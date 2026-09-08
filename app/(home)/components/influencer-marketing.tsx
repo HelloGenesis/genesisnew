@@ -46,7 +46,7 @@ export function InfluencerMarketing() {
         className="seamless pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(46% 38% at 24% 16%, rgb(214 210 214 / 0.11) 0%, transparent 68%), radial-gradient(50% 44% at 8% 92%, rgb(255 212 0 / 0.16) 0%, transparent 70%), radial-gradient(60% 50% at 88% 40%, rgb(255 212 0 / 0.07) 0%, transparent 72%)",
+            "radial-gradient(46% 38% at 24% 16%, rgb(214 210 214 / 0.11) 0%, transparent 68%), radial-gradient(50% 44% at 8% 92%, rgb(255 197 22 / 0.16) 0%, transparent 70%), radial-gradient(60% 50% at 88% 40%, rgb(255 197 22 / 0.07) 0%, transparent 72%)",
         }}
       />
 
@@ -133,7 +133,7 @@ export function InfluencerMarketing() {
                 className="glass glass-lit mt-6 flex items-center gap-5 rounded-panel p-5"
                 style={{
                   background:
-                    "linear-gradient(102deg, rgb(255 212 0 / 0.17) 0%, rgb(255 212 0 / 0.05) 42%, rgb(255 255 255 / 0.03) 100%)",
+                    "linear-gradient(102deg, rgb(255 197 22 / 0.17) 0%, rgb(255 197 22 / 0.05) 42%, rgb(255 255 255 / 0.03) 100%)",
                 }}
               >
                 <div className="grid size-14 shrink-0 place-items-center rounded-card border border-brand/35 bg-brand/10 text-brand-ink">
@@ -232,6 +232,18 @@ export function InfluencerMarketing() {
           them in the stats panel packed four numbers and two buttons into one
           row; they get their own line.
         */}
+        {/*
+          THE TWO BUTTONS GENESIS SPECIFIED, in their words and to their
+          destinations.
+
+          "Explore Genesis Influence" is gone. It went to /influencer-campaigns
+          — the division's own page — which is a third thing to click in a
+          section that is meant to offer a choice between starting a campaign
+          and seeing the work. Genesis asked for the second button to be "View
+          Case Studies", landing on the library "filtering exclusively for
+          influencer campaigns", which is what the query string does. The
+          division page is still reachable from the card above.
+        */}
         <Reveal delay={0.15} className="mt-5 flex flex-wrap gap-3">
           <GlassButton
             href="/#contact"
@@ -240,10 +252,15 @@ export function InfluencerMarketing() {
             size="lg"
             arrow
           >
-            Plan an influencer campaign
+            Plan Influencer Campaign
           </GlassButton>
-          <GlassButton href="/influencer-campaigns" variant="glass" size="lg" arrow>
-            Explore Genesis Influence
+          <GlassButton
+            href="/our-work?filter=Influencer+Campaigns"
+            variant="glass"
+            size="lg"
+            arrow
+          >
+            View Case Studies
           </GlassButton>
         </Reveal>
       </div>

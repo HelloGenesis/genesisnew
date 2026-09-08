@@ -10,6 +10,12 @@ export type NavItem = {
   blurb?: string;
   /** Marks routes that do not exist until Phase 4. */
   planned?: boolean;
+  /**
+   * Leaves the site. Rendered as a plain anchor with target/rel rather than
+   * through next/link, which would try to route it. "Build Your AI Avatar"
+   * in the footer is the only one today — it opens WhatsApp.
+   */
+  external?: boolean;
 };
 
 export const siteConfig = {
@@ -42,33 +48,73 @@ export const siteConfig = {
    */
   whatsappMessage:
     "Hi Genesis! I found you through your website and I'd like to talk about a project.",
+  /**
+   * THE AVATAR ENQUIRY, written by Genesis, opened by two different controls:
+   * AI Lab's "Create Your AI Avatar" and the footer's "Build Your AI Avatar".
+   *
+   * It sits here rather than with the AI Lab copy precisely because there are
+   * two callers. The floating button's message above cannot name a division —
+   * it floats on every page and does not know what the reader was looking at
+   * — but both of these do, so the first reply does not have to open by
+   * asking what the enquiry is about.
+   */
+  avatarWhatsappMessage:
+    "Hello Team Genesis! I would like to inquire about AI avatars and AI content creation. Could you please provide me with further guidance?",
 } as const;
 
 /**
- * Primary navigation — the four verticals first, then the rest.
+ * Builds a wa.me link, with the compose box already filled in.
  *
- * NO "WORK" ITEM. There is now exactly one browse on the homepage — the
- * library, below the four verticals — and Studios' own reel wall points down
- * to it. The verticals are the way in; a reader who wants the catalogue
- * reaches it from any of them.
+ * ONE PLACE, because there are two callers now and they must not disagree
+ * about how a phone number becomes a URL. The floating button opens the
+ * generic message above; AI Lab's "Create Your AI Avatar" opens one Genesis
+ * wrote for that button specifically, so the first reply does not have to
+ * start by asking what the enquiry is about.
  *
- * FLAT, NOT A DROPDOWN. The verticals lived behind a Capabilities menu, on
- * the reasoning that nine items crowd a pill. Genesis wants them on the bar
- * itself, and they are right that a division a visitor came for should not be
- * one hover away from being found. Eight fit because the names are short —
- * two of them are the forms, which Genesis asked to be reachable without
- * scrolling into a section first.
+ * Returns undefined when there is no number, which is the same switch the
+ * floating button already honours: a WhatsApp link that opens a chat with
+ * nobody is worse than no link, and every caller has to be able to render
+ * something else instead.
+ */
+export function whatsappLink(message: string = siteConfig.whatsappMessage) {
+  const number = siteConfig.whatsapp.replace(/\D/g, "");
+  if (!number) return undefined;
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
+
+/**
+ * Primary navigation — four items, and that is the whole bar.
  *
- * THE PREFIX IS DROPPED. "Genesis Influence" four times in a row, under a
- * Genesis wordmark, is the same word five times across one bar. The prefix
- * belongs on the division's own page, where it is the lockup.
+ * THE FOUR VERTICALS ARE OFF IT, at Genesis's instruction. Influence,
+ * Studios, AI Labs and Brand & Design each had a link here; they are now
+ * reached from the Brain, which is the first thing on the page and is a
+ * picture of exactly that choice. Naming them twice — once as a row of small
+ * grey words in a pill, once as four gradient marks around the orb — made the
+ * pill compete with the composition that was built to be the way in.
+ *
+ * WORK AND CASE STUDIES ARE TWO ITEMS, NOT ONE. They were briefly merged
+ * into a single "Work | Case Studies" link — that was a misreading of the
+ * brief and Genesis corrected it. They are different things and they go to
+ * different places:
+ *
+ *   WORK is the Portfolio — the full library of films, reels and campaigns at
+ *     /our-work. Browsing.
+ *   CASE STUDIES is the written argument: the problem, what was decided, and
+ *     the number the client agreed to. It scrolls to that section on the
+ *     homepage, whose own button leads on to the full studies.
+ *
+ * Merging them pointed both readings at the library, so anyone looking for
+ * the results got a wall of thumbnails.
+ *
+ * WHAT THIS BUYS BACK. Eight items needed about 1150px alongside the
+ * wordmark, the toggle and the CTA, which is why the full bar waited for xl
+ * and every laptop under 1280 got the hamburger. Five short ones fit
+ * comfortably at lg — "Work" and "Case Studies" together are narrower than
+ * the single "Work | Case Studies" they replace.
  */
 export const navItems: NavItem[] = [
-  { label: "Influence", href: "/#influence" },
-  { label: "Studios", href: "/#studios" },
-  { label: "AI Labs", href: "/#ai-lab" },
-  { label: "Brand & Design", href: "/#brand-design" },
-  { label: "Case Studies", href: "/case-studies" },
+  { label: "Work", href: "/our-work" },
+  { label: "Case Studies", href: "/#case-studies" },
   /*
     THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable
     from the nav — the only routes to them were a button inside a section you
@@ -82,8 +128,22 @@ export const navItems: NavItem[] = [
 ];
 
 /**
- * The same four, with their full names and blurbs, for the footer — where
- * there is room and no wordmark beside them.
+ * WHERE THE WORDMARK GOES.
+ *
+ * Genesis asked for the logo in the top-left to lead back to the Brain rather
+ * than to "/" — which on the homepage did nothing at all, because the Brain
+ * IS the top of the homepage and the browser was already there. As a hash it
+ * scrolls from anywhere on the homepage and still loads the homepage from any
+ * other route, so one href covers both.
+ */
+export const homeHref = "/#services";
+
+/**
+ * The four divisions, with their full names and blurbs.
+ *
+ * NO LONGER IN THE FOOTER — see footerNav, which Genesis rewrote. Kept
+ * because it is the one place the four are written out in full with a line
+ * each, and it is a short walk from here to a sitemap or a division index.
  */
 export const capabilities: NavItem[] = [
   { label: "Genesis Influence", href: "/#influence", blurb: "Creator-led growth" },
@@ -96,37 +156,67 @@ export const capabilities: NavItem[] = [
 export const primaryCta = { label: "Start a Project", href: "/#contact" } as const;
 
 /**
- * Footer groupings, rebuilt around the four verticals rather than around the
- * old service list.
+ * Footer groupings — Genesis's own list of links, in three columns.
  *
- * Client Login is here and nowhere else. Genesis Insider is an internal
- * operating system, and it was interrupting the agency story with a section
- * on the homepage — a visitor deciding whether to hire Genesis has no use for
- * a staff login, and a prospect who sees one wonders whether they are in the
- * right place.
+ * WHAT THIS REPLACED. Three columns headed Genesis / Capabilities / Connect,
+ * carrying About, Portfolio, Team and the four division names. Genesis
+ * supplied a flat list of eleven links and asked for the "About Genesis"
+ * blurb above it to come off; both are done. About, Portfolio and Team are
+ * gone from here because they are not on that list — Portfolio survives as
+ * "Library", which is the same destination under the name Genesis uses for
+ * it, and the divisions are reached from the Brain now rather than from a
+ * column of small grey words.
+ *
+ * THE GROUPING IS MINE, THE LINKS ARE THEIRS. A flat eleven in one column is
+ * a long thin list beside a wide empty footer; three headed groups is the
+ * shape the panel is built for. Nothing is added or dropped in the process —
+ * the eleven below are the eleven supplied, in their order.
+ *
+ * TODO(routes): Employee Login points at /insider, the same place as Client
+ * Login, because there is only one authenticated door today. If staff and
+ * clients are meant to land somewhere different, that is a route to add
+ * rather than a label to change here.
  */
 export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
-    heading: "Genesis",
+    heading: "Work",
     items: [
-      { label: "About", href: "/#about" },
-          { label: "Portfolio", href: "/our-work" },
+      { label: "Influencer Marketing", href: "/influencer-campaigns" },
+      { label: "Campaigns", href: "/our-work?filter=Influencer+Campaigns" },
+      { label: "Library", href: "/#library" },
       { label: "Case Studies", href: "/case-studies" },
-      { label: "Team", href: "/team" },
-      { label: "Careers", href: "/careers" },
     ],
   },
   {
-    heading: "Capabilities",
-    items: capabilities.map(({ label, href }) => ({ label, href })),
+    heading: "Genesis",
+    items: [
+      { label: "Start a Project", href: "/#contact" },
+      /*
+        The same chat, with the same message, as AI Lab's own CTA — built
+        from whatsappLink below rather than typed out, so the two cannot
+        drift. It is the only external link in the footer.
+      */
+      {
+        label: "Build Your AI Avatar",
+        /*
+          Falls back to the enquiry form when there is no number in
+          siteConfig — the same switch the floating button honours. A footer
+          link that opens a chat with nobody is worse than one that opens the
+          form.
+        */
+        href: whatsappLink(siteConfig.avatarWhatsappMessage) ?? "/#contact",
+        external: Boolean(whatsappLink(siteConfig.avatarWhatsappMessage)),
+      },
+      { label: "I'm a Creator", href: "/creator" },
+      { label: "Careers", href: "/careers" },
+      { label: "Genesis Academy", href: "/academy" },
+    ],
   },
   {
-    heading: "Connect",
+    heading: "Log in",
     items: [
-      { label: "Contact", href: "/#contact" },
-      { label: "For Creators", href: "/creator" },
-      { label: "Start a Project", href: "/#contact" },
       { label: "Client Login", href: "/insider" },
+      { label: "Employee Login", href: "/insider" },
     ],
   },
 ];

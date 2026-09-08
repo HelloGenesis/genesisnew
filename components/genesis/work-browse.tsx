@@ -264,8 +264,29 @@ function Billboard({ item }: { item: WorkItem }) {
   );
 }
 
-export function WorkBrowse({ items }: { items: WorkItem[] }) {
-  const [filter, setFilter] = useState("All");
+export function WorkBrowse({
+  items,
+  initialFilter = "All",
+}: {
+  items: WorkItem[];
+  /**
+   * Which filter the page opens on, from `?filter=` on the URL.
+   *
+   * IT IS A PROP, NOT A useSearchParams CALL, and that is a rendering
+   * decision rather than a style one. Reading the query string inside this
+   * component would opt the whole Portfolio route out of static rendering
+   * and require a Suspense boundary around it. The page is a server
+   * component that already receives searchParams; handing the answer down
+   * costs nothing and keeps the page static for the common case of no query
+   * at all.
+   *
+   * Genesis's use for it is the division CTAs: "View Case Studies" under
+   * Influence has to land on the library already filtered to influencer
+   * campaigns rather than on the whole catalogue.
+   */
+  initialFilter?: string;
+}) {
+  const [filter, setFilter] = useState(initialFilter);
   const filters = useMemo(() => workFilters(items), [items]);
   const shelves = useMemo(() => workRows(items), [items]);
   const hero = useMemo(() => billboardItem(items), [items]);

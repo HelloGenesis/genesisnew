@@ -168,14 +168,32 @@ export const FORMS: Record<FormKind, FormSpec> = {
     submitLabel: "Send brief",
     successMessage: "Thanks — we'll come back to you within a working day.",
     fields: [
+      /*
+       * WHAT IS REQUIRED IS GENESIS'S CALL, and they have moved the line.
+       * Their list: Name, Company, Email, Phone, Project Brief and Website or
+       * Social Media Link — "other fields are optional".
+       *
+       * TWO CHANGES, IN OPPOSITE DIRECTIONS. Phone and website become
+       * required, which is a real cost — every additional required field
+       * loses some proportion of the people who start the form — and it is a
+       * cost Genesis is choosing knowingly: a brand enquiry with no phone
+       * number and no link to look at is one that cannot be qualified before
+       * the first call.
+       *
+       * And "What do you need?" becomes OPTIONAL, which is the half that is
+       * easy to miss. It was required, and it is not on Genesis's list — so
+       * leaving it required would have kept a mandatory field they did not
+       * ask for while adding two they did.
+       */
       { name: "name", label: "Name", required: true, half: true, autoComplete: "name" },
       { name: "company", label: "Company", required: true, half: true, autoComplete: "organization" },
       { name: "email", label: "Email", type: "email", required: true, half: true, autoComplete: "email" },
-      { name: "phone", label: "Phone", type: "tel", half: true, autoComplete: "tel" },
+      { name: "phone", label: "Phone", type: "tel", required: true, half: true, autoComplete: "tel" },
       {
         name: "website",
         label: "Website or social",
         type: "url",
+        required: true,
         half: true,
         placeholder: "https://",
       },
@@ -184,7 +202,6 @@ export const FORMS: Record<FormKind, FormSpec> = {
         label: "What do you need?",
         type: "select",
         options: NEEDS,
-        required: true,
         half: true,
       },
       { name: "budget", label: "Budget range", type: "select", options: BUDGETS, half: true },

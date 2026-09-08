@@ -95,10 +95,6 @@ export const services = {
   items: [
     {
       title: "Genesis.Influence",
-      /* The colour this vertical GLOWS when you point at it. One stop out of
-         its own ramp — a hover state has to be a single colour, and picking it
-         here keeps it beside the ramp it came from. */
-      glow: "#f7719e",
       /*
        * THE SHORT NAME, used where the Genesis wordmark is already in the
        * picture. The divisions board sets the four around the mark and drops
@@ -138,10 +134,6 @@ export const services = {
     },
     {
       title: "Genesis.BrandDesign",
-      /* The colour this vertical GLOWS when you point at it. One stop out of
-         its own ramp — a hover state has to be a single colour, and picking it
-         here keeps it beside the ramp it came from. */
-      glow: "#e2a6ff",
       short: "Brand & Design",
       href: "/#brand-design",
       // See the note on Influence above — read off the 2026 lockup.
@@ -151,10 +143,6 @@ export const services = {
     },
     {
       title: "Genesis.Studios",
-      /* The colour this vertical GLOWS when you point at it. One stop out of
-         its own ramp — a hover state has to be a single colour, and picking it
-         here keeps it beside the ramp it came from. */
-      glow: "#ffab52",
       short: "Studios",
       href: "/#studios",
       // The one that already agreed with its lockup, bar capitalisation.
@@ -164,10 +152,6 @@ export const services = {
     },
     {
       title: "Genesis.AILab",
-      /* The colour this vertical GLOWS when you point at it. One stop out of
-         its own ramp — a hover state has to be a single colour, and picking it
-         here keeps it beside the ramp it came from. */
-      glow: "#ff8fb8",
       short: "AI Lab",
       href: "/#ai-lab",
       // See the note on Influence above — read off the 2026 lockup.
@@ -251,20 +235,37 @@ export const whoWeAre = {
       line: "Ideas matter. Shipping matters more.",
     },
   ],
+  /*
+   * THE SECTORS, AS GENESIS REVISED THEM.
+   *
+   * Twelve became ten. "Finance" and "Health" both came out because BFSI
+   * already covers them — the acronym expands to Banking, Financial Services
+   * and Health Insurance, so the strip was naming two of its own three parts
+   * a second time. "Tech" is written out as Technology.
+   *
+   * `expands` is the acronym's own long form, and it is a separate field
+   * rather than part of the label because the strip is set in letterspaced
+   * uppercase micro type: "BFSI (BANKING, FINANCIAL SERVICES & HEALTH
+   * INSURANCE)" printed there is wider than the other nine put together. It
+   * renders as the <abbr> title instead, so the expansion is available to
+   * anyone who wants it and to a screen reader, without the line becoming
+   * one sector and a paragraph.
+   */
   sectors: [
-    "BFSI",
-    "Finance",
-    "Fashion",
-    "Beauty",
-    "Food & Beverage",
-    "Health",
-    "Lifestyle",
-    "Entertainment",
-    "Education",
-    "Travel",
-    "Tech",
-    "Real Estate",
-  ],
+    {
+      label: "BFSI",
+      expands: "Banking, Financial Services & Health Insurance",
+    },
+    { label: "Fashion" },
+    { label: "Beauty" },
+    { label: "Lifestyle" },
+    { label: "Entertainment" },
+    { label: "Food & Beverage" },
+    { label: "Education" },
+    { label: "Travel" },
+    { label: "Technology" },
+    { label: "Real Estate" },
+  ] as ReadonlyArray<{ label: string; expands?: string }>,
 } as const;
 
 // --- AI content -------------------------------------------------------------
@@ -275,8 +276,38 @@ export const aiContent = {
   label: "AI Lab",
   heading: "Speed up the workflow,",
   headingAccent: "not the standard",
+  /*
+   * GENESIS'S OWN COPY, verbatim, replacing a description written before they
+   * had one. The line it replaces — "AI tools, image generation, video
+   * generation and a roster of AI avatars…" — was an inventory. This one says
+   * who it is for, which is the part a founder reading it needs.
+   */
   body:
-    "AI tools, image generation, video generation and a roster of AI avatars — used to compress content workflows and lift engagement, with direction and final approval staying human.",
+    "AI Content & Avatars tailored for founders, creators, influencers, and artists that look real. For Real!",
+  /*
+   * THE SECOND CLAIM, which the deck sets as its own line and which the
+   * section had nowhere to put. It is the recurring-service half of the
+   * pitch — the roster above is what you get, this is what happens after.
+   */
+  promise: {
+    heading: "One Setup. Real-Time. Every Time",
+    line: "Automated AI Content for Your Brand and Personal Social Media.",
+  },
+  /*
+   * THE AUTOMATION BLOCK, Genesis's copy verbatim. It is the third claim in
+   * this section and the largest one — the roster says what the avatars are,
+   * the promise says the content keeps coming, and this says the workflow
+   * itself is the product. It is the only part of AI Lab that is about the
+   * client's own business rather than about Genesis's output, which is why it
+   * gets the diagrams and its own heading rather than another paragraph.
+   */
+  automation: {
+    heading: "AI-Powered Automation",
+    body:
+      "Discover the unseen opportunities in your startup or business through AI Automation. By automating your workflows, you can simplify your daily business tasks. Let us handle it for you!",
+    /** The caption under the diagram — see AutomationSources. */
+    sourcesCaption: "Everything a campaign already has, in one place.",
+  },
   /*
    * THE AVATAR BOARD, from the AI Lab page of the deck.
    *
@@ -383,21 +414,30 @@ export const studios = {
   headingAccent: "the standard",
   body:
     "Creative direction, scripting, shoot and post — the whole pipeline in-house, so a campaign never loses its thread between the idea and the published cut.",
-  /** The brief's list, in its own words. */
+  /*
+   * THE CAPABILITY LIST, REPLACED BY GENESIS'S OWN.
+   *
+   * Thirteen became nine, and they are not a subset — the old list was
+   * written from the original brief and named OUTPUTS ("Brand films",
+   * "Corporate films", "Motion graphics"). Genesis's list names the parts of
+   * the pipeline they sell, which is a different and more useful claim: two
+   * of them ("Studio and venue rentals", "Founder-led shoots") are services
+   * the old list had no way to express at all.
+   *
+   * `heading` is theirs too. The list sits under "Strategy" in the document
+   * rather than under a label written here.
+   */
+  capabilitiesHeading: "Strategy",
   capabilities: [
-    "Reels",
-    "DVCs",
-    "Brand films",
-    "Product films",
-    "Corporate films",
-    "Social content",
-    "Podcasts",
-    "Photography",
-    "Shoots",
-    "Motion graphics",
+    "Scripting",
     "Editing",
-    "Event content",
-    "UGC production",
+    "Shooting",
+    "Studio and venue rentals",
+    "DVCs",
+    "Founder-led shoots",
+    "Ideation",
+    "Post-production",
+    "Podcast planning and shoot",
   ],
   /**
    * Which transcoded previews the wall plays. Sixteen of the thirty-two, in
@@ -685,25 +725,48 @@ export const clients = {
    * is worse than a missing one. It goes in the moment someone names it.
    * TODO(content): identify file 21 of the Pallete of Brand Works.
    *
-   * `ink` IS MEASURED, AND THE CHIP IS ALWAYS PAPER. An earlier pass split
-   * the wall between white chips and dark ones so every mark had a ground
-   * that suited it — which worked, and looked like a chequerboard. Genesis
-   * was right that a wall of client logos wants one surface.
+   * `treat` IS THE CORRECTION EACH MARK NEEDS, AND IT IS MEASURED.
    *
-   * So the ground is uniform and the seven marks that cannot live on it are
-   * named here instead. Sampling mean luminance AND saturation over every
-   * opaque pixel separates two cases the first pass had conflated:
+   * The chips are gone at Genesis's request — only the PNGs — and that turned
+   * a solved problem back into an open one. With a white chip there was one
+   * ground for all thirty and the fix could be a constant. Without one the
+   * ground is the page: near-black in one theme, paper in the other, and a
+   * mark needs the OPPOSITE treatment in each.
    *
-   *   "invert" — social-samosa (L 0.98, sat 0.00) and someplace-else
-   *     (L 0.99, sat 0.01) are monochrome white. Inverting a mark with no
-   *     colour in it produces the same mark in black and loses nothing at
-   *     all, which is why only these two get it.
-   *   "darken" — mahindra-finance, the-lalit-mumbai, ht-brunch, bumble and
-   *     lizol sit between L 0.68 and 0.85 and DO carry colour, so inverting
-   *     would turn The Lalit's red square cyan. They are dimmed instead,
-   *     which holds their hue and costs some saturation.
+   * THE FIELD NAMES THE FIX, NOT THE ARTWORK, and that is the second attempt.
+   * The first classified each file by its ink's mean luminance — dark, mid,
+   * light — and it was wrong for a whole category: a logo that is a SOLID
+   * DARK PLAQUE with light lettering (Grand Hyatt, Four Points, HDFC) reads
+   * as "dark" by the mean, and inverting it turns the plaque WHITE. Which is
+   * to say the first pass reintroduced the white blocks this change exists to
+   * remove, on five of the thirty.
    *
-   * Everything else is left exactly as supplied.
+   * So the choice is made by simulation rather than by classification. Each
+   * file is composited over the dark page under all three candidate filters,
+   * and each result is scored on two numbers: VISIBILITY (alpha-weighted mean
+   * distance from the ground) and BLOCKINESS (the share of the frame that
+   * ends up opaque AND far from the ground — which is exactly what a "block"
+   * is). The winner is the most visible option whose blockiness stays under
+   * 30%.
+   *
+   *   "invert" — five files. Ordinary dark ink on transparent, with little
+   *     enough of it that flipping cannot produce a slab.
+   *   "lift"   — twenty-three. Brightness rather than inversion, because
+   *     brightening a dark plaque lifts it to grey while brightening thin
+   *     dark ink lifts it to near-white: it is the one operation that helps
+   *     the ink without ever manufacturing a white rectangle.
+   *   "asis"   — two. Already light artwork; any correction would hide them.
+   *
+   * The light theme mirrors all three — see .client-mark in globals.css.
+   *
+   * TWO ARE STILL COMPROMISED and it is worth knowing which. Grand Hyatt and
+   * Four Points are drawn as filled plaques, so under any filter their box
+   * remains a visible rectangle; "lift" makes it grey rather than white,
+   * which is the best a filter can do. SiNet is the only file of the thirty
+   * with no transparency at all — measured, 0% transparent pixels — so its
+   * background is part of the picture.
+   * TODO(assets): transparent, single-colour exports of those three would
+   * remove every special case here.
    *
    * `ratio` IS THE FILE'S OWN WIDTH/HEIGHT, and it is here because it is what
    * decides how big each mark is allowed to be. These range from 0.89 (LN
@@ -718,36 +781,36 @@ export const clients = {
    * untouched. Dimming a client's colour is a compromise, not a preference.
    */
   logos: [
-    { name: "Aditya Birla Capital", file: "aditya-birla-capital", ink: "auto", ratio: 2.55 },
-    { name: "Mahindra Finance", file: "mahindra-finance", ink: "darken", ratio: 12.63 },
-    { name: "HDFC Bank", file: "hdfc-bank", ink: "auto", ratio: 5.93 },
-    { name: "IDBI Bank", file: "idbi-bank", ink: "auto", ratio: 5.93 },
-    { name: "House of Hiranandani", file: "house-of-hiranandani", ink: "auto", ratio: 2.02 },
-    { name: "The WorldGrad", file: "the-worldgrad", ink: "auto", ratio: 3.24 },
-    { name: "The Lalit Mumbai", file: "the-lalit-mumbai", ink: "darken", ratio: 1.22 },
-    { name: "Social Samosa", file: "social-samosa", ink: "invert", ratio: 1.97 },
-    { name: "Four Points", file: "four-points", ink: "auto", ratio: 1.0 },
-    { name: "Someplace Else", file: "someplace-else", ink: "invert", ratio: 6.32 },
-    { name: "Matahaari", file: "matahaari", ink: "auto", ratio: 1.76 },
-    { name: "Grand Hyatt", file: "grand-hyatt", ink: "auto", ratio: 4.14 },
-    { name: "MNR", file: "mnr", ink: "auto", ratio: 1.4 },
-    { name: "BNI", file: "bni", ink: "auto", ratio: 2.55 },
-    { name: "Imagicaa", file: "imagicaa", ink: "auto", ratio: 2.39 },
-    { name: "Kitty Su", file: "kitty-su", ink: "auto", ratio: 1.29 },
-    { name: "Royal Tulip", file: "royal-tulip", ink: "auto", ratio: 2.21 },
-    { name: "Radcliffe", file: "radcliffe", ink: "auto", ratio: 3.53 },
-    { name: "HT Brunch", file: "ht-brunch", ink: "darken", ratio: 4.21 },
-    { name: "Bumble", file: "bumble", ink: "darken", ratio: 5.85 },
-    { name: "Lizol", file: "lizol", ink: "darken", ratio: 0.98 },
-    { name: "Dove", file: "dove", ink: "auto", ratio: 1.42 },
-    { name: "Bacardi", file: "bacardi", ink: "auto", ratio: 1.36 },
-    { name: "Vivo", file: "vivo", ink: "auto", ratio: 3.78 },
-    { name: "Budweiser", file: "budweiser", ink: "auto", ratio: 2.94 },
-    { name: "LN Construction", file: "ln-construction", ink: "auto", ratio: 0.89 },
-    { name: "Kamdhenu", file: "kamdhenu", ink: "auto", ratio: 1.56 },
-    { name: "Aditya Birla Sun Life Insurance", file: "aditya-birla-sun-life", ink: "auto", ratio: 2.54 },
-    { name: "TripGate", file: "tripgate", ink: "auto", ratio: 3.24 },
-    { name: "SiNet", file: "sinet", ink: "auto", ratio: 1.09 },
+    { name: "Aditya Birla Capital", file: "aditya-birla-capital", treat: "invert", ratio: 2.55 },
+    { name: "Mahindra Finance", file: "mahindra-finance", treat: "lift", ratio: 12.63 },
+    { name: "HDFC Bank", file: "hdfc-bank", treat: "lift", ratio: 5.93 },
+    { name: "IDBI Bank", file: "idbi-bank", treat: "lift", ratio: 5.93 },
+    { name: "House of Hiranandani", file: "house-of-hiranandani", treat: "lift", ratio: 2.02 },
+    { name: "The WorldGrad", file: "the-worldgrad", treat: "lift", ratio: 3.24 },
+    { name: "The Lalit Mumbai", file: "the-lalit-mumbai", treat: "lift", ratio: 1.22 },
+    { name: "Social Samosa", file: "social-samosa", treat: "lift", ratio: 1.97 },
+    { name: "Four Points", file: "four-points", treat: "lift", ratio: 1.0 },
+    { name: "Someplace Else", file: "someplace-else", treat: "lift", ratio: 6.32 },
+    { name: "Matahaari", file: "matahaari", treat: "lift", ratio: 1.76 },
+    { name: "Grand Hyatt", file: "grand-hyatt", treat: "lift", ratio: 4.14 },
+    { name: "MNR", file: "mnr", treat: "invert", ratio: 1.4 },
+    { name: "BNI", file: "bni", treat: "lift", ratio: 2.55 },
+    { name: "Imagicaa", file: "imagicaa", treat: "lift", ratio: 2.39 },
+    { name: "Kitty Su", file: "kitty-su", treat: "invert", ratio: 1.29 },
+    { name: "Royal Tulip", file: "royal-tulip", treat: "lift", ratio: 2.21 },
+    { name: "Radcliffe", file: "radcliffe", treat: "lift", ratio: 3.53 },
+    { name: "HT Brunch", file: "ht-brunch", treat: "asis", ratio: 4.21 },
+    { name: "Bumble", file: "bumble", treat: "lift", ratio: 5.85 },
+    { name: "Lizol", file: "lizol", treat: "asis", ratio: 0.98 },
+    { name: "Dove", file: "dove", treat: "lift", ratio: 1.42 },
+    { name: "Bacardi", file: "bacardi", treat: "lift", ratio: 1.36 },
+    { name: "Vivo", file: "vivo", treat: "lift", ratio: 3.78 },
+    { name: "Budweiser", file: "budweiser", treat: "lift", ratio: 2.94 },
+    { name: "LN Construction", file: "ln-construction", treat: "lift", ratio: 0.89 },
+    { name: "Kamdhenu", file: "kamdhenu", treat: "lift", ratio: 1.56 },
+    { name: "Aditya Birla Sun Life Insurance", file: "aditya-birla-sun-life", treat: "invert", ratio: 2.54 },
+    { name: "TripGate", file: "tripgate", treat: "invert", ratio: 3.24 },
+    { name: "SiNet", file: "sinet", treat: "invert", ratio: 1.09 },
   ],
 } as const;
 

@@ -10,7 +10,7 @@
    Derived from docs/reference/. Two of those images (img-012 Influencer
    Campaigns, img-013 Our Content) are existing Genesis Media artwork, so the
    palette below follows them rather than the approximate values in the brief:
-   the brand accent is the guidelines' yellow #ffd400, and it is the only one
+   the brand accent is the guidelines' yellow #ffc516, and it is the only one
    "dramatic light" accent because the recurring papers-catching-light motif
    (img-001, 005, 011, 014, 043) is unmistakably warm.
 
@@ -44,35 +44,35 @@
     --color-elevated: var(--surface-panel);
 
     /* --- Brand accent ------------------------------------------------------
-       Genesis Yellow #FFD400, from the guidelines' Color System page, which
+       Genesis Yellow #ffc516, from the guidelines' Color System page, which
        also fixes the ratio it is used at: 70% white/black, 20% grey, 10%
        yellow, and "Yellow is an accent. Never the background."
 
        THE DECK QUOTES THREE YELLOWS and they disagree: Color System says
-       #FFD400, the Master Logo page says #FFC90C, and the supplied logo
+       #ffc516, the Master Logo page says #FFC90C, and the supplied logo
        artwork measures #FFC516. The Color System page wins because that is
        the page that defines the system; the logo files keep their own value,
        so the wordmark's wedge is a hair warmer than the UI accent until new
-       artwork is exported at #FFD400.
+       artwork is exported at #ffc516.
 
        WHAT THIS REPLACED. The site was built on crimson #ff2d3f and amber
        #ff8a3d, sampled from mockups before the guidelines existed. Neither
        appears anywhere in the brand book. They are gone rather than demoted:
        a second accent is exactly what the guidelines do not have. */
-    --color-brand: #ffd400;
+    --color-brand: #ffc516;
     /* The book's second yellow, for gradients and pressed states. */
-    --color-brand-deep: #e6bf00;
-    --color-brand-soft: #ffe466;
+    --color-brand-deep: #e0ad13;
+    --color-brand-soft: #ffdc72;
 
-    /* Yellow for TYPE. #ffd400 on the light theme's paper measures about
+    /* Yellow for TYPE. #ffc516 on the light theme's paper measures about
        1.4:1, so as ink it has to darken — the same split the type already
        needed when the accent was brand. Fills, dots and glows keep
        --color-brand; anything that has to be READ takes this. */
     --color-brand-ink: var(--brand-ink);
 
     /* On a yellow fill, text is the brand's near-black, never white:
-       #111111 on #ffd400 measures 12.2:1, white on it measures 1.6:1. */
-    --color-on-brand: #111111;
+       #000000 on #ffc516 measures 14.6:1, white on it measures 1.6:1. */
+    --color-on-brand: #000000;
 
     /* The mark's diagonal, as a gradient angle. Derived once here so every
        use — masks, washes, image crops — is the same slope. See .n-cut. */
@@ -145,7 +145,7 @@
        on the PAGE ground, not on a lit object, so unlike the inks in
        animated-timeline and stat-card it has to flip: #cfe3ff measures about
        1.2:1 on cream, which is not a faint accent, it is an invisible one. */
-    /* Amber for TYPE. --color-brand stays fixed at #ffd400 because it is also
+    /* Amber for TYPE. --color-brand stays fixed at #ffc516 because it is also
        a light source: glows, borders, the lit wall. But as TEXT on the light
        theme's paper it measured 1.97-2.08:1 on every section heading accent,
        every service caption and every numbered label on the site — against
@@ -236,13 +236,12 @@
        their own literal colours in both themes and the chrome moves around
        them, which is also what every editorial site with a theme toggle does
        with its imagery. */
-    /* Brand neutrals. #242426 is the guidelines' cover ground and #0b0b0c
-       its deepest black; #96969a and #6b6b70 are its grey ramp. */
-    /* Straight off the guidelines' Color System page: Black #111111, White
-       #FFFFFF, Grey #8B8B8B, supporting #F5F5F5 / #D9D9D9 / #555555, and
-       Deep Space Gray #2B2B2B, which the deck names as the master logo's
-       own colour. */
-    --surface-base: #111111;
+    /* THE SUPPLIED PALETTE, which supersedes the guidelines' Color System
+       page. Genesis fixed six: #ffffff, #000000, #ffc516, #f9f9f9, #242426
+       and #d1cfcf. Black is the floor and charcoal the panel; the steps
+       between them are derived, because six colours cannot express an
+       elevation ladder on their own. See the note in .scene-dark. */
+    --surface-base: #000000;
 
     /* --- THE PAGE'S OWN GROUND ------------------------------------------
        Genesis asked for the background to BE a gradient rather than a flat
@@ -251,28 +250,37 @@
        ten to twenty percent alpha — which is a lot of careful colour sitting
        on a black wall, and at that alpha the wall is what you see.
 
-       This is the wall itself, and it runs the length of the document: the
-       violet the Brain sits in, cooling through the work, warming through
-       Studios, back to plum for the case studies and out. The radial field
-       keeps doing what it does on top; it now has something to tint rather
-       than something to fight.
+       IT IS NEUTRAL NOW, AND THAT IS THE BRAND'S CALL. This ramp used to run
+       violet at the top, cool through the work, warm through Studios and back
+       to plum — four hues the palette does not contain. Genesis has fixed the
+       primaries at grey, yellow, white and black, so the wall is a charcoal
+       ramp: #242426 (the palette's charcoal) at the top, resolving to the
+       palette's own #000000 at the foot.
 
-       EVERY STOP IS STILL NEARLY BLACK, and deliberately. Measured against
-       white body copy, the worst of the seven is #1e1526 at 17.64:1, where
-       the flat #111111 it replaces is 18.88:1 — a tenth of a stop of headroom
-       given up out of eighteen. The page gains a gradient and no text on it
-       loses a usable amount of contrast. A background is allowed to have a
-       colour; it is not allowed to have an opinion about legibility.
+       IT DRIFTS WARM ON THE WAY DOWN, and that is the part that was missing.
+       The first neutral pass ran charcoal to black through pure greys, and
+       Genesis's report was that the dark theme had no gradients worth the
+       name — correctly, because a ramp between two colours a few levels apart
+       with nothing in between IS a flat slab. The palette has exactly one
+       hue, #ffc516, so the drift is built from it: the 28% and 60% stops are
+       charcoal pulled towards the yellow (#232019, #282317), which gives the
+       Influence and Studios stretches their warmth without putting a colour
+       on the page the brand does not own.
+
+       EVERY STOP IS STILL NEARLY BLACK, and deliberately. The lightest of the
+       seven is #282317 at 14.9:1 against white body copy, where the flat
+       #111111 it replaces measured 18.88. A background is allowed to have a
+       value; it is not allowed to have an opinion about legibility.
        --------------------------------------------------------------------- */
     --page-ground: linear-gradient(
         168deg,
-        #191333 0%,
-        #141126 16%,
-        #17131f 32%,
-        #1d1518 50%,
-        #1a1320 68%,
-        #1e1526 84%,
-        #120f18 100%
+        #242426 0%,
+        #201f21 12%,
+        #232019 28%,
+        #1a1a1d 44%,
+        #282317 60%,
+        #161618 78%,
+        #000000 100%
     );
 
     /*
@@ -282,8 +290,8 @@
        homepage where it unrolls over many screens. On a page that is one and a
        half screens tall — /careers is 1355px — the whole ramp is visible at
        once, so its warm middle stops sit right behind the form and the page
-       reads as a violet top fading into mud. The gradient is not wrong; it is
-       being asked to do its job in a fifth of the distance.
+       reads as a top that never arrives anywhere. The gradient is not wrong;
+       it is being asked to do its job in a fifth of the distance.
 
        This is the same idea over a short drop: fewer stops, one direction, and
        no warm turn, so a page you can take in at a glance has a ground that
@@ -291,9 +299,9 @@
     */
     --page-ground-compact: linear-gradient(
         180deg,
-        #1c1540 0%,
-        #181231 46%,
-        #110e1e 100%
+        #242426 0%,
+        #24211a 46%,
+        #000000 100%
     );
 
     /*
@@ -315,10 +323,10 @@
     --glow-edge: 255 255 255 / 0.15;
     --glow-text-alpha: 0.9;
     --glow-cast: 0.75;
-    --surface-ink: #1a1a1a;
-    --surface-raised: #222222;
-    --surface-panel: #2b2b2b;
-    --surface-float: #333333;
+    --surface-ink: #0d0d0e;
+    --surface-raised: #18181a;
+    --surface-panel: #242426;
+    --surface-float: #2e2e30;
     --ink-strong: #ffffff;
 
     /*
@@ -348,8 +356,10 @@
       cut.
     */
     --chapter-blend: transparent;
-    --ink-muted: #d9d9d9;
-    --ink-faint: #8b8b8b;
+    /* The palette's own grey, and a derived step below it for the faintest
+       label — two greys cannot make a three-step ramp. */
+    --ink-muted: #d1cfcf;
+    --ink-faint: #85848a;
 
     --glass-fill: rgb(255 255 255 / 0.075);
     --glass-fill-strong: rgb(255 255 255 / 0.12);
@@ -368,7 +378,7 @@
     --spot-veil: 0;
 
     --cool-accent: #cfe3ff;
-    --brand-ink: #ffd400;
+    --brand-ink: #ffc516;
     --spectrum: 1;
     --hover-wash: rgb(255 255 255 / 0.07);
     --logo-invert: 0;
@@ -377,13 +387,13 @@
        off the company's own journey board, which is a night map — so these
        are the board's values and they hold only on a dark ground. The light
        theme takes a darkened ramp: on white, #f7a03c measures 2.09:1 and
-       #ffd400 measures 1.43:1, so two of the five stops would have been
+       #ffc516 measures 1.43:1, so two of the five stops would have been
        unreadable. */
     --route-1: #8b5cf6;
     --route-2: #d946a6;
     --route-3: #f0603c;
     --route-4: #f7a03c;
-    --route-5: #ffd400;
+    --route-5: #ffc516;
     /* The AI Lab board's title ramp, violet through pink into orange, and a
        held-back version for the line under it. Theme-aware for the same
        reason --route-* is: this one is sampled off a board printed on black,
@@ -404,7 +414,7 @@
     --card-foreground: #f5f5f4;
     --popover: #131316;
     --popover-foreground: #f5f5f4;
-    --primary: #ffd400;
+    --primary: #ffc516;
     --primary-foreground: #ffffff;
     --secondary: #1c1a20;
     --secondary-foreground: #f5f5f4;
@@ -412,18 +422,18 @@
     --muted-foreground: #a3a3a3;
     --accent: #1c1a20;
     --accent-foreground: #f5f5f4;
-    --destructive: #ffd400;
+    --destructive: #ffc516;
     --border: rgb(255 255 255 / 0.1);
     --input: rgb(255 255 255 / 0.14);
-    --ring: #ffd400;
+    --ring: #ffc516;
     --sidebar: #0a0a0b;
     --sidebar-foreground: #f5f5f4;
-    --sidebar-primary: #ffd400;
+    --sidebar-primary: #ffc516;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #1c1a20;
     --sidebar-accent-foreground: #f5f5f4;
     --sidebar-border: rgb(255 255 255 / 0.1);
-    --sidebar-ring: #ffd400;
+    --sidebar-ring: #ffc516;
 }
 
 .dark {
@@ -433,7 +443,7 @@
     --card-foreground: #f5f5f4;
     --popover: #131316;
     --popover-foreground: #f5f5f4;
-    --primary: #ffd400;
+    --primary: #ffc516;
     --primary-foreground: #ffffff;
     --secondary: #1c1a20;
     --secondary-foreground: #f5f5f4;
@@ -441,18 +451,18 @@
     --muted-foreground: #a3a3a3;
     --accent: #1c1a20;
     --accent-foreground: #f5f5f4;
-    --destructive: #ffd400;
+    --destructive: #ffc516;
     --border: rgb(255 255 255 / 0.1);
     --input: rgb(255 255 255 / 0.14);
-    --ring: #ffd400;
+    --ring: #ffc516;
     --sidebar: #0a0a0b;
     --sidebar-foreground: #f5f5f4;
-    --sidebar-primary: #ffd400;
+    --sidebar-primary: #ffc516;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #1c1a20;
     --sidebar-accent-foreground: #f5f5f4;
     --sidebar-border: rgb(255 255 255 / 0.1);
-    --sidebar-ring: #ffd400;
+    --sidebar-ring: #ffc516;
 }
 
 
@@ -494,8 +504,8 @@
        homepage where it unrolls over many screens. On a page that is one and a
        half screens tall — /careers is 1355px — the whole ramp is visible at
        once, so its warm middle stops sit right behind the form and the page
-       reads as a violet top fading into mud. The gradient is not wrong; it is
-       being asked to do its job in a fifth of the distance.
+       reads as a top that never arrives anywhere. The gradient is not wrong;
+       it is being asked to do its job in a fifth of the distance.
 
        This is the same idea over a short drop: fewer stops, one direction, and
        no warm turn, so a page you can take in at a glance has a ground that
@@ -514,15 +524,15 @@
     --glow-edge: 122 96 0 / 0.22;
     --glow-text-alpha: 0;
     --glow-cast: 0.45;
-    --chapter-ground: #111111;
+    --chapter-ground: #000000;
     --chapter-blend: #ffffff;
-    --surface-ink: #f5f5f5;
+    --surface-ink: #f9f9f9;
     --surface-raised: #ffffff;
     --surface-panel: #ffffff;
     --surface-float: #ffffff;
-    --ink-strong: #111111;
-    --ink-muted: #555555;
-    --ink-faint: #6e6e6e;
+    --ink-strong: #000000;
+    --ink-muted: #4b4b4d;
+    --ink-faint: #6e6d72;
 
     --glass-fill: rgb(255 255 255 / 0.72);
     --glass-fill-strong: rgb(255 255 255 / 0.9);
@@ -534,7 +544,7 @@
     --spot-beam: 0.22;
     --spot-veil: 1;
     --cool-accent: #35607f;
-    --brand-ink: #7a6000;
+    --brand-ink: #7a5c00;
     /* Colour on paper reads about twice as strongly as on black. */
     --spectrum: 0.5;
     --hover-wash: rgb(17 17 17 / 0.07);
@@ -602,8 +612,8 @@
            homepage where it unrolls over many screens. On a page that is one and a
            half screens tall — /careers is 1355px — the whole ramp is visible at
            once, so its warm middle stops sit right behind the form and the page
-           reads as a violet top fading into mud. The gradient is not wrong; it is
-           being asked to do its job in a fifth of the distance.
+           reads as a top that never arrives anywhere. The gradient is not
+           wrong; it is being asked to do its job in a fifth of the distance.
 
            This is the same idea over a short drop: fewer stops, one direction, and
            no warm turn, so a page you can take in at a glance has a ground that
@@ -622,15 +632,15 @@
         --glow-edge: 122 96 0 / 0.22;
         --glow-text-alpha: 0;
         --glow-cast: 0.45;
-        --chapter-ground: #111111;
+        --chapter-ground: #000000;
         --chapter-blend: #ffffff;
-        --surface-ink: #f5f5f5;
+        --surface-ink: #f9f9f9;
         --surface-raised: #ffffff;
         --surface-panel: #ffffff;
         --surface-float: #ffffff;
-        --ink-strong: #111111;
-        --ink-muted: #555555;
-        --ink-faint: #6e6e6e;
+        --ink-strong: #000000;
+        --ink-muted: #4b4b4d;
+        --ink-faint: #6e6d72;
 
         --glass-fill: rgb(255 255 255 / 0.72);
         --glass-fill-strong: rgb(255 255 255 / 0.9);
@@ -642,7 +652,7 @@
         --spot-beam: 0.22;
         --spot-veil: 1;
         --cool-accent: #35607f;
-        --brand-ink: #7a6000;
+        --brand-ink: #7a5c00;
         /* Colour on paper reads about twice as strongly as on black. */
         --spectrum: 0.5;
         --hover-wash: rgb(17 17 17 / 0.07);
@@ -685,20 +695,31 @@
    it always did, and the chrome outside it still follows the theme.
    -------------------------------------------------------------------------- */
 .scene-dark {
-    /* Brand neutrals. #242426 is the guidelines' cover ground and #0b0b0c
-       its deepest black; #96969a and #6b6b70 are its grey ramp. */
-    /* Straight off the guidelines' Color System page: Black #111111, White
-       #FFFFFF, Grey #8B8B8B, supporting #F5F5F5 / #D9D9D9 / #555555, and
-       Deep Space Gray #2B2B2B, which the deck names as the master logo's
-       own colour. */
-    --surface-base: #111111;
-    --surface-ink: #1a1a1a;
-    --surface-raised: #222222;
-    --surface-panel: #2b2b2b;
-    --surface-float: #333333;
+    /*
+       THE LADDER, ANCHORED ON THE SUPPLIED PALETTE.
+
+       Genesis fixed six colours: #ffffff, #000000, #ffc516, #f9f9f9, #242426
+       and #d1cfcf. Two of those are the ends of this ladder — black is the
+       ground, charcoal is the panel — and the three steps between them are
+       DERIVED, evenly, because six colours cannot express an elevation ladder
+       on their own. A card has to read as sitting above the page, and "above"
+       is a value difference; without the intermediate steps every surface is
+       either black or charcoal and the dark theme is two flat tones.
+
+       The floor moved from #111111 to true #000000, which is the palette's
+       black and is what makes the charcoal chapter read as a chapter rather
+       than as a slightly different black.
+    */
+    --surface-base: #000000;
+    --surface-ink: #0d0d0e;
+    --surface-raised: #18181a;
+    --surface-panel: #242426;
+    --surface-float: #2e2e30;
     --ink-strong: #ffffff;
-    --ink-muted: #d9d9d9;
-    --ink-faint: #8b8b8b;
+    /* The palette's own grey, and a derived step below it for the faintest
+       label — two greys cannot make a three-step ramp. */
+    --ink-muted: #d1cfcf;
+    --ink-faint: #85848a;
 
     --glass-fill: rgb(255 255 255 / 0.075);
     --glass-fill-strong: rgb(255 255 255 / 0.12);
@@ -712,7 +733,7 @@
     --spot-beam: 1;
     --spot-veil: 0;
     --cool-accent: #cfe3ff;
-    --brand-ink: #ffd400;
+    --brand-ink: #ffc516;
     --spectrum: 1;
     --hover-wash: rgb(255 255 255 / 0.07);
     --logo-invert: 0;
@@ -721,13 +742,13 @@
        off the company's own journey board, which is a night map — so these
        are the board's values and they hold only on a dark ground. The light
        theme takes a darkened ramp: on white, #f7a03c measures 2.09:1 and
-       #ffd400 measures 1.43:1, so two of the five stops would have been
+       #ffc516 measures 1.43:1, so two of the five stops would have been
        unreadable. */
     --route-1: #8b5cf6;
     --route-2: #d946a6;
     --route-3: #f0603c;
     --route-4: #f7a03c;
-    --route-5: #ffd400;
+    --route-5: #ffc516;
     /* The AI Lab board's title ramp, violet through pink into orange, and a
        held-back version for the line under it. Theme-aware for the same
        reason --route-* is: this one is sampled off a board printed on black,
@@ -757,6 +778,194 @@
     color-scheme: dark;
 }
 
+/* THE CLIENT WALL — bare marks, no chips.
+
+   Genesis asked for the white blocks gone and only the PNGs shown. That
+   sounds like deleting a background, and it is not: the chip was doing real
+   work. Most of the thirty files are dark ink drawn for white paper, so
+   dropped straight onto a near-black page they are invisible.
+
+   THE CORRECTION IS PER THEME, WHICH IS WHY IT LIVES IN CSS. With a white
+   chip there was one ground and the fix could be a measured constant in the
+   data. Without one the ground is the page — near-black in one theme, paper
+   in the other — and a mark needs the OPPOSITE treatment in each. So the data
+   carries WHICH FIX each mark needs (see `treat` in lib/home-content, where
+   the measurement is recorded) and these rules carry the fix itself, twice.
+
+   `lift` IS THE DEFAULT AND THAT IS THE WHOLE TRICK. Inverting is the obvious
+   move and it is wrong for any logo drawn as a solid plaque: flipping a dark
+   plaque produces a WHITE rectangle, which is the exact thing being removed.
+   Brightness does not have that failure mode — it lifts thin dark ink to
+   near-white and a dark plaque only to grey — so it carries twenty-three of
+   the thirty, and inversion is reserved for the five where it measurably
+   wins without blocking.
+
+   GREYSCALE THROUGHOUT, because Genesis asked for the wall in black and
+   white, and that instruction did not change with the chips.
+
+   THE OPACITY IS THE POINT OF A LOGO WALL. These are credentials, not
+   artwork: a quiet row you scan, lifting when you look at one. With chips the
+   border did that job; without one, value does. */
+.client-mark {
+    filter: grayscale(1) brightness(2.1);
+    opacity: 0.66;
+    transition: opacity 300ms ease-out;
+}
+
+.client-mark--invert {
+    filter: grayscale(1) invert(1);
+}
+
+.client-mark--asis {
+    /* Already light artwork; any correction would hide it. */
+    filter: grayscale(1);
+}
+
+li:hover .client-mark {
+    opacity: 1;
+}
+
+/* The mirror, on paper: every mark has to end up DARK instead. */
+:root[data-theme="light"] .client-mark {
+    filter: grayscale(1) brightness(0.45);
+    opacity: 0.78;
+}
+
+:root[data-theme="light"] .client-mark--invert {
+    filter: grayscale(1);
+}
+
+:root[data-theme="light"] .client-mark--asis {
+    filter: grayscale(1) invert(1);
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .client-mark {
+        filter: grayscale(1) brightness(0.45);
+        opacity: 0.78;
+    }
+
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .client-mark--invert {
+        filter: grayscale(1);
+    }
+
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .client-mark--asis {
+        filter: grayscale(1) invert(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .client-mark {
+        transition: none;
+    }
+}
+
+/* WHICH AMBIENT FIELD EACH THEME PAINTS.
+
+   Two lists exist — a neutral one of grey and yellow, and the original
+   tinted one — because Genesis wanted the brand's primaries on the dark
+   theme and reported that the light theme was right as it already was. Both
+   are generated in JS and handed to the element as custom properties, since
+   they are long strings assembled from a table of sources.
+
+   THE CHOICE HAS TO BE MADE HERE, on a selector that matches the element
+   carrying those properties. Two things it cannot be: an inline `background`
+   (inline styles outrank class rules, so the light theme could never win) or
+   a `--page-field: var(--field-colour)` set at :root (computed there, where
+   --field-colour does not exist, it resolves to the guaranteed-invalid value
+   and inherits down as nothing at all — which is exactly what it did).
+
+   Dark is the default, so the base rule takes the neutral list. */
+.page-field {
+    background: var(--field-neutral);
+}
+
+.section-wash {
+    background: var(--wash-neutral);
+}
+
+:root[data-theme="light"] .page-field {
+    background: var(--field-colour);
+}
+
+:root[data-theme="light"] .section-wash {
+    background: var(--wash-colour);
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .page-field {
+        background: var(--field-colour);
+    }
+
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .section-wash {
+        background: var(--wash-colour);
+    }
+}
+
+/* THE BRAIN'S GROUND — charcoal, ON THE DARK THEME ONLY.
+
+   Genesis named the colour: #242426, the guidelines' own cover ground and the
+   darkest of the four primaries once yellow, white and grey are spoken for.
+
+   IT WAS PINNED IN BOTH THEMES AND THAT WAS WRONG. The instruction arrived
+   against a screenshot of the dark site, and I read it as "this section is
+   charcoal, always" — which turned the light theme's opening screen into a
+   near-black slab with a light nav floating on it. Genesis's report was that
+   the light theme was fine as it was, so it goes back to being fine: on light
+   this class does nothing at all and the section shows the page's own ground
+   through it, exactly as it did before the charcoal existed.
+
+   NO `.scene-dark` ON THE SECTION ANY MORE, and that is what makes the above
+   possible rather than a pile of overrides. `.scene-dark` pins two dozen dark
+   tokens unconditionally; undoing it under the light theme would mean
+   restating every one of them here. On the dark theme :root ALREADY carries
+   those tokens, so a charcoal chapter needs nothing from that class — only
+   its own ground. Three declarations, and the light theme neutralises them
+   with three more.
+
+   It also means the nav's `overDark` probe (which looks for `.scene-dark` on
+   the first child of main) correctly stops firing on light, where the Brain
+   is no longer dark and the pill should follow the theme. */
+.scene-charcoal {
+    --surface-base: #242426;
+    --surface-ink: #2b2b2d;
+    background-color: #242426;
+    /*
+       A LIT ROOM, NOT A SLAB. Flat #242426 behind the orb is technically the
+       colour Genesis asked for, and it reads as a grey rectangle — the sphere
+       is a light source and the wall behind it should know that. A wide radial
+       lifts the middle two levels and warms it towards the accent, and drops
+       the corners below the page's own top stop so the section has edges to
+       sit inside. Still charcoal everywhere a value is measured: the centre is
+       #2c2a24 at 15.6:1 against white.
+    */
+    background-image: radial-gradient(
+        125% 95% at 50% 44%,
+        #2c2a24 0%,
+        #242426 44%,
+        #1b1b1d 100%
+    );
+}
+
+/* …and on light it is not a chapter at all. Both light selectors, matching
+   the pattern the rest of this file uses: an explicit choice, and the system
+   preference when no choice has been stamped. */
+:root[data-theme="light"] .scene-charcoal {
+    --surface-base: #ffffff;
+    --surface-ink: #f9f9f9;
+    background-color: transparent;
+    background-image: none;
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .scene-charcoal {
+        --surface-base: #ffffff;
+        --surface-ink: #f9f9f9;
+        background-color: transparent;
+        background-image: none;
+    }
+}
+
 /* Chrome that FLOATS over a dark scene without being one.
    .scene-dark paints itself — background-color and color — which is right for
    a section and wrong for the nav pill: applied there it turned the glass
@@ -766,8 +975,10 @@
    its blur while its inks, borders and logo follow the dark ground beneath. */
 .on-dark {
     --ink-strong: #ffffff;
-    --ink-muted: #d9d9d9;
-    --ink-faint: #8b8b8b;
+    /* The palette's own grey, and a derived step below it for the faintest
+       label — two greys cannot make a three-step ramp. */
+    --ink-muted: #d1cfcf;
+    --ink-faint: #85848a;
 
     --glass-fill: rgb(255 255 255 / 0.075);
     --glass-fill-strong: rgb(255 255 255 / 0.12);
@@ -1184,6 +1395,104 @@ body:has(main.scene-dark) header {
     }
     to {
         transform: rotate(0.9deg);
+    }
+}
+
+/*
+   THE ANIMATED WORDMARK — a light travelling through the letterforms.
+
+   Genesis asked for an animated logo. The obvious versions are all wrong for
+   a mark that sits in a fixed pill on every page: a spin or a bounce draws
+   the eye away from whatever the reader came for, and a loop with no rest is
+   a thing moving in the corner of your vision for the whole visit.
+
+   So it is a sheen, and most of its cycle is a pause. The sweep takes about
+   a fifth of the six seconds; the rest of the time the overlay is parked off
+   the left edge painting nothing. The mark is still, and every so often the
+   light catches it.
+
+   MASKED TO THE INK. The overlay carries the wordmark PNG as its mask, so
+   the gradient is clipped to the glyphs — it moves THROUGH the letters
+   instead of across a bar over them. `contain`/`left center` matches the
+   images underneath, which are object-contain object-left in the same box.
+
+   `screen`, not `normal`: on the dark lockup a flat white wash would grey
+   the ink out as it passed. Screen only ever lightens, so the sweep reads as
+   light on the mark rather than paint over it.
+*/
+.logo-sheen {
+    -webkit-mask-image: url("/brand/genesis-wordmark-light.png");
+    mask-image: url("/brand/genesis-wordmark-light.png");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: left center;
+    mask-position: left center;
+
+    background-image: linear-gradient(
+        105deg,
+        transparent 42%,
+        rgb(255 255 255 / 0.9) 50%,
+        transparent 58%
+    );
+    background-repeat: no-repeat;
+    background-size: 300% 100%;
+    mix-blend-mode: screen;
+    animation: genesis-sheen 6s ease-in-out infinite;
+}
+
+@keyframes genesis-sheen {
+    0% {
+        background-position: 150% 0;
+    }
+    /* The sweep. Everything after this is the rest. */
+    22% {
+        background-position: -60% 0;
+    }
+    100% {
+        background-position: -60% 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* No sweep, and no parked overlay either — it paints nothing there, but
+       a masked, blended box over the mark is not worth keeping for that. */
+    .logo-sheen {
+        display: none;
+    }
+}
+
+/*
+   THE TRAVELLING DASH on the automation diagrams' connectors.
+
+   A workflow drawn in still lines is a wiring diagram; the same lines with
+   something moving along them is a pipeline. It is a stroke-dash offset and
+   nothing else — no JS, no per-frame work, and the compositor handles it.
+
+   The dash pattern is deliberately mostly GAP: a short lit segment travelling
+   along a faint line reads as a packet moving, where an even dash reads as a
+   marching-ants selection.
+*/
+.gm-flow {
+    stroke-dasharray: 26 150;
+    animation: gm-flow-travel 4.5s linear infinite;
+}
+
+@keyframes gm-flow-travel {
+    from {
+        stroke-dashoffset: 176;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* The line stays, whole and still — the diagram still reads. */
+    .gm-flow {
+        stroke-dasharray: none;
+        animation: none;
     }
 }
 

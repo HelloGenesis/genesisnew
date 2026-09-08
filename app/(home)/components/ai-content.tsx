@@ -2,10 +2,12 @@ import type { CSSProperties } from "react";
 
 import { Sparkles } from "lucide-react";
 
+import { AutomationSources } from "@/components/genesis/automation-diagram";
 import { AvatarFan } from "@/components/genesis/avatar-fan";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
+import { siteConfig, whatsappLink } from "@/lib/site-config";
 import { SectionShell } from "./section-shell";
 
 /**
@@ -19,6 +21,15 @@ import { SectionShell } from "./section-shell";
  */
 
 export function AiContent() {
+  /*
+    Undefined when there is no number in site-config, exactly as the floating
+    button handles it. The button falls back to the enquiry form rather than
+    disappearing: "Create Your AI Avatar" is the section's primary action, and
+    a section whose main CTA vanishes because a phone number is unset is worse
+    than one that routes the same intent through the form.
+  */
+  const avatarChat = whatsappLink(siteConfig.avatarWhatsappMessage);
+
   return (
     <SectionShell
       id="ai-lab"
@@ -100,24 +111,90 @@ export function AiContent() {
       </Reveal>
 
       {/*
+        THE SECOND CLAIM, set as its own small block rather than run into the
+        paragraph above. The two are different promises — what the avatars are,
+        then what the service does month after month — and joined into one
+        paragraph the second disappeared into the first.
+      */}
+      <Reveal delay={0.08} className="mt-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-h3 font-medium leading-tight tracking-tight text-bone">
+            {aiContent.promise.heading}
+          </p>
+          <p className="mt-2 text-body leading-relaxed text-ash">
+            {aiContent.promise.line}
+          </p>
+        </div>
+      </Reveal>
+
+      {/*
         THE TOOL STACK AND THE CAPABILITY CHIPS ARE GONE from the homepage.
         With the roster, the stack, a chip row and a button this section ran
         to 2.28 screens — the worst offender on the page by some way, in a
         brief that asks for one section to a screen. The avatars are the
         argument; the tooling is a detail for the division's own page.
       */}
+      {/*
+        AI-POWERED AUTOMATION — the third and largest claim in this section.
+
+        ONE DIAGRAM, NOT TWO. Genesis supplied two references and asked for
+        both; they have since asked for the workflow graph — Brief, Generate,
+        Human review, Adapt, Publish — to come out. So the converging-sources
+        picture stands alone, which is the half that says what the automation
+        is FED, and the copy above it carries the rest.
+
+        The panel keeps its own ground and border because it is still an
+        exhibit rather than a loose graphic; what it no longer needs is the
+        divider that separated the pair.
+      */}
+      <Reveal delay={0.12} className="mt-16">
+        <div className="mx-auto max-w-3xl text-center">
+          <h3 className="text-balance text-h3 font-medium leading-tight tracking-tight text-bone sm:text-h2">
+            {aiContent.automation.heading}
+          </h3>
+          <p className="mt-4 text-pretty text-body leading-relaxed text-ash sm:text-lead">
+            {aiContent.automation.body}
+          </p>
+        </div>
+
+        <div className="glass glass-lit mx-auto mt-10 max-w-3xl overflow-hidden rounded-panel">
+          <figure className="px-4 pb-7 pt-7 sm:px-9 sm:pb-9 sm:pt-9">
+            <AutomationSources />
+            <figcaption className="mt-3 text-center text-small text-ash">
+              {aiContent.automation.sourcesCaption}
+            </figcaption>
+          </figure>
+        </div>
+      </Reveal>
+
+      {/*
+        THE TWO BUTTONS GENESIS SPECIFIED. "Build with AI" opened the popup
+        form; they asked for the primary action to go straight to WhatsApp
+        with a message already written — see siteConfig.avatarWhatsappMessage —
+        which
+        for an enquiry this specific is a shorter route to a human than a form
+        that has to be triaged.
+
+        The form is the fallback, not a third button: `quickContact` only
+        applies when there is no chat link to give.
+      */}
       <Reveal delay={0.1} className="mt-12 flex flex-wrap justify-center gap-3">
         <GlassButton
-          href="/#contact"
-          quickContact="ai-labs:build-with-ai"
+          href={avatarChat ?? "/#contact"}
+          quickContact={avatarChat ? undefined : "ai-labs:create-an-avatar"}
           variant="brand"
           icon={<Sparkles className="size-4" />}
           arrow
         >
-          Build with AI
+          Create Your AI Avatar
         </GlassButton>
-        <GlassButton href="/our-work" variant="glass" arrow>
-          View AI work
+        {/*
+          Into the library, filtered — the same treatment Influence's second
+          button gets. It went to /our-work unfiltered, which is "view AI
+          content" landing on everything Genesis has ever made.
+        */}
+        <GlassButton href="/our-work?filter=AI+Content" variant="glass" arrow>
+          View AI Content
         </GlassButton>
       </Reveal>
     </SectionShell>

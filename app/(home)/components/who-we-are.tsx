@@ -83,8 +83,23 @@ export function WhoWeAre() {
         <Reveal delay={0.15} className="mt-12">
           <ul className="flex flex-wrap items-center gap-x-3 gap-y-2">
             {whoWeAre.sectors.map((sector, index) => (
-              <li key={sector} className="flex items-center gap-3">
-                <span className="micro-label !text-faint">{sector}</span>
+              <li key={sector.label} className="flex items-center gap-3">
+                {/*
+                  An <abbr> only where there is something to expand. Wrapping
+                  every sector in one would announce "abbreviation" before
+                  "Fashion" to a screen reader, which is a worse line than the
+                  plain word.
+                */}
+                {sector.expands ? (
+                  <abbr
+                    title={sector.expands}
+                    className="micro-label !text-faint no-underline"
+                  >
+                    {sector.label}
+                  </abbr>
+                ) : (
+                  <span className="micro-label !text-faint">{sector.label}</span>
+                )}
                 {index < whoWeAre.sectors.length - 1 && (
                   <span aria-hidden className="text-brand">
                     ·

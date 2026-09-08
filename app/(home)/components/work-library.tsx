@@ -63,10 +63,21 @@ export function WorkLibrary() {
             <SectionLabel dot tone="brand">
               Everything we&rsquo;ve made
             </SectionLabel>
+            {/*
+              GENESIS'S OWN NAME FOR THIS SECTION. It read "The full library",
+              which was a description rather than a title — and the deck calls
+              this board Portfolio | Case Studies. The separator is set as its
+              own muted span rather than typed into either half, so at 56px it
+              reads as a divider between two names instead of hyphenating one
+              long one.
+            */}
             <h2 className="mt-4 text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
-              The full{" "}
+              Portfolio{" "}
+              <span aria-hidden className="text-faint">
+                -
+              </span>{" "}
               <span className="font-serif font-normal italic text-brand-ink">
-                library
+                Case Studies
               </span>
             </h2>
           </Reveal>

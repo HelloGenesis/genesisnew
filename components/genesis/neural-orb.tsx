@@ -1134,7 +1134,7 @@ export function NeuralOrb({ className }: { className?: string }) {
         className="absolute inset-[10%] rounded-full blur-2xl"
         style={{
           background:
-            "radial-gradient(circle at 50% 46%, rgb(255 212 0 / 0.10) 0%, rgb(247 113 158 / 0.07) 38%, rgb(122 60 255 / 0.08) 64%, transparent 78%)",
+            "radial-gradient(circle at 50% 46%, rgb(255 197 22 / 0.10) 0%, rgb(247 113 158 / 0.07) 38%, rgb(122 60 255 / 0.08) 64%, transparent 78%)",
         }}
       />
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />

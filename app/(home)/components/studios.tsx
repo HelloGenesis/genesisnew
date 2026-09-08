@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { services, studios } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
+import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
+import { useInViewPlayback } from "@/components/genesis/use-in-view-playback";
 
 /**
  * Genesis Studios — the production vertical.
@@ -131,13 +131,6 @@ export function Studios() {
 
       <div className="relative z-[2] mx-auto mt-10 w-full max-w-6xl px-6 sm:mt-12">
         {/*
-          THE CAPABILITY LIST IS GONE from this section at Genesis's request.
-          Thirteen service names set as a run-on line under a wall of footage
-          was the section explaining what the footage already showed, and it
-          was the last thing standing between Studios and one screen.
-        */}
-
-        {/*
           THE COPY UNDER THE WALL, above the buttons — the same order AI Lab
           uses, and for the same reason. Over the reel it was a description of
           footage the reader had not seen yet; under it, it is the caption on
@@ -149,7 +142,41 @@ export function Studios() {
           </p>
         </Reveal>
 
-        <Reveal delay={0.1} className="mt-8 flex flex-wrap justify-center gap-3">
+        {/*
+          THE CAPABILITY LIST IS BACK, and it is a different list.
+
+          It came off this section once, and the reason was sound at the time:
+          thirteen OUTPUT names — "Brand films", "Corporate films", "Motion
+          graphics" — set in a run-on line under a wall of footage was the
+          section explaining in words what the footage was already showing.
+
+          Genesis has since supplied their own nine, and they are not the same
+          claim. These are the parts of the pipeline you can buy, and two of
+          them are things no amount of watching the reel would tell you:
+          Genesis rents studios and venues, and shoots founders. That is
+          information, not a caption.
+
+          Set as chips under their own heading rather than as a run-on line,
+          so a reader scanning for the one service they came for finds it in a
+          single pass — the same treatment Influence gives its niches.
+        */}
+        <Reveal delay={0.08} className="mt-10">
+          <p className="micro-label text-center">
+            {studios.capabilitiesHeading}
+          </p>
+          <ul className="mx-auto mt-4 flex max-w-3xl flex-wrap justify-center gap-2">
+            {studios.capabilities.map((capability) => (
+              <li
+                key={capability}
+                className="rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
+              >
+                {capability}
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+
+        <Reveal delay={0.14} className="mt-8 flex flex-wrap justify-center gap-3">
           <GlassButton
             href="/#contact"
             quickContact="studios:plan-a-shoot"
@@ -208,45 +235,14 @@ function ReelRow({ clips }: { clips: readonly number[] }) {
 }
 
 function ReelTile({ n, duplicate }: { n: number; duplicate: boolean }) {
-  const ref = useRef<HTMLVideoElement>(null);
-
   /*
-    Plays while on screen, pauses off it. The observer is what keeps "they
-    should all be running" from meaning "all thirty-two are decoding": the row
-    is wider than any viewport, so at most seven or eight tiles are ever
-    visible, and those are the only ones with a decoder attached.
-
-    It does not rewind on the way out, unlike the old hover handler. A clip
-    that resets every time it drifts past the edge of the screen restarts from
-    frame one on a wall that is permanently drifting, so nothing beyond the
-    first second of any clip would ever be seen.
-
-    Reduce Motion stops it: the wall's own drift is already disabled there, and
-    autoplaying video is exactly what that setting is asking not to happen.
+    Plays while on screen, pauses off it — which is what keeps "they should all
+    be running" from meaning "all thirty-two are decoding". This wall is where
+    that behaviour was first written; it now lives in a hook, because the work
+    tiles and the case-study posters have since been asked for the same thing
+    and there is no version of it that should differ between the three.
   */
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          // Rejects if the element is detached or the play is superseded;
-          // neither is worth surfacing.
-          void video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      },
-      // A little margin so a tile is already running by the time it drifts in
-      // rather than starting in full view.
-      { rootMargin: "200px" },
-    );
-
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, []);
+  const ref = useInViewPlayback<HTMLVideoElement>();
 
   return (
     <div
@@ -281,6 +277,7 @@ function ReelTile({ n, duplicate }: { n: number; duplicate: boolean }) {
           thirty-two on load, which is the thing being avoided.
         */
         preload="metadata"
+        {...VIDEO_GUARD_CLIENT}
         className="aspect-[9/13] w-full object-cover"
       />
     </div>

@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { AvatarPager } from "@/components/genesis/avatar-pager";
 import { Media } from "@/components/genesis/media";
 import { mediaUrl } from "@/lib/media-url";
 import { isPending } from "@/lib/home-content";
 import { avatars, AVATAR_TINT, type Avatar } from "@/lib/avatars";
+import { VIDEO_GUARD } from "@/lib/video-guard";
 
 /**
  * One AI avatar, rendered identically whether it arrived as a dialog over the
@@ -28,7 +30,31 @@ import { avatars, AVATAR_TINT, type Avatar } from "@/lib/avatars";
  * writing a backstory for them would be putting words in a client's mouth. The
  * Story section below renders the moment the field is filled.
  */
-export function AvatarDetail({ avatar }: { avatar: Avatar }) {
+export function AvatarDetail({
+  avatar,
+  paged = false,
+}: {
+  avatar: Avatar;
+  /**
+   * Renders the prev/next slider over the portrait. ONLY the dialog passes
+   * it, and that is a correctness constraint rather than a preference.
+   *
+   * This route is intercepted: an in-app navigation to /avatars/<slug>
+   * renders into the @modal slot instead of replacing the page. That is
+   * exactly what the slider wants while it IS the modal — stepping swaps the
+   * dialog's contents and the roster stays behind it. From the standalone
+   * PAGE it is the opposite of what you want: the navigation is still an
+   * in-app one, so it is still intercepted, and the next avatar opens as a
+   * dialog ON TOP of the page you were already reading. Measured, not
+   * guessed — the document ended up with two <h1>s, "Adi" and "Diya", and
+   * two position counters.
+   *
+   * There is no per-navigation opt-out of an interception, so the fix is to
+   * not offer the control where it cannot work. Genesis asked for the slider
+   * in the pop-up window, which is the one place it behaves.
+   */
+  paged?: boolean;
+}) {
   const index = Math.max(0, avatars.findIndex((a) => a.id === avatar.id));
   const tint = AVATAR_TINT[index % AVATAR_TINT.length];
   const hasSamples = avatar.reel.length > 0 || avatar.stills.length > 0;
@@ -65,6 +91,16 @@ export function AvatarDetail({ avatar }: { avatar: Avatar }) {
             }}
           />
         )}
+
+        {/*
+          THE SLIDER, over the portrait. Genesis asked the window to carry
+          arrow buttons and arrow-key stepping; it lives inside this figure
+          because the figure is the one element in this layout with a fixed
+          shape at every width, so the controls have somewhere to be at 375px
+          as well as at 1440. See AvatarPager for why it replaces rather than
+          pushes history, and `paged` above for why the page does not get it.
+        */}
+        {paged && <AvatarPager currentId={avatar.id} />}
       </figure>
 
       <div className="flex min-w-0 flex-col gap-6">
@@ -149,6 +185,7 @@ export function AvatarDetail({ avatar }: { avatar: Avatar }) {
                     playsInline
                     controls
                     preload="metadata"
+                    {...VIDEO_GUARD}
                     className="aspect-[9/13] w-full rounded-card border border-[var(--glass-border)] bg-ink object-cover"
                   />
                 </li>

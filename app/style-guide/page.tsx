@@ -71,11 +71,11 @@ export default function StyleGuidePage() {
             ["ink", "#0a0a0b"],
             ["elevated", "#131316"],
             ["raised", "#1c1a20"],
-            ["brand", "#ffd400"],
-            ["brand-deep", "#e6bf00"],
-            ["brand", "#ffd400"],
-            ["brand-soft", "#ffe466"],
-            ["brand", "#ffd400"],
+            ["brand", "#ffc516"],
+            ["brand-deep", "#e0ad13"],
+            ["brand", "#ffc516"],
+            ["brand-soft", "#ffdc72"],
+            ["brand", "#ffc516"],
             ["bone", "#f5f5f4"],
             ["ash", "#a3a3a3"],
             ["faint", "#6b6b70"],
@@ -111,7 +111,7 @@ export default function StyleGuidePage() {
       <Section title="Glass surfaces" note="One UI 'Blur' — heavy blur, low-contrast fill, lit top edge. Not the iOS 'Clear' style.">
         <div className="relative overflow-hidden rounded-panel">
           {/* A busy ground so the blur has something to actually blur. */}
-          <div className="absolute inset-0 bg-[conic-gradient(from_180deg,#ffd400,#ffd400,#ffd400,#ffd400)] opacity-40 blur-2xl" />
+          <div className="absolute inset-0 bg-[conic-gradient(from_180deg,#ffc516,#ffc516,#ffc516,#ffc516)] opacity-40 blur-2xl" />
           <div className="relative grid gap-4 p-8 sm:grid-cols-3">
             <div className="glass rounded-card p-6 text-small text-bone">.glass</div>
             <div className="glass glass-lit rounded-card p-6 text-small text-bone">
@@ -228,9 +228,18 @@ export default function StyleGuidePage() {
         </div>
       </Section>
 
-      <Section title="Logo marquee" note="Seamless loop; pauses on hover. Wordmarks stand in for real client logos.">
+      <Section title="Logo marquee" note="Seamless loop; pauses on hover. Takes any node — the client wall passes logo chips; these wordmarks are just a demo.">
         <LogoMarquee
-          logos={["KAYALI", "TATA MOTORS", "ICICI BANK", "MIRAGGIO", "YONEX", "KREO TECH", "DOT & KEY"]}
+          items={["KAYALI", "TATA MOTORS", "ICICI BANK", "MIRAGGIO", "YONEX", "KREO TECH", "DOT & KEY"].map(
+            (name) => (
+              <span
+                key={name}
+                className="whitespace-nowrap px-6 text-h3 font-semibold tracking-[0.12em] text-bone/35"
+              >
+                {name}
+              </span>
+            ),
+          )}
         />
       </Section>
 

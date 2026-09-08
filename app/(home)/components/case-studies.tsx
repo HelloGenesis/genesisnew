@@ -81,8 +81,17 @@ export function CaseStudies() {
       label={caseStudiesPage.label}
       heading={caseStudiesPage.heading}
       headingAccent={caseStudiesPage.headingAccent}
-      body={caseStudiesPage.body}
-      align="split"
+      /*
+        NO STANDFIRST. Genesis asked for the paragraph to come off this
+        section — "Not a gallery — the problem, what we decided to do about
+        it, and what changed…" was a promise made beside four posters that
+        cannot keep it yet, and `align="split"` existed only to give that
+        paragraph a column of its own. With it gone the heading takes the
+        full width and the rail sits directly under it. The copy is still in
+        lib/case-studies for the /case-studies page, which is where it is
+        true.
+      */
+      align="left"
       tone="brand"
       origin="top-right"
       intensity={0.2}
@@ -99,7 +108,7 @@ export function CaseStudies() {
             className="pointer-events-none absolute -inset-x-10 -inset-y-8"
             style={{
               background:
-                "radial-gradient(closest-side, rgb(255 212 0 / 0.3) 0%, rgb(255 212 0 / 0.12) 42%, transparent 76%)",
+                "radial-gradient(closest-side, rgb(255 197 22 / 0.3) 0%, rgb(255 197 22 / 0.12) 42%, transparent 76%)",
             }}
           />
           {/*

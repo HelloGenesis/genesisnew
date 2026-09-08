@@ -20,11 +20,11 @@ import type { CSSProperties } from "react";
  * cannot draw an edge inside itself, so there is nothing left to cut.
  *
  * IT IS ALSO THE BETTER DESIGN. Because the sources are placed against the
- * whole document rather than against each box, the colour drifts as you
- * scroll — violet through the Brain, warm through Influence and Studios,
- * pink through AI Lab, brand yellow into the close. The page reads as one
- * continuous scene that changes temperature, which is what the sectioned
- * version was trying and failing to say.
+ * whole document rather than against each box, the light drifts as you
+ * scroll — neutral over the Brain, the accent warming through Influence and
+ * Studios, neutral again through the library, and the accent into the close.
+ * The page reads as one continuous scene that changes temperature, which is
+ * what the sectioned version was trying and failing to say.
  *
  * ANYTHING STILL PAINTING A FULL-BLEED WASH INSIDE A SECTION — the two
  * chapters that pin themselves dark, and so hide this field behind their own
@@ -40,7 +40,7 @@ import type { CSSProperties } from "react";
  * homepage rather than the same fraction of a much smaller box — at 6% of
  * 2,000px a source would be a hard little spot.
  */
-const SOURCES: Array<{
+type Source = {
   /** rgb triplet, space separated. */
   color: string;
   x: string;
@@ -49,13 +49,89 @@ const SOURCES: Array<{
   rx: string;
   ry: string;
   alpha: number;
-}> = [
+};
+
+/**
+ * THE DARK THEME'S FIELD — grey and yellow, and nothing else.
+ */
+const NEUTRAL: Source[] = [
+  /*
+    GREY AND YELLOW, AND THAT IS THE WHOLE PALETTE.
+
+    These eighteen sources used to run violet, blue, orange, pink and lilac
+    down the page — a drift in TEMPERATURE, which was the point, but built
+    from five hues the brand does not have.
+
+    THE FIRST NEUTRAL PASS WENT TOO FAR THE OTHER WAY. Every source came down
+    to white or grey at six to twelve percent, and Genesis's report was that
+    the dark theme had no gradients worth the name. They were right: a field
+    of near-white blooms at 6% over a charcoal wall is not a light field, it
+    is a faint haze, and it left the whole page reading as one flat tone.
+
+    So the accent does the work now. #ffc516 is the only hue in the palette
+    and it is a LIGHT source as much as a colour — the sources that carry it
+    run at sixteen to twenty percent, roughly double what they were, and the
+    neutral ones stay quiet so the warm passages have something to be warm
+    against. The drift survives: neutral over the Brain, the accent through
+    Influence and Studios, neutral again for the library, the accent into the
+    close.
+
+    TWENTY PERCENT IS THE CEILING, and it is a legibility number rather than a
+    taste one. #ffc516 at 0.20 over the ground's #1a1a1d resolves to about
+    #48401f — 9.8:1 against white body copy and 5.4:1 against --ink-muted.
+    Past that the muted text on the warmest stretches starts to fail.
+  */
+  // The Brain — neutral, so the charcoal chapter behind it stays charcoal.
+  { color: "255 255 255", x: "14%", y: "2%", rx: "44rem", ry: "30rem", alpha: 0.07 },
+  { color: "209 207 207", x: "88%", y: "7%", rx: "40rem", ry: "28rem", alpha: 0.12 },
+  // Work, then the client wall — grey, then the accent arrives.
+  { color: "209 207 207", x: "18%", y: "13%", rx: "42rem", ry: "28rem", alpha: 0.1 },
+  { color: "255 197 22", x: "82%", y: "18%", rx: "44rem", ry: "30rem", alpha: 0.16 },
+  // Influence — the accent, warming.
+  { color: "255 197 22", x: "10%", y: "24%", rx: "44rem", ry: "30rem", alpha: 0.18 },
+  { color: "255 255 255", x: "78%", y: "29%", rx: "40rem", ry: "28rem", alpha: 0.06 },
+  // Studios — the warmest stretch of the page.
+  { color: "255 197 22", x: "16%", y: "35%", rx: "46rem", ry: "30rem", alpha: 0.2 },
+  { color: "224 173 19", x: "86%", y: "41%", rx: "40rem", ry: "28rem", alpha: 0.17 },
+  // The library — cools off so the posters carry the colour.
+  { color: "209 207 207", x: "12%", y: "47%", rx: "42rem", ry: "30rem", alpha: 0.11 },
+  // AI Lab — the accent again, because the automation diagrams are drawn in it.
+  { color: "255 197 22", x: "84%", y: "53%", rx: "42rem", ry: "28rem", alpha: 0.16 },
+  { color: "209 207 207", x: "14%", y: "58%", rx: "42rem", ry: "28rem", alpha: 0.1 },
+  // Brand & Design.
+  { color: "255 255 255", x: "82%", y: "64%", rx: "44rem", ry: "30rem", alpha: 0.07 },
+  // Who we are, then the journey.
+  { color: "209 207 207", x: "16%", y: "70%", rx: "42rem", ry: "28rem", alpha: 0.1 },
+  { color: "255 197 22", x: "84%", y: "76%", rx: "42rem", ry: "30rem", alpha: 0.16 },
+  { color: "209 207 207", x: "12%", y: "81%", rx: "40rem", ry: "26rem", alpha: 0.1 },
+  // Case studies and testimonials, closing on the accent.
+  { color: "255 197 22", x: "80%", y: "87%", rx: "44rem", ry: "30rem", alpha: 0.18 },
+  { color: "255 255 255", x: "18%", y: "92%", rx: "42rem", ry: "28rem", alpha: 0.06 },
+  { color: "255 197 22", x: "72%", y: "98%", rx: "46rem", ry: "32rem", alpha: 0.2 },
+];
+
+/**
+ * THE LIGHT THEME'S FIELD — the original, and it is back at Genesis's request.
+ *
+ * The neutral pass above was applied to both themes, on the reading that the
+ * brand's four primaries are grey, yellow, white and black. On the dark theme
+ * that was right and Genesis kept it. On the LIGHT theme it took a page that
+ * drifted through warm and cool tints over its full height and flattened it
+ * to grey on white — Genesis's word for the old one was that it was fine, so
+ * it is restored rather than argued about.
+ *
+ * The two are not a hue swap of one list; they are two different lists, which
+ * is the point. A tint that reads as "a warm room" at 14% on black reads as
+ * "a stain" at 14% on paper, and the alphas here are the ones that were
+ * measured against paper.
+ */
+const COLOUR: Source[] = [
   // The Brain — the orb's own violet and blue.
   { color: "122 60 255", x: "14%", y: "2%", rx: "44rem", ry: "30rem", alpha: 0.2 },
   { color: "59 91 255", x: "88%", y: "7%", rx: "40rem", ry: "28rem", alpha: 0.16 },
   // Work, then the client wall — cool, then the first of the brand yellow.
   { color: "108 92 220", x: "18%", y: "13%", rx: "42rem", ry: "28rem", alpha: 0.11 },
-  { color: "255 212 0", x: "82%", y: "18%", rx: "44rem", ry: "30rem", alpha: 0.1 },
+  { color: "255 197 22", x: "82%", y: "18%", rx: "44rem", ry: "30rem", alpha: 0.1 },
   // Influence — its own ramp, orange into pink.
   { color: "255 138 76", x: "10%", y: "24%", rx: "44rem", ry: "30rem", alpha: 0.14 },
   { color: "247 113 158", x: "78%", y: "29%", rx: "40rem", ry: "28rem", alpha: 0.13 },
@@ -74,9 +150,9 @@ const SOURCES: Array<{
   { color: "139 92 246", x: "84%", y: "76%", rx: "42rem", ry: "30rem", alpha: 0.13 },
   { color: "217 70 166", x: "12%", y: "81%", rx: "40rem", ry: "26rem", alpha: 0.11 },
   // Case studies and testimonials, closing on the accent.
-  { color: "255 212 0", x: "80%", y: "87%", rx: "44rem", ry: "30rem", alpha: 0.11 },
+  { color: "255 197 22", x: "80%", y: "87%", rx: "44rem", ry: "30rem", alpha: 0.11 },
   { color: "255 143 184", x: "18%", y: "92%", rx: "42rem", ry: "28rem", alpha: 0.12 },
-  { color: "255 212 0", x: "72%", y: "98%", rx: "46rem", ry: "32rem", alpha: 0.14 },
+  { color: "255 197 22", x: "72%", y: "98%", rx: "46rem", ry: "32rem", alpha: 0.14 },
 ];
 
 /**
@@ -84,10 +160,27 @@ const SOURCES: Array<{
  * about twice as strongly on paper as it does on black. It is declared with
  * the rest of the theme tokens, so this stays one string for both themes.
  */
-const FIELD = SOURCES.map(
-  (s) =>
-    `radial-gradient(${s.rx} ${s.ry} at ${s.x} ${s.y}, rgb(${s.color} / calc(${s.alpha} * var(--spectrum, 1))) 0%, transparent 100%)`,
-).join(", ");
+function field(sources: Source[]) {
+  return sources
+    .map(
+      (s) =>
+        `radial-gradient(${s.rx} ${s.ry} at ${s.x} ${s.y}, rgb(${s.color} / calc(${s.alpha} * var(--spectrum, 1))) 0%, transparent 100%)`,
+    )
+    .join(", ");
+}
+
+/*
+  BOTH FIELDS ARE HANDED TO CSS AND CSS PICKS, which is the only way this can
+  work at all. The theme is decided in the browser — an attribute on <html>,
+  or the OS preference — and this component renders on the server, so it
+  cannot know which list to emit. It emits both as custom properties and
+  globals.css points --page-field at the right one; see the light theme
+  blocks there. The unused string costs a few hundred bytes of style
+  attribute and no work, because a custom property that nothing references is
+  never parsed as a background.
+*/
+const FIELD_NEUTRAL = field(NEUTRAL);
+const FIELD_COLOUR = field(COLOUR);
 
 export function PageAtmosphere({ children }: { children: React.ReactNode }) {
   return (
@@ -116,8 +209,28 @@ export function PageAtmosphere({ children }: { children: React.ReactNode }) {
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{ background: FIELD } as CSSProperties}
+        className="page-field pointer-events-none absolute inset-0 -z-10"
+        /*
+          THE PROPERTIES ONLY — the `background` that reads them is in
+          globals.css, and that split is load-bearing twice over.
+
+          An inline `background` would WIN over the stylesheet, so the light
+          theme could never override it; inline styles beat class rules.
+
+          And the switch cannot be a variable set at :root either, which was
+          the first attempt: `--page-field: var(--field-colour)` declared on
+          :root is computed there, where --field-colour does not exist, so it
+          resolves to the guaranteed-invalid value and inherits down as
+          nothing. The custom properties live here because they are enormous
+          strings; the rule that chooses between them has to live somewhere it
+          can see them, which is a selector matching THIS element.
+        */
+        style={
+          {
+            "--field-neutral": FIELD_NEUTRAL,
+            "--field-colour": FIELD_COLOUR,
+          } as CSSProperties
+        }
       />
       {/*
         GRAIN IS PAGE-WIDE TOO, and for a sharper reason than the field.

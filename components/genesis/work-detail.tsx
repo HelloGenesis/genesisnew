@@ -12,6 +12,7 @@ import {
   reelPoster,
   type WorkItem,
 } from "@/lib/work";
+import { VIDEO_GUARD } from "@/lib/video-guard";
 
 /**
  * One project, rendered identically whether it arrived as a modal over the
@@ -74,6 +75,7 @@ export function WorkDetail({ item }: { item: WorkItem }) {
               controls
               playsInline
               preload="metadata"
+              {...VIDEO_GUARD}
               className="absolute inset-0 size-full object-contain"
             />
           ) : item.art ? (
@@ -121,6 +123,7 @@ export function WorkDetail({ item }: { item: WorkItem }) {
                   playsInline
                   controls
                   preload="none"
+                  {...VIDEO_GUARD}
                   className="aspect-[9/16] w-full rounded-card border border-[var(--glass-border)] bg-ink object-cover"
                 />
                 {/*

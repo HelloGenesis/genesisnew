@@ -72,6 +72,32 @@ const BOARD: Record<string, { slug: string; width: number; height: number }> = {
 };
 
 /**
+ * THE NAME SET — the board artwork with the tagline cut off.
+ *
+ * Genesis asked for the divisions' subtitles to appear only while the reader
+ * is pointing at the name. A tagline burned into a picture cannot be revealed
+ * on hover, so the board marks were re-cropped to their first band of ink and
+ * the tagline goes back to being live text, exactly as it is on the wordmark
+ * set. See scripts/crop-division-names — the cut is taken at the transparent
+ * gap the files already have between the two bands.
+ *
+ * ONE FILE, NOT A THEME PAIR, and that is measured rather than assumed. The
+ * board's light and dark variants differ ONLY in the tagline band — rows 106
+ * to 136 of Influence's 147, and the equivalent in the other three — because
+ * the NAME is a gradient that reads on either ground and only the subtitle
+ * flips between white and dark ink. Cropping the tagline away therefore
+ * removes the entire difference between the two files, so there is nothing
+ * left to cross-fade and the second <Image> is dropped rather than rendered
+ * at zero opacity forever.
+ */
+const NAME: Record<string, { slug: string; width: number; height: number }> = {
+  Influence: { slug: "influence", width: 728, height: 71 },
+  Studios: { slug: "studios", width: 623, height: 71 },
+  "AI Lab": { slug: "ai-lab", width: 684, height: 69 },
+  "Brand & Design": { slug: "brand-design", width: 648, height: 88 },
+};
+
+/**
  * How tall a lockup stands at full size, in px.
  *
  * WIDTH IS WHAT IS CAPPED, NOT HEIGHT, and the difference matters on a phone.
@@ -119,6 +145,15 @@ const BOARD_MAX_RATIO = Math.max(
   ...Object.values(BOARD).map((l) => l.width / l.height),
 );
 
+/**
+ * And for the name set, which is the widest of the three — cropping the
+ * tagline away leaves the same ink over less than half the height, so
+ * Brand & Design goes from 4.38:1 on the board to 7.36:1 here.
+ */
+const NAME_MAX_RATIO = Math.max(
+  ...Object.values(NAME).map((l) => l.width / l.height),
+);
+
 export function DivisionLockup({
   name,
   tagline,
@@ -127,6 +162,8 @@ export function DivisionLockup({
   height = TARGET_HEIGHT,
   fluid = false,
   board = false,
+  nameOnly = false,
+  taglineClassName,
   priority = false,
   className,
 }: {
@@ -153,6 +190,23 @@ export function DivisionLockup({
    */
   board?: boolean;
   /**
+   * Uses the NAME artwork — the board mark with its tagline cropped away — and
+   * prints the tagline as live text underneath. For the divisions board, where
+   * Genesis wants the subtitle to appear only on hover: text can be revealed,
+   * a picture cannot.
+   *
+   * Wins over `board` if both are passed, because it is the more specific
+   * request; a caller asking for the name alone has already said it does not
+   * want the tagline in the picture.
+   */
+  nameOnly?: boolean;
+  /**
+   * Extra classes on the tagline, so the caller can decide how it appears —
+   * the divisions board hides it until the block is hovered or focused.
+   * Ignored when the artwork is carrying the tagline itself.
+   */
+  taglineClassName?: string;
+  /**
    * Preloads both variants at high priority. OFF by default, and that is a
    * fix rather than a preference.
    *
@@ -170,7 +224,10 @@ export function DivisionLockup({
   priority?: boolean;
   className?: string;
 }) {
-  const lockup = board ? BOARD[name] : LOCKUPS[name];
+  const art = nameOnly ? NAME : board ? BOARD : LOCKUPS;
+  const lockup = art[name];
+  /* Only the board set burns its tagline into the picture. */
+  const taglineInArt = board && !nameOnly;
 
   /*
     A division with no artwork falls back to the type it used to be rather
@@ -211,7 +268,9 @@ export function DivisionLockup({
     move the segment rather than overwrite the file.
   */
   const src = (variant: "light" | "dark") =>
-    `/brand/divisions/${board ? "board" : "wordmark"}/${lockup.slug}-${variant}.png`;
+    nameOnly
+      ? `/brand/divisions/name/${lockup.slug}.png`
+      : `/brand/divisions/${board ? "board" : "wordmark"}/${lockup.slug}-${variant}.png`;
 
   /*
     FLUID MODE EXISTS SO FOUR LOCKUPS CAN SHARE A HEIGHT.
@@ -228,10 +287,13 @@ export function DivisionLockup({
     and the arithmetic falls out such that every one of them is exactly
     column / 7.36 tall, at every breakpoint, with nothing to keep in sync.
   */
+  const maxRatio = nameOnly
+    ? NAME_MAX_RATIO
+    : board
+      ? BOARD_MAX_RATIO
+      : MAX_RATIO;
   const sizing = fluid
-    ? {
-        width: `${((ratio / (board ? BOARD_MAX_RATIO : MAX_RATIO)) * 100).toFixed(3)}%`,
-      }
+    ? { width: `${((ratio / maxRatio) * 100).toFixed(3)}%` }
     : { maxWidth: Math.round(height * ratio) };
   const maxWidth = Math.round(height * ratio);
 
@@ -256,7 +318,7 @@ export function DivisionLockup({
       */}
       <span className="sr-only">
         Genesis.{name}
-        {board ? ` — ${tagline}` : ""}
+        {taglineInArt ? ` — ${tagline}` : ""}
       </span>
 
       {/*
@@ -275,18 +337,25 @@ export function DivisionLockup({
           priority={priority}
           sizes={fluid ? "(min-width: 1024px) 30vw, 90vw" : `(min-width: 640px) ${maxWidth}px, 100vw`}
           className="h-auto w-full"
-          style={{ opacity: "calc(1 - var(--logo-invert, 0))" }}
+          /*
+            The name set is one file for both themes — see the note on NAME —
+            so it must NOT be faded by --logo-invert, or it would vanish
+            entirely on whichever theme sets that token to 1.
+          */
+          style={nameOnly ? undefined : { opacity: "calc(1 - var(--logo-invert, 0))" }}
         />
-        <Image
-          src={src("dark")}
-          alt=""
-          width={lockup.width}
-          height={lockup.height}
-          priority={priority}
-          sizes={fluid ? "(min-width: 1024px) 30vw, 90vw" : `(min-width: 640px) ${maxWidth}px, 100vw`}
-          className={cn("absolute inset-0 h-auto w-full")}
-          style={{ opacity: "var(--logo-invert, 0)" }}
-        />
+        {!nameOnly && (
+          <Image
+            src={src("dark")}
+            alt=""
+            width={lockup.width}
+            height={lockup.height}
+            priority={priority}
+            sizes={fluid ? "(min-width: 1024px) 30vw, 90vw" : `(min-width: 640px) ${maxWidth}px, 100vw`}
+            className={cn("absolute inset-0 h-auto w-full")}
+            style={{ opacity: "var(--logo-invert, 0)" }}
+          />
+        )}
       </span>
 
       {/*
@@ -297,8 +366,20 @@ export function DivisionLockup({
         condition, decided by which artwork is in use, so it cannot be got
         wrong at a call site.
       */}
-      {!board && (
-        <span className="mt-2 block text-pretty text-small leading-relaxed text-ash sm:text-lead">
+      {!taglineInArt && (
+        <span
+          className={cn(
+            "mt-2 block text-pretty text-small leading-relaxed text-ash sm:text-lead",
+            /*
+              LAST, so a caller can actually override the defaults above.
+              `cn` runs tailwind-merge, which resolves conflicts by source
+              order within one property group — the divisions board passes a
+              smaller size and a tighter leading and needs them to win over
+              `sm:text-lead` and `leading-relaxed`.
+            */
+            taglineClassName,
+          )}
+        >
           {tagline}
         </span>
       )}

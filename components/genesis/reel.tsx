@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 
 /**
  * A looping reel.
@@ -63,7 +64,7 @@ export function Reel({
         ) : (
           // TODO(assets): footage pending. A labelled frame keeps the layout
           // honest rather than pretending with a stock gradient.
-          <div className="grid size-full place-items-center bg-[radial-gradient(120%_100%_at_30%_10%,rgb(255_212_0/0.14),transparent_60%)]">
+          <div className="grid size-full place-items-center bg-[radial-gradient(120%_100%_at_30%_10%,rgb(255_197_22/0.14),transparent_60%)]">
             <p className="micro-label">{label}</p>
           </div>
         )}
@@ -85,6 +86,7 @@ export function Reel({
         autoPlay={autoPlay}
         preload="metadata"
         aria-label={label}
+        {...VIDEO_GUARD_CLIENT}
         className="size-full object-cover"
       />
 

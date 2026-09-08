@@ -113,3 +113,21 @@ export const contentCreationPage = {
    */
   videoNote: "Articles pair with the film they document.",
 } as const;
+
+/**
+ * Genesis Academy — announced, not yet open.
+ *
+ * The copy is Genesis's, verbatim: "Genesis Academy: Empowering students and
+ * professionals to build their careers with AI and automation in advertising,
+ * real estate, and more." Split into a heading and a body because the page
+ * needs both and the sentence already contains them — the name is the
+ * heading, the promise is the standfirst.
+ */
+export const academy = {
+  label: "Genesis Academy",
+  headingLead: "Coming",
+  headingAccent: "soon",
+  title: "Genesis Academy — coming soon",
+  body:
+    "Genesis Academy: Empowering students and professionals to build their careers with AI and automation in advertising, real estate, and more.",
+} as const;

@@ -49,20 +49,20 @@ const SIZES = {
 
 const VARIANTS = {
   brand: [
-    // BLACK on the yellow, not white. The brand accent is #ffd400: white on it
+    // BLACK on the yellow, not white. The brand accent is #ffc516: white on it
     // measures 1.58:1 and the brand's own near-black measures 12.4:1. This is
     // the one place the palette dictates the text colour rather than the
     // theme, which is why it uses --color-on-brand and not an ink token.
     "text-on-brand border border-brand-deep/50",
-    "bg-[linear-gradient(180deg,#ffe04d_0%,#ffd400_45%,#e6bf00_100%)]",
-    "shadow-[0_8px_30px_-6px_rgb(255_212_0/0.45),0_1px_0_0_rgb(255_255_255/0.45)_inset]",
-    "hover:shadow-[0_12px_44px_-6px_rgb(255_212_0/0.65),0_1px_0_0_rgb(255_255_255/0.55)_inset]",
+    "bg-[linear-gradient(180deg,#ffd658_0%,#ffc516_45%,#e0ad13_100%)]",
+    "shadow-[0_8px_30px_-6px_rgb(255_197_22/0.45),0_1px_0_0_rgb(255_255_255/0.45)_inset]",
+    "hover:shadow-[0_12px_44px_-6px_rgb(255_197_22/0.65),0_1px_0_0_rgb(255_255_255/0.55)_inset]",
   ],
   luminous: [
     "text-on-brand border border-brand-deep/40",
-    "bg-[radial-gradient(120%_140%_at_50%_50%,#fff8e0_0%,#ffe466_45%,#ffd400_100%)]",
-    "shadow-[0_8px_34px_-4px_rgb(255_212_0/0.6),0_1px_0_0_rgb(255_255_255/0.5)_inset]",
-    "hover:shadow-[0_14px_50px_-4px_rgb(255_212_0/0.8),0_1px_0_0_rgb(255_255_255/0.6)_inset]",
+    "bg-[radial-gradient(120%_140%_at_50%_50%,#fff7e0_0%,#ffdc72_45%,#ffc516_100%)]",
+    "shadow-[0_8px_34px_-4px_rgb(255_197_22/0.6),0_1px_0_0_rgb(255_255_255/0.5)_inset]",
+    "hover:shadow-[0_14px_50px_-4px_rgb(255_197_22/0.8),0_1px_0_0_rgb(255_255_255/0.6)_inset]",
   ],
   glass: ["glass glass-lit text-bone", "hover:bg-white/10"],
   ghost: [
@@ -149,11 +149,27 @@ export function GlassButton({
     const routed = href.startsWith("/");
     const MotionLink = routed ? MOTION_LINK : motion.a;
 
+    /*
+      A LINK TO ANOTHER ORIGIN OPENS IN ITS OWN TAB, and takes the usual pair
+      of rel tokens with it. AI Lab's "Create Your AI Avatar" is the case that
+      needed it: sent to wa.me in the same tab, the visitor's whole session on
+      the site is replaced by WhatsApp Web and the back button is their only
+      way back to the page they were reading.
+
+      Scoped to http(s) so mailto: and tel: are untouched — those hand off to
+      a separate application and never navigate the page, so a blank target
+      would leave an empty tab behind.
+    */
+    const external = /^https?:\/\//.test(href);
+
     return (
       <MotionLink
         href={href}
         data-quick-contact={quickContact}
         className={classes}
+        {...(external
+          ? { target: "_blank", rel: "noopener noreferrer" }
+          : {})}
         {...motionProps}
       >
         {content}
@@ -211,7 +227,7 @@ export function GlassSegment({
             {active && (
               <motion.span
                 layoutId="glass-segment-active"
-                className="absolute inset-0 rounded-full bg-[radial-gradient(120%_140%_at_50%_50%,#fff3dd_0%,#ffe466_45%,#ffd400_100%)] shadow-[0_6px_28px_-4px_rgb(255_212_0/0.7)]"
+                className="absolute inset-0 rounded-full bg-[radial-gradient(120%_140%_at_50%_50%,#fff7e0_0%,#ffdc72_45%,#ffc516_100%)] shadow-[0_6px_28px_-4px_rgb(255_197_22/0.7)]"
                 transition={{ type: "spring", stiffness: 380, damping: 32 }}
               />
             )}

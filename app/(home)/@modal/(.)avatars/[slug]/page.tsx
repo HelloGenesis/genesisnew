@@ -20,7 +20,14 @@ export default async function AvatarModal({
 
   return (
     <RouteModal label={`${avatar.name} — AI avatar`}>
-      <AvatarDetail avatar={avatar} />
+      {/*
+        `paged` is the dialog's to pass. The slider steps by navigating, and a
+        navigation to a sibling avatar is intercepted back into this same
+        slot — so inside the window it swaps the contents, and from the
+        standalone page it would stack a second window on top. See the note on
+        the prop.
+      */}
+      <AvatarDetail avatar={avatar} paged />
     </RouteModal>
   );
 }

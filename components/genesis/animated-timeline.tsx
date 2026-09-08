@@ -71,10 +71,10 @@ export function AnimatedTimeline({
 
   const glowColor =
     tone === "brand"
-      ? "rgb(255 212 0 / 0.5)"
+      ? "rgb(255 197 22 / 0.5)"
       : tone === "brand"
         ? "rgb(45 212 191 / 0.45)"
-        : "rgb(255 212 0 / 0.5)";
+        : "rgb(255 197 22 / 0.5)";
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>

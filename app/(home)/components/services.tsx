@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 import Link from "next/link";
 
 import { Spectrum } from "@/components/genesis/atmosphere";
@@ -37,12 +35,22 @@ import { services } from "@/lib/home-content";
  * toward the page edges. It is the only thing holding the corners to the
  * middle once the type is this large.
  *
- * THE HOVER STATE IS A GLOW. It was a rule that grew out from under each
- * name; Genesis asked for the line gone and a shadow in its place. Each
- * vertical lights in its OWN colour rather than in the interface yellow, and
- * because the names are gradients clipped to their glyphs it has to be a
- * drop-shadow filter — a text-shadow paints behind transparent text and would
- * put a coloured slab where the halo should be.
+ * THERE IS NO HOVER GLOW ANY MORE. This went through two versions — a rule
+ * growing out from under each name, then a coloured drop-shadow halo in the
+ * division's own ramp — and Genesis has asked for both gone. What is left is
+ * the lift, which is enough to say a name is a target without lighting the
+ * charcoal up around it.
+ *
+ * THE SUBTITLE IS THE HOVER STATE INSTEAD. Genesis asked for each division's
+ * tagline to appear only while the reader is pointing at its name. That is
+ * why the board can no longer use the `board` artwork: those files carry the
+ * tagline burned in, and a picture cannot be revealed a band at a time. The
+ * marks are re-cropped to the name alone (`nameOnly`) and the tagline is live
+ * text again, which is also what makes it selectable and translatable.
+ *
+ * IT RESERVES ITS SPACE. The tagline fades rather than mounting, so pointing
+ * at a name does not push the other three around — and on a touch screen,
+ * where there is no hover at all, it is simply always visible.
  */
 
 /**
@@ -67,7 +75,18 @@ export function Services() {
         orb a full screen to sit in rather than the 24 units of section
         padding it had when it was section two.
       */
-      className="scene-open grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32"
+      /*
+        CHARCOAL, ON THE DARK THEME. Genesis named the colour: #242426, the
+        guidelines' own cover ground. `.scene-charcoal` paints it, and on the
+        light theme it deliberately paints nothing — see the note on that
+        class. Genesis's feedback was that light mode was right as it was, and
+        forcing a near-black slab under a light nav was not what the charcoal
+        instruction meant.
+
+        It replaces `.scene-open`, which was a rule about when a dark chapter
+        should NOT paint. This one is about when it should.
+      */
+      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme
@@ -209,7 +228,6 @@ export function Services() {
               <Link
                 href={service.href}
                 className="group flex w-full flex-col rounded-sm outline-none transition-transform duration-300 ease-out focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-transparent motion-safe:hover:-translate-y-0.5"
-                style={{ "--glow": service.glow } as CSSProperties}
               >
                 {/*
                   THE FULL LOCKUP, at Genesis's instruction — artwork, not the
@@ -239,16 +257,40 @@ export function Services() {
                   as="h3"
                   fluid
                   /*
-                    THE BOARD SET: the short name, no GENESIS prefix, tagline
-                    inside the artwork. The wordmark is already at the orb's
-                    core, so the full lockup in all four corners made the
-                    composition say GENESIS five times — and because this
-                    artwork carries its own tagline, the component prints no
-                    second one. That double line is what Genesis kept seeing
-                    here.
+                    THE NAME SET: the short name, no GENESIS prefix, and the
+                    tagline cropped out of the artwork so it can be live text
+                    below. The wordmark is already at the orb's core, so the
+                    full lockup in all four corners made the composition say
+                    GENESIS five times — which is why this is not the wordmark
+                    set — and the tagline has to be text, which is why it is no
+                    longer the board set either.
                   */
-                  board
-                  className="transition-[filter] duration-300 ease-out group-hover:[filter:drop-shadow(0_0_10px_var(--glow))_drop-shadow(0_0_34px_var(--glow))] motion-reduce:transition-none"
+                  nameOnly
+                  /*
+                    HIDDEN UNTIL POINTED AT. Opacity rather than mounting, so
+                    the four names never shift as the reader moves between
+                    them; the line keeps its space whether or not it is shown.
+
+                    `(hover: none)` covers every touch screen, where there is
+                    no hover to give and a permanently invisible subtitle would
+                    simply be a missing one.
+
+                    AND IT IS SET AS A CAPTION, NOT AS BODY COPY. The default
+                    tagline size is text-lead — 19px on 31px of leading —
+                    because on a division's own SECTION it is the standfirst
+                    under the mark and that is the right size for it. On the
+                    board it is a label under a 32px logo, and at 19px it
+                    wrapped to two airy lines that read as a paragraph
+                    somebody had left there. Measured: 61px of text under a
+                    43px mark, which is a caption outweighing its subject.
+
+                    14px on 1.35 leading puts two lines at 38px. The explicit
+                    min-height is what keeps the four aligned once the size
+                    drops: at 360px some taglines now fit on ONE line and
+                    others still take two, and without a floor the marks would
+                    sit at four different heights on hover.
+                  */
+                  taglineClassName="mt-3 min-h-[2.7em] text-small leading-[1.35] text-balance sm:text-small opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none [@media(hover:none)]:opacity-100"
                 />
               </Link>
             </RevealItem>

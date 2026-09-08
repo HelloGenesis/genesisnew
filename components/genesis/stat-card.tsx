@@ -103,7 +103,7 @@ export function StatCard({
     <div
       className={cn(
         "glass glass-lit group relative flex items-start gap-6 rounded-panel p-6 sm:p-8",
-        "bg-[linear-gradient(135deg,rgb(255_212_0/0.10)_0%,transparent_55%)]",
+        "bg-[linear-gradient(135deg,rgb(255_197_22/0.10)_0%,transparent_55%)]",
         className,
       )}
     >

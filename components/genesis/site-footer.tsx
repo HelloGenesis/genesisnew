@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { Atmosphere } from "@/components/genesis/atmosphere";
@@ -39,9 +40,14 @@ export function SiteFooter() {
         <div className="glass glass-strong glass-lit grid gap-12 rounded-panel p-8 sm:grid-cols-2 sm:p-12 lg:grid-cols-4">
           <Reveal>
             <GenesisMark />
-            <p className="mt-6 max-w-xs text-small leading-relaxed text-ash">
-              {siteConfig.description}
-            </p>
+            {/*
+              NO "ABOUT GENESIS" PARAGRAPH. Genesis asked for it off. It was
+              siteConfig.description — "a Gen Z-led full-service agency where
+              strategy, content and technology come together" — which is the
+              page's own opening argument restated in four lines of small grey
+              type at the bottom of it. The column keeps what a footer is
+              actually for: the mark, the address, and the social accounts.
+            */}
             <a
               href={`mailto:${footerCta.email}`}
               className="mt-6 inline-block text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
@@ -65,12 +71,32 @@ export function SiteFooter() {
                     the destination made React see them as the same child.
                   */
                   <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-small text-ash transition-colors hover:text-bone"
-                    >
-                      {item.label}
-                    </Link>
+                    {/*
+                      One link in this footer leaves the site — "Build Your AI
+                      Avatar" opens WhatsApp — and next/link would try to
+                      route it. An external item renders as a plain anchor
+                      with the usual pair of rel tokens and its own tab, so a
+                      visitor's session on the site is not replaced by
+                      WhatsApp Web with the back button as their only way
+                      back.
+                    */}
+                    {item.external ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-small text-ash transition-colors hover:text-bone"
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className="text-small text-ash transition-colors hover:text-bone"
+                      >
+                        {item.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -105,20 +131,64 @@ export function SiteFooter() {
         </div>
       </div>
 
-      {/* The oversized outlined wordmark, bleeding off the bottom edge. */}
+      {/*
+        THE REAL MARK, oversized, bleeding off the bottom edge.
+
+        IT WAS THE WORD "GENESIS" SET IN THE UI TYPEFACE, outlined with
+        -webkit-text-stroke. Genesis asked for the actual logo here, and they
+        are right that it was the wrong thing: those are not the brand's
+        letterforms — the wordmark's N carries a yellow wedge and its own
+        drawing, neither of which a system font has.
+
+        "JUST GENESIS", NOT "GENESIS MEDIA". The line it replaces said
+        GENESIS, and the full lockup is already at the top of this same panel;
+        printing it twice, once small and once enormous, is the stutter this
+        codebase keeps having to fix. So the wordmark is cropped at the gap
+        between the two words — see public/brand/genesis-only-*.png — which is
+        the same composition the outlined text had, in the real letterforms.
+
+        THE FIRST ATTEMPT AT THIS RENDERED NOTHING, and the reason is worth
+        writing down. It reused <GenesisMark> with `h-auto w-full`. GenesisMark
+        positions its two images with `fill`, so they are absolutely positioned
+        and contribute NO height to their parent — `h-auto` therefore resolved
+        to zero and the mark was a full-width box zero pixels tall. A `fill`
+        image needs a box that is sized by something other than its contents,
+        which is what the aspect ratio below is for. Genesis reported this as
+        the footer having been deleted, and from the page that is exactly what
+        it looked like.
+
+        IT FOLLOWS THE THEME, like every other instance of the mark. The old
+        outlined version was a white stroke at 8% in BOTH themes, so on the
+        light theme it was white-on-white and genuinely invisible — a bug that
+        was there before this and would have survived the swap unnoticed.
+      */}
       <div
         aria-hidden
-        className="pointer-events-none select-none overflow-hidden"
+        className="pointer-events-none relative select-none overflow-hidden px-4"
       >
-        <p
-          className="translate-y-[18%] whitespace-nowrap text-center text-[22vw] font-semibold leading-none tracking-tight"
-          style={{
-            color: "transparent",
-            WebkitTextStroke: "1px rgb(255 255 255 / 0.08)",
-          }}
-        >
-          GENESIS
-        </p>
+        {/*
+          The ratio is the cropped artwork's own, 1025x200. Height follows
+          width from it, so the mark spans the footer at every viewport and
+          the box is never zero.
+        */}
+        <div className="relative aspect-[1025/200] w-full translate-y-[14%] opacity-[0.13]">
+          <Image
+            src="/brand/genesis-only-light.png"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-contain"
+            style={{ opacity: "calc(1 - var(--logo-invert, 0))" }}
+          />
+          <Image
+            src="/brand/genesis-only-dark.png"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-contain"
+            style={{ opacity: "var(--logo-invert, 0)" }}
+          />
+        </div>
       </div>
     </Atmosphere>
   );

@@ -35,11 +35,30 @@ import { cn } from "@/lib/utils";
 export function GenesisMark({
   className,
   compact = false,
+  animated = false,
   sizes = "120px",
 }: {
   className?: string;
   /** The N symbol alone — for tight spaces such as the mobile bar. */
   compact?: boolean;
+  /**
+   * Sweeps a light across the mark every few seconds — Genesis asked for an
+   * animated logo, and this is the version that does not fight the rest of
+   * the page.
+   *
+   * IT IS A MASK, NOT A SECOND ASSET. The overlay is the wordmark's own PNG
+   * used as a CSS mask, so the sheen is clipped to the ink and travels
+   * through the letterforms rather than across a rectangle over them. The
+   * alpha silhouette is identical in the light and dark files — they differ
+   * only in colour — so one mask serves both themes and the sheen stays
+   * registered with whichever lockup --logo-invert is showing.
+   *
+   * OPT-IN, AND ONE CALLER. A mark that shines in the nav is a signature; the
+   * same mark shining at the orb's core, in the footer and inside eight
+   * division lockups is a page that will not sit still. Reduce Motion turns
+   * it off — see .logo-sheen in globals.css.
+   */
+  animated?: boolean;
   /**
    * What width the mark actually renders at, for next/image's srcset.
    *
@@ -79,6 +98,11 @@ export function GenesisMark({
     <span
       className={cn("relative block h-[14px] w-[7.5rem] shrink-0", className)}
     >
+      {/*
+        Painted LAST in the stack but declared first, so it can be `absolute`
+        over two `fill` images without a z-index: both of those are absolute
+        too, and the sheen is given one explicitly below.
+      */}
       <Image
         src="/brand/genesis-wordmark-light.png"
         alt="Genesis Media"
@@ -98,6 +122,13 @@ export function GenesisMark({
         className="object-contain object-left"
         style={{ opacity: "var(--logo-invert, 0)" }}
       />
+
+      {animated && (
+        <span
+          aria-hidden
+          className="logo-sheen pointer-events-none absolute inset-0 z-[1]"
+        />
+      )}
     </span>
   );
 }

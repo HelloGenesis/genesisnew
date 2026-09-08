@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
 
 import { type WorkItem } from "@/lib/work";
 import { cn } from "@/lib/utils";
+import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
+import { useInViewPlayback } from "./use-in-view-playback";
 
 /**
  * One piece of work as a tile, used by the masonry grid and by the browse
@@ -39,8 +40,20 @@ export function aspectFor(item: WorkItem): string {
     filing category, not a description of the frame.
   */
   if (item.reel?.length) return "aspect-[9/13]";
-  if (item.format === "Reels" || item.format === "UGC") return "aspect-[9/13]";
-  if (item.format === "Shoots" || item.format === "Campaigns") return "aspect-[4/3]";
+  /*
+    The vertical formats. Renamed with the rest of the filter vocabulary —
+    "UGC" is spelled out now — and "Shoots" is gone entirely, so the 4:3 case
+    is down to the two that are genuinely shot wide. See CATEGORIES.
+  */
+  if (
+    item.format === "Reels" ||
+    item.format === "User-Generated Content (UGC)"
+  ) {
+    return "aspect-[9/13]";
+  }
+  if (item.format === "Event Shoots" || item.format === "Photo Gallery") {
+    return "aspect-[4/3]";
+  }
   return "aspect-[4/5]";
 }
 
@@ -52,55 +65,56 @@ export function WorkTile({
    * aspect — so a row of mixed formats lines up top AND bottom. Netflix rows
    * are uniform; this catalogue is not, and letting the width vary is what
    * reconciles the two without cropping a portrait reel into a landscape box.
+   * `fill` takes BOTH from its cell — the tile fills whatever box it is put
+   * in and imposes no aspect of its own, because the library grid sets one
+   * uniform 9:13 cell for every piece. See WorkGrid. (It was called `bento`
+   * for the layout that briefly used it; the mechanism outlived the layout.)
    */
   variant = "grid",
   className,
 }: {
   item: WorkItem;
-  variant?: "grid" | "rail";
+  variant?: "grid" | "rail" | "fill";
   className?: string;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  /*
+    THE TILE PLAYS ITSELF. This was hover-started and hover-stopped, which
+    Genesis has asked to change: the work "will play directly within the
+    gallery". Hover was hiding that these tiles are films at all, and on every
+    touch screen — where there is no hover — the entire portfolio was stills.
+
+    The cost that made it hover-only in the first place still stands, and the
+    hook is where it is paid: only the tiles actually on screen ever get a
+    decoder. See useInViewPlayback.
+  */
+  const videoRef = useInViewPlayback<HTMLVideoElement>();
   const hasArt = Boolean(item.clip || item.art);
   const rail = variant === "rail";
-
-  /*
-    Hover playback, started and stopped by hand rather than with `autoPlay`.
-    A grid of autoplaying videos pulls every file on load and keeps a dozen
-    decoders alive; this way nothing decodes until a pointer is actually over
-    a tile. play() rejects if the pointer leaves before the promise settles,
-    which is normal and not worth surfacing.
-  */
-  const play = () => {
-    const video = videoRef.current;
-    if (video) void video.play().catch(() => {});
-  };
-  const stop = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.pause();
-    video.currentTime = 0;
-  };
+  const fill = variant === "fill";
 
   return (
     <Link
       href={`/work/${item.slug}`}
-      onMouseEnter={play}
-      onMouseLeave={stop}
-      onFocus={play}
-      onBlur={stop}
       className={cn(
         "group relative block overflow-hidden rounded-card border border-[var(--glass-border)] bg-ink",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
         rail && "h-full w-auto shrink-0",
+        // The cell is already the size it wants to be; the tile's job is to
+        // fill it exactly, top to bottom.
+        fill && "h-full w-full",
         className,
       )}
     >
       <div
         className={cn(
           "relative",
-          rail ? "h-full w-auto" : "w-full",
-          aspectFor(item),
+          rail && "h-full w-auto",
+          fill && "size-full",
+          !rail && !fill && "w-full",
+          // The aspect is what SHAPES a grid tile and what SIZES a rail one.
+          // A `fill` tile is shaped by its cell, so imposing one here would
+          // fight the box the grid just gave it.
+          !fill && aspectFor(item),
         )}
       >
         {item.clip ? (
@@ -114,6 +128,7 @@ export function WorkTile({
             // Nothing but the header until someone hovers.
             preload="metadata"
             aria-hidden
+            {...VIDEO_GUARD_CLIENT}
             className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.03]"
           />
         ) : item.art ? (
@@ -162,7 +177,7 @@ export function WorkTile({
                 backgroundSize: "32px 32px",
               }}
             />
-            <span className="glass-chip relative w-fit rounded-full px-2.5 py-1 text-micro text-white/90">
+            <span className="glass-chip relative w-fit max-w-full truncate rounded-full px-2.5 py-1 text-micro text-white/90">
               {item.format}
             </span>
             <div className="relative">
@@ -198,16 +213,42 @@ export function WorkTile({
               }}
             />
 
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-5">
-              <div className="min-w-0">
-                <p className="truncate text-small font-medium text-white">
-                  {item.client}
-                </p>
-                <p className="truncate text-micro text-white/70">{item.title}</p>
-              </div>
-              <span className="glass-chip shrink-0 rounded-full px-2.5 py-1 text-micro text-white/90">
-                {item.format}
-              </span>
+            {/*
+              THE FORMAT CHIP MOVED TO THE TOP, AND THAT IS A BUG FIX RATHER
+              THAN A REARRANGEMENT.
+
+              It used to sit at the bottom RIGHT, sharing one flex row with the
+              client name and marked `shrink-0` — so the chip took whatever
+              width it wanted and the name took the remainder. That was
+              survivable while the longest format was "Campaigns". Renaming the
+              vocabulary to Genesis's list made the longest "User-Generated
+              Content (UGC)" at 24 characters, which on a 264px tile left about
+              twenty pixels for the client: "Aditya Birla Capital Health
+              Insurance" rendered as "A." over "C". Genesis screenshotted it.
+
+              Two things had to change, not one. Moving the chip out of that
+              row gives the name the full width — but a chip alone can still
+              overrun a narrow tile, so it is capped at the tile's width and
+              truncates. Top-left is also where Genesis's own reference cards
+              put it.
+            */}
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-1/4"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgb(0 0 0 / 0.5) 0%, transparent 100%)",
+              }}
+            />
+            <span className="glass-chip absolute left-3 top-3 max-w-[calc(100%-1.5rem)] truncate rounded-full px-2.5 py-1 text-micro text-white/90">
+              {item.format}
+            </span>
+
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+              <p className="truncate text-small font-medium text-white">
+                {item.client}
+              </p>
+              <p className="truncate text-micro text-white/70">{item.title}</p>
             </div>
           </>
         )}

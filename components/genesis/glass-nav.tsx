@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMark } from "./genesis-mark";
-import { navItems, primaryCta } from "@/lib/site-config";
+import { homeHref, navItems, primaryCta } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 /**
@@ -133,30 +133,32 @@ export function GlassNav() {
           overDark && "on-dark",
         )}
       >
+        {/*
+          BACK TO THE BRAIN, not to "/". Genesis asked for the wordmark to
+          lead to the orb; on the homepage "/" was a link to the page you were
+          already on, which did nothing when clicked. See homeHref.
+        */}
         <Link
-          href="/"
+          href={homeHref}
           className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-          aria-label={`${"Genesis Media"} — home`}
+          aria-label={`${"Genesis Media"} — back to the Brain`}
         >
-          <GenesisMark />
+          {/* The one animated instance of the mark; see GenesisMark. */}
+          <GenesisMark animated />
         </Link>
 
         {/*
-          Flat: the four verticals, then work, case studies and contact. The
-          Capabilities disclosure is gone — a division someone came for should
-          not be one hover away from being found, and the names are short
-          enough that seven fit the pill.
+          FIVE ITEMS. The verticals came off the bar — the Brain is how you
+          reach a division now — leaving Work, Case Studies, the two forms and
+          contact. See navItems for why those first two are separate.
+
+          lg AGAIN, AND THE MEASUREMENT IS WHY. Eight items needed about
+          1150px beside the wordmark, the toggle and the CTA, which is what
+          pushed this to xl and gave every laptop under 1280 the hamburger.
+          Five short ones measure roughly 500px, so the full bar comes back at
+          lg with room to spare.
         */}
-        {/*
-          xl, NOT lg. Genesis added "I'm a Creator" and "Career" to the bar,
-          taking it from six items to eight, and at 1024 the row measured
-          1077px inside 990 — it overflowed and pushed "Start a Project" off
-          the right edge. Measured, not guessed. Eight items need about 1150px
-          alongside the wordmark, the theme toggle and the CTA, so the full bar
-          waits for xl and everything below it gets the menu, which already
-          lists all eight.
-        */}
-        <ul className="ml-2 hidden flex-1 items-center gap-0.5 xl:flex">
+        <ul className="ml-2 hidden flex-1 items-center gap-0.5 lg:flex">
           {navItems.map((item) => (
             <li key={item.label}>
               <Link href={item.href} className={NAV_LINK}>
@@ -172,7 +174,7 @@ export function GlassNav() {
           furniture — they are what the bar shrinks AROUND, not what shrinks.
         */}
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <ThemeToggle className="hidden xl:inline-flex" />
+          <ThemeToggle className="hidden lg:inline-flex" />
 
           <GlassButton
             href={primaryCta.href}
@@ -189,7 +191,7 @@ export function GlassNav() {
             onClick={() => setMenuOpen((open) => !open)}
             aria-expanded={menuOpen}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="grid size-9 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand xl:hidden"
+            className="grid size-9 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:hidden"
           >
             {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
@@ -204,7 +206,7 @@ export function GlassNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="glass glass-strong pointer-events-auto absolute inset-x-4 top-20 rounded-panel p-4 xl:hidden"
+            className="glass glass-strong pointer-events-auto absolute inset-x-4 top-20 rounded-panel p-4 lg:hidden"
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="micro-label">Menu</span>

@@ -59,13 +59,13 @@ function portrait(id: string) {
  * corner. lucide-react v1 dropped brand icons, so the glyphs are drawn inline.
  */
 const PLATFORMS = [
-  { key: "instagram", fill: "linear-gradient(135deg,#ffd400,#ee2a7b 48%,#6228d7)" },
+  { key: "instagram", fill: "linear-gradient(135deg,#ffc516,#ee2a7b 48%,#6228d7)" },
   { key: "youtube", fill: "#ff0000" },
   { key: "linkedin", fill: "#0a66c2" },
-  { key: "instagram", fill: "linear-gradient(135deg,#ffd400,#ee2a7b 48%,#6228d7)" },
+  { key: "instagram", fill: "linear-gradient(135deg,#ffc516,#ee2a7b 48%,#6228d7)" },
   { key: "threads", fill: "#ffffff" },
   { key: "youtube", fill: "#ff0000" },
-  { key: "instagram", fill: "linear-gradient(135deg,#ffd400,#ee2a7b 48%,#6228d7)" },
+  { key: "instagram", fill: "linear-gradient(135deg,#ffc516,#ee2a7b 48%,#6228d7)" },
 ] as const;
 
 function PlatformGlyph({ platform }: { platform: string }) {
@@ -181,9 +181,9 @@ function Globe() {
     <svg aria-hidden viewBox="0 0 400 400" className="absolute inset-0 size-full">
       <defs>
         <radialGradient id="genesis-globe-core" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ffd400" stopOpacity="0.09" />
-          <stop offset="70%" stopColor="#ffd400" stopOpacity="0.02" />
-          <stop offset="100%" stopColor="#ffd400" stopOpacity="0" />
+          <stop offset="0%" stopColor="#ffc516" stopOpacity="0.09" />
+          <stop offset="70%" stopColor="#ffc516" stopOpacity="0.02" />
+          <stop offset="100%" stopColor="#ffc516" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -215,7 +215,7 @@ function Globe() {
           cx={cx}
           cy={cy}
           r="2.6"
-          fill="#ffd400"
+          fill="#ffc516"
           className=""
           style={
             {

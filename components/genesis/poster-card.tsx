@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useRef } from "react";
 import { Play } from "lucide-react";
 import { useEdgeFade } from "./use-edge-fade";
+import { useInViewPlayback } from "./use-in-view-playback";
 
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 
 /**
  * Movie-poster card — the "Genesis Netflix" unit (img-025, img-026, img-013).
@@ -88,29 +89,23 @@ export function PosterCard({
   /** Renders larger, as the focused card in a rail. */
   priority?: boolean;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const play = () => {
-    const video = videoRef.current;
-    if (video) void video.play().catch(() => {});
-  };
-  const stop = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.pause();
-    video.currentTime = 0;
-  };
+  /*
+    THE POSTER PLAYS ITSELF, at Genesis's instruction — the rail's videos
+    "will play directly within the gallery". It was hover-started, which on a
+    rail of four cards meant a play glyph that did nothing until pointed at
+    and nothing at all on a phone. The hook keeps the cost where it was: only
+    the cards on screen hold a decoder. See useInViewPlayback.
+  */
+  const videoRef = useInViewPlayback<HTMLVideoElement>();
 
   const card = (
     <motion.article
       whileHover={{ y: -10 }}
-      onHoverStart={play}
-      onHoverEnd={stop}
       transition={{ type: "spring", stiffness: 300, damping: 24 }}
       className={cn(
         "group relative shrink-0 overflow-hidden rounded-panel border border-white/10",
         "shadow-[0_18px_50px_-18px_rgb(0_0_0/0.9)]",
-        "transition-shadow duration-500 hover:shadow-[0_26px_70px_-16px_rgb(255_212_0/0.4)]",
+        "transition-shadow duration-500 hover:shadow-[0_26px_70px_-16px_rgb(255_197_22/0.4)]",
         // Spec page 12 asks Portfolio for a "minimal Scroll section", and the
         // scroll IS the section. At the previous widths four posters plus
         // their gaps measured 1144px inside a 1104px container — the track was
@@ -155,6 +150,7 @@ export function PosterCard({
             playsInline
             preload="metadata"
             aria-hidden
+            {...VIDEO_GUARD_CLIENT}
             className="absolute inset-0 size-full object-cover"
           />
         )}
@@ -204,9 +200,18 @@ export function PosterCard({
           {poster.category}
         </span>
 
-        <span className="glass absolute right-3 top-3 grid size-8 place-items-center rounded-full text-bone opacity-80 transition-opacity duration-300 group-hover:opacity-100">
-          <Play className="size-3.5 fill-current" aria-hidden />
-        </span>
+        {/*
+          ONLY WHERE THERE IS FOOTAGE. The glyph was painted on all four cards
+          including the two with no clip behind them — a play control that
+          starts nothing is the same fault as a link to a page that does not
+          exist. Now that the cards play themselves it reads as a label saying
+          "this one is a film" rather than as a button.
+        */}
+        {poster.clip && (
+          <span className="glass absolute right-3 top-3 grid size-8 place-items-center rounded-full text-bone opacity-80 transition-opacity duration-300 group-hover:opacity-100">
+            <Play className="size-3.5 fill-current" aria-hidden />
+          </span>
+        )}
 
         <div className="absolute inset-x-0 bottom-0 p-4">
           {poster.client && poster.image && (

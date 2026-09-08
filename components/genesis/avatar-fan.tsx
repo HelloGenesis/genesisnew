@@ -321,7 +321,7 @@ export function AvatarFan({
                 // The upright card is the only one carrying a lift, so the
                 // eye is told where to start.
                 isCentre
-                  ? "border-white/25 shadow-[0_24px_70px_-20px_rgb(0_0_0/0.9),0_0_44px_-12px_rgb(255_212_0/0.28)]"
+                  ? "border-white/25 shadow-[0_24px_70px_-20px_rgb(0_0_0/0.9),0_0_44px_-12px_rgb(255_197_22/0.28)]"
                   : "border-white/10 shadow-[0_18px_50px_-24px_rgb(0_0_0/0.9)]",
               )}
               style={

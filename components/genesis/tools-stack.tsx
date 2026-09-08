@@ -54,9 +54,9 @@ export function ToolsStack({
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#6b6b70" stopOpacity="0.2" />
-            <stop offset="45%" stopColor="#ffd400" stopOpacity="0.75" />
-            <stop offset="80%" stopColor="#ffd400" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#ffd400" stopOpacity="0.7" />
+            <stop offset="45%" stopColor="#ffc516" stopOpacity="0.75" />
+            <stop offset="80%" stopColor="#ffc516" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#ffc516" stopOpacity="0.7" />
           </linearGradient>
 
           <filter id={glowId} x="-30%" y="-30%" width="160%" height="160%">
@@ -102,7 +102,7 @@ export function ToolsStack({
                   }
                 />
                 {/* Emitter dot at the source. */}
-                <circle cx="150" cy={startY} r="3" fill="#ffd400" opacity="0.85" />
+                <circle cx="150" cy={startY} r="3" fill="#ffc516" opacity="0.85" />
               </g>
             );
           })}
@@ -110,7 +110,7 @@ export function ToolsStack({
 
         {/* Where everything arrives. */}
         <circle cx={FOCUS_X} cy={FOCUS_Y} r="5" fill="#ffffff" opacity="0.9" />
-        <circle cx={FOCUS_X} cy={FOCUS_Y} r="14" fill="#ffd400" opacity="0.18" />
+        <circle cx={FOCUS_X} cy={FOCUS_Y} r="14" fill="#ffc516" opacity="0.18" />
       </svg>
 
       {/*
@@ -194,7 +194,7 @@ export function ToolsStack({
             className="h-[3px] rounded-full"
             style={{
               background:
-                "linear-gradient(90deg, #6b6b70 0%, #ffd400 46%, #ffd400 100%)",
+                "linear-gradient(90deg, #6b6b70 0%, #ffc516 46%, #ffc516 100%)",
             }}
           />
         </div>

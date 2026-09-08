@@ -28,29 +28,76 @@ import { isPending, services } from "./home-content";
  */
 
 /**
- * THE FILTER VOCABULARY, fixed by Genesis.
+ * THE FILTER VOCABULARY, rewritten to the list Genesis supplied for the
+ * portfolio dashboard.
  *
- * Every piece's `format` comes from this list, so the filter row cannot drift
- * into whatever words happened to be typed on the day. The row still only
- * offers the tags that have work behind them — printing all eight when four
- * match nothing gives a visitor four ways to empty the grid — so the unused
- * ones appear the moment something is tagged with them.
+ * IT IS TWO LISTS, BECAUSE THE SUPPLIED ONE IS TWO KINDS OF THING. Genesis's
+ * twelve filters mix what a piece IS — Reels, UGC, Launch Films, Product
+ * Explainers — with the sector it was made FOR: Real Estate, F&B, BFSI. Those
+ * are independent facets, and collapsing them into the single `format` field
+ * this file had would force a false choice on every entry: the Mahindra
+ * Finance work is an influencer campaign AND it is BFSI, and tagging it as
+ * one loses the other. So `format` keeps the first kind and `tags` carries
+ * the second, and a piece can appear under both.
+ *
+ * WHAT CAME OUT. "Influencer marketing", "Shoots", "Fashion", "Campaigns",
+ * "Creators" and "Design & creatives" are not on Genesis's list. Two of them
+ * survive under new names — "Campaigns" is now "Influencer Campaigns" and
+ * "UGC" is spelled out — and the rest are gone.
+ *
+ * THE ROW STILL ONLY OFFERS WHAT HAS WORK BEHIND IT. Printing all twelve when
+ * five match nothing gives a visitor five ways to empty the grid. The unused
+ * ones appear the moment something is tagged with them, which is the point of
+ * declaring the whole vocabulary here rather than deriving it.
  */
 export const CATEGORIES = [
-  "Influencer marketing",
-  "Shoots",
-  "Fashion",
-  "Campaigns",
-  "Creators",
-  "Design & creatives",
+  "Influencer Campaigns",
   "Reels",
-  "UGC",
+  "User-Generated Content (UGC)",
+  "AI Content",
+  "Event Shoots",
+  "Launch Films",
+  "Photo Gallery",
+  "Product Explainers",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
 
-/** The four verticals, used for filtering and for the modal's byline. */
-export type Vertical = "Influence" | "Studios" | "AI Labs" | "Brand & Design";
+/**
+ * The sector facet — the other half of Genesis's filter list.
+ *
+ * BFSI is written as the acronym because that is how the filter row has to
+ * read; the expansion Genesis gives it — Banking, Financial Services & Health
+ * Insurance — is the same one the sectors strip carries, and it lives with
+ * that strip in lib/home-content rather than being retyped here.
+ *
+ * "AI Labs" is deliberately NOT here. It is already one of the four verticals
+ * and the filter row offers those first, so declaring it a second time would
+ * print the same chip twice.
+ */
+export const WORK_TAGS = [
+  "Real Estate",
+  "Food & Beverage (F&B)",
+  "BFSI",
+] as const;
+
+export type WorkTag = (typeof WORK_TAGS)[number];
+
+/**
+ * The four verticals, used for filtering and for the project byline.
+ *
+ * A VALUE AS WELL AS A TYPE, so the filter row can offer them in the brand's
+ * own order rather than in whatever order the catalogue happens to mention
+ * them. It was a bare union, which a filter builder cannot iterate.
+ */
+export const VERTICALS = [
+  "Influence",
+  "Studios",
+  "AI Labs",
+  "Brand & Design",
+] as const;
+
+export type Vertical = (typeof VERTICALS)[number];
 
 export type WorkResult = { label: string; value: string };
 
@@ -60,8 +107,18 @@ export type WorkItem = {
   client: string;
   title: string;
   vertical: Vertical;
-  /** Filter tag, from CATEGORIES. */
+  /** What the piece IS. From CATEGORIES. */
   format: Category;
+  /**
+   * What the piece was made FOR — the sector facet. From WORK_TAGS.
+   *
+   * Optional and usually short: a piece is tagged only where the sector is
+   * something the catalogue actually knows, not inferred from the footage.
+   * An untagged piece simply does not appear under a sector filter, which is
+   * the right failure — a wrong sector on a named client is a claim about
+   * that client.
+   */
+  tags?: WorkTag[];
   /** Still. Every piece has one; the clip is the upgrade. */
   art?: string;
   /** Muted loop played on hover. Derived from `reel` when that is set. */
@@ -120,7 +177,8 @@ const catalogue: WorkItem[] = [
     client: "Mahindra Finance",
     title: "Influencer & Content Campaign",
     vertical: "Influence",
-    format: "Campaigns",
+    format: "Influencer Campaigns",
+    tags: ["BFSI"],
     featured: true,
     reel: [16, 17, 18, 19, 20],
   },
@@ -129,7 +187,8 @@ const catalogue: WorkItem[] = [
     client: "Aditya Birla Capital Health Insurance",
     title: "Content & Campaign Work",
     vertical: "Influence",
-    format: "Campaigns",
+    format: "Influencer Campaigns",
+    tags: ["BFSI"],
     featured: true,
     reel: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 29, 30, 31],
   },
@@ -138,14 +197,16 @@ const catalogue: WorkItem[] = [
     client: "Aditya Birla Sun Life Insurance",
     title: "Brand & Performance Content",
     vertical: "Influence",
-    format: "Campaigns",
+    format: "Influencer Campaigns",
+    tags: ["BFSI"],
   },
   {
     slug: "hdfc-content-production",
     client: "HDFC",
     title: "Content Production",
     vertical: "Studios",
-    format: "UGC",
+    format: "User-Generated Content (UGC)",
+    tags: ["BFSI"],
   },
 
   /*
@@ -208,6 +269,7 @@ const catalogue: WorkItem[] = [
     title: "Property Films",
     vertical: "Studios",
     format: "Reels",
+    tags: ["Real Estate"],
     reel: [33, 34, 35, 36, 37, 38, 39, 40, 41, 42],
     featured: true,
   },
@@ -226,6 +288,7 @@ const catalogue: WorkItem[] = [
     title: "Brand Content",
     vertical: "Studios",
     format: "Reels",
+    tags: ["Real Estate"],
     reel: [32],
     featured: true,
   },
@@ -301,24 +364,41 @@ export function findWork(slug: string): WorkItem | undefined {
 export const featuredWork = work.filter((item) => item.featured);
 
 /**
- * Filter tags, built from the data rather than hardcoded.
+ * The filter row, built from the data rather than hardcoded.
  *
- * The brief lists ten tags. Printing all ten when six of them match nothing
- * gives a visitor six ways to empty the grid, so the row offers verticals
- * first, then formats, and only the ones that actually have work behind them.
+ * ONLY WHAT HAS WORK BEHIND IT. Genesis's list runs to twelve and the
+ * catalogue currently answers five of them; printing all twelve would give a
+ * visitor seven ways to empty the grid. The rest appear on their own as the
+ * catalogue fills, with no code change.
+ *
+ * THE ORDER IS THE VOCABULARY'S, NOT THE CATALOGUE'S. This used to push each
+ * tag as it was first encountered, so the row's order was an accident of
+ * which entry happened to sit at the top of the array — and re-ordering the
+ * catalogue silently re-ordered the filters. Verticals first, since they are
+ * the coarsest cut, then the formats and the sectors in the order Genesis
+ * wrote them down.
  */
 export function workFilters(items: WorkItem[]): string[] {
-  const verticals: string[] = [];
-  const formats: string[] = [];
-  for (const item of items) {
-    if (!verticals.includes(item.vertical)) verticals.push(item.vertical);
-    if (!formats.includes(item.format)) formats.push(item.format);
-  }
-  return ["All", ...verticals, ...formats];
+  const verticals = VERTICALS.filter((v) => items.some((i) => i.vertical === v));
+  const formats = CATEGORIES.filter((c) => items.some((i) => i.format === c));
+  const tags = WORK_TAGS.filter((t) =>
+    items.some((i) => i.tags?.includes(t)),
+  );
+  return ["All", ...verticals, ...formats, ...tags];
 }
 
+/**
+ * A piece matches on ANY of its three facets. `tags` is the addition: a
+ * filter row that offers BFSI and then returns nothing for it, because the
+ * Mahindra work is filed as an influencer campaign, is a row that lies.
+ */
 export function matchesFilter(item: WorkItem, filter: string): boolean {
-  return filter === "All" || item.vertical === filter || item.format === filter;
+  return (
+    filter === "All" ||
+    item.vertical === filter ||
+    item.format === filter ||
+    Boolean(item.tags?.includes(filter as WorkTag))
+  );
 }
 
 /** True when a piece has enough written to be worth opening a case study for. */
@@ -398,19 +478,33 @@ export const WORK_ROWS: WorkRow[] = [
     id: "reels",
     title: "Reels & short form",
     blurb: "Shot vertical, cut for the feed.",
-    test: (i) => i.format === "Reels" || i.format === "UGC",
-  },
-  {
-    id: "shoots",
-    title: "Shoots & films",
-    blurb: "Full productions, on location and in studio.",
-    test: (i) => i.format === "Shoots",
+    test: (i) =>
+      i.format === "Reels" || i.format === "User-Generated Content (UGC)",
   },
   {
     id: "campaigns",
-    title: "Campaigns",
+    title: "Influencer campaigns",
     blurb: "Multi-format work built around one idea.",
-    test: (i) => i.format === "Campaigns",
+    test: (i) => i.format === "Influencer Campaigns",
+  },
+  /*
+    THE SECTOR SHELVES. Genesis's filter list names Real Estate and BFSI, and
+    a filter worth offering is usually a shelf worth having — the property
+    films in particular are ten pieces that read as a body of work rather than
+    as ten reels. `workRows` drops any shelf with fewer than two pieces, so
+    these appear and disappear with the catalogue.
+  */
+  {
+    id: "real-estate",
+    title: "Real estate",
+    blurb: "Property films, shot on location.",
+    test: (i) => Boolean(i.tags?.includes("Real Estate")),
+  },
+  {
+    id: "bfsi",
+    title: "BFSI",
+    blurb: "Banking, financial services and health insurance.",
+    test: (i) => Boolean(i.tags?.includes("BFSI")),
   },
   {
     id: "influence",

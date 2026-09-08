@@ -27,43 +27,64 @@ const ORIGIN_POSITION: Record<NonNullable<AuroraProps["origin"]>, string> = {
 };
 
 const TONE_COLOR: Record<NonNullable<AuroraProps["tone"]>, string> = {
-  brand: "255 212 0",
-  neutral: "180 180 200",
+  brand: "255 197 22",
+  neutral: "209 207 207",
 };
 
 /**
- * The ambient spectrum, from the deck's own secondary fills.
+ * The ambient spectrum — grey and yellow on dark, the original four on light.
  *
- * Counting the guidelines' vector colours turns up more than the accent:
- * violet #7a3cff, blue #3b5bff, purple #6f4fc4 and a light violet #cac1ff sit
- * alongside it, and the divisions board runs a full warm-to-cool ramp. Every
- * section here was being washed in the one yellow, which is what made the
- * page read monotone — one colour doing the work of a palette.
+ * IT WAS A FOUR-HUE FIELD: violet #7a3cff, blue #3b5bff, pink #ff8fb8 and the
+ * yellow, on the reasoning that the deck's vector art carries more than the
+ * accent. Genesis has since fixed the primaries — grey, yellow, white, black —
+ * and three of those four sources were painting a palette the brand does not
+ * have. On the homepage they were most of the reason the page read violet.
  *
- * Four sources, placed at different corners so no two sections light the same
- * way, and each scaled by --spectrum. That token is 1 on dark and 0.5 on
- * light, because the same alpha of colour reads about twice as strongly on
- * paper as it does on black.
+ * On DARK what is left is the accent and the grey ramp: one warm source,
+ * three neutral. On LIGHT the original four are kept — Genesis's report was
+ * that the light theme was right as it stood. Both are placed at different
+ * corners so no two sections light the same way, and both are scaled by
+ * --spectrum, which is 1 on dark and 0.5 on light because the same alpha
+ * reads about twice as strongly on paper as on black.
  *
  * Deliberately a TINT. The guidelines set the ratio at 70% white/black, 20%
  * grey, 10% yellow and say plainly that yellow is never the background — so
- * these sit where the hue is felt rather than seen. The measured lift on the
- * section ground is under two points of luminance.
+ * these sit where the light is felt rather than seen. The measured lift on
+ * the section ground is under two points of luminance.
  */
-const SPECTRUM = [
+const SPECTRUM_NEUTRAL = [
+  { color: "255 255 255", at: "14% 6%", size: "52% 46%", alpha: 0.06 },
+  { color: "209 207 207", at: "88% 16%", size: "46% 42%", alpha: 0.1 },
+  { color: "255 255 255", at: "78% 88%", size: "54% 48%", alpha: 0.05 },
+  /* The accent carries this wash, at the same strength the page-wide field
+     now uses. At 0.09 it was a rumour; see the note in page-atmosphere. */
+  { color: "255 197 22", at: "18% 92%", size: "48% 42%", alpha: 0.17 },
+];
+
+/**
+ * The light theme keeps the original four, at Genesis's request — the same
+ * split the page-wide field now has. See page-atmosphere.tsx for why both
+ * have to be emitted and let CSS choose.
+ */
+const SPECTRUM_COLOUR = [
   { color: "122 60 255", at: "14% 6%", size: "52% 46%", alpha: 0.15 },
   { color: "59 91 255", at: "88% 16%", size: "46% 42%", alpha: 0.12 },
   { color: "255 143 184", at: "78% 88%", size: "54% 48%", alpha: 0.11 },
-  { color: "255 212 0", at: "18% 92%", size: "48% 42%", alpha: 0.09 },
+  { color: "255 197 22", at: "18% 92%", size: "48% 42%", alpha: 0.09 },
 ];
 
 /** Every source stacked into one background-image. */
-function spectrumWash() {
-  return SPECTRUM.map(
-    (s) =>
-      `radial-gradient(${s.size} at ${s.at}, rgb(${s.color} / calc(${s.alpha} * var(--spectrum, 1))) 0%, transparent 70%)`,
-  ).join(", ");
+function spectrumWash(sources: typeof SPECTRUM_NEUTRAL) {
+  return sources
+    .map(
+      (s) =>
+        `radial-gradient(${s.size} at ${s.at}, rgb(${s.color} / calc(${s.alpha} * var(--spectrum, 1))) 0%, transparent 70%)`,
+    )
+    .join(", ");
 }
+
+const WASH_NEUTRAL = spectrumWash(SPECTRUM_NEUTRAL);
+const WASH_COLOUR = spectrumWash(SPECTRUM_COLOUR);
 
 /** A single soft directional light source — the "aurora" wash. */
 export function Aurora({
@@ -97,8 +118,22 @@ export function Spectrum({ className }: { className?: string }) {
   return (
     <div
       aria-hidden
-      className={cn("seamless pointer-events-none absolute inset-0", className)}
-      style={{ background: spectrumWash() }}
+      className={cn(
+        "section-wash seamless pointer-events-none absolute inset-0",
+        className,
+      )}
+      /*
+        The properties only; the `background` that reads them is in
+        globals.css, keyed off the theme. See the note in page-atmosphere.tsx
+        — an inline background would outrank the light theme's override, and
+        a switch declared at :root cannot see variables defined here.
+      */
+      style={
+        {
+          "--wash-neutral": WASH_NEUTRAL,
+          "--wash-colour": WASH_COLOUR,
+        } as React.CSSProperties
+      }
     />
   );
 }

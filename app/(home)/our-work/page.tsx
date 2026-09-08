@@ -4,7 +4,7 @@ import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { WorkBrowse } from "@/components/genesis/work-browse";
 import { ourWork } from "@/lib/page-content";
-import { work } from "@/lib/work";
+import { work, workFilters } from "@/lib/work";
 
 export const metadata: Metadata = {
   title: "Portfolio",
@@ -38,7 +38,26 @@ export const metadata: Metadata = {
  * filter is picked. What the shelves ARE lives in lib/work.ts, because
  * Genesis's instruction is that they become the folders in the shared Drive.
  */
-export default function OurWorkPage() {
+export default async function OurWorkPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
+  /*
+    `?filter=` OPENS THE PAGE ON A GENRE. The division sections link here for
+    their own work — Influence's "View case studies" wants influencer
+    campaigns, not the whole catalogue — and landing on everything and asking
+    the reader to find the chip is not what that button promised.
+
+    VALIDATED AGAINST THE REAL FILTER LIST rather than passed through. An
+    unrecognised value would render a filter row with nothing selected and a
+    grid with nothing in it, which looks like an empty portfolio rather than
+    like a bad link. Anything unknown falls back to "All".
+  */
+  const { filter } = await searchParams;
+  const known = workFilters(work);
+  const initialFilter = filter && known.includes(filter) ? filter : "All";
+
   return (
     <main className="relative min-h-dvh pb-32 pt-32 sm:pt-40">
       <div className="mx-auto w-full max-w-6xl px-6">
@@ -67,7 +86,7 @@ export default function OurWorkPage() {
         the container to the parts that need it.
       */}
       <Reveal variant="scene" className="mt-14 sm:mt-16">
-        <WorkBrowse items={work} />
+        <WorkBrowse items={work} initialFilter={initialFilter} />
       </Reveal>
     </main>
   );

@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/site-config";
+import { whatsappLink } from "@/lib/site-config";
 
 /**
  * Floating WhatsApp button.
@@ -14,12 +14,10 @@ import { siteConfig } from "@/lib/site-config";
  * grow a label, a bubble, or a "we're online!" prompt.
  */
 export function WhatsappButton() {
-  const number = siteConfig.whatsapp.replace(/\D/g, "");
-  if (!number) return null;
-
-  const href = `https://wa.me/${number}?text=${encodeURIComponent(
-    siteConfig.whatsappMessage,
-  )}`;
+  // Through the shared builder, so this and AI Lab's avatar CTA cannot
+  // disagree about how a number becomes a link. See whatsappLink.
+  const href = whatsappLink();
+  if (!href) return null;
 
   return (
     <a
