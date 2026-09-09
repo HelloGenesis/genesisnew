@@ -205,7 +205,17 @@ export function Services() {
                   figure — at 250-325px here it would pick the 256 candidate
                   and render 1x on a retina screen.
                 */}
+                {/*
+                  `animated`, so the mark at the orb's core catches the same
+                  light as the one in the header. Genesis asked for the two to
+                  match. It is the same sheen — a gradient masked to the
+                  wordmark's own alpha — so it travels through the letterforms
+                  here exactly as it does in the pill, and both sit still for
+                  most of their six-second cycle rather than shimmering
+                  continuously in the corner of the eye.
+                */}
                 <GenesisMark
+                  animated
                   className="h-auto w-[64%] aspect-[8.8/1]"
                   sizes="(min-width: 1280px) 330px, (min-width: 1024px) 255px, 60vw"
                 />

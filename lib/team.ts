@@ -49,7 +49,7 @@ export const team = {
   heading: "The people",
   headingAccent: "behind it",
   body:
-    "Genesis is built in-house — strategy, creative, production and technology under one roof. It is led by the two people below.",
+    "Genesis is built in-house: strategy, creative, production and technology under one roof. It is led by the two people below.",
   members: [
     {
       slug: "shivam-mestry",

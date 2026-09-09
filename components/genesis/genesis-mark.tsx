@@ -53,10 +53,12 @@ export function GenesisMark({
    * only in colour — so one mask serves both themes and the sheen stays
    * registered with whichever lockup --logo-invert is showing.
    *
-   * OPT-IN, AND ONE CALLER. A mark that shines in the nav is a signature; the
-   * same mark shining at the orb's core, in the footer and inside eight
-   * division lockups is a page that will not sit still. Reduce Motion turns
-   * it off — see .logo-sheen in globals.css.
+   * OPT-IN, AND TWO CALLERS: the nav pill and the mark at the orb's core,
+   * which Genesis asked to match. Still opt-in rather than default — the same
+   * sheen inside eight division lockups and the footer as well would be a
+   * page that will not sit still, and the two that have it are the two that
+   * ARE the Genesis wordmark rather than a division's. Reduce Motion turns it
+   * off; see .logo-sheen in globals.css.
    */
   animated?: boolean;
   /**

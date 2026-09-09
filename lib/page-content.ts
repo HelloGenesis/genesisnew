@@ -15,7 +15,7 @@ export const ourWork = {
   heading: "Everything",
   headingAccent: "we've made",
   body:
-    "The complete library — reels, films, campaigns and brand work. Filter by division or by format; every piece opens on its own page.",
+    "The complete library of reels, films, campaigns and brand work. Filter by division or by format; every piece opens on its own page.",
 } as const;
 
 /** Sidebar navigation, exactly as listed in the mockup. */
@@ -35,7 +35,7 @@ export const influencerPage = {
     "Tech", "Lifestyle", "Beauty", "Gaming", "Parenting",
   ],
   process: [
-    { title: "Discovery", body: "Brief, audience and channel strategy — before a single creator is approached." },
+    { title: "Discovery", body: "Brief, audience and channel strategy, before a single creator is approached." },
     { title: "Matching", body: "Creators shortlisted from the database against the audience, not the follower count." },
     { title: "Production", body: "Scripting, direction and edit support so the content clears the bar." },
     { title: "Delivery", body: "Publishing, tracking and reporting against the numbers agreed up front." },
@@ -78,7 +78,7 @@ export const careersPage = {
   heading: "Join our talented",
   headingAccent: "team",
   body:
-    "We open roles in batches. Tell us which role you're after and leave a link to your work — we reach out when something matching opens up.",
+    "We open roles in batches. Tell us which role you're after and leave a link to your work. We reach out when something matching opens up.",
   disciplines: [
     "Content production", "Editing & post", "Creative direction",
     "Strategy", "Influencer partnerships", "Design & motion",
@@ -98,13 +98,13 @@ export const contentCreationPage = {
   heading: "Production that holds up",
   headingAccent: "on any feed",
   body:
-    "Creative direction, strategy, scripting, shoot and post — the full pipeline in-house, so a campaign never loses its thread between the idea and the published post.",
+    "Creative direction, strategy, scripting, shoot and post. The full pipeline in-house, so a campaign never loses its thread between the idea and the published post.",
   capabilities: [
     { title: "Creative direction", body: "The idea, and the argument about whether it is the right one." },
     { title: "Strategy", body: "Audience, channel and measurement decided before anything is shot." },
     { title: "Scripting", body: "Concept to board, written for the placement it will actually run in." },
     { title: "Production", body: "Shoot or generation, with the standard set at the top." },
-    { title: "Edit & post", body: "Assembly, grade and sound — where timing decides whether it works." },
+    { title: "Edit & post", body: "Assembly, grade and sound, where timing decides whether it works." },
     { title: "Distribution", body: "Publishing, tracking, and reporting against the numbers agreed up front." },
   ],
   /**
@@ -127,7 +127,7 @@ export const academy = {
   label: "Genesis Academy",
   headingLead: "Coming",
   headingAccent: "soon",
-  title: "Genesis Academy — coming soon",
+  title: "Genesis Academy is coming soon",
   body:
     "Genesis Academy: Empowering students and professionals to build their careers with AI and automation in advertising, real estate, and more.",
 } as const;

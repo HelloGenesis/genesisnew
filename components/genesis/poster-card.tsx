@@ -252,7 +252,7 @@ export function PosterCard({
   return (
     <Link
       href={poster.href}
-      aria-label={`${poster.client ?? poster.title} — ${poster.title}`}
+      aria-label={`${poster.client ?? poster.title}, ${poster.title}`}
       className="shrink-0 rounded-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
     >
       {card}

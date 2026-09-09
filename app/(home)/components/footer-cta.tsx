@@ -48,7 +48,16 @@ export function FooterCta() {
         </Reveal>
 
         {/* The spec asks for the form to sit last, after the pitch. */}
-        <Reveal delay={0.1} className="mt-10 max-w-2xl" id="contact">
+        {/*
+          TWO BLOCKS ON ONE LINE. Genesis asked to see the form that way. It
+          was capped at max-w-2xl, which is 672px — the fields already sit in
+          a two-column grid at sm and up, so at that width each column was
+          about 300px and the pair read as one narrow stack rather than as two
+          blocks. Given the container's full width the same grid becomes what
+          was asked for, and the long fields (the brief, the consent) still
+          span both columns because they are marked `half: false`.
+        */}
+        <Reveal delay={0.1} className="mt-10" id="contact">
           <GenesisForm kind="brand" source="/#contact" />
         </Reveal>
       </div>

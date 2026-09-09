@@ -74,57 +74,54 @@ export function AiContent() {
         variant="scene"
         className="relative left-1/2 mt-12 w-screen -translate-x-1/2 overflow-hidden"
       >
+        {/*
+          GENESIS'S COPY, ABOVE THE ROSTER, in the slot the old "AI Avatars &
+          Realism" heading had. Three parts, in their order: who it is for,
+          the claim, and what the claim means.
+
+          THE GRADIENT GOES ON THE MIDDLE LINE, which is the one that
+          replaces the old heading. Putting it on the first line instead
+          would wear the ramp on a 100-character sentence, and a gradient
+          clipped to that much text stops reading as a colour and starts
+          reading as a printing fault.
+
+          PLAIN EVERYWHERE ELSE, NOT A SECOND GRADIENT. The subtitle here
+          used to run --ramp-avatars-soft, the same ramp desaturated, which
+          on the dark ground reads as grey directly under the bright version
+          of itself. Two gradients stacked is where the block stopped having
+          a hierarchy.
+        */}
         <div className="mx-auto max-w-3xl px-6 text-center">
+          {/*
+            THE HEADLINE IS "AI CONTENT & AVATARS", which Genesis identified
+            as the main line. It wears the AI Lab ramp; the qualification
+            under it is plain, because two gradients stacked is where a block
+            stops having a hierarchy.
+          */}
           <h3
             className="ramp-text text-balance text-h2 font-normal leading-[1.05] tracking-tight sm:text-h1"
             style={{ "--ramp": "var(--ramp-avatars)" } as CSSProperties}
           >
-            {aiContent.avatarsHeading} {aiContent.avatarsAccent}
+            {aiContent.avatarsIntro.heading}
           </h3>
+          <p className="mx-auto mt-5 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+            {aiContent.avatarsIntro.lead}
+          </p>
+
           {/*
-            PLAIN, NOT A SECOND GRADIENT. This ran --ramp-avatars-soft, which
-            is the avatar ramp with the saturation taken out — a muted
-            lavender-to-tan that on the dark ground reads as grey, directly
-            under a heading wearing the bright version of the same gradient.
-            Two gradients stacked is where the block stopped having a
-            hierarchy. The heading keeps the colour; its subtitle is simply
-            legible.
+            The second claim, a step down from the first. It was the h1 here
+            and is now a sub-heading, which is the demotion that lets the line
+            above it read as the section's title.
           */}
-          <p className="mt-4 text-lead leading-relaxed text-bone/85">
-            {aiContent.avatarsBody}
+          <p className="mt-10 text-balance text-h3 font-medium leading-tight tracking-tight text-bone">
+            {aiContent.avatarsIntro.promise}
+          </p>
+          <p className="mt-3 text-body leading-relaxed text-ash sm:text-lead">
+            {aiContent.avatarsIntro.line}
           </p>
         </div>
 
         <AvatarFan avatars={aiContent.avatars} className="mt-10 sm:mt-12" />
-      </Reveal>
-
-      {/*
-        THE SECTION'S COPY, below the roster and above the buttons, where
-        Genesis asked for it. It reads better here than it did in the header:
-        above the fan it was a claim made before anything was shown, and here
-        it is the caption on seven faces the reader has just looked at.
-      */}
-      <Reveal delay={0.05} className="mt-6">
-        <p className="mx-auto max-w-2xl text-pretty text-center text-body leading-relaxed text-ash sm:text-lead">
-          {aiContent.body}
-        </p>
-      </Reveal>
-
-      {/*
-        THE SECOND CLAIM, set as its own small block rather than run into the
-        paragraph above. The two are different promises — what the avatars are,
-        then what the service does month after month — and joined into one
-        paragraph the second disappeared into the first.
-      */}
-      <Reveal delay={0.08} className="mt-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-h3 font-medium leading-tight tracking-tight text-bone">
-            {aiContent.promise.heading}
-          </p>
-          <p className="mt-2 text-body leading-relaxed text-ash">
-            {aiContent.promise.line}
-          </p>
-        </div>
       </Reveal>
 
       {/*
@@ -135,35 +132,41 @@ export function AiContent() {
         argument; the tooling is a detail for the division's own page.
       */}
       {/*
-        AI-POWERED AUTOMATION — the third and largest claim in this section.
+        AI-POWERED AUTOMATION, AS A BENTO CARD WITH EDGES YOU CAN SEE.
 
-        ONE DIAGRAM, NOT TWO. Genesis supplied two references and asked for
-        both; they have since asked for the workflow graph — Brief, Generate,
-        Human review, Adapt, Publish — to come out. So the converging-sources
-        picture stands alone, which is the half that says what the automation
-        is FED, and the copy above it carries the rest.
+        IT WAS FULL BLEED WITH A HAIRLINE TOP AND BOTTOM and Genesis reported
+        the borders as not showing. They were not. `--glass-border` is a 12%
+        white over a near-black ground, which across the whole width of the
+        viewport reads as a faint change of tone rather than as an edge — and
+        with nothing down the sides there were no corners to give the shape
+        away. A band the width of the screen has no edges to see.
 
-        The panel keeps its own ground and border because it is still an
-        exhibit rather than a loose graphic; what it no longer needs is the
-        divider that separated the pair.
+        SO IT IS A CARD AGAIN, which is what "bento" asked for in the first
+        place: held to the page's own measure, rounded, bordered on all four
+        sides, and sitting on --surface-raised so the panel is a step above
+        the page rather than a wash over it. The border is doubled up — the
+        token plus an inset highlight — because one hairline on a dark panel
+        against a dark page is exactly the thing that failed before.
+
+        THE HEADING KEEPS ITS SECTION SIZE. Genesis asked for this to be big
+        and it stays big; what changed is that the big thing now has an
+        outline. The diagram keeps its own generous measure so the labels and
+        the node are read rather than squinted at.
       */}
-      <Reveal delay={0.12} className="mt-16">
-        <div className="mx-auto max-w-3xl text-center">
-          <h3 className="text-balance text-h3 font-medium leading-tight tracking-tight text-bone sm:text-h2">
-            {aiContent.automation.heading}
-          </h3>
-          <p className="mt-4 text-pretty text-body leading-relaxed text-ash sm:text-lead">
-            {aiContent.automation.body}
-          </p>
-        </div>
+      <Reveal delay={0.12} className="mt-20">
+        <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-6 py-14 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10 sm:py-16 lg:py-20">
+          <div className="mx-auto w-full max-w-5xl text-center">
+            <h3 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
+              {aiContent.automation.heading}
+            </h3>
+            <p className="mx-auto mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+              {aiContent.automation.body}
+            </p>
 
-        <div className="glass glass-lit mx-auto mt-10 max-w-3xl overflow-hidden rounded-panel">
-          <figure className="px-4 pb-7 pt-7 sm:px-9 sm:pb-9 sm:pt-9">
-            <AutomationSources />
-            <figcaption className="mt-3 text-center text-small text-ash">
-              {aiContent.automation.sourcesCaption}
-            </figcaption>
-          </figure>
+            <figure className="mx-auto mt-12 max-w-[52rem] sm:mt-16">
+              <AutomationSources />
+            </figure>
+          </div>
         </div>
       </Reveal>
 
@@ -193,7 +196,7 @@ export function AiContent() {
           button gets. It went to /our-work unfiltered, which is "view AI
           content" landing on everything Genesis has ever made.
         */}
-        <GlassButton href="/our-work?filter=AI+Content" variant="glass" arrow>
+        <GlassButton href="/#library" variant="glass" arrow>
           View AI Content
         </GlassButton>
       </Reveal>

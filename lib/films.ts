@@ -1,3 +1,4 @@
+import type { ReelId } from "./work";
 /**
  * The FULL-LENGTH films, as opposed to the four-second previews.
  *
@@ -35,6 +36,6 @@ export const filmsFromDrive = FROM_DRIVE;
  * Returns undefined when Drive is not switched on, which is the caller's cue
  * to fall back to the preview rather than render a broken player.
  */
-export function filmUrl(n: number): string | undefined {
+export function filmUrl(n: ReelId): string | undefined {
   return FROM_DRIVE ? `/api/media/films/${n}.mp4` : undefined;
 }

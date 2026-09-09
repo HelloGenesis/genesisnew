@@ -155,8 +155,8 @@ export function CaseStudies() {
         was a dead end — four posters and no way to read any of them.
       */}
       <Reveal delay={0.1} className="mt-10">
-        <GlassButton href="/case-studies" variant="glass" arrow>
-          Read the case studies
+        <GlassButton href="/#library" variant="glass" arrow>
+          See the work
         </GlassButton>
       </Reveal>
     </SectionShell>

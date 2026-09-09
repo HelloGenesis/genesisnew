@@ -43,7 +43,7 @@ export const hero = {
   // The spec asks for "a good hook" and keeps the form to last. Expertise line
   // is drawn from Section 1's note on where the expertise lies.
   body:
-    "Quality production and edits, creative direction, strategy and scripting — the parts that decide whether content performs. Genesis builds all of it in-house.",
+    "Quality production and edits, creative direction, strategy and scripting. These are the parts that decide whether content performs, and Genesis builds all of it in-house.",
   primaryCta: { label: "Start a project", href: "/#contact" },
   secondaryCta: { label: "See our work", href: "/our-work" },
 } as const;
@@ -67,7 +67,7 @@ export const services = {
   heading: "Four divisions,",
   headingAccent: "one system",
   body:
-    "Genesis is an AI-native culture and growth studio building the future of influence — human creativity, AI generation, creator marketing and performance thinking in one creative system.",
+    "Genesis is an AI-native culture and growth studio building the future of influence. Human creativity, AI generation, creator marketing and performance thinking in one creative system.",
   /*
    * THE FOUR DIVISIONS, named by the brand guidelines rather than by us.
    *
@@ -96,6 +96,20 @@ export const services = {
     {
       title: "Genesis.Influence",
       /*
+       * THE DIVISION'S SERVICES, READ OFF PAGE 3 OF THE CREDENTIALS DECK.
+       *
+       * Verbatim, which is the point: these are the lines Genesis already
+       * sells against in the room, so the site should not paraphrase them
+       * into something adjacent. They are also the answer to what each
+       * division actually DOES, which the tagline gestures at and the body
+       * copy talks around.
+       */
+      services: [
+        "Influencer Marketing",
+        "Bulk Creator Activations",
+        "UGC & Regional Campaigns",
+      ],
+      /*
        * THE SHORT NAME, used where the Genesis wordmark is already in the
        * picture. The divisions board sets the four around the mark and drops
        * the prefix off each one, because the centre is saying it — printing
@@ -106,6 +120,12 @@ export const services = {
          the other two anchor to their homepage section until they do. */
       href: "/#influence",
       /*
+       * PIPES, NOT COMMAS. Genesis asked for the separator in every division
+       * tagline to be a pipe. It is the deck's own convention for these lists
+       * and it reads as a set of capabilities rather than as a sentence that
+       * ran out of room. The ampersand before the last pair stays, which is
+       * how Genesis wrote the example.
+       *
        * READ OFF THE 2026 LOCKUP, verbatim. Each division's artwork carries
        * its tagline burned in under the wordmark, and this string is set
        * beneath the same lockup rendered as live text — so where the two
@@ -114,7 +134,7 @@ export const services = {
        * "Positioning" and the pipe-delimited AI Lab list are not what the
        * new artwork says.
        */
-      caption: "Influencer Marketing, Celeb Partnerships & UGC",
+      caption: "Influencer Marketing | Celeb Partnerships & UGC",
       /*
        * ONE GRADIENT PER DIVISION, from the deck's "What we do" board, where
        * each name is set in its own warm-to-cool ramp rather than in the
@@ -130,32 +150,75 @@ export const services = {
        * why the section is pinned dark, exactly as the board is.
        */
       ramp: "linear-gradient(100deg, #ff8a4c 0%, #f7719e 46%, #c3a2ff 100%)",
-      body: "Creator and celebrity activations across every genre, from a database of over a lakh creators — briefed, matched, run and measured.",
+      body: "Creator and celebrity activations across every genre, from a database of over a lakh creators. Briefed, matched, run and measured.",
     },
     {
       title: "Genesis.BrandDesign",
+      /*
+       * THE DIVISION'S SERVICES, READ OFF PAGE 3 OF THE CREDENTIALS DECK.
+       *
+       * Verbatim, which is the point: these are the lines Genesis already
+       * sells against in the room, so the site should not paraphrase them
+       * into something adjacent. They are also the answer to what each
+       * division actually DOES, which the tagline gestures at and the body
+       * copy talks around.
+       */
+      services: [
+        "Brand Positioning & Guidelines",
+        "Social-First Design & Campaigns",
+        "Pitch Decks & Brand Collaterals",
+      ],
       short: "Brand & Design",
       href: "/#brand-design",
       // See the note on Influence above — read off the 2026 lockup.
-      caption: "Branding Positioning, Design & Collaterals",
+      caption: "Branding Positioning | Design & Collaterals",
       ramp: "linear-gradient(100deg, #f0dcff 0%, #f5a3cd 50%, #ffbe8f 100%)",
       body: "Identity systems, brand guidelines, motion design and the rules that keep a brand recognisable everywhere it appears.",
     },
     {
       title: "Genesis.Studios",
+      /*
+       * THE DIVISION'S SERVICES, READ OFF PAGE 3 OF THE CREDENTIALS DECK.
+       *
+       * Verbatim, which is the point: these are the lines Genesis already
+       * sells against in the room, so the site should not paraphrase them
+       * into something adjacent. They are also the answer to what each
+       * division actually DOES, which the tagline gestures at and the body
+       * copy talks around.
+       */
+      services: [
+        "Strategy, Scripting & Production",
+        "Reels, Podcasts & Product Videos",
+        "Founder-Led Content",
+      ],
       short: "Studios",
       href: "/#studios",
       // The one that already agreed with its lockup, bar capitalisation.
-      caption: "Strategy, Scripting & Content Production",
+      caption: "Strategy | Scripting & Content Production",
       ramp: "linear-gradient(100deg, #ff9147 0%, #ffb057 58%, #ffd27a 100%)",
-      body: "Creative direction, strategy, scripting, production and post — plus the product and interactive work — built to hold up on any feed.",
+      body: "Creative direction, strategy, scripting, production and post, plus the product and interactive work. All of it built to hold up on any feed.",
     },
     {
       title: "Genesis.AILab",
+      /*
+       * THE DIVISION'S SERVICES, READ OFF PAGE 3 OF THE CREDENTIALS DECK.
+       *
+       * Verbatim, which is the point: these are the lines Genesis already
+       * sells against in the room, so the site should not paraphrase them
+       * into something adjacent. They are also the answer to what each
+       * division actually DOES, which the tagline gestures at and the body
+       * copy talks around.
+       */
+      services: [
+        "AI Avatars & Voice Cloning",
+        "Multilingual & Personalised Videos",
+        "Scalable AI Content",
+        "AI-Powered Automations, Games & Apps",
+      ],
       short: "AI Lab",
       href: "/#ai-lab",
       // See the note on Influence above — read off the 2026 lockup.
-      caption: "Avatars, Multilingual Content, Games & Apps",
+      caption: "Avatars | Multilingual Content | Games & Apps",
       ramp: "linear-gradient(100deg, #ff8fb8 0%, #ffa25c 100%)",
       body: "AI avatars and influencers, image and video generation, digital fashion, and the automation that compresses a content workflow from weeks into days.",
     },
@@ -208,66 +271,6 @@ export const caseStudies = {
  *
  * The sectors are the deck's own list, in its own order.
  */
-export const whoWeAre = {
-  label: "Who we are",
-  heading: "An AI-native",
-  headingAccent: "creative company",
-  body:
-    "The market has traditional agencies, social media agencies, influencer agencies and AI agencies. Genesis is a culture and growth studio building the future of influence.",
-  /** The four categories the deck positions Genesis against. */
-  market: [
-    "Traditional agencies",
-    "Social media agencies",
-    "Influencer agencies",
-    "AI agencies",
-  ],
-  ideas: [
-    {
-      title: "Culture First",
-      line: "We build ideas people want to share.",
-    },
-    {
-      title: "AI First",
-      line: "AI isn't software. AI is our creative medium.",
-    },
-    {
-      title: "Execution Wins",
-      line: "Ideas matter. Shipping matters more.",
-    },
-  ],
-  /*
-   * THE SECTORS, AS GENESIS REVISED THEM.
-   *
-   * Twelve became ten. "Finance" and "Health" both came out because BFSI
-   * already covers them — the acronym expands to Banking, Financial Services
-   * and Health Insurance, so the strip was naming two of its own three parts
-   * a second time. "Tech" is written out as Technology.
-   *
-   * `expands` is the acronym's own long form, and it is a separate field
-   * rather than part of the label because the strip is set in letterspaced
-   * uppercase micro type: "BFSI (BANKING, FINANCIAL SERVICES & HEALTH
-   * INSURANCE)" printed there is wider than the other nine put together. It
-   * renders as the <abbr> title instead, so the expansion is available to
-   * anyone who wants it and to a screen reader, without the line becoming
-   * one sector and a paragraph.
-   */
-  sectors: [
-    {
-      label: "BFSI",
-      expands: "Banking, Financial Services & Health Insurance",
-    },
-    { label: "Fashion" },
-    { label: "Beauty" },
-    { label: "Lifestyle" },
-    { label: "Entertainment" },
-    { label: "Food & Beverage" },
-    { label: "Education" },
-    { label: "Travel" },
-    { label: "Technology" },
-    { label: "Real Estate" },
-  ] as ReadonlyArray<{ label: string; expands?: string }>,
-} as const;
-
 // --- AI content -------------------------------------------------------------
 
 // Spec: "AI tools, Image Generations, AI Avatars, Video Generations, AI videos
@@ -277,20 +280,40 @@ export const aiContent = {
   heading: "Speed up the workflow,",
   headingAccent: "not the standard",
   /*
-   * GENESIS'S OWN COPY, verbatim, replacing a description written before they
-   * had one. The line it replaces — "AI tools, image generation, video
-   * generation and a roster of AI avatars…" — was an inventory. This one says
-   * who it is for, which is the part a founder reading it needs.
+   * THE COPY ABOVE THE ROSTER, and all three lines of it are Genesis's own.
+   *
+   * IT MOVED, AND IT REPLACED SOMETHING. This block used to sit BELOW the
+   * avatar fan, under a gradient heading that read "AI Avatars & Realism"
+   * with "AI content that works like magic." beneath it. Genesis supplied
+   * this copy as the replacement for that heading and asked for it above the
+   * avatars, in the same style. So the old heading and its one-liner are
+   * gone, not demoted: there is one piece of copy over the roster now, not
+   * two competing for the same slot.
+   *
+   * THREE PARTS, IN THE ORDER GENESIS WROTE THEM. `lead` says who the
+   * avatars are for, `heading` is the claim that takes the gradient the old
+   * heading had, and `line` is what that claim means in practice. Splitting
+   * them is what lets the middle one carry the ramp while the other two stay
+   * legible body copy; run together as one paragraph the claim disappears
+   * into the qualification around it.
    */
-  body:
-    "AI Content & Avatars tailored for founders, creators, influencers, and artists that look real. For Real!",
-  /*
-   * THE SECOND CLAIM, which the deck sets as its own line and which the
-   * section had nowhere to put. It is the recurring-service half of the
-   * pitch — the roster above is what you get, this is what happens after.
-   */
-  promise: {
-    heading: "One Setup. Real-Time. Every Time",
+  avatarsIntro: {
+    /*
+     * "AI Content & Avatars" IS THE HEADLINE. It was the opening clause of a
+     * single long sentence set at body size, with "One Setup. Real-Time.
+     * Every Time" taking the gradient above the roster. Genesis pointed at
+     * this phrase as the main thing, so it takes the large type and the
+     * division ramp, and the qualification breaks to its own line under it
+     * with a capital T — which is what makes it a standfirst rather than a
+     * sentence that has been cut in half.
+     */
+    heading: "AI Content & Avatars",
+    lead: "Tailored for founders, creators, influencers, and artists that look real. For Real!",
+    /*
+     * The recurring-service claim, now the SECOND heading rather than the
+     * first. It keeps its own line beneath it.
+     */
+    promise: "One Setup. Real-Time. Every Time",
     line: "Automated AI Content for Your Brand and Personal Social Media.",
   },
   /*
@@ -305,8 +328,6 @@ export const aiContent = {
     heading: "AI-Powered Automation",
     body:
       "Discover the unseen opportunities in your startup or business through AI Automation. By automating your workflows, you can simplify your daily business tasks. Let us handle it for you!",
-    /** The caption under the diagram — see AutomationSources. */
-    sourcesCaption: "Everything a campaign already has, in one place.",
   },
   /*
    * THE AVATAR BOARD, from the AI Lab page of the deck.
@@ -325,9 +346,6 @@ export const aiContent = {
    * the brand-work avatar there rather than whoever happened to be listed
    * first.
    */
-  avatarsHeading: "AI Avatars &",
-  avatarsAccent: "Realism",
-  avatarsBody: "AI content that works like magic.",
   /*
     THE PORTRAITS ARE IN. Genesis supplied one card per name at 1080x1920,
     which is why `portrait` is a real path on every entry rather than the
@@ -353,7 +371,7 @@ export const aiContent = {
     { id: "ivaanat", portrait: "/avatars/ivaanat.jpg", name: "Ivaanat", role: "Fashion & Beauty" as string | undefined,
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: [] as string[], stills: [] as string[] },
-    { id: "tanvi", portrait: "/avatars/tanvi.jpg", name: "Tanvi", role: "Head of Creatives" as string | undefined,
+    { id: "tanvi", portrait: "/avatars/tanvi.jpg", name: "Tanvi", role: "Head of Creatives | Genesis" as string | undefined,
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: [] as string[], stills: [] as string[] },
     { id: "jesko", portrait: "/avatars/jesko.jpg", name: "Jesko", role: "DJ | Techno artist",
@@ -413,7 +431,7 @@ export const studios = {
   heading: "Production at",
   headingAccent: "the standard",
   body:
-    "Creative direction, scripting, shoot and post — the whole pipeline in-house, so a campaign never loses its thread between the idea and the published cut.",
+    "Creative direction, scripting, shoot and post. The whole pipeline in-house, so a campaign never loses its thread between the idea and the published cut.",
   /*
    * THE CAPABILITY LIST, REPLACED BY GENESIS'S OWN.
    *
@@ -439,6 +457,33 @@ export const studios = {
     "Post-production",
     "Podcast planning and shoot",
   ],
+  /**
+   * THE PIPELINE, AS GENESIS WROTE IT.
+   *
+   * Supplied with a reference layout: a timeline with a stage at each stop.
+   * The reference gave every stage its own hue — orange, violet, blue, green
+   * — which is four colours that are not in the six Genesis fixed, so the
+   * progression here is carried by the accent and by VALUE instead. See
+   * StudiosPipeline.
+   *
+   * NO DASH IN THE STANDFIRST. Genesis's line was "Strategy, scripting,
+   * production and post — one connected studio system"; they have asked for
+   * dashes out of the copy, so it is a colon, which is what the sentence was
+   * doing anyway.
+   */
+  pipeline: {
+    heading: "From brief to",
+    headingAccent: "final cut",
+    lead:
+      "Strategy, scripting, production and post: one connected studio system built for every screen.",
+    stages: [
+      { n: "01", name: "Brief", body: "Goal, audience, format" },
+      { n: "02", name: "Script", body: "Concept, script, storyboard" },
+      { n: "03", name: "Shoot", body: "Direction, set, performance" },
+      { n: "04", name: "Edit", body: "Cut, colour, sound, motion" },
+      { n: "05", name: "Deliver", body: "Every platform. Ready to play." },
+    ],
+  },
   /**
    * Which transcoded previews the wall plays. Sixteen of the thirty-two, in
    * two rows — enough to read as a body of work without putting every poster
@@ -555,10 +600,13 @@ export const influencer = {
   heading: "Influencer marketing,",
   headingAccent: "UGC & celebrity",
   body:
-    "From discovery to delivery, we connect brands with the right voices — creators across every genre, and celebrity collaborations at the top end.",
+    "From discovery to delivery, we connect brands with the right voices. Creators across every genre, and celebrity collaborations at the top end.",
   databaseStat: {
     ...proof.creatorDatabase,
-    label: "Influencer database",
+    /* NO LABEL. Genesis asked for the "Influencer database" caption gone
+       from this card on both mobile and desktop; the figure and the line
+       under it already say what it is. */
+    label: "",
     description: "A curated network of creators across every niche and platform.",
   },
   /**
@@ -654,7 +702,7 @@ export const branding = {
    * own tagline says it does.
    */
   body:
-    "Brand guidelines, design, motion videos and brand collaterals — built for the sixth-second crop, not just the pitch deck.",
+    "Brand guidelines, design, motion videos and brand collaterals, built for the sixth-second crop and not just the pitch deck.",
   work: [
     /*
       TRIPGATE'S LOCKED PALETTE, read off Genesis's own guidelines slide —
@@ -708,7 +756,9 @@ export const clients = {
    * what the heading now says and carries the sectors instead, which is the
    * one thing twenty-nine marks cannot tell you on their own.
    */
-  label: "Trusted by",
+  /* NO EYEBROW. Genesis asked for "Trusted by" off this section: the
+     heading already says "Our clients" and the marks say the rest. */
+  label: "",
   heading: "Our",
   headingAccent: "clients",
   body: "Thirty brands across banking, hospitality, FMCG, media, real estate and education.",
@@ -780,19 +830,67 @@ export const clients = {
    * TODO(assets): dark-ink versions of those seven would let every mark run
    * untouched. Dimming a client's colour is a compromise, not a preference.
    */
+  /*
+   * THE SECTORS, AND THEY LIVE HERE NOW.
+   *
+   * They were part of the positioning section, which Genesis has asked to be
+   * removed entirely — except for this line, which they asked to keep and to
+   * move under the client logos. It belongs there better than it did where
+   * it was: a list of the industries Genesis works in is a caption on thirty
+   * client marks, not a footnote to a philosophy.
+   *
+   * Twelve became ten. "Finance" and "Health" both came out because BFSI
+   * already covers them — the acronym expands to Banking, Financial Services
+   * and Health Insurance, so the strip was naming two of its own three parts
+   * a second time. "Tech" is written out as Technology.
+   *
+   * `expands` is the acronym's own long form, and it is a separate field
+   * rather than part of the label because the strip is set in letterspaced
+   * uppercase micro type: "BFSI (BANKING, FINANCIAL SERVICES & HEALTH
+   * INSURANCE)" printed there is wider than the other nine put together. It
+   * renders as the <abbr> title instead, so the expansion is available to
+   * anyone who wants it and to a screen reader, without the line becoming
+   * one sector and a paragraph.
+   */
+  sectors: [
+    {
+      label: "BFSI",
+      expands: "Banking, Financial Services & Health Insurance",
+    },
+    { label: "Fashion" },
+    { label: "Beauty" },
+    { label: "Lifestyle" },
+    { label: "Entertainment" },
+    { label: "Food & Beverage" },
+    { label: "Education" },
+    { label: "Travel" },
+    { label: "Technology" },
+    { label: "Real Estate" },
+  ] as ReadonlyArray<{ label: string; expands?: string }>,
+
   logos: [
     { name: "Aditya Birla Capital", file: "aditya-birla-capital", treat: "invert", ratio: 2.55 },
     { name: "Mahindra Finance", file: "mahindra-finance", treat: "lift", ratio: 12.63 },
-    { name: "HDFC Bank", file: "hdfc-bank", treat: "lift", ratio: 5.93 },
+    { name: "HDFC Bank", file: "hdfc-bank", treat: "asis", ratio: 5.7 },
     { name: "IDBI Bank", file: "idbi-bank", treat: "lift", ratio: 5.93 },
     { name: "House of Hiranandani", file: "house-of-hiranandani", treat: "lift", ratio: 2.02 },
     { name: "The WorldGrad", file: "the-worldgrad", treat: "lift", ratio: 3.24 },
     { name: "The Lalit Mumbai", file: "the-lalit-mumbai", treat: "lift", ratio: 1.22 },
     { name: "Social Samosa", file: "social-samosa", treat: "lift", ratio: 1.97 },
-    { name: "Four Points", file: "four-points", treat: "lift", ratio: 1.0 },
+    { name: "Four Points", file: "four-points", treat: "asis", ratio: 1.47 },
     { name: "Someplace Else", file: "someplace-else", treat: "lift", ratio: 6.32 },
     { name: "Matahaari", file: "matahaari", treat: "lift", ratio: 1.76 },
-    { name: "Grand Hyatt", file: "grand-hyatt", treat: "lift", ratio: 4.14 },
+    /*
+      THESE THREE HAD THEIR PLAQUES KEYED OUT — see scripts/key-client-plaques.
+      They shipped as the brand's coloured block with the mark reversed out of
+      it (navy, blue and maroon), and since the wall greyscales everything,
+      those blocks flattened to exactly the grey rectangle Genesis asked to be
+      rid of. What is left is white ink on transparency, so they take `asis`:
+      the artwork is already light and `lift`'s brightness would only blow it
+      out. The ratios moved because cropping to the ink changed their shape —
+      Four Points was a square plaque and is a wide wordmark now.
+    */
+    { name: "Grand Hyatt", file: "grand-hyatt", treat: "asis", ratio: 5.68 },
     { name: "MNR", file: "mnr", treat: "invert", ratio: 1.4 },
     { name: "BNI", file: "bni", treat: "lift", ratio: 2.55 },
     { name: "Imagicaa", file: "imagicaa", treat: "lift", ratio: 2.39 },
@@ -810,7 +908,15 @@ export const clients = {
     { name: "Kamdhenu", file: "kamdhenu", treat: "lift", ratio: 1.56 },
     { name: "Aditya Birla Sun Life Insurance", file: "aditya-birla-sun-life", treat: "invert", ratio: 2.54 },
     { name: "TripGate", file: "tripgate", treat: "invert", ratio: 3.24 },
-    { name: "SiNet", file: "sinet", treat: "invert", ratio: 1.09 },
+    /*
+      SINET WAS "invert" AND THAT IS WHAT PUT A BLACK SQUARE ON THE PAGE. Its
+      export was a fully opaque file — dark ink on a white plaque, 100% of the
+      frame — so inverting it to lift the ink on a dark page also flipped the
+      white ground to black, which is the block Genesis asked to be rid of.
+      The file has since had that ground keyed out (13% of it is ink now), so
+      it takes the default lift like the rest of the dark-on-transparent set.
+    */
+    { name: "SiNet", file: "sinet", treat: "lift", ratio: 1.09 },
   ],
 } as const;
 
@@ -860,7 +966,7 @@ export const testimonials = {
     },
     {
       quote:
-        "The creators they put us in front of actually matched the brief. Reach was the easy part — the fit is what moved the numbers.",
+        "The creators they put us in front of actually matched the brief. Reach was the easy part. The fit is what moved the numbers.",
       name: "Amey Khopte",
       role: "Aditya Birla Sun Life Insurance",
       approved: false,
@@ -913,7 +1019,7 @@ export const insider = {
   heading: "The workspace",
   headingAccent: "behind the work",
   body:
-    "Clients, projects, content pipelines and invoicing — the internal operating system the team runs on. Access is invite-only.",
+    "Clients, projects, content pipelines and invoicing. The internal operating system the team runs on, and access is invite-only.",
   cta: { label: "Sign in to Insider", href: "/insider" },
 } as const;
 

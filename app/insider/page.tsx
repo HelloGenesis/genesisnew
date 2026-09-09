@@ -131,7 +131,7 @@ export default async function InsiderPage() {
                       <td className="py-3 text-bone">{submission.name}</td>
                       <td className="py-3 text-ash">{submission.email}</td>
                       <td className="py-3 text-ash">{submission.type}</td>
-                      <td className="py-3 text-faint">{submission.source ?? "—"}</td>
+                      <td className="py-3 text-faint">{submission.source ?? "not set"}</td>
                       <td className="py-3 text-faint">
                         {submission.createdAt.toISOString().slice(0, 10)}
                       </td>

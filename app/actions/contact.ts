@@ -77,7 +77,7 @@ export async function submitContactForm(
 
   // Silently accept honeypot hits: telling a bot it failed only helps it.
   if (data.website) {
-    return { status: "success", message: "Thanks — we'll be in touch." };
+    return { status: "success", message: "Thanks. We'll be in touch." };
   }
 
   const headerList = await headers();
@@ -134,7 +134,7 @@ export async function submitContactForm(
           message:
             data.type === "CAREERS_WAITLIST"
               ? "You're on the list. We'll be in touch when a matching role opens."
-              : "Thanks — we'll be in touch shortly.",
+              : "Thanks. We'll be in touch shortly.",
         }
       : {
           status: "error",
@@ -171,7 +171,7 @@ export async function submitContactForm(
       message:
         data.type === "CAREERS_WAITLIST"
           ? "You're on the list. We'll be in touch when a matching role opens."
-          : "Thanks — we'll be in touch shortly.",
+          : "Thanks. We'll be in touch shortly.",
     };
   } catch {
     /*
@@ -181,7 +181,7 @@ export async function submitContactForm(
       database internals to a public form either way.
     */
     return sheeted
-      ? { status: "success", message: "Thanks — we'll be in touch shortly." }
+      ? { status: "success", message: "Thanks. We'll be in touch shortly." }
       : {
           status: "error",
           message: "Something went wrong saving that. Please try again.",

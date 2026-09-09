@@ -134,7 +134,7 @@ export function WorkTile({
         ) : item.art ? (
           <Image
             src={item.art}
-            alt={`${item.client} — ${item.title}`}
+            alt={`${item.client}, ${item.title}`}
             fill
             // Follows the column count on the grid: four on desktop, three on
             // tablet, two on a phone. Rails cap out around 320px.

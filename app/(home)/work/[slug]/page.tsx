@@ -29,7 +29,7 @@ export async function generateMetadata({
   const item = findWork(slug);
   if (!item) return {};
 
-  const title = `${item.client} — ${item.title}`;
+  const title = `${item.client} · ${item.title}`;
   return {
     title,
     description: `${item.vertical} · ${item.format} for ${item.client}, by ${siteConfig.name}.`,

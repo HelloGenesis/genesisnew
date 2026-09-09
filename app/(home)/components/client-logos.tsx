@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { LogoMarquee } from "@/components/genesis/logo-marquee";
+import { Reveal } from "@/components/genesis/reveal";
 import { clients } from "@/lib/home-content";
 import { cn } from "@/lib/utils";
 import { SectionShell } from "./section-shell";
@@ -127,6 +128,7 @@ export function ClientLogos() {
       origin="center"
       intensity={0.14}
     >
+
       {/*
         FULL-BLEED. A marquee that stops at the container's edge has 144px of
         empty page beyond its own fade on a large display, which reads as a
@@ -151,6 +153,46 @@ export function ClientLogos() {
           />
         ))}
       </div>
+
+      {/*
+        THE SECTORS, UNDER THE MARKS. Genesis removed the positioning section
+        this line used to live in and asked for it kept with the client wall.
+        It sat above the rail for one round and they have asked for it back
+        underneath: logos first, copy after. The marks are the evidence and
+        this is the caption on them, and a caption goes below the picture.
+
+        Set at the wall's own weight, not louder. It is the same micro-label
+        it always was; what changed is what it is a caption FOR.
+      */}
+      <Reveal delay={0.1} className="mt-10">
+        <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+          {clients.sectors.map((sector, index) => (
+            <li key={sector.label} className="flex items-center gap-3">
+              {/*
+                An <abbr> only where there is something to expand. Wrapping
+                every sector in one would announce "abbreviation" before
+                "Fashion" to a screen reader, which is a worse line than the
+                plain word.
+              */}
+              {sector.expands ? (
+                <abbr
+                  title={sector.expands}
+                  className="micro-label !text-faint no-underline"
+                >
+                  {sector.label}
+                </abbr>
+              ) : (
+                <span className="micro-label !text-faint">{sector.label}</span>
+              )}
+              {index < clients.sectors.length - 1 && (
+                <span aria-hidden className="text-brand">
+                  ·
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </Reveal>
     </SectionShell>
   );
 }

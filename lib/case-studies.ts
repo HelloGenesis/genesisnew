@@ -133,5 +133,5 @@ export const caseStudiesPage = {
   heading: "Work that",
   headingAccent: "moved a number",
   body:
-    "Not a gallery — the problem, what we decided to do about it, and what changed. Every study here ends in a number the client agreed to.",
+    "Not a gallery. The problem, what we decided to do about it, and what changed. Every study here ends in a number the client agreed to.",
 } as const;

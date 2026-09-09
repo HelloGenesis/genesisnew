@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
-import { GenesisMark } from "./genesis-mark";
+import { GenesisMarkMotion } from "./genesis-mark-motion";
 import { homeHref, navItems, primaryCta } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
@@ -141,10 +141,15 @@ export function GlassNav() {
         <Link
           href={homeHref}
           className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-          aria-label={`${"Genesis Media"} — back to the Brain`}
+          aria-label={`${"Genesis Media"}, back to the Brain`}
         >
-          {/* The one animated instance of the mark; see GenesisMark. */}
-          <GenesisMark animated />
+          {/*
+            THE ANIMATED LOCKUP. Genesis supplied footage for this slot and
+            asked for it to run here. It replaces the sheen that used to
+            sweep the still mark; see GenesisMarkMotion for the crop, the
+            two blend modes and the Reduce Motion still.
+          */}
+          <GenesisMarkMotion />
         </Link>
 
         {/*
@@ -158,7 +163,34 @@ export function GlassNav() {
           Five short ones measure roughly 500px, so the full bar comes back at
           lg with room to spare.
         */}
-        <ul className="ml-2 hidden flex-1 items-center gap-0.5 lg:flex">
+        {/*
+          CENTRED IN THE SPACE BETWEEN THE LOCKUP AND THE ACTIONS, which is
+          what makes the bar read as even.
+
+          IT WAS LEFT-ALIGNED AND THAT IS WHAT LOOKED WRONG. Measured on a
+          1512 display: the five links sat 24px from the lockup and 231px from
+          the theme toggle. Their spacing among themselves was already even —
+          2px of gap either side of 10px of link padding, so 22px between one
+          word and the next — but a block with a sliver on one side and a void
+          ten times bigger on the other does not read as aligned to anything.
+          It reads as floating.
+
+          THE ANIMATED LOCKUP MADE IT WORSE, and this is the part that is not
+          obvious from the CSS. That canvas is 191px wide but "GENESIS." alone
+          is about 76 of them: the rest is deliberately empty, reserved for
+          the division name that animates in and out (see CSS_HEIGHT in
+          GenesisMarkMotion for why the box has to be that shape). So the gap
+          a visitor actually SEES between the wordmark and "Work" is 24px when
+          "Brand & Design" is showing and about 140px when nothing is — the
+          left-hand gap pulses while the right-hand void never moves.
+
+          `justify-center` on the flex-1 list splits the leftover space evenly
+          instead, so the gutters match by construction and stay matched as
+          the lockup animates and at every width the full bar is shown. The
+          bar becomes the conventional three-part header it always looked like
+          it was meant to be: mark left, links centre, actions right.
+        */}
+        <ul className="hidden flex-1 items-center justify-center gap-1 lg:flex">
           {navItems.map((item) => (
             <li key={item.label}>
               <Link href={item.href} className={NAV_LINK}>

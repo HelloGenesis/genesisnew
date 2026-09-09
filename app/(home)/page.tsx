@@ -7,15 +7,13 @@ import { CaseStudies } from "./components/case-studies";
 import { ClientLogos } from "./components/client-logos";
 import { FooterCta } from "./components/footer-cta";
 import { InfluencerMarketing } from "./components/influencer-marketing";
+import { Portfolio } from "./components/portfolio";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
-import { WorkLibrary } from "./components/work-library";
-import { Testimonials } from "./components/testimonials";
-import { WhoWeAre } from "./components/who-we-are";
 
 export const metadata: Metadata = {
   title: {
-    absolute: `${siteConfig.name} — ${siteConfig.tagline}`,
+    absolute: `${siteConfig.name} · ${siteConfig.tagline}`,
   },
   description: siteConfig.description,
 };
@@ -63,44 +61,43 @@ export default function HomePage() {
       {/* 01 — the Brain. Four verticals, one system, and the way in. */}
       <Services />
 
-      {/* 02 — proof: who Genesis has done it for. */}
+      {/*
+        02-03 — WHO THE WORK WAS FOR, DIRECTLY UNDER THE ORB.
+
+        Genesis has given the page's running order and the client wall is
+        second in it. That is the credential, and a credential is worth
+        nothing on screen seven: a visitor who has just met a diagram of four
+        divisions wants to know whether anyone has actually hired them before
+        they read another word. The sector strip leads and the marks follow,
+        so the categories are a key to the rail rather than a footnote to it.
+      */}
       <ClientLogos />
 
-      {/* 03-06 — the four verticals, in the brief's order. */}
+      {/*
+        04 — WORK THAT MOVED A NUMBER. The strongest thing the page has to
+        say, and it sits directly above the divisions: the result first, then
+        the four explanations of how it was got.
+      */}
+      <CaseStudies />
+
+      {/* 05-08 — the four verticals, in the brief's order. AI Lab carries the
+          automation picture inside its own block. */}
       <InfluencerMarketing />
       <Studios />
       <AiContent />
       <BrandingDesign />
 
       {/*
-        07 — THE LIBRARY, and the only browse on the page. Genesis counted the
-        work three times over: a poster rail at the top under "Selected work",
-        the Studios reel wall, and this grid between Studios and AI Lab. Three
-        answers to "show me what you've made", two of them trailers for each
-        other.
+        09 — THE PORTFOLIO, once every division has had its say.
 
-        Two now, with different jobs. The reel wall inside Studios is that
-        division showing its own footage, and its button sends you here rather
-        than off to another page. This is the browse: everything, filterable,
-        and placed after all four verticals so a visitor has met the whole
-        ecosystem before being handed the catalogue. The rail that used to open
-        the page is gone outright — it was the same catalogue, four cards
-        shorter.
+        It was merged into the client wall for a round. Genesis's order splits
+        them again, and at these two depths that is right: the wall answers
+        "should I keep reading" and the grid answers "show me everything",
+        which only lands after a visitor knows what the four divisions are.
       */}
-      <WorkLibrary />
+      <Portfolio />
 
-      {/*
-        Positioning. This used to be half of a pair — "who we are" beside "how
-        we got here" — and the note here said the journey was easy to cut if
-        the answer was still cut. It was: Genesis removed it. What is left is
-        the deck's own positioning page, which they asked for, standing on its
-        own between the library and the case studies.
-      */}
-      <WhoWeAre />
-
-      {/* 09-11 — the strategic case, the client's voice, then the ask. */}
-      <CaseStudies />
-      <Testimonials />
+      {/* 10 — let's build something iconic. */}
       <FooterCta />
     </main>
   );

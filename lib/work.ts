@@ -101,6 +101,9 @@ export type Vertical = (typeof VERTICALS)[number];
 
 export type WorkResult = { label: string; value: string };
 
+/** A clip id: a number from the first Drive folder, or a name slug from the portfolio one. */
+export type ReelId = number | string;
+
 export type WorkItem = {
   /** URL segment. Permanent — changing it breaks every shared link. */
   slug: string;
@@ -125,20 +128,26 @@ export type WorkItem = {
   clip?: string;
   poster?: string;
   /**
-   * The clips in Genesis's Drive folder that belong to this piece, by number.
+   * The clips in Genesis's Drive folder that belong to this piece.
    *
-   * ONE NUMBER ADDRESSES THREE FILES, because the numbering is identical in
-   * all three places: `/work/clips/<n>.mp4` is the 4-second preview,
-   * `/work/posters/<n>.jpg` is its frame, and `<n>.mp4` in the Drive folder is
-   * the master. Storing paths instead would be three strings per clip that can
-   * disagree with each other, and there are thirty-two of them.
+   * ONE ID ADDRESSES THREE FILES, because the naming is identical in all
+   * three places: `/work/clips/<id>.mp4` is the 4-second preview,
+   * `/work/posters/<id>.jpg` is its frame, and the Drive holds the master.
+   * Storing paths instead would be three strings per clip that can disagree
+   * with each other, and there are seventy of them.
+   *
+   * NUMBERS OR NAMES. The first folder Genesis shared was 1.mp4..42.mp4, so
+   * these were numbers. The portfolio folder is named work — "ABHI KA
+   * STAR.mp4" — which the ingest slugs to `studios-abhi-ka-star`, keeping the
+   * division it came from in the id. Both kinds address files the same way,
+   * so the type widened rather than the scheme changing.
    *
    * THE FIRST ONE IS THE TILE. `clip`, `poster` and `art` are all derived from
    * `reel[0]` below unless a piece sets them itself, which is what turns the
    * artwork-less placeholder tiles into real footage without touching a
    * component.
    */
-  reel?: number[];
+  reel?: ReelId[];
   /** Shown in the homepage Work section. */
   featured?: boolean;
 
@@ -190,7 +199,30 @@ const catalogue: WorkItem[] = [
     format: "Influencer Campaigns",
     tags: ["BFSI"],
     featured: true,
-    reel: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 29, 30, 31],
+    /*
+      SPLIT AT 28, WHICH IS WHERE THE DIVISIONS DIVIDE. This reel used to run
+      [1..15, 29, 30, 31] and carry one vertical for all of it. Genesis's Drive
+      puts 1..28 under Influence and 29..32 under AI Lab, so those last three
+      were a different division's work filed under this one's byline — and
+      because a piece has exactly one `vertical`, no amount of tagging here
+      could have made both true. They are their own entry below.
+    */
+    reel: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  },
+  {
+    /*
+      THE SAME CLIENT, THE OTHER DIVISION. Clips 29, 30 and 31 sit in the AI
+      Lab folder, so this is Aditya Birla's AI work rather than its creator
+      campaign. Separate entry rather than a tag, because `vertical` is what
+      the portfolio filters on and one row cannot answer to two.
+    */
+    slug: "aditya-birla-capital-ai-content",
+    client: "Aditya Birla Capital Health Insurance",
+    title: "AI Content",
+    vertical: "AI Labs",
+    format: "Reels",
+    tags: ["BFSI"],
+    reel: [29, 30, 31],
   },
   {
     slug: "absli-brand-performance",
@@ -207,6 +239,13 @@ const catalogue: WorkItem[] = [
     vertical: "Studios",
     format: "User-Generated Content (UGC)",
     tags: ["BFSI"],
+    /*
+      IT HAD NO FOOTAGE UNTIL NOW. This entry existed on a client name alone
+      and rendered a typographic placeholder. The portfolio Drive named two
+      files for it outright — "HDFC x ABHI_SAMPOORNA2.0" and "With HDFC
+      Slide" — so it has a tile like everything else.
+    */
+    reel: ["studios-hdfc-x-abhi-sampoorna2-0", "studios-with-hdfc-slide"],
   },
 
   /*
@@ -214,19 +253,30 @@ const catalogue: WorkItem[] = [
    * the Studios reel wall, but with no entry here, so nothing in the portfolio
    * knew they existed.
    *
-   * TODO(content): THE VERTICAL AND FORMAT ARE MY GUESS, not Genesis's. The
-   * mapping I was given is client names against clip numbers and nothing else,
-   * and all thirty-two are 1080x1920 social cuts, so "Reels" is the honest
-   * read of the FILE. Which division ran each account is not something the
-   * footage can tell me — Studios is the safer default because it claims
-   * production rather than a creator partnership I cannot verify. Correct any
-   * of these and the shelves re-sort themselves.
+   * THE VERTICALS ARE GENESIS'S NOW, NOT A GUESS. This block used to carry a
+   * TODO saying Studios was a safe default because nothing in a 1080x1920
+   * social cut tells you which division ran the account. Genesis has since
+   * shared the portfolio Drive sorted into three folders — Influence, Studios
+   * and AI Lab — and that is exactly the missing mapping:
+   *
+   *     Influence  1.mp4 .. 28.mp4
+   *     AI Lab     29.mp4 .. 32.mp4  (plus its own named work)
+   *
+   * VERIFIED, NOT ASSUMED, because a coincidence of numbering would have been
+   * an easy way to mis-file the whole catalogue. Every numbered master was
+   * re-transcoded from the new folder and compared against the poster already
+   * in the repo: mean absolute luma difference at 8x8 was 0 for every sample,
+   * so these are the same files, now grouped by the division that made them.
+   *
+   * So the four below move to Influence, and House of Hiranandani — whose one
+   * clip is 32 — moves to AI Labs. `format` is untouched: the folder says who
+   * made a piece, not what shape it is.
    */
   {
     slug: "the-worldgrad-study-abroad",
     client: "The WorldGrad",
     title: "Study Abroad Content",
-    vertical: "Studios",
+    vertical: "Influence",
     format: "Reels",
     reel: [21, 24],
     featured: true,
@@ -235,7 +285,7 @@ const catalogue: WorkItem[] = [
     slug: "foy-social-content",
     client: "FOY",
     title: "Social Content",
-    vertical: "Studios",
+    vertical: "Influence",
     format: "Reels",
     reel: [22, 23, 25],
     featured: true,
@@ -244,7 +294,7 @@ const catalogue: WorkItem[] = [
     slug: "loreal-hair-care",
     client: "L'Oreal",
     title: "Hair Care Content",
-    vertical: "Studios",
+    vertical: "Influence",
     format: "Reels",
     reel: [27, 28],
     featured: true,
@@ -277,7 +327,7 @@ const catalogue: WorkItem[] = [
     slug: "ht-brunch-content",
     client: "HT Brunch",
     title: "Editorial Content",
-    vertical: "Studios",
+    vertical: "Influence",
     format: "Reels",
     reel: [26],
     featured: true,
@@ -286,12 +336,159 @@ const catalogue: WorkItem[] = [
     slug: "house-of-hiranandani-content",
     client: "House of Hiranandani",
     title: "Brand Content",
-    vertical: "Studios",
+    vertical: "AI Labs",
     format: "Reels",
     tags: ["Real Estate"],
     reel: [32],
     featured: true,
   },
+
+  /*
+   * ---------------------------------------------------------------------
+   * THE PORTFOLIO DRIVE, September 2026.
+   *
+   * Genesis shared a second folder sorted into Influence / Studios / AI Lab.
+   * Its Influence and AI Lab halves were the clips already here, which is
+   * what settled the verticals above; its Studios half is twenty-six pieces
+   * that had never reached the site, plus three more under AI Lab.
+   *
+   * HOW THE CLIENTS BELOW WERE DECIDED, because it is not all the same
+   * confidence and the difference should be visible rather than buried:
+   *
+   *   NAMED BY THE FILE. "ABHI KA STAR", "Mahindra Cut_44", "With HDFC
+   *     Slide", "Women's Day | ABHI", "Mr. Mayank Bathwal CEO Aditya Birla
+   *     Health Insurance" — the client is written into the filename, so these
+   *     are read rather than inferred. Activ Travel and Activ Yuva are ABHI
+   *     product lines, and "100% health and 100% health insurance" is ABHI's
+   *     own line, so those go the same way.
+   *
+   *   FORMAT READ FROM THE FILE, not guessed. Portrait cuts are Reels, the
+   *     landscape ones are films, the two Activ Travel plan pieces call
+   *     themselves explainers and the two event pieces call themselves an
+   *     aftermovie and a year. Measured with ffprobe rather than assumed.
+   *
+   *   TODO(content): ELEVEN PIECES NAME NOTHING. "1x1", "b1", "ddddd",
+   *     "dfv", "video_001", "video_02", "wo vo sales pro", "Friends Final",
+   *     "6) Common Mistakes", "7) Draft6_Income Protect" and "1) Draft
+   *     9_EAT MOVE HEAL" carry no client anywhere in them. They are in the
+   *     portfolio under Genesis Studios' own byline rather than attributed to
+   *     a client I would be inventing. Name any of them and it moves.
+   *
+   *   TODO(content): THE EVENT FILMS. UMANG 2024 and Utsav are event names,
+   *     not clients. Whose events they were is not in the file.
+   * ---------------------------------------------------------------------
+   */
+  {
+    slug: "abhi-health-content",
+    client: "Aditya Birla Health Insurance",
+    title: "Health & Awareness Content",
+    vertical: "Studios",
+    format: "Reels",
+    tags: ["BFSI"],
+    featured: true,
+    reel: [
+      "studios-abhi-ka-star",
+      "studios-final-menopause-abhi-02",
+      "studios-women-s-day-abhi",
+      "studios-dha-1",
+      "studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance",
+    ],
+  },
+  {
+    slug: "abhi-activ-travel-explainers",
+    client: "Aditya Birla Health Insurance",
+    title: "Activ Travel Plan Explainers",
+    vertical: "Studios",
+    format: "Product Explainers",
+    tags: ["BFSI"],
+    reel: [
+      "studios-activ-travel-leisure-plan-finalhd-1",
+      "studios-activ-travel-senior-plan-02",
+    ],
+  },
+  {
+    slug: "abhi-leadership-films",
+    client: "Aditya Birla Health Insurance",
+    title: "Leadership & Internal Films",
+    vertical: "Studios",
+    format: "Launch Films",
+    tags: ["BFSI"],
+    reel: [
+      "studios-mr-mayank-bathwal-ceo-aditya-birla-health-insurance",
+      "studios-abhi-ex-coms",
+    ],
+  },
+  {
+    slug: "mahindra-finance-brand-film",
+    client: "Mahindra Finance",
+    title: "Brand Film",
+    vertical: "Studios",
+    format: "Launch Films",
+    tags: ["BFSI"],
+    reel: ["studios-mahindra-cut-44"],
+  },
+  {
+    slug: "tripgate-travel-content",
+    client: "TripGate",
+    title: "Travel Content",
+    vertical: "Studios",
+    format: "Reels",
+    reel: ["studios-tripagetet"],
+  },
+  {
+    slug: "genesis-event-films",
+    client: "Genesis Studios",
+    title: "Event Films",
+    vertical: "Studios",
+    format: "Event Shoots",
+    reel: ["studios-umang-2024", "studios-utsav-aftermovie"],
+  },
+  {
+    /*
+      The eleven unnamed pieces, under Genesis Studios' own byline. See the
+      TODO above: every one of them is real work and belongs in the portfolio,
+      and none of them says who it was for.
+    */
+    slug: "studios-selected-production",
+    client: "Genesis Studios",
+    title: "Selected Production Work",
+    vertical: "Studios",
+    format: "Reels",
+    reel: [
+      "studios-1-draft-9-eat-move-heal",
+      "studios-6-common-mistakes",
+      "studios-7-draft6-income-protect",
+      "studios-friends-final-1",
+      "studios-wo-vo-sales-pro",
+      "studios-1x1",
+      "studios-b1",
+      "studios-dfv",
+      "studios-ddddd",
+      "studios-video-001",
+      "studios-video-02",
+    ],
+  },
+  {
+    slug: "abhi-activ-yuva-ai-explainers",
+    client: "Aditya Birla Health Insurance",
+    title: "Activ Yuva Explainers",
+    vertical: "AI Labs",
+    format: "Product Explainers",
+    tags: ["BFSI"],
+    reel: [
+      "ai-lab-1-2-9x16-main-product-explainer-activ-yuva",
+      "ai-lab-2-1-9x16-health-returns-activ-yuva",
+    ],
+  },
+  {
+    slug: "sinet-ai-film",
+    client: "SiNet",
+    title: "AI Brand Film",
+    vertical: "AI Labs",
+    format: "AI Content",
+    reel: ["ai-lab-sinet-english-v004"],
+  },
+
 ];
 
 /**
@@ -317,7 +514,36 @@ const catalogue: WorkItem[] = [
  * their subject in the filename, and throwing that away to renumber them would
  * be discarding the only description anyone has written of these ten.
  */
-export const CLIP_LABELS: Record<number, string> = {
+export const CLIP_LABELS: Record<ReelId, string> = {
+  /*
+    THE PORTFOLIO DRIVE'S FILES CARRY REAL NAMES, unlike the first folder's
+    numbers, so the ones that describe their own contents are captioned here.
+    Only those: "ddddd" and "b1" are filenames, not titles, and a caption
+    repeating them is worse than none.
+  */
+  "studios-abhi-ka-star": "ABHI Ka Star",
+  "studios-final-menopause-abhi-02": "Menopause",
+  "studios-women-s-day-abhi": "Women's Day",
+  "studios-dha-1": "DHA",
+  "studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance":
+    "100% Health & 100% Health Insurance",
+  "studios-activ-travel-leisure-plan-finalhd-1": "Activ Travel — Leisure Plan",
+  "studios-activ-travel-senior-plan-02": "Activ Travel — Senior Plan",
+  "studios-mr-mayank-bathwal-ceo-aditya-birla-health-insurance":
+    "Mayank Bathwal, CEO",
+  "studios-abhi-ex-coms": "Executive Communications",
+  "studios-hdfc-x-abhi-sampoorna2-0": "HDFC x ABHI Sampoorna 2.0",
+  "studios-with-hdfc-slide": "With HDFC",
+  "studios-umang-2024": "UMANG 2024",
+  "studios-utsav-aftermovie": "Utsav Aftermovie",
+  "studios-1-draft-9-eat-move-heal": "Eat Move Heal",
+  "studios-6-common-mistakes": "Common Mistakes",
+  "studios-7-draft6-income-protect": "Income Protect",
+  "studios-friends-final-1": "Friends",
+  "ai-lab-1-2-9x16-main-product-explainer-activ-yuva":
+    "Activ Yuva — Product Explainer",
+  "ai-lab-2-1-9x16-health-returns-activ-yuva": "Activ Yuva — Health Returns",
+  "ai-lab-sinet-english-v004": "SiNet (English)",
   33: "Panvel Hospital Plot",
   34: "Ghatkopar Godown",
   35: "Chembur Commercial Office",
@@ -330,9 +556,9 @@ export const CLIP_LABELS: Record<number, string> = {
   42: "Sarda Village",
 };
 
-/** Where a numbered clip and its frame live. The numbering mirrors Drive. */
-export const reelClip = (n: number) => `/work/clips/${n}.mp4`;
-export const reelPoster = (n: number) => `/work/posters/${n}.jpg`;
+/** Where a clip and its frame live. The naming mirrors Drive. */
+export const reelClip = (n: ReelId) => `/work/clips/${n}.mp4`;
+export const reelPoster = (n: ReelId) => `/work/posters/${n}.jpg`;
 
 export const work: WorkItem[] = catalogue.map((item) => {
   /*
@@ -456,12 +682,21 @@ export type WorkRow = {
 };
 
 /** A division's tagline and ramp, looked up by the name on its service card. */
-function divisionOf(title: string): WorkRow["division"] {
+function divisionOf(title: string, name?: string): WorkRow["division"] {
   const service = services.items.find((item) => item.title === title);
   if (!service) return undefined;
   return {
-    // "Genesis.Influence" -> "Influence", which is what DivisionLockup keys on.
-    name: title.replace(/^Genesis\./, ""),
+    /*
+      "Genesis.Influence" -> "Influence", which is what DivisionLockup keys on.
+
+      `name` OVERRIDES IT WHERE THE TWO SPELLINGS DIFFER, and AI Lab is why
+      this parameter exists. The service card is titled "Genesis.AILab" with
+      no space, so stripping the prefix yields "AILab" — and DivisionLockup's
+      artwork table is keyed "AI Lab". The mismatch does not throw; it just
+      finds no lockup and renders the shelf heading as the bare string
+      "GENESIS.AILab", which is exactly what it did until this was caught.
+    */
+    name: name ?? title.replace(/^Genesis\./, ""),
     tagline: service.caption,
     ramp: service.ramp,
   };
@@ -523,6 +758,42 @@ export const WORK_ROWS: WorkRow[] = [
     title: "Genesis.Studios",
     division: divisionOf("Genesis.Studios"),
     test: (i) => i.vertical === "Studios",
+  },
+  {
+    /*
+      AI LABS HAD NO SHELF, which is why its work was reachable by filter and
+      nowhere on the page itself. It was written when the catalogue held four
+      Influence pieces and ten Studios ones and AI Labs was empty — a division
+      shelf for nothing would have been an empty row. The portfolio Drive
+      brought four AI Labs pieces, so the row earns its place, and `workRows`
+      would have hidden it on its own if it had not.
+
+      `divisionOf` keys on the service card's own title, which is
+      "Genesis.AILab" — no space, matching lib/home-content. Getting that
+      string wrong returns undefined and silently drops the lockup rather than
+      failing, so it is worth stating why it looks like a typo and is not.
+    */
+    id: "ai-labs",
+    title: "Genesis.AI Lab",
+    division: divisionOf("Genesis.AILab", "AI Lab"),
+    test: (i) => i.vertical === "AI Labs",
+  },
+  {
+    /*
+      THE LONG-FORM SHELF. Three formats arrived with the portfolio Drive that
+      the page had no room for — Launch Films, Product Explainers and Event
+      Shoots — and all three are the opposite of a feed cut: landscape brand
+      films, plan explainers and event aftermovies. "Reels & short form" is
+      explicitly the shelf they are NOT, so they get their own rather than
+      being filed under a name that contradicts them.
+    */
+    id: "films",
+    title: "Films & explainers",
+    blurb: "Brand films, product explainers and event coverage.",
+    test: (i) =>
+      i.format === "Launch Films" ||
+      i.format === "Product Explainers" ||
+      i.format === "Event Shoots",
   },
 ];
 

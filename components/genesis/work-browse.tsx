@@ -252,7 +252,7 @@ function Billboard({ item }: { item: WorkItem }) {
         {item.art && (
           <Image
             src={item.art}
-            alt={`${item.client} — ${item.title}`}
+            alt={`${item.client}, ${item.title}`}
             fill
             priority
             sizes="(min-width: 1024px) 45vw, 100vw"

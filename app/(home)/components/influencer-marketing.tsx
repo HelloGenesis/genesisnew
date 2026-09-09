@@ -144,14 +144,14 @@ export function InfluencerMarketing() {
                   <p className="text-h3 font-medium leading-none tracking-tight text-bone">
                     {influencer.databaseStat.value}
                   </p>
-                  <p className="micro-label mt-2">{influencer.databaseStat.label}</p>
                   <p className="mt-2 text-small leading-relaxed text-ash">
                     {influencer.databaseStat.description}
                   </p>
                 </div>
 
                 <Link
-                  href="/influencer-campaigns"
+                  /* Stays on the landing page: only the two forms change page. */
+                  href="/#library"
                   aria-label="See influencer campaigns"
                   className="grid size-11 shrink-0 place-items-center rounded-full border border-white/20 text-bone transition-colors hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
@@ -255,7 +255,7 @@ export function InfluencerMarketing() {
             Plan Influencer Campaign
           </GlassButton>
           <GlassButton
-            href="/our-work?filter=Influencer+Campaigns"
+            href="/#case-studies"
             variant="glass"
             size="lg"
             arrow

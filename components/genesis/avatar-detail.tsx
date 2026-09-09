@@ -195,7 +195,7 @@ export function AvatarDetail({
                 <li key={still}>
                   <Media
                     src={mediaUrl(still)}
-                    alt={`${avatar.name} — sample still`}
+                    alt={`${avatar.name}, sample still`}
                     aspect="portrait"
                     sizes="(min-width: 1024px) 14rem, 40vw"
                   />

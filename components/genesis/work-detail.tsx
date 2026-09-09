@@ -81,7 +81,7 @@ export function WorkDetail({ item }: { item: WorkItem }) {
           ) : item.art ? (
             <Image
               src={item.art}
-              alt={`${item.client} — ${item.title}`}
+              alt={`${item.client}, ${item.title}`}
               fill
               // Sits in a max-w-4xl column, full width below that.
               sizes="(min-width: 896px) 896px, 100vw"
@@ -109,7 +109,12 @@ export function WorkDetail({ item }: { item: WorkItem }) {
       {rest.length > 0 && (
         <section className="flex flex-col gap-4">
           <h2 className="micro-label">
-            More from this {rest.length + 1 > 6 ? "campaign" : "set"} ·{" "}
+            {/*
+              ALWAYS "campaign". It used to say "set" for anything under
+              seven pieces, which is a filing word rather than a word about
+              the work; Genesis asked for "campaign" throughout.
+            */}
+            More from this campaign ·{" "}
             {String(rest.length + 1).padStart(2, "0")}
           </h2>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

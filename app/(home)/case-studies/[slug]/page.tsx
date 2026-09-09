@@ -32,7 +32,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const study = findCaseStudy(slug);
   if (!study) return {};
-  const title = `${study.client} — case study`;
+  const title = `${study.client} case study`;
   return {
     title,
     description:

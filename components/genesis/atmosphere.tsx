@@ -62,15 +62,17 @@ const SPECTRUM_NEUTRAL = [
 ];
 
 /**
- * The light theme keeps the original four, at Genesis's request — the same
- * split the page-wide field now has. See page-atmosphere.tsx for why both
- * have to be emitted and let CSS choose.
+ * The light theme's wash is now the palette too: the grey and the accent,
+ * where it used to be violet, blue and pink. Genesis asked for the light
+ * theme to be built on #f9f9f9 with a little yellow in it. See
+ * page-atmosphere.tsx for why both lists have to be emitted and let CSS
+ * choose between them.
  */
 const SPECTRUM_COLOUR = [
-  { color: "122 60 255", at: "14% 6%", size: "52% 46%", alpha: 0.15 },
-  { color: "59 91 255", at: "88% 16%", size: "46% 42%", alpha: 0.12 },
-  { color: "255 143 184", at: "78% 88%", size: "54% 48%", alpha: 0.11 },
-  { color: "255 197 22", at: "18% 92%", size: "48% 42%", alpha: 0.09 },
+  { color: "209 207 207", at: "14% 6%", size: "52% 46%", alpha: 0.5 },
+  { color: "255 197 22", at: "88% 16%", size: "46% 42%", alpha: 0.13 },
+  { color: "209 207 207", at: "78% 88%", size: "54% 48%", alpha: 0.4 },
+  { color: "255 197 22", at: "18% 92%", size: "48% 42%", alpha: 0.15 },
 ];
 
 /** Every source stacked into one background-image. */

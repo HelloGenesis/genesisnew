@@ -72,8 +72,8 @@ const NEEDS = [
 
 const BUDGETS = [
   "Under ₹5L",
-  "₹5L – ₹15L",
-  "₹15L – ₹50L",
+  "₹5L to ₹15L",
+  "₹15L to ₹50L",
   "₹50L+",
   "Not sure yet",
 ] as const;
@@ -81,7 +81,7 @@ const BUDGETS = [
 const TIMELINES = [
   "Immediately",
   "Within a month",
-  "1–3 months",
+  "1 to 3 months",
   "Just exploring",
 ] as const;
 
@@ -128,10 +128,10 @@ export const FORMS: Record<FormKind, FormSpec> = {
     submissionType: "CREATOR",
     title: "Work with Genesis",
     blurb:
-      "Join the Genesis creator network. Tell us where you post and what you make — we brief creators for brand campaigns every week.",
+      "Join the Genesis creator network. Tell us where you post and what you make. We brief creators for brand campaigns every week.",
     submitLabel: "Join the network",
     successMessage:
-      "Thanks — you're in the network. We'll be in touch when a brief fits.",
+      "Thanks, you're in the network. We'll be in touch when a brief fits.",
     fields: [
       { name: "name", label: "Name", required: true, half: true, autoComplete: "name" },
       { name: "email", label: "Email", type: "email", required: true, half: true, autoComplete: "email" },
@@ -166,7 +166,7 @@ export const FORMS: Record<FormKind, FormSpec> = {
     blurb:
       "Tell us what you're trying to do. The more you give us here, the more useful our first conversation is.",
     submitLabel: "Send brief",
-    successMessage: "Thanks — we'll come back to you within a working day.",
+    successMessage: "Thanks. We'll come back to you within a working day.",
     fields: [
       /*
        * WHAT IS REQUIRED IS GENESIS'S CALL, and they have moved the line.
@@ -232,7 +232,7 @@ export const FORMS: Record<FormKind, FormSpec> = {
     title: "Let's talk",
     blurb: "Four questions. We'll take it from there.",
     submitLabel: "Let's talk",
-    successMessage: "Got it — we'll be in touch shortly.",
+    successMessage: "Got it. We'll be in touch shortly.",
     fields: [
       { name: "name", label: "Name", required: true, half: true, autoComplete: "name" },
       { name: "company", label: "Company", half: true, autoComplete: "organization" },
@@ -264,10 +264,10 @@ export const FORMS: Record<FormKind, FormSpec> = {
     submissionType: "CAREERS_WAITLIST",
     title: "Join our talented team",
     blurb:
-      "We open roles in batches. Tell us what you do and leave a link to your work — we reach out when something matching opens up.",
+      "We open roles in batches. Tell us what you do and leave a link to your work. We reach out when something matching opens up.",
     submitLabel: "Submit application",
     successMessage:
-      "Thanks — your application is in. We'll be in touch when a matching role opens.",
+      "Thanks, your application is in. We'll be in touch when a matching role opens.",
     fields: [
       { name: "name", label: "First name", required: true, half: true, autoComplete: "given-name" },
       { name: "lastName", label: "Last name", half: true, autoComplete: "family-name" },
@@ -303,10 +303,10 @@ export const FORMS: Record<FormKind, FormSpec> = {
     submissionType: "CREATOR",
     title: "Get onboarded with us",
     blurb:
-      "Hello influencers and creators. Tell us where you post, what you charge and what you are looking for — we brief creators for brand campaigns every week.",
+      "Hello influencers and creators. Tell us where you post, what you charge and what you are looking for. We brief creators for brand campaigns every week.",
     submitLabel: "Submit",
     successMessage:
-      "Thanks — you're on the roster. We'll be in touch when a brief fits.",
+      "Thanks, you're on the roster. We'll be in touch when a brief fits.",
     fields: [
       { name: "name", label: "Name", required: true, autoComplete: "name", placeholder: "Your name" },
       {
@@ -334,8 +334,8 @@ export const FORMS: Record<FormKind, FormSpec> = {
         one beside it — which is the ragged edge that made this form look
         packed. The placeholder carries the caveat either way.
       */
-      { name: "igReelCost", label: "IG reel cost (₹)", half: true, placeholder: "Per reel — subject to change." },
-      { name: "ytReelCost", label: "YT integrated (₹)", half: true, placeholder: "Per video — subject to change." },
+      { name: "igReelCost", label: "IG reel cost (₹)", half: true, placeholder: "Per reel, subject to change." },
+      { name: "ytReelCost", label: "YT integrated (₹)", half: true, placeholder: "Per video, subject to change." },
       { name: "previousBrands", label: "Previous brands you've collaborated with", type: "textarea", max: 2000 },
       {
         name: "picture",

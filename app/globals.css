@@ -484,16 +484,19 @@
     --surface-base: #ffffff;
 
     /* The light theme's own ground. Same drift, same order, at paper values —
-       see --page-ground in the dark block. Worst stop here is #f6f3ff at
-       17.25:1 against #111111 body copy, against flat white's 18.88. */
+       THE PALETTE'S OWN OFF-WHITE, #f9f9f9, with the accent warming the
+       middle. Genesis asked for the light theme to be built on that grey
+       with "thoda sa yellow" rather than on the violet-tinted paper it had.
+       The warm stops are the accent at a few percent, which is felt rather
+       than seen. Worst stop is #f9f9f9 at 17.7:1 against #000000 body copy. */
     --page-ground: linear-gradient(
         168deg,
-        #f6f3ff 0%,
-        #fdfaff 18%,
-        #fffdf9 36%,
-        #fff8f2 54%,
-        #fdf7ff 72%,
-        #fffbf2 88%,
+        #f9f9f9 0%,
+        #fbfaf6 18%,
+        #fffdf4 36%,
+        #fffcf0 54%,
+        #fbfaf6 72%,
+        #fffdf4 88%,
         #ffffff 100%
     );
 
@@ -513,9 +516,9 @@
     */
     --page-ground-compact: linear-gradient(
         180deg,
-        #f4f0ff 0%,
-        #faf7fd 48%,
-        #f6f3ec 100%
+        #f9f9f9 0%,
+        #fffdf4 48%,
+        #ffffff 100%
     );
 
     --glow-ink: 122 96 0;
@@ -596,12 +599,12 @@
            white's 18.88. */
         --page-ground: linear-gradient(
             168deg,
-            #f6f3ff 0%,
-            #fdfaff 18%,
-            #fffdf9 36%,
-            #fff8f2 54%,
-            #fdf7ff 72%,
-            #fffbf2 88%,
+            #f9f9f9 0%,
+            #fbfaf6 18%,
+            #fffdf4 36%,
+            #fffcf0 54%,
+            #fbfaf6 72%,
+            #fffdf4 88%,
             #ffffff 100%
         );
 
@@ -621,9 +624,9 @@
         */
         --page-ground-compact: linear-gradient(
             180deg,
-            #f4f0ff 0%,
-            #faf7fd 48%,
-            #f6f3ec 100%
+            #f9f9f9 0%,
+            #fffdf4 48%,
+            #ffffff 100%
         );
 
         --glow-ink: 122 96 0;

@@ -126,33 +126,39 @@ const NEUTRAL: Source[] = [
  * measured against paper.
  */
 const COLOUR: Source[] = [
-  // The Brain — the orb's own violet and blue.
-  { color: "122 60 255", x: "14%", y: "2%", rx: "44rem", ry: "30rem", alpha: 0.2 },
-  { color: "59 91 255", x: "88%", y: "7%", rx: "40rem", ry: "28rem", alpha: 0.16 },
-  // Work, then the client wall — cool, then the first of the brand yellow.
-  { color: "108 92 220", x: "18%", y: "13%", rx: "42rem", ry: "28rem", alpha: 0.11 },
-  { color: "255 197 22", x: "82%", y: "18%", rx: "44rem", ry: "30rem", alpha: 0.1 },
-  // Influence — its own ramp, orange into pink.
-  { color: "255 138 76", x: "10%", y: "24%", rx: "44rem", ry: "30rem", alpha: 0.14 },
-  { color: "247 113 158", x: "78%", y: "29%", rx: "40rem", ry: "28rem", alpha: 0.13 },
-  // Studios — amber, the warmest stretch of the page.
-  { color: "255 145 71", x: "16%", y: "35%", rx: "46rem", ry: "30rem", alpha: 0.13 },
-  { color: "255 176 87", x: "86%", y: "41%", rx: "40rem", ry: "28rem", alpha: 0.11 },
-  // The library — cools off so the posters carry the colour.
-  { color: "111 79 196", x: "12%", y: "47%", rx: "42rem", ry: "30rem", alpha: 0.12 },
-  // AI Lab — violet through pink.
-  { color: "203 182 255", x: "84%", y: "53%", rx: "42rem", ry: "28rem", alpha: 0.12 },
-  { color: "242 134 180", x: "14%", y: "58%", rx: "42rem", ry: "28rem", alpha: 0.12 },
-  // Brand & Design — the lilac end of the divisions board.
-  { color: "202 193 255", x: "82%", y: "64%", rx: "44rem", ry: "30rem", alpha: 0.13 },
-  // Who we are, then the journey — back to the route ramp.
-  { color: "59 91 255", x: "16%", y: "70%", rx: "42rem", ry: "28rem", alpha: 0.11 },
-  { color: "139 92 246", x: "84%", y: "76%", rx: "42rem", ry: "30rem", alpha: 0.13 },
-  { color: "217 70 166", x: "12%", y: "81%", rx: "40rem", ry: "26rem", alpha: 0.11 },
-  // Case studies and testimonials, closing on the accent.
-  { color: "255 197 22", x: "80%", y: "87%", rx: "44rem", ry: "30rem", alpha: 0.11 },
-  { color: "255 143 184", x: "18%", y: "92%", rx: "42rem", ry: "28rem", alpha: 0.12 },
-  { color: "255 197 22", x: "72%", y: "98%", rx: "46rem", ry: "32rem", alpha: 0.14 },
+  /*
+    THE LIGHT THEME'S FIELD IS THE PALETTE NOW TOO.
+
+    It kept the original violet-through-pink drift for a while, on Genesis's
+    word that the light theme was right as it stood. They have since asked for
+    it rebuilt on #f9f9f9 with "thoda sa yellow", so the hues are gone from
+    here as well and the drift runs in VALUE and warmth: the palette's grey
+    for the cool passages, the accent for the warm ones.
+
+    THE ALPHAS ARE NOT THE DARK LIST'S. --spectrum halves everything on light
+    already, and a tint reads about twice as strongly on paper as on black, so
+    the greys run high (they are barely-there shading) and the accent stays
+    low enough to be felt rather than seen. The guidelines are explicit that
+    yellow is never the background.
+  */
+  { color: "209 207 207", x: "14%", y: "2%", rx: "44rem", ry: "30rem", alpha: 0.55 },
+  { color: "255 197 22", x: "88%", y: "7%", rx: "40rem", ry: "28rem", alpha: 0.1 },
+  { color: "209 207 207", x: "18%", y: "13%", rx: "42rem", ry: "28rem", alpha: 0.45 },
+  { color: "255 197 22", x: "82%", y: "18%", rx: "44rem", ry: "30rem", alpha: 0.14 },
+  { color: "255 197 22", x: "10%", y: "24%", rx: "44rem", ry: "30rem", alpha: 0.16 },
+  { color: "209 207 207", x: "78%", y: "29%", rx: "40rem", ry: "28rem", alpha: 0.4 },
+  { color: "255 197 22", x: "16%", y: "35%", rx: "46rem", ry: "30rem", alpha: 0.18 },
+  { color: "224 173 19", x: "86%", y: "41%", rx: "40rem", ry: "28rem", alpha: 0.12 },
+  { color: "209 207 207", x: "12%", y: "47%", rx: "42rem", ry: "30rem", alpha: 0.5 },
+  { color: "255 197 22", x: "84%", y: "53%", rx: "42rem", ry: "28rem", alpha: 0.13 },
+  { color: "209 207 207", x: "14%", y: "58%", rx: "42rem", ry: "28rem", alpha: 0.45 },
+  { color: "255 197 22", x: "82%", y: "64%", rx: "44rem", ry: "30rem", alpha: 0.12 },
+  { color: "209 207 207", x: "16%", y: "70%", rx: "42rem", ry: "28rem", alpha: 0.45 },
+  { color: "255 197 22", x: "84%", y: "76%", rx: "42rem", ry: "30rem", alpha: 0.14 },
+  { color: "209 207 207", x: "12%", y: "81%", rx: "40rem", ry: "26rem", alpha: 0.45 },
+  { color: "255 197 22", x: "80%", y: "87%", rx: "44rem", ry: "30rem", alpha: 0.16 },
+  { color: "209 207 207", x: "18%", y: "92%", rx: "42rem", ry: "28rem", alpha: 0.4 },
+  { color: "255 197 22", x: "72%", y: "98%", rx: "46rem", ry: "32rem", alpha: 0.18 },
 ];
 
 /**

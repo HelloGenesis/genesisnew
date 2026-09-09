@@ -26,7 +26,7 @@ export async function generateMetadata({
   const avatar = findAvatar(slug);
   if (!avatar) return {};
   return {
-    title: `${avatar.name} — AI avatar`,
+    title: `${avatar.name}, AI avatar`,
     description:
       avatar.bio ??
       `${avatar.name}, an AI avatar from ${siteConfig.name}'s AI Lab.`,

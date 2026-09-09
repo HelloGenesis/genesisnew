@@ -1,3 +1,4 @@
+import Script from "next/script";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
@@ -86,13 +87,38 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Absent from storage means "follow the OS", so nothing is stamped and
           the prefers-color-scheme block in globals.css resolves it.
         */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("genesis-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`,
-          }}
-        />
+        {/*
+          THROUGH next/script, NOT A BARE <script>, and the reason is a real
+          warning rather than tidiness. React 19 logs "Encountered a script tag
+          while rendering React component" for an inline <script> in the tree:
+          it is emitted in the server HTML and runs there, but on any CLIENT
+          render React does not execute it. For a theme stamp that only ever
+          needs to run on first paint that is harmless in practice, which is
+          exactly why it is worth routing properly rather than leaving a
+          standing console error for every other error to hide in.
+
+          `beforeInteractive` is the strategy that matches what this does: it
+          runs before Next's own code and before hydration, which is the whole
+          point of stamping data-theme ahead of first paint. Next requires such
+          scripts to live in the root layout, which is where this already is.
+        */}
+        <Script id="genesis-theme-init" strategy="beforeInteractive">
+          {`(function(){try{var t=localStorage.getItem("genesis-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`}
+        </Script>
       </head>
-      <body className="bg-background text-foreground antialiased">
+      <body
+        className="bg-background text-foreground antialiased"
+        /*
+          BROWSER EXTENSIONS WRITE TO <body> BEFORE REACT HYDRATES. Grammarly
+          stamps data-gr-ext-installed and data-new-gr-c-s-check-loaded on it,
+          and form-fillers add their own attributes to inputs. React sees the
+          server HTML and the live DOM disagree and reports a hydration
+          mismatch that no change to this codebase can fix, because the
+          difference is not ours. Suppressing it here keeps a real mismatch —
+          one we could actually cause — visible instead of buried under this.
+        */
+        suppressHydrationWarning
+      >
         {children}
         <Analytics />
       </body>

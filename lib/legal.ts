@@ -30,7 +30,7 @@ export type LegalDocument = {
 
 /** Shown at the top of both documents, so the status is never in doubt. */
 export const LEGAL_NOTICE =
-  "This is an interim version, published so the site is not without a policy. It is not legal advice and it is being replaced. Anything here that matters to you — write to us and we will answer directly.";
+  "This is an interim version, published so the site is not without a policy. It is not legal advice and it is being replaced. If anything here matters to you, write to us and we will answer directly.";
 
 export const LEGAL_EMAIL = "hello@genesismedia.co";
 
@@ -51,7 +51,7 @@ export const privacy: LegalDocument = {
     {
       heading: "What the site collects on its own",
       paragraphs: [
-        "Vercel Web Analytics records page views without cookies and without building a profile of you across sites. Sentry records technical details when something on the site errors — the page, the browser and the fault — so we can fix it.",
+        "Vercel Web Analytics records page views without cookies and without building a profile of you across sites. Sentry records technical details when something on the site errors: the page, the browser and the fault, so we can fix it.",
         "Video and images on the work pages are served from Genesis Media's own Google Drive through this site, so Google receives the request as our hosting provider.",
       ],
     },

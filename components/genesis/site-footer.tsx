@@ -162,9 +162,13 @@ export function SiteFooter() {
         light theme it was white-on-white and genuinely invisible — a bug that
         was there before this and would have survived the swap unnoticed.
       */}
+      {/*
+        AIR ABOVE IT. Genesis asked for more space between the footer's
+        content and the mark; it was sitting close under the copyright line.
+      */}
       <div
         aria-hidden
-        className="pointer-events-none relative select-none overflow-hidden px-4"
+        className="pointer-events-none relative mt-14 select-none overflow-hidden px-4 sm:mt-20 lg:mt-24"
       >
         {/*
           The ratio is the cropped artwork's own, 1025x200. Height follows

@@ -113,7 +113,20 @@ export function whatsappLink(message: string = siteConfig.whatsappMessage) {
  * the single "Work | Case Studies" they replace.
  */
 export const navItems: NavItem[] = [
-  { label: "Work", href: "/our-work" },
+  /*
+    WORK SCROLLS, IT DOES NOT NAVIGATE. This was "/our-work" and Genesis's
+    report was that clicking it took them off the homepage to a page they did
+    not want. The portfolio grid is already ON the homepage, so the nav item
+    named after it should land there: #library is the section, and as a hash
+    it scrolls from anywhere on the homepage while still loading the homepage
+    from any other route.
+
+    /our-work still exists and is still the complete catalogue — the division
+    blocks link into it FILTERED ("view the AI content work"), and a piece's
+    own page links back to it. What changed is that the top-level nav no
+    longer sends a first-time visitor there.
+  */
+  { label: "Work", href: "/#library" },
   { label: "Case Studies", href: "/#case-studies" },
   /*
     THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable
@@ -181,10 +194,19 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
     heading: "Work",
     items: [
-      { label: "Influencer Marketing", href: "/influencer-campaigns" },
-      { label: "Campaigns", href: "/our-work?filter=Influencer+Campaigns" },
+      /*
+        THESE SCROLL, THEY DO NOT NAVIGATE. Genesis's instruction is that the
+        footer should take you to the section rather than open a new page —
+        which is right for a single-page site: a reader at the bottom clicking
+        "Influencer Marketing" wants the block they just scrolled past, not a
+        fresh document and a lost scroll position.
+
+        Only the two that have no section of their own still navigate.
+      */
+      { label: "Influencer Marketing", href: "/#influence" },
+      { label: "Campaigns", href: "/#library" },
       { label: "Library", href: "/#library" },
-      { label: "Case Studies", href: "/case-studies" },
+      { label: "Case Studies", href: "/#case-studies" },
     ],
   },
   {

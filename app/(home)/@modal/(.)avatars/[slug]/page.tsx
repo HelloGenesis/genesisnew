@@ -19,7 +19,7 @@ export default async function AvatarModal({
   if (!avatar) notFound();
 
   return (
-    <RouteModal label={`${avatar.name} — AI avatar`}>
+    <RouteModal label={`${avatar.name}, AI avatar`}>
       {/*
         `paged` is the dialog's to pass. The slider steps by navigating, and a
         navigation to a sibling avatar is intercepted back into this same

@@ -247,7 +247,7 @@ export function BrandingDesign() {
                               <div className="relative aspect-square min-w-0 flex-[1.4] basis-0 overflow-hidden rounded-card border border-brand-ink/40 bg-white shadow-[0_10px_30px_-12px_rgb(0_0_0/0.6)] sm:max-w-28">
                                 <Image
                                   src={route.final}
-                                  alt={`${item.title} — the finished logo`}
+                                  alt={`${item.title}, the finished logo`}
                                   fill
                                   unoptimized
                                   className="object-contain p-2 sm:p-3"
@@ -322,7 +322,8 @@ export function BrandingDesign() {
         <Reveal delay={0.06}>
           <div className="glass glass-lit relative flex h-full flex-col rounded-panel p-8">
             <p className="micro-label mb-6">
-              What we make · {String(branding.capabilities.length).padStart(2, "0")}
+              {/* No count. Genesis asked for the "· 06" off this label. */}
+              What we make
             </p>
 
             {/*
@@ -373,7 +374,7 @@ export function BrandingDesign() {
           >
             Build a brand
           </GlassButton>
-          <GlassButton href="/our-work" variant="glass" arrow>
+          <GlassButton href="/#library" variant="glass" arrow>
             View branding work
           </GlassButton>
         </Reveal>

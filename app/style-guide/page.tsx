@@ -108,7 +108,7 @@ export default function StyleGuidePage() {
         </div>
       </Section>
 
-      <Section title="Glass surfaces" note="One UI 'Blur' — heavy blur, low-contrast fill, lit top edge. Not the iOS 'Clear' style.">
+      <Section title="Glass surfaces" note="One UI 'Blur': heavy blur, low-contrast fill, lit top edge. Not the iOS 'Clear' style.">
         <div className="relative overflow-hidden rounded-panel">
           {/* A busy ground so the blur has something to actually blur. */}
           <div className="absolute inset-0 bg-[conic-gradient(from_180deg,#ffc516,#ffc516,#ffc516,#ffc516)] opacity-40 blur-2xl" />
@@ -196,15 +196,15 @@ export default function StyleGuidePage() {
       <Section title="Animated timeline" note="The lit rail fills as the section scrolls.">
         <AnimatedTimeline
           milestones={[
-            { date: "Mar 2024", title: "Genesis founded", description: "Sample copy — a one-line milestone, long enough to show how the description wraps beneath its title." },
-            { date: "Aug 2024", title: "First brand film", description: "Sample copy — a shorter entry, to show the rail with uneven row heights." },
-            { date: "Feb 2025", title: "Creator network at 50K", description: "Sample copy — used here only to demonstrate the timeline component." },
-            { date: "Nov 2025", title: "AI Lab launched", description: "Sample copy — the final entry, where the rail fades out." },
+            { date: "Mar 2024", title: "Genesis founded", description: "Sample copy for a one-line milestone, long enough to show how the description wraps beneath its title." },
+            { date: "Aug 2024", title: "First brand film", description: "Sample copy for a shorter entry, to show the rail with uneven row heights." },
+            { date: "Feb 2025", title: "Creator network at 50K", description: "Sample copy used here only to demonstrate the timeline component." },
+            { date: "Nov 2025", title: "AI Lab launched", description: "Sample copy for the final entry, where the rail fades out." },
           ]}
         />
       </Section>
 
-      <Section title="Magnetic floating paper cards" note="The connective motif — paper caught in a single light.">
+      <Section title="Magnetic floating paper cards" note="The connective motif: paper caught in a single light.">
         <div className="space-y-12">
           <div className="flex flex-wrap gap-8">
             <PaperCard pinned className="w-64">
@@ -221,14 +221,14 @@ export default function StyleGuidePage() {
           <PaperStack
             items={[
               { title: "Preparation", caption: "research, inspiration", body: "Sample copy, at roughly the length a real step runs to, so the card's height and text block can be judged." },
-              { title: "Incubation", caption: "letting ideas simmer", body: "Sample copy — deliberately shorter, to show the cards at uneven heights." },
+              { title: "Incubation", caption: "letting ideas simmer", body: "Sample copy, deliberately shorter, to show the cards at uneven heights." },
               { title: "Illumination", caption: "refine & execute", body: "Sample copy for the third card in the row." },
             ]}
           />
         </div>
       </Section>
 
-      <Section title="Logo marquee" note="Seamless loop; pauses on hover. Takes any node — the client wall passes logo chips; these wordmarks are just a demo.">
+      <Section title="Logo marquee" note="Seamless loop; pauses on hover. Takes any node. The client wall passes logo chips; these wordmarks are just a demo.">
         <LogoMarquee
           items={["KAYALI", "TATA MOTORS", "ICICI BANK", "MIRAGGIO", "YONEX", "KREO TECH", "DOT & KEY"].map(
             (name) => (
@@ -243,7 +243,7 @@ export default function StyleGuidePage() {
         />
       </Section>
 
-      <Section title="Reel" note="Muted, looping, controlless — the spec's 'playing on their own like a GIF'. Without a src it renders a labelled frame, so layout is correct before footage exists. Does NOT autoplay under prefers-reduced-motion.">
+      <Section title="Reel" note="Muted, looping, controlless, matching the spec's 'playing on their own like a GIF'. Without a src it renders a labelled frame, so layout is correct before footage exists. Does NOT autoplay under prefers-reduced-motion.">
         <div className="grid gap-6 sm:grid-cols-3">
           <Reel label="Showreel" aspect="4 / 5" />
           <Reel label="Behind the scenes" aspect="1 / 1" />
@@ -251,11 +251,11 @@ export default function StyleGuidePage() {
         </div>
       </Section>
 
-      <Section title="Social stars" note="The lockup's four-point star as a clip-path, so the hover bloom takes the star's silhouette. Marks drawn inline — lucide v1 dropped its brand icons.">
+      <Section title="Social stars" note="The lockup's four-point star as a clip-path, so the hover bloom takes the star's silhouette. Marks drawn inline, since lucide v1 dropped its brand icons.">
         <SocialStars />
       </Section>
 
-      <Section title="Scene primitives" note="Spotlight, ghosted display type and editorial corner marks — the language the reference layouts are built from.">
+      <Section title="Scene primitives" note="Spotlight, ghosted display type and editorial corner marks: the language the reference layouts are built from.">
         <div className="relative h-80 overflow-hidden rounded-card bg-void">
           <Spotlight x={62} spread={16} tone="warm" />
           <GhostType>OUR SERVICES</GhostType>
@@ -268,7 +268,7 @@ export default function StyleGuidePage() {
         </div>
       </Section>
 
-      <Section title="Lit room" note="An interior drawn entirely as alpha — no clip-paths, no CSS filters. Walls are a lateral falloff; the floor is an ellipse centred below the frame.">
+      <Section title="Lit room" note="An interior drawn entirely as alpha, with no clip-paths and no CSS filters. Walls are a lateral falloff; the floor is an ellipse centred below the frame.">
         <div className="relative h-96 overflow-hidden rounded-card">
           <LitRoom />
         </div>
@@ -296,13 +296,13 @@ export default function StyleGuidePage() {
         </div>
       </Section>
 
-      <Section title="Document wall" note="The curved wall of lit panels from the page-1 landing reference. Pure CSS — no images.">
+      <Section title="Document wall" note="The curved wall of lit panels from the page-1 landing reference. Pure CSS, no images.">
         <div className="relative h-72 overflow-hidden rounded-card bg-void">
           <DocumentWall tone="brand" />
         </div>
       </Section>
 
-      <Section title="Apple Watch cluster" note='Spec asks for this twice — client logos "movable like Apple Watch Apps" and testimonials the same. Drag it.'>
+      <Section title="Apple Watch cluster" note='Spec asks for this twice: client logos "movable like Apple Watch Apps" and testimonials the same. Drag it.'>
         <WatchCluster
           height={360}
           cell={130}
@@ -343,7 +343,7 @@ export default function StyleGuidePage() {
         />
       </Section>
 
-      <Section title="Glowing word & iridescent button" note="The waitlist treatment: one word lit from within, held in glass. Emission is text-shadow, not a filter — filters rasterise the whole word.">
+      <Section title="Glowing word & iridescent button" note="The waitlist treatment: one word lit from within, held in glass. Emission is text-shadow, not a filter, because filters rasterise the whole word.">
         <div className="flex flex-col items-center gap-12 rounded-card bg-void py-16">
           <GlowWord tone="warm" className="text-h2 sm:text-h1">
             waitlist

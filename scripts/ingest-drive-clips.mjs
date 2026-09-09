@@ -35,6 +35,7 @@
 import { execFile } from "node:child_process";
 import { mkdirSync, statSync, writeFileSync } from "node:fs";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 
 import "dotenv/config";
 import { google } from "googleapis";
@@ -46,7 +47,17 @@ if (!folderId) {
   process.exit(1);
 }
 
-const OUT = new URL("../public/work", import.meta.url).pathname;
+/*
+  `fileURLToPath`, NOT `.pathname`, and it is a real bug rather than a style
+  note. A file: URL percent-encodes its path, so on a checkout living in a
+  directory with a space in the name — "claude builds" — `.pathname` hands
+  back ".../claude%20builds/genesis/public/work" as a literal string. mkdirSync
+  then cheerfully CREATES a folder called "claude%20builds" next to the real
+  one and writes every clip, poster and the manifest into it. The run reports
+  "61/61 converted" and the repo gains nothing; that is exactly what happened
+  the first time this was pointed at the divisions folder.
+*/
+const OUT = fileURLToPath(new URL("../public/work", import.meta.url));
 /** One filter for both orientations: reels are portrait, films landscape. */
 const SCALE = "scale='if(gt(iw,ih),720,-2)':'if(gt(iw,ih),-2,720)':flags=lanczos";
 

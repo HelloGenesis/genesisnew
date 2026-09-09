@@ -90,11 +90,22 @@ const BOARD: Record<string, { slug: string; width: number; height: number }> = {
  * left to cross-fade and the second <Image> is dropped rather than rendered
  * at zero opacity forever.
  */
+/*
+  THESE ARE THE NORMALISED CUTS. The files were re-cut by
+  scripts/normalise-division-names.py, which is where the reasoning lives; the
+  short version is that the four were exported with whatever padding their
+  artboards had, and sizing from the file box meant the LETTERS ended up at
+  four different offsets and four different sizes even though the boxes lined
+  up perfectly. Every file is now cropped tight to its ink horizontally and
+  padded so the cap-to-baseline body is 66% of the box with the baseline at
+  74%, in all four. Re-run that script if the artwork is ever re-exported —
+  do not hand-edit these numbers.
+*/
 const NAME: Record<string, { slug: string; width: number; height: number }> = {
-  Influence: { slug: "influence", width: 728, height: 71 },
-  Studios: { slug: "studios", width: 623, height: 71 },
-  "AI Lab": { slug: "ai-lab", width: 684, height: 69 },
-  "Brand & Design": { slug: "brand-design", width: 648, height: 88 },
+  Influence: { slug: "influence", width: 362, height: 98 },
+  Studios: { slug: "studios", width: 296, height: 103 },
+  "AI Lab": { slug: "ai-lab", width: 250, height: 98 },
+  "Brand & Design": { slug: "brand-design", width: 616, height: 100 },
 };
 
 /**
@@ -148,8 +159,39 @@ const BOARD_MAX_RATIO = Math.max(
 /**
  * And for the name set, which is the widest of the three — cropping the
  * tagline away leaves the same ink over less than half the height, so
- * Brand & Design goes from 4.38:1 on the board to 7.36:1 here.
+ * Brand & Design leads the set at 6.16:1.
+ *
+ * DERIVED, NOT TYPED, which is what makes the normalisation hold: every mark
+ * is sized as its own ratio over this one, so all four end up the same height
+ * and, now that the files are cropped to their ink, the same body height with
+ * their left edges flush. Re-cutting the artwork changes the table above and
+ * this follows.
  */
+/**
+ * What `sizes` a fluid lockup declares, and it is a fix rather than a tidy-up.
+ *
+ * IT WAS "30vw", WHICH ASKED FOR RENDERS FOUR TIMES THE ARTWORK. `sizes` is
+ * how the browser picks a srcset candidate: 30vw on a 1440 display is 432 CSS
+ * pixels, doubled for a retina screen is 864, so it reached for the 1080-wide
+ * candidate — of source files that are between 250 and 616 pixels wide. Next
+ * clamps to the source rather than upscaling, so every one of those requests
+ * did the work of a large resize and handed back the same small image.
+ *
+ * The board holds each mark to at most 360px, so that is what it declares.
+ * The browser now picks the 750 candidate on a retina display, which is the
+ * first one at or above the widest source in the set.
+ *
+ * IT ALSO STOPPED THE BOARD FROM HANGING. Four marks sharing one declared
+ * size meant four simultaneous, identical w=1080 requests on first paint, and
+ * Next 16.3.1's dev image cache coalesces concurrent requests for one key —
+ * when that coalescing wedged, three of the four never resolved and their
+ * lockups never appeared. Measured against the running server: studios at
+ * w=750, 828, 1200 and 1920 all return in under 120ms while w=1080 hangs
+ * indefinitely, and a client logo at w=1080 is fine. Asking for a sane width
+ * sidesteps it; the payload win is the reason to keep it either way.
+ */
+const FLUID_SIZES = "(min-width: 1024px) 360px, 90vw";
+
 const NAME_MAX_RATIO = Math.max(
   ...Object.values(NAME).map((l) => l.width / l.height),
 );
@@ -318,7 +360,7 @@ export function DivisionLockup({
       */}
       <span className="sr-only">
         Genesis.{name}
-        {taglineInArt ? ` — ${tagline}` : ""}
+        {taglineInArt ? `, ${tagline}` : ""}
       </span>
 
       {/*
@@ -328,14 +370,46 @@ export function DivisionLockup({
         follows the theme AND follows `.scene-dark` without either of them
         having to know there is a logo in here.
       */}
-      <span aria-hidden className="relative block w-full" style={sizing}>
+      {/*
+        INLINE-BLOCK, NOT BLOCK, so the artwork follows its container's text
+        alignment.
+
+        THE BUG THIS FIXES, because "display" is an odd place to find an
+        alignment fault. On the divisions board the two left-hand verticals
+        are set `text-right` so they read in toward the orb, and the two on
+        the right are set `text-left`. The tagline obeyed that; the picture
+        did not. A block-level box ignores `text-align` entirely — it sits
+        flush against the start edge of its container whatever the text under
+        it is doing — and because `fluid` gives each mark a width proportional
+        to its own aspect ratio, the four are all different widths. So the
+        widest mark happened to fill its column and looked aligned, while a
+        narrow one sat flush left inside a right-aligned column and hung out
+        past its neighbour. Measured at 1440: Influence filled all 360px of
+        the column, Brand & Design was 259px and started at the same left
+        edge, leaving its right edge 101px short of Influence's.
+
+        An inline-level box is positioned BY `text-align`, which is what makes
+        this one line rather than a set of alignment props threaded down from
+        every call site: the left column right-aligns its mark, the right
+        column left-aligns its own, and a centred section centres it, all
+        from the alignment those callers already declare for their text.
+
+        `align-bottom` goes with it. An inline-block sits on the text baseline
+        by default, which reserves room for descenders underneath and would
+        add a few stray pixels below every lockup on the page.
+      */}
+      <span
+        aria-hidden
+        className="relative inline-block w-full align-bottom"
+        style={sizing}
+      >
         <Image
           src={src("light")}
           alt=""
           width={lockup.width}
           height={lockup.height}
           priority={priority}
-          sizes={fluid ? "(min-width: 1024px) 30vw, 90vw" : `(min-width: 640px) ${maxWidth}px, 100vw`}
+          sizes={fluid ? FLUID_SIZES : `(min-width: 640px) ${maxWidth}px, 100vw`}
           className="h-auto w-full"
           /*
             The name set is one file for both themes — see the note on NAME —
@@ -351,7 +425,7 @@ export function DivisionLockup({
             width={lockup.width}
             height={lockup.height}
             priority={priority}
-            sizes={fluid ? "(min-width: 1024px) 30vw, 90vw" : `(min-width: 640px) ${maxWidth}px, 100vw`}
+            sizes={fluid ? FLUID_SIZES : `(min-width: 640px) ${maxWidth}px, 100vw`}
             className={cn("absolute inset-0 h-auto w-full")}
             style={{ opacity: "var(--logo-invert, 0)" }}
           />
@@ -380,9 +454,44 @@ export function DivisionLockup({
             taglineClassName,
           )}
         >
-          {tagline}
+          <Tagline text={tagline} />
         </span>
       )}
     </Tag>
+  );
+}
+
+/**
+ * A division tagline, with its dividers DRAWN rather than typed.
+ *
+ * Genesis asked for the parts of these lines to be separated by a pipe rather
+ * than a comma. Typing "|" is the obvious way to do that and it renders as a
+ * missing-glyph box here: the display face, mont, has no vertical bar, so the
+ * browser falls through to whatever the platform offers and the divider comes
+ * out as a small rectangle with hex digits in it — visible on the AI Lab and
+ * Brand & Design lockups as a mark that reads like tiny stray lettering.
+ *
+ * A one-pixel rule sidesteps the glyph entirely: it cannot be missing from a
+ * font, it takes the surrounding colour, and it can be set to the height the
+ * line actually wants instead of the full ascender the character would have
+ * occupied. It is aria-hidden, so the line is announced as its parts rather
+ * than as "Avatars vertical line Multilingual Content".
+ */
+function Tagline({ text }: { text: string }) {
+  const parts = text.split("|").map((part) => part.trim());
+  return (
+    <>
+      {parts.map((part, index) => (
+        <span key={part}>
+          {index > 0 && (
+            <span
+              aria-hidden
+              className="mx-[0.5em] inline-block h-[0.85em] w-px translate-y-[0.1em] bg-current opacity-40"
+            />
+          )}
+          {part}
+        </span>
+      ))}
+    </>
   );
 }

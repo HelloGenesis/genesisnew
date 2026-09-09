@@ -1,91 +1,108 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The picture under AI Lab's automation copy.
+ * The picture under AI Lab's automation copy: the applications a run draws
+ * on, converging into the Lab.
  *
- * IT WAS TWO. Genesis supplied two references — this fan of sources
- * converging into one node, and a branching workflow graph — and has since
- * asked for the workflow graph to be removed. That component and its node and
- * edge tables are deleted rather than left exported and unused: an unreferenced
- * diagram is a thing the next person has to work out is dead before they can
- * safely change anything near it. It is in the history if it comes back.
+ * IT WAS TWO DIAGRAMS. Genesis supplied two references, this fan and a
+ * branching workflow graph, and has since asked for the graph to be removed.
+ * That component and its node and edge tables are deleted rather than left
+ * exported and unused; it is in the history if it comes back.
  *
- * WHY IT IS DRAWN AND NOT PLACED. The references were screenshots of other
- * companies' marketing pages — references for what the picture should SAY,
- * not assets to paste. Shipping someone else's artwork on a client site is a
- * licensing problem, and they carry a different brand's palette (cyan and
- * electric blue), which is nowhere in the six colours Genesis fixed. So this
- * is rebuilt in the brand's own colours and it describes Genesis's pipeline
- * rather than a workflow SaaS's.
+ * WHY IT IS DRAWN AND NOT PLACED. The reference was a screenshot of another
+ * company's marketing page, and a reference for what the picture should SAY
+ * is not an asset to paste: shipping someone else's artwork on a client site
+ * is a licensing problem, and it carries a palette (cyan and electric blue)
+ * that is nowhere in the six colours Genesis fixed.
  *
  * WHAT THE FIRST DRAW GOT WRONG, because it is the reason for most of the
- * numbers below. Three faults, all of them visible at a glance:
+ * numbers below:
  *
  *   THE LINES LOOKED BROKEN. Each connector was a single travelling dash and
- *     nothing else, so at any given moment most of every strand was simply
- *     absent — the picture read as a scatter of unconnected fragments rather
- *     than as six things joined to one. Every connector now draws TWICE: a
- *     continuous base at low opacity that says "these are connected", and the
- *     travelling highlight on top that says "something is moving through".
+ *     nothing else, so at any moment most of every strand was absent and the
+ *     picture read as a scatter of fragments. Every connector now draws
+ *     TWICE: a continuous base that says "these are connected", and the
+ *     travelling highlight that says "something is moving through".
  *
  *   THE GLOW SWALLOWED THE PANEL. A 190-unit radial at 35% over a 420-unit
- *     canvas is a light source occupying most of the frame; it washed the
- *     surrounding glass yellow and left the hub sitting in fog. It is a third
- *     of that radius now and half the alpha — a bloom behind a node, not a
- *     sunrise.
+ *     canvas is a light source filling most of the frame. It is a third of
+ *     that radius now and half the alpha.
  *
- *   THE COMPOSITION WAS MOSTLY GAP. Labels ended at x=194 and the hub began
- *     at x=574 on an 820 canvas: nearly half the width was empty middle, so
- *     the two halves read as two separate graphics. The span is tighter and
- *     the hub is a real node with an edge around it rather than loose text
- *     floating at the end of some lines.
+ *   THE COMPOSITION WAS MOSTLY GAP. Nearly half the width was empty middle,
+ *     so the two halves read as separate graphics.
  *
- * INLINE SVG RATHER THAN AN IMAGE FILE, for the reasons that always apply to
- * a diagram: the labels are real text, so they are selectable, searchable and
- * read aloud; it is sharp at any size; it follows the theme because its
- * colours are the page's own tokens; and it weighs a couple of kilobytes
- * against a couple of hundred.
- *
- * IT IS `aria-hidden` WITH A REAL CAPTION BESIDE IT. A screen reader
- * hearing "Brand brief, Brand guidelines, Product shots… Genesis AI" as a
- * loose bag of words learns nothing; the paragraph above it is the
- * accessible version of the same claim, which is the honest arrangement for a
- * picture that illustrates prose rather than carrying data of its own.
+ * INLINE SVG RATHER THAN AN IMAGE FILE: the labels are real text, so they are
+ * selectable, searchable and read aloud; it is sharp at any size; and it
+ * follows the theme because its colours are the page's own tokens.
  */
-
-/** The diagram's two colours, named once. */
-const ACCENT = "var(--color-brand, #ffc516)";
-const MUTED = "var(--ink-faint, #85848a)";
 
 /**
- * The inputs an automation run actually starts from.
+ * The applications a run actually draws on.
  *
- * DELIBERATELY NOT A ROW OF THIRD-PARTY LOGOS, which is what the reference
- * does — YouTube, GitHub, Medium. Printing another company's mark here is a
- * claim that Genesis has an integration with them, and an integration either
- * exists or does not. These are the materials a campaign is actually built
- * from, which is a claim Genesis can stand behind on any project.
+ * NAMED BY GENESIS. An earlier version listed the raw materials instead — the
+ * brief, the guidelines, past campaigns — on the reasoning that printing
+ * another company's product name is a claim to use it. Genesis has since
+ * asked for the applications by name, which settles that: it is their stack
+ * and their claim to make.
+ *
+ * WORDS RATHER THAN LOGOS, for now. Redrawing four third-party marks from
+ * memory would get them subtly wrong, and reproducing them from the web is
+ * the licensing problem this whole file exists to avoid. The labels read
+ * correctly at this size and swapping any one for supplied artwork is a
+ * one-line change.
+ *
+ * ADDING A FIFTH re-spaces the fan on its own; nothing below is hard-coded to
+ * four.
  */
-const SOURCES = [
-  "Brand brief",
-  "Brand guidelines",
-  "Product shots",
-  "Scripts",
-  "Past campaigns",
-  "Performance data",
-];
+const APPLICATIONS = ["Google Docs", "Higgsfield", "Seedance", "Claude"];
+
+/**
+ * THE AI LAB LOCKUP AT THE CENTRE, not the words "Genesis AI".
+ *
+ * Genesis asked for the division's own logo here and for the GENESIS prefix
+ * to stay off it. That artwork already exists: it is the name-only crop made
+ * for the divisions board, which is the AI Lab wordmark with the prefix and
+ * the tagline cut away. So this is the real mark rather than a placeholder,
+ * and it needs no theme pair — the crop's ink is a gradient that reads on
+ * either ground, which is why the board uses one file for both themes.
+ */
+const AI_LAB_MARK = {
+  src: "/brand/divisions/name/ai-lab.png",
+  width: 250,
+  height: 98,
+};
+
+/**
+ * Where the lettering sits inside that file, as a share of its height.
+ *
+ * The name marks were re-cut to a common baseline so the four line up on the
+ * orb board (see scripts/normalise-division-names.py). That normalisation
+ * pads every file to leave headroom above the cap line and depth below the
+ * baseline for a descender — "AI Lab" has neither, so a third of its box is
+ * deliberately empty air. Centring the BOX in the node would therefore hang
+ * the visible lettering high, so the BODY is what gets centred here.
+ */
+const BODY_MIDPOINT = 0.41;
 
 export function AutomationSources({ className }: { className?: string }) {
-  /*
-    Geometry is computed rather than typed out, so adding a seventh source
-    re-spaces the fan instead of landing on top of the sixth.
-  */
   const width = 760;
-  const height = 300;
+  const height = 270;
   const dotX = 250;
-  const hub = { x: 452, y: height / 2, w: 268, h: 96 };
-  const top = 30;
-  const gap = (height - top * 2) / (SOURCES.length - 1);
+  const hub = { x: 452, y: height / 2, w: 268, h: 92 };
+  const top = 46;
+  const gap = (height - top * 2) / (APPLICATIONS.length - 1);
+
+  /*
+    The mark, sized to sit inside the node with air around it.
+
+    THIS NUMBER CAME DOWN FROM 196 WITHOUT THE LOGO CHANGING SIZE. The old
+    file carried 215px of transparent padding on each side, so a 196-unit box
+    held about 72 units of actual lettering. The re-cut file is its ink and
+    nothing else, so the box and the mark are now the same thing and 150 units
+    of box is more lettering than 196 units of the old one was.
+  */
+  const markW = 150;
+  const markH = Math.round((markW / AI_LAB_MARK.width) * AI_LAB_MARK.height);
 
   return (
     <svg
@@ -95,20 +112,33 @@ export function AutomationSources({ className }: { className?: string }) {
       className={cn("h-auto w-full", className)}
     >
       <defs>
-        <linearGradient id="gm-conv-line" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor={MUTED} stopOpacity="0.5" />
-          <stop offset="100%" stopColor={ACCENT} stopOpacity="1" />
+        {/*
+          THE AI LAB RAMP, which Genesis asked the flowing lines to carry. It
+          is the division's own gradient from lib/home-content — pink into
+          orange — rather than the interface yellow every other diagram on the
+          site uses. Written out here rather than read from a CSS variable
+          because an SVG gradient needs its stops as elements, and a
+          `linear-gradient()` string cannot be handed to <stop>.
+        */}
+        <linearGradient id="gm-ai-line" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
+          <stop offset="55%" stopColor="#ff8fb8" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
         </linearGradient>
-        <radialGradient id="gm-conv-glow">
-          <stop offset="0%" stopColor={ACCENT} stopOpacity="0.18" />
-          <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
+        <linearGradient id="gm-ai-dash" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ff8fb8" />
+          <stop offset="100%" stopColor="#ffa25c" />
+        </linearGradient>
+        <radialGradient id="gm-ai-glow">
+          <stop offset="0%" stopColor="#ff9a86" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#ff9a86" stopOpacity="0" />
         </radialGradient>
       </defs>
 
-      {/* A bloom behind the node. Small and faint — see the note above. */}
-      <circle cx={hub.x + hub.w / 2} cy={hub.y} r="132" fill="url(#gm-conv-glow)" />
+      {/* A bloom behind the node. Small and faint. */}
+      <circle cx={hub.x + hub.w / 2} cy={hub.y} r="128" fill="url(#gm-ai-glow)" />
 
-      {SOURCES.map((source, index) => {
+      {APPLICATIONS.map((app, index) => {
         const y = top + index * gap;
         /*
           A cubic with both handles pulled horizontally, so a strand leaves
@@ -117,30 +147,26 @@ export function AutomationSources({ className }: { className?: string }) {
         */
         const d = `M ${dotX} ${y} C ${dotX + 96} ${y}, ${hub.x - 96} ${hub.y}, ${hub.x} ${hub.y}`;
         return (
-          <g key={source}>
-            {/*
-              THE BASE. Always whole, always visible. Without it the strand
-              exists only where the travelling dash happens to be, which is
-              what made the first version look like a broken picture.
-            */}
+          <g key={app}>
+            {/* The base: always whole, always visible. */}
             <path
               d={d}
               fill="none"
-              stroke="url(#gm-conv-line)"
+              stroke="url(#gm-ai-line)"
               strokeWidth="1.25"
-              opacity="0.32"
+              opacity="0.4"
             />
             {/* And the highlight travelling along it. */}
             <path
               d={d}
               fill="none"
-              stroke={ACCENT}
+              stroke="url(#gm-ai-dash)"
               strokeWidth="1.75"
               strokeLinecap="round"
               className="gm-flow motion-reduce:[animation:none] motion-reduce:hidden"
-              style={{ animationDelay: `${index * -0.75}s` }}
+              style={{ animationDelay: `${index * -1.1}s` }}
             />
-            <circle cx={dotX} cy={y} r="3" fill={ACCENT} />
+            <circle cx={dotX} cy={y} r="3" fill="#ff8fb8" />
             <text
               x={dotX - 14}
               y={y}
@@ -149,16 +175,21 @@ export function AutomationSources({ className }: { className?: string }) {
               fontSize="16"
               fill="var(--ink-muted, #d1cfcf)"
             >
-              {source}
+              {app}
             </text>
           </g>
         );
       })}
 
+      {/* The node. */}
       {/*
-        THE NODE, as a node. It was loose text at the end of the strands,
-        which is why the right half read as a caption rather than as the thing
-        everything else points at.
+        THE NODE'S EDGES HAVE TO READ. Genesis asked for the ends of this box
+        to be visible, and they were not: a 1-unit stroke at 40% opacity in a
+        760-unit viewBox renders as roughly one pixel at barely a third
+        strength, so the box was a slightly darker patch with no discernible
+        outline. It is a full-strength stroke at 1.75 units now, which is the
+        same weight the connectors carry, so the node reads as the object they
+        arrive at rather than as a shadow behind the lockup.
       */}
       <rect
         x={hub.x}
@@ -167,40 +198,23 @@ export function AutomationSources({ className }: { className?: string }) {
         height={hub.h}
         rx="18"
         fill="var(--surface-raised, #18181a)"
-        stroke={ACCENT}
-        strokeOpacity="0.4"
+        stroke="url(#gm-ai-dash)"
+        strokeWidth="1.75"
+        strokeOpacity="0.95"
       />
-      <text
-        x={hub.x + hub.w / 2}
-        y={hub.y - 12}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="27"
-        fontWeight="500"
-        fill="var(--ink-strong, #ffffff)"
-      >
-        Genesis AI
-      </text>
-      <rect
-        x={hub.x + hub.w / 2 - 46}
-        y={hub.y + 8}
-        width="92"
-        height="2"
-        rx="1"
-        fill={ACCENT}
-        opacity="0.7"
+      {/*
+        The lockup, centred in the node. "AUTOMATED" used to sit under it and
+        Genesis asked for it gone: the mark is the label, and a word in
+        letterspaced caps beneath a logo is the sort of caption that explains
+        what the picture is already saying.
+      */}
+      <image
+        href={AI_LAB_MARK.src}
+        x={hub.x + (hub.w - markW) / 2}
+        y={hub.y - markH * BODY_MIDPOINT}
+        width={markW}
+        height={markH}
       />
-      <text
-        x={hub.x + hub.w / 2}
-        y={hub.y + 27}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="11"
-        letterSpacing="0.22em"
-        fill="var(--ink-faint, #85848a)"
-      >
-        AUTOMATED
-      </text>
     </svg>
   );
 }
