@@ -1,7 +1,7 @@
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { WorkGrid } from "@/components/genesis/work-grid";
-import { work, type WorkItem } from "@/lib/work";
+import { expandToClips, work, type WorkItem } from "@/lib/work";
 
 /**
  * The portfolio grid, after the four verticals.
@@ -24,32 +24,29 @@ import { work, type WorkItem } from "@/lib/work";
  */
 
 /**
- * What the homepage browse shows, and why it is not simply the first eight.
+ * What the portfolio shows: every clip, ordered so the divisions interleave.
  *
- * IT WAS `featured, then catalogue order, sliced to 8`, and after the
- * portfolio Drive landed that produced eight tiles that were all Influence
- * and Studios — every AI Labs piece, every film, every explainer and every
- * event cut fell past the cut. The filter row is built from what is SHOWN, so
- * the homepage offered eight filters where the portfolio has thirteen, and a
- * visitor who came for the AI work saw none of it.
+ * IT SHOWED ONE TILE PER ENGAGEMENT AND THAT WAS THE BUG. The catalogue is a
+ * list of twenty engagements; most carry several cuts, so "All" drew twenty
+ * tiles while seventy-one videos sat in /public. `expandToClips` turns each
+ * engagement into one tile per clip, which is what Genesis means by all the
+ * videos.
  *
- * SO IT ROUND-ROBINS THE DIVISIONS. One piece from each vertical in turn,
- * then the next from each, until the cap. Every division that has work is
- * represented in the first row, the mix reads as an agency with four arms
- * rather than a reel shop, and the filter row can actually answer for what
- * it offers.
+ * THE ORDER ROUND-ROBINS THE DIVISIONS at the engagement level, before the
+ * clips are expanded. Straight catalogue order would open the rail with
+ * fifteen consecutive Aditya Birla cuts and bury AI Labs at the far end;
+ * taking one engagement from each vertical in turn means the first screenful
+ * shows what the agency actually does, and a client's cuts still arrive
+ * together rather than being shuffled apart.
  *
- * FEATURED STILL WINS INSIDE A DIVISION, so the pieces Genesis leads with are
- * the ones that represent it. `featured` means the piece has footage you can
- * watch.
+ * FEATURED WINS INSIDE A DIVISION, so the pieces Genesis leads with represent
+ * it. `featured` means the piece has footage you can watch.
  *
- * TWELVE, NOT EIGHT. Four divisions do not divide into eight evenly enough
- * to give the smaller ones a showing. Twelve fills the rail's two rows with
- * six columns, so there is real travel behind the arrows without the section
- * turning into a catalogue. The whole of it is one click away at /our-work.
+ * NO CAP. There was one — twelve — from when this was a grid that could only
+ * grow downward. It is two rows that slide now, so length costs the page
+ * nothing and the whole body of work is reachable without leaving the
+ * landing page, which is where Genesis wants it.
  */
-const ON_HOMEPAGE = 12;
-
 function forHomepage() {
   const byVertical = new Map<string, WorkItem[]>();
   for (const item of work) {
@@ -64,17 +61,14 @@ function forHomepage() {
     ...items.filter((i) => !i.featured),
   ]);
 
-  const picked: WorkItem[] = [];
-  for (let round = 0; picked.length < ON_HOMEPAGE; round += 1) {
-    /* Every queue exhausted — the catalogue is smaller than the cap. */
-    if (queues.every((q) => round >= q.length)) break;
+  const ordered: WorkItem[] = [];
+  const longest = Math.max(...queues.map((q) => q.length));
+  for (let round = 0; round < longest; round += 1) {
     for (const queue of queues) {
-      if (round < queue.length && picked.length < ON_HOMEPAGE) {
-        picked.push(queue[round]);
-      }
+      if (round < queue.length) ordered.push(queue[round]);
     }
   }
-  return picked;
+  return expandToClips(ordered);
 }
 
 export function Portfolio() {

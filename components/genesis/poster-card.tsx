@@ -82,11 +82,14 @@ function placeholderArt(id: string) {
 export function PosterCard({
   poster,
   className,
+  onSelect,
   priority = false,
 }: {
   poster: Poster;
   className?: string;
   /** Renders larger, as the focused card in a rail. */
+  /** Opens the card in place instead of navigating. See the wrapper below. */
+  onSelect?: (id: string) => void;
   priority?: boolean;
 }) {
   /*
@@ -244,6 +247,28 @@ export function PosterCard({
   );
 
   /*
+    A BUTTON WHERE THE CALLER WANTS THE CARD TO OPEN SOMETHING IN PLACE.
+    Genesis asked for the case-study posters to open over the page with the
+    page blurred behind, which is a dialog rather than a destination — so
+    where `onSelect` is given the poster becomes a real <button>, not a div
+    with a click handler. That is what makes it reachable by Tab and operable
+    with Space and Enter for free.
+  */
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(poster.id)}
+        aria-haspopup="dialog"
+        aria-label={`${poster.client ?? poster.title}, ${poster.title}`}
+        className="block shrink-0 rounded-panel text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      >
+        {card}
+      </button>
+    );
+  }
+
+  /*
     A LINK WRAPS THE CARD rather than sitting inside it. The whole poster is
     the target, and because it is an anchor rather than a click handler,
     cmd-click and middle-click open the project in a tab.
@@ -260,9 +285,11 @@ export function PosterCard({
   );
 }export function PosterRail({
   posters,
+  onSelect,
   className,
 }: {
   posters: Poster[];
+  onSelect?: (id: string) => void;
   className?: string;
 }) {
   const { ref: railRef, style: railStyle } = useEdgeFade<HTMLDivElement>();
@@ -293,7 +320,11 @@ export function PosterCard({
     >
       {posters.map((poster, index) => (
         <div key={poster.id} className="snap-center">
-          <PosterCard poster={poster} priority={index === Math.floor(posters.length / 2)} />
+          <PosterCard
+            poster={poster}
+            onSelect={onSelect}
+            priority={index === Math.floor(posters.length / 2)}
+          />
         </div>
       ))}
     </div>

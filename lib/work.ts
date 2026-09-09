@@ -150,6 +150,12 @@ export type WorkItem = {
   reel?: ReelId[];
   /** Shown in the homepage Work section. */
   featured?: boolean;
+  /**
+   * Set only by `expandToClips`, where one engagement becomes several tiles
+   * and `slug` is no longer unique. React needs a stable distinct key and the
+   * slug still has to point at the parent piece, so the two are separated.
+   */
+  key?: string;
 
   // --- The mini case study, per the brief -----------------------------------
   objective?: string;
@@ -605,12 +611,53 @@ export const featuredWork = work.filter((item) => item.featured);
  * wrote them down.
  */
 export function workFilters(items: WorkItem[]): string[] {
-  const verticals = VERTICALS.filter((v) => items.some((i) => i.vertical === v));
+  /*
+    GENESIS'S TWELVE, AND ONLY THOSE. This offered all four verticals as well
+    — Influence, Studios, AI Labs and Brand & Design — which was three chips
+    they never asked for. Their list is the eight formats, the three sectors
+    and AI Labs; the note on WORK_TAGS says as much, explaining that AI Labs
+    is left out of the sector list precisely because it arrives as a vertical.
+    That was true, but the row then printed the other three alongside it.
+
+    Influence and Studios stay in the DATA — every piece still carries its
+    vertical, the portfolio's division shelves are built from it, and the
+    reorganisation that came out of Genesis's Drive depends on it. What
+    changed is only what the filter row offers.
+  */
+  const aiLabs = items.some((i) => i.vertical === "AI Labs") ? ["AI Labs"] : [];
   const formats = CATEGORIES.filter((c) => items.some((i) => i.format === c));
   const tags = WORK_TAGS.filter((t) =>
     items.some((i) => i.tags?.includes(t)),
   );
-  return ["All", ...verticals, ...formats, ...tags];
+  return ["All", ...aiLabs, ...formats, ...tags];
+}
+
+/**
+ * One entry per CLIP rather than per piece of work.
+ *
+ * WHY THE PORTFOLIO NEEDS IT. The catalogue is a list of ENGAGEMENTS — twenty
+ * of them — and most carry several cuts: Aditya Birla is fifteen clips, the
+ * property films are ten. The grid drew one tile per engagement, so "All"
+ * showed twenty tiles while seventy-one videos sat in /public. Genesis's
+ * report was exactly that: All does not have all the videos.
+ *
+ * Each clip inherits its parent's client, title, vertical, format and tags,
+ * so every filter keeps working unchanged and a clip is reachable under the
+ * same chips its engagement was. `slug` is left alone, so a tile still opens
+ * the piece the clip belongs to; only `key` has to be unique, which is what
+ * the composed id is for.
+ */
+export function expandToClips(items: WorkItem[]): WorkItem[] {
+  return items.flatMap((item) => {
+    if (!item.reel?.length) return [item];
+    return item.reel.map((id) => ({
+      ...item,
+      key: `${item.slug}-${id}`,
+      clip: mediaUrl(reelClip(id)),
+      poster: mediaUrl(reelPoster(id)),
+      art: mediaUrl(reelPoster(id)),
+    }));
+  });
 }
 
 /**

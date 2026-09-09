@@ -14,6 +14,7 @@ import {
   billboardItem,
   matchesFilter,
   workFilters,
+  expandToClips,
   workRows,
   type WorkItem,
   type WorkRow,
@@ -359,7 +360,13 @@ export function WorkBrowse({
             and two sets of chips filtering the same list is a bug waiting to
             be reported.
           */}
-          <WorkGrid items={filtered} showFilters={false} />
+          {/*
+            EVERY CLIP, not one tile per engagement — the same fix the landing
+            page needed. Filtering happens on engagements above, so expanding
+            here keeps the chips answering for whole pieces while the grid
+            shows all the footage inside them.
+          */}
+          <WorkGrid items={expandToClips(filtered)} showFilters={false} />
         </div>
       )}
     </div>

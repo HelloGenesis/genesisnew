@@ -149,7 +149,7 @@ export function WorkGrid({
             style={{ gridAutoColumns: "clamp(9rem, 38vw, 15rem)" }}
           >
             {visible.map((item) => (
-              <div key={item.slug} className="aspect-[9/13] snap-start">
+              <div key={item.key ?? item.slug} className="aspect-[9/13] snap-start">
                 <WorkTile item={item} variant="fill" />
               </div>
             ))}
@@ -174,7 +174,7 @@ export function WorkGrid({
           )}
         >
           {visible.map((item) => (
-            <div key={item.slug} className="aspect-[9/13]">
+            <div key={item.key ?? item.slug} className="aspect-[9/13]">
               <WorkTile item={item} variant="fill" />
             </div>
           ))}

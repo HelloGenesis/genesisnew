@@ -1,4 +1,9 @@
+"use client";
+
+import { useState } from "react";
+
 import { PosterRail, type Poster } from "@/components/genesis/poster-card";
+import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { caseStudiesPage, caseStudyList, isPublished } from "@/lib/case-studies";
@@ -24,6 +29,14 @@ import { SectionShell } from "./section-shell";
  * and the story takes over the moment it is written. Nothing is invented.
  */
 export function CaseStudies() {
+  /*
+    WHICH STUDY IS OPEN, by slug. Genesis asked for the posters to be
+    interactive — click one and the study appears over a blurred page — so the
+    rail hands its id up here and the dialog reads the catalogue for the rest.
+    Holding the slug rather than the object keeps this a single string of
+    state that cannot drift from the source list.
+  */
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
   /*
     Reads the case-study catalogue rather than its own copy of the list. The
     homepage rail and /case-studies were describing the same four clients from
@@ -136,6 +149,7 @@ export function CaseStudies() {
           <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden">
             <PosterRail
               posters={posters}
+              onSelect={setOpenSlug}
               /*
                 The container is 72rem wide with its own 1.5rem gutter inside
                 it, so its text starts at (100vw - 72rem) / 2 + 1.5rem. The
@@ -159,6 +173,11 @@ export function CaseStudies() {
           See the work
         </GlassButton>
       </Reveal>
+
+      <CaseStudyDialog
+        study={caseStudyList.find((s) => s.slug === openSlug) ?? null}
+        onClose={() => setOpenSlug(null)}
+      />
     </SectionShell>
   );
 }
