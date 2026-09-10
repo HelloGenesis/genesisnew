@@ -58,11 +58,29 @@ import { services } from "@/lib/home-content";
  * Tailwind reads the source for literals; `lg:col-start-${n}` compiles to
  * nothing at all.
  */
+/*
+  THE SAME FOUR CORNERS ON A PHONE. Below `lg` this used to fall back to one
+  column: the orb, then the four names stacked under it with their taglines
+  showing, a screen and a half of scrolling for what is one diagram on desktop.
+  Genesis asked for it smaller and "desktop jaisa". So a phone gets the same
+  arrangement turned on its side: two names above the orb, two below, each in
+  the quadrant it holds on desktop.
+
+  CENTRED IN THEIR QUADRANTS ON A PHONE, not hugging the middle. The first
+  pass aligned each name in toward the sphere the way the desktop columns
+  are, and Genesis reported the phone as still misaligned — rightly. Pushed
+  to the centre line, a pair is only balanced if its two names are the same
+  width, and Brand & Design is more than twice Studios, so the bottom pair
+  sat visibly off-centre under the orb. Centred in its own half, every name
+  lands the same distance either side of the sphere's axis whatever its
+  length. Desktop keeps its inward alignment from `lg`, where the names sit
+  beside the orb rather than above and below it.
+*/
 const PLACEMENT = [
-  "lg:col-start-1 lg:row-start-1 lg:items-end lg:text-right",
-  "lg:col-start-1 lg:row-start-2 lg:items-end lg:text-right",
-  "lg:col-start-3 lg:row-start-2 lg:items-start lg:text-left",
-  "lg:col-start-3 lg:row-start-1 lg:items-start lg:text-left",
+  "col-start-1 row-start-1 items-center text-center lg:col-start-1 lg:row-start-1 lg:items-end lg:text-right",
+  "col-start-1 row-start-3 items-center text-center lg:col-start-1 lg:row-start-2 lg:items-end lg:text-right",
+  "col-start-2 row-start-3 items-center text-center lg:col-start-3 lg:row-start-2 lg:items-start lg:text-left",
+  "col-start-2 row-start-1 items-center text-center lg:col-start-3 lg:row-start-1 lg:items-start lg:text-left",
 ];
 
 export function Services() {
@@ -86,7 +104,7 @@ export function Services() {
         It replaces `.scene-open`, which was a rule about when a dark chapter
         should NOT paint. This one is about when it should.
       */
-      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32"
+      className="scene-charcoal grain relative isolate flex flex-col lg:min-h-dvh justify-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme
@@ -150,8 +168,8 @@ export function Services() {
           The side columns are 296px at lg and 360px from xl up, which is what
           the type below is sized against.
         */}
-        <RevealGroup className="mt-14 grid items-center gap-y-12 sm:mt-12 lg:grid-cols-[1fr_minmax(0,20rem)_1fr] lg:grid-rows-2 lg:gap-x-8 lg:gap-y-12 xl:grid-cols-[1fr_minmax(0,26rem)_1fr] xl:gap-x-12">
-          <RevealItem className="order-first lg:order-none lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <RevealGroup className="mt-10 grid grid-cols-2 items-center gap-x-5 gap-y-6 sm:mt-12 lg:grid-cols-[1fr_minmax(0,20rem)_1fr] lg:grid-rows-2 lg:gap-x-8 lg:gap-y-12 xl:grid-cols-[1fr_minmax(0,26rem)_1fr] xl:gap-x-12">
+          <RevealItem className="col-span-2 row-start-2 lg:col-span-1 lg:col-start-2 lg:row-span-2 lg:row-start-1">
             {/*
               The orb overruns its own column by 11% each side, into the grid
               gap — which is why that gap is 14. It buys the sphere the
@@ -163,7 +181,7 @@ export function Services() {
               0.375 to leave room for a crest, so the box grew to keep the
               sphere the same size on the page.
             */}
-            <div className="relative mx-auto w-[min(88vw,24rem)] lg:-mx-[11%] lg:w-[122%]">
+            <div className="relative mx-auto w-[min(62vw,17rem)] lg:-mx-[11%] lg:w-[122%]">
               <NeuralOrb />
 
               {/*
@@ -217,7 +235,7 @@ export function Services() {
                 <GenesisMark
                   animated
                   className="h-auto w-[64%] aspect-[8.8/1]"
-                  sizes="(min-width: 1280px) 330px, (min-width: 1024px) 255px, 60vw"
+                  sizes="(min-width: 1280px) 330px, (min-width: 1024px) 255px, 40vw"
                 />
               </div>
             </div>
@@ -300,7 +318,7 @@ export function Services() {
                     others still take two, and without a floor the marks would
                     sit at four different heights on hover.
                   */
-                  taglineClassName="mt-3 min-h-[2.7em] text-small leading-[1.35] text-balance sm:text-small opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none [@media(hover:none)]:opacity-100"
+                  taglineClassName="hidden lg:block mt-3 min-h-[2.7em] text-small leading-[1.35] text-balance sm:text-small opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none lg:[@media(hover:none)]:opacity-100"
                 />
               </Link>
             </RevealItem>

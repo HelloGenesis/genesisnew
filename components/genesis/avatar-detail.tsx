@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import { AvatarPager } from "@/components/genesis/avatar-pager";
 import { Media } from "@/components/genesis/media";
@@ -32,28 +31,15 @@ import { VIDEO_GUARD } from "@/lib/video-guard";
  */
 export function AvatarDetail({
   avatar,
-  paged = false,
+  onNavigate,
 }: {
   avatar: Avatar;
   /**
-   * Renders the prev/next slider over the portrait. ONLY the dialog passes
-   * it, and that is a correctness constraint rather than a preference.
-   *
-   * This route is intercepted: an in-app navigation to /avatars/<slug>
-   * renders into the @modal slot instead of replacing the page. That is
-   * exactly what the slider wants while it IS the modal — stepping swaps the
-   * dialog's contents and the roster stays behind it. From the standalone
-   * PAGE it is the opposite of what you want: the navigation is still an
-   * in-app one, so it is still intercepted, and the next avatar opens as a
-   * dialog ON TOP of the page you were already reading. Measured, not
-   * guessed — the document ended up with two <h1>s, "Adi" and "Diya", and
-   * two position counters.
-   *
-   * There is no per-navigation opt-out of an interception, so the fix is to
-   * not offer the control where it cannot work. Genesis asked for the slider
-   * in the pop-up window, which is the one place it behaves.
+   * Steps to a neighbouring avatar in place, which is what puts the ‹ › pager
+   * on the portrait. Only the landing-page dialog passes it; the avatar pages
+   * this used to serve are gone, and so is the URL-based paging they used.
    */
-  paged?: boolean;
+  onNavigate?: (id: string) => void;
 }) {
   const index = Math.max(0, avatars.findIndex((a) => a.id === avatar.id));
   const tint = AVATAR_TINT[index % AVATAR_TINT.length];
@@ -100,7 +86,7 @@ export function AvatarDetail({
           as well as at 1440. See AvatarPager for why it replaces rather than
           pushes history, and `paged` above for why the page does not get it.
         */}
-        {paged && <AvatarPager currentId={avatar.id} />}
+        {onNavigate && <AvatarPager currentId={avatar.id} onNavigate={onNavigate} />}
       </figure>
 
       <div className="flex min-w-0 flex-col gap-6">
@@ -205,14 +191,6 @@ export function AvatarDetail({
           </section>
         )}
 
-        <footer className="border-t border-[var(--glass-border)] pt-6">
-          <Link
-            href="/#ai-lab"
-            className="rounded-full text-small text-ash underline-offset-4 transition-colors hover:text-bone hover:underline"
-          >
-            All avatars
-          </Link>
-        </footer>
       </div>
     </article>
   );

@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 
-import { motion, useAnimationFrame, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
-import { Play } from "lucide-react";
-import { useState } from "react";
+import { animate, motion, useAnimationFrame, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
+import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { useRef, useState } from "react";
 
 import { mediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
@@ -109,23 +109,52 @@ export function CreatorConstellation({
   const prefersReducedMotion = useReducedMotion();
   const angle = useMotionValue(0);
   const [paused, setPaused] = useState(false);
+  /*
+    Declared ABOVE useAnimationFrame, which reads it. Declared below, the React
+    Compiler cannot see it is a ref by the time the hook captures it, and
+    flags the write in step() as mutating a value passed to a hook.
+  */
+  const stepping = useRef(false);
 
   useAnimationFrame((_t, delta) => {
-    if (paused || prefersReducedMotion) return;
+    if (paused || prefersReducedMotion || stepping.current) return;
     // A full turn every ~90s. Slow reads premium; fast reads like a widget.
     angle.set(angle.get() + (delta / 1000) * (360 / 90));
   });
 
   const orbiting = creators.filter((creator) => !creator.feature);
 
+  /*
+    LEFT AND RIGHT, BETWEEN INFLUENCERS. Genesis asked for the constellation to
+    stay interactive and to gain buttons that move from one creator to the next.
+    A step turns the ring by exactly one card's share of the circle, so the
+    next creator lands where the last one was, and it is tweened rather than
+    jumped so the eye can follow which card moved.
+
+    The ambient drift is held off while a step is running. Both write the same
+    angle, and letting the drift keep adding during the tween is what would
+    make a step overshoot by a few degrees and stop looking deliberate.
+  */
+  const step = (direction: 1 | -1) => {
+    stepping.current = true;
+    animate(angle, angle.get() + direction * (360 / Math.max(orbiting.length, 1)), {
+      duration: prefersReducedMotion ? 0 : 0.7,
+      ease: [0.16, 1, 0.3, 1],
+      onComplete: () => {
+        stepping.current = false;
+      },
+    });
+  };
+
   return (
+    <div className={cn("mx-auto w-full", className)}>
     <div
       /*
         Wider than it is tall now, 850/620 rather than 850/720. It sits beside
         the copy in a two-column grid, so its height sets the whole section's
         — and that height was most of why Influence ran over a screen.
       */
-      className={cn("relative isolate mx-auto aspect-[850/620] w-full", className)}
+      className="relative isolate mx-auto aspect-[850/620] w-full"
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
     >
@@ -171,6 +200,24 @@ export function CreatorConstellation({
           avatar={mediaUrl(`/creators/avatars/a${(index % 6) + 1}.webp`)}
         />
       ))}
+    </div>
+      <div className="mt-4 flex items-center justify-center gap-3">
+        {([-1, 1] as const).map((direction) => (
+          <button
+            key={direction}
+            type="button"
+            onClick={() => step(direction)}
+            aria-label={direction < 0 ? "Previous influencer" : "Next influencer"}
+            className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] text-bone transition-colors hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          >
+            {direction < 0 ? (
+              <ChevronLeft className="size-4" aria-hidden />
+            ) : (
+              <ChevronRight className="size-4" aria-hidden />
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

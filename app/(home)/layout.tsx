@@ -12,11 +12,8 @@ import { WhatsappButton } from "@/components/genesis/whatsapp-button";
  */
 export default function HomeLayout({
   children,
-  modal,
 }: {
   children: React.ReactNode;
-  /** Parallel slot holding an intercepted project route, or nothing. */
-  modal: React.ReactNode;
 }) {
   return (
     <>
@@ -42,22 +39,6 @@ export default function HomeLayout({
         <SiteFooter />
       </PageAtmosphere>
 
-      {/*
-        THE DIALOG SITS OUTSIDE THE ATMOSPHERE, and it has to.
-
-        PageAtmosphere is `isolate` — it must be, or its -z-10 field and grain
-        would paint behind the page rather than behind its own children. But
-        isolation creates a stacking context, and a stacking context is a
-        ceiling: the modal's z-[60] was being resolved INSIDE it, against
-        siblings, while the wrapper itself has z-index auto. The nav is a fixed
-        z-50 sibling of the wrapper, so it won every time — which is why an
-        open avatar dialog had the nav pill floating over its own blurred
-        backdrop, sharp and still clickable.
-
-        Rendered here the slot is a sibling of the nav rather than a
-        descendant of an isolated box, and z-60 finally means what it says.
-      */}
-      {modal}
       <QuickContact />
       <WhatsappButton />
     </>

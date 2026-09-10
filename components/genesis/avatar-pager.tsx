@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect } from "react";
 
 import { avatars } from "@/lib/avatars";
@@ -34,16 +33,21 @@ import { avatars } from "@/lib/avatars";
  * still an in-app navigation, so the interception applies in the dialog and
  * does not on a cold-loaded page. Same component, right behaviour in both.
  */
-export function AvatarPager({ currentId }: { currentId: string }) {
-  const router = useRouter();
+export function AvatarPager({
+  currentId,
+  onNavigate,
+}: {
+  currentId: string;
+  onNavigate: (id: string) => void;
+}) {
   const index = Math.max(0, avatars.findIndex((a) => a.id === currentId));
 
   const step = useCallback(
     (delta: -1 | 1) => {
       const next = avatars[(index + delta + avatars.length) % avatars.length];
-      router.replace(`/avatars/${next.id}`, { scroll: false });
+      onNavigate(next.id);
     },
-    [index, router],
+    [index, onNavigate],
   );
 
   useEffect(() => {

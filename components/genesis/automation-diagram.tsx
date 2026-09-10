@@ -84,7 +84,33 @@ const AI_LAB_MARK = {
  */
 const BODY_MIDPOINT = 0.41;
 
+/**
+ * The diagram, in the shape that suits the screen.
+ *
+ * TWO DRAWINGS, NOT ONE SCALED. The wide one is 760 units across with its
+ * labels at 16, so on a phone it rendered 277px wide with the application
+ * names at 5.8px: a diagram that technically fitted and could not be read.
+ * Scaling type up inside it would only have pushed the labels into each
+ * other. A phone gets a tall arrangement instead, two applications above the
+ * node and two below, with the labels at 18 units in a 360-unit-wide drawing,
+ * which lands them near 14px on a 375px screen.
+ *
+ * DISTINCT GRADIENT IDS, which is load-bearing rather than tidy. Both drawings
+ * are in the page and CSS hides one. An SVG `url(#id)` resolves to the FIRST
+ * element with that id in the document, and a gradient inside a display:none
+ * SVG does not render, so if the two shared ids the visible drawing would
+ * reference the hidden one's gradients and paint its lines with nothing.
+ */
 export function AutomationSources({ className }: { className?: string }) {
+  return (
+    <>
+      <WideDiagram className={cn("hidden sm:block", className)} />
+      <TallDiagram className={cn("sm:hidden", className)} />
+    </>
+  );
+}
+
+function WideDiagram({ className }: { className?: string }) {
   const width = 760;
   const height = 270;
   const dotX = 250;
@@ -212,6 +238,109 @@ export function AutomationSources({ className }: { className?: string }) {
         href={AI_LAB_MARK.src}
         x={hub.x + (hub.w - markW) / 2}
         y={hub.y - markH * BODY_MIDPOINT}
+        width={markW}
+        height={markH}
+      />
+    </svg>
+  );
+}
+
+function TallDiagram({ className }: { className?: string }) {
+  const width = 360;
+  const height = 440;
+  const hub = { x: 80, y: 180, w: 200, h: 80 };
+  const cx = hub.x + hub.w / 2;
+  const half = Math.ceil(APPLICATIONS.length / 2);
+  const rows = [
+    { apps: APPLICATIONS.slice(0, half), dotY: 64, labelY: 40, toY: hub.y, down: true },
+    { apps: APPLICATIONS.slice(half), dotY: 376, labelY: 410, toY: hub.y + hub.h, down: false },
+  ];
+
+  const markW = 140;
+  const markH = Math.round((markW / AI_LAB_MARK.width) * AI_LAB_MARK.height);
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      role="presentation"
+      aria-hidden
+      className={cn("h-auto w-full", className)}
+    >
+      <defs>
+        {/*
+          The strands here run mostly vertically, so the ramp is laid along y
+          in user space: faint at the application, full orange at the node,
+          for the rows above and below alike.
+        */}
+        <linearGradient id="gm-ai-line-down" gradientUnits="userSpaceOnUse" x1="0" y1="64" x2="0" y2={hub.y}>
+          <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
+        </linearGradient>
+        <linearGradient id="gm-ai-line-up" gradientUnits="userSpaceOnUse" x1="0" y1="376" x2="0" y2={hub.y + hub.h}>
+          <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
+        </linearGradient>
+        <linearGradient id="gm-ai-dash-tall" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ff8fb8" />
+          <stop offset="100%" stopColor="#ffa25c" />
+        </linearGradient>
+        <radialGradient id="gm-ai-glow-tall">
+          <stop offset="0%" stopColor="#ff9a86" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#ff9a86" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <circle cx={cx} cy={hub.y + hub.h / 2} r="110" fill="url(#gm-ai-glow-tall)" />
+
+      {rows.map((row) =>
+        row.apps.map((app, index) => {
+          const x = (index + 0.5) * (width / row.apps.length);
+          const bend = row.down ? 70 : -70;
+          const d = `M ${x} ${row.dotY} C ${x} ${row.dotY + bend}, ${cx} ${row.toY - bend * 0.85}, ${cx} ${row.toY}`;
+          const line = row.down ? "url(#gm-ai-line-down)" : "url(#gm-ai-line-up)";
+          return (
+            <g key={app}>
+              <path d={d} fill="none" stroke={line} strokeWidth="1.5" opacity="0.55" />
+              <path
+                d={d}
+                fill="none"
+                stroke={line}
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="gm-flow motion-reduce:[animation:none] motion-reduce:hidden"
+                style={{ animationDelay: `${(index + (row.down ? 0 : 2)) * -1.1}s` }}
+              />
+              <circle cx={x} cy={row.dotY} r="3.5" fill="#ff8fb8" />
+              <text
+                x={x}
+                y={row.labelY}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="18"
+                fill="var(--ink-muted, #d1cfcf)"
+              >
+                {app}
+              </text>
+            </g>
+          );
+        }),
+      )}
+
+      <rect
+        x={hub.x}
+        y={hub.y}
+        width={hub.w}
+        height={hub.h}
+        rx="18"
+        fill="var(--surface-raised, #18181a)"
+        stroke="url(#gm-ai-dash-tall)"
+        strokeWidth="1.75"
+        strokeOpacity="0.95"
+      />
+      <image
+        href={AI_LAB_MARK.src}
+        x={cx - markW / 2}
+        y={hub.y + hub.h / 2 - markH * BODY_MIDPOINT}
         width={markW}
         height={markH}
       />

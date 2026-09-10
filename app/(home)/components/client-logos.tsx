@@ -124,6 +124,12 @@ export function ClientLogos() {
       heading={clients.heading}
       headingAccent={clients.headingAccent}
       body={clients.body}
+      /*
+        Off on phones, at Genesis's request ("remove highlighted text on
+        mobile"). On a narrow screen the line is three rows of caption between
+        the heading and the wall it describes; the marks make the point faster.
+      */
+      bodyClassName="hidden sm:block"
       tone="brand"
       origin="center"
       intensity={0.14}
@@ -165,9 +171,17 @@ export function ClientLogos() {
         it always was; what changed is what it is a caption FOR.
       */}
       <Reveal delay={0.1} className="mt-10">
-        <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+        <ul
+          /*
+            ONE SWIPEABLE LINE ON A PHONE ("woh sec 2 bfsi copy wala scroller
+            me daalo only on mobile"). Wrapped, ten sectors made a ragged
+            three-row block; as a single line it reads as the caption strip it
+            is. From `sm` up it wraps and centres exactly as before.
+          */
+          className="no-scrollbar -mx-6 flex items-center gap-x-3 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:justify-center sm:gap-y-2 sm:overflow-visible sm:px-0"
+        >
           {clients.sectors.map((sector, index) => (
-            <li key={sector.label} className="flex items-center gap-3">
+            <li key={sector.label} className="flex shrink-0 items-center gap-3">
               {/*
                 An <abbr> only where there is something to expand. Wrapping
                 every sector in one would announce "abbreviation" before

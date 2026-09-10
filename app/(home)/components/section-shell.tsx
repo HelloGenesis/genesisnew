@@ -30,6 +30,7 @@ export function SectionShell({
   align = "left",
   className,
   contentClassName,
+  bodyClassName,
 }: {
   id?: string;
   label?: string;
@@ -63,6 +64,8 @@ export function SectionShell({
   align?: "left" | "center" | "split";
   className?: string;
   contentClassName?: string;
+  /** Extra classes on the body paragraph's wrapper. The client wall hides it on phones. */
+  bodyClassName?: string;
 }) {
   const Heading = headingAs;
   return (
@@ -150,7 +153,7 @@ export function SectionShell({
             )}
 
             {body && (
-              <Reveal delay={0.1} className={align === "split" ? "lg:pb-2" : undefined}>
+              <Reveal delay={0.1} className={cn(align === "split" && "lg:pb-2", bodyClassName)}>
                 <p
                   className={cn(
                     "text-pretty text-body text-ash sm:text-lead",

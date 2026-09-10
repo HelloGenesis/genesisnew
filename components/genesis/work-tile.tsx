@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 
 import { type WorkItem } from "@/lib/work";
 import { cn } from "@/lib/utils";
@@ -72,10 +71,17 @@ export function WorkTile({
    */
   variant = "grid",
   className,
+  onOpen,
 }: {
   item: WorkItem;
   variant?: "grid" | "rail" | "fill";
   className?: string;
+  /**
+   * Opens the piece over the landing page. There are no project pages any
+   * more: Genesis asked for everything but the two forms to stay on the one
+   * page, so a tile is a button that raises the piece's dialog.
+   */
+  onOpen?: () => void;
 }) {
   /*
     THE TILE PLAYS ITSELF. This was hover-started and hover-stopped, which
@@ -93,10 +99,13 @@ export function WorkTile({
   const fill = variant === "fill";
 
   return (
-    <Link
-      href={`/work/${item.slug}`}
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-haspopup="dialog"
+      aria-label={`${item.client}, ${item.title}`}
       className={cn(
-        "group relative block overflow-hidden rounded-card border border-[var(--glass-border)] bg-ink",
+        "group relative block overflow-hidden rounded-card border border-[var(--glass-border)] bg-ink text-left",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
         rail && "h-full w-auto shrink-0",
         // The cell is already the size it wants to be; the tile's job is to
@@ -253,6 +262,6 @@ export function WorkTile({
           </>
         )}
       </div>
-    </Link>
+    </button>
   );
 }

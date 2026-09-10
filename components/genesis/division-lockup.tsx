@@ -36,18 +36,31 @@ import { cn } from "@/lib/utils";
  */
 
 /**
- * The four lockups, with the intrinsic size of the cropped artwork.
+ * THE MARK SET: the yellow N beside the division's name in its gradient, and
+ * the default wherever a division is introduced.
  *
- * Both variants of a division share one canvas — the crop was taken from the
- * union of the two bounding boxes precisely so they would — which is what
- * lets the pair be cross-faded in place without the mark shifting by a pixel
- * as the theme changes.
+ * It replaces the GENESIS.<name> lockups, at Genesis's request. Their
+ * "Rebranding 3" folder carries a set with the small N standing in for the
+ * full wordmark, and they asked for that on the division sections. The full
+ * GENESIS wordmark is still in the header and at the centre of the orb, so the
+ * sections no longer repeat it four more times.
+ *
+ * ONE FILE PER DIVISION, NOT A THEME PAIR. The old lockups needed a light and a
+ * dark cut because "GENESIS" was white on one and black on the other. This set
+ * has no neutral ink in it at all: the N is the brand yellow and the name is
+ * its gradient. Both were checked composited over #242426 and #f9f9f9, so
+ * there is nothing to cross-fade.
+ *
+ * NORMALISED, NOT AS EXPORTED. The squares came at different lettering sizes
+ * (Brand & Design's is 28% smaller, to fit its longer name), so they were cut
+ * by scripts/cut-division-marks.py to the same 66% body and 74% baseline the
+ * name set uses. Re-run that script if the artwork changes; do not hand-edit.
  */
-const LOCKUPS: Record<string, { slug: string; width: number; height: number }> = {
-  Influence: { slug: "influence", width: 1514, height: 169 },
-  Studios: { slug: "studios", width: 1374, height: 171 },
-  "AI Lab": { slug: "ai-lab", width: 1347, height: 164 },
-  "Brand & Design": { slug: "brand-design", width: 2017, height: 192 },
+const MARK: Record<string, { slug: string; width: number; height: number }> = {
+  Influence: { slug: "influence", width: 688, height: 165 },
+  Studios: { slug: "studios", width: 571, height: 168 },
+  "AI Lab": { slug: "ai-lab", width: 492, height: 167 },
+  "Brand & Design": { slug: "brand-design", width: 803, height: 120 },
 };
 
 /**
@@ -138,7 +151,15 @@ const NAME: Record<string, { slug: string; width: number; height: number }> = {
  * division clears 13. If that reads too small on a real phone, the fix is a
  * stacked mobile crop from Genesis, not a CSS change here.
  */
-const TARGET_HEIGHT = 58;
+/*
+  65 SINCE THE MARK SET ARRIVED, and it follows the LETTERS, not the box. The
+  GENESIS.<name> lockups put their cap-to-baseline body at 74% of the box, so
+  58px stood the lettering at about 43px. The N-mark cuts are normalised to
+  66%, so the same 43px needs a 65px box. Kept equal on purpose: the section
+  headers were built around that letter size, and a new logo is not a reason
+  for every division heading on the page to shrink.
+*/
+const TARGET_HEIGHT = 65;
 
 /**
  * The widest of the four, in aspect terms — Brand & Design, at 7.36:1.
@@ -148,7 +169,7 @@ const TARGET_HEIGHT = 58;
  * than typed, so a fifth division cannot leave it stale.
  */
 const MAX_RATIO = Math.max(
-  ...Object.values(LOCKUPS).map((l) => l.width / l.height),
+  ...Object.values(MARK).map((l) => l.width / l.height),
 );
 
 /** The same figure for the board set, which has its own proportions. */
@@ -190,7 +211,7 @@ const BOARD_MAX_RATIO = Math.max(
  * indefinitely, and a client logo at w=1080 is fine. Asking for a sane width
  * sidesteps it; the payload win is the reason to keep it either way.
  */
-const FLUID_SIZES = "(min-width: 1024px) 360px, 90vw";
+const FLUID_SIZES = "(min-width: 1024px) 360px, 45vw";
 
 const NAME_MAX_RATIO = Math.max(
   ...Object.values(NAME).map((l) => l.width / l.height),
@@ -266,10 +287,16 @@ export function DivisionLockup({
   priority?: boolean;
   className?: string;
 }) {
-  const art = nameOnly ? NAME : board ? BOARD : LOCKUPS;
+  const art = nameOnly ? NAME : board ? BOARD : MARK;
   const lockup = art[name];
   /* Only the board set burns its tagline into the picture. */
   const taglineInArt = board && !nameOnly;
+  /*
+    Only the board set is a light/dark PAIR. The name set and the mark set are
+    one file each, drawn in inks that read on both grounds, so there is no
+    second image to cross-fade and none is rendered.
+  */
+  const singleFile = !board || nameOnly;
 
   /*
     A division with no artwork falls back to the type it used to be rather
@@ -312,7 +339,9 @@ export function DivisionLockup({
   const src = (variant: "light" | "dark") =>
     nameOnly
       ? `/brand/divisions/name/${lockup.slug}.png`
-      : `/brand/divisions/${board ? "board" : "wordmark"}/${lockup.slug}-${variant}.png`;
+      : board
+        ? `/brand/divisions/board/${lockup.slug}-${variant}.png`
+        : `/brand/divisions/mark/${lockup.slug}.png`;
 
   /*
     FLUID MODE EXISTS SO FOUR LOCKUPS CAN SHARE A HEIGHT.
@@ -336,7 +365,20 @@ export function DivisionLockup({
       : MAX_RATIO;
   const sizing = fluid
     ? { width: `${((ratio / maxRatio) * 100).toFixed(3)}%` }
-    : { maxWidth: Math.round(height * ratio) };
+    : {
+        maxWidth: Math.round(height * ratio),
+        /*
+          A FLOOR AS WELL AS A CEILING, for centred headings. A centred header
+          shrinks to fit its widest child, and this box is a percentage width,
+          so it contributes nothing to that: the heading ended up exactly as
+          wide as the TAGLINE and the mark was squeezed to match. On a phone
+          that stood Brand & Design at 39px when the screen had room for 49.
+          The floor asks for the mark's full width, capped at the page's own
+          column (the viewport less its 1.5rem gutters), so a wide mark takes
+          the width available and a narrow one is unaffected.
+        */
+        minWidth: `min(${Math.round(height * ratio)}px, calc(100vw - 3rem))`,
+      };
   const maxWidth = Math.round(height * ratio);
 
   return (
@@ -416,9 +458,9 @@ export function DivisionLockup({
             so it must NOT be faded by --logo-invert, or it would vanish
             entirely on whichever theme sets that token to 1.
           */
-          style={nameOnly ? undefined : { opacity: "calc(1 - var(--logo-invert, 0))" }}
+          style={singleFile ? undefined : { opacity: "calc(1 - var(--logo-invert, 0))" }}
         />
-        {!nameOnly && (
+        {!singleFile && (
           <Image
             src={src("dark")}
             alt=""
@@ -443,7 +485,15 @@ export function DivisionLockup({
       {!taglineInArt && (
         <span
           className={cn(
-            "mt-2 block text-pretty text-small leading-relaxed text-ash sm:text-lead",
+            /*
+              ONE LINE ON A PHONE. Genesis flagged Influence's and AI Lab's
+              taglines wrapping onto a second line on mobile ("this shd be in
+              one line", "one line please"). The size tracks the viewport
+              between 11 and 14px so the longest, "Influencer Marketing |
+              Celeb Partnerships & UGC", still fits a 375px screen; from `sm`
+              up it wraps and sizes exactly as it did.
+            */
+            "mt-2 block whitespace-nowrap text-[clamp(0.6875rem,3.3vw,0.875rem)] leading-relaxed text-ash sm:whitespace-normal sm:text-pretty sm:text-lead",
             /*
               LAST, so a caller can actually override the defaults above.
               `cn` runs tailwind-merge, which resolves conflicts by source

@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { matchesFilter, workFilters, type WorkItem } from "@/lib/work";
+import { findWork, matchesFilter, workFilters, type WorkItem } from "@/lib/work";
 import { cn } from "@/lib/utils";
+import { WorkDialog } from "./work-dialog";
 import { WorkTile } from "./work-tile";
 
 /**
@@ -51,20 +52,151 @@ export function WorkGrid({
   className?: string;
 }) {
   const [filter, setFilter] = useState("All");
+  /* Which piece is open over the page, by slug: a clip tile opens its whole engagement. */
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
   const filters = useMemo(() => workFilters(items), [items]);
   const visible = useMemo(
     () => items.filter((item) => matchesFilter(item, filter)),
     [items, filter],
   );
 
-  const scroller = useRef<HTMLDivElement>(null);
+  const rowA = useRef<HTMLDivElement>(null);
+  const rowB = useRef<HTMLDivElement>(null);
   const page = useCallback((direction: 1 | -1) => {
-    const el = scroller.current;
-    if (!el) return;
-    /* Roughly a screenful, so a click moves the reader on without losing the
-       thread of where they were. */
-    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "smooth" });
+    /*
+      BOTH ROWS MOVE, IN OPPOSITE DIRECTIONS, which is Genesis's "upar wala
+      right scroll, niche wala left scroll". The bottom row is laid out
+      right-to-left (see the rail below), so "forward" for it is a negative
+      scrollLeft. Roughly a screenful each time, so a click moves the reader on
+      without losing the thread of where they were.
+    */
+    for (const [ref, sign] of [[rowA, 1], [rowB, -1]] as const) {
+      const el = ref.current;
+      if (el) el.scrollBy({ left: sign * direction * el.clientWidth * 0.8, behavior: "smooth" });
+    }
   }, []);
+
+  const railBox = useRef<HTMLDivElement>(null);
+
+  /*
+    THE STRIPS MOVE ON THEIR OWN ("portfolio me auto move wala rakho"), in
+    opposite directions, and they still belong to the reader.
+
+    DRIVEN BY scrollLeft, NOT A CSS MARQUEE. A transform animation is the usual
+    way to do this and it would have taken three things away: the swipe (a
+    translated track is not a scroll position), the arrows (which step the
+    scroll), and the loop without a seam, which a transform marquee buys by
+    DOUBLING the track — seventy-two video tiles becoming a hundred and
+    forty-four. Moving the real scroll position keeps all three and doubles
+    nothing. At the end of a strip it turns and comes back.
+
+    IT GETS OUT OF THE WAY. Pointing at the rail stops it; touching, dragging
+    or wheeling a strip stops it for a few seconds and it picks up from
+    wherever the reader left it; it only runs while the rail is on screen and
+    the tab is visible; and Reduce Motion gets still strips.
+
+    NO SCROLL-SNAP ON THESE STRIPS ANY MORE. Snap re-aligns the position at the
+    end of every scroll, and a strip creeping forward a fraction of a pixel a
+    frame is one long run of scroll ends: snap kept pulling it back, so it
+    stuttered in place instead of moving. The arrows ask for smooth scrolling
+    themselves, so the strips no longer need `scroll-smooth` either — which
+    would otherwise have tried to animate every one of those fractional steps.
+  */
+  useEffect(() => {
+    if (!rail) return;
+    const box = railBox.current;
+    const strips = [rowA.current, rowB.current].filter(
+      (el): el is HTMLDivElement => el !== null,
+    );
+    if (!box || strips.length === 0) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const SPEED = 26; // px per second
+    const lanes = strips.map((el) => ({
+      el,
+      rtl: el.dir === "rtl",
+      step: 1,
+      offset: Math.abs(el.scrollLeft),
+    }));
+    let onScreen = false;
+    let hovering = false;
+    let holdUntil = 0;
+    let frame = 0;
+    let last = performance.now();
+
+
+    const hold = (ms: number) => {
+      holdUntil = performance.now() + ms;
+    };
+    const enter = () => {
+      hovering = true;
+    };
+    const leave = () => {
+      hovering = false;
+      hold(900);
+    };
+    const touched = () => hold(3500);
+    box.addEventListener("pointerenter", enter);
+    box.addEventListener("pointerleave", leave);
+    for (const el of strips) {
+      el.addEventListener("pointerdown", touched, { passive: true });
+      el.addEventListener("touchstart", touched, { passive: true });
+      el.addEventListener("wheel", touched, { passive: true });
+    }
+
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      /*
+        ON SCREEN IS MEASURED HERE, EVERY FRAME, not reported by an
+        IntersectionObserver. It was an observer first, and on a phone it never
+        once reported the rail visible — while a second observer, attached to
+        the same element with the same threshold from outside the component,
+        reported it fully in view. The strips never moved. The loop already
+        runs each frame, and one rect read per frame is cheap, so it asks the
+        element directly and cannot be left holding a stale answer.
+      */
+      const rect = box.getBoundingClientRect();
+      onScreen = rect.bottom > 0 && rect.top < window.innerHeight;
+      const running = onScreen && !hovering && now > holdUntil && !document.hidden;
+      for (const lane of lanes) {
+        const max = lane.el.scrollWidth - lane.el.clientWidth;
+        if (!running || max <= 0) {
+          /* Follow the reader's own scrolling, so the drift resumes from there. */
+          lane.offset = Math.abs(lane.el.scrollLeft);
+          continue;
+        }
+        /*
+          The offset is kept as a float and only WRITTEN, never read back,
+          while running. A browser may round scrollLeft to whole pixels, and
+          at 26px a second a frame's step is under half of one — read back and
+          re-added, it would round to nothing and the strip would never move.
+        */
+        lane.offset += lane.step * SPEED * dt;
+        if (lane.offset >= max) {
+          lane.offset = max;
+          lane.step = -1;
+        } else if (lane.offset <= 0) {
+          lane.offset = 0;
+          lane.step = 1;
+        }
+        lane.el.scrollLeft = lane.rtl ? -lane.offset : lane.offset;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      box.removeEventListener("pointerenter", enter);
+      box.removeEventListener("pointerleave", leave);
+      for (const el of strips) {
+        el.removeEventListener("pointerdown", touched);
+        el.removeEventListener("touchstart", touched);
+        el.removeEventListener("wheel", touched);
+      }
+    };
+  }, [rail, visible]);
 
   return (
     <div className={className}>
@@ -134,35 +266,53 @@ export function WorkGrid({
         tile fills it.
       */}
       {rail ? (
-        <div className="relative">
+        <div ref={railBox} className="relative">
           {/*
-            TWO ROWS, FLOWING SIDEWAYS. `grid-flow-col` with two explicit rows
-            fills top-then-bottom and starts a new column, which is what makes
-            a horizontal rail read in the same order a grid does. Each column
-            is a fixed fraction of the viewport so a tile is never a sliver,
-            and `snap-x` lands the scroll on a column edge rather than halfway
-            through one.
+            TWO ROWS THAT SLIDE ON THEIR OWN, IN OPPOSITE DIRECTIONS.
+
+            It was one scroll container holding two grid rows, so both rows
+            only ever moved together. Genesis's phone note asks for four cards
+            on screen in two lines, "upar wala right scroll, niche wala left
+            scroll": two independent strips, each swiped by itself, running
+            against each other the way the client wall does.
+
+            The bottom strip is `dir="rtl"`, which is what makes it start at
+            the right-hand edge and travel left. Each tile resets to `ltr`, so
+            only the strip's direction flips and no caption is mirrored.
+
+            The catalogue is dealt alternately into the two strips rather than
+            split in half, so both open with a mix of divisions instead of the
+            top being one run of work and the bottom another.
+
+            Two cards per strip on a phone, which is the "4 cards" on screen;
+            from `sm` up each tile takes its previous width.
           */}
-          <div
-            ref={scroller}
-            className="no-scrollbar -mx-6 grid snap-x snap-mandatory grid-flow-col grid-rows-2 gap-3 overflow-x-auto scroll-smooth px-6 pb-1 sm:gap-4"
-            style={{ gridAutoColumns: "clamp(9rem, 38vw, 15rem)" }}
-          >
-            {visible.map((item) => (
-              <div key={item.key ?? item.slug} className="aspect-[9/13] snap-start">
-                <WorkTile item={item} variant="fill" />
-              </div>
-            ))}
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {[
+              visible.filter((_, index) => index % 2 === 0),
+              visible.filter((_, index) => index % 2 === 1),
+            ].map((row, rowIndex) =>
+              row.length === 0 ? null : (
+                <div
+                  key={rowIndex}
+                  ref={rowIndex === 0 ? rowA : rowB}
+                  dir={rowIndex === 1 ? "rtl" : "ltr"}
+                  className="no-scrollbar -mx-6 flex gap-3 overflow-x-auto px-6 pb-1 sm:gap-4"
+                >
+                  {row.map((item) => (
+                    <div
+                      key={item.key ?? item.slug}
+                      dir="ltr"
+                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(9rem,38vw,15rem)]"
+                    >
+                      <WorkTile item={item} variant="fill" onOpen={() => setOpenSlug(item.slug)} />
+                    </div>
+                  ))}
+                </div>
+              ),
+            )}
           </div>
 
-          {/*
-            THE ARROWS. Genesis asked for them, and they are an addition to
-            the scroll rather than a replacement: the rail still takes a
-            trackpad swipe, a shift-wheel and a keyboard, so the buttons are
-            aria-hidden furniture for the pointer rather than the only way
-            through. They page by roughly a screenful, clamped so a short rail
-            cannot scroll into empty space.
-          */}
           <RailArrow direction="left" onClick={() => page(-1)} />
           <RailArrow direction="right" onClick={() => page(1)} />
         </div>
@@ -175,7 +325,7 @@ export function WorkGrid({
         >
           {visible.map((item) => (
             <div key={item.key ?? item.slug} className="aspect-[9/13]">
-              <WorkTile item={item} variant="fill" />
+              <WorkTile item={item} variant="fill" onOpen={() => setOpenSlug(item.slug)} />
             </div>
           ))}
         </div>
@@ -186,6 +336,10 @@ export function WorkGrid({
           Nothing in {filter} yet.
         </p>
       )}
+      <WorkDialog
+        item={openSlug ? (findWork(openSlug) ?? null) : null}
+        onClose={() => setOpenSlug(null)}
+      />
     </div>
   );
 }

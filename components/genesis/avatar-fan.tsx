@@ -2,10 +2,10 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { cn } from "@/lib/utils";
+import { AvatarDialog } from "./avatar-dialog";
 
 /**
  * The AI avatar roster, dealt as a hand of cards.
@@ -166,6 +166,8 @@ export function AvatarFan({
   */
   const still = useReducedMotion();
   const fan = useFanRoom();
+  /* Which avatar is open over the page. They were routes; see AvatarDialog. */
+  const [openId, setOpenId] = useState<string | null>(null);
 
   return (
     /*
@@ -180,6 +182,7 @@ export function AvatarFan({
       box is not merely overlapping, it is cut off. At 1.82 it was slicing the
       bottom off the outer two cards' names.
     */
+    <>
     <div
       className={cn(
         /*
@@ -192,8 +195,16 @@ export function AvatarFan({
         */
         fan
           ? "relative h-[calc(clamp(7.5rem,14vw,13rem)*2.08)] w-full"
-          : // Two centred rows, four then three. See useFanRoom.
-            "flex flex-wrap justify-center gap-x-2 gap-y-3 px-4",
+          : // A swipeable row of full-size cards. See useFanRoom.
+            /*
+              BIGGER, AND SWIPED ("scroll karke bada kardo ai avatars wale
+              ko"). The phone layout was two centred rows of four and three,
+              which at 375px made every card about 80px wide with its name
+              at 9px: seven avatars reduced to stamps. One row that scrolls
+              lets each card be nearly half the screen, and the whole point
+              of the section is that you can see the faces.
+            */
+            "no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2",
         className,
       )}
     >
@@ -230,7 +241,7 @@ export function AvatarFan({
             className={
               fan
                 ? "pointer-events-none absolute inset-x-0 top-0 flex justify-center"
-                : "w-[calc((100%-1.5rem)/4)] max-w-[7rem]"
+                : "w-[46vw] max-w-[13rem] shrink-0 snap-center"
             }
             style={
               fan
@@ -303,11 +314,13 @@ export function AvatarFan({
                   : undefined
               }
             >
-            <Link
-              href={`/avatars/${avatar.id}`}
+            <button
+              type="button"
+              onClick={() => setOpenId(avatar.id)}
+              aria-haspopup="dialog"
               aria-label={`${avatar.name}${avatar.role ? `, ${avatar.role}` : ""}`}
               className={cn(
-                "pointer-events-auto block rounded-[1.25rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+                "pointer-events-auto block w-full rounded-[1.25rem] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
               )}
             >
             <figure
@@ -347,7 +360,7 @@ export function AvatarFan({
                   src={avatar.portrait}
                   alt=""
                   fill
-                  sizes="(min-width: 1024px) 13rem, (min-width: 640px) 14vw, 7.5rem"
+                  sizes="(min-width: 880px) 14vw, 46vw"
                   className="object-cover"
                 />
               )}
@@ -368,13 +381,13 @@ export function AvatarFan({
               <figcaption
                 className={cn(
                   "absolute inset-x-0 bottom-0 text-center",
-                  fan ? "p-3 sm:p-4" : "p-1.5",
+                  fan ? "p-3 sm:p-4" : "p-3",
                 )}
               >
                 <span
                   className={cn(
                     "block font-semibold uppercase leading-none tracking-tight text-white",
-                    fan ? "text-[clamp(0.95rem,1.9vw,1.6rem)]" : "text-[0.6rem]",
+                    fan ? "text-[clamp(0.95rem,1.9vw,1.6rem)]" : "text-[1.05rem]",
                   )}
                 >
                   {avatar.name}
@@ -385,7 +398,7 @@ export function AvatarFan({
                       "block font-medium uppercase leading-tight text-white/70",
                       fan
                         ? "mt-1.5 text-[clamp(0.4rem,0.72vw,0.6rem)] tracking-[0.14em]"
-                        : "mt-1 text-[0.4rem] tracking-[0.1em]",
+                        : "mt-1.5 text-[0.55rem] tracking-[0.12em]",
                     )}
                   >
                     {avatar.role}
@@ -393,11 +406,13 @@ export function AvatarFan({
                 )}
               </figcaption>
             </figure>
-            </Link>
+            </button>
             </div>
           </motion.div>
         );
       })}
     </div>
+    <AvatarDialog id={openId} onClose={() => setOpenId(null)} onNavigate={setOpenId} />
+    </>
   );
 }

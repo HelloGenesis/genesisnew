@@ -7,6 +7,15 @@ import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { influencer, isPending, services } from "@/lib/home-content";
 
+/*
+  ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller ("buttons on same
+  line - reduce size"). `max-sm:` leaves every larger screen as it was, and the
+  arrow goes first because it is the one part of a button that says nothing
+  its label does not.
+*/
+const MOBILE_CTA =
+  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
+
 /**
  * Influencer marketing — built to the Genesis mockup on page 7.
  *
@@ -67,7 +76,18 @@ export function InfluencerMarketing() {
           />
         </Reveal>
 
-        <div className="mt-6 grid items-center gap-8 lg:grid-cols-[0.82fr_1.18fr]">
+        {/*
+          A DIFFERENT ORDER ON A PHONE, from Genesis's mobile notes: the
+          1,00,000+ card first ("1 lakh + influencer above the scroll wala"),
+          then the niches, then the constellation ("ye upar hona chahiye phone
+          me"), then the copy ("copy below this section, only mobile").
+
+          `contents` on the left column below `lg` dissolves it, so its three
+          blocks and the constellation become siblings in this grid and
+          `order` can interleave them. At `lg` the column is a real box again,
+          every order resets, and desktop is exactly what it was.
+        */}
+        <div className="mt-6 grid items-center gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:gap-8">
           {/*
             min-w-0 is load-bearing. A grid item defaults to `min-width: auto`,
             which refuses to shrink below its content's longest unbreakable
@@ -76,7 +96,7 @@ export function InfluencerMarketing() {
             the section's overflow:hidden at 417px against a 375px viewport.
             With min-w-0 the column can shrink and the line wraps instead.
           */}
-          <div className="min-w-0">
+          <div className="contents lg:block lg:min-w-0">
             {/*
               THE DIVISION'S OWN LOCKUP, replacing a bespoke headline set at
               up to 80px across three lines. Two things were wrong with it:
@@ -98,12 +118,18 @@ export function InfluencerMarketing() {
 
               A list, semantically, because that is what it is.
             */}
-            <Reveal delay={0.06}>
-              <ul className="flex flex-wrap gap-x-2 gap-y-2">
+            <Reveal delay={0.06} className="order-2 min-w-0 lg:order-none">
+              <ul
+                /*
+                  One swipeable line on a phone ("add scroller for this as well
+                  only on mobile"); from `sm` up it wraps as before.
+                */
+                className="no-scrollbar -mx-6 flex gap-2 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+              >
                 {influencer.niches.map((niche) => (
                   <li
                     key={niche}
-                    className="rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
+                    className="shrink-0 rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
                   >
                     {niche}
                   </li>
@@ -115,22 +141,39 @@ export function InfluencerMarketing() {
                   whose own niche is not among the ten needs to be told the
                   list is a sample, not the extent of it.
                 */}
-                <li className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-brand-ink">
+                <li className="shrink-0 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-brand-ink">
                   +{influencer.moreNiches} more
                 </li>
               </ul>
             </Reveal>
 
-            <Reveal delay={0.1}>
-              <p className="mt-5 max-w-lg text-pretty text-body leading-relaxed text-ash">
+            <Reveal delay={0.1} className="order-4 lg:order-none">
+              <p className="max-w-lg text-pretty text-body leading-relaxed text-ash lg:mt-5">
                 {influencer.body}
               </p>
             </Reveal>
 
             {/* The database card: red-tinted glass, icon well, circular arrow. */}
-            <Reveal delay={0.16}>
+            {/*
+              ON A PHONE, JUST THE NUMBER ("box hatado, sirf text rakho").
+              The glass card below is desktop's: an icon, a description and an
+              arrow in a panel. On a phone Genesis wants the figure on its
+              own, where it reads as the headline it is rather than a widget.
+            */}
+            <Reveal delay={0.16} className="order-1 text-center lg:hidden">
+              <p className="leading-none tracking-tight text-bone">
+                <span className="text-[2.25rem] font-normal">
+                  {influencer.databaseStat.value}
+                </span>{" "}
+                <span className="font-serif text-h3 italic text-brand-ink">
+                  influencers
+                </span>
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.16} className="hidden lg:order-none lg:block">
               <div
-                className="glass glass-lit mt-6 flex items-center gap-5 rounded-panel p-5"
+                className="glass glass-lit flex items-center gap-5 rounded-panel p-5 lg:mt-6"
                 style={{
                   background:
                     "linear-gradient(102deg, rgb(255 197 22 / 0.17) 0%, rgb(255 197 22 / 0.05) 42%, rgb(255 255 255 / 0.03) 100%)",
@@ -161,7 +204,7 @@ export function InfluencerMarketing() {
             </Reveal>
           </div>
 
-          <Reveal delay={0.2} direction="left" variant="scene">
+          <Reveal delay={0.2} direction="left" variant="scene" className="order-3 lg:order-none">
             {/*
               The mockup labels these by niche and follower count, not by
               celebrity name — the named celebrity collaborations are a
@@ -183,7 +226,12 @@ export function InfluencerMarketing() {
         </div>
 
         {/* The figures bar — the CTA lives inside it, as in the mockup. */}
-        <Reveal delay={0.24} className="mt-8">
+        {/*
+          The stat bento is off on phones ("remove the bentogrid, only
+          mobile"): below the constellation it was a fourth consecutive block
+          of numbers, and the 1,00,000+ card already leads the section.
+        */}
+        <Reveal delay={0.24} className="mt-8 hidden sm:block">
           <div className="glass glass-lit flex flex-col gap-6 rounded-panel px-5 py-5 sm:px-6 lg:flex-row lg:items-center">
             <div className="grid flex-1 grid-cols-2 gap-y-6 lg:grid-cols-4">
               {stats.map((stat, index) => {
@@ -244,13 +292,14 @@ export function InfluencerMarketing() {
           influencer campaigns", which is what the query string does. The
           division page is still reachable from the card above.
         */}
-        <Reveal delay={0.15} className="mt-5 flex flex-wrap gap-3">
+        <Reveal delay={0.15} className="mt-5 flex flex-nowrap gap-2 sm:flex-wrap sm:gap-3">
           <GlassButton
             href="/#contact"
             quickContact="influence:plan-a-campaign"
             variant="brand"
             size="lg"
             arrow
+            className={MOBILE_CTA}
           >
             Plan Influencer Campaign
           </GlassButton>
@@ -259,6 +308,7 @@ export function InfluencerMarketing() {
             variant="glass"
             size="lg"
             arrow
+            className={MOBILE_CTA}
           >
             View Case Studies
           </GlassButton>

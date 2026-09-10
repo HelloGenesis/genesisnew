@@ -10,6 +10,14 @@ import { aiContent, services } from "@/lib/home-content";
 import { siteConfig, whatsappLink } from "@/lib/site-config";
 import { SectionShell } from "./section-shell";
 
+/*
+  ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller: the same
+  treatment Genesis asked for on Influence ("buttons on same line - reduce
+  size"), for the same pair of buttons here. Larger screens are untouched.
+*/
+const MOBILE_CTA =
+  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
+
 /**
  * Section — AI-generated content.
  *
@@ -181,13 +189,14 @@ export function AiContent() {
         The form is the fallback, not a third button: `quickContact` only
         applies when there is no chat link to give.
       */}
-      <Reveal delay={0.1} className="mt-12 flex flex-wrap justify-center gap-3">
+      <Reveal delay={0.1} className="mt-12 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
         <GlassButton
           href={avatarChat ?? "/#contact"}
           quickContact={avatarChat ? undefined : "ai-labs:create-an-avatar"}
           variant="brand"
           icon={<Sparkles className="size-4" />}
           arrow
+          className={MOBILE_CTA}
         >
           Create Your AI Avatar
         </GlassButton>
@@ -196,7 +205,7 @@ export function AiContent() {
           button gets. It went to /our-work unfiltered, which is "view AI
           content" landing on everything Genesis has ever made.
         */}
-        <GlassButton href="/#library" variant="glass" arrow>
+        <GlassButton href="/#library" variant="glass" arrow className={MOBILE_CTA}>
           View AI Content
         </GlassButton>
       </Reveal>

@@ -8,6 +8,14 @@ import { Reveal } from "@/components/genesis/reveal";
 import { branding, services } from "@/lib/home-content";
 import { SectionShell } from "./section-shell";
 
+/*
+  ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller: the same
+  treatment Genesis asked for on Influence ("buttons on same line - reduce
+  size"), for the same pair of buttons here. Larger screens are untouched.
+*/
+const MOBILE_CTA =
+  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
+
 /**
  * Section 8 — Branding & Design.
  *
@@ -319,7 +327,13 @@ export function BrandingDesign() {
           </div>
         </Reveal>
 
-        <Reveal delay={0.06}>
+        {/*
+          "WHAT WE MAKE" LEADS ON A PHONE ("woh wale section ko above the
+          tripgate and activhealth app ka logos"). Stacked, the showcase came
+          first and a reader met two client logos before being told what the
+          division does. On desktop they sit side by side and order is moot.
+        */}
+        <Reveal delay={0.06} className="order-first lg:order-none">
           <div className="glass glass-lit relative flex h-full flex-col rounded-panel p-8">
             <p className="micro-label mb-6">
               {/* No count. Genesis asked for the "· 06" off this label. */}
@@ -365,16 +379,17 @@ export function BrandingDesign() {
           This division had no call to action at all — a reader could finish
           the section that describes identity work with nowhere to go.
         */}
-        <Reveal delay={0.15} className="mt-2 flex flex-wrap justify-center gap-3 lg:col-span-2">
+        <Reveal delay={0.15} className="mt-2 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3 lg:col-span-2">
           <GlassButton
             href="/#contact"
             quickContact="brand-design:build-a-brand"
             variant="brand"
             arrow
+            className={MOBILE_CTA}
           >
             Build a brand
           </GlassButton>
-          <GlassButton href="/#library" variant="glass" arrow>
+          <GlassButton href="/#library" variant="glass" arrow className={MOBILE_CTA}>
             View branding work
           </GlassButton>
         </Reveal>

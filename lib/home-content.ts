@@ -45,7 +45,7 @@ export const hero = {
   body:
     "Quality production and edits, creative direction, strategy and scripting. These are the parts that decide whether content performs, and Genesis builds all of it in-house.",
   primaryCta: { label: "Start a project", href: "/#contact" },
-  secondaryCta: { label: "See our work", href: "/our-work" },
+  secondaryCta: { label: "See our work", href: "/#library" },
 } as const;
 
 /**

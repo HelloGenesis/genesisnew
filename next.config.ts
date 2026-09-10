@@ -21,6 +21,41 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  /*
+    THE PAGES THAT FOLDED INTO THE LANDING PAGE. Genesis asked for everything
+    except the two forms to live on the one page, so these routes are gone.
+    Anyone arriving on an old link — a shared project, a bookmarked case study,
+    a search result — lands on the section that replaced it, not on a 404.
+
+    THE SLUG PATTERNS ARE DELIBERATELY NARROW, and that is the part to keep.
+    Next checks redirects BEFORE /public, and /public has live files under two
+    of these prefixes: every video at /work/clips/<n>.mp4 and every avatar
+    portrait at /avatars/<name>.jpg. `/work/:slug*` would have redirected the
+    whole catalogue's footage and `/avatars/:slug` every portrait. Matching one
+    segment of letters, digits and hyphens only — no dot, no slash — catches
+    the old page URLs and cannot touch a file.
+
+    Temporary (307), not permanent: the decision is new, and a 308 is cached by
+    browsers and search engines long enough to be hard to take back.
+  */
+  async redirects() {
+    const slug = ":slug([a-z0-9-]+)";
+    return [
+      { source: "/our-work", destination: "/#library", permanent: false },
+      { source: `/work/${slug}`, destination: "/#library", permanent: false },
+      { source: "/case-studies", destination: "/#case-studies", permanent: false },
+      { source: `/case-studies/${slug}`, destination: "/#case-studies", permanent: false },
+      { source: `/avatars/${slug}`, destination: "/#ai-lab", permanent: false },
+      { source: "/influencer-campaigns", destination: "/#influence", permanent: false },
+      { source: "/content-creation", destination: "/#studios", permanent: false },
+      { source: "/academy", destination: "/", permanent: false },
+      { source: "/team", destination: "/", permanent: false },
+      { source: "/blog", destination: "/", permanent: false },
+      { source: `/blog/${slug}`, destination: "/", permanent: false },
+      { source: "/style-guide", destination: "/", permanent: false },
+    ];
+  },
+
   async headers() {
     return [
       {

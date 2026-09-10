@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import { GlassButton } from "@/components/genesis/glass-button";
 import { isPending } from "@/lib/home-content";
@@ -70,14 +69,27 @@ export function WorkDetail({ item }: { item: WorkItem }) {
                 Drive when that is switched on, and undefined when it is not —
                 in which case this is exactly what it was before.
               */
-              src={(item.reel?.[0] && filmUrl(item.reel[0])) || item.clip}
               poster={item.poster ?? item.art}
               controls
               playsInline
               preload="metadata"
               {...VIDEO_GUARD}
               className="absolute inset-0 size-full object-contain"
-            />
+            >
+              {/*
+                THE FILM, THEN THE PREVIEW, AS TWO SOURCES. This was a single
+                `src` that was the full film whenever films are switched on —
+                and when a film could not be served (measured: /api/media/
+                films/16.mp4 answered 404) the player sat there empty, because
+                one src has nothing to fall back to. With <source> children the
+                browser moves to the next one on its own when the first fails,
+                so the worst case is the preview cut, never a blank frame.
+              */}
+              {item.reel?.[0] !== undefined && filmUrl(item.reel[0]) && (
+                <source src={filmUrl(item.reel[0])} type="video/mp4" />
+              )}
+              {item.clip && <source src={item.clip} type="video/mp4" />}
+            </video>
           ) : item.art ? (
             <Image
               src={item.art}
@@ -121,7 +133,6 @@ export function WorkDetail({ item }: { item: WorkItem }) {
             {rest.map((n) => (
               <li key={n} className="flex flex-col gap-2">
                 <video
-                  src={filmUrl(n) ?? mediaUrl(reelClip(n))}
                   poster={mediaUrl(reelPoster(n))}
                   muted
                   loop
@@ -130,7 +141,11 @@ export function WorkDetail({ item }: { item: WorkItem }) {
                   preload="none"
                   {...VIDEO_GUARD}
                   className="aspect-[9/16] w-full rounded-card border border-[var(--glass-border)] bg-ink object-cover"
-                />
+                >
+                  {/* Same fallback as the lead: the film if it serves, else the preview. */}
+                  {filmUrl(n) && <source src={filmUrl(n)} type="video/mp4" />}
+                  <source src={mediaUrl(reelClip(n))} type="video/mp4" />
+                </video>
                 {/*
                   Only where the file told us what it is. The first thirty-two
                   clips have no name of their own, and a caption reading
@@ -147,7 +162,12 @@ export function WorkDetail({ item }: { item: WorkItem }) {
         </section>
       )}
 
-      <header className="flex flex-col gap-3">
+      {/*
+        THE NAME LEADS ON A PHONE ("ye text upar aana chahiye"). Stacked, the
+        player filled the first screen and the reader had to scroll past a
+        film to learn whose it was. From `sm` up the order is as before.
+      */}
+      <header className="-order-1 flex flex-col gap-3 sm:order-none">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="micro-label text-brand-ink">{item.vertical}</span>
           <span aria-hidden className="text-faint">
@@ -212,20 +232,9 @@ export function WorkDetail({ item }: { item: WorkItem }) {
           Full Case Study" button that goes nowhere is the single most
           annoying thing a portfolio can do to someone evaluating an agency.
         */}
-        {item.caseStudyHref && (
-          <GlassButton href={item.caseStudyHref} variant="brand" arrow>
-            View full case study
-          </GlassButton>
-        )}
         <GlassButton href="/#contact" variant="glass" arrow>
           Start a project
         </GlassButton>
-        <Link
-          href="/our-work"
-          className="rounded-full px-3 py-2 text-small text-ash underline-offset-4 transition-colors hover:text-bone hover:underline"
-        >
-          All work
-        </Link>
       </footer>
     </article>
   );

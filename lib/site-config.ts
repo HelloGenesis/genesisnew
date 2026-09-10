@@ -121,10 +121,9 @@ export const navItems: NavItem[] = [
     it scrolls from anywhere on the homepage while still loading the homepage
     from any other route.
 
-    /our-work still exists and is still the complete catalogue — the division
-    blocks link into it FILTERED ("view the AI content work"), and a piece's
-    own page links back to it. What changed is that the top-level nav no
-    longer sends a first-time visitor there.
+    /our-work has since been removed altogether, with every page but the two
+    forms: the whole catalogue lives in the portfolio section, and each piece
+    opens over the landing page rather than on a page of its own.
   */
   { label: "Work", href: "/#library" },
   { label: "Case Studies", href: "/#case-studies" },
@@ -231,7 +230,6 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
       },
       { label: "I'm a Creator", href: "/creator" },
       { label: "Careers", href: "/careers" },
-      { label: "Genesis Academy", href: "/academy" },
     ],
   },
   {

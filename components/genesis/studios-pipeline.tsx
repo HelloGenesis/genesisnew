@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef } from "react";
+
 import { Reveal } from "@/components/genesis/reveal";
 import { studios } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
@@ -96,6 +98,19 @@ const ICONS: Record<string, React.ReactNode> = {
 export function StudiosPipeline() {
   const { heading, headingAccent, lead, stages } = studios.pipeline;
 
+  /*
+    ARROWS FOR THE PHONE RAIL ("manually scroll rakho - and arrow button as
+    well"). The rail already swipes; these step it exactly one stage at a
+    time, measured from the first card so they stay right at every width.
+  */
+  const rail = useRef<HTMLOListElement>(null);
+  const step = (direction: 1 | -1) => {
+    const el = rail.current;
+    const card = el?.firstElementChild as HTMLElement | null;
+    if (!el || !card) return;
+    el.scrollBy({ left: direction * (card.offsetWidth + 16), behavior: "smooth" });
+  };
+
   return (
     <div>
       <Reveal className="mx-auto max-w-3xl text-center">
@@ -119,7 +134,14 @@ export function StudiosPipeline() {
         */}
         <span
           aria-hidden
-          className="pointer-events-none absolute -left-1 top-0 hidden md:block"
+          /*
+            AT THE RULER'S HEIGHT, NOT THE TOP OF THE BLOCK. It sat at
+            top-0, which is where the first stop's "01" label is, and the dot
+            was painted straight over the zero. The rule runs 31px down; the
+            dot is 10px, so 26px centres it on the line, which is also where
+            the reference hangs it.
+          */
+          className="pointer-events-none absolute -left-1 top-[26px] hidden md:block"
         >
           <span
             className="block size-2.5 rounded-full"
@@ -137,7 +159,7 @@ export function StudiosPipeline() {
           />
         </span>
 
-        <ol className="no-scrollbar -mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:grid-cols-5 md:gap-5 md:overflow-visible md:px-0">
+        <ol ref={rail} className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:grid-cols-5 md:gap-5 md:overflow-visible md:px-0">
           {stages.map((stage, index) => {
             const s = STRENGTH[index];
             return (
@@ -249,6 +271,22 @@ export function StudiosPipeline() {
             );
           })}
         </ol>
+
+        <div className="mt-5 flex justify-center gap-3 md:hidden">
+          {([-1, 1] as const).map((direction) => (
+            <button
+              key={direction}
+              type="button"
+              onClick={() => step(direction)}
+              aria-label={direction < 0 ? "Previous stage" : "Next stage"}
+              className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d={direction < 0 ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} />
+              </svg>
+            </button>
+          ))}
+        </div>
       </Reveal>
     </div>
   );
