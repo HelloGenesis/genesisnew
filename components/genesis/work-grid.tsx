@@ -303,7 +303,15 @@ export function WorkGrid({
                     <div
                       key={item.key ?? item.slug}
                       dir="ltr"
-                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(9rem,38vw,15rem)]"
+                      /*
+                        A TILE IS BOUND BY THE SCREEN'S HEIGHT TOO, not just
+                        its width. These are 9:13, so width sets height, and
+                        at 15rem two rows plus the heading and filters stood
+                        1074 points on a 800-point laptop. `20vh` caps a tile
+                        at about 29vh tall, which keeps both rows and the
+                        chrome inside one screen at any window size.
+                      */
+                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(7.5rem,min(36vw,17vh),14rem)]"
                     >
                       <WorkTile item={item} variant="fill" onOpen={() => setOpenSlug(item.slug)} />
                     </div>

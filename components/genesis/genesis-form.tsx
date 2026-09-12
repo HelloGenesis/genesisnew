@@ -74,7 +74,7 @@ export function GenesisForm({
   return (
     <form
       action={formAction}
-      className={cn(panel && "glass glass-lit rounded-panel p-6 sm:p-8", className)}
+      className={cn(panel && "glass glass-lit rounded-panel p-5 sm:p-7", className)}
     >
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="source" value={source} />
@@ -86,7 +86,7 @@ export function GenesisForm({
       </div>
 
       {!compact && (
-        <header className="mb-6 flex flex-col gap-2">
+        <header className="mb-4 flex flex-col gap-2">
           <h2 className="text-h3 font-normal tracking-tight text-bone">
             {spec.title}
           </h2>
@@ -109,7 +109,12 @@ export function GenesisForm({
         of controls with no grouping. The extra space is what lets a label
         belong to the field under it rather than to the field above.
       */}
-      <div className="grid gap-x-6 gap-y-7 sm:grid-cols-2">
+      {/*
+        gap-y-5 from 7 on a short screen. The brief asks for a section to fit
+        one screen and this form is the tallest block on the page; two points
+        of leading between seven fields is 14 of them.
+      */}
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:gap-y-6">
         {spec.fields.map((field) => (
           <Field
             key={field.name}

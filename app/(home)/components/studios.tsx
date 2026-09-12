@@ -34,7 +34,7 @@ export function Studios() {
   return (
     <section
       id="studios"
-      className="scene-open grain relative isolate overflow-hidden py-12 sm:py-14 lg:py-16"
+      className="scene-open grain relative isolate overflow-hidden py-7 sm:py-8 lg:py-9"
     >
       <Spectrum className="seamless" />
 
@@ -49,11 +49,11 @@ export function Studios() {
           </Reveal>
         </div>
 
-        <div className="mt-12 sm:mt-14">
+        <div className="mt-6 sm:mt-8">
           <StudiosPipeline />
         </div>
 
-        <Reveal delay={0.14} className="mt-12 flex flex-wrap justify-center gap-3">
+        <Reveal delay={0.14} className="mt-6 flex flex-wrap justify-center gap-3">
           <GlassButton
             href="/#contact"
             quickContact="studios:plan-a-shoot"

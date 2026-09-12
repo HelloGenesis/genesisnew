@@ -159,7 +159,14 @@ const NAME: Record<string, { slug: string; width: number; height: number }> = {
   headers were built around that letter size, and a new logo is not a reason
   for every division heading on the page to shrink.
 */
-const TARGET_HEIGHT = 65;
+/*
+  58 AGAIN, ON THE ONE-SCREEN PASS. The note above kept 65 so a new logo
+  would not shrink every heading — the right call then. The constraint that
+  overrode it is Genesis's: every section has to fit a screen, and this box
+  is the first thing in eight of them, so seven points off it is 56 points
+  off the page for nothing anyone can see at a glance.
+*/
+const TARGET_HEIGHT = 58;
 
 /**
  * The widest of the four, in aspect terms — Brand & Design, at 7.36:1.

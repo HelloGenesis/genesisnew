@@ -87,7 +87,14 @@ export function InfluencerMarketing() {
           `order` can interleave them. At `lg` the column is a real box again,
           every order resets, and desktop is exactly what it was.
         */}
-        <div className="mt-6 grid items-center gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:gap-8">
+        {/*
+          TWO COLUMNS FROM md, NOT lg. Stacked, a tablet put the copy, the
+          ring and the stats one under another and Influence stood 1223
+          points on a 1024 screen. There is room for the split at 768 — the
+          ring caps its own height — and side by side the section comes in
+          under one screen.
+        */}
+        <div className="mt-6 grid items-center gap-6 md:grid-cols-[0.82fr_1.18fr] md:gap-6 lg:gap-8">
           {/*
             min-w-0 is load-bearing. A grid item defaults to `min-width: auto`,
             which refuses to shrink below its content's longest unbreakable
@@ -233,7 +240,7 @@ export function InfluencerMarketing() {
         */}
         <Reveal delay={0.24} className="mt-8 hidden sm:block">
           <div className="glass glass-lit flex flex-col gap-6 rounded-panel px-5 py-5 sm:px-6 lg:flex-row lg:items-center">
-            <div className="grid flex-1 grid-cols-2 gap-y-6 lg:grid-cols-4">
+            <div className="grid flex-1 grid-cols-2 gap-y-4 sm:gap-y-6 md:grid-cols-4">
               {stats.map((stat, index) => {
                 const Icon = STAT_ICONS[index] ?? Globe;
                 const highlight = index === 0;

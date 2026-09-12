@@ -155,7 +155,7 @@ export function BrandingDesign() {
       tone="brand"
       origin="top-left"
       intensity={0.16}
-      contentClassName="sm:mt-20"
+      contentClassName="sm:mt-12"
     >
       {/*
         THREE ACROSS FROM xl, where the reference's proportions fit. Below
@@ -163,10 +163,10 @@ export function BrandingDesign() {
         next; on a phone they stack headline, list, work, so the reader is
         told what the division does before being shown it.
       */}
-      <div className="grid items-center gap-6 md:grid-cols-2 xl:-mx-10 xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8">
+      <div className="grid items-center gap-4 sm:gap-5 md:grid-cols-2 xl:-mx-10 xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8">
         {/* ─── The work ─────────────────────────────────────────────── */}
         <Reveal className="relative z-10 order-3 md:order-2 xl:order-1">
-          <FolderPanel tab={0.4} dots contentClassName="p-4 sm:p-5">
+          <FolderPanel tab={0.4} dots contentClassName="p-3 sm:p-5">
             <div className="flex items-center gap-2.5 pr-12">
               <Image
                 src="/brand/genesis-n.png"
@@ -181,7 +181,7 @@ export function BrandingDesign() {
               </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-2 sm:mt-5 sm:pt-3">
               <span className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
                 Case studies
               </span>
@@ -191,7 +191,7 @@ export function BrandingDesign() {
               </span>
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
               {route.final && (
                 <Tile
                   n={1}
@@ -214,7 +214,7 @@ export function BrandingDesign() {
                   n={i + 2}
                   label={[`Sketch ${i + 1}`]}
                   light
-                  className="aspect-[5/4]"
+                  className="aspect-[4/3]"
                 >
                   <Image
                     src={src}
@@ -270,7 +270,7 @@ export function BrandingDesign() {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 sm:mt-4">
               {[
                 ["Strategy", "driven design"],
                 ["Brands that", "make an impact"],
@@ -314,9 +314,14 @@ export function BrandingDesign() {
           <FolderPanel
             tab={0.5}
             dots
-            contentClassName="flex min-h-[20rem] flex-col justify-center px-7 pt-10 pb-20 sm:px-10 xl:min-h-[26rem]"
+            /*
+              A PHONE DOES NOT NEED 20rem OF MINIMUM. The headline sets its
+              own height in four lines; the floor was there to give the
+              folder presence beside two others, which only happens from xl.
+            */
+            contentClassName="flex flex-col justify-center px-6 pt-8 pb-14 sm:min-h-[16rem] sm:px-10 sm:pb-16 xl:min-h-[26rem]"
           >
-            <h3 className="text-[2rem] leading-[1.04] font-semibold tracking-tight text-scene md:text-[3rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
+            <h3 className="text-[2rem] leading-[1.04] font-semibold tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
               Branding
               <br />
               Positioning,
@@ -343,8 +348,8 @@ export function BrandingDesign() {
 
         {/* ─── What we make ─────────────────────────────────────────── */}
         <Reveal delay={0.1} className="order-2 md:order-3 xl:order-3">
-          <FolderPanel tab={0} dots contentClassName="px-3 pt-11 pb-3 sm:px-4 sm:pb-4">
-            <FolderPanel tab={0.34} tabHeight={20} radius={16} contentClassName="px-5 pt-4 pb-5">
+          <FolderPanel tab={0} dots contentClassName="px-3 pt-9 pb-3 sm:pt-11 sm:px-4 sm:pb-4">
+            <FolderPanel tab={0.34} tabHeight={20} radius={16} contentClassName="px-4 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
               <p className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
                 What we make
               </p>
@@ -352,7 +357,7 @@ export function BrandingDesign() {
                 {branding.capabilities.map((capability, index) => (
                   <li
                     key={capability}
-                    className="flex items-baseline gap-5 border-b border-white/10 py-2.5 last:border-0"
+                    className="flex items-baseline gap-5 border-b border-white/10 py-1.5 last:border-0 sm:py-2.5"
                   >
                     <span className="w-4 shrink-0 text-[0.625rem] tracking-[0.15em]" style={{ color: ORANGE }}>
                       {String(index + 1).padStart(2, "0")}
@@ -361,7 +366,7 @@ export function BrandingDesign() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-2 flex justify-end">
+              <div className="mt-1 flex justify-end sm:mt-2">
                 <ArrowCircle
                   href="/#contact"
                   quickContact="brand-design:what-we-make"

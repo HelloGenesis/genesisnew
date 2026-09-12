@@ -1,7 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 import { getLenis } from "./smooth-scroll";
@@ -37,6 +37,20 @@ import { getLenis } from "./smooth-scroll";
  * THE BLUR IS ON THE BACKDROP, NOT THE PAGE. Filtering the document would
  * repaint every section behind it and create a containing block this fixed
  * layer would then be trapped inside.
+ *
+ * IT IS PORTALLED TO THE BODY, and that is a bug fix rather than tidiness.
+ * This used to render where it was written — inside the section that opened
+ * it — and every one of those sections sits under a `Reveal`, which animates
+ * with a transform. A transformed ancestor becomes the containing block for
+ * `position: fixed` descendants, so "fixed inset-0" was not the viewport at
+ * all: it was that section's box. The panel sat wherever the section
+ * happened to be, the navigation bar painted over it despite a far higher
+ * z-index (a transform makes a stacking context too), and the top of the
+ * panel could be scrolled away entirely. Genesis reported both halves of
+ * that: the window is "not even aligned properly" and the nav on top of it.
+ *
+ * AND IT IS SHAPED LIKE A WINDOW, which Genesis asked for in the same
+ * message: a title bar with the three buttons, the red one closing it.
  */
 export function Overlay({
   open,
@@ -130,13 +144,19 @@ export function Overlay({
     );
   };
 
+  /*
+    `document` below is safe without a mounted flag: this returns null unless
+    `open`, and `open` is state a click sets, so the portal is only ever
+    reached in a browser. A useState/useEffect pair to prove that would be
+    two renders to say what the line above already guarantees.
+  */
   if (!open) return null;
 
   const dismissFromBackdrop = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) close.current();
   };
 
-  return (
+  return createPortal(
     <div
       data-lenis-prevent
       onMouseDown={dismissFromBackdrop}
@@ -144,7 +164,14 @@ export function Overlay({
     >
       <div
         onMouseDown={dismissFromBackdrop}
-        className="flex min-h-full items-start justify-center p-4 sm:items-center sm:p-8"
+        /*
+          CENTRED AT EVERY SIZE. It was `items-start` below `sm`, from when
+          the panel could be taller than the screen and had to be scrolled
+          from the top of the page. The window now caps its own height and
+          scrolls inside itself, so there is nothing left to scroll past and
+          a phone gets the same centred window a desktop does.
+        */
+        className="flex min-h-full items-center justify-center p-3 sm:p-8"
       >
         <div
           ref={panel}
@@ -154,22 +181,59 @@ export function Overlay({
           tabIndex={-1}
           onClickCapture={onClickCapture}
           className={cn(
-            "relative w-full max-w-4xl rounded-[1.75rem] border border-[var(--glass-border)]",
-            "bg-[var(--surface-raised)] p-6 pt-14 shadow-2xl outline-none sm:p-9 sm:pt-14",
+            "relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden",
+            "rounded-xl border border-[var(--glass-border)] bg-[var(--surface-raised)] shadow-2xl outline-none",
+            "sm:max-h-[calc(100dvh-4rem)] sm:rounded-[0.875rem]",
             className,
           )}
         >
-          <button
-            type="button"
-            onClick={() => close.current()}
-            aria-label="Close"
-            className="absolute right-4 top-4 z-[2] grid size-9 place-items-center rounded-full border border-[var(--glass-border)] bg-[var(--surface-raised)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-          >
-            <X className="size-4" aria-hidden />
-          </button>
-          {children}
+          {/*
+            THE TITLE BAR. The red button closes the window and is a real
+            button with a real label; the amber and green are decoration and
+            are hidden from assistive technology, because a minimise that
+            does not minimise is worse than no minimise at all.
+
+            The three colours are macOS's own rather than the brand's six.
+            They are the whole point of the reference — a traffic light in
+            yellow, yellow and yellow is not one — and they are chrome around
+            the content rather than part of the page's palette.
+          */}
+          <div className="relative flex h-10 shrink-0 items-center gap-2 border-b border-[var(--glass-border)] bg-[var(--surface-panel)] px-4">
+            <button
+              type="button"
+              onClick={() => close.current()}
+              aria-label="Close"
+              className="group grid size-3 place-items-center rounded-full bg-[#ff5f57] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-panel)]"
+            >
+              <svg
+                aria-hidden
+                viewBox="0 0 10 10"
+                className="size-2 text-black/55 opacity-0 transition-opacity group-hover:opacity-100"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              >
+                <path d="M2.5 2.5 7.5 7.5M7.5 2.5 2.5 7.5" />
+              </svg>
+            </button>
+            <span aria-hidden className="size-3 rounded-full bg-[#febc2e]" />
+            <span aria-hidden className="size-3 rounded-full bg-[#28c840]" />
+
+            {/*
+              The window's title, centred the way a Mac centres it — and
+              `pointer-events-none` so it cannot swallow a click meant for
+              the buttons underneath its own box.
+            */}
+            <span className="pointer-events-none absolute inset-x-24 truncate text-center text-micro font-medium !tracking-normal text-ash">
+              {label}
+            </span>
+          </div>
+
+          {/* The content, scrolling inside the window rather than moving it. */}
+          <div className="overflow-y-auto overscroll-contain p-6 sm:p-9">{children}</div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

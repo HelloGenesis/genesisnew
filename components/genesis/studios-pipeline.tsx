@@ -7,6 +7,7 @@ import { studios } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { useInViewPlayback } from "@/components/genesis/use-in-view-playback";
+import { cn } from "@/lib/utils";
 
 /**
  * FROM BRIEF TO FINAL CUT — the five stages of a Studios job, laid out as the
@@ -51,8 +52,59 @@ import { useInViewPlayback } from "@/components/genesis/use-in-view-playback";
  */
 const STRENGTH = [0.3, 0.475, 0.65, 0.825, 1];
 
-/** Which clip sits in each card. */
-const CLIPS = [3, 11, 19, 26, 32];
+/**
+ * Which clip sits in each card — STUDIOS WORK, which it was not.
+ *
+ * The five here were 3, 11, 19, 26 and 32: four Influence pieces and one AI
+ * Labs one. Genesis's note was exactly that ("this is all Genesis.influence
+ * and AI"), and it is the worst kind of wrong for this section — a timeline
+ * of how Studios makes a film, illustrated with another division's work.
+ *
+ * These five are all Studios work, and they are ORDERED BY SHAPE to match
+ * the row below: the two landscape films first, the square one in the
+ * middle, the two portrait reels last. That is what lets each card grow
+ * without anything being cropped into a shape it was not shot in.
+ *
+ * Two of the first picks were dropped on sight rather than on principle:
+ * their opening frame is a white title card, so the first and last stage
+ * were plain slabs where every other card was a photograph.
+ */
+const CLIPS = [
+  "studios-umang-2024",
+  "studios-mahindra-cut-44",
+  "studios-1x1",
+  "studios-abhi-ka-star",
+  "studios-activ-travel-leisure-plan-finalhd-1",
+];
+
+/**
+ * The shape of each stage's card, and how much of the row it takes.
+ *
+ * NOT FIVE EQUAL BOXES, AND NOT RANDOM ONES EITHER. Genesis asked first for
+ * unequal cards — "like horizontal and then a square / should look like
+ * videos of different duration" — and then, seeing them, for the variation
+ * to be a PROGRESSION rather than a scatter: "harr ek me size badte jaaye
+ * not uneven". Both notes point the same way once you take the scrubber
+ * seriously. A clip's width on a timeline is its duration, and this row runs
+ * Brief to Deliver: the work accumulates, so the cards should grow with it.
+ * Uneven widths said the five stages differ in length for no reason anybody
+ * could read.
+ *
+ * So every step is wider AND taller than the one before it — 0.74 of a share
+ * of the track up to 1.25, with the shape turning from landscape through
+ * square to portrait, which is what makes the height climb faster than the
+ * width. Measured at 1440: 85, 134, 205, 292 and 341 points tall.
+ *
+ * The shapes follow each clip's own orientation (see CLIPS), so the growth
+ * costs no cropping.
+ */
+const SHAPE = [
+  { span: "0.78fr", aspect: "aspect-[16/9]" },
+  { span: "0.9fr", aspect: "aspect-[4/3]" },
+  { span: "1fr", aspect: "aspect-square" },
+  { span: "1.12fr", aspect: "aspect-[5/6]" },
+  { span: "1.2fr", aspect: "aspect-[4/5]" },
+];
 
 const accent = (alpha: number) => `rgb(255 197 22 / ${alpha})`;
 
@@ -113,19 +165,19 @@ export function StudiosPipeline() {
 
   return (
     <div>
-      <Reveal className="mx-auto max-w-3xl text-center">
+      <Reveal className="mx-auto max-w-2xl text-center">
         <h3 className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
           {heading}{" "}
           <span className="font-serif font-normal italic text-brand-ink">
             {headingAccent}
           </span>
         </h3>
-        <p className="mx-auto mt-5 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+        <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
           {lead}
         </p>
       </Reveal>
 
-      <Reveal variant="scene" delay={0.08} className="relative mt-12 sm:mt-14">
+      <Reveal variant="scene" delay={0.08} className="relative mt-6 sm:mt-8">
         {/*
           THE ORIGIN, at the far left: the filled dot the reference hangs its
           timeline from, and the hairline that drops from it down the side of
@@ -159,13 +211,30 @@ export function StudiosPipeline() {
           />
         </span>
 
-        <ol ref={rail} className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:grid-cols-5 md:gap-5 md:overflow-visible md:px-0">
+        {/*
+          THE TRACK'S COLUMNS ARE UNEVEN, which is the whole point — see
+          SHAPE. Written as a style rather than a Tailwind class because the
+          five weights are data, and a class string would have to be kept in
+          sync with the array by hand.
+        */}
+        <ol
+          ref={rail}
+          className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:gap-5 md:overflow-visible md:px-0 md:[grid-template-columns:var(--pipeline-track)]"
+          style={{ "--pipeline-track": SHAPE.map((s) => s.span).join(" ") } as React.CSSProperties}
+        >
           {stages.map((stage, index) => {
             const s = STRENGTH[index];
             return (
               <li
                 key={stage.n}
-                className="w-[72vw] shrink-0 snap-start sm:w-[46vw] md:w-auto"
+                /*
+                  NARROWER ON A PHONE, 54vw from 72. The cards grow to a 3:4
+                  card at the end of the run, so their WIDTH sets the whole
+                  section's height on a single-column screen: at 72vw the last
+                  card stood 360 points tall and Studios ran 1088 against an
+                  812-point screen.
+                */
+                className="w-[44vw] shrink-0 snap-start sm:w-[34vw] md:w-auto"
               >
                 {/*
                   THE SCRUBBER SEGMENT for this stage: the numbered stop, the
@@ -213,13 +282,24 @@ export function StudiosPipeline() {
                       boxShadow: `0 0 24px -12px ${accent(s * 0.7)}`,
                     }}
                   >
-                    <StageClip n={CLIPS[index]} label={stage.name} />
+                    <StageClip
+                      id={CLIPS[index]}
+                      label={stage.name}
+                      aspect={SHAPE[index].aspect}
+                    />
                   </div>
 
                   {index < stages.length - 1 && (
                     <span
                       aria-hidden
-                      className="absolute -right-[1.85rem] top-1/2 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full border md:flex"
+                      /*
+                        A FIXED DISTANCE FROM THE TOP, not half way down. The
+                        cards are deliberately different heights now, so
+                        centring each arrow on its own card scattered the five
+                        of them down the row. Pinned near the top they sit on
+                        one line and read as one track.
+                      */
+                      className="absolute -right-[1.85rem] top-[4.5rem] hidden size-6 items-center justify-center rounded-full border md:flex"
                       style={{
                         borderColor: accent(s * 0.5),
                         color: accent(Math.max(s, 0.6)),
@@ -233,7 +313,7 @@ export function StudiosPipeline() {
                 </div>
 
                 {/* The dotted number-and-name label, as the reference sets it. */}
-                <div className="mt-4 flex items-center gap-2">
+                <div className="mt-3 flex items-center gap-2">
                   <span
                     aria-hidden
                     className="size-1.5 shrink-0 rounded-full"
@@ -250,14 +330,14 @@ export function StudiosPipeline() {
                   </span>
                 </div>
 
-                <p className="mt-2.5 text-pretty text-small leading-relaxed text-ash">
+                <p className="mt-2 text-pretty text-small leading-relaxed text-ash">
                   {stage.body}
                 </p>
 
                 <svg
                   aria-hidden
                   viewBox="0 0 24 24"
-                  className="mt-5 size-7"
+                  className="mt-3 size-6"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="1.5"
@@ -292,7 +372,15 @@ export function StudiosPipeline() {
   );
 }
 
-function StageClip({ n, label }: { n: number; label: string }) {
+function StageClip({
+  id,
+  label,
+  aspect,
+}: {
+  id: string;
+  label: string;
+  aspect: string;
+}) {
   /*
     Plays while on screen and pauses off it — the same hook the work tiles and
     the case-study posters use. Five of these is a cost worth paying where the
@@ -303,15 +391,20 @@ function StageClip({ n, label }: { n: number; label: string }) {
   return (
     <video
       ref={ref}
-      src={mediaUrl(`/work/clips/${n}.mp4`)}
-      poster={mediaUrl(`/work/posters/${n}.jpg`)}
+      src={mediaUrl(`/work/clips/${id}.mp4`)}
+      poster={mediaUrl(`/work/posters/${id}.jpg`)}
       muted
       loop
       playsInline
       preload="metadata"
       aria-label={`${label} — Genesis Studios work`}
       {...VIDEO_GUARD_CLIENT}
-      className="aspect-[4/5] w-full object-cover md:aspect-[3/4]"
+      /*
+        The aspect gives the card its shape; the vh cap keeps the tallest of
+        them inside a short laptop screen, cropping a little off a portrait
+        reel rather than pushing the section past one screen.
+      */
+      className={cn("w-full object-cover", aspect, "max-h-[30vh]")}
     />
   );
 }

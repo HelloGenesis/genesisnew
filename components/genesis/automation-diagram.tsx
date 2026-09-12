@@ -333,13 +333,13 @@ function TallDiagram({ className }: { className?: string }) {
     { apps: APPLICATIONS.slice(0, half), dotX: 156, dir: 1 as const },
     { apps: APPLICATIONS.slice(half), dotX: 204, dir: -1 as const },
   ];
-  const rowTop = 30;
-  const rowGap = 42;
+  const rowTop = 26;
+  const rowGap = 36;
   const rows = Math.max(...columns.map((c) => c.apps.length));
-  const hubY = rowTop + rows * rowGap + 26;
+  const hubY = rowTop + rows * rowGap + 18;
   const hub = { x: 80, y: hubY, w: 200, h: 80 };
   const cx = hub.x + hub.w / 2;
-  const height = hubY + hub.h + 24;
+  const height = hubY + hub.h + 16;
 
   const markW = 140;
   const markH = Math.round((markW / AI_LAB_MARK.width) * AI_LAB_MARK.height);

@@ -57,7 +57,7 @@ export function FooterCta() {
           was asked for, and the long fields (the brief, the consent) still
           span both columns because they are marked `half: false`.
         */}
-        <Reveal delay={0.1} className="mt-10" id="contact">
+        <Reveal delay={0.1} className="mt-4" id="contact">
           <GenesisForm kind="brand" source="/#contact" />
         </Reveal>
       </div>

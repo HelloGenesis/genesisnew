@@ -92,7 +92,13 @@ export function SectionShell({
         48/56/64 now, and every section on the page uses it, this shell's
         four included. The gap between two blocks is the same gap everywhere.
       */
-      className={cn("py-12 sm:py-14 lg:py-16", className)}
+      /*
+        TIGHTER AGAIN, 32/40/48 from 48/56/64. Genesis's test is that a
+        section fits a screen on every device, and padding is the cheapest
+        height on the page: four sections were over by less than the 64 top
+        and bottom they were each spending on air.
+      */
+      className={cn("py-7 sm:py-8 lg:py-9", className)}
     >
       <section id={id} className="mx-auto w-full max-w-6xl px-6">
         {/*
@@ -173,7 +179,7 @@ export function SectionShell({
         )}
 
         {children && (
-          <div className={cn("mt-10 sm:mt-10", contentClassName)}>{children}</div>
+          <div className={cn("mt-5 sm:mt-7", contentClassName)}>{children}</div>
         )}
       </section>
     </Atmosphere>

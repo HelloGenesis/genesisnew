@@ -165,7 +165,14 @@ export function CreatorConstellation({
         the copy in a two-column grid, so its height sets the whole section's
         — and that height was most of why Influence ran over a screen.
       */
-      className="relative isolate mx-auto aspect-[850/620] w-full"
+      /*
+        CAPPED BY THE VIEWPORT'S HEIGHT. The box keeps its 850:620 shape, so
+        its width is what decides how tall it stands: on a tablet the column
+        went full width and the ring alone was 560 points of a 1024 screen.
+        The max-width is that ratio expressed against vh, which holds the
+        whole constellation inside 58vh however wide the column gets.
+      */
+      className="relative isolate mx-auto aspect-[850/620] w-full max-w-[calc(40vh*850/620)]"
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
     >

@@ -39,6 +39,7 @@ export function AiContent() {
   const avatarChat = whatsappLink(siteConfig.avatarWhatsappMessage);
 
   return (
+    <>
     <SectionShell
       id="ai-lab"
       division={{
@@ -112,7 +113,7 @@ export function AiContent() {
           >
             {aiContent.avatarsIntro.heading}
           </h3>
-          <p className="mx-auto mt-5 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+          <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
             {aiContent.avatarsIntro.lead}
           </p>
 
@@ -124,7 +125,7 @@ export function AiContent() {
           */}
         </div>
 
-        <AvatarFan avatars={aiContent.avatars} className="mt-8 sm:mt-10" />
+        <AvatarFan avatars={aiContent.avatars} className="mt-5 sm:mt-6" />
 
         {/*
           THE LINE SITS UNDER THE ROSTER, at Genesis's request. Above it, it
@@ -133,7 +134,7 @@ export function AiContent() {
           that sentence is doing — the same move Brand & Design's standfirst
           made for the same reason.
         */}
-        <p className="mx-auto mt-6 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead">
+        <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead">
           {aiContent.avatarsIntro.line}
         </p>
       </Reveal>
@@ -167,26 +168,6 @@ export function AiContent() {
         outline. The diagram keeps its own generous measure so the labels and
         the node are read rather than squinted at.
       */}
-      <Reveal delay={0.12} className="mt-20">
-        <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-6 py-14 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10 sm:py-16 lg:py-20">
-          <div className="mx-auto w-full max-w-5xl text-center">
-            <h3 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
-              {aiContent.automation.heading}
-            </h3>
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              {aiContent.automation.body}
-            </p>
-            <p className="mx-auto mt-4 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:text-lead">
-              {aiContent.automation.kicker}
-            </p>
-
-            <figure className="mx-auto mt-12 max-w-[52rem] sm:mt-16">
-              <AutomationSources />
-            </figure>
-          </div>
-        </div>
-      </Reveal>
-
       {/*
         THE TWO BUTTONS GENESIS SPECIFIED. "Build with AI" opened the popup
         form; they asked for the primary action to go straight to WhatsApp
@@ -198,7 +179,7 @@ export function AiContent() {
         The form is the fallback, not a third button: `quickContact` only
         applies when there is no chat link to give.
       */}
-      <Reveal delay={0.1} className="mt-12 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
+      <Reveal delay={0.1} className="mt-6 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
         <GlassButton
           href={avatarChat ?? "/#contact"}
           quickContact={avatarChat ? undefined : "ai-labs:create-an-avatar"}
@@ -219,5 +200,45 @@ export function AiContent() {
         </GlassButton>
       </Reveal>
     </SectionShell>
+
+      {/*
+        AUTOMATION IS ITS OWN SECTION NOW, and the reason is measurement
+        rather than taste. With the roster and this in one, AI Lab stood
+        1734 points tall on a phone and 1968 on a laptop — two and a half
+        screens, against a brief of one section to a screen, and Genesis's
+        instruction was exactly that ("ek pura section ek hi page pe dikhe").
+        No content moved and nothing was cut: the two halves were always two
+        arguments, the avatars and the workflow, and they now get a screen
+        each.
+      */}
+      <SectionShell id="ai-automation" tone="brand" origin="center" intensity={0.12}>
+      <Reveal delay={0.06}>
+        <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-5 py-8 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10 sm:py-12">
+          <div className="mx-auto w-full max-w-5xl text-center">
+            <h3 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
+              {aiContent.automation.heading}
+            </h3>
+            <p className="mx-auto mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+              {aiContent.automation.body}
+            </p>
+            <p className="mx-auto mt-3 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:text-lead">
+              {aiContent.automation.kicker}
+            </p>
+
+            {/*
+              THE DIAGRAM IS CAPPED NARROWER THAN THE CARD, at 40rem rather
+              than 52. An SVG scales with its width, so every rem of measure
+              costs height too — 12 of them were 100 points of section that
+              nothing was drawn in. See the note on this section's split.
+            */}
+            <figure className="mx-auto mt-6 max-w-[40rem] sm:mt-10">
+              <AutomationSources />
+            </figure>
+          </div>
+        </div>
+      </Reveal>
+
+      </SectionShell>
+    </>
   );
 }
