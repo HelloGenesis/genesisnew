@@ -104,7 +104,15 @@ export function Services() {
         It replaces `.scene-open`, which was a rule about when a dark chapter
         should NOT paint. This one is about when it should.
       */
-      className="scene-charcoal grain relative isolate flex flex-col lg:min-h-dvh justify-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32"
+      /*
+        ONE SCREEN, ON EVERY DEVICE ("this should appear in one single
+        section"). min-h-dvh was `lg:` only, so on a phone the hero stopped
+        546px down and the client wall's first logos pushed into the same
+        screen under a band of dead padding — the orb read as half a section
+        with somebody else's section under it. Full height and centred, the
+        orb and its four names own the screen and the wall starts below it.
+      */
+      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme

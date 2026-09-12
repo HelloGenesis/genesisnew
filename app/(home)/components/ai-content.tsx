@@ -117,19 +117,25 @@ export function AiContent() {
           </p>
 
           {/*
-            The second claim, a step down from the first. It was the h1 here
-            and is now a sub-heading, which is the demotion that lets the line
-            above it read as the section's title.
+            "One Setup. Real-Time. Every Time" stood here and is gone at
+            Genesis's request. The section had three claims stacked before a
+            single face was shown; the line that survives it now sits under
+            the roster instead.
           */}
-          <p className="mt-10 text-balance text-h3 font-medium leading-tight tracking-tight text-bone">
-            {aiContent.avatarsIntro.promise}
-          </p>
-          <p className="mt-3 text-body leading-relaxed text-ash sm:text-lead">
-            {aiContent.avatarsIntro.line}
-          </p>
         </div>
 
-        <AvatarFan avatars={aiContent.avatars} className="mt-10 sm:mt-12" />
+        <AvatarFan avatars={aiContent.avatars} className="mt-8 sm:mt-10" />
+
+        {/*
+          THE LINE SITS UNDER THE ROSTER, at Genesis's request. Above it, it
+          was a third line of introduction before anything had been shown;
+          under the faces it reads as the caption to them, which is the job
+          that sentence is doing — the same move Brand & Design's standfirst
+          made for the same reason.
+        */}
+        <p className="mx-auto mt-6 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead">
+          {aiContent.avatarsIntro.line}
+        </p>
       </Reveal>
 
       {/*
@@ -169,6 +175,9 @@ export function AiContent() {
             </h3>
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
               {aiContent.automation.body}
+            </p>
+            <p className="mx-auto mt-4 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:text-lead">
+              {aiContent.automation.kicker}
             </p>
 
             <figure className="mx-auto mt-12 max-w-[52rem] sm:mt-16">

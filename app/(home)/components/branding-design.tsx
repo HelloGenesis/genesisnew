@@ -2,10 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 import Image from "next/image";
+import Link from "next/link";
 
+import { FolderPanel } from "@/components/genesis/folder-panel";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { branding, services } from "@/lib/home-content";
+import { cn } from "@/lib/utils";
 import { SectionShell } from "./section-shell";
 
 /*
@@ -16,26 +19,15 @@ import { SectionShell } from "./section-shell";
 const MOBILE_CTA =
   "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
 
-/**
- * Section 8 — Branding & Design.
- *
- * A bento arrangement (img-021, img-028): one tall statement tile beside the
- * capabilities. Deliberately quieter than the sections either side of it, so
- * the page has a trough between Influencer and the logo wall.
- *
- * QUIET IS NOT THE SAME AS UNLIT. This was the flattest thing on the page: a
- * `tone="neutral"` section with no light at all, next to a grid of six
- * identical grey rectangles carrying one 14px word each. Every other section
- * on this site is lit; this one just had the light switched off, which does
- * not read as restraint, it reads as unfinished.
- *
- * Two changes. The section gets an brand wash — the secondary accent, so it
- * stays quieter than the brand sections around it without being dark. And
- * the capabilities stop being a 3x2 grid of equal boxes: they are a LIST of
- * disciplines, not six things of equal weight, so they are set as a rule-
- * separated column with the count carried in the eyebrow, which is what the
- * editorial references do with a list.
- */
+/*
+  THE REFERENCE'S TEXT COLOURS, and only its text ("i meant text ke
+  colors"): the headline's orange into pink into violet, and the orange of
+  the numbered list. Everything that is not type, the folder edges, the
+  dots, the shape behind, stays in the brand's yellow and grey.
+*/
+const ORANGE = "#ff9a3c";
+const HEADLINE_RAMP = "linear-gradient(95deg, #ffa33f 0%, #f7788f 55%, #c47bff 100%)";
+
 /**
  * The sketch phases and finished mark for one identity, if they are on disk.
  *
@@ -125,7 +117,29 @@ function identityRoute(assets: string): { phases: string[]; final?: string } {
   };
 }
 
+/**
+ * Brand & Design, laid out as the three-folder reference Genesis supplied:
+ * the work on the left, the positioning in the middle, what the division
+ * makes on the right, with a cursor reaching across.
+ *
+ * The text colours are the reference's; see ORANGE above.
+ *
+ * The case-study tiles. The reference fills them with stock work; these hold
+ * Genesis's own, the Activ Health route from four sketches to the finished
+ * mark and Tripgate's locked palette. Only real work goes in the folder, so
+ * the grid is shaped around what exists rather than around the picture.
+ *
+ * Behind the middle folder is the Genesis N, blurred, standing in for the
+ * reference's soft 3D shape ("background logo shd be blurred").
+ */
 export function BrandingDesign() {
+  const tripgate = branding.work.find((w) => "palette" in w);
+  const palette = tripgate && "palette" in tripgate ? tripgate.palette : [];
+  const activ = branding.work.find((w) => "assets" in w);
+  const route =
+    activ && "assets" in activ ? identityRoute(activ.assets) : { phases: [] };
+  const sketches = route.phases.slice(0, 4);
+
   return (
     <SectionShell
       id="brand-design"
@@ -134,252 +148,235 @@ export function BrandingDesign() {
         tagline: services.items[1].caption,
         ramp: services.items[1].ramp,
       }}
-      /*
-        NO `body` HERE — it is set below the tiles instead, at Genesis's
-        request. Between the lockup and the work it was a third line of
-        introduction before anything had been shown; underneath, it reads as
-        the caption to what you have just looked at, which is the job that
-        sentence is actually doing.
-      */
-      // Centred, like AI Lab and Studios: the mark is artwork and sits in the
-      // middle of its section. See the note in ai-content.
+      /* The tagline under the lockup is hidden: the middle folder says it,
+         large, one scroll below. Printed twice it reads as a stutter. */
+      taglineClassName="hidden"
       align="center"
       tone="brand"
       origin="top-left"
       intensity={0.16}
+      contentClassName="sm:mt-20"
     >
       {/*
-        THE IDENTITY COLUMN IS THE WIDER ONE NOW. It was the narrower half of
-        a 1 : 1.1 split while it held two lines of text; it holds the actual
-        marks today, and a logo squeezed under a capability list is the section
-        showing everything except the work.
+        THREE ACROSS FROM xl, where the reference's proportions fit. Below
+        that the headline folder spans the row and the other two share the
+        next; on a phone they stack headline, list, work, so the reader is
+        told what the division does before being shown it.
       */}
-      <div className="grid gap-6 lg:grid-cols-[1.35fr_0.9fr]">
-        <Reveal>
-          <div className="glass glass-lit relative flex h-full min-h-64 flex-col justify-end overflow-hidden rounded-panel p-8">
-            {/* Hairline grid, the editorial device from img-058. */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-[0.07]"
-              style={{
-                backgroundImage:
-                  "linear-gradient(rgb(255 255 255) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255) 1px, transparent 1px)",
-                backgroundSize: "48px 48px",
-              }}
-            />
-            <div className="relative">
-              <p className="micro-label mb-6">Selected identity work</p>
-              {/* Tripgate and the Activ Health App — see lib/home-content. */}
-              <ul className="flex flex-col gap-4">
-                {branding.work.map((item) => {
-                  const route =
-                    "assets" in item
-                      ? identityRoute(item.assets)
-                      : { phases: [], final: undefined };
-                  const hasRoute = route.phases.length > 0 || route.final;
-
-                  return (
-                    <li
-                      key={item.title}
-                      className="border-b border-white/10 pb-6 last:border-0 last:pb-0"
-                    >
-                      <p className="text-h3 font-semibold tracking-tight text-bone">
-                        {item.title}
-                      </p>
-                      <p className="mt-0.5 text-small text-ash">{item.caption}</p>
-
-                      {/*
-                        THE MARKS, AND THEY ARE THE POINT OF THIS TILE. Sketches
-                        first, then what they arrived at — set large enough to
-                        actually read, on white, because these are scans of
-                        paper and the panel's glass would show through and grey
-                        the pencil out.
-
-                        The final mark is half again the size of a sketch and
-                        sits behind a rule: it is the answer, not a fifth
-                        attempt, and five equal squares read as five options.
-                      */}
-                      {hasRoute && (
-                        /*
-                          ONE LINE, ALWAYS. This was `flex-wrap` with fixed
-                          72-80px squares, which on a phone broke Activ
-                          Health's five marks into three and two — a route
-                          from sketch to finished logo reads as a sequence,
-                          and a sequence that wraps stops being one.
-
-                          So the boxes are FRACTIONS OF THE ROW rather than
-                          pixel sizes: each sketch takes an equal share, the
-                          final mark takes 1.4 shares because it is the
-                          answer, and `min-w-0` lets them all shrink below
-                          their content on a narrow tile instead of forcing an
-                          overflow. The max-widths keep them from ballooning
-                          on a wide one, where four sketches would otherwise
-                          stretch to 150px each.
-                        */
-                        <div className="mt-5 flex items-end gap-1.5 sm:gap-2.5">
-                          {route.phases.map((src, index) => (
-                            <div
-                              key={src}
-                              className="relative aspect-square min-w-0 flex-1 basis-0 overflow-hidden rounded-card border border-white/15 bg-white sm:max-w-20"
-                            >
-                              {/*
-                                `unoptimized`, and it is the fix rather than a
-                                shortcut. These are 15-50KB PNGs drawn at 80px;
-                                the optimiser saves almost nothing on them and
-                                IS the layer that served a stale stand-in under
-                                a reused filename. Serving the file directly
-                                means the ?v= stamp above is the whole cache
-                                key, and it also sidesteps needing to open
-                                images.localPatterns to arbitrary query strings
-                                — which the Next docs warn lets anyone mint
-                                unlimited optimiser cache entries.
-                              */}
-                              <Image
-                                src={src}
-                                alt={`${item.title} logo, sketch ${index + 1} of ${route.phases.length}`}
-                                fill
-                                unoptimized
-                                className="object-contain p-1.5 sm:p-2"
-                              />
-                            </div>
-                          ))}
-
-                          {route.final && (
-                            <>
-                              {route.phases.length > 0 && (
-                                <span
-                                  aria-hidden
-                                  className="h-10 w-px shrink-0 self-center bg-white/15 sm:h-16"
-                                />
-                              )}
-                              <div className="relative aspect-square min-w-0 flex-[1.4] basis-0 overflow-hidden rounded-card border border-brand-ink/40 bg-white shadow-[0_10px_30px_-12px_rgb(0_0_0/0.6)] sm:max-w-28">
-                                <Image
-                                  src={route.final}
-                                  alt={`${item.title}, the finished logo`}
-                                  fill
-                                  unoptimized
-                                  className="object-contain p-2 sm:p-3"
-                                />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
-
-                      {/*
-                        THE PALETTE AS ONE STRIP, not five labelled chips.
-
-                        It was a row of swatches with the hex printed under each
-                        in 9px, which read as a spreadsheet of colours and was
-                        the loudest thing in the tile — louder than the work.
-                        A locked palette is one object, so it is drawn as one:
-                        a continuous band, no captions. The codes are still
-                        there on hover, where somebody who actually needs to
-                        copy one will look, and nowhere near the eye of someone
-                        who does not.
-                      */}
-                      {/*
-                        THE PALETTE, WITH ITS CODES BACK UNDER IT.
-
-                        Three passes on this. Five chips with a hex caption each
-                        read as a spreadsheet; one bare band with the codes
-                        hidden on hover threw away the useful half — a hex you
-                        cannot see is a hex you cannot copy, and somebody
-                        rebuilding a deck needs to. So: one continuous band,
-                        because a locked palette is one object, with the codes
-                        set beneath each segment on the same grid. The
-                        descriptor line that ran under it is gone at Genesis's
-                        request.
-                      */}
-                      {"palette" in item && item.palette.length > 0 && (
-                        <div className="mt-5 w-full max-w-sm">
-                          <div className="flex h-8 overflow-hidden rounded-card border border-white/15">
-                            {item.palette.map((hex) => (
-                              <span
-                                key={hex}
-                                className="h-full flex-1"
-                                style={{ backgroundColor: hex }}
-                              />
-                            ))}
-                          </div>
-                          {/*
-                            One column per swatch, so each code sits under the
-                            colour it names rather than in a sentence beside it.
-                          */}
-                          <div className="mt-1.5 flex">
-                            {item.palette.map((hex) => (
-                              <span
-                                key={hex}
-                                className="flex-1 text-center text-[0.5625rem] uppercase tracking-wide text-faint"
-                              >
-                                {hex}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                    </li>
-                  );
-                })}
-              </ul>
+      <div className="grid items-center gap-6 md:grid-cols-2 xl:-mx-10 xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8">
+        {/* ─── The work ─────────────────────────────────────────────── */}
+        <Reveal className="relative z-10 order-3 md:order-2 xl:order-1">
+          <FolderPanel tab={0.4} dots contentClassName="p-4 sm:p-5">
+            <div className="flex items-center gap-2.5 pr-12">
+              <Image
+                src="/brand/genesis-n.png"
+                alt=""
+                width={306}
+                height={500}
+                className="h-6 w-auto"
+              />
+              <p className="leading-tight">
+                <span className="block text-small font-medium text-scene">Genesis</span>
+                <span className="block text-[0.6875rem] text-scene-dim">Brand &amp; Design</span>
+              </p>
             </div>
-          </div>
-        </Reveal>
 
-        {/*
-          "WHAT WE MAKE" LEADS ON A PHONE ("woh wale section ko above the
-          tripgate and activhealth app ka logos"). Stacked, the showcase came
-          first and a reader met two client logos before being told what the
-          division does. On desktop they sit side by side and order is moot.
-        */}
-        <Reveal delay={0.06} className="order-first lg:order-none">
-          <div className="glass glass-lit relative flex h-full flex-col rounded-panel p-8">
-            <p className="micro-label mb-6">
-              {/* No count. Genesis asked for the "· 06" off this label. */}
-              What we make
-            </p>
+            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+              <span className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
+                Case studies
+              </span>
+              <span className="flex items-center gap-2 text-[0.5rem] uppercase tracking-[0.2em] text-scene-dim/70">
+                <span aria-hidden className="h-px w-6 bg-white/20" />
+                Brands · People · Impact
+              </span>
+            </div>
 
-            {/*
-              A rule-separated list, numbered. Six equal boxes said these were
-              six interchangeable things; a list says they are a set of
-              disciplines with an order, and it lets the type carry the section
-              instead of six rectangles carrying it.
-            */}
-            <ul className="flex flex-1 flex-col justify-between">
-              {branding.capabilities.map((capability, index) => (
-                <li
-                  key={capability}
-                  className="flex items-baseline gap-6 border-b border-white/10 py-4 last:border-0"
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {route.final && (
+                <Tile
+                  n={1}
+                  label={["Activ Health", "Logo redesign"]}
+                  light
+                  className="row-span-2"
                 >
-                  <span className="micro-label shrink-0 !text-brand-ink/70">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <span className="text-h3 font-medium leading-tight tracking-tight text-bone">
-                    {capability}
-                  </span>
-                </li>
+                  <Image
+                    src={route.final}
+                    alt="Activ Health, the finished logo"
+                    fill
+                    unoptimized
+                    className="object-contain p-4"
+                  />
+                </Tile>
+              )}
+              {sketches.map((src, i) => (
+                <Tile
+                  key={src}
+                  n={i + 2}
+                  label={[`Sketch ${i + 1}`]}
+                  light
+                  className="aspect-[5/4]"
+                >
+                  <Image
+                    src={src}
+                    alt={`Activ Health logo, sketch ${i + 1} of ${sketches.length}`}
+                    fill
+                    unoptimized
+                    className="object-contain p-2.5"
+                  />
+                </Tile>
               ))}
-            </ul>
+
+              {palette.length > 0 && (
+                <Tile
+                  n={sketches.length + 2}
+                  label={["Tripgate", "Brand guidelines"]}
+                  className="col-span-2"
+                >
+                  <div className="mx-2.5 mt-6 mb-7">
+                    <div className="flex h-7 overflow-hidden rounded-md border border-white/15">
+                      {palette.map((hex) => (
+                        <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                    <div className="mt-1 flex">
+                      {palette.map((hex) => (
+                        <span
+                          key={hex}
+                          className="flex-1 text-center text-[0.4375rem] uppercase tracking-wide text-scene-dim"
+                        >
+                          {hex}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </Tile>
+              )}
+
+              <div className="relative flex flex-col justify-between rounded-[10px] border border-white/10 bg-white/[0.03] p-2.5">
+                <span className="text-[0.5rem] tracking-[0.2em] text-scene-dim">
+                  {String(sketches.length + 3).padStart(2, "0")}
+                </span>
+                <p className="mt-3 text-[0.8125rem] font-light italic leading-snug text-scene">
+                  Strategic design
+                  <br />
+                  for what&rsquo;s next.
+                </p>
+                <ArrowCircle
+                  href="/#contact"
+                  quickContact="brand-design:strategic-design"
+                  label="Talk to us about brand strategy"
+                  className="mt-2 size-7 self-end"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+              {[
+                ["Strategy", "driven design"],
+                ["Brands that", "make an impact"],
+              ].map(([a, b]) => (
+                <span key={a} className="flex items-center gap-2">
+                  <Bloom />
+                  <span className="text-[0.5rem] uppercase leading-snug tracking-[0.2em] text-scene-dim">
+                    {a}
+                    <br />
+                    {b}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </FolderPanel>
+
+          <Pointer className="pointer-events-none absolute -right-12 -bottom-[4.75rem] z-20 hidden w-24 xl:block" />
+        </Reveal>
+
+        {/* ─── The positioning ──────────────────────────────────────── */}
+        <Reveal
+          delay={0.06}
+          className="relative isolate order-1 md:col-span-2 xl:order-2 xl:col-span-1"
+        >
+          {/* The Genesis N itself, in its own yellow, blurred just enough to
+              sit behind the glass while still reading as the N. Showing
+              above and below the folder, where the reference has its shape. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-1/2 -z-10 aspect-[306/500] h-[132%] -translate-x-[42%] -translate-y-1/2"
+          >
+            <Image
+              src="/brand/genesis-n.png"
+              alt=""
+              fill
+              sizes="340px"
+              className="object-contain blur-[5px]"
+            />
           </div>
+
+          <FolderPanel
+            tab={0.5}
+            dots
+            contentClassName="flex min-h-[20rem] flex-col justify-center px-7 pt-10 pb-20 sm:px-10 xl:min-h-[26rem]"
+          >
+            <h3 className="text-[2rem] leading-[1.04] font-semibold tracking-tight text-scene md:text-[3rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
+              Branding
+              <br />
+              Positioning,
+              <br />
+              {/* `clone` so each line carries the whole ramp, orange at its
+                  start and violet at its end, as both do in the reference. */}
+              <span
+                className="bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
+                style={{ backgroundImage: HEADLINE_RAMP }}
+              >
+                Design &amp;
+                <br />
+                Collaterals
+              </span>
+            </h3>
+            <ArrowCircle
+              href="/#contact"
+              quickContact="brand-design:build-a-brand"
+              label="Build a brand with Genesis"
+              className="absolute right-6 bottom-6 size-12 sm:right-8 sm:bottom-8"
+            />
+          </FolderPanel>
         </Reveal>
 
-        {/*
-          The standfirst, moved down out of the header. lg:col-span-2 so it
-          runs the full width under both tiles rather than being trapped in
-          the left column, and centred to match the header above it.
-        */}
-        <Reveal delay={0.12} className="lg:col-span-2">
-          <p className="mx-auto max-w-2xl text-pretty text-center text-body text-ash sm:text-lead">
-            {branding.body}
-          </p>
+        {/* ─── What we make ─────────────────────────────────────────── */}
+        <Reveal delay={0.1} className="order-2 md:order-3 xl:order-3">
+          <FolderPanel tab={0} dots contentClassName="px-3 pt-11 pb-3 sm:px-4 sm:pb-4">
+            <FolderPanel tab={0.34} tabHeight={20} radius={16} contentClassName="px-5 pt-4 pb-5">
+              <p className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
+                What we make
+              </p>
+              <ul className="mt-3">
+                {branding.capabilities.map((capability, index) => (
+                  <li
+                    key={capability}
+                    className="flex items-baseline gap-5 border-b border-white/10 py-2.5 last:border-0"
+                  >
+                    <span className="w-4 shrink-0 text-[0.625rem] tracking-[0.15em]" style={{ color: ORANGE }}>
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="text-body leading-snug text-scene">{capability}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-2 flex justify-end">
+                <ArrowCircle
+                  href="/#contact"
+                  quickContact="brand-design:what-we-make"
+                  label="Start a brand project"
+                  className="size-11"
+                />
+              </div>
+            </FolderPanel>
+          </FolderPanel>
         </Reveal>
 
-        {/*
-          This division had no call to action at all — a reader could finish
-          the section that describes identity work with nowhere to go.
-        */}
-        <Reveal delay={0.15} className="mt-2 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3 lg:col-span-2">
+        <Reveal
+          delay={0.15}
+          className="order-4 mt-4 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3 md:col-span-2 xl:col-span-3"
+        >
           <GlassButton
             href="/#contact"
             quickContact="brand-design:build-a-brand"
@@ -395,5 +392,138 @@ export function BrandingDesign() {
         </Reveal>
       </div>
     </SectionShell>
+  );
+}
+
+/** One case-study tile: a number at the top, a caption at the bottom. */
+function Tile({
+  n,
+  label,
+  light = false,
+  className,
+  children,
+}: {
+  n: number;
+  label: readonly string[];
+  /** White ground, for the logo scans, which are pencil on paper. */
+  light?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const ink = light ? "text-black/55" : "text-scene-dim";
+  return (
+    <div
+      className={cn(
+        "relative min-h-16 overflow-hidden rounded-[10px] border",
+        light ? "border-white/20 bg-white" : "border-white/10 bg-white/[0.03]",
+        className,
+      )}
+    >
+      {children}
+      <span
+        className={cn(
+          "absolute top-2 left-2.5 flex items-center gap-1.5 text-[0.5rem] tracking-[0.2em]",
+          ink,
+        )}
+      >
+        {String(n).padStart(2, "0")}
+        <span aria-hidden className="h-px w-3 bg-current opacity-60" />
+      </span>
+      <span
+        className={cn(
+          "absolute bottom-2 left-2.5 text-[0.4375rem] uppercase leading-snug tracking-[0.18em]",
+          ink,
+        )}
+      >
+        {label.map((line) => (
+          <span key={line} className="block">
+            {line}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/** The circled arrow in the corner of each folder. Opens the quick contact. */
+function ArrowCircle({
+  href,
+  quickContact,
+  label,
+  className,
+}: {
+  href: string;
+  quickContact: string;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      data-quick-contact={quickContact}
+      aria-label={label}
+      className={cn(
+        "grid shrink-0 place-items-center rounded-full border border-white/25 bg-white/[0.04] text-scene transition-colors duration-300 hover:border-brand hover:bg-brand hover:text-black focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none",
+        className,
+      )}
+    >
+      <svg aria-hidden viewBox="0 0 24 24" className="size-[45%]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </Link>
+  );
+}
+
+/**
+ * The cursor reaching across from the work to the headline, as in the
+ * reference: black, lit at the rim in the accent. Decoration only.
+ */
+function Pointer({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="-10 -10 80 104"
+      className={cn("overflow-visible", className)}
+      style={{ filter: "drop-shadow(0 0 10px rgb(255 197 22 / 0.55)) drop-shadow(0 18px 24px rgb(0 0 0 / 0.6))" }}
+    >
+      <defs>
+        <linearGradient id="bd-pointer-rim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffc516" />
+          <stop offset="100%" stopColor="#ffc516" />
+        </linearGradient>
+        <linearGradient id="bd-pointer-body" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#242426" />
+          <stop offset="100%" stopColor="#000000" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M0 0 L0 64 L16 49 L28 76 L41 70 L29 44 L51 44 Z"
+        fill="url(#bd-pointer-body)"
+        stroke="url(#bd-pointer-rim)"
+        strokeWidth="3.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** The small four-petal mark beside each badge in the reference. */
+function Bloom() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="size-5 shrink-0">
+      {[0, 90, 180, 270].map((deg) => (
+        <ellipse
+          key={deg}
+          cx="10"
+          cy="5.5"
+          rx="3.2"
+          ry="4.5"
+          fill="#ffc516"
+          opacity="0.9"
+          transform={`rotate(${deg} 10 10)`}
+        />
+      ))}
+      <circle cx="10" cy="10" r="2.2" fill="#000" opacity="0.55" />
+    </svg>
   );
 }

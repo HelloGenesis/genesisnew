@@ -824,6 +824,36 @@
     filter: grayscale(1);
 }
 
+/* --- Third-party app marks, in the AI Lab diagram ---------------------
+   THE SAME TREATMENT THE CLIENT WALL USES, and for the same two reasons.
+
+   Legibility first: Genesis supplied these as dark artwork — ChatGPT,
+   Midjourney, Runway, GitHub, Kling and Higgsfield are black, and Claude's
+   and Gemini's lettering is near-black — so on the dark theme half the set
+   would be invisible ink on a dark ground. There are no light variants of
+   these files to cross-fade to.
+
+   And uniformity, which is what Genesis asked for: twelve marks in twelve
+   different brand colours next to each other is the same raggedness as
+   twelve different sizes. One ink, one cap height, one set.
+*/
+.app-mark {
+    filter: grayscale(1) invert(1) brightness(1.05);
+    opacity: 0.82;
+}
+
+:root[data-theme="light"] .app-mark {
+    filter: grayscale(1) brightness(0.35);
+    opacity: 0.8;
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .app-mark {
+        filter: grayscale(1) brightness(0.35);
+        opacity: 0.8;
+    }
+}
+
 li:hover .client-mark {
     opacity: 1;
 }

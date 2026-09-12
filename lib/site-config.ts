@@ -184,10 +184,12 @@ export const primaryCta = { label: "Start a Project", href: "/#contact" } as con
  * shape the panel is built for. Nothing is added or dropped in the process —
  * the eleven below are the eleven supplied, in their order.
  *
- * TODO(routes): Employee Login points at /insider, the same place as Client
- * Login, because there is only one authenticated door today. If staff and
- * clients are meant to land somewhere different, that is a route to add
- * rather than a label to change here.
+ * THE LOG IN COLUMN IS GONE, at Genesis's request. It offered a Client Login
+ * and an Employee Login that both opened /insider, the only authenticated
+ * door there is; two labels for one door in the footer of a site that has no
+ * accounts yet was promising something the site does not do. /insider itself
+ * is untouched and still reachable by typing it — see robots.ts, which keeps
+ * it out of search.
  */
 export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
@@ -230,13 +232,6 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
       },
       { label: "I'm a Creator", href: "/creator" },
       { label: "Careers", href: "/careers" },
-    ],
-  },
-  {
-    heading: "Log in",
-    items: [
-      { label: "Client Login", href: "/insider" },
-      { label: "Employee Login", href: "/insider" },
     ],
   },
 ];

@@ -3,7 +3,7 @@
 import Image from "next/image";
 
 import { animate, motion, useAnimationFrame, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { mediaUrl } from "@/lib/media-url";
@@ -30,11 +30,22 @@ import { cn } from "@/lib/utils";
 
 export type Creator = {
   id: string;
-  /** The niche. Stays as the accessible description of the card. */
+  /** The accessible description of the card — the creator's name. */
   label: string;
-  /** The creator's own name, once Genesis supplies it. Empty until then. */
+  /** The name printed on the card. */
   name?: string;
-  followers: string;
+  /**
+   * Reach, WHERE IT IS A REAL FIGURE. Optional because the counts that used
+   * to sit here were illustrative, and an invented number under a real
+   * person's photograph is a claim about them.
+   */
+  followers?: string;
+  /**
+   * Their Instagram. Given one, the whole card becomes a link to it —
+   * Genesis's instruction when they supplied the roster: "when somebody
+   * clicks on their image they can be redirected to their instagram".
+   */
+  instagram?: string;
   /** Portrait cropped from the mockup; a warm gradient stands in without one. */
   image?: string;
   /** The one large, near-centre card. */
@@ -188,16 +199,32 @@ export function CreatorConstellation({
           key={creator.id}
           creator={creator}
           angle={angle}
-          // The feature card barely moves; the rest are spread evenly.
-          offset={creator.feature ? 0 : (360 / orbiting.length) * index}
+          /*
+            The feature card barely moves; the rest are spread evenly — by
+            their position among the ORBITING cards, not among all of them.
+            Indexing into the whole list skips whatever slot the feature card
+            occupies and hands the last card the first one's angle, so two of
+            eleven rode the ring stacked on each other.
+          */
+          offset={
+            creator.feature
+              ? 0
+              : (360 / orbiting.length) * orbiting.indexOf(creator)
+          }
           /*
             Same arithmetic as the badges. A card is 19% wide and grows to
             1.06x at the front of its orbit, so its half-width is 10.1% and 37
             put its edge at 97.1% — inside, but with nothing to spare once the
             scale peaked. 35 and 25 leave a two-point margin.
           */
-          radius={creator.feature ? 7 : index % 2 === 0 ? 35 : 25}
-          avatar={mediaUrl(`/creators/avatars/a${(index % 6) + 1}.webp`)}
+          /*
+            38 and 26, out from 35 and 25. Eleven cards ride where eight did,
+            so the two rings are pushed apart to keep them from reading as one
+            pile. The outer figure is set by the edge: a card is 17% wide and
+            peaks at 1.06x, so its half-width is 9% and 38 lands its edge at
+            96% — inside, with room to spare.
+          */
+          radius={creator.feature ? 7 : index % 2 === 0 ? 38 : 26}
         />
       ))}
     </div>
@@ -225,7 +252,19 @@ export function CreatorConstellation({
 /** Wireframe sphere with orbital rings and pulsing nodes. */
 function Globe() {
   return (
-    <svg aria-hidden viewBox="0 0 400 400" className="absolute inset-0 size-full">
+    /*
+      THE GLOBE IS DRAWN IN `currentColor`, NOT IN WHITE.
+
+      Its latitude bands and orbits were rgb(255 255 255 / 0.11) and / 0.07 —
+      white lines, which is correct on the dark theme and completely invisible
+      on the light one, where the ground is #f9f9f9. Genesis saw the globe
+      disappear and reasonably assumed it had been deleted.
+
+      `text-bone` is the ink token that flips with the theme — near-white on
+      dark, near-black on light — so the same two opacities now read on both
+      grounds, and the strokes inherit it through currentColor.
+    */
+    <svg aria-hidden viewBox="0 0 400 400" className="absolute inset-0 size-full text-bone">
       <defs>
         <radialGradient id="genesis-globe-core" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ffc516" stopOpacity="0.09" />
@@ -237,7 +276,7 @@ function Globe() {
       <circle cx="200" cy="200" r="118" fill="url(#genesis-globe-core)" />
 
       {/* Latitude bands — ellipses flattening toward the poles. */}
-      <g stroke="rgb(255 255 255 / 0.11)" fill="none" strokeWidth="0.9">
+      <g stroke="currentColor" strokeOpacity="0.17" fill="none" strokeWidth="0.9">
         <circle cx="200" cy="200" r="118" />
         {[0.3, 0.58, 0.82, 0.96].map((k) => (
           <ellipse key={k} cx="200" cy="200" rx="118" ry={118 * k} />
@@ -248,7 +287,7 @@ function Globe() {
       </g>
 
       {/* Wider orbits the cards and badges travel on. */}
-      <g stroke="rgb(255 255 255 / 0.07)" fill="none" strokeWidth="0.8">
+      <g stroke="currentColor" strokeOpacity="0.12" fill="none" strokeWidth="0.8">
         <ellipse cx="200" cy="200" rx="176" ry="150" transform="rotate(-12 200 200)" />
         <ellipse cx="200" cy="200" rx="188" ry="112" transform="rotate(8 200 200)" />
       </g>
@@ -281,13 +320,11 @@ function OrbitCard({
   angle,
   offset,
   radius,
-  avatar,
 }: {
   creator: Creator;
   angle: MotionValue<number>;
   offset: number;
   radius: number;
-  avatar: string;
 }) {
   const rad = (deg: number) => ((deg + offset) * Math.PI) / 180;
   // Fixed precision: Framer serialises style values at reduced precision during
@@ -312,10 +349,36 @@ function OrbitCard({
         "absolute -translate-x-1/2 -translate-y-1/2",
         // Measured off the mockup: the centre card is 27% of the constellation
         // width and the rest are ~17%.
-        creator.feature ? "z-30 w-[27%]" : "z-20 w-[19%]",
+        /*
+          17%, down from 19: the orbit carries eleven real creators where it
+          carried eight, and at the old width the two rings touched.
+        */
+        creator.feature ? "z-30 w-[26%]" : "z-20 w-[17%]",
       )}
     >
-      <div className="glass glass-lit w-full overflow-hidden rounded-card">
+      {/*
+        THE WHOLE CARD IS THE LINK, which is Genesis's instruction when they
+        supplied the roster: a click on the photograph opens that creator's
+        Instagram. A plain <a> rather than next/link because it leaves the
+        site, with the usual pair of rel tokens so the new tab cannot reach
+        back into this one, and target=_blank so a reader who follows one
+        does not lose their place on the page.
+
+        Anyone without a handle falls back to a div, so a roster that is only
+        half supplied still renders rather than linking nowhere.
+      */}
+      <CardShell
+        href={creator.instagram}
+        /*
+          NO HOVER RING. A yellow outline snapped around whichever card the
+          pointer crossed, and on a ring that is already drifting under the
+          cursor that fires constantly — Genesis's note was simply that they
+          do not want it. The keyboard ring stays: it appears only on
+          focus-visible, which a mouse never triggers, and without it a
+          keyboard user cannot see which photograph they are about to open.
+        */
+        className="glass glass-lit block w-full overflow-hidden rounded-card outline-none focus-visible:shadow-[0_0_0_2px_var(--color-brand)]"
+      >
         <div
           className="relative aspect-[4/5]"
           style={{ backgroundImage: creator.image ? undefined : portrait(creator.id) }}
@@ -331,82 +394,31 @@ function OrbitCard({
             />
           )}
 
-          <span
-            className={cn(
-              "glass absolute right-2 top-2 grid place-items-center rounded-full text-bone",
-              creator.feature ? "size-9" : "size-6",
-            )}
-          >
-            <Play className={creator.feature ? "size-4 fill-current" : "size-2.5 fill-current"} aria-hidden />
-          </span>
-
           {/*
-            THE NAME BAR CARRIES THE CREATOR'S NAME, not their niche.
-            Genesis asked for the name here; the niche is what the whole
-            section is about, so printing it on every card said the same
-            thing eight times and was most of the clutter.
-
-            It renders only when a name exists. Until Genesis supplies them
-            the cards are simply photographs — which is the decluttering, and
-            is honest: these are real faces and a made-up name under one is a
-            claim about a person. The niche and reach stay in the sr-only
-            description below, so nothing is lost to a screen reader.
+            NO BADGE IN THE CORNER. It was a play triangle, then an Instagram
+            glyph once the cards became links, and Genesis's answer to both is
+            that the photograph is the button: "direvtly image pe click karne
+            se khulna chahiye". A glyph floating over somebody's face is one
+            more thing on a card whose whole job is the face.
           */}
-          {creator.name && (
-          <div
-            className={cn(
-              "glass glass-strong absolute inset-x-2 bottom-2 flex items-center rounded-card",
-              creator.feature ? "gap-3 px-3 py-3" : "gap-2 px-2 py-2",
-            )}
-          >
-            <Image
-              src={avatar}
-              alt=""
-              // Fixed 36px and 20px on screen; 72 is the 2x source.
-              width={72}
-              height={72}
-              className={cn(
-                "shrink-0 rounded-full object-cover",
-                creator.feature ? "size-9" : "size-5",
-              )}
-            />
-            <span className="min-w-0">
-              <span
-                /*
-                  line-clamp, not truncate. `truncate` forces one line, and
-                  the name bar is 73-99px wide — so "Lifestyle Creator" lost
-                  its last word to an ellipsis even on a featured card. Two
-                  short lines carry the whole name; one line carries most of
-                  it and a full stop that is not there.
-                */
-                className={cn(
-                  "block line-clamp-2 font-medium leading-tight text-bone",
-                  creator.feature ? "text-small" : "text-micro",
-                )}
-              >
-                {creator.name}
-              </span>
-              {/*
-                The follower count only appears on the featured cards. A
-                small card's name bar is 73px wide, and at 11px "Travel
-                Creator" alone needs 121px — so both lines were truncating to
-                "Travel Crea…" and "856K Follo…", which is not a smaller
-                version of the information, it is a broken version of it.
+          {/*
+            AND NO NAME BAR. A white slab across the bottom of every card is
+            what Genesis called out — "ya toh dont add their names because it
+            is not looking good, woh white box is not looking good" — and on
+            a phone, where an orbiting card is about 60px wide, the name broke
+            to three clipped lines inside it.
 
-                One line fits. The full string is still in the sr-only label
-                below, so nothing is lost to a screen reader.
-              */}
-              {creator.feature && (
-                <span className="block line-clamp-1 text-micro leading-tight text-ash">
-                  {creator.followers}
-                </span>
-              )}
-            </span>
-          </div>
-          )}
+            The names are NOT lost: each card's accessible description below
+            still carries the creator's name, so a screen reader announces who
+            the link opens, and the photograph is what a sighted reader sees.
+          */}
         </div>
-      </div>
-      <span className="sr-only">{`${creator.label}, ${creator.followers}`}</span>
+      </CardShell>
+      <span className="sr-only">
+        {[creator.label, creator.followers, creator.instagram ? "on Instagram" : ""]
+          .filter(Boolean)
+          .join(", ")}
+      </span>
     </motion.div>
   );
 }
@@ -453,5 +465,25 @@ function PlatformBadge({
         <PlatformGlyph platform={platform.key} />
       </span>
     </motion.div>
+  );
+}
+
+/**
+ * The card's own box: a link when there is somewhere to go, a div otherwise.
+ */
+function CardShell({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (!href) return <div className={className}>{children}</div>;
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+      {children}
+    </a>
   );
 }

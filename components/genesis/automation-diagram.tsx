@@ -37,24 +37,67 @@ import { cn } from "@/lib/utils";
  */
 
 /**
- * The applications a run actually draws on.
+ * The applications a run actually draws on, as their own marks.
  *
- * NAMED BY GENESIS. An earlier version listed the raw materials instead — the
- * brief, the guidelines, past campaigns — on the reasoning that printing
- * another company's product name is a claim to use it. Genesis has since
- * asked for the applications by name, which settles that: it is their stack
- * and their claim to make.
+ * NAMED BY GENESIS, AND NOW DRAWN BY THEM TOO: they supplied the logo files,
+ * which is what makes this legitimate to show. Earlier passes set the names
+ * as type precisely because redrawing a third-party mark from memory gets it
+ * subtly wrong and lifting one off the web is a licensing problem. Supplied
+ * artwork settles both.
  *
- * WORDS RATHER THAN LOGOS, for now. Redrawing four third-party marks from
- * memory would get them subtly wrong, and reproducing them from the web is
- * the licensing problem this whole file exists to avoid. The labels read
- * correctly at this size and swapping any one for supplied artwork is a
- * one-line change.
+ * `ratio` IS THE FILE'S OWN WIDTH OVER ITS HEIGHT, measured after trimming
+ * the transparent padding off each one — Google Drive's arrived as a wordmark
+ * floating in a 768-square, which would have rendered it at a third the size
+ * of everything else however carefully the boxes were matched.
  *
- * ADDING A FIFTH re-spaces the fan on its own; nothing below is hard-coded to
- * four.
+ * `mark` FLAGS THE SQUARE ONES. Four of these are icons rather than
+ * wordmarks, and setting an icon to the same HEIGHT as a wordmark makes it
+ * look smaller than everything around it — matching heights is the thing
+ * people mean by "uniform" for wordmarks, and it is the wrong rule for a
+ * square. Icons take a larger height so the SET reads as one size, which is
+ * what Genesis asked for: "koi alag size koi alag size" is the fault.
+ *
+ * Google Veo and Nano Banana came off at Genesis's instruction, replaced by
+ * one Google Gemini.
  */
-const APPLICATIONS = ["Google Docs", "Higgsfield", "Seedance", "Claude"];
+const APPLICATIONS = [
+  { name: "ChatGPT", src: "/brand/apps/chatgpt.svg", ratio: 1, mark: true },
+  { name: "Claude", src: "/brand/apps/claude.png", ratio: 4.65 },
+  /* `scale` is the one hand-set number here. Midjourney's mark is line art
+     — a hairline boat in a 1024 box — where every other icon is solid, so at
+     the shared height its strokes render under a pixel and it reads as an
+     empty space in the row. */
+  { name: "Midjourney", src: "/brand/apps/midjourney.svg", ratio: 1, mark: true, scale: 1.3 },
+  { name: "Runway", src: "/brand/apps/runway.png", ratio: 1, mark: true },
+  { name: "Kling", src: "/brand/apps/kling.png", ratio: 3.69 },
+  { name: "Google Gemini", src: "/brand/apps/gemini.png", ratio: 4.44 },
+  { name: "ElevenLabs", src: "/brand/apps/elevenlabs.png", ratio: 7.79 },
+  { name: "Higgsfield", src: "/brand/apps/higgsfield.png", ratio: 4.92 },
+  { name: "GitHub", src: "/brand/apps/github.svg", ratio: 3.53 },
+  { name: "Google Docs", src: "/brand/apps/google-docs.svg", ratio: 5.21 },
+  { name: "Google Sheets", src: "/brand/apps/google-sheets.svg", ratio: 5.8 },
+  { name: "Google Drive", src: "/brand/apps/google-drive.png", ratio: 5.96 },
+];
+
+/**
+ * One logo's box, at a size that makes the whole set look equal.
+ *
+ * Wordmarks share a cap height, capped by `maxWidth` so a very long one
+ * cannot dwarf the rest: ElevenLabs is 7.79:1, nearly twice the next widest,
+ * and at a matched height it read as the biggest thing in the picture. Width
+ * is the honest measure of how large a wordmark looks, so it gives up a
+ * little height to keep the SET even.
+ *
+ * Square marks take 1.5x the height, which is the opposite correction: an
+ * icon set to a wordmark's cap height looks smaller than everything by it.
+ */
+function logoBox(app: (typeof APPLICATIONS)[number], height: number, maxWidth: number) {
+  const scale = "scale" in app ? (app.scale as number) : 1;
+  const h = app.mark
+    ? height * 1.5 * scale
+    : Math.min(height, maxWidth / app.ratio) * scale;
+  return { w: h * app.ratio, h };
+}
 
 /**
  * THE AI LAB LOCKUP AT THE CENTRE, not the words "Genesis AI".
@@ -91,9 +134,15 @@ const BODY_MIDPOINT = 0.41;
  * labels at 16, so on a phone it rendered 277px wide with the application
  * names at 5.8px: a diagram that technically fitted and could not be read.
  * Scaling type up inside it would only have pushed the labels into each
- * other. A phone gets a tall arrangement instead, two applications above the
- * node and two below, with the labels at 18 units in a 360-unit-wide drawing,
- * which lands them near 14px on a 375px screen.
+ * other. A phone gets a tall arrangement instead — half the applications
+ * above the node and half below, two to a row — with the labels at 16 units
+ * in a 360-unit-wide drawing, which lands them near 14px on a 375px screen.
+ *
+ * TWELVE APPLICATIONS, up from four, which is what set both layouts. The
+ * list is split down the middle and fed in from BOTH sides: left and right
+ * of the node on a wide screen, two columns above it on a phone. One column
+ * of thirteen would be taller than anything it points at, and a phone cannot
+ * carry two labels side by side and a node between them at a readable size.
  *
  * DISTINCT GRADIENT IDS, which is load-bearing rather than tidy. Both drawings
  * are in the page and CSS hides one. An SVG `url(#id)` resolves to the FIRST
@@ -112,11 +161,23 @@ export function AutomationSources({ className }: { className?: string }) {
 
 function WideDiagram({ className }: { className?: string }) {
   const width = 760;
-  const height = 270;
-  const dotX = 250;
-  const hub = { x: 452, y: height / 2, w: 268, h: 92 };
-  const top = 46;
-  const gap = (height - top * 2) / (APPLICATIONS.length - 1);
+  /*
+    THE CANVAS GREW WITH THE LIST. Seven labels a side at the old 300 units
+    left 36 units between baselines for 16-unit type, which is lines of text
+    touching. At 420 they sit 56 apart, the spacing four of them had.
+  */
+  const height = 420;
+  const hub = { x: 246, y: height / 2, w: 268, h: 92 };
+  /* Where the strands start, and therefore how much room a logo has: 140
+     units outside the dot, which is what the widest mark needs. */
+  const leftX = 168;
+  const rightX = width - leftX;
+  const half = Math.ceil(APPLICATIONS.length / 2);
+  const sides = [
+    { apps: APPLICATIONS.slice(0, half), x: leftX, dir: 1 },
+    { apps: APPLICATIONS.slice(half), x: rightX, dir: -1 },
+  ];
+  const top = 44;
 
   /*
     The mark, sized to sit inside the node with air around it.
@@ -145,8 +206,18 @@ function WideDiagram({ className }: { className?: string }) {
           site uses. Written out here rather than read from a CSS variable
           because an SVG gradient needs its stops as elements, and a
           `linear-gradient()` string cannot be handed to <stop>.
+
+          MIRRORED FOR THE RIGHT-HAND HALF. A gradient runs left to right in
+          its own box whichever way the strand travels, so the right side
+          reuses the same stops reversed and arrives at the node at full
+          strength like its opposite number.
         */}
         <linearGradient id="gm-ai-line" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
+          <stop offset="55%" stopColor="#ff8fb8" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
+        </linearGradient>
+        <linearGradient id="gm-ai-line-flip" x1="1" y1="0" x2="0" y2="0">
           <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
           <stop offset="55%" stopColor="#ff8fb8" stopOpacity="0.9" />
           <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
@@ -164,48 +235,49 @@ function WideDiagram({ className }: { className?: string }) {
       {/* A bloom behind the node. Small and faint. */}
       <circle cx={hub.x + hub.w / 2} cy={hub.y} r="128" fill="url(#gm-ai-glow)" />
 
-      {APPLICATIONS.map((app, index) => {
-        const y = top + index * gap;
-        /*
-          A cubic with both handles pulled horizontally, so a strand leaves
-          its label flat and arrives at the node flat. A quadratic curves out
-          at an angle and reads as a wire under tension.
-        */
-        const d = `M ${dotX} ${y} C ${dotX + 96} ${y}, ${hub.x - 96} ${hub.y}, ${hub.x} ${hub.y}`;
-        return (
-          <g key={app}>
-            {/* The base: always whole, always visible. */}
-            <path
-              d={d}
-              fill="none"
-              stroke="url(#gm-ai-line)"
-              strokeWidth="1.25"
-              opacity="0.4"
-            />
-            {/* And the highlight travelling along it. */}
-            <path
-              d={d}
-              fill="none"
-              stroke="url(#gm-ai-dash)"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              className="gm-flow motion-reduce:[animation:none] motion-reduce:hidden"
-              style={{ animationDelay: `${index * -1.1}s` }}
-            />
-            <circle cx={dotX} cy={y} r="3" fill="#ff8fb8" />
-            <text
-              x={dotX - 14}
-              y={y}
-              textAnchor="end"
-              dominantBaseline="middle"
-              fontSize="16"
-              fill="var(--ink-muted, #d1cfcf)"
-            >
-              {app}
-            </text>
-          </g>
-        );
-      })}
+      {sides.map((side) =>
+        side.apps.map((app, index) => {
+          const gap = (height - top * 2) / Math.max(side.apps.length - 1, 1);
+          const y = top + index * gap;
+          const box = logoBox(app, 18, 112);
+          const arrive = side.dir === 1 ? hub.x : hub.x + hub.w;
+          /*
+            A cubic with both handles pulled horizontally, so a strand leaves
+            its label flat and arrives at the node flat. A quadratic curves out
+            at an angle and reads as a wire under tension.
+          */
+          const d = `M ${side.x} ${y} C ${side.x + 96 * side.dir} ${y}, ${arrive - 96 * side.dir} ${hub.y}, ${arrive} ${hub.y}`;
+          const stroke = side.dir === 1 ? "url(#gm-ai-line)" : "url(#gm-ai-line-flip)";
+          return (
+            <g key={app.name}>
+              {/* The base: always whole, always visible. */}
+              <path d={d} fill="none" stroke={stroke} strokeWidth="1.25" opacity="0.4" />
+              {/* And the highlight travelling along it. */}
+              <path
+                d={d}
+                fill="none"
+                stroke="url(#gm-ai-dash)"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                className="gm-flow motion-reduce:[animation:none] motion-reduce:hidden"
+                style={{ animationDelay: `${index * -1.1 - (side.dir === 1 ? 0 : 0.55)}s` }}
+              />
+              <circle cx={side.x} cy={y} r="3" fill="#ff8fb8" />
+              <image
+                href={app.src}
+                x={side.dir === 1 ? side.x - 16 - box.w : side.x + 16}
+                y={y - box.h / 2}
+                width={box.w}
+                height={box.h}
+                preserveAspectRatio="xMidYMid meet"
+                className="app-mark"
+              >
+                <title>{app.name}</title>
+              </image>
+            </g>
+          );
+        }),
+      )}
 
       {/* The node. */}
       {/*
@@ -247,14 +319,27 @@ function WideDiagram({ className }: { className?: string }) {
 
 function TallDiagram({ className }: { className?: string }) {
   const width = 360;
-  const height = 440;
-  const hub = { x: 80, y: 180, w: 200, h: 80 };
-  const cx = hub.x + hub.w / 2;
+  /*
+    TWO COLUMNS ABOVE THE NODE, rather than the node in the middle with rows
+    either side of it. With four applications a phone could carry two above
+    and two below; with thirteen that arrangement is a column of seven
+    stacked over the node and six under it, which is a drawing taller than
+    the screen. Stacked in two columns with everything converging DOWNWARD
+    into the Lab, the whole list is one glance and the labels keep their
+    size.
+  */
   const half = Math.ceil(APPLICATIONS.length / 2);
-  const rows = [
-    { apps: APPLICATIONS.slice(0, half), dotY: 64, labelY: 40, toY: hub.y, down: true },
-    { apps: APPLICATIONS.slice(half), dotY: 376, labelY: 410, toY: hub.y + hub.h, down: false },
+  const columns = [
+    { apps: APPLICATIONS.slice(0, half), dotX: 156, dir: 1 as const },
+    { apps: APPLICATIONS.slice(half), dotX: 204, dir: -1 as const },
   ];
+  const rowTop = 30;
+  const rowGap = 42;
+  const rows = Math.max(...columns.map((c) => c.apps.length));
+  const hubY = rowTop + rows * rowGap + 26;
+  const hub = { x: 80, y: hubY, w: 200, h: 80 };
+  const cx = hub.x + hub.w / 2;
+  const height = hubY + hub.h + 24;
 
   const markW = 140;
   const markH = Math.round((markW / AI_LAB_MARK.width) * AI_LAB_MARK.height);
@@ -268,15 +353,17 @@ function TallDiagram({ className }: { className?: string }) {
     >
       <defs>
         {/*
-          The strands here run mostly vertically, so the ramp is laid along y
-          in user space: faint at the application, full orange at the node,
-          for the rows above and below alike.
+          The strands here run vertically, so the ramp is laid along y in user
+          space: faint at the application, full orange where it meets the node.
         */}
-        <linearGradient id="gm-ai-line-down" gradientUnits="userSpaceOnUse" x1="0" y1="64" x2="0" y2={hub.y}>
-          <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
-        </linearGradient>
-        <linearGradient id="gm-ai-line-up" gradientUnits="userSpaceOnUse" x1="0" y1="376" x2="0" y2={hub.y + hub.h}>
+        <linearGradient
+          id="gm-ai-line-down"
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1={rowTop}
+          x2="0"
+          y2={hub.y}
+        >
           <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
         </linearGradient>
@@ -292,35 +379,46 @@ function TallDiagram({ className }: { className?: string }) {
 
       <circle cx={cx} cy={hub.y + hub.h / 2} r="110" fill="url(#gm-ai-glow-tall)" />
 
-      {rows.map((row) =>
-        row.apps.map((app, index) => {
-          const x = (index + 0.5) * (width / row.apps.length);
-          const bend = row.down ? 70 : -70;
-          const d = `M ${x} ${row.dotY} C ${x} ${row.dotY + bend}, ${cx} ${row.toY - bend * 0.85}, ${cx} ${row.toY}`;
-          const line = row.down ? "url(#gm-ai-line-down)" : "url(#gm-ai-line-up)";
+      {columns.map((column, side) =>
+        column.apps.map((app, index) => {
+          const y = rowTop + index * rowGap;
+          const box = logoBox(app, 17, 108);
+          /*
+            Straight down out of the dot, then a flat arrival on the node's
+            top edge — the same handle discipline the wide drawing uses, so
+            thirteen strands gather instead of crossing.
+          */
+          const d = `M ${column.dotX} ${y} C ${column.dotX} ${y + 48}, ${cx} ${hub.y - 48}, ${cx} ${hub.y}`;
           return (
-            <g key={app}>
-              <path d={d} fill="none" stroke={line} strokeWidth="1.5" opacity="0.55" />
+            <g key={app.name}>
               <path
                 d={d}
                 fill="none"
-                stroke={line}
+                stroke="url(#gm-ai-line-down)"
+                strokeWidth="1.5"
+                opacity="0.55"
+              />
+              <path
+                d={d}
+                fill="none"
+                stroke="url(#gm-ai-line-down)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 className="gm-flow motion-reduce:[animation:none] motion-reduce:hidden"
-                style={{ animationDelay: `${(index + (row.down ? 0 : 2)) * -1.1}s` }}
+                style={{ animationDelay: `${(index * 2 + side) * -0.55}s` }}
               />
-              <circle cx={x} cy={row.dotY} r="3.5" fill="#ff8fb8" />
-              <text
-                x={x}
-                y={row.labelY}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="18"
-                fill="var(--ink-muted, #d1cfcf)"
+              <circle cx={column.dotX} cy={y} r="3.5" fill="#ff8fb8" />
+              <image
+                href={app.src}
+                x={column.dir === 1 ? column.dotX - 12 - box.w : column.dotX + 12}
+                y={y - box.h / 2}
+                width={box.w}
+                height={box.h}
+                preserveAspectRatio="xMidYMid meet"
+                className="app-mark"
               >
-                {app}
-              </text>
+                <title>{app.name}</title>
+              </image>
             </g>
           );
         }),

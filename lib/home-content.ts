@@ -310,10 +310,9 @@ export const aiContent = {
     heading: "AI Content & Avatars",
     lead: "Tailored for founders, creators, influencers, and artists that look real. For Real!",
     /*
-     * The recurring-service claim, now the SECOND heading rather than the
-     * first. It keeps its own line beneath it.
+     * The caption to the roster, printed UNDER the faces. "One Setup.
+     * Real-Time. Every Time" used to head it and Genesis has taken it off.
      */
-    promise: "One Setup. Real-Time. Every Time",
     line: "Automated AI Content for Your Brand and Personal Social Media.",
   },
   /*
@@ -325,9 +324,15 @@ export const aiContent = {
    * gets the diagrams and its own heading rather than another paragraph.
    */
   automation: {
-    heading: "AI-Powered Automation",
+    heading: "Automate Your Business with AI",
     body:
-      "Discover the unseen opportunities in your startup or business through AI Automation. By automating your workflows, you can simplify your daily business tasks. Let us handle it for you!",
+      "We build AI-powered workflows for MSMEs, SMEs, startups, and growing businesses to automate repetitive tasks, simplify operations, and save time.",
+    /*
+     * The three-beat close Genesis wrote under the paragraph. It is set on
+     * its own line rather than folded into the body: three fragments read as
+     * a claim when they stand apart and as a stutter when they run on.
+     */
+    kicker: "Less manual work. Smarter workflows. Faster growth.",
   },
   /*
    * THE AVATAR BOARD, from the AI Lab page of the deck.
@@ -624,51 +629,38 @@ export const influencer = {
   */
   stats: [proof.campaigns, proof.brands, proof.reach, proof.platforms],
   /**
-   * The constellation cards. The mockup labels these by NICHE and follower
-   * count — "Travel Creator · 856K Followers" — not by celebrity name, so the
-   * named celebrity collaborations below are a separate list and are not what
-   * rides the orbits.
+   * THE CONSTELLATION CARDS — real creators, supplied by Genesis with their
+   * photographs and their Instagram handles.
    *
-   * Portraits are cropped from that same mockup and live in public/creators.
-   * INTERIM: they are stills lifted from a design comp, at comp resolution.
-   * Replace with real shot photography before launch.
-   */
-  /*
-   * THE CONSTELLATION IS A MAP OF CATEGORIES, not a cast list. Genesis briefs
-   * creators across every genre, and five dots read as five creators rather
-   * than as a network — so the roster covers the niches the database actually
-   * spans. Only the five with artwork carry an `image`; the rest fall through
-   * to the cycling avatars, which is what the component already does for
-   * anything orbiting.
+   * WHAT THIS REPLACED. The cards used to be NICHES with stills lifted from a
+   * design comp and illustrative follower counts, carrying a standing note
+   * that none of it could launch as it stood. This is that note discharged:
+   * every card is a person Genesis works with, the portrait is their own, and
+   * clicking one opens their Instagram.
    *
-   * TODO(content): real creators and real reach, per the brief's note about
-   * replacing generic placeholders. The CATEGORIES are real; the follower
-   * counts are illustrative and must be signed off or removed before launch.
-   */
-  /*
-   * EIGHT, NOT TWELVE. Twelve cards overlapping in one orbit read as a pile
-   * rather than as a network — the labels collided and half the photographs
-   * were behind another card.
+   * NO FOLLOWER COUNTS. The old numbers were invented to fill the layout and
+   * are not re-used under real names — a made-up reach printed under a real
+   * creator's face is a claim about that person. `followers` is optional now
+   * and every card omits it; supply the real figures and they come back.
    *
-   * `name` IS THE LABEL, not the category. Genesis asked for the creator's
-   * name on the card; the niche is what the section is already about, so
-   * printing it eight times was saying the same thing eight times. The chip
-   * renders only when a name exists, so until they arrive the cards are
-   * simply photographs — which is also the decluttering.
+   * Vikrant Massey is the featured card, the one held near the centre: he is
+   * the name at the top of Genesis's own list.
    *
-   * TODO(content): real creator names and reach. The `label` values below
-   * are the niches and stay as the accessible description; `name` is empty
-   * and must not be invented — these sit next to real photographs.
+   * Photographs live in public/creators/influencers, resized from the files
+   * Genesis supplied.
    */
   creators: [
-    { id: "lifestyle", label: "Lifestyle", name: "", followers: "1.2M Followers", image: "/creators/lifestyle.webp", feature: true },
-    { id: "travel", label: "Travel", name: "", followers: "856K Followers", image: "/creators/travel.webp" },
-    { id: "fitness", label: "Fitness", name: "", followers: "2.4M Followers", image: "/creators/fitness.webp" },
-    { id: "fashion", label: "Fashion", name: "", followers: "947K Followers", image: "/creators/fashion.webp" },
-    { id: "finance", label: "Finance", name: "", followers: "1.1M Followers", image: "/creators/finance.webp" },
-    { id: "beauty", label: "Beauty & skincare", name: "", followers: "1.6M Followers" },
-    { id: "comedy", label: "Comedy & entertainment", name: "", followers: "3.1M Followers" },
-    { id: "tech", label: "Tech & gadgets", name: "", followers: "610K Followers" },
+    { id: "vikrant-massey", label: "Vikrant Massey", name: "Vikrant Massey", image: "/creators/influencers/vikrant-massey.jpg", instagram: "https://www.instagram.com/vikrantmassey/", feature: true },
+    { id: "rashmi-rai", label: "Rashmi Rai", name: "Rashmi Rai", image: "/creators/influencers/rashmi-rai.jpg", instagram: "https://www.instagram.com/rashmiraiofficial/" },
+    { id: "gunika-sethi", label: "Gunika Sethi", name: "Gunika Sethi", image: "/creators/influencers/gunika-sethi.jpg", instagram: "https://www.instagram.com/tryology_with_gunika/" },
+    { id: "kamya-sidana", label: "Kamya Sidana", name: "Kamya Sidana", image: "/creators/influencers/kamya-sidana.jpg", instagram: "https://www.instagram.com/yogawithkamya_/" },
+    { id: "aakash-salunke", label: "Aakash Salunke", name: "Aakash Salunke", image: "/creators/influencers/aakash-salunke.jpg", instagram: "https://www.instagram.com/aakash_itis/" },
+    { id: "lord-manish", label: "Lord Manish", name: "Lord Manish", image: "/creators/influencers/lord-manish.jpg", instagram: "https://www.instagram.com/lordmanish_/" },
+    { id: "parvi-sharma", label: "Parvi Sharma", name: "Parvi Sharma", image: "/creators/influencers/parvi-sharma.jpg", instagram: "https://www.instagram.com/parviisharrma/" },
+    { id: "vidhi-oswal", label: "Vidhi Oswal", name: "Vidhi Oswal", image: "/creators/influencers/vidhi-oswal.jpg", instagram: "https://www.instagram.com/vidhioswal_/" },
+    { id: "jayesh-gharat", label: "Jayesh Gharat", name: "Jayesh Gharat", image: "/creators/influencers/jayesh-gharat.jpg", instagram: "https://www.instagram.com/jayeshgharat_/" },
+    { id: "priti-jambhale", label: "Priti Jambhale", name: "Priti Jambhale", image: "/creators/influencers/priti-jambhale.jpg", instagram: "https://www.instagram.com/priti_jambhale/" },
+    { id: "komal-singh", label: "Komal Singh", name: "Komal Singh", image: "/creators/influencers/komal-singh.jpg", instagram: "https://www.instagram.com/ikomalsingh28/" },
   ],
   // Celebrity collaborations named in the spec.
   // TODO(spelling/legal): the document writes "Vikhrant Messay" and "Ajay

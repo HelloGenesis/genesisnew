@@ -31,6 +31,7 @@ export function SectionShell({
   className,
   contentClassName,
   bodyClassName,
+  taglineClassName,
 }: {
   id?: string;
   label?: string;
@@ -66,6 +67,8 @@ export function SectionShell({
   contentClassName?: string;
   /** Extra classes on the body paragraph's wrapper. The client wall hides it on phones. */
   bodyClassName?: string;
+  /** Passed to the division lockup's tagline. Brand & Design hides it. */
+  taglineClassName?: string;
 }) {
   const Heading = headingAs;
   return (
@@ -116,6 +119,7 @@ export function SectionShell({
                   tagline={division.tagline}
                   ramp={division.ramp}
                   as={headingAs}
+                  taglineClassName={taglineClassName}
                 />
               </Reveal>
             ) : (
