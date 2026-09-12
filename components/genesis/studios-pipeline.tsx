@@ -219,7 +219,16 @@ export function StudiosPipeline() {
         */}
         <ol
           ref={rail}
-          className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:gap-5 md:overflow-visible md:px-0 md:[grid-template-columns:var(--pipeline-track)]"
+          /*
+            FIVE ROWS THE COLUMNS SHARE, via subgrid. The cards are
+            deliberately different heights, and with each column laying itself
+            out alone that pushed all five labels, all five lines of copy and
+            all five icons to different heights — a staircase of text that
+            Genesis called out. The row heights are declared once here and
+            every stage borrows them, so the cards sit on a common baseline
+            and everything under them lines up.
+          */
+          className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:gap-x-5 md:gap-y-0 md:overflow-visible md:px-0 md:[grid-template-columns:var(--pipeline-track)] md:[grid-template-rows:auto_1fr_auto_auto_auto]"
           style={{ "--pipeline-track": SHAPE.map((s) => s.span).join(" ") } as React.CSSProperties}
         >
           {stages.map((stage, index) => {
@@ -234,7 +243,7 @@ export function StudiosPipeline() {
                   card stood 360 points tall and Studios ran 1088 against an
                   812-point screen.
                 */
-                className="w-[44vw] shrink-0 snap-start sm:w-[34vw] md:w-auto"
+                className="w-[44vw] shrink-0 snap-start sm:w-[34vw] md:row-span-5 md:grid md:w-auto md:grid-rows-subgrid"
               >
                 {/*
                   THE SCRUBBER SEGMENT for this stage: the numbered stop, the
@@ -274,9 +283,9 @@ export function StudiosPipeline() {
                   sits in the gap to its right, so it cannot drift out of
                   alignment with a card whose height changed.
                 */}
-                <div className="relative mt-3">
+                <div className="relative mt-3 md:mt-0 md:flex md:items-end">
                   <div
-                    className="overflow-hidden rounded-2xl border bg-ink"
+                    className="w-full overflow-hidden rounded-2xl border bg-ink"
                     style={{
                       borderColor: accent(s * 0.55),
                       boxShadow: `0 0 24px -12px ${accent(s * 0.7)}`,
@@ -293,19 +302,25 @@ export function StudiosPipeline() {
                     <span
                       aria-hidden
                       /*
-                        A FIXED DISTANCE FROM THE TOP, not half way down. The
-                        cards are deliberately different heights now, so
-                        centring each arrow on its own card scattered the five
-                        of them down the row. Pinned near the top they sit on
-                        one line and read as one track.
+                        ON THE BASELINE THE CARDS SHARE, not at a fixed
+                        distance from the top. The cards bottom-align and are
+                        deliberately different heights, so a top offset put
+                        the arrows above the shorter ones — floating in the
+                        gap, against the section's own background, which is
+                        why Genesis could not see them. Measured up from the
+                        bottom they land inside every card in the row.
+
+                        They also carry a filled disc now: a hairline ring on
+                        a dark ground at this size was the other half of the
+                        invisibility.
                       */
-                      className="absolute -right-[1.85rem] top-[4.5rem] hidden size-6 items-center justify-center rounded-full border md:flex"
+                      className="absolute -right-[1.9rem] bottom-10 hidden size-7 items-center justify-center rounded-full border bg-[var(--surface-raised)] shadow-[0_2px_10px_-2px_rgb(0_0_0/0.6)] md:flex"
                       style={{
-                        borderColor: accent(s * 0.5),
-                        color: accent(Math.max(s, 0.6)),
+                        borderColor: accent(Math.max(s * 0.8, 0.5)),
+                        color: accent(Math.max(s, 0.75)),
                       }}
                     >
-                      <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 12h14M13 6l6 6-6 6" />
                       </svg>
                     </span>
@@ -404,7 +419,7 @@ function StageClip({
         them inside a short laptop screen, cropping a little off a portrait
         reel rather than pushing the section past one screen.
       */
-      className={cn("w-full object-cover", aspect, "max-h-[30vh]")}
+      className={cn("w-full object-cover", aspect, "max-h-[26vh]")}
     />
   );
 }

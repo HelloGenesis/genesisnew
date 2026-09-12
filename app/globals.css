@@ -837,20 +837,27 @@
    different brand colours next to each other is the same raggedness as
    twelve different sizes. One ink, one cap height, one set.
 */
+/* ONE FLAT INK, NOT "DESATURATED". `grayscale()` maps a colour to its
+   LUMINANCE, so a black wordmark came out white while Google Drive's mid
+   greens and blues came out mid grey — the set still read as several
+   colours at several strengths, which is what Genesis called out. Knocking
+   the brightness to zero paints every non-transparent pixel black and the
+   invert then lifts the lot to one white; the alpha channel is untouched,
+   so the shapes keep their edges. */
 .app-mark {
-    filter: grayscale(1) invert(1) brightness(1.05);
-    opacity: 0.82;
+    filter: brightness(0) invert(1);
+    opacity: 0.85;
 }
 
 :root[data-theme="light"] .app-mark {
-    filter: grayscale(1) brightness(0.35);
-    opacity: 0.8;
+    filter: brightness(0);
+    opacity: 0.72;
 }
 
 @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]):not([data-theme="light"]) .app-mark {
-        filter: grayscale(1) brightness(0.35);
-        opacity: 0.8;
+        filter: brightness(0);
+        opacity: 0.72;
     }
 }
 

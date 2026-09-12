@@ -330,7 +330,15 @@ export function AvatarFan({
                   Off the fan's own unit above 640, and off the row below it,
                   where the wrapper carries the width — see the note on it.
                 */
-                fan ? "w-[clamp(6.5rem,min(11vw,13vh),11.5rem)]" : "w-full",
+                /*
+                  BACK TO THE ORIGINAL SIZE. The one-screen pass capped this
+                  by viewport height and shrank the fan to fit; Genesis's
+                  answer was that the roster "was looking good earlier". The
+                  fan is the argument of this section, so it keeps its size
+                  and the section is allowed to run a little past a short
+                  screen.
+                */
+                fan ? "w-[clamp(7.5rem,14vw,13rem)]" : "w-full",
                 // The upright card is the only one carrying a lift, so the
                 // eye is told where to start.
                 isCentre
