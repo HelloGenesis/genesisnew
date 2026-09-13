@@ -300,16 +300,23 @@
        #111111 it replaces measured 18.88. A background is allowed to have a
        value; it is not allowed to have an opinion about legibility.
        --------------------------------------------------------------------- */
+    /* THE WORDMARK'S PALETTE (playingwithcolors). Genesis pointed at the
+       lockup itself: white GENESIS, the yellow N, and MEDIA set in a ramp
+       that runs orange #f39a3c → coral #e8663a → rose #d06a8a → lavender
+       #a48be0, all on black. So the ground is black, and it drifts through
+       very deep versions of that same ramp on the way down the page. */
     --page-ground: linear-gradient(
         168deg,
-        #242426 0%,
-        #201f21 12%,
-        #232019 28%,
-        #1a1a1d 44%,
-        #282317 60%,
-        #161618 78%,
-        #000000 100%
+        #1a1215 0%,
+        #201519 24%,
+        #1b1320 48%,
+        #221518 72%,
+        #110c0f 100%
     );
+
+    /* Box fill and rim, sampled off folder-panel.tsx. */
+    --box-fill: linear-gradient(150deg, rgb(58 44 16 / 0.9) 0%, rgb(24 18 22 / 0.9) 42%, rgb(22 16 30 / 0.9) 64%, rgb(40 24 62 / 0.9) 100%);
+    --box-rim: linear-gradient(150deg, rgb(255 197 22 / 0.85) 0%, rgb(255 154 60 / 0.4) 32%, rgb(224 112 192 / 0.3) 65%, rgb(164 92 255 / 0.75) 100%);
 
     /*
        A SHORT PAGE'S GROUND.
@@ -326,10 +333,10 @@
        resolves rather than transitions.
     */
     --page-ground-compact: linear-gradient(
-        180deg,
-        #242426 0%,
-        #24211a 46%,
-        #000000 100%
+        170deg,
+        #201519 0%,
+        #1b1320 55%,
+        #110c0f 100%
     );
 
     /*
@@ -351,10 +358,10 @@
     --glow-edge: 255 255 255 / 0.15;
     --glow-text-alpha: 0.9;
     --glow-cast: 0.75;
-    --surface-ink: #0d0d0e;
-    --surface-raised: #18181a;
-    --surface-panel: #242426;
-    --surface-float: #2e2e30;
+    --surface-ink: #0f0d0e;
+    --surface-raised: #1a1719;
+    --surface-panel: #231f22;
+    --surface-float: #2d282b;
     --ink-strong: #ffffff;
 
     /*
@@ -387,12 +394,14 @@
     /* The palette's own grey, and a derived step below it for the faintest
        label — two greys cannot make a three-step ramp. */
     --ink-muted: #d1cfcf;
-    --ink-faint: #85848a;
+    --ink-faint: #8a8589;
 
-    --glass-fill: rgb(255 255 255 / 0.075);
-    --glass-fill-strong: rgb(255 255 255 / 0.12);
-    --glass-border: rgb(255 255 255 / 0.12);
-    --glass-highlight: rgb(255 255 255 / 0.3);
+    /* Glass keeps its white frost, warmed a touch towards the ramp, and the
+       border picks up the rose so a box reads as part of the MEDIA family. */
+    --glass-fill: rgb(255 240 235 / 0.07);
+    --glass-fill-strong: rgb(255 240 235 / 0.12);
+    --glass-border: rgb(232 150 140 / 0.2);
+    --glass-highlight: rgb(255 197 22 / 0.75);
 
     --ghost-ink: rgb(255 255 255 / 0.12);
 
@@ -405,10 +414,10 @@
     --spot-beam: 1;
     --spot-veil: 0;
 
-    --cool-accent: #cfe3ff;
-    --brand-ink: #ffc516;
+    --cool-accent: #c9b8f2;
+    --brand-ink: #f5c542;
     --spectrum: 1;
-    --hover-wash: rgb(255 255 255 / 0.07);
+    --hover-wash: rgb(255 255 255 / 0.08);
     --logo-invert: 0;
 
     /* The journey route, graded from the garage year to the present. Sampled
@@ -428,66 +437,68 @@
        and the section carrying it is NOT pinned dark, so on paper the light
        stops measured under 2:1 and the title was barely there. The light
        ramp reuses the route palette, which is already checked against white. */
-    --ramp-avatars: linear-gradient(100deg, #cbb6ff 0%, #f286b4 40%, #ff9a5c 74%, #ffc46b 100%);
-    --ramp-avatars-soft: linear-gradient(100deg, #b6abdc 0%, #d99cb4 52%, #e0a469 100%);
+    --ramp-avatars: var(--ramp-media);
+    --ramp-avatars-soft: linear-gradient(100deg, #d9a36c 0%, #c98a86 52%, #a99bd0 100%);
+    /* The MEDIA wordmark's own ramp, sampled off the supplied lockup. */
+    --ramp-media: linear-gradient(100deg, #f39a3c 0%, #e8663a 38%, #d06a8a 70%, #a48be0 100%);
     --ghost-outline: rgb(255 255 255 / 0.07);
 
     --radius: 0.625rem;
 
     /* Genesis is dark-only; light values exist solely so shadcn primitives
        have something valid to resolve against before `.dark` applies. */
-    --background: #0a0a0b;
+    --background: #0a0909;
     --foreground: #f5f5f4;
-    --card: #131316;
+    --card: #171416;
     --card-foreground: #f5f5f4;
-    --popover: #131316;
+    --popover: #171416;
     --popover-foreground: #f5f5f4;
     --primary: #ffc516;
     --primary-foreground: #ffffff;
-    --secondary: #1c1a20;
+    --secondary: #221e21;
     --secondary-foreground: #f5f5f4;
-    --muted: #1c1a20;
-    --muted-foreground: #a3a3a3;
-    --accent: #1c1a20;
+    --muted: #221e21;
+    --muted-foreground: #a9a3a7;
+    --accent: #221e21;
     --accent-foreground: #f5f5f4;
     --destructive: #ffc516;
     --border: rgb(255 255 255 / 0.1);
     --input: rgb(255 255 255 / 0.14);
     --ring: #ffc516;
-    --sidebar: #0a0a0b;
+    --sidebar: #0a0909;
     --sidebar-foreground: #f5f5f4;
     --sidebar-primary: #ffc516;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #1c1a20;
+    --sidebar-accent: #221e21;
     --sidebar-accent-foreground: #f5f5f4;
     --sidebar-border: rgb(255 255 255 / 0.1);
     --sidebar-ring: #ffc516;
 }
 
 .dark {
-    --background: #0a0a0b;
+    --background: #0a0909;
     --foreground: #f5f5f4;
-    --card: #131316;
+    --card: #171416;
     --card-foreground: #f5f5f4;
-    --popover: #131316;
+    --popover: #171416;
     --popover-foreground: #f5f5f4;
     --primary: #ffc516;
     --primary-foreground: #ffffff;
-    --secondary: #1c1a20;
+    --secondary: #221e21;
     --secondary-foreground: #f5f5f4;
-    --muted: #1c1a20;
-    --muted-foreground: #a3a3a3;
-    --accent: #1c1a20;
+    --muted: #221e21;
+    --muted-foreground: #a9a3a7;
+    --accent: #221e21;
     --accent-foreground: #f5f5f4;
     --destructive: #ffc516;
     --border: rgb(255 255 255 / 0.1);
     --input: rgb(255 255 255 / 0.14);
     --ring: #ffc516;
-    --sidebar: #0a0a0b;
+    --sidebar: #0a0909;
     --sidebar-foreground: #f5f5f4;
     --sidebar-primary: #ffc516;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #1c1a20;
+    --sidebar-accent: #221e21;
     --sidebar-accent-foreground: #f5f5f4;
     --sidebar-border: rgb(255 255 255 / 0.1);
     --sidebar-ring: #ffc516;
@@ -519,12 +530,13 @@
        than seen. Worst stop is #f9f9f9 at 17.7:1 against #000000 body copy. */
     --page-ground: linear-gradient(
         168deg,
-        #f9f9f9 0%,
-        #fbfaf6 18%,
-        #fffdf4 36%,
-        #fffcf0 54%,
-        #fbfaf6 72%,
-        #fffdf4 88%,
+        #fbf8f4 0%,
+        #fdf0e4 16%,
+        #fcebe6 32%,
+        #faf7f6 46%,
+        #fae9ef 60%,
+        #f1edfb 76%,
+        #fbf1ea 90%,
         #ffffff 100%
     );
 
@@ -543,9 +555,9 @@
        resolves rather than transitions.
     */
     --page-ground-compact: linear-gradient(
-        180deg,
-        #f9f9f9 0%,
-        #fffdf4 48%,
+        170deg,
+        #fdf0e4 0%,
+        #fae9ef 50%,
         #ffffff 100%
     );
 
@@ -556,26 +568,29 @@
     --glow-text-alpha: 0;
     --glow-cast: 0.45;
     --chapter-ground: #000000;
+    --box-fill: linear-gradient(150deg, rgb(255 241 196 / 0.92) 0%, rgb(255 252 250 / 0.92) 42%, rgb(252 249 255 / 0.92) 64%, rgb(238 226 255 / 0.9) 100%);
+    --box-rim: linear-gradient(150deg, rgb(230 168 0 / 0.85) 0%, rgb(243 140 50 / 0.35) 32%, rgb(208 100 170 / 0.28) 65%, rgb(140 80 230 / 0.65) 100%);
+    --grain-opacity: 0.16;
     --chapter-blend: #ffffff;
-    --surface-ink: #f9f9f9;
+    --surface-ink: #faf7f5;
     --surface-raised: #ffffff;
     --surface-panel: #ffffff;
     --surface-float: #ffffff;
     --ink-strong: #000000;
-    --ink-muted: #4b4b4d;
-    --ink-faint: #6e6d72;
+    --ink-muted: #4b4749;
+    --ink-faint: #6e696c;
 
-    --glass-fill: rgb(255 255 255 / 0.72);
-    --glass-fill-strong: rgb(255 255 255 / 0.9);
-    --glass-border: rgb(17 17 17 / 0.26);
+    --glass-fill: rgb(255 255 255 / 0.66);
+    --glass-fill-strong: rgb(255 255 255 / 0.88);
+    --glass-border: rgb(150 70 60 / 0.22);
     --glass-highlight: rgb(255 255 255 / 0.9);
     --glass-inset: 0 -1px 0 0 rgb(17 17 17 / 0.05) inset;
 
     --ghost-ink: rgb(17 17 17 / 0.09);
     --spot-beam: 0.22;
     --spot-veil: 1;
-    --cool-accent: #35607f;
-    --brand-ink: #7a5c00;
+    --cool-accent: #6a4fb8;
+    --brand-ink: #9c3710;
     /* Colour on paper reads about twice as strongly as on black. */
     --spectrum: 0.5;
     --hover-wash: rgb(17 17 17 / 0.07);
@@ -595,23 +610,23 @@
     --shadow-panel: 0 2px 4px -1px rgb(17 17 17 / 0.10), 0 12px 28px -8px rgb(17 17 17 / 0.20);
     --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.12), 0 28px 56px -16px rgb(17 17 17 / 0.28);
 
-    --background: #f4f1ec;
+    --background: #f7f3f0;
     --foreground: #16141b;
     --card: #ffffff;
     --card-foreground: #16141b;
     --popover: #ffffff;
     --popover-foreground: #16141b;
-    --secondary: #efebe4;
+    --secondary: #f2ece8;
     --secondary-foreground: #16141b;
-    --muted: #efebe4;
+    --muted: #f2ece8;
     --muted-foreground: #55525d;
-    --accent: #efebe4;
+    --accent: #f2ece8;
     --accent-foreground: #16141b;
     --border: rgb(17 17 17 / 0.12);
     --input: rgb(17 17 17 / 0.16);
-    --sidebar: #f4f1ec;
+    --sidebar: #f7f3f0;
     --sidebar-foreground: #16141b;
-    --sidebar-accent: #efebe4;
+    --sidebar-accent: #f2ece8;
     --sidebar-accent-foreground: #16141b;
     --sidebar-border: rgb(17 17 17 / 0.12);
 }
@@ -626,15 +641,16 @@
            #f6f3ff at 17.25:1 against #111111 body copy, against flat
            white's 18.88. */
         --page-ground: linear-gradient(
-            168deg,
-            #f9f9f9 0%,
-            #fbfaf6 18%,
-            #fffdf4 36%,
-            #fffcf0 54%,
-            #fbfaf6 72%,
-            #fffdf4 88%,
-            #ffffff 100%
-        );
+        168deg,
+        #fbf8f4 0%,
+        #fdf0e4 16%,
+        #fcebe6 32%,
+        #faf7f6 46%,
+        #fae9ef 60%,
+        #f1edfb 76%,
+        #fbf1ea 90%,
+        #ffffff 100%
+    );
 
         /*
            A SHORT PAGE'S GROUND.
@@ -651,11 +667,11 @@
            resolves rather than transitions.
         */
         --page-ground-compact: linear-gradient(
-            180deg,
-            #f9f9f9 0%,
-            #fffdf4 48%,
-            #ffffff 100%
-        );
+        170deg,
+        #fdf0e4 0%,
+        #fae9ef 50%,
+        #ffffff 100%
+    );
 
         --glow-ink: 122 96 0;
         --glow-halo: 255 196 60;
@@ -664,26 +680,29 @@
         --glow-text-alpha: 0;
         --glow-cast: 0.45;
         --chapter-ground: #000000;
+    --box-fill: linear-gradient(150deg, rgb(255 241 196 / 0.92) 0%, rgb(255 252 250 / 0.92) 42%, rgb(252 249 255 / 0.92) 64%, rgb(238 226 255 / 0.9) 100%);
+    --box-rim: linear-gradient(150deg, rgb(230 168 0 / 0.85) 0%, rgb(243 140 50 / 0.35) 32%, rgb(208 100 170 / 0.28) 65%, rgb(140 80 230 / 0.65) 100%);
+    --grain-opacity: 0.16;
         --chapter-blend: #ffffff;
-        --surface-ink: #f9f9f9;
+        --surface-ink: #faf7f5;
         --surface-raised: #ffffff;
         --surface-panel: #ffffff;
         --surface-float: #ffffff;
         --ink-strong: #000000;
-        --ink-muted: #4b4b4d;
-        --ink-faint: #6e6d72;
+        --ink-muted: #4b4749;
+        --ink-faint: #6e696c;
 
-        --glass-fill: rgb(255 255 255 / 0.72);
-        --glass-fill-strong: rgb(255 255 255 / 0.9);
-        --glass-border: rgb(17 17 17 / 0.26);
+        --glass-fill: rgb(255 255 255 / 0.66);
+        --glass-fill-strong: rgb(255 255 255 / 0.88);
+        --glass-border: rgb(150 70 60 / 0.22);
         --glass-highlight: rgb(255 255 255 / 0.9);
         --glass-inset: 0 -1px 0 0 rgb(17 17 17 / 0.05) inset;
 
         --ghost-ink: rgb(17 17 17 / 0.09);
         --spot-beam: 0.22;
         --spot-veil: 1;
-        --cool-accent: #35607f;
-        --brand-ink: #7a5c00;
+        --cool-accent: #6a4fb8;
+        --brand-ink: #9c3710;
         /* Colour on paper reads about twice as strongly as on black. */
         --spectrum: 0.5;
         --hover-wash: rgb(17 17 17 / 0.07);
@@ -702,7 +721,7 @@
         --shadow-panel: 0 2px 4px -1px rgb(17 17 17 / 0.10), 0 12px 28px -8px rgb(17 17 17 / 0.20);
         --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.12), 0 28px 56px -16px rgb(17 17 17 / 0.28);
 
-        --background: #f4f1ec;
+        --background: #f7f3f0;
         --foreground: #16141b;
         --card: #ffffff;
         --card-foreground: #16141b;
@@ -742,20 +761,20 @@
        than as a slightly different black.
     */
     --surface-base: #000000;
-    --surface-ink: #0d0d0e;
-    --surface-raised: #18181a;
-    --surface-panel: #242426;
-    --surface-float: #2e2e30;
+    --box-fill: linear-gradient(150deg, rgb(58 44 16 / 0.9) 0%, rgb(24 18 22 / 0.9) 42%, rgb(22 16 30 / 0.9) 64%, rgb(40 24 62 / 0.9) 100%);
+    --box-rim: linear-gradient(150deg, rgb(255 197 22 / 0.85) 0%, rgb(255 154 60 / 0.4) 32%, rgb(224 112 192 / 0.3) 65%, rgb(164 92 255 / 0.75) 100%);
+    --surface-ink: #0f0d0e;
+    --surface-raised: #1a1719;
+    --surface-panel: #231f22;
+    --surface-float: #2d282b;
     --ink-strong: #ffffff;
-    /* The palette's own grey, and a derived step below it for the faintest
-       label — two greys cannot make a three-step ramp. */
     --ink-muted: #d1cfcf;
-    --ink-faint: #85848a;
+    --ink-faint: #8a8589;
 
-    --glass-fill: rgb(255 255 255 / 0.075);
-    --glass-fill-strong: rgb(255 255 255 / 0.12);
-    --glass-border: rgb(255 255 255 / 0.12);
-    --glass-highlight: rgb(255 255 255 / 0.3);
+    --glass-fill: rgb(255 240 235 / 0.07);
+    --glass-fill-strong: rgb(255 240 235 / 0.12);
+    --glass-border: rgb(232 150 140 / 0.2);
+    --glass-highlight: rgb(255 197 22 / 0.75);
 
     --ghost-ink: rgb(255 255 255 / 0.12);
     --ghost-outline: rgb(255 255 255 / 0.07);
@@ -763,8 +782,8 @@
     /* A pinned-dark scene keeps the additive beam. */
     --spot-beam: 1;
     --spot-veil: 0;
-    --cool-accent: #cfe3ff;
-    --brand-ink: #ffc516;
+    --cool-accent: #c9b8f2;
+    --brand-ink: #f5c542;
     --spectrum: 1;
     --hover-wash: rgb(255 255 255 / 0.07);
     --logo-invert: 0;
@@ -786,20 +805,20 @@
        and the section carrying it is NOT pinned dark, so on paper the light
        stops measured under 2:1 and the title was barely there. The light
        ramp reuses the route palette, which is already checked against white. */
-    --ramp-avatars: linear-gradient(100deg, #cbb6ff 0%, #f286b4 40%, #ff9a5c 74%, #ffc46b 100%);
+    --ramp-avatars: linear-gradient(100deg, #f39a3c 0%, #e8663a 38%, #d06a8a 70%, #a48be0 100%);
     --ramp-avatars-soft: linear-gradient(100deg, #b6abdc 0%, #d99cb4 52%, #e0a469 100%);
 
     --shadow-raised: 0 2px 8px -2px rgb(0 0 0 / 0.6);
     --shadow-panel: 0 12px 32px -8px rgb(0 0 0 / 0.7);
     --shadow-float: 0 28px 64px -16px rgb(0 0 0 / 0.85);
 
-    --background: #0a0a0b;
+    --background: #0a0909;
     --foreground: #f5f5f4;
-    --card: #131316;
+    --card: #171416;
     --card-foreground: #f5f5f4;
     --border: rgb(255 255 255 / 0.1);
     --input: rgb(255 255 255 / 0.14);
-    --muted-foreground: #a3a3a3;
+    --muted-foreground: #a9a3a7;
 
     background-color: var(--surface-base);
     /* Inherited colour too, not just the tokens. Without this any text in the
@@ -1110,23 +1129,18 @@ li:hover .client-mark {
    the first child of main) correctly stops firing on light, where the Brain
    is no longer dark and the pill should follow the theme. */
 .scene-charcoal {
-    --surface-base: #242426;
-    --surface-ink: #2b2b2d;
-    background-color: #242426;
-    /*
-       A LIT ROOM, NOT A SLAB. Flat #242426 behind the orb is technically the
-       colour Genesis asked for, and it reads as a grey rectangle — the sphere
-       is a light source and the wall behind it should know that. A wide radial
-       lifts the middle two levels and warms it towards the accent, and drops
-       the corners below the page's own top stop so the section has edges to
-       sit inside. Still charcoal everywhere a value is measured: the centre is
-       #2c2a24 at 15.6:1 against white.
-    */
+    --surface-base: #1a1215;
+    --surface-ink: #201519;
+    background-color: transparent;
+    /* A lit room in the wordmark's colours: the orb throws orange at its
+       centre, fading through rose to a lavender edge before the black. */
     background-image: radial-gradient(
-        125% 95% at 50% 44%,
-        #2c2a24 0%,
-        #242426 44%,
-        #1b1b1d 100%
+        110% 90% at 50% 44%,
+        rgb(255 197 22 / 0.2) 0%,
+        rgb(243 154 60 / 0.1) 30%,
+        rgb(208 106 138 / 0.06) 50%,
+        rgb(164 139 224 / 0.05) 62%,
+        transparent 100%
     );
 }
 
@@ -1157,6 +1171,8 @@ li:hover .client-mark {
    tokens the floating chrome reads, so the pill keeps its translucency and
    its blur while its inks, borders and logo follow the dark ground beneath. */
 .on-dark {
+    --box-fill: linear-gradient(150deg, rgb(58 44 16 / 0.9) 0%, rgb(24 18 22 / 0.9) 42%, rgb(22 16 30 / 0.9) 64%, rgb(40 24 62 / 0.9) 100%);
+    --box-rim: linear-gradient(150deg, rgb(255 197 22 / 0.85) 0%, rgb(255 154 60 / 0.4) 32%, rgb(224 112 192 / 0.3) 65%, rgb(164 92 255 / 0.75) 100%);
     --ink-strong: #ffffff;
     /* The palette's own grey, and a derived step below it for the faintest
        label — two greys cannot make a three-step ramp. */
@@ -1197,6 +1213,8 @@ li:hover .client-mark {
    of the page was still light paper, which made the wordmark disappear. Only
    a page whose main element is the scene should take the chrome with it. */
 body:has(main.scene-dark) header {
+    --box-fill: linear-gradient(150deg, rgb(58 44 16 / 0.9) 0%, rgb(24 18 22 / 0.9) 42%, rgb(22 16 30 / 0.9) 64%, rgb(40 24 62 / 0.9) 100%);
+    --box-rim: linear-gradient(150deg, rgb(255 197 22 / 0.85) 0%, rgb(255 154 60 / 0.4) 32%, rgb(224 112 192 / 0.3) 65%, rgb(164 92 255 / 0.75) 100%);
     /* The wordmark swaps on this too. .scene-dark sets --logo-invert, but it
        sets it on MAIN — and the logo lives in the header, outside that
        subtree, so without repeating it here a scene page showed the dark
@@ -1347,11 +1365,19 @@ body:has(main.scene-dark) header {
         );
     }
 
+    /* THE FOLDER LOOK, everywhere. Genesis pointed at the Brand & Design
+       folders as the box they want: a warm top-left fading through the dark
+       to violet at the foot, inside a rim that runs orange to violet. Two
+       backgrounds do it — the fill clipped to the padding box, the rim
+       showing only through a transparent 1px border — so the rim follows
+       the radius, which border-image cannot. */
     .glass {
         position: relative;
-        background-color: var(--glass-fill);
+        background:
+            var(--box-fill) padding-box,
+            var(--box-rim) border-box;
         backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-        border: 1px solid var(--glass-border);
+        border: 1px solid transparent;
         box-shadow:
             var(--glass-inset, 0 1px 0 0 rgb(255 255 255 / 0.06) inset),
             var(--shadow-panel);
@@ -1430,12 +1456,18 @@ body:has(main.scene-dark) header {
         inset-inline: 12%;
         top: -1px;
         height: 1px;
+        /* The MEDIA ramp as the lit edge, so every box carries the mark. */
         background: linear-gradient(
             90deg,
             transparent,
-            var(--glass-highlight),
+            #ffc516 15%,
+            #f39a3c 32%,
+            #e8663a 45%,
+            #d06a8a 70%,
+            #a48be0 85%,
             transparent
         );
+        opacity: 0.8;
         pointer-events: none;
     }
 
@@ -1448,9 +1480,11 @@ body:has(main.scene-dark) header {
         inset: 0;
         pointer-events: none;
         z-index: 1;
-        opacity: 0.18;
+        /* A noise-filled gradient, not a faint haze: the grain is meant to be
+           seen, so the glows read as sprayed light rather than smooth CSS. */
+        opacity: var(--grain-opacity, 0.11);
         mix-blend-mode: overlay;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
     }
 
     /* --- Editorial micro-label -------------------------------------------

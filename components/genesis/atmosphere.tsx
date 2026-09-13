@@ -53,12 +53,12 @@ const TONE_COLOR: Record<NonNullable<AuroraProps["tone"]>, string> = {
  * the section ground is under two points of luminance.
  */
 const SPECTRUM_NEUTRAL = [
-  { color: "255 255 255", at: "14% 6%", size: "52% 46%", alpha: 0.06 },
-  { color: "209 207 207", at: "88% 16%", size: "46% 42%", alpha: 0.1 },
-  { color: "255 255 255", at: "78% 88%", size: "54% 48%", alpha: 0.05 },
+  { color: "255 197 22", at: "14% 6%", size: "52% 46%", alpha: 0.06 },
+  { color: "243 154 60", at: "88% 16%", size: "46% 42%", alpha: 0.1 },
+  { color: "255 197 22", at: "78% 88%", size: "54% 48%", alpha: 0.05 },
   /* The accent carries this wash, at the same strength the page-wide field
      now uses. At 0.09 it was a rumour; see the note in page-atmosphere. */
-  { color: "255 197 22", at: "18% 92%", size: "48% 42%", alpha: 0.17 },
+  { color: "208 106 138", at: "18% 92%", size: "48% 42%", alpha: 0.17 },
 ];
 
 /**
@@ -69,10 +69,10 @@ const SPECTRUM_NEUTRAL = [
  * choose between them.
  */
 const SPECTRUM_COLOUR = [
-  { color: "209 207 207", at: "14% 6%", size: "52% 46%", alpha: 0.5 },
-  { color: "255 197 22", at: "88% 16%", size: "46% 42%", alpha: 0.13 },
-  { color: "209 207 207", at: "78% 88%", size: "54% 48%", alpha: 0.4 },
-  { color: "255 197 22", at: "18% 92%", size: "48% 42%", alpha: 0.15 },
+  { color: "255 197 22", at: "14% 6%", size: "52% 46%", alpha: 0.25 },
+  { color: "243 154 60", at: "88% 16%", size: "46% 42%", alpha: 0.13 },
+  { color: "255 197 22", at: "78% 88%", size: "54% 48%", alpha: 0.2 },
+  { color: "208 106 138", at: "18% 92%", size: "48% 42%", alpha: 0.15 },
 ];
 
 /** Every source stacked into one background-image. */
