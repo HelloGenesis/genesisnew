@@ -5,6 +5,15 @@ import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { StudiosPipeline } from "@/components/genesis/studios-pipeline";
 import { services } from "@/lib/home-content";
 
+/*
+  ONE LINE ON A PHONE, the same treatment Influence, AI Lab and Brand &
+  Design already give their pairs. Wrapped, these two `lg` buttons stacked
+  and cost the section 50 points — the last thing standing between Studios
+  and the one-screen rule on a handset.
+*/
+const MOBILE_CTA =
+  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
+
 /**
  * Genesis Studios — the production vertical.
  *
@@ -34,7 +43,7 @@ export function Studios() {
   return (
     <section
       id="studios"
-      className="scene-open grain relative isolate overflow-hidden py-7 sm:py-8 lg:py-9"
+      className="scene-open grain relative isolate overflow-hidden py-[var(--section-pad)]"
     >
       <Spectrum className="seamless" />
 
@@ -49,17 +58,18 @@ export function Studios() {
           </Reveal>
         </div>
 
-        <div className="mt-6 sm:mt-8">
+        <div className="fit-window mt-[var(--block-gap)]">
           <StudiosPipeline />
         </div>
 
-        <Reveal delay={0.14} className="mt-6 flex flex-wrap justify-center gap-3">
+        <Reveal delay={0.14} className="mt-[var(--block-gap)] flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
           <GlassButton
             href="/#contact"
             quickContact="studios:plan-a-shoot"
             variant="brand"
             size="lg"
             arrow
+            className={MOBILE_CTA}
           >
             Start a Project
           </GlassButton>
@@ -70,7 +80,7 @@ export function Studios() {
             the same place as this one is not worth keeping — so it is gone
             rather than re-pointed.
           */}
-          <GlassButton href="/#library" variant="ghost" size="lg" arrow>
+          <GlassButton href="/#library" variant="ghost" size="lg" arrow className={MOBILE_CTA}>
             View the whole library
           </GlassButton>
         </Reveal>

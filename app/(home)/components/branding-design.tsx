@@ -163,9 +163,24 @@ export function BrandingDesign() {
         next; on a phone they stack headline, list, work, so the reader is
         told what the division does before being shown it.
       */}
-      <div className="grid items-center gap-4 sm:gap-5 md:grid-cols-2 xl:-mx-10 xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8">
+      {/*
+        A SWIPE RAIL BELOW xl, A ROW ABOVE IT.
+
+        Stacked, these three folders are 1328 points on a phone and 1076 on a
+        tablet — against Genesis's rule that a section fits the window on any
+        device. Nothing here can come out: each folder is a different part of
+        the division's argument, and shrinking all three to fit a phone
+        screen would put the case-study tiles below legibility.
+
+        So on a small screen they behave like the Studios timeline, which
+        Genesis already reads as one section: one folder at a time, swiped,
+        with the section standing as tall as the tallest of them instead of
+        all three put together. From xl, where all three fit side by side,
+        nothing changes.
+      */}
+      <div className="no-scrollbar -mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 sm:gap-5 xl:mx-[-2.5rem] xl:grid xl:snap-none xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8 xl:overflow-visible xl:px-0">
         {/* ─── The work ─────────────────────────────────────────────── */}
-        <Reveal className="relative z-10 order-3 md:order-2 xl:order-1">
+        <Reveal className="relative z-10 order-3 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-1 xl:w-auto xl:max-w-none">
           <FolderPanel tab={0.4} dots contentClassName="p-3 sm:p-5">
             <div className="flex items-center gap-2.5 pr-12">
               <Image
@@ -191,7 +206,7 @@ export function BrandingDesign() {
               </span>
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
+            <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-2">
               {route.final && (
                 <Tile
                   n={1}
@@ -293,7 +308,7 @@ export function BrandingDesign() {
         {/* ─── The positioning ──────────────────────────────────────── */}
         <Reveal
           delay={0.06}
-          className="relative isolate order-1 md:col-span-2 xl:order-2 xl:col-span-1"
+          className="relative isolate order-1 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-2 xl:w-auto xl:max-w-none"
         >
           {/* The Genesis N itself, in its own yellow, blurred just enough to
               sit behind the glass while still reading as the N. Showing
@@ -326,7 +341,7 @@ export function BrandingDesign() {
               own height in four lines; the floor was there to give the
               folder presence beside two others, which only happens from xl.
             */
-            contentClassName="flex flex-col justify-center px-6 pt-8 pb-14 sm:min-h-[16rem] sm:px-10 sm:pb-16 xl:min-h-[26rem]"
+            contentClassName="flex flex-col justify-center px-6 pt-8 pb-14 sm:min-h-[min(16rem,26vh)] sm:px-10 sm:pb-16 xl:min-h-[min(26rem,34vh)]"
           >
             <h3 className="text-[2rem] leading-[1.04] font-semibold tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
               Branding
@@ -354,7 +369,7 @@ export function BrandingDesign() {
         </Reveal>
 
         {/* ─── What we make ─────────────────────────────────────────── */}
-        <Reveal delay={0.1} className="order-2 md:order-3 xl:order-3">
+        <Reveal delay={0.1} className="order-2 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-3 xl:w-auto xl:max-w-none">
           <FolderPanel tab={0} dots contentClassName="px-3 pt-9 pb-3 sm:pt-11 sm:px-4 sm:pb-4">
             <FolderPanel tab={0.34} tabHeight={20} radius={16} contentClassName="px-4 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
               <p className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
@@ -385,24 +400,25 @@ export function BrandingDesign() {
           </FolderPanel>
         </Reveal>
 
-        <Reveal
-          delay={0.15}
-          className="order-4 mt-4 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3 md:col-span-2 xl:col-span-3"
-        >
-          <GlassButton
-            href="/#contact"
-            quickContact="brand-design:build-a-brand"
-            variant="brand"
-            arrow
-            className={MOBILE_CTA}
-          >
-            Build a brand
-          </GlassButton>
-          <GlassButton href="/#library" variant="glass" arrow className={MOBILE_CTA}>
-            View branding work
-          </GlassButton>
-        </Reveal>
       </div>
+
+      <Reveal
+        delay={0.15}
+        className="mt-4 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3"
+      >
+        <GlassButton
+          href="/#contact"
+          quickContact="brand-design:build-a-brand"
+          variant="brand"
+          arrow
+          className={MOBILE_CTA}
+        >
+          Build a brand
+        </GlassButton>
+        <GlassButton href="/#library" variant="glass" arrow className={MOBILE_CTA}>
+          View branding work
+        </GlassButton>
+      </Reveal>
     </SectionShell>
   );
 }

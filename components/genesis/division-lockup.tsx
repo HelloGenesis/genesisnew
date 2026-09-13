@@ -370,10 +370,19 @@ export function DivisionLockup({
     : board
       ? BOARD_MAX_RATIO
       : MAX_RATIO;
+  /*
+    THE HEIGHT IS A CSS VARIABLE, NOT A NUMBER, unless a caller names one.
+    Genesis's one-screen test failed first on a 13-inch laptop, and a lockup
+    is the first thing in eight sections — so it steps down with the window's
+    height along with the type and the padding (see --lockup-h in globals).
+    The width follows from it, which is why both bounds are expressed against
+    the same variable rather than computed here in pixels.
+  */
+  const lockupH = height === TARGET_HEIGHT ? "var(--lockup-h)" : `${height}px`;
   const sizing = fluid
     ? { width: `${((ratio / maxRatio) * 100).toFixed(3)}%` }
     : {
-        maxWidth: Math.round(height * ratio),
+        maxWidth: `calc(${ratio.toFixed(3)} * ${lockupH})`,
         /*
           A FLOOR AS WELL AS A CEILING, for centred headings. A centred header
           shrinks to fit its widest child, and this box is a percentage width,
@@ -384,7 +393,7 @@ export function DivisionLockup({
           column (the viewport less its 1.5rem gutters), so a wide mark takes
           the width available and a narrow one is unaffected.
         */
-        minWidth: `min(${Math.round(height * ratio)}px, calc(100vw - 3rem))`,
+        minWidth: `min(calc(${ratio.toFixed(3)} * ${lockupH}), calc(100vw - 3rem))`,
       };
   const maxWidth = Math.round(height * ratio);
 

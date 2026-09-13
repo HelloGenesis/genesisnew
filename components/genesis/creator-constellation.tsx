@@ -172,7 +172,7 @@ export function CreatorConstellation({
         The max-width is that ratio expressed against vh, which holds the
         whole constellation inside 58vh however wide the column gets.
       */
-      className="relative isolate mx-auto aspect-[850/620] w-full max-w-[calc(40vh*850/620)]"
+      className="relative isolate mx-auto aspect-[850/620] w-full max-w-[calc(31vh*850/620)]"
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
     >

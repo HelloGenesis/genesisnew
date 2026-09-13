@@ -107,7 +107,7 @@ export function Portfolio() {
           </h2>
         </Reveal>
 
-        <Reveal variant="scene" className="mt-8">
+        <Reveal variant="scene" className="fit-window mt-[var(--block-gap)]">
           <WorkGrid items={forHomepage()} rail />
         </Reveal>
       </div>

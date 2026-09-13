@@ -94,7 +94,7 @@ export function InfluencerMarketing() {
           ring caps its own height — and side by side the section comes in
           under one screen.
         */}
-        <div className="mt-6 grid items-center gap-6 md:grid-cols-[0.82fr_1.18fr] md:gap-6 lg:gap-8">
+        <div className="fit-window mt-6 grid items-center gap-6 md:grid-cols-[0.82fr_1.18fr] md:gap-6 lg:gap-8">
           {/*
             min-w-0 is load-bearing. A grid item defaults to `min-width: auto`,
             which refuses to shrink below its content's longest unbreakable
@@ -240,7 +240,7 @@ export function InfluencerMarketing() {
         */}
         <Reveal delay={0.24} className="mt-8 hidden sm:block">
           <div className="glass glass-lit flex flex-col gap-6 rounded-panel px-5 py-5 sm:px-6 lg:flex-row lg:items-center">
-            <div className="grid flex-1 grid-cols-2 gap-y-4 sm:gap-y-6 md:grid-cols-4">
+            <div className="grid flex-1 grid-cols-2 gap-y-3 sm:gap-y-5 md:grid-cols-4">
               {stats.map((stat, index) => {
                 const Icon = STAT_ICONS[index] ?? Globe;
                 const highlight = index === 0;

@@ -104,16 +104,16 @@
     --text-display: 4.75rem;
     --text-display--line-height: 0.92;
     --text-display--letter-spacing: -0.03em;
-    --text-h1: 3.5rem;
+    --text-h1: var(--fs-h1);
     --text-h1--line-height: 0.98;
     --text-h1--letter-spacing: -0.025em;
-    --text-h2: 2.5rem;
+    --text-h2: var(--fs-h2);
     --text-h2--line-height: 1.05;
     --text-h2--letter-spacing: -0.02em;
-    --text-h3: 1.75rem;
+    --text-h3: var(--fs-h3);
     --text-h3--line-height: 1.15;
     --text-h3--letter-spacing: -0.015em;
-    --text-lead: 1.1875rem;
+    --text-lead: var(--fs-lead);
     --text-lead--line-height: 1.55;
     --text-lead--letter-spacing: -0.005em;
     --text-body: 1rem;
@@ -212,6 +212,34 @@
 }
 
 :root {
+    /* --- The display scale, and why it is a VARIABLE -----------------------
+       Genesis's test for this page is that a section fits the window on
+       whatever they open it on, and the case that broke it was a 13-inch
+       MacBook: about 700 points of viewport once Chrome has taken its
+       chrome, where a 1280-wide layout was being drawn at sizes chosen for a
+       1080-tall monitor.
+
+       WIDTH WAS NEVER THE PROBLEM — HEIGHT IS. A narrow window reflows; a
+       short one just runs out of room, and nothing in a width breakpoint can
+       see that. So the scale, the section padding and the division lockup
+       are declared here and stepped down by HEIGHT media queries below. The
+       media that carry the sections were already capped in vh, so they come
+       down with it.
+
+       Tailwind's `@theme inline` substitutes a theme value straight into the
+       utility, so `--text-h1` cannot be overridden after the fact. It points
+       at these instead, which can. */
+    --fs-h1: 3.5rem;
+    --fs-h2: 2.5rem;
+    --fs-h3: 1.75rem;
+    --fs-lead: 1.1875rem;
+    /* Section padding, top and bottom, and the height of a division lockup. */
+    --section-pad: 2.25rem;
+    --lockup-h: 58px;
+    /* The gap between a section's header and its content, and between that
+       content and the buttons under it. Steps with everything else. */
+    --block-gap: 1.75rem;
+
     /* --- Glass (One UI "Blur", per img-000) -------------------------------
        Deliberately NOT the iOS "Clear" style: heavy blur, low-contrast fill,
        a bright top edge, and no refraction/distortion. */
@@ -822,6 +850,121 @@
 .client-mark--asis {
     /* Already light artwork; any correction would hide it. */
     filter: grayscale(1);
+}
+
+/* --- A section that will not fit, drawn smaller -----------------------
+   The scale, the padding and the media caps take a section most of the way
+   down on a short window; three of them — Influence, AI Lab and Brand &
+   Design — are carrying enough real content that the last 6 to 8 per cent
+   has to come out of the whole block rather than out of any one part of it.
+
+   `zoom` rather than `transform: scale()` because zoom changes the LAYOUT
+   box: the section actually occupies less of the page, which is the point.
+   A transform would shrink the picture and reserve the original height, so
+   the scroll would be exactly as long as before. Text is re-rendered at the
+   new size, so nothing goes soft.
+
+   This is the last resort in the chain and it is applied to every section
+   for consistency: a page where three blocks shrink and the rest do not is
+   a page that looks like it has three mistakes in it. */
+.fit-window {
+    zoom: 1;
+}
+
+/* A phone is the other short window: one column, and the browser's own
+   chrome on top of it. */
+@media (max-width: 640px) {
+    .fit-window {
+        zoom: 0.94;
+    }
+}
+
+@media (max-height: 780px) {
+    .fit-window {
+        zoom: 0.91;
+    }
+}
+
+@media (max-height: 680px) {
+    .fit-window {
+        zoom: 0.85;
+    }
+}
+
+/* A laptop carrying a bookmarks bar and a downloads shelf. */
+@media (max-height: 640px) {
+    .fit-window {
+        zoom: 0.79;
+    }
+}
+
+/* --- Narrow windows --------------------------------------------------
+   A phone is short in its own way: 812 points sounds tall, but the nav, the
+   browser chrome and a one-column layout eat it. The same variables step
+   here so the rule holds on a handset as well as on a laptop. */
+@media (max-width: 640px) {
+    :root {
+        --fs-h1: 2.5rem;
+        --fs-h2: 2rem;
+        --fs-h3: 1.45rem;
+        --fs-lead: 1.0625rem;
+        --section-pad: 1.35rem;
+        --block-gap: 1.15rem;
+    }
+}
+
+/* --- Short windows ----------------------------------------------------
+   Three steps rather than one, so a 13-inch laptop and a 1080 monitor are
+   not handed the same compromise. 900 catches a 1440x900 Mac with its
+   chrome; 780 the 13-inch class; 680 a laptop with a toolbar or two.
+   Everything here is a proportion of the full scale — the page is the same
+   design, drawn smaller, rather than a different layout. */
+@media (max-height: 900px) {
+    :root {
+        --fs-h1: 3rem;
+        --fs-h2: 2.15rem;
+        --fs-h3: 1.55rem;
+        --fs-lead: 1.125rem;
+        --section-pad: 1.75rem;
+        --lockup-h: 50px;
+        --block-gap: 1.35rem;
+    }
+}
+
+@media (max-height: 780px) {
+    :root {
+        --fs-h1: 2.6rem;
+        --fs-h2: 1.9rem;
+        --fs-h3: 1.4rem;
+        --fs-lead: 1.0625rem;
+        --section-pad: 1.35rem;
+        --lockup-h: 44px;
+        --block-gap: 1.1rem;
+    }
+}
+
+@media (max-height: 680px) {
+    :root {
+        --fs-h1: 2.25rem;
+        --fs-h2: 1.7rem;
+        --fs-h3: 1.3rem;
+        --fs-lead: 1rem;
+        --section-pad: 1.1rem;
+        --lockup-h: 38px;
+        --block-gap: 0.9rem;
+    }
+}
+
+@media (max-height: 640px) {
+    :root {
+        --fs-h1: 2rem;
+        --fs-h2: 1.55rem;
+        --fs-h3: 1.2rem;
+        --fs-lead: 0.9375rem;
+        --section-pad: 0.85rem;
+        --lockup-h: 34px;
+        --block-gap: 0.75rem;
+    }
 }
 
 /* --- Third-party app marks, in the AI Lab diagram ---------------------

@@ -112,7 +112,7 @@ export function Services() {
         with somebody else's section under it. Full height and centred, the
         orb and its four names own the screen and the wall starts below it.
       */
-      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-32"
+      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[calc(var(--section-pad)*3.4)]"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme
@@ -189,7 +189,10 @@ export function Services() {
               0.375 to leave room for a crest, so the box grew to keep the
               sphere the same size on the page.
             */}
-            <div className="relative mx-auto w-[min(62vw,17rem)] lg:-mx-[11%] lg:w-[122%]">
+            {/* The orb is bound by the window's HEIGHT as well as its width: it is
+              the one thing in the hero that can push the four names off a
+              short screen. */}
+            <div className="relative mx-auto w-[min(62vw,17rem,36vh)] lg:-mx-[11%] lg:w-[min(122%,52vh)]">
               <NeuralOrb />
 
               {/*

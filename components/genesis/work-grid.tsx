@@ -328,7 +328,7 @@ export function WorkGrid({
                         at about 29vh tall, which keeps both rows and the
                         chrome inside one screen at any window size.
                       */
-                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(7.5rem,min(36vw,17vh),14rem)]"
+                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(7rem,min(36vw,15.5vh),14rem)]"
                     >
                       <WorkTile item={item} variant="fill" onOpen={() => setOpenSlug(item.slug)} />
                     </div>

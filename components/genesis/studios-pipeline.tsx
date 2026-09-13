@@ -186,7 +186,7 @@ export function StudiosPipeline() {
         </p>
       </Reveal>
 
-      <Reveal variant="scene" delay={0.08} className="relative mt-6 sm:mt-8">
+      <Reveal variant="scene" delay={0.08} className="relative mt-[var(--block-gap)]">
         {/*
           THE ORIGIN, at the far left: the filled dot the reference hangs its
           timeline from, and the hairline that drops from it down the side of
@@ -268,7 +268,7 @@ export function StudiosPipeline() {
                   and the space a short card leaves sits ABOVE it, under the
                   scrubber, instead of as a hole beneath its caption.
                 */
-                className="grid w-[44vw] shrink-0 snap-start grid-rows-[auto_1fr_auto_auto_auto] sm:w-[34vw] md:row-span-5 md:w-auto md:grid-rows-subgrid"
+                className="grid w-[40vw] shrink-0 snap-start grid-rows-[auto_1fr_auto_auto_auto] sm:w-[34vw] md:row-span-5 md:w-auto md:grid-rows-subgrid"
               >
                 {/*
                   THE SCRUBBER SEGMENT for this stage: the numbered stop, the

@@ -338,7 +338,7 @@ export function AvatarFan({
                   and the section is allowed to run a little past a short
                   screen.
                 */
-                fan ? "w-[clamp(7.5rem,14vw,13rem)]" : "w-full",
+                fan ? "w-[clamp(6.75rem,min(14vw,23vh),13rem)]" : "w-full",
                 // The upright card is the only one carrying a lift, so the
                 // eye is told where to start.
                 isCentre

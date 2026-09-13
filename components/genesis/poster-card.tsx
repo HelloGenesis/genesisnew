@@ -128,7 +128,11 @@ export function PosterCard({
 
           Arbitrary-value syntax: Tailwind v4 has no bare-fraction aspect-2/3.
         */
-        className="relative w-full aspect-[2/3]"
+        /* The card is 2:3, so its WIDTH sets how tall the shelf stands. On
+           a short laptop four across came to more than half the window on
+           their own; the cap trades a little of the poster's foot for the
+           section fitting the screen. */
+        className="relative w-full aspect-[2/3] max-h-[46vh]"
         style={
           poster.image
             ? { backgroundImage: `url(${poster.image})`, backgroundSize: "cover" }

@@ -179,7 +179,7 @@ export function AiContent() {
         The form is the fallback, not a third button: `quickContact` only
         applies when there is no chat link to give.
       */}
-      <Reveal delay={0.1} className="mt-6 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
+      <Reveal delay={0.1} className="mt-[var(--block-gap)] flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
         <GlassButton
           href={avatarChat ?? "/#contact"}
           quickContact={avatarChat ? undefined : "ai-labs:create-an-avatar"}
@@ -228,7 +228,7 @@ export function AiContent() {
       */}
       <SectionShell id="ai-automation" tone="brand" origin="center" intensity={0.12}>
       <Reveal delay={0.06}>
-        <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-5 py-8 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10 sm:py-12">
+        <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-5 py-[calc(var(--section-pad)*1.6)] shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10">
           <div className="mx-auto w-full max-w-5xl text-center">
             <h3 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
               {aiContent.automation.heading}

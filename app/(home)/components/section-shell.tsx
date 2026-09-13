@@ -98,7 +98,9 @@ export function SectionShell({
         height on the page: four sections were over by less than the 64 top
         and bottom they were each spending on air.
       */
-      className={cn("py-7 sm:py-8 lg:py-9", className)}
+      /* --section-pad steps down with the window's HEIGHT — see globals. A
+         width breakpoint cannot see the 13-inch laptop this is for. */
+      className={cn("py-[var(--section-pad)]", className)}
     >
       <section id={id} className="mx-auto w-full max-w-6xl px-6">
         {/*
@@ -179,7 +181,9 @@ export function SectionShell({
         )}
 
         {children && (
-          <div className={cn("mt-5 sm:mt-7", contentClassName)}>{children}</div>
+          <div className={cn("fit-window mt-[var(--block-gap)]", contentClassName)}>
+            {children}
+          </div>
         )}
       </section>
     </Atmosphere>
