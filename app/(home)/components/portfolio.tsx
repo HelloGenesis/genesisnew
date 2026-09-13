@@ -101,16 +101,66 @@ export function Portfolio() {
             <span aria-hidden className="text-faint">
               -
             </span>{" "}
-            <span className="font-serif font-normal italic text-brand-ink">
-              Case Studies
+            {/* Circled in grease pencil, the way a pick is marked on a proof. */}
+            <span className="relative inline-block">
+              <span className="gm-ramp-text font-serif font-normal italic">Case Studies</span>
+              <svg
+                aria-hidden
+                viewBox="0 0 300 90"
+                preserveAspectRatio="none"
+                className="pointer-events-none absolute -inset-x-[8%] -inset-y-[22%] h-[144%] w-[116%] overflow-visible"
+              >
+                <path
+                  d="M40 14C120 -2 262 4 288 34c20 24-40 48-146 50C58 86 6 70 10 44 14 22 70 8 156 8"
+                  fill="none"
+                  stroke="#ffc516"
+                  strokeWidth="3.2"
+                  strokeLinecap="round"
+                  opacity="0.9"
+                />
+              </svg>
             </span>
           </h2>
         </Reveal>
 
+        {/*
+          THE DEVICE: A CONTACT SHEET. Brand & Design is a set of folders; the
+          library is the sheet a photographer proofs a roll on — edge print
+          along the top and bottom, frame numbers, and the pick circled in
+          grease pencil in the heading above.
+        */}
         <Reveal variant="scene" className="fit-window mt-[var(--block-gap)]">
-          <WorkGrid items={forHomepage()} rail />
+          <div className="gm-rim relative overflow-hidden rounded-panel shadow-[0_30px_80px_-34px_rgb(243_154_60/0.45)]">
+            <FilmEdge />
+            <div className="px-6 py-4">
+              <WorkGrid items={forHomepage()} rail />
+            </div>
+            <FilmEdge bottom />
+          </div>
         </Reveal>
       </div>
     </section>
+  );
+}
+
+/* The edge print on a roll of film, frame numbers running along it. */
+function FilmEdge({ bottom = false }: { bottom?: boolean }) {
+  return (
+    <div
+      aria-hidden
+      className={
+        "flex items-center gap-6 overflow-hidden whitespace-nowrap bg-[rgb(0_0_0/0.22)] px-6 py-1.5 font-mono text-[0.5625rem] font-semibold uppercase tracking-[0.2em] " +
+        (bottom ? "border-t border-white/10" : "border-b border-white/10")
+      }
+    >
+      <span className="gm-ramp-text gm-ramp-text--full shrink-0">
+        {bottom ? "Genesis Safety Film" : "Genesis 400 · Proof Sheet"}
+      </span>
+      {Array.from({ length: 24 }, (_, i) => (
+        <span key={i} className="shrink-0 text-[#f39a3c]/70">
+          ▸ {bottom ? `${i + 1}A` : i + 1}
+        </span>
+      ))}
+    </div>
   );
 }

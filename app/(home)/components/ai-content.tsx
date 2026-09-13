@@ -6,6 +6,7 @@ import { AutomationSources } from "@/components/genesis/automation-diagram";
 import { AvatarFan } from "@/components/genesis/avatar-fan";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
+import { TypingPrompt } from "@/components/genesis/typing-prompt";
 import { aiContent, services } from "@/lib/home-content";
 import { siteConfig, whatsappLink } from "@/lib/site-config";
 import { SectionShell } from "./section-shell";
@@ -79,10 +80,44 @@ export function AiContent() {
         centred rows — so there is nothing left to scroll and a scroller with
         no overflow only invites a sideways drag that goes nowhere.
       */}
+      {/*
+        THE DEVICE: A PROMPT WINDOW. Brand & Design is a set of folders; the
+        AI Lab is the window the work is generated in — a title bar, a prompt
+        that types itself, the roster rendered underneath, and a render bar
+        running in the lockup's ramp along the foot.
+      */}
       <Reveal
         variant="scene"
-        className="relative left-1/2 mt-12 w-screen -translate-x-1/2 overflow-hidden"
+        className="relative mt-10 overflow-hidden rounded-[1.4rem] gm-rim shadow-[0_40px_90px_-40px_rgb(164_92_255/0.55)]"
       >
+        <div className="flex items-center gap-3 border-b border-white/10 bg-[rgb(0_0_0/0.2)] px-4 py-2.5">
+          <span aria-hidden className="flex gap-1.5">
+            <span className="size-3 rounded-full bg-[#ff5f57]" />
+            <span className="size-3 rounded-full bg-[#febc2e]" />
+            <span className="size-3 rounded-full bg-[#28c840]" />
+          </span>
+          <span className="flex-1 truncate text-center font-mono text-[0.6875rem] tracking-[0.08em] text-faint">
+            genesis-ai-lab — render
+          </span>
+          <span className="hidden items-center gap-1.5 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-ash sm:flex">
+            <span className="gm-pulse size-1.5 rounded-full bg-[#7ee08a]" aria-hidden />
+            Online
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3 font-mono text-[0.75rem] sm:px-6 sm:text-small">
+          <span className="gm-ramp-text gm-ramp-text--full font-semibold">genesis&nbsp;›</span>
+          <TypingPrompt
+            className="truncate text-bone"
+            prompts={[
+              `generate avatars --count ${aiContent.avatars.length} --realism max`,
+              "translate reel --to hindi,tamil,marathi --lipsync on",
+              "render campaign --formats 9:16,1:1,16:9",
+            ]}
+          />
+        </div>
+
+        <div className="pb-2 pt-6 sm:pt-8">
         {/*
           GENESIS'S COPY, ABOVE THE ROSTER, in the slot the old "AI Avatars &
           Realism" heading had. Three parts, in their order: who it is for,
@@ -137,6 +172,17 @@ export function AiContent() {
         <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead">
           {aiContent.avatarsIntro.line}
         </p>
+        </div>
+
+        <div className="flex items-center gap-3 border-t border-white/10 bg-[rgb(0_0_0/0.2)] px-4 py-2.5 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-faint sm:px-6">
+          <span className="shrink-0">Rendering</span>
+          <span aria-hidden className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+            <span className="gm-render-bar block h-full w-full rounded-full" />
+          </span>
+          <span className="shrink-0 text-ash">
+            {aiContent.avatars.length}/{aiContent.avatars.length} avatars
+          </span>
+        </div>
       </Reveal>
 
       {/*
@@ -228,7 +274,9 @@ export function AiContent() {
       */}
       <SectionShell id="ai-automation" tone="brand" origin="center" intensity={0.12}>
       <Reveal delay={0.06}>
-        <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-5 py-[calc(var(--section-pad)*1.6)] shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10">
+        {/* A node editor's canvas: ramp rim, dotted ground. */}
+        <div className="gm-rim overflow-hidden rounded-[2rem] shadow-[0_40px_90px_-40px_rgb(255_197_22/0.3)]">
+        <div className="gm-dot-grid px-5 py-[calc(var(--section-pad)*1.6)] sm:px-10">
           <div className="mx-auto w-full max-w-5xl text-center">
             <h3 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
               {aiContent.automation.heading}
@@ -250,6 +298,7 @@ export function AiContent() {
               <AutomationSources />
             </figure>
           </div>
+        </div>
         </div>
       </Reveal>
 

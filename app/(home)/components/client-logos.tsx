@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { LogoMarquee } from "@/components/genesis/logo-marquee";
+import { BoardClock, SplitFlap } from "@/components/genesis/split-flap";
 import { Reveal } from "@/components/genesis/reveal";
 import { clients } from "@/lib/home-content";
 import { cn } from "@/lib/utils";
@@ -113,9 +114,19 @@ function LogoMark({ logo }: { logo: (typeof clients.logos)[number] }) {
   );
 }
 
+/*
+  THE DEVICE: A DEPARTURES BOARD.
+
+  Brand & Design is a set of folders; this section is the board at the gate.
+  Every brand on it has already flown with Genesis, so the status column
+  reads BOARDED, the destination flaps through the sectors the brands come
+  from, and the marks themselves run past on the board's two rows. It says
+  "a lot of people have travelled this way" without a single adjective.
+*/
 export function ClientLogos() {
   const half = Math.ceil(clients.logos.length / 2);
   const rows = [clients.logos.slice(0, half), clients.logos.slice(half)];
+  const sectorWords = clients.sectors.map((s) => s.label);
 
   return (
     <SectionShell
@@ -134,78 +145,80 @@ export function ClientLogos() {
       origin="center"
       intensity={0.14}
     >
+      <Reveal variant="scene">
+        <div className="gm-rim relative overflow-hidden rounded-panel shadow-[0_30px_80px_-30px_rgb(164_92_255/0.35)]">
+          {/* The board's header strip. */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-[linear-gradient(90deg,rgb(255_197_22/0.14),rgb(232_102_58/0.08)_45%,rgb(164_139_224/0.12))] px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-3">
+              <span className="grid size-8 place-items-center rounded-md bg-brand text-on-brand">
+                <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
+                  <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5Z" />
+                </svg>
+              </span>
+              <span className="font-mono text-small font-semibold uppercase tracking-[0.28em] text-bone">
+                Departures
+              </span>
+              <span className="hidden font-mono text-micro uppercase tracking-[0.2em] text-faint sm:inline">
+                / Genesis Terminal
+              </span>
+            </div>
+            <div className="flex items-center gap-4 font-mono text-micro uppercase tracking-[0.2em] text-ash">
+              <span className="flex items-center gap-2">
+                <span className="gm-pulse size-2 rounded-full bg-[#7ee08a]" aria-hidden />
+                Live
+              </span>
+              <BoardClock className="text-bone" />
+            </div>
+          </div>
 
-      {/*
-        FULL-BLEED. A marquee that stops at the container's edge has 144px of
-        empty page beyond its own fade on a large display, which reads as a
-        rail that failed rather than as one running off the screen. It runs to
-        both edges and the mask dissolves it into the page.
-      */}
-      <div className="relative left-1/2 w-screen -translate-x-1/2 space-y-4">
-        {rows.map((row, index) => (
-          <LogoMarquee
-            key={index}
-            /*
-              Different speeds as well as different directions. Two rails at
-              the same rate moving opposite ways beat against each other and
-              the pair reads as one mechanism; a few seconds apart and they
-              read as two.
-            */
-            speedSeconds={index === 0 ? 52 : 60}
-            reverse={index === 1}
-            items={row.map((logo) => (
-              <LogoMark key={logo.file} logo={logo} />
+          {/* Column heads, and the one row that flaps. */}
+          <div className="grid grid-cols-2 items-center gap-x-4 gap-y-2 px-4 pt-4 font-mono sm:grid-cols-[auto_1fr_auto] text-micro uppercase tracking-[0.22em] text-faint sm:gap-x-8 sm:px-6">
+            <span>Flight</span>
+            <span className="hidden sm:block">Sector</span>
+            <span className="text-right">Status</span>
+
+            <span className="gm-ramp-text gm-ramp-text--full text-small font-semibold tracking-[0.12em]">
+              GNS {String(clients.logos.length).padStart(3, "0")}
+            </span>
+            <SplitFlap words={sectorWords} className="order-last col-span-2 min-w-0 overflow-hidden text-[0.75rem] sm:order-none sm:col-span-1 sm:text-small" />
+            <span className="justify-self-end rounded-md bg-brand px-2.5 py-1 text-right text-[0.7rem] font-semibold tracking-[0.18em] text-on-brand">
+              Boarded
+            </span>
+          </div>
+
+          {/* The marks, running past on the board's two rows. */}
+          <div className="mt-4 space-y-2 border-y border-white/10 bg-[rgb(0_0_0/0.18)] py-3">
+            {rows.map((row, index) => (
+              <LogoMarquee
+                key={index}
+                speedSeconds={index === 0 ? 52 : 60}
+                reverse={index === 1}
+                items={row.map((logo) => (
+                  <LogoMark key={logo.file} logo={logo} />
+                ))}
+              />
             ))}
-          />
-        ))}
-      </div>
+          </div>
 
-      {/*
-        THE SECTORS, UNDER THE MARKS. Genesis removed the positioning section
-        this line used to live in and asked for it kept with the client wall.
-        It sat above the rail for one round and they have asked for it back
-        underneath: logos first, copy after. The marks are the evidence and
-        this is the caption on them, and a caption goes below the picture.
-
-        Set at the wall's own weight, not louder. It is the same micro-label
-        it always was; what changed is what it is a caption FOR.
-      */}
-      <Reveal delay={0.1} className="mt-10">
-        <ul
-          /*
-            ONE SWIPEABLE LINE ON A PHONE ("woh sec 2 bfsi copy wala scroller
-            me daalo only on mobile"). Wrapped, ten sectors made a ragged
-            three-row block; as a single line it reads as the caption strip it
-            is. From `sm` up it wraps and centres exactly as before.
-          */
-          className="no-scrollbar -mx-6 flex items-center gap-x-3 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:justify-center sm:gap-y-2 sm:overflow-visible sm:px-0"
-        >
-          {clients.sectors.map((sector, index) => (
-            <li key={sector.label} className="flex shrink-0 items-center gap-3">
-              {/*
-                An <abbr> only where there is something to expand. Wrapping
-                every sector in one would announce "abbreviation" before
-                "Fashion" to a screen reader, which is a worse line than the
-                plain word.
-              */}
-              {sector.expands ? (
-                <abbr
-                  title={sector.expands}
-                  className="micro-label !text-faint no-underline"
-                >
-                  {sector.label}
-                </abbr>
-              ) : (
-                <span className="micro-label !text-faint">{sector.label}</span>
-              )}
-              {index < clients.sectors.length - 1 && (
-                <span aria-hidden className="text-brand">
-                  ·
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
+          {/* The sectors as gates. */}
+          <ul className="no-scrollbar flex items-center gap-2 overflow-x-auto px-4 py-3 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-6">
+            {clients.sectors.map((sector, index) => (
+              <li
+                key={sector.label}
+                className="flex shrink-0 items-center gap-2 rounded-md border border-white/10 bg-[var(--hover-wash)] px-2 py-1 font-mono text-[0.625rem] uppercase tracking-[0.16em]"
+              >
+                <span className="text-brand-ink">G{String(index + 1).padStart(2, "0")}</span>
+                {sector.expands ? (
+                  <abbr title={sector.expands} className="text-ash no-underline">
+                    {sector.label}
+                  </abbr>
+                ) : (
+                  <span className="text-ash">{sector.label}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
       </Reveal>
     </SectionShell>
   );

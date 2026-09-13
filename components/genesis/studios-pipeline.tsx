@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Reveal } from "@/components/genesis/reveal";
 import { studios } from "@/lib/home-content";
@@ -50,7 +50,14 @@ import { cn } from "@/lib/utils";
  * Linear from a quiet grey-gold to full #ffc516, so the row reads as a
  * progress bar filling. "Deliver" should look like the end of something.
  */
-const STRENGTH = [0.3, 0.475, 0.65, 0.825, 1];
+const STRENGTH = [0.82, 0.86, 0.9, 0.95, 1];
+
+/*
+  EACH STAGE TAKES ITS STOP ON THE LOCKUP'S RAMP (playingwithcolors): the
+  yellow N at Brief, running through MEDIA's orange, coral and rose to the
+  lavender at Deliver. The travel is carried in hue now as well as value.
+*/
+const STAGE_RGB = ["255 197 22", "243 154 60", "232 102 58", "208 106 138", "164 139 224"];
 
 /**
  * Which clip sits in each card — STUDIOS WORK, which it was not.
@@ -115,7 +122,7 @@ const SHAPE = [
   { span: "1.2fr", aspect: "aspect-[4/5]" },
 ];
 
-const accent = (alpha: number) => `rgb(255 197 22 / ${alpha})`;
+const accent = (alpha: number, stage = 0) => `rgb(${STAGE_RGB[stage]} / ${alpha})`;
 
 /**
  * One outline glyph per stage, in the reference's position under the copy.
@@ -177,7 +184,7 @@ export function StudiosPipeline() {
       <Reveal className="mx-auto max-w-2xl text-center">
         <h3 className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
           {heading}{" "}
-          <span className="font-serif font-normal italic text-brand-ink">
+          <span className="gm-ramp-text font-serif font-normal italic">
             {headingAccent}
           </span>
         </h3>
@@ -187,6 +194,16 @@ export function StudiosPipeline() {
       </Reveal>
 
       <Reveal variant="scene" delay={0.08} className="relative mt-[var(--block-gap)]">
+        <Slate stages={stages.map((st) => st.name)} />
+        {/*
+          THE DEVICE: A LENGTH OF FILM. Brand & Design is a set of folders;
+          Studios is the reel the job is cut on — sprocket holes top and
+          bottom, the five stages as frames along it. Pinned dark in both
+          themes, because film stock has no light mode.
+        */}
+        <div className="scene-dark gm-film relative -mx-6 mt-4 overflow-hidden shadow-[0_30px_70px_-30px_rgb(232_102_58/0.45)] md:mx-0 md:rounded-2xl">
+          <div aria-hidden className="gm-sprockets mt-1.5" />
+          <div className="relative py-4 md:px-7">
         {/*
           THE ORIGIN, at the far left: the filled dot the reference hangs its
           timeline from, and the hairline that drops from it down the side of
@@ -202,7 +219,7 @@ export function StudiosPipeline() {
             dot is 10px, so 26px centres it on the line, which is also where
             the reference hangs it.
           */
-          className="pointer-events-none absolute -left-1 top-[26px] hidden md:block"
+          className="pointer-events-none absolute left-[24px] top-[42px] hidden md:block"
         >
           <span
             className="block size-2.5 rounded-full"
@@ -244,7 +261,7 @@ export function StudiosPipeline() {
             24 it read as flush. 32, and `scroll-pl` so a swipe back to the
             start lands on the same gutter rather than snapping it away.
           */
-          className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto scroll-pl-8 pb-2 pl-8 pr-6 md:mx-0 md:grid md:gap-x-5 md:gap-y-0 md:overflow-visible md:p-0 md:[grid-template-columns:var(--pipeline-track)] md:[grid-template-rows:auto_1fr_auto_auto_auto]"
+          className="no-scrollbar flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto scroll-pl-8 pb-2 pl-8 pr-6 md:mx-0 md:grid md:gap-x-5 md:gap-y-0 md:overflow-visible md:p-0 md:[grid-template-columns:var(--pipeline-track)] md:[grid-template-rows:auto_1fr_auto_auto_auto]"
           style={{ "--pipeline-track": SHAPE.map((s) => s.span).join(" ") } as React.CSSProperties}
         >
           {stages.map((stage, index) => {
@@ -281,23 +298,23 @@ export function StudiosPipeline() {
                 <div aria-hidden className="relative h-9">
                   <span
                     className="absolute left-0 top-0 text-micro font-medium tabular-nums tracking-[0.14em]"
-                    style={{ color: accent(Math.max(s, 0.55)) }}
+                    style={{ color: accent(Math.max(s, 0.55), index) }}
                   >
                     {stage.n}
                   </span>
                   <span
                     className="absolute inset-x-0 bottom-1 h-px"
-                    style={{ background: accent(s * 0.5) }}
+                    style={{ background: accent(s * 0.5, index) }}
                   />
                   <span
                     className="absolute bottom-[1px] left-0 size-1.5 rounded-full"
-                    style={{ background: accent(s) }}
+                    style={{ background: accent(s, index) }}
                   />
                   {[1, 2, 3].map((tick) => (
                     <span
                       key={tick}
                       className="absolute bottom-[3px] h-[5px] w-px"
-                      style={{ left: `${tick * 25}%`, background: accent(s * 0.32) }}
+                      style={{ left: `${tick * 25}%`, background: accent(s * 0.32, index) }}
                     />
                   ))}
                 </div>
@@ -312,8 +329,8 @@ export function StudiosPipeline() {
                   <div
                     className="w-full overflow-hidden rounded-2xl border bg-ink"
                     style={{
-                      borderColor: accent(s * 0.55),
-                      boxShadow: `0 0 24px -12px ${accent(s * 0.7)}`,
+                      borderColor: accent(s * 0.55, index),
+                      boxShadow: `0 0 24px -12px ${accent(s * 0.7, index)}`,
                     }}
                   >
                     <StageClip
@@ -341,8 +358,8 @@ export function StudiosPipeline() {
                       */
                       className="absolute -right-[1.9rem] bottom-10 hidden size-7 items-center justify-center rounded-full border bg-[var(--surface-raised)] shadow-[0_2px_10px_-2px_rgb(0_0_0/0.6)] md:flex"
                       style={{
-                        borderColor: accent(Math.max(s * 0.8, 0.5)),
-                        color: accent(Math.max(s, 0.75)),
+                        borderColor: accent(Math.max(s * 0.8, 0.5), index),
+                        color: accent(Math.max(s, 0.75), index),
                       }}
                     >
                       <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -357,11 +374,11 @@ export function StudiosPipeline() {
                   <span
                     aria-hidden
                     className="size-1.5 shrink-0 rounded-full"
-                    style={{ background: accent(s) }}
+                    style={{ background: accent(s, index) }}
                   />
                   <span
                     className="text-micro font-medium tabular-nums tracking-[0.14em]"
-                    style={{ color: accent(Math.max(s, 0.6)) }}
+                    style={{ color: accent(Math.max(s, 0.6), index) }}
                   >
                     {stage.n}
                   </span>
@@ -390,7 +407,7 @@ export function StudiosPipeline() {
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  style={{ color: accent(Math.max(s, 0.5)) }}
+                  style={{ color: accent(Math.max(s, 0.5), index) }}
                 >
                   {ICONS[stage.name]}
                 </svg>
@@ -398,6 +415,9 @@ export function StudiosPipeline() {
             );
           })}
         </ol>
+          </div>
+          <div aria-hidden className="gm-sprockets mb-1.5" />
+        </div>
 
         <div className="mt-5 flex justify-center gap-3 md:hidden">
           {([-1, 1] as const).map((direction) => (
@@ -415,6 +435,58 @@ export function StudiosPipeline() {
           ))}
         </div>
       </Reveal>
+    </div>
+  );
+}
+
+/*
+  THE CLAPPERBOARD over the reel: the hinged bar in the ramp's stripes, the
+  slate under it, and a timecode that actually runs. The scene flips through
+  the five stages so the slate always names a part of the job.
+*/
+function Slate({ stages }: { stages: string[] }) {
+  const [frames, setFrames] = useState(0);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const start = performance.now();
+    const id = window.setInterval(() => {
+      setFrames(Math.floor(((performance.now() - start) / 1000) * 25));
+    }, 40);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const seconds = Math.floor(frames / 25);
+  const timecode = `00:${pad(Math.floor(seconds / 60) % 60)}:${pad(seconds % 60)}:${pad(frames % 25)}`;
+  const scene = Math.floor(seconds / 3) % stages.length;
+
+  return (
+    <div className="scene-dark mx-auto w-full max-w-md overflow-hidden rounded-xl border border-white/15 bg-[#0c090b] shadow-[0_20px_50px_-24px_rgb(255_197_22/0.45)]">
+      <div aria-hidden className="relative h-5 origin-bottom-left -rotate-[3deg] translate-y-[3px] overflow-hidden rounded-t-md">
+        <div className="gm-clapper absolute inset-0 [--clap:#ffc516]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgb(232_102_58/0.55)_50%,rgb(164_139_224/0.8))] mix-blend-color" />
+      </div>
+      <div className="grid grid-cols-4 divide-x divide-white/10 border-t border-white/15 font-mono text-[0.625rem] uppercase tracking-[0.18em]">
+        {[
+          ["Prod", "Genesis"],
+          ["Scene", `${pad(scene + 1)} ${stages[scene]}`],
+          ["Take", "01"],
+          ["Roll", "A"],
+        ].map(([k, v]) => (
+          <span key={k} className="px-2.5 py-2">
+            <span className="block text-[0.5625rem] text-white/45">{k}</span>
+            <span className="mt-0.5 block truncate text-white">{v}</span>
+          </span>
+        ))}
+      </div>
+      <div className="flex items-center justify-between border-t border-white/10 px-2.5 py-1.5 font-mono text-[0.6875rem] tabular-nums">
+        <span className="flex items-center gap-1.5 text-white/60">
+          <span className="gm-pulse size-1.5 rounded-full bg-[#ff4d4d]" aria-hidden />
+          REC
+        </span>
+        <span className="gm-ramp-text gm-ramp-text--full font-semibold tracking-[0.12em]">{timecode}</span>
+      </div>
     </div>
   );
 }

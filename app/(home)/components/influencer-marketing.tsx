@@ -1,4 +1,5 @@
 import { BarChart3, Globe, Sparkles, Target, Users } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { CreatorConstellation } from "@/components/genesis/creator-constellation";
@@ -126,30 +127,32 @@ export function InfluencerMarketing() {
               A list, semantically, because that is what it is.
             */}
             <Reveal delay={0.06} className="order-2 min-w-0 lg:order-none">
-              <ul
-                /*
-                  One swipeable line on a phone ("add scroller for this as well
-                  only on mobile"); from `sm` up it wraps as before.
-                */
-                className="no-scrollbar -mx-6 flex gap-2 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
-              >
+              {/*
+                THE DEVICE: A CREATOR'S PROFILE. The niches are the profile's
+                story highlights — each a ringed circle with its name under it
+                — so a brand scans for its category the way it scans a
+                creator's page. The last bubble is the "+56 more".
+              */}
+              <ul className="no-scrollbar -mx-6 flex gap-3 overflow-x-auto px-6 pb-1 sm:mx-0 sm:flex-wrap sm:gap-x-3 sm:gap-y-3 sm:overflow-visible sm:px-0">
                 {influencer.niches.map((niche) => (
-                  <li
-                    key={niche}
-                    className="shrink-0 rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
-                  >
-                    {niche}
+                  <li key={niche} className="flex w-[3.6rem] shrink-0 flex-col items-center gap-1.5">
+                    <span className="gm-story-ring">
+                      <span className="grid size-12 place-items-center rounded-full border-2 border-[var(--surface-base)] bg-[var(--surface-raised)]">
+                        <span className="gm-ramp-text gm-ramp-text--full text-[0.8rem] font-semibold uppercase tracking-tight">
+                          {niche.slice(0, 2)}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="w-full truncate text-center text-[0.625rem] text-ash">
+                      {niche}
+                    </span>
                   </li>
                 ))}
-                {/*
-                  The board's own "+56 More". Ten named against sixty-six
-                  covered is Genesis's figure from Genesis's artwork, and it
-                  is the whole point of listing categories at all — a brand
-                  whose own niche is not among the ten needs to be told the
-                  list is a sample, not the extent of it.
-                */}
-                <li className="shrink-0 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-brand-ink">
-                  +{influencer.moreNiches} more
+                <li className="flex w-[3.6rem] shrink-0 flex-col items-center gap-1.5">
+                  <span className="grid size-[3.3rem] place-items-center rounded-full bg-brand text-[0.8rem] font-semibold text-on-brand shadow-[0_0_24px_-6px_rgb(255_197_22/0.7)]">
+                    +{influencer.moreNiches}
+                  </span>
+                  <span className="text-center text-[0.625rem] text-ash">more</span>
                 </li>
               </ul>
             </Reveal>
@@ -239,43 +242,53 @@ export function InfluencerMarketing() {
           of numbers, and the 1,00,000+ card already leads the section.
         */}
         <Reveal delay={0.24} className="mt-8 hidden sm:block">
-          <div className="glass glass-lit flex flex-col gap-6 rounded-panel px-5 py-5 sm:px-6 lg:flex-row lg:items-center">
-            <div className="grid flex-1 grid-cols-2 gap-y-3 sm:gap-y-5 md:grid-cols-4">
-              {stats.map((stat, index) => {
-                const Icon = STAT_ICONS[index] ?? Globe;
-                const highlight = index === 0;
+          <div className="gm-rim relative overflow-hidden rounded-panel shadow-[0_30px_70px_-30px_rgb(164_92_255/0.4)]">
+            {/* The profile's cover: the lockup's ramp, as a band. */}
+            <div aria-hidden className="h-10 bg-[linear-gradient(100deg,rgb(255_197_22/0.55),rgb(243_154_60/0.45)_28%,rgb(232_102_58/0.4)_52%,rgb(208_106_138/0.4)_76%,rgb(164_139_224/0.5))]" />
+            <div className="flex flex-col gap-5 px-5 pb-5 sm:px-6 lg:flex-row lg:items-end">
+              <div className="-mt-7 flex items-end gap-4">
+                <span className="gm-story-ring shrink-0 !p-[3px]">
+                  <span className="grid size-16 place-items-center rounded-full border-[3px] border-[var(--surface-base)] bg-[#0f0b0d]">
+                    <Image src="/brand/genesis-n.png" alt="" width={306} height={500} className="h-8 w-auto" />
+                  </span>
+                </span>
+                <span className="pb-1 leading-tight">
+                  <span className="flex items-center gap-1.5 text-small font-semibold text-bone">
+                    genesis.influence
+                    <svg viewBox="0 0 24 24" className="size-4" aria-label="Verified">
+                      <path fill="#ffc516" d="m12 1.5 2.6 2 3.2-.3.9 3.1 2.8 1.6-1 3.1 1 3.1-2.8 1.6-.9 3.1-3.2-.3-2.6 2-2.6-2-3.2.3-.9-3.1L2.5 14l1-3.1-1-3.1 2.8-1.6.9-3.1 3.2.3 2.6-2Z" />
+                      <path d="m8 12.2 2.7 2.6L16.2 9" fill="none" stroke="#000" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span className="mt-1 block text-[0.75rem] text-faint">
+                    {services.items[0].caption}
+                  </span>
+                </span>
+              </div>
 
-                return (
-                  <div
-                    key={stat.label}
-                    className={cnJoin(
-                      "flex items-center gap-4 px-1",
-                      index > 0 ? "lg:border-l lg:border-white/10 lg:pl-6" : "",
-                    )}
-                  >
-                    <span
+              <div className="grid flex-1 grid-cols-2 gap-y-4 md:grid-cols-4 lg:ml-6">
+                {stats.map((stat, index) => {
+                  const Icon = STAT_ICONS[index] ?? Globe;
+                  return (
+                    <div
+                      key={stat.label}
                       className={cnJoin(
-                        "grid size-10 shrink-0 place-items-center rounded-card border",
-                        highlight
-                          ? "border-brand/35 bg-brand/10 text-brand-ink"
-                          : "border-white/12 bg-white/5 text-bone",
+                        "flex flex-col items-center text-center",
+                        index > 0 ? "md:border-l md:border-white/10" : "",
                       )}
                     >
-                      <Icon className="size-5" aria-hidden />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-h3 font-medium leading-none tracking-tight text-bone">
+                      <span className="gm-ramp-text gm-ramp-text--full text-h3 font-semibold leading-none tracking-tight">
                         {stat.value}
                       </span>
-                      <span className="mt-2 block text-small leading-tight text-ash">
+                      <span className="mt-1.5 flex items-center gap-1.5 text-[0.75rem] leading-tight text-ash">
+                        <Icon className="size-3.5 text-brand-ink" aria-hidden />
                         {stat.label}
                       </span>
-                    </span>
-                  </div>
-                );
-              })}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-
           </div>
         </Reveal>
 

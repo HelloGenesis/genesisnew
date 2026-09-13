@@ -152,7 +152,7 @@ export function SectionShell({
                   {headingAccent && (
                     <>
                       {" "}
-                      <span className="font-serif italic font-normal text-brand-ink">
+                      <span className="gm-ramp-text font-serif italic font-normal">
                         {headingAccent}
                       </span>
                     </>

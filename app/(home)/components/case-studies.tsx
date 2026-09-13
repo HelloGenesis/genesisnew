@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { PosterRail, type Poster } from "@/components/genesis/poster-card";
+import { PosterCard, type Poster } from "@/components/genesis/poster-card";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
@@ -147,20 +147,16 @@ export function CaseStudies() {
             overflow-hidden, so 100vw cannot widen the page.
           */}
           <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden">
-            <PosterRail
-              posters={posters}
-              onSelect={setOpenSlug}
-              /*
-                The container is 72rem wide with its own 1.5rem gutter inside
-                it, so its text starts at (100vw - 72rem) / 2 + 1.5rem. The
-                padding has to be that same figure or the first poster sits a
-                gutter's width to the left of the heading it belongs under —
-                measured, 144px against the heading's 168px. Below 72rem the
-                whole expression falls under 1.5rem and the max holds the
-                phone gutter.
-              */
-              className="px-[max(1.5rem,calc((100vw-72rem)/2+1.5rem))]"
-            />
+            <div className="no-scrollbar flex snap-x snap-mandatory items-start gap-5 overflow-x-auto px-[max(1.5rem,calc((100vw-72rem)/2+1.5rem))] pb-6 pt-2">
+              {posters.map((poster, index) => (
+                <PostFrame
+                  key={poster.id}
+                  poster={poster}
+                  index={index}
+                  onSelect={setOpenSlug}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </Reveal>
@@ -179,5 +175,93 @@ export function CaseStudies() {
         onClose={() => setOpenSlug(null)}
       />
     </SectionShell>
+  );
+}
+
+/*
+  THE DEVICE: A SOCIAL POST.
+
+  Brand & Design is a set of folders; this is the feed. Genesis's work lives
+  in people's phones, so each case study is framed the way it was actually
+  seen — the brand at the top with a story ring, the film in the middle, and
+  the reactions underneath. The ring and the heart carry the lockup's ramp.
+
+  No invented numbers. The caption shows a study's real result where one is
+  written and its discipline where one is not.
+*/
+function PostFrame({
+  poster,
+  index,
+  onSelect,
+}: {
+  poster: Poster;
+  index: number;
+  onSelect: (id: string) => void;
+}) {
+  const name = poster.client ?? poster.title;
+  const gradientId = `post-heart-${index}`;
+
+  return (
+    <article className="gm-rim w-[clamp(15rem,24vw,19.5rem)] shrink-0 snap-center rounded-[1.4rem] p-2.5 shadow-[0_26px_60px_-28px_rgb(208_106_138/0.55)] transition-transform duration-500 hover:-translate-y-2">
+      <header className="flex items-center gap-2.5 px-1 pb-2.5">
+        <span className="gm-story-ring shrink-0">
+          <span className="grid size-8 place-items-center rounded-full bg-[var(--surface-base)] text-[0.8rem] font-semibold text-bone">
+            {name.charAt(0)}
+          </span>
+        </span>
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate text-small font-medium text-bone">{name}</span>
+          <span className="block truncate text-[0.6875rem] text-faint">
+            with <span className="gm-ramp-text">genesis.media</span>
+          </span>
+        </span>
+        <span aria-hidden className="flex gap-[3px] px-1">
+          {[0, 1, 2].map((d) => (
+            <span key={d} className="size-[3px] rounded-full bg-[var(--ink-muted)]" />
+          ))}
+        </span>
+      </header>
+
+      {/* PosterCard wraps itself in a <button>, which shrinks to fit its
+          content unless told to fill — and the card inside is w-full. */}
+      <div className="[&>button]:w-full">
+        <PosterCard
+          poster={poster}
+          onSelect={onSelect}
+          className="w-full rounded-[1rem] border-0 hover:shadow-none"
+        />
+      </div>
+
+      <div aria-hidden className="flex items-center gap-3.5 px-1 pt-3 text-bone">
+        <svg viewBox="0 0 24 24" className="size-[1.35rem]">
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#ffc516" />
+              <stop offset="45%" stopColor="#e8663a" />
+              <stop offset="100%" stopColor="#a48be0" />
+            </linearGradient>
+          </defs>
+          <path
+            fill={`url(#${gradientId})`}
+            d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.2 0 3.6 1.2 4.3 2.4.7-1.2 2.1-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21Z"
+          />
+        </svg>
+        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+          <path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5Z" />
+        </svg>
+        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+          <path d="M22 3 2 10.5l7.5 3L12 21l3.5-7.5L22 3Z" />
+        </svg>
+        <svg viewBox="0 0 24 24" className="ml-auto size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+          <path d="M6 3h12v18l-6-4.5L6 21V3Z" />
+        </svg>
+      </div>
+
+      <p className="px-1 pb-1 pt-2 text-[0.75rem] leading-snug text-ash">
+        <span className="font-semibold text-bone">genesis.media</span>{" "}
+        {poster.meta?.[0] ?? poster.category}{" "}
+        <span className="gm-ramp-text">#{name.replace(/[^A-Za-z0-9]+/g, "")}</span>
+      </p>
+    </article>
   );
 }
