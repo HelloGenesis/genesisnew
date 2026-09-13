@@ -300,7 +300,14 @@ export function BrandingDesign() {
               above and below the folder, where the reference has its shape. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute top-1/2 left-1/2 -z-10 aspect-[306/500] h-[132%] -translate-x-[42%] -translate-y-1/2"
+            /*
+              SMALLER AND FAINTER ON A PHONE. At 132% the N stood half a card
+              proud of the folder top and bottom; on a narrow screen that
+              stops reading as a mark behind the headline and becomes a
+              yellow slab leaking out from under it. Full size from sm, where
+              there is room for it to be what it is.
+            */
+            className="pointer-events-none absolute top-1/2 left-1/2 -z-10 aspect-[306/500] h-[106%] -translate-x-[42%] -translate-y-1/2 opacity-65 sm:h-[132%] sm:opacity-100"
           >
             <Image
               src="/brand/genesis-n.png"

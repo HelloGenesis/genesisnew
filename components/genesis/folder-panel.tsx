@@ -102,7 +102,7 @@ export function FolderPanel({
                 <stop offset="100%" stopColor="#ff8a3d" stopOpacity="0" />
               </radialGradient>
               <radialGradient id={`${id}-cool`} cx="1" cy="1" r="0.85">
-                <stop offset="0%" stopColor="#9b5cff" stopOpacity="0.3" />
+                <stop offset="0%" stopColor="#9b5cff" stopOpacity="0.22" />
                 <stop offset="100%" stopColor="#9b5cff" stopOpacity="0" />
               </radialGradient>
               <clipPath id={`${id}-inside`}>
@@ -117,12 +117,19 @@ export function FolderPanel({
             {/* The rim's glow, blurred and kept inside the shape, so the edge
                 reads as lit glass rather than a drawn line. */}
             <g clipPath={`url(#${id}-inside)`}>
+              {/*
+                SOFTER THAN IT WAS, 9 at 0.36 from 14 at 0.55. On a laptop
+                the heavier bloom read as lit glass; stacked three deep on a
+                phone, where the panels are close together and the screen is
+                small, the same glow was most of what you saw. The rim still
+                reads — it is the line below that draws it.
+              */}
               <path
                 d={d}
                 fill="none"
                 stroke={`url(#${id}-edge)`}
-                strokeWidth="14"
-                strokeOpacity="0.55"
+                strokeWidth="9"
+                strokeOpacity="0.36"
                 filter={`url(#${id}-soften)`}
               />
             </g>

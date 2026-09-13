@@ -195,7 +195,22 @@ export function AiContent() {
           button gets. It went to /our-work unfiltered, which is "view AI
           content" landing on everything Genesis has ever made.
         */}
-        <GlassButton href="/#library" variant="glass" arrow className={MOBILE_CTA}>
+        {/*
+          A BARE "#library", NOT "/#library", and the difference is the whole
+          feature. The routed form is a client navigation to the same page:
+          the section tree re-renders, the work grid comes back with its
+          filter at its initial "All", and the chip this button just asked
+          for is thrown away before the reader arrives. A bare hash is
+          handled by SmoothScroll on capture — no navigation, so the grid
+          keeps the state it was handed.
+        */}
+        <GlassButton
+          href="#library"
+          selectsFilter="AI Labs"
+          variant="glass"
+          arrow
+          className={MOBILE_CTA}
+        >
           View AI Content
         </GlassButton>
       </Reveal>

@@ -60,6 +60,23 @@ export function WorkGrid({
     [items, filter],
   );
 
+  /*
+    A CTA ELSEWHERE ON THE PAGE CAN ASK FOR A FILTER. AI Lab's "View AI
+    Content" scrolls here and means the AI work specifically; without this it
+    landed on "All" and the reader had to find the chip themselves. The event
+    carries the chip's own name and is ignored unless this grid actually
+    offers it, so a stale caller cannot empty the shelf.
+  */
+  useEffect(() => {
+    const onClickAnywhere = (event: MouseEvent) => {
+      const trigger = (event.target as Element | null)?.closest?.("[data-work-filter]");
+      const wanted = trigger?.getAttribute("data-work-filter");
+      if (wanted && filters.includes(wanted)) setFilter(wanted);
+    };
+    document.addEventListener("click", onClickAnywhere, true);
+    return () => document.removeEventListener("click", onClickAnywhere, true);
+  }, [filters]);
+
   const rowA = useRef<HTMLDivElement>(null);
   const rowB = useRef<HTMLDivElement>(null);
   const page = useCallback((direction: 1 | -1) => {

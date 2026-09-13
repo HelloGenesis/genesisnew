@@ -98,6 +98,15 @@ const CLIPS = [
  * The shapes follow each clip's own orientation (see CLIPS), so the growth
  * costs no cropping.
  */
+/*
+  THE GROWTH RUNS ON A PHONE TOO. It was taken off the small screen to kill
+  the whitespace under the first cards, but that was the wrong culprit: the
+  gap came from the rail being a row of FLEX items, which stretch to the
+  tallest of them, so a short card carried 300 points of nothing under its
+  caption. `items-start` on the row fixes that at the source and the cards
+  keep their shapes at every width — which is what Genesis asked for twice
+  now, most recently "phone me box ka size difference nahi aa raaha".
+*/
 const SHAPE = [
   { span: "0.78fr", aspect: "aspect-[16/9]" },
   { span: "0.9fr", aspect: "aspect-[4/3]" },
@@ -228,7 +237,14 @@ export function StudiosPipeline() {
             every stage borrows them, so the cards sit on a common baseline
             and everything under them lines up.
           */
-          className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:gap-x-5 md:gap-y-0 md:overflow-visible md:px-0 md:[grid-template-columns:var(--pipeline-track)] md:[grid-template-rows:auto_1fr_auto_auto_auto]"
+          /*
+            A GUTTER BEFORE THE FIRST CARD. The rail is pulled full-bleed so
+            a card can run to the edge as you swipe, and its own padding is
+            what stands the first one off the screen edge — at the page's own
+            24 it read as flush. 32, and `scroll-pl` so a swipe back to the
+            start lands on the same gutter rather than snapping it away.
+          */
+          className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto scroll-pl-8 pb-2 pl-8 pr-6 md:mx-0 md:grid md:gap-x-5 md:gap-y-0 md:overflow-visible md:p-0 md:[grid-template-columns:var(--pipeline-track)] md:[grid-template-rows:auto_1fr_auto_auto_auto]"
           style={{ "--pipeline-track": SHAPE.map((s) => s.span).join(" ") } as React.CSSProperties}
         >
           {stages.map((stage, index) => {
@@ -243,7 +259,16 @@ export function StudiosPipeline() {
                   card stood 360 points tall and Studios ran 1088 against an
                   812-point screen.
                 */
-                className="w-[44vw] shrink-0 snap-start sm:w-[34vw] md:row-span-5 md:grid md:w-auto md:grid-rows-subgrid"
+                /*
+                  THE SAME FIVE ROWS ON A PHONE, laid out per card rather than
+                  shared across the row — a flex item cannot take a subgrid
+                  from a flex parent. The effect is what matters and it is the
+                  same: the card hangs from the bottom of its cell, so five
+                  cards of five heights still put their captions on one line
+                  and the space a short card leaves sits ABOVE it, under the
+                  scrubber, instead of as a hole beneath its caption.
+                */
+                className="grid w-[44vw] shrink-0 snap-start grid-rows-[auto_1fr_auto_auto_auto] sm:w-[34vw] md:row-span-5 md:w-auto md:grid-rows-subgrid"
               >
                 {/*
                   THE SCRUBBER SEGMENT for this stage: the numbered stop, the
@@ -283,7 +308,7 @@ export function StudiosPipeline() {
                   sits in the gap to its right, so it cannot drift out of
                   alignment with a card whose height changed.
                 */}
-                <div className="relative mt-3 md:mt-0 md:flex md:items-end">
+                <div className="relative mt-3 flex items-end md:mt-0">
                   <div
                     className="w-full overflow-hidden rounded-2xl border bg-ink"
                     style={{
@@ -345,7 +370,14 @@ export function StudiosPipeline() {
                   </span>
                 </div>
 
-                <p className="mt-2 text-pretty text-small leading-relaxed text-ash">
+                {/*
+                  TWO LINES' WORTH, WHETHER IT USES THEM OR NOT. On a phone
+                  each card lays out on its own, so a one-line stage ("Goal,
+                  audience, format") pulled its caption a line higher than
+                  its neighbours and the row of labels went ragged again. The
+                  desktop grid shares its rows and needs no floor.
+                */}
+                <p className="mt-2 min-h-[3.2em] text-pretty text-small leading-relaxed text-ash md:min-h-0">
                   {stage.body}
                 </p>
 
@@ -419,7 +451,7 @@ function StageClip({
         them inside a short laptop screen, cropping a little off a portrait
         reel rather than pushing the section past one screen.
       */
-      className={cn("w-full object-cover", aspect, "max-h-[26vh]")}
+      className={cn("w-full object-cover", aspect, "md:max-h-[32vh]")}
     />
   );
 }

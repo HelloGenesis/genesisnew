@@ -35,6 +35,16 @@ type GlassButtonProps = {
   /** Opt-in pointer-follow. Reserve for hero CTAs; it is loud in quantity. */
   magnetic?: boolean;
   icon?: ReactNode;
+  /**
+   * Asks the work grid to switch to this filter as the link is followed.
+   *
+   * "View AI Content" points at the library and should land on the AI work
+   * rather than on everything Genesis has ever made. The grid holds its
+   * filter in React state, and the two live in different sections of the
+   * page, so the click announces the filter and the grid picks it up — no
+   * router round trip, and the scroll the href triggers is untouched.
+   */
+  selectsFilter?: string;
   className?: string;
   onClick?: () => void;
   type?: "button" | "submit";
@@ -87,6 +97,7 @@ export function GlassButton({
   arrow = false,
   magnetic = false,
   icon,
+  selectsFilter,
   className,
   onClick,
   type = "button",
@@ -166,6 +177,19 @@ export function GlassButton({
       <MotionLink
         href={href}
         data-quick-contact={quickContact}
+        /*
+          A DECLARATION, NOT A HANDLER. An onClick here never ran: SmoothScroll
+          catches anchor clicks on the document in the CAPTURE phase and stops
+          propagation, so React's own listener — bound at the root, below the
+          document — was never reached. The work grid reads this attribute from
+          its own capture listener instead, which the stop cannot suppress
+          because stopPropagation does not silence other listeners already
+          bound to the same node.
+        */
+        data-work-filter={selectsFilter}
+        onClick={
+onClick
+        }
         className={classes}
         {...(external
           ? { target: "_blank", rel: "noopener noreferrer" }

@@ -153,8 +153,15 @@ const BODY_MIDPOINT = 0.41;
 export function AutomationSources({ className }: { className?: string }) {
   return (
     <>
-      <WideDiagram className={cn("hidden sm:block", className)} />
-      <TallDiagram className={cn("sm:hidden", className)} />
+      {/*
+        THE BOARD HOLDS UNTIL md, NOT sm. At 640-768 the fan was being asked
+        to fit a 760-unit drawing into about 600 points of column, which put
+        the labels back under 13px and crowded the strands — the tablet half
+        of Genesis's report. The board has no such problem: it reflows as two
+        columns of cells at any width.
+      */}
+      <WideDiagram className={cn("hidden md:block", className)} />
+      <TallDiagram className={cn("md:hidden", className)} />
     </>
   );
 }
@@ -318,31 +325,55 @@ function WideDiagram({ className }: { className?: string }) {
 }
 
 function TallDiagram({ className }: { className?: string }) {
-  const width = 360;
   /*
-    TWO COLUMNS ABOVE THE NODE, rather than the node in the middle with rows
-    either side of it. With four applications a phone could carry two above
-    and two below; with thirteen that arrangement is a column of seven
-    stacked over the node and six under it, which is a drawing taller than
-    the screen. Stacked in two columns with everything converging DOWNWARD
-    into the Lab, the whole list is one glance and the labels keep their
-    size.
-  */
-  const half = Math.ceil(APPLICATIONS.length / 2);
-  const columns = [
-    { apps: APPLICATIONS.slice(0, half), dotX: 156, dir: 1 as const },
-    { apps: APPLICATIONS.slice(half), dotX: 204, dir: -1 as const },
-  ];
-  const rowTop = 26;
-  const rowGap = 36;
-  const rows = Math.max(...columns.map((c) => c.apps.length));
-  const hubY = rowTop + rows * rowGap + 18;
-  const hub = { x: 80, y: hubY, w: 200, h: 80 };
-  const cx = hub.x + hub.w / 2;
-  const height = hubY + hub.h + 16;
+    THE NODE IN THE MIDDLE, EVERY APPLICATION RUNNING INTO IT — Genesis's
+    own instruction after two passes that missed: "ai lab ko thoda beech me
+    rakho and fir sabse ek connection".
 
-  const markW = 140;
+    It is the wide drawing's sentence at a phone's proportions. Three
+    applications a side above the Lab and three below, each with one curve of
+    its own into the nearest edge of it. Six strands meet at the top and six
+    at the bottom, which is few enough that they gather rather than tangle —
+    the fault in the first attempt, where twelve ran the full height of the
+    drawing through each other and behind the logos.
+
+    THE CONNECTORS ARE DRAWN IN A USER-SPACE GRADIENT, and that is a fix
+    rather than a detail. A gradient in the default objectBoundingBox units
+    has nothing to resolve against on a path whose box has no height — a flat
+    horizontal run — so the previous version's taps were painted with an
+    empty paint server and Genesis saw dots joined to nothing.
+  */
+  const width = 360;
+  const cx = width / 2;
+
+  const rowGap = 44;
+  const perSide = 3;
+
+  const topRows = [0, 1, 2].map((i) => 24 + i * rowGap);
+  const hub = { w: 150, h: 58, x: (width - 150) / 2, y: 24 + perSide * rowGap + 14 };
+  const bottomRows = [0, 1, 2].map((i) => hub.y + hub.h + 30 + i * rowGap);
+  const height = bottomRows[bottomRows.length - 1] + 30;
+
+  const markW = 120;
   const markH = Math.round((markW / AI_LAB_MARK.width) * AI_LAB_MARK.height);
+
+  /* Where a strand leaves its logo, and how much room that leaves the logo. */
+  const tap = 118;
+  const logoMax = 100;
+
+  const taps = APPLICATIONS.map((app, index) => {
+    const above = index < perSide * 2;
+    const side = index % 2 === 0 ? -1 : 1;
+    const row = Math.floor((above ? index : index - perSide * 2) / 2);
+    return {
+      app,
+      x: side === -1 ? tap : width - tap,
+      y: above ? topRows[row] : bottomRows[row],
+      side,
+      toY: above ? hub.y : hub.y + hub.h,
+      bend: above ? 1 : -1,
+    };
+  });
 
   return (
     <svg
@@ -352,24 +383,31 @@ function TallDiagram({ className }: { className?: string }) {
       className={cn("h-auto w-full", className)}
     >
       <defs>
-        {/*
-          The strands here run vertically, so the ramp is laid along y in user
-          space: faint at the application, full orange where it meets the node.
-        */}
+        <linearGradient id="gm-ai-dash-tall" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={width} y2="0">
+          <stop offset="0%" stopColor="#ff8fb8" />
+          <stop offset="100%" stopColor="#ffa25c" />
+        </linearGradient>
         <linearGradient
           id="gm-ai-line-down"
           gradientUnits="userSpaceOnUse"
           x1="0"
-          y1={rowTop}
+          y1={topRows[0]}
           x2="0"
           y2={hub.y}
         >
-          <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
+          <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.45" />
           <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
         </linearGradient>
-        <linearGradient id="gm-ai-dash-tall" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#ff8fb8" />
-          <stop offset="100%" stopColor="#ffa25c" />
+        <linearGradient
+          id="gm-ai-line-up"
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1={bottomRows[bottomRows.length - 1]}
+          x2="0"
+          y2={hub.y + hub.h}
+        >
+          <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
         </linearGradient>
         <radialGradient id="gm-ai-glow-tall">
           <stop offset="0%" stopColor="#ff9a86" stopOpacity="0.2" />
@@ -377,59 +415,47 @@ function TallDiagram({ className }: { className?: string }) {
         </radialGradient>
       </defs>
 
-      <circle cx={cx} cy={hub.y + hub.h / 2} r="110" fill="url(#gm-ai-glow-tall)" />
+      <circle cx={cx} cy={hub.y + hub.h / 2} r="104" fill="url(#gm-ai-glow-tall)" />
 
-      {columns.map((column, side) =>
-        column.apps.map((app, index) => {
-          const y = rowTop + index * rowGap;
-          const box = logoBox(app, 17, 108);
-          /*
-            Straight down out of the dot, then a flat arrival on the node's
-            top edge — the same handle discipline the wide drawing uses, so
-            thirteen strands gather instead of crossing.
-          */
-          const d = `M ${column.dotX} ${y} C ${column.dotX} ${y + 48}, ${cx} ${hub.y - 48}, ${cx} ${hub.y}`;
-          return (
-            <g key={app.name}>
-              <path
-                d={d}
-                fill="none"
-                stroke="url(#gm-ai-line-down)"
-                strokeWidth="1.5"
-                opacity="0.55"
-              />
-              <path
-                d={d}
-                fill="none"
-                stroke="url(#gm-ai-line-down)"
-                strokeWidth="2"
-                strokeLinecap="round"
-                className="gm-flow motion-reduce:[animation:none] motion-reduce:hidden"
-                style={{ animationDelay: `${(index * 2 + side) * -0.55}s` }}
-              />
-              <circle cx={column.dotX} cy={y} r="3.5" fill="#ff8fb8" />
-              <image
-                href={app.src}
-                x={column.dir === 1 ? column.dotX - 12 - box.w : column.dotX + 12}
-                y={y - box.h / 2}
-                width={box.w}
-                height={box.h}
-                preserveAspectRatio="xMidYMid meet"
-                className="app-mark"
-              >
-                <title>{app.name}</title>
-              </image>
-            </g>
-          );
-        }),
-      )}
+      {taps.map(({ app, x, y, side, toY, bend }, index) => {
+        const pull = 34 * bend;
+        const d = `M ${x} ${y} C ${x} ${y + pull}, ${cx} ${toY - pull * 1.1}, ${cx} ${toY}`;
+        const stroke = bend === 1 ? "url(#gm-ai-line-down)" : "url(#gm-ai-line-up)";
+        const box = logoBox(app, 16, logoMax);
+        return (
+          <g key={app.name}>
+            <path d={d} fill="none" stroke={stroke} strokeWidth="1.4" opacity="0.6" />
+            <path
+              d={d}
+              fill="none"
+              stroke={stroke}
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="gm-flow motion-reduce:[animation:none] motion-reduce:hidden"
+              style={{ animationDelay: `${index * -0.55}s` }}
+            />
+            <circle cx={x} cy={y} r="3" fill="#ff8fb8" />
+            <image
+              href={app.src}
+              x={side === -1 ? x - 12 - box.w : x + 12}
+              y={y - box.h / 2}
+              width={box.w}
+              height={box.h}
+              preserveAspectRatio={side === -1 ? "xMaxYMid meet" : "xMinYMid meet"}
+              className="app-mark"
+            >
+              <title>{app.name}</title>
+            </image>
+          </g>
+        );
+      })}
 
       <rect
         x={hub.x}
         y={hub.y}
         width={hub.w}
         height={hub.h}
-        rx="18"
+        rx="16"
         fill="var(--surface-raised, #18181a)"
         stroke="url(#gm-ai-dash-tall)"
         strokeWidth="1.75"
