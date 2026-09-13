@@ -753,7 +753,7 @@ export const clients = {
   label: "",
   heading: "Our",
   headingAccent: "clients",
-  body: "Thirty brands across banking, hospitality, FMCG, media, real estate and education.",
+  body: "Fifteen brands across banking, insurance, hospitality, real estate, media and education.",
   /*
    * THE REAL LOGO FILES, at last. This was a list of NAMES rendered as text
    * wordmarks under a standing TODO ("Ask tanvi"); it is Genesis's own
@@ -860,54 +860,35 @@ export const clients = {
     { label: "Real Estate" },
   ] as ReadonlyArray<{ label: string; expands?: string }>,
 
+  /*
+   * GENESIS'S OWN SIXTEEN, and only those.
+   *
+   * The wall carried thirty marks, which was every logo the project had been
+   * handed. Genesis has since named the list they actually want shown and
+   * asked for everything else off it, so fifteen come out — among them The
+   * Lalit, Grand Hyatt, Imagicaa, HT Brunch and the FMCG set. The artwork
+   * stays in public/clients; putting one back is a line here.
+   *
+   * ABHI — Aditya Birla Health Insurance — is on their list and has no mark
+   * on disk, so it is NOT in the array: a client wall is a set of logos, and
+   * a name typed where a logo should be reads as a missing image. It goes in
+   * the day the file arrives.
+   */
   logos: [
     { name: "Aditya Birla Capital", file: "aditya-birla-capital", treat: "invert", ratio: 2.55 },
+    { name: "Aditya Birla Sun Life Insurance", file: "aditya-birla-sun-life", treat: "invert", ratio: 2.54 },
     { name: "Mahindra Finance", file: "mahindra-finance", treat: "lift", ratio: 12.63 },
     { name: "HDFC Bank", file: "hdfc-bank", treat: "asis", ratio: 5.7 },
     { name: "IDBI Bank", file: "idbi-bank", treat: "lift", ratio: 5.93 },
-    { name: "House of Hiranandani", file: "house-of-hiranandani", treat: "lift", ratio: 2.02 },
     { name: "The WorldGrad", file: "the-worldgrad", treat: "lift", ratio: 3.24 },
-    { name: "The Lalit Mumbai", file: "the-lalit-mumbai", treat: "lift", ratio: 1.22 },
     { name: "Social Samosa", file: "social-samosa", treat: "lift", ratio: 1.97 },
-    { name: "Four Points", file: "four-points", treat: "asis", ratio: 1.47 },
-    { name: "Someplace Else", file: "someplace-else", treat: "lift", ratio: 6.32 },
-    { name: "Matahaari", file: "matahaari", treat: "lift", ratio: 1.76 },
-    /*
-      THESE THREE HAD THEIR PLAQUES KEYED OUT — see scripts/key-client-plaques.
-      They shipped as the brand's coloured block with the mark reversed out of
-      it (navy, blue and maroon), and since the wall greyscales everything,
-      those blocks flattened to exactly the grey rectangle Genesis asked to be
-      rid of. What is left is white ink on transparency, so they take `asis`:
-      the artwork is already light and `lift`'s brightness would only blow it
-      out. The ratios moved because cropping to the ink changed their shape —
-      Four Points was a square plaque and is a wide wordmark now.
-    */
-    { name: "Grand Hyatt", file: "grand-hyatt", treat: "asis", ratio: 5.68 },
-    { name: "MNR", file: "mnr", treat: "invert", ratio: 1.4 },
-    { name: "BNI", file: "bni", treat: "lift", ratio: 2.55 },
-    { name: "Imagicaa", file: "imagicaa", treat: "lift", ratio: 2.39 },
+    { name: "House of Hiranandani", file: "house-of-hiranandani", treat: "lift", ratio: 2.02 },
     { name: "Kitty Su", file: "kitty-su", treat: "invert", ratio: 1.29 },
     { name: "Royal Tulip", file: "royal-tulip", treat: "lift", ratio: 2.21 },
-    { name: "Radcliffe", file: "radcliffe", treat: "lift", ratio: 3.53 },
-    { name: "HT Brunch", file: "ht-brunch", treat: "asis", ratio: 4.21 },
     { name: "Bumble", file: "bumble", treat: "lift", ratio: 5.85 },
-    { name: "Lizol", file: "lizol", treat: "asis", ratio: 0.98 },
-    { name: "Dove", file: "dove", treat: "lift", ratio: 1.42 },
-    { name: "Bacardi", file: "bacardi", treat: "lift", ratio: 1.36 },
-    { name: "Vivo", file: "vivo", treat: "lift", ratio: 3.78 },
-    { name: "Budweiser", file: "budweiser", treat: "lift", ratio: 2.94 },
     { name: "LN Construction", file: "ln-construction", treat: "lift", ratio: 0.89 },
-    { name: "Kamdhenu", file: "kamdhenu", treat: "lift", ratio: 1.56 },
-    { name: "Aditya Birla Sun Life Insurance", file: "aditya-birla-sun-life", treat: "invert", ratio: 2.54 },
-    { name: "TripGate", file: "tripgate", treat: "invert", ratio: 3.24 },
-    /*
-      SINET WAS "invert" AND THAT IS WHAT PUT A BLACK SQUARE ON THE PAGE. Its
-      export was a fully opaque file — dark ink on a white plaque, 100% of the
-      frame — so inverting it to lift the ink on a dark page also flipped the
-      white ground to black, which is the block Genesis asked to be rid of.
-      The file has since had that ground keyed out (13% of it is ink now), so
-      it takes the default lift like the rest of the dark-on-transparent set.
-    */
+    { name: "MNR", file: "mnr", treat: "invert", ratio: 1.4 },
+    { name: "Someplace Else", file: "someplace-else", treat: "lift", ratio: 6.32 },
     { name: "SiNet", file: "sinet", treat: "lift", ratio: 1.09 },
   ],
 } as const;
