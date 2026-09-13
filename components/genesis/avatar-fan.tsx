@@ -150,6 +150,18 @@ function useFanRoom(): boolean {
   );
 }
 
+/*
+  THE CARD'S WIDTH, WRITTEN ONCE.
+
+  The fan's box is a multiple of this — a rotated 3:4 card needs just over
+  twice its own width in height — and the two had drifted apart: the card
+  picked up a viewport-height bound during the one-screen pass and the box
+  was left on the old `clamp(7.5rem,14vw,13rem)`. So on a short window the
+  box reserved room for a card half a size larger than the one drawn in it,
+  which is the band of nothing Genesis saw under the roster.
+*/
+const CARD_W = "clamp(6.75rem,min(14vw,23vh),13rem)";
+
 export function AvatarFan({
   avatars,
   className,
@@ -194,7 +206,7 @@ export function AvatarFan({
           what the shadows and the sway's ±0.9 degrees need.
         */
         fan
-          ? "relative h-[calc(clamp(7.5rem,14vw,13rem)*2.08)] w-full"
+          ? "relative w-full h-[calc(var(--fan-card)*2.08)]"
           : // A swipeable row of full-size cards. See useFanRoom.
             /*
               BIGGER, AND SWIPED ("scroll karke bada kardo ai avatars wale
@@ -207,6 +219,7 @@ export function AvatarFan({
             "no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2",
         className,
       )}
+      style={{ "--fan-card": CARD_W } as React.CSSProperties}
     >
       {avatars.map((avatar, index) => {
         const offset = index - centre;
@@ -338,7 +351,7 @@ export function AvatarFan({
                   and the section is allowed to run a little past a short
                   screen.
                 */
-                fan ? "w-[clamp(6.75rem,min(14vw,23vh),13rem)]" : "w-full",
+                fan ? "w-[var(--fan-card)]" : "w-full",
                 // The upright card is the only one carrying a lift, so the
                 // eye is told where to start.
                 isCentre
