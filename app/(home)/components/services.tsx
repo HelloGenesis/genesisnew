@@ -112,7 +112,7 @@ export function Services() {
         with somebody else's section under it. Full height and centred, the
         orb and its four names own the screen and the wall starts below it.
       */
-      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[calc(var(--section-pad)*3.4)]"
+      className="scene-charcoal relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[calc(var(--section-pad)*3.4)]"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme
@@ -140,7 +140,7 @@ export function Services() {
         }}
       />
 
-      <Spectrum />
+      <Spectrum className="seamless" />
 
       <div className="relative z-[2] mx-auto w-full max-w-7xl px-6">
         {/*

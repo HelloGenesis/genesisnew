@@ -43,7 +43,7 @@ export function Studios() {
   return (
     <section
       id="studios"
-      className="scene-open grain relative isolate overflow-hidden py-[var(--section-pad)]"
+      className="scene-open relative isolate overflow-hidden py-[var(--section-pad)]"
     >
       <Spectrum className="seamless" />
 

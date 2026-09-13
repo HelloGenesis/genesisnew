@@ -307,15 +307,15 @@
        very deep versions of that same ramp on the way down the page. */
     --page-ground: linear-gradient(
         168deg,
-        #1a1215 0%,
-        #201519 24%,
-        #1b1320 48%,
-        #221518 72%,
-        #110c0f 100%
+        #0e0a0c 0%,
+        #120c0f 24%,
+        #0f0b13 48%,
+        #130c0e 72%,
+        #070506 100%
     );
 
     /* Box fill and rim, sampled off folder-panel.tsx. */
-    --box-fill: linear-gradient(150deg, rgb(58 44 16 / 0.9) 0%, rgb(24 18 22 / 0.9) 42%, rgb(22 16 30 / 0.9) 64%, rgb(40 24 62 / 0.9) 100%);
+    --box-fill: linear-gradient(150deg, rgb(42 32 12 / 0.92) 0%, rgb(16 12 14 / 0.93) 42%, rgb(14 11 20 / 0.93) 64%, rgb(30 18 48 / 0.92) 100%);
     --box-rim: linear-gradient(150deg, rgb(255 197 22 / 0.85) 0%, rgb(255 154 60 / 0.4) 32%, rgb(224 112 192 / 0.3) 65%, rgb(164 92 255 / 0.75) 100%);
 
     /*
@@ -334,9 +334,9 @@
     */
     --page-ground-compact: linear-gradient(
         170deg,
-        #201519 0%,
-        #1b1320 55%,
-        #110c0f 100%
+        #120c0f 0%,
+        #0f0b13 55%,
+        #070506 100%
     );
 
     /*
@@ -571,7 +571,7 @@
     --box-fill: linear-gradient(150deg, rgb(255 241 196 / 0.92) 0%, rgb(255 252 250 / 0.92) 42%, rgb(252 249 255 / 0.92) 64%, rgb(238 226 255 / 0.9) 100%);
     --box-rim: linear-gradient(150deg, rgb(230 168 0 / 0.85) 0%, rgb(243 140 50 / 0.35) 32%, rgb(208 100 170 / 0.28) 65%, rgb(140 80 230 / 0.65) 100%);
     --grain-opacity: 0.16;
-    --chapter-blend: #ffffff;
+    --chapter-blend: transparent;
     --surface-ink: #faf7f5;
     --surface-raised: #ffffff;
     --surface-panel: #ffffff;
@@ -683,7 +683,7 @@
     --box-fill: linear-gradient(150deg, rgb(255 241 196 / 0.92) 0%, rgb(255 252 250 / 0.92) 42%, rgb(252 249 255 / 0.92) 64%, rgb(238 226 255 / 0.9) 100%);
     --box-rim: linear-gradient(150deg, rgb(230 168 0 / 0.85) 0%, rgb(243 140 50 / 0.35) 32%, rgb(208 100 170 / 0.28) 65%, rgb(140 80 230 / 0.65) 100%);
     --grain-opacity: 0.16;
-        --chapter-blend: #ffffff;
+        --chapter-blend: transparent;
         --surface-ink: #faf7f5;
         --surface-raised: #ffffff;
         --surface-panel: #ffffff;
@@ -761,7 +761,7 @@
        than as a slightly different black.
     */
     --surface-base: #000000;
-    --box-fill: linear-gradient(150deg, rgb(58 44 16 / 0.9) 0%, rgb(24 18 22 / 0.9) 42%, rgb(22 16 30 / 0.9) 64%, rgb(40 24 62 / 0.9) 100%);
+    --box-fill: linear-gradient(150deg, rgb(42 32 12 / 0.92) 0%, rgb(16 12 14 / 0.93) 42%, rgb(14 11 20 / 0.93) 64%, rgb(30 18 48 / 0.92) 100%);
     --box-rim: linear-gradient(150deg, rgb(255 197 22 / 0.85) 0%, rgb(255 154 60 / 0.4) 32%, rgb(224 112 192 / 0.3) 65%, rgb(164 92 255 / 0.75) 100%);
     --surface-ink: #0f0d0e;
     --surface-raised: #1a1719;
@@ -1129,17 +1129,18 @@ li:hover .client-mark {
    the first child of main) correctly stops firing on light, where the Brain
    is no longer dark and the pill should follow the theme. */
 .scene-charcoal {
-    --surface-base: #1a1215;
-    --surface-ink: #201519;
+    --surface-base: #0e0a0c;
+    --surface-ink: #120c0f;
     background-color: transparent;
     /* A lit room in the wordmark's colours: the orb throws orange at its
        centre, fading through rose to a lavender edge before the black. */
+    /* Sized so it reaches zero well inside the box: a glow still lit at
+       the section's edge is exactly the hard line Genesis flagged. */
     background-image: radial-gradient(
-        110% 90% at 50% 44%,
-        rgb(255 197 22 / 0.2) 0%,
-        rgb(243 154 60 / 0.1) 30%,
-        rgb(208 106 138 / 0.06) 50%,
-        rgb(164 139 224 / 0.05) 62%,
+        46% 42% at 50% 48%,
+        rgb(255 197 22 / 0.1) 0%,
+        rgb(243 154 60 / 0.05) 40%,
+        rgb(208 106 138 / 0.025) 70%,
         transparent 100%
     );
 }
@@ -1171,7 +1172,7 @@ li:hover .client-mark {
    tokens the floating chrome reads, so the pill keeps its translucency and
    its blur while its inks, borders and logo follow the dark ground beneath. */
 .on-dark {
-    --box-fill: linear-gradient(150deg, rgb(58 44 16 / 0.9) 0%, rgb(24 18 22 / 0.9) 42%, rgb(22 16 30 / 0.9) 64%, rgb(40 24 62 / 0.9) 100%);
+    --box-fill: linear-gradient(150deg, rgb(42 32 12 / 0.92) 0%, rgb(16 12 14 / 0.93) 42%, rgb(14 11 20 / 0.93) 64%, rgb(30 18 48 / 0.92) 100%);
     --box-rim: linear-gradient(150deg, rgb(255 197 22 / 0.85) 0%, rgb(255 154 60 / 0.4) 32%, rgb(224 112 192 / 0.3) 65%, rgb(164 92 255 / 0.75) 100%);
     --ink-strong: #ffffff;
     /* The palette's own grey, and a derived step below it for the faintest
@@ -1213,7 +1214,7 @@ li:hover .client-mark {
    of the page was still light paper, which made the wordmark disappear. Only
    a page whose main element is the scene should take the chrome with it. */
 body:has(main.scene-dark) header {
-    --box-fill: linear-gradient(150deg, rgb(58 44 16 / 0.9) 0%, rgb(24 18 22 / 0.9) 42%, rgb(22 16 30 / 0.9) 64%, rgb(40 24 62 / 0.9) 100%);
+    --box-fill: linear-gradient(150deg, rgb(42 32 12 / 0.92) 0%, rgb(16 12 14 / 0.93) 42%, rgb(14 11 20 / 0.93) 64%, rgb(30 18 48 / 0.92) 100%);
     --box-rim: linear-gradient(150deg, rgb(255 197 22 / 0.85) 0%, rgb(255 154 60 / 0.4) 32%, rgb(224 112 192 / 0.3) 65%, rgb(164 92 255 / 0.75) 100%);
     /* The wordmark swaps on this too. .scene-dark sets --logo-invert, but it
        sets it on MAIN — and the logo lives in the header, outside that
@@ -1482,7 +1483,7 @@ body:has(main.scene-dark) header {
         z-index: 1;
         /* A noise-filled gradient, not a faint haze: the grain is meant to be
            seen, so the glows read as sprayed light rather than smooth CSS. */
-        opacity: var(--grain-opacity, 0.11);
+        opacity: var(--grain-opacity, 0.1);
         mix-blend-mode: overlay;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
     }
