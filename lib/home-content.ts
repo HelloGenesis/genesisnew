@@ -381,7 +381,7 @@ export const aiContent = {
     { id: "ivaanat", portrait: "/avatars/ivaanat.jpg", name: "Ivaanat", role: "Fashion & Beauty" as string | undefined,
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: [] as string[], stills: [] as string[] },
-    { id: "tanvi", portrait: "/avatars/tanvi.jpg", name: "Tanvi", role: "Head of Creatives | Genesis" as string | undefined,
+    { id: "tanvi", portrait: "/avatars/tanvi.jpg", name: "Tanvi", role: "Head of Creative | Genesis" as string | undefined,
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: ["ai-lab-tanvi-uiiui", "ai-lab-tanvi-b2813828", "ai-lab-tanvi-photos"] as string[], stills: [] as string[] },
     { id: "jesko", portrait: "/avatars/jesko.jpg", name: "Jesko", role: "DJ | Techno artist",

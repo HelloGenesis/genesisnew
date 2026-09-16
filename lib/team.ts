@@ -61,7 +61,7 @@ export const team = {
     {
       slug: "tanvi-panchal",
       name: "Tanvi Panchal",
-      role: "Head of Creatives",
+      role: "Head of Creative",
       division: "Genesis Studios",
       photo: "/team/tanvi.jpg",
     },
