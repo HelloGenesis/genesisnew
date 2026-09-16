@@ -350,8 +350,17 @@ function TallDiagram({ className }: { className?: string }) {
   const width = 360;
   const cx = width / 2;
 
-  const rowGap = 44;
+  /*
+    ROOM FOR THE SYMBOLS. With names gone each application is a square
+    mark, and at 32 units on 44-unit rows they touched their neighbours and
+    sat ragged against their dots — the "ajeeb" Genesis saw on a phone.
+    Marks are 26 now, on 50-unit rows, each centred in a fixed slot beside
+    its dot so the two columns line up.
+  */
+  const rowGap = 50;
   const perSide = 3;
+  const markSize = 26;
+  const slot = 36;
 
   const topRows = [0, 1, 2].map((i) => 24 + i * rowGap);
   const hub = { w: 150, h: 58, x: (width - 150) / 2, y: 24 + perSide * rowGap + 14 };
@@ -424,7 +433,8 @@ function TallDiagram({ className }: { className?: string }) {
         const pull = 34 * bend;
         const d = `M ${x} ${y} C ${x} ${y + pull}, ${cx} ${toY - pull * 1.1}, ${cx} ${toY}`;
         const stroke = bend === 1 ? "url(#gm-ai-line-down)" : "url(#gm-ai-line-up)";
-        const box = logoBox(app, 32);
+        const box = logoBox(app, markSize);
+        const centre = side === -1 ? x - 12 - slot / 2 : x + 12 + slot / 2;
         return (
           <g key={app.name}>
             <path d={d} fill="none" stroke={stroke} strokeWidth="1.4" opacity="0.6" />
@@ -440,11 +450,11 @@ function TallDiagram({ className }: { className?: string }) {
             <circle cx={x} cy={y} r="3" fill="#ff8fb8" />
             <image
               href={app.src}
-              x={side === -1 ? x - 12 - box.w : x + 12}
+              x={centre - box.w / 2}
               y={y - box.h / 2}
               width={box.w}
               height={box.h}
-              preserveAspectRatio={side === -1 ? "xMaxYMid meet" : "xMinYMid meet"}
+              preserveAspectRatio="xMidYMid meet"
               className="app-mark"
             >
               <title>{app.name}</title>

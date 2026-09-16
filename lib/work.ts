@@ -584,8 +584,12 @@ export const CLIP_LABELS: Record<ReelId, string> = {
   "studios-7-draft6-income-protect": "Income Protect",
   "studios-friends-final-1": "Friends",
   "ai-lab-1-2-9x16-main-product-explainer-activ-yuva":
-    "Activ Yuva — Product Explainer",
-  "ai-lab-2-1-9x16-health-returns-activ-yuva": "Activ Yuva — Health Returns",
+    "Activ Yuva — Product Explainer · Adi",
+  "ai-lab-2-1-9x16-health-returns-activ-yuva":
+    "Activ Yuva — Health Returns · Diya",
+  29: "Activ Yuva — OPD Cover · Adi",
+  30: "Activ Yuva — Worldwide Maternity Cover · Diya",
+  31: "Activ Yuva — Launch · Adi & Diya",
   "ai-lab-sinet-english-v004": "SiNet (English)",
   "ai-lab-tanvi-uiiui": "Tanvi",
   "ai-lab-tanvi-b2813828": "Tanvi",

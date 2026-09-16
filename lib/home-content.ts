@@ -374,7 +374,13 @@ export const aiContent = {
     CLIP IDS, the same ids lib/work uses, so an avatar's window and the
     portfolio play one file rather than two copies that can drift apart.
 
-    TODO(assets): Ivaanat, Jesko, Adi and Diya — their folders are empty.
+    ADI AND DIYA'S ARE THE ABHI ACTIV YUVA FILMS they front, matched by
+    face: Adi in OPD Cover (29) and the product explainer, Diya in Worldwide
+    Maternity Cover (30) and Health Returns, and both in the launch film
+    (31). Their Drive folders are empty; the films live in AI Lab. Numbered
+    clips are written as strings here — the id scheme is the same.
+
+    TODO(assets): Ivaanat and Jesko — their folders are empty.
     Stills still take image paths.
   */
   avatars: [
@@ -389,10 +395,10 @@ export const aiContent = {
       reel: [] as string[], stills: [] as string[] },
     { id: "adi", portrait: "/avatars/adi.jpg", name: "Adi", role: "Aditya Birla Health Insurance",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
-      reel: [] as string[], stills: [] as string[] },
+      reel: ["29", "ai-lab-1-2-9x16-main-product-explainer-activ-yuva", "31"] as string[], stills: [] as string[] },
     { id: "diya", portrait: "/avatars/diya.jpg", name: "Diya", role: "Aditya Birla Health Insurance",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
-      reel: [] as string[], stills: [] as string[] },
+      reel: ["30", "ai-lab-2-1-9x16-health-returns-activ-yuva", "31"] as string[], stills: [] as string[] },
     { id: "bharat", portrait: "/avatars/bharat.jpg", name: "Bharat", role: "Advocate",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: ["ai-lab-bharat-bharat"] as string[], stills: [] as string[] },

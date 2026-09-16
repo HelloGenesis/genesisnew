@@ -65,8 +65,11 @@ const PROPERTY_FILMS: Record<number, string> = {
  * because the film lookup walked /films and found nothing. The manifest
  * already knows which Drive file each slug came from, so it is asked.
  *
- * Only slugs that are not bare numbers: the manifest records 1-32 under their
- * pre-rename slugs (`influence-1`), which the numbered path handles.
+ * NUMBERED CLIPS GO THROUGH IT TOO. The manifest records 1-32 under the
+ * slugs of the folders they now live in — `influence-16`, `ai-lab-29` —
+ * because Genesis sorted the root folder into division subfolders. The
+ * filename lookup below still asked the root for `16.mp4` and got nothing,
+ * so every numbered film answered 404 and fell back to its preview.
  */
 const NAMED_FILMS = new Map(
   (manifest as { slug: string; driveId: string; name: string }[]).map(
@@ -81,7 +84,10 @@ function filmSource(
   if (segments.length !== 2 || segments[0] !== "films") return null;
   const stem = segments[1].replace(/\.mp4$/i, "");
 
-  const named = NAMED_FILMS.get(stem);
+  const named =
+    NAMED_FILMS.get(stem) ??
+    NAMED_FILMS.get(`influence-${stem}`) ??
+    NAMED_FILMS.get(`ai-lab-${stem}`);
   if (named) {
     return {
       file: { id: named.driveId, name: named.name, mimeType: "video/mp4" },
