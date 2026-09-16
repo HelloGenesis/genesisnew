@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { FolderPanel } from "@/components/genesis/folder-panel";
+import { SwipeHintRail } from "@/components/genesis/swipe-hint-rail";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { branding, services } from "@/lib/home-content";
@@ -178,7 +179,13 @@ export function BrandingDesign() {
         all three put together. From xl, where all three fit side by side,
         nothing changes.
       */}
-      <div className="no-scrollbar -mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 sm:gap-5 xl:mx-[-2.5rem] xl:grid xl:snap-none xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8 xl:overflow-visible xl:px-0">
+      {/*
+        ORDER ON THE RAIL, Genesis's: the six-point "What we make" list first,
+        the Branding Positioning headline second, the work third. From xl the
+        row keeps its own order — work, headline, list — which is set by the
+        xl:order classes on each card.
+      */}
+      <SwipeHintRail className="no-scrollbar -mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 sm:gap-5 xl:mx-[-2.5rem] xl:grid xl:snap-none xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8 xl:overflow-visible xl:px-0">
         {/* ─── The work ─────────────────────────────────────────────── */}
         <Reveal className="relative z-10 order-3 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-1 xl:w-auto xl:max-w-none">
           <FolderPanel tab={0.4} dots contentClassName="p-3 sm:p-5">
@@ -308,7 +315,7 @@ export function BrandingDesign() {
         {/* ─── The positioning ──────────────────────────────────────── */}
         <Reveal
           delay={0.06}
-          className="relative isolate order-1 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-2 xl:w-auto xl:max-w-none"
+          className="relative isolate order-2 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-2 xl:w-auto xl:max-w-none"
         >
           {/* The Genesis N itself, in its own yellow, blurred just enough to
               sit behind the glass while still reading as the N. Showing
@@ -369,7 +376,7 @@ export function BrandingDesign() {
         </Reveal>
 
         {/* ─── What we make ─────────────────────────────────────────── */}
-        <Reveal delay={0.1} className="order-2 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-3 xl:w-auto xl:max-w-none">
+        <Reveal delay={0.1} className="order-1 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-3 xl:w-auto xl:max-w-none">
           <FolderPanel tab={0} dots contentClassName="px-3 pt-9 pb-3 sm:pt-11 sm:px-4 sm:pb-4">
             <FolderPanel tab={0.34} tabHeight={20} radius={16} contentClassName="px-4 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
               <p className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
@@ -400,7 +407,7 @@ export function BrandingDesign() {
           </FolderPanel>
         </Reveal>
 
-      </div>
+      </SwipeHintRail>
 
       <Reveal
         delay={0.15}
