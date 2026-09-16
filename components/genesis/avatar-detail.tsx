@@ -4,6 +4,8 @@ import { AvatarPager } from "@/components/genesis/avatar-pager";
 import { Media } from "@/components/genesis/media";
 import { mediaUrl } from "@/lib/media-url";
 import { isPending } from "@/lib/home-content";
+import { filmUrl } from "@/lib/films";
+import { reelClip, reelPoster } from "@/lib/work";
 import { avatars, AVATAR_TINT, type Avatar } from "@/lib/avatars";
 import { VIDEO_GUARD } from "@/lib/video-guard";
 
@@ -164,16 +166,22 @@ export function AvatarDetail({
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {avatar.reel.map((clip) => (
                 <li key={clip}>
+                  {/*
+                    The full film when Drive serves it, the preview when it
+                    does not — the same fallback the portfolio's detail uses,
+                    since `clip` is one of its ids.
+                  */}
                   <video
-                    src={mediaUrl(clip)}
-                    muted
-                    loop
+                    poster={mediaUrl(reelPoster(clip))}
                     playsInline
                     controls
-                    preload="metadata"
+                    preload="none"
                     {...VIDEO_GUARD}
                     className="aspect-[9/13] w-full rounded-card border border-[var(--glass-border)] bg-ink object-cover"
-                  />
+                  >
+                    {filmUrl(clip) && <source src={filmUrl(clip)} type="video/mp4" />}
+                    <source src={mediaUrl(reelClip(clip))} type="video/mp4" />
+                  </video>
                 </li>
               ))}
 

@@ -1,5 +1,5 @@
 import { isPending } from "./home-content";
-import type { Vertical } from "./work";
+import { findWork, type ReelId, type Vertical } from "./work";
 
 /**
  * CASE STUDIES — a different question from the portfolio.
@@ -44,7 +44,7 @@ export type CaseStudy = {
    * number addresses /work/clips/<n>.mp4 and its poster, the same convention
    * the catalogue uses.
    */
-  heroClip?: number;
+  heroClip?: ReelId;
 
   /** The one figure a card leads with. */
   headline?: string;
@@ -106,10 +106,140 @@ export const caseStudyList: CaseStudy[] = [
     work: ["mahindra-finance-influencer-campaign"],
     heroClip: 18,
   },
+  /*
+   * THE SLIDER'S OTHER TWELVE, added at Genesis's request after the four
+   * above, which stay as they were. Six are the portfolio tiles Genesis
+   * pointed at; the rest they named — Vikrant Massey, Menopause, House of
+   * Hiranandani, Matcha, and the Tanvi and Bharat avatar films.
+   *
+   * Each one leads with a clip that already lives in the portfolio, so the
+   * same file plays in both places. `work` names the catalogue piece it
+   * belongs to and `client` is that piece's client, never a new one.
+   */
+  {
+    slug: "aditya-birla-capital-jump-for-health",
+    client: "Aditya Birla Capital",
+    campaign: "#JumpForHealth",
+    vertical: "Influence",
+    discipline: "Influencer campaign",
+    work: ["aditya-birla-capital-campaign"],
+    heroClip: 8,
+  },
+  {
+    slug: "abhi-ka-star",
+    client: "Aditya Birla Health Insurance",
+    campaign: "ABHI Ka Star",
+    vertical: "Studios",
+    discipline: "Reels",
+    work: ["abhi-health-content"],
+    heroClip: "studios-abhi-ka-star",
+  },
+  {
+    slug: "abhi-100-health",
+    client: "Aditya Birla Health Insurance",
+    campaign: "100% Health & 100% Health Insurance",
+    vertical: "Studios",
+    discipline: "Reels",
+    work: ["abhi-health-content"],
+    heroClip:
+      "studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance",
+  },
+  {
+    slug: "income-protect",
+    client: "Genesis Studios",
+    campaign: "Income Protect",
+    vertical: "Studios",
+    discipline: "Reels",
+    work: ["studios-selected-production"],
+    heroClip: "studios-7-draft6-income-protect",
+  },
+  {
+    slug: "aditya-birla-capital-bombay-running",
+    client: "Aditya Birla Capital",
+    campaign: "Bombay Running Crew",
+    vertical: "Influence",
+    discipline: "Influencer campaign",
+    work: ["aditya-birla-capital-campaign"],
+    heroClip: 13,
+  },
+  {
+    slug: "aditya-birla-capital-lets-face-it",
+    client: "Aditya Birla Capital",
+    campaign: "#LetsFaceIt 2024",
+    vertical: "Influence",
+    discipline: "Influencer campaign",
+    work: ["aditya-birla-capital-campaign"],
+    heroClip: 3,
+  },
+  {
+    slug: "aditya-birla-capital-vikrant-massey",
+    client: "Aditya Birla Capital",
+    campaign: "BTS with Vikrant Massey",
+    vertical: "Influence",
+    discipline: "Celebrity content",
+    work: ["aditya-birla-capital-campaign"],
+    heroClip: 2,
+  },
+  {
+    slug: "abhi-world-menopause-day",
+    client: "Aditya Birla Health Insurance",
+    campaign: "World Menopause Day",
+    vertical: "Studios",
+    discipline: "Reels",
+    work: ["abhi-health-content"],
+    heroClip: "studios-final-menopause-abhi-02",
+  },
+  {
+    slug: "house-of-hiranandani",
+    client: "House of Hiranandani",
+    campaign: "Brand Content",
+    vertical: "AI Labs",
+    discipline: "Real estate",
+    work: ["house-of-hiranandani-content"],
+    heroClip: 32,
+  },
+  {
+    slug: "aditya-birla-capital-matcha",
+    client: "Aditya Birla Capital",
+    campaign: "Matcha",
+    vertical: "Influence",
+    discipline: "Influencer campaign",
+    work: ["aditya-birla-capital-campaign"],
+    heroClip: 9,
+  },
+  {
+    slug: "ai-avatar-bharat",
+    client: "Bharat",
+    campaign: "AI Avatar",
+    vertical: "AI Labs",
+    discipline: "AI avatar",
+    work: ["ai-avatar-bharat"],
+    heroClip: "ai-lab-bharat-bharat",
+  },
+  {
+    slug: "ai-avatar-tanvi",
+    client: "Tanvi",
+    campaign: "AI Avatar",
+    vertical: "AI Labs",
+    discipline: "AI avatar",
+    work: ["ai-avatar-tanvi"],
+    heroClip: "ai-lab-tanvi-uiiui",
+  },
 ];
 
 export function findCaseStudy(slug: string): CaseStudy | undefined {
   return caseStudyList.find((study) => study.slug === slug);
+}
+
+/**
+ * The clip a study leads with: its own `heroClip`, else the first clip of the
+ * catalogue piece it covers. The poster and the dialog both ask this, so the
+ * card and the window it opens can never show two different films.
+ */
+export function leadClip(study: CaseStudy): ReelId | undefined {
+  if (study.heroClip !== undefined) return study.heroClip;
+  const piece = study.work?.[0] ? findWork(study.work[0]) : undefined;
+  return piece?.reel?.[0];
 }
 
 /**

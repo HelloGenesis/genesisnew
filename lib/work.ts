@@ -494,6 +494,43 @@ const catalogue: WorkItem[] = [
     format: "AI Content",
     reel: ["ai-lab-sinet-english-v004"],
   },
+  /*
+   * THE AI AVATARS' OWN WORK, from the per-avatar folders under AI Lab in
+   * Genesis's Drive. The roster in lib/home-content lists the same ids in
+   * each avatar's `reel`, so a video shows in the avatar window, here, and
+   * — for Tanvi and Bharat — in the case-study slider, from one file.
+   * Ivaanat, Jesko, Adi and Diya have folders with nothing in them yet.
+   */
+  {
+    slug: "ai-avatar-tanvi",
+    client: "Tanvi · AI Avatar",
+    title: "AI Avatar Content",
+    vertical: "AI Labs",
+    format: "AI Content",
+    featured: true,
+    reel: [
+      "ai-lab-tanvi-uiiui",
+      "ai-lab-tanvi-b2813828",
+      "ai-lab-tanvi-photos",
+    ],
+  },
+  {
+    slug: "ai-avatar-bharat",
+    client: "Bharat · AI Avatar",
+    title: "AI Avatar Content",
+    vertical: "AI Labs",
+    format: "AI Content",
+    featured: true,
+    reel: ["ai-lab-bharat-bharat"],
+  },
+  {
+    slug: "ai-avatar-shivam",
+    client: "Shivam · AI Avatar",
+    title: "AI Avatar Content",
+    vertical: "AI Labs",
+    format: "AI Content",
+    reel: ["ai-lab-shivam-sh1"],
+  },
 
 ];
 
@@ -550,6 +587,17 @@ export const CLIP_LABELS: Record<ReelId, string> = {
     "Activ Yuva — Product Explainer",
   "ai-lab-2-1-9x16-health-returns-activ-yuva": "Activ Yuva — Health Returns",
   "ai-lab-sinet-english-v004": "SiNet (English)",
+  "ai-lab-tanvi-uiiui": "Tanvi",
+  "ai-lab-tanvi-b2813828": "Tanvi",
+  "ai-lab-tanvi-photos": "Tanvi — Photo Series",
+  "ai-lab-bharat-bharat": "Bharat",
+  "ai-lab-shivam-sh1": "Shivam",
+  2: "BTS with Vikrant Massey",
+  3: "#LetsFaceIt 2024",
+  8: "#JumpForHealth",
+  9: "Matcha",
+  13: "Bombay Running Crew",
+  32: "House of Hiranandani",
   33: "Panvel Hospital Plot",
   34: "Ghatkopar Godown",
   35: "Chembur Commercial Office",
@@ -566,26 +614,36 @@ export const CLIP_LABELS: Record<ReelId, string> = {
 export const reelClip = (n: ReelId) => `/work/clips/${n}.mp4`;
 export const reelPoster = (n: ReelId) => `/work/posters/${n}.jpg`;
 
-export const work: WorkItem[] = catalogue.map((item) => {
+export const work: WorkItem[] = catalogue
   /*
-    The lead clip fills in whatever the piece did not state. A piece with a
-    reel and no artwork was rendering a typographic placeholder while its own
-    footage sat in /public under a number nobody had connected to it; this is
-    the connection, and it is one line rather than a field on every entry.
+    NOTHING WITHOUT FOOTAGE OR A STILL REACHES THE PAGE. A piece with neither
+    fell back to its client's name set as a poster, and a long name —
+    "Aditya Birla Sun Life Insurance" — broke out of a portfolio tile one word
+    per line. A portfolio is pictures of work; a client with nothing to show
+    stays in the catalogue for when footage arrives, and appears the moment
+    a reel or artwork is added.
   */
-  const lead = item.reel?.[0];
-  const clip = item.clip ?? (lead === undefined ? undefined : reelClip(lead));
-  const poster =
-    item.poster ?? (lead === undefined ? undefined : reelPoster(lead));
-  const art = item.art ?? poster;
+  .filter((item) => item.reel?.length || item.art || item.clip || item.poster)
+  .map((item) => {
+    /*
+      The lead clip fills in whatever the piece did not state. A piece with a
+      reel and no artwork was rendering a typographic placeholder while its own
+      footage sat in /public under a number nobody had connected to it; this is
+      the connection, and it is one line rather than a field on every entry.
+    */
+    const lead = item.reel?.[0];
+    const clip = item.clip ?? (lead === undefined ? undefined : reelClip(lead));
+    const poster =
+      item.poster ?? (lead === undefined ? undefined : reelPoster(lead));
+    const art = item.art ?? poster;
 
-  return {
-    ...item,
-    ...(art ? { art: mediaUrl(art) } : {}),
-    ...(clip ? { clip: mediaUrl(clip) } : {}),
-    ...(poster ? { poster: mediaUrl(poster) } : {}),
-  };
-});
+    return {
+      ...item,
+      ...(art ? { art: mediaUrl(art) } : {}),
+      ...(clip ? { clip: mediaUrl(clip) } : {}),
+      ...(poster ? { poster: mediaUrl(poster) } : {}),
+    };
+  });
 
 
 /** Fast lookup for the project route. */

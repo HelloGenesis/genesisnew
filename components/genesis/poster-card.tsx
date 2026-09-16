@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 import { useEdgeFade } from "./use-edge-fade";
+import { useCallback, useEffect, useRef } from "react";
+import { RailArrow } from "./work-grid";
 import { useInViewPlayback } from "./use-in-view-playback";
 
 import Link from "next/link";
@@ -298,39 +300,187 @@ export function PosterCard({
 }) {
   const { ref: railRef, style: railStyle } = useEdgeFade<HTMLDivElement>();
 
-  return (
-    <div
-      ref={railRef}
-      // Retained as a hook; the camera turn that used to scrub this rail's
-      // scrollLeft has been removed.
-      data-poster-rail
-      className={cn(
-        "no-scrollbar flex snap-x snap-mandatory items-center gap-4 overflow-x-auto px-1 pb-4",
-        className,
-      )}
-      /*
-        The rail ran to a hard edge, so the first and last cards were sliced
-        mid-word by the viewport — "…hindra" — which reads as a rendering
-        fault rather than as more content off-screen.
+  /*
+    A SLIDER, NOT JUST A SCROLLER. With sixteen posters the rail runs well
+    past the window, and a trackpad swipe is not something every visitor
+    thinks to try. The arrows step one card at a time, measured from the
+    first card so the step is right at every width; the wrap-around keeps
+    the last arrow press from being a dead click.
+  */
+  const step = useCallback((direction: 1 | -1) => {
+    const rail = railRef.current;
+    const card = rail?.firstElementChild as HTMLElement | null;
+    if (!rail || !card) return;
+    const max = rail.scrollWidth - rail.clientWidth;
+    const atEnd = direction === 1 && rail.scrollLeft >= max - 2;
+    const atStart = direction === -1 && rail.scrollLeft <= 2;
+    if (atEnd || atStart) {
+      rail.scrollTo({ left: atEnd ? 0 : max, behavior: "smooth" });
+      return;
+    }
+    rail.scrollBy({ left: direction * (card.offsetWidth + 16), behavior: "smooth" });
+  }, [railRef]);
 
-        A mask fades the ends into the page instead, and it SAYS there is more
-        to the side, which a clean cut does not: a card dissolving is an
-        invitation to scroll, a card guillotined is a bug. useEdgeFade sets
-        each width from the rail's actual scroll position, so an end with
-        nothing beyond it carries no fade and a rail that fits carries none
-        at all.
-      */
-      style={railStyle}
-    >
-      {posters.map((poster, index) => (
-        <div key={poster.id} className="snap-center">
-          <PosterCard
-            poster={poster}
-            onSelect={onSelect}
-            priority={index === Math.floor(posters.length / 2)}
-          />
-        </div>
-      ))}
+  /*
+    IT SLIDES ON ITS OWN, continuously, and gives way to the reader. Pointing at the rail or focusing a card pauses it; a touch, a
+    wheel or an arrow press holds it for a while so it does not yank the rail
+    out from under someone who is browsing. It only runs while the rail is on
+    screen and the tab is visible, and Reduce Motion gets a still rail.
+
+    A DRIFT, as Genesis asked ("continuous slide"), driven by scrollLeft the
+    same way the portfolio strips are, so swiping and the arrows still work
+    on the same scroll position. At either end it turns and comes back.
+
+    NO SCROLL-SNAP ON THIS RAIL any more. Snap re-aligns the position at the
+    end of every scroll, and a rail creeping forward a fraction of a pixel a
+    frame is one long run of scroll ends — snap kept pulling it back and it
+    stuttered in place. The portfolio strips dropped snap for the same reason.
+  */
+  const box = useRef<HTMLDivElement>(null);
+  const holdUntil = useRef(0);
+  const hold = useCallback((ms: number) => {
+    // Never shortens a longer hold already in place — leaving the rail
+    // right after an arrow press must not cut that press's pause short.
+    holdUntil.current = Math.max(holdUntil.current, Date.now() + ms);
+  }, []);
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let paused = false;
+    const pause = () => {
+      paused = true;
+    };
+    const resume = () => {
+      paused = false;
+      hold(1500);
+    };
+    const touched = () => hold(6000);
+    el.addEventListener("pointerenter", pause);
+    el.addEventListener("pointerleave", resume);
+    el.addEventListener("focusin", pause);
+    el.addEventListener("focusout", resume);
+    el.addEventListener("touchstart", touched, { passive: true });
+    el.addEventListener("wheel", touched, { passive: true });
+
+    const rail = railRef.current;
+    if (!rail) return;
+    const SPEED = 30; // px per second
+    let direction = 1;
+    // Kept as a float and only written while running: a browser may round
+    // scrollLeft to whole pixels, and at 30px a second a frame's step is
+    // under one — read back and re-added, it would round to nothing.
+    let offset = rail.scrollLeft;
+    let last = performance.now();
+    let frame = 0;
+
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const rect = el.getBoundingClientRect();
+      const onScreen = rect.bottom > 0 && rect.top < window.innerHeight;
+      // A dialog opened from a card is over the page; the rail should wait.
+      const dialogOpen = document.querySelector("[role=dialog]") !== null;
+      const max = rail.scrollWidth - rail.clientWidth;
+      const running =
+        !paused &&
+        onScreen &&
+        !dialogOpen &&
+        !document.hidden &&
+        Date.now() >= holdUntil.current &&
+        max > 0;
+
+      if (!running) {
+        // Follow the reader's own scrolling, so the drift resumes from there.
+        offset = rail.scrollLeft;
+      } else {
+        offset += direction * SPEED * dt;
+        if (offset >= max) {
+          offset = max;
+          direction = -1;
+        } else if (offset <= 0) {
+          offset = 0;
+          direction = 1;
+        }
+        rail.scrollLeft = offset;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("pointerenter", pause);
+      el.removeEventListener("pointerleave", resume);
+      el.removeEventListener("focusin", pause);
+      el.removeEventListener("focusout", resume);
+      el.removeEventListener("touchstart", touched);
+      el.removeEventListener("wheel", touched);
+    };
+  }, [railRef, hold]);
+
+  return (
+    <div ref={box} className="relative">
+      <div
+        ref={railRef}
+        // Retained as a hook; the camera turn that used to scrub this rail's
+        // scrollLeft has been removed.
+        data-poster-rail
+        className={cn(
+          /*
+            ROOM ABOVE THE CARDS. A card lifts 10px on hover, and a
+            sideways scroller clips vertically too — overflow-x: auto forces
+            overflow-y off `visible` — so the lifted card's top was being
+            sliced off at the rail's edge. The top padding is space for the
+            lift to happen in; the bottom leaves room for the hover glow.
+          */
+          "no-scrollbar flex items-center gap-4 overflow-x-auto px-1 pt-5 pb-6",
+          className,
+        )}
+        /*
+          The rail ran to a hard edge, so the first and last cards were sliced
+          mid-word by the viewport — "…hindra" — which reads as a rendering
+          fault rather than as more content off-screen.
+
+          A mask fades the ends into the page instead, and it SAYS there is more
+          to the side, which a clean cut does not: a card dissolving is an
+          invitation to scroll, a card guillotined is a bug. useEdgeFade sets
+          each width from the rail's actual scroll position, so an end with
+          nothing beyond it carries no fade and a rail that fits carries none
+          at all.
+        */
+        style={railStyle}
+      >
+        {posters.map((poster, index) => (
+          <div key={poster.id}>
+            <PosterCard
+              poster={poster}
+              onSelect={onSelect}
+              priority={index === Math.floor(posters.length / 2)}
+            />
+          </div>
+        ))}
+      </div>
+      <RailArrow
+        direction="left"
+        label="Previous case study"
+        onClick={() => {
+          hold(8000);
+          step(-1);
+        }}
+        className="!grid left-3 sm:left-6"
+      />
+      <RailArrow
+        direction="right"
+        label="Next case study"
+        onClick={() => {
+          hold(8000);
+          step(1);
+        }}
+        className="!grid right-3 sm:right-6"
+      />
     </div>
   );
 }

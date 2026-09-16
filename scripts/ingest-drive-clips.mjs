@@ -33,7 +33,7 @@
  * Requires ffmpeg on PATH.
  */
 import { execFile } from "node:child_process";
-import { mkdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
@@ -117,15 +117,28 @@ async function walk(id, trail = []) {
   return found;
 }
 
-const files = await walk(folderId);
-if (files.length === 0) {
+/*
+  RE-RUNS ARE INCREMENTAL. A file whose Drive id is already in the manifest
+  was converted on an earlier run, and converting it again would both waste
+  the fetch and throw away the watermark stamped onto it since. The manifest
+  is merged rather than rewritten for the same reason: running this on one
+  new folder used to leave a manifest describing only that folder.
+*/
+const MANIFEST = `${OUT}/clips/manifest.json`;
+const previous = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, "utf8")) : [];
+const seen = new Set(previous.map((entry) => entry.driveId));
+
+const found = await walk(folderId);
+const files = found.filter((file) => !seen.has(file.id));
+console.log(`${found.length - files.length} already ingested, skipped`);
+if (found.length === 0) {
   console.error(
     "No videos found. If the folder is not empty, it is probably not shared\n" +
       `with the service account (${credentials().client_email}).`,
   );
   process.exit(1);
 }
-console.log(`${files.length} videos found\n`);
+console.log(`${files.length} new videos\n`);
 
 mkdirSync(`${OUT}/clips`, { recursive: true });
 mkdirSync(`${OUT}/posters`, { recursive: true });
@@ -158,7 +171,7 @@ async function convert(file, token) {
 const token = await auth.getAccessToken();
 const queue = [...files];
 const done = [];
-const manifest = [];
+const manifest = [...previous];
 
 // Four at a time: encoding is CPU-bound and fetching network-bound, so a small
 // pool keeps both busy without thrashing either.
@@ -194,7 +207,7 @@ await Promise.all(
   re-listing the whole Drive.
 */
 manifest.sort((a, b) => a.slug.localeCompare(b.slug, undefined, { numeric: true }));
-writeFileSync(`${OUT}/clips/manifest.json`, JSON.stringify(manifest, null, 2));
+writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2));
 
 const mb = (n) => (n / 1048576).toFixed(1);
 console.log(`\n${done.length}/${files.length} converted`);

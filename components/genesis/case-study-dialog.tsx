@@ -1,6 +1,9 @@
 "use client";
 
-import { type CaseStudy, isPublished } from "@/lib/case-studies";
+import { type CaseStudy, isPublished, leadClip } from "@/lib/case-studies";
+import { filmUrl } from "@/lib/films";
+import { mediaUrl } from "@/lib/media-url";
+import { reelClip, reelPoster } from "@/lib/work";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { Overlay } from "./overlay";
 
@@ -21,6 +24,7 @@ export function CaseStudyDialog({
   onClose: () => void;
 }) {
   const published = study ? isPublished(study) : false;
+  const clip = study ? leadClip(study) : undefined;
   const sections = study
     ? [
         { label: "The problem", body: study.problem },
@@ -41,10 +45,37 @@ export function CaseStudyDialog({
           <h2 className="mt-3 text-balance text-h3 font-normal leading-[1.08] tracking-tight text-bone sm:text-h2">
             {study.client}
           </h2>
+          {study.campaign && (
+            <p className="mt-2 text-lead leading-relaxed text-bone/80">{study.campaign}</p>
+          )}
           {study.headline && !study.headline.startsWith("TODO") && (
             <p className="mt-3 text-pretty text-body leading-relaxed text-ash sm:text-lead">
               {study.headline}
             </p>
+          )}
+
+          {/*
+            THE FILM THE POSTER WAS PLAYING, at full length where Drive serves
+            it and as the preview where it does not. Portrait, like the
+            footage, and capped by the window's height so a 9:16 video never
+            pushes the rest of the study off screen.
+          */}
+          {!study.hero && clip !== undefined && (
+            <div className="mt-6 flex justify-center overflow-hidden rounded-2xl border border-[var(--glass-border)] bg-ink">
+              <video
+                key={String(clip)}
+                poster={mediaUrl(reelPoster(clip))}
+                controls
+                autoPlay
+                playsInline
+                preload="metadata"
+                {...VIDEO_GUARD_CLIENT}
+                className="max-h-[70vh] w-full object-contain"
+              >
+                {filmUrl(clip) && <source src={filmUrl(clip)} type="video/mp4" />}
+                <source src={mediaUrl(reelClip(clip))} type="video/mp4" />
+              </video>
+            </div>
           )}
 
           {study.hero && (
@@ -97,8 +128,8 @@ export function CaseStudyDialog({
           */}
           {!published && sections.length === 0 && (
             <p className="mt-8 text-pretty text-small leading-relaxed text-ash">
-              The full write-up for this campaign is being prepared. The work
-              itself is in the portfolio below.
+              The full write-up for this campaign is being prepared. More of
+              the work is in the portfolio below.
             </p>
           )}
         </>

@@ -369,8 +369,13 @@ export const aiContent = {
     captioning one of them "Adi" would be inventing a credit. The section
     renders nothing at all until a file is listed here.
 
-    TODO(assets): per avatar, drop the files under public/avatars/<id>/ and
-    list them below — reel takes .mp4 paths, stills take images.
+    THREE ARE FILLED NOW. Genesis's Drive grew a folder per avatar under
+    AI Lab, and Tanvi, Bharat and Shivam have footage in theirs. `reel` holds
+    CLIP IDS, the same ids lib/work uses, so an avatar's window and the
+    portfolio play one file rather than two copies that can drift apart.
+
+    TODO(assets): Ivaanat, Jesko, Adi and Diya — their folders are empty.
+    Stills still take image paths.
   */
   avatars: [
     { id: "ivaanat", portrait: "/avatars/ivaanat.jpg", name: "Ivaanat", role: "Fashion & Beauty" as string | undefined,
@@ -378,7 +383,7 @@ export const aiContent = {
       reel: [] as string[], stills: [] as string[] },
     { id: "tanvi", portrait: "/avatars/tanvi.jpg", name: "Tanvi", role: "Head of Creatives | Genesis" as string | undefined,
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
-      reel: [] as string[], stills: [] as string[] },
+      reel: ["ai-lab-tanvi-uiiui", "ai-lab-tanvi-b2813828", "ai-lab-tanvi-photos"] as string[], stills: [] as string[] },
     { id: "jesko", portrait: "/avatars/jesko.jpg", name: "Jesko", role: "DJ | Techno artist",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: [] as string[], stills: [] as string[] },
@@ -390,10 +395,10 @@ export const aiContent = {
       reel: [] as string[], stills: [] as string[] },
     { id: "bharat", portrait: "/avatars/bharat.jpg", name: "Bharat", role: "Advocate",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
-      reel: [] as string[], stills: [] as string[] },
+      reel: ["ai-lab-bharat-bharat"] as string[], stills: [] as string[] },
     { id: "shivam", portrait: "/avatars/shivam.jpg", name: "Shivam", role: "Founder & CEO | Genesis",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
-      reel: [] as string[], stills: [] as string[] },
+      reel: ["ai-lab-shivam-sh1"] as string[], stills: [] as string[] },
   ],
   // The deck's own subtitle for the division, verbatim, in place of four
   // categories written before the guidelines existed.

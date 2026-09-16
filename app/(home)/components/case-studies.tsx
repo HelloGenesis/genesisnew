@@ -6,7 +6,7 @@ import { PosterRail, type Poster } from "@/components/genesis/poster-card";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
-import { caseStudiesPage, caseStudyList, isPublished } from "@/lib/case-studies";
+import { caseStudiesPage, caseStudyList, isPublished, leadClip } from "@/lib/case-studies";
 import { findWork, reelClip, reelPoster } from "@/lib/work";
 import { mediaUrl } from "@/lib/media-url";
 import { SectionShell } from "./section-shell";
@@ -63,27 +63,26 @@ export function CaseStudies() {
 
     /*
       `heroClip` wins over the catalogue piece's own lead. Two studies can
-      cover one client — Aditya Birla Capital has eighteen films behind two of
-      these cards — and without it both would open on the same video.
+      cover one client — Aditya Birla Capital has eighteen films behind
+      several of these cards — and without it they would all open on the same
+      video. `leadClip` makes that choice for the dialog as well.
     */
-    const clip =
-      study.heroClip === undefined
-        ? lead?.clip
-        : mediaUrl(reelClip(study.heroClip));
+    const id = leadClip(study);
+    const clip = id === undefined ? lead?.clip : mediaUrl(reelClip(id));
     const image =
-      study.heroClip === undefined
-        ? (lead?.poster ?? lead?.art)
-        : mediaUrl(reelPoster(study.heroClip));
+      id === undefined ? (lead?.poster ?? lead?.art) : mediaUrl(reelPoster(id));
 
     return {
       id: study.slug,
       category: study.discipline,
       image,
       clip,
-      // With no written study the client IS the title; with one, it steps
-      // back up to the eyebrow above it.
-      client: published ? study.client : undefined,
-      title: published ? (study.headline ?? study.client) : study.client,
+      // With no written study the client IS the title; with one — or with a
+      // named campaign — it steps back up to the eyebrow above it.
+      client: published || study.campaign ? study.client : undefined,
+      title: published
+        ? (study.headline ?? study.client)
+        : (study.campaign ?? study.client),
       meta: published && study.results?.[0] ? [study.results[0].value] : undefined,
     };
   });

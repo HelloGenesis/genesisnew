@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDriveClient, getRootFolderId, isDriveConfigured } from "./google-drive";
+import manifest from "../public/work/clips/manifest.json";
 
 /**
  * Resolving a public-looking media path to a file inside Genesis's Drive.
@@ -54,12 +55,40 @@ const PROPERTY_FILMS: Record<number, string> = {
   42: "11) Sarda Village.mp4",
 };
 
+/**
+ * THE NAMED CLIPS, by the Drive id the ingest recorded for each.
+ *
+ * Numbered films resolve by filename below. A named clip — `ai-lab-tanvi-uiiui`
+ * — has no filename to ask for: its id is a slug of the folder path and the
+ * original name, and Drive holds "uiiui.mp4" inside "AI Lab / Tanvi". Without
+ * this every named piece played its four-second preview on the detail page,
+ * because the film lookup walked /films and found nothing. The manifest
+ * already knows which Drive file each slug came from, so it is asked.
+ *
+ * Only slugs that are not bare numbers: the manifest records 1-32 under their
+ * pre-rename slugs (`influence-1`), which the numbered path handles.
+ */
+const NAMED_FILMS = new Map(
+  (manifest as { slug: string; driveId: string; name: string }[]).map(
+    (entry) => [entry.slug, entry] as const,
+  ),
+);
+
 /** Resolves `films/<n>.mp4` to the folder and filename Drive really has. */
 function filmSource(
   segments: string[],
-): { parentId: string; name: string } | null {
+): { parentId: string; name: string } | { file: DriveMediaFile } | null {
   if (segments.length !== 2 || segments[0] !== "films") return null;
-  const n = Number(segments[1].replace(/\.mp4$/i, ""));
+  const stem = segments[1].replace(/\.mp4$/i, "");
+
+  const named = NAMED_FILMS.get(stem);
+  if (named) {
+    return {
+      file: { id: named.driveId, name: named.name, mimeType: "video/mp4" },
+    };
+  }
+
+  const n = Number(stem);
   if (!Number.isInteger(n)) return null;
 
   const property = PROPERTY_FILMS[n];
@@ -192,7 +221,9 @@ export async function resolveDriveMedia(
       folder. Everything else still mirrors /public.
     */
     const film = filmSource(segments);
-    if (film) return findChild(film.parentId, film.name);
+    if (film) {
+      return "file" in film ? film.file : findChild(film.parentId, film.name);
+    }
 
     let parent = root;
     for (const segment of segments.slice(0, -1)) {

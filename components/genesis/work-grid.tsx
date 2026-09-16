@@ -382,25 +382,30 @@ export function WorkGrid({
  * relative to the screen, and a 40px control parked over the artwork covers
  * a real fraction of it.
  */
-function RailArrow({
+export function RailArrow({
   direction,
   onClick,
+  label,
+  className,
 }: {
   direction: "left" | "right";
   onClick: () => void;
+  label?: string;
+  className?: string;
 }) {
   const left = direction === "left";
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={left ? "Previous work" : "Next work"}
+      aria-label={label ?? (left ? "Previous work" : "Next work")}
       className={cn(
         "absolute top-1/2 hidden size-10 -translate-y-1/2 place-items-center rounded-full sm:grid",
         "border border-[var(--glass-border)] bg-[var(--surface-raised)]/85 text-bone backdrop-blur",
         "transition-colors hover:bg-[var(--hover-wash)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
         left ? "-left-2" : "-right-2",
+        className,
       )}
     >
       <svg
