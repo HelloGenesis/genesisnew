@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { Sparkles } from "lucide-react";
 
 import { AutomationSources } from "@/components/genesis/automation-diagram";
+import { AutomationCtas } from "@/components/genesis/automation-ctas";
 import { AvatarFan } from "@/components/genesis/avatar-fan";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
@@ -249,6 +250,8 @@ export function AiContent() {
             <figure className="mx-auto mt-6 max-w-[40rem] sm:mt-10">
               <AutomationSources />
             </figure>
+
+            <AutomationCtas className="mt-6 sm:mt-10" />
           </div>
         </div>
       </Reveal>

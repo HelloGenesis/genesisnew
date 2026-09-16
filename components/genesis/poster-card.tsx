@@ -349,19 +349,36 @@ export function PosterCard({
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    let paused = false;
-    const pause = () => {
-      paused = true;
+    /*
+      ON A PHONE IT HAS TO KEEP GOING, which the first version did not.
+      Tapping a card focused it, closing the dialog handed focus straight
+      back, and a focused card meant "paused" until focus went somewhere else
+      — which on a phone is usually never. So only a real MOUSE over the rail
+      and KEYBOARD focus (:focus-visible) pause it; a finger just holds it
+      for a few seconds, like the portfolio strips.
+    */
+    let hovering = false;
+    let focused = false;
+    const enter = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") hovering = true;
     };
-    const resume = () => {
-      paused = false;
+    const leave = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      hovering = false;
       hold(1500);
     };
-    const touched = () => hold(6000);
-    el.addEventListener("pointerenter", pause);
-    el.addEventListener("pointerleave", resume);
-    el.addEventListener("focusin", pause);
-    el.addEventListener("focusout", resume);
+    const focusIn = (event: FocusEvent) => {
+      focused = (event.target as Element).matches(":focus-visible");
+    };
+    const focusOut = () => {
+      focused = false;
+    };
+    const touched = () => hold(4000);
+    el.addEventListener("pointerenter", enter);
+    el.addEventListener("pointerleave", leave);
+    el.addEventListener("focusin", focusIn);
+    el.addEventListener("focusout", focusOut);
+    el.addEventListener("pointerdown", touched, { passive: true });
     el.addEventListener("touchstart", touched, { passive: true });
     el.addEventListener("wheel", touched, { passive: true });
 
@@ -385,7 +402,8 @@ export function PosterCard({
       const dialogOpen = document.querySelector("[role=dialog]") !== null;
       const max = rail.scrollWidth - rail.clientWidth;
       const running =
-        !paused &&
+        !hovering &&
+        !focused &&
         onScreen &&
         !dialogOpen &&
         !document.hidden &&
@@ -412,10 +430,11 @@ export function PosterCard({
 
     return () => {
       cancelAnimationFrame(frame);
-      el.removeEventListener("pointerenter", pause);
-      el.removeEventListener("pointerleave", resume);
-      el.removeEventListener("focusin", pause);
-      el.removeEventListener("focusout", resume);
+      el.removeEventListener("pointerenter", enter);
+      el.removeEventListener("pointerleave", leave);
+      el.removeEventListener("focusin", focusIn);
+      el.removeEventListener("focusout", focusOut);
+      el.removeEventListener("pointerdown", touched);
       el.removeEventListener("touchstart", touched);
       el.removeEventListener("wheel", touched);
     };

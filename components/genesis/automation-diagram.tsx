@@ -59,24 +59,30 @@ import { cn } from "@/lib/utils";
  *
  * Google Veo and Nano Banana came off at Genesis's instruction, replaced by
  * one Google Gemini.
+ *
+ * SYMBOLS ONLY, NO NAMES, at Genesis's instruction — and larger. The
+ * `-mark` files are the icon cut from the left of each supplied wordmark
+ * (the SVGs by a narrowed viewBox, the PNGs by a crop to the icon's own ink),
+ * so every entry is now roughly square and one shared height makes the set
+ * read as one size. The wordmark files stay beside them.
  */
 const APPLICATIONS = [
-  { name: "ChatGPT", src: "/brand/apps/chatgpt.svg", ratio: 1, mark: true },
-  { name: "Claude", src: "/brand/apps/claude.png", ratio: 4.65 },
+  { name: "ChatGPT", src: "/brand/apps/chatgpt.svg", ratio: 1 },
+  { name: "Claude", src: "/brand/apps/claude-mark.png", ratio: 1 },
   /* `scale` is the one hand-set number here. Midjourney's mark is line art
      — a hairline boat in a 1024 box — where every other icon is solid, so at
      the shared height its strokes render under a pixel and it reads as an
      empty space in the row. */
-  { name: "Midjourney", src: "/brand/apps/midjourney.svg", ratio: 1, mark: true, scale: 1.3 },
-  { name: "Runway", src: "/brand/apps/runway.png", ratio: 1, mark: true },
-  { name: "Kling", src: "/brand/apps/kling.png", ratio: 3.69 },
-  { name: "Google Gemini", src: "/brand/apps/gemini.png", ratio: 4.44 },
-  { name: "ElevenLabs", src: "/brand/apps/elevenlabs.png", ratio: 7.79 },
-  { name: "Higgsfield", src: "/brand/apps/higgsfield.png", ratio: 4.92 },
-  { name: "GitHub", src: "/brand/apps/github.svg", ratio: 3.53 },
-  { name: "Google Docs", src: "/brand/apps/google-docs.svg", ratio: 5.21 },
-  { name: "Google Sheets", src: "/brand/apps/google-sheets.svg", ratio: 5.8 },
-  { name: "Google Drive", src: "/brand/apps/google-drive.png", ratio: 5.96 },
+  { name: "Midjourney", src: "/brand/apps/midjourney.svg", ratio: 1, scale: 1.3 },
+  { name: "Runway", src: "/brand/apps/runway.png", ratio: 1 },
+  { name: "Kling", src: "/brand/apps/kling-mark.png", ratio: 0.99 },
+  { name: "Google Gemini", src: "/brand/apps/gemini-mark.png", ratio: 1.01 },
+  { name: "ElevenLabs", src: "/brand/apps/elevenlabs-mark.png", ratio: 0.63 },
+  { name: "Higgsfield", src: "/brand/apps/higgsfield-mark.png", ratio: 1.09 },
+  { name: "GitHub", src: "/brand/apps/github-mark.svg", ratio: 1.03 },
+  { name: "Google Docs", src: "/brand/apps/google-docs-mark.svg", ratio: 0.72 },
+  { name: "Google Sheets", src: "/brand/apps/google-sheets-mark.svg", ratio: 0.74 },
+  { name: "Google Drive", src: "/brand/apps/google-drive-mark.png", ratio: 1.12 },
 ];
 
 /**
@@ -91,11 +97,9 @@ const APPLICATIONS = [
  * Square marks take 1.5x the height, which is the opposite correction: an
  * icon set to a wordmark's cap height looks smaller than everything by it.
  */
-function logoBox(app: (typeof APPLICATIONS)[number], height: number, maxWidth: number) {
+function logoBox(app: (typeof APPLICATIONS)[number], height: number) {
   const scale = "scale" in app ? (app.scale as number) : 1;
-  const h = app.mark
-    ? height * 1.5 * scale
-    : Math.min(height, maxWidth / app.ratio) * scale;
+  const h = height * scale;
   return { w: h * app.ratio, h };
 }
 
@@ -246,7 +250,7 @@ function WideDiagram({ className }: { className?: string }) {
         side.apps.map((app, index) => {
           const gap = (height - top * 2) / Math.max(side.apps.length - 1, 1);
           const y = top + index * gap;
-          const box = logoBox(app, 18, 112);
+          const box = logoBox(app, 40);
           const arrive = side.dir === 1 ? hub.x : hub.x + hub.w;
           /*
             A cubic with both handles pulled horizontally, so a strand leaves
@@ -357,9 +361,8 @@ function TallDiagram({ className }: { className?: string }) {
   const markW = 120;
   const markH = Math.round((markW / AI_LAB_MARK.width) * AI_LAB_MARK.height);
 
-  /* Where a strand leaves its logo, and how much room that leaves the logo. */
+  /* Where a strand leaves its logo. */
   const tap = 118;
-  const logoMax = 100;
 
   const taps = APPLICATIONS.map((app, index) => {
     const above = index < perSide * 2;
@@ -421,7 +424,7 @@ function TallDiagram({ className }: { className?: string }) {
         const pull = 34 * bend;
         const d = `M ${x} ${y} C ${x} ${y + pull}, ${cx} ${toY - pull * 1.1}, ${cx} ${toY}`;
         const stroke = bend === 1 ? "url(#gm-ai-line-down)" : "url(#gm-ai-line-up)";
-        const box = logoBox(app, 16, logoMax);
+        const box = logoBox(app, 32);
         return (
           <g key={app.name}>
             <path d={d} fill="none" stroke={stroke} strokeWidth="1.4" opacity="0.6" />
