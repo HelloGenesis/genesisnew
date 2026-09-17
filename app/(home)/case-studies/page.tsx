@@ -60,10 +60,18 @@ export default function CaseStudiesPage() {
           <SectionLabel dot tone="brand">
             {caseStudiesPage.label}
           </SectionLabel>
-          <h1 className="mt-6 text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
-            {caseStudiesPage.heading}{" "}
+          {/*
+            THE PORTFOLIO'S OWN TITLE, which Genesis wrote for this board —
+            the same pair the homepage section carries, with the separator as
+            its own muted span so it reads as a divider between two names.
+          */}
+          <h1 className="mt-6 whitespace-nowrap text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2 lg:text-h1">
+            Portfolio{" "}
+            <span aria-hidden className="text-faint">
+              -
+            </span>{" "}
             <span className="font-serif font-normal italic text-brand-ink">
-              {caseStudiesPage.headingAccent}
+              Case Studies
             </span>
           </h1>
         </Reveal>
