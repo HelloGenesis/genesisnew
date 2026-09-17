@@ -6,7 +6,7 @@ import { PosterRail, type Poster } from "@/components/genesis/poster-card";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
-import { caseStudiesPage, caseStudyList, isPublished, leadClip } from "@/lib/case-studies";
+import { caseStudiesPage, caseStudyList, disciplines, isPublished, leadClip } from "@/lib/case-studies";
 import { findWork, reelClip, reelPoster } from "@/lib/work";
 import { mediaUrl } from "@/lib/media-url";
 import { SectionShell } from "./section-shell";
@@ -74,7 +74,8 @@ export function CaseStudies() {
 
     return {
       id: study.slug,
-      category: study.discipline,
+      category: disciplines(study)[0],
+      extraCategories: disciplines(study).slice(1),
       image,
       clip,
       // With no written study the client IS the title; with one — or with a

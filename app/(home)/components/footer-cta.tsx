@@ -1,6 +1,5 @@
 import { Atmosphere } from "@/components/genesis/atmosphere";
 import { GenesisForm } from "@/components/genesis/genesis-form";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { footerCta } from "@/lib/home-content";
 
@@ -30,20 +29,15 @@ export function FooterCta() {
               </span>
             </h2>
 
-            <div className="flex flex-col items-start gap-4">
-              <p className="max-w-sm text-small leading-relaxed text-ash">
-                {footerCta.body}
-              </p>
-              <GlassButton
-                href={footerCta.primaryCta.href}
-                variant="brand"
-                size="lg"
-                arrow
-                magnetic
-              >
-                {footerCta.primaryCta.label}
-              </GlassButton>
-            </div>
+            {/*
+              NO BUTTON HERE ANY MORE. "Contact us" pointed at the form
+              directly beneath it, and Genesis did not like a button to the
+              form sitting on top of the form. The same button now closes the
+              portfolio, where it has somewhere to take the reader.
+            */}
+            <p className="max-w-sm text-small leading-relaxed text-ash">
+              {footerCta.body}
+            </p>
           </div>
         </Reveal>
 

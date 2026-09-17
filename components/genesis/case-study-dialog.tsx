@@ -1,6 +1,6 @@
 "use client";
 
-import { type CaseStudy, isPublished, leadClip } from "@/lib/case-studies";
+import { type CaseStudy, disciplines, isPublished, leadClip } from "@/lib/case-studies";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
 import { reelClip, reelPoster } from "@/lib/work";
@@ -41,7 +41,7 @@ export function CaseStudyDialog({
     >
       {study && (
         <>
-          <p className="micro-label !text-brand">{study.discipline}</p>
+          <p className="micro-label !text-brand">{disciplines(study).join(" · ")}</p>
           <h2 className="mt-3 text-balance text-h3 font-normal leading-[1.08] tracking-tight text-bone sm:text-h2">
             {study.client}
           </h2>

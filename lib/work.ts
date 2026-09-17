@@ -59,6 +59,8 @@ export const CATEGORIES = [
   "Launch Films",
   "Photo Gallery",
   "Product Explainers",
+  /* Added at Genesis's request for the animated and designed pieces. */
+  "Motion Graphics & Design",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
@@ -461,9 +463,6 @@ const catalogue: WorkItem[] = [
     vertical: "Studios",
     format: "Reels",
     reel: [
-      "studios-1-draft-9-eat-move-heal",
-      "studios-6-common-mistakes",
-      "studios-7-draft6-income-protect",
       "studios-friends-final-1",
       "studios-wo-vo-sales-pro",
       "studios-1x1",
@@ -472,6 +471,24 @@ const catalogue: WorkItem[] = [
       "studios-ddddd",
       "studios-video-001",
       "studios-video-02",
+    ],
+  },
+  {
+    /*
+     * THE ANIMATED PIECES, out of "Selected Production Work" and into their
+     * own entry so Genesis's Motion Graphics & Design filter has something
+     * behind it. The pixel-art explainers and the app walkthrough are design
+     * work, not shoots.
+     */
+    slug: "studios-motion-design",
+    client: "Genesis Studios",
+    title: "Motion Graphics & Design",
+    vertical: "Studios",
+    format: "Motion Graphics & Design",
+    reel: [
+      "studios-7-draft6-income-protect",
+      "studios-1-draft-9-eat-move-heal",
+      "studios-6-common-mistakes",
     ],
   },
   {

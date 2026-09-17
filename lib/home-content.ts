@@ -764,7 +764,6 @@ export const clients = {
   label: "",
   heading: "Our",
   headingAccent: "clients",
-  body: "Fifteen brands across banking, insurance, hospitality, real estate, media and education.",
   /*
    * THE REAL LOGO FILES, at last. This was a list of NAMES rendered as text
    * wordmarks under a standing TODO ("Ask tanvi"); it is Genesis's own

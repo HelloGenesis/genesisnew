@@ -31,7 +31,11 @@ export type CaseStudy = {
   /** The campaign's own name, where it has one. */
   campaign?: string;
   vertical: Vertical;
-  discipline: string;
+  /**
+   * What the work IS, shown as the poster's label. A list where Genesis gave
+   * a card two ("event shoot and aftermovie - two tabs"); each is its own pill.
+   */
+  discipline: string | string[];
   /** Pulled from the work catalogue where a piece of this campaign exists. */
   hero?: string;
   heroPoster?: string;
@@ -56,7 +60,7 @@ export type CaseStudy = {
   work?: string[];
 };
 
-export const caseStudyList: CaseStudy[] = [
+const studies: CaseStudy[] = [
   {
     slug: "mahindra-finance-influencer-campaign",
     client: "Mahindra Finance",
@@ -93,8 +97,9 @@ export const caseStudyList: CaseStudy[] = [
   {
     slug: "aditya-birla-capital-brand-performance",
     client: "Aditya Birla Capital",
+    campaign: "Adi · AI Avatar",
     vertical: "Influence",
-    discipline: "Brand & performance content",
+    discipline: "AI avatar",
     work: ["aditya-birla-capital-campaign"],
     heroClip: 29,
   },
@@ -102,7 +107,7 @@ export const caseStudyList: CaseStudy[] = [
     slug: "mahindra-finance-content-production",
     client: "Mahindra Finance",
     vertical: "Studios",
-    discipline: "Content production",
+    discipline: "UGC",
     work: ["mahindra-finance-influencer-campaign"],
     heroClip: 18,
   },
@@ -121,7 +126,7 @@ export const caseStudyList: CaseStudy[] = [
     client: "Aditya Birla Capital",
     campaign: "#JumpForHealth",
     vertical: "Influence",
-    discipline: "Influencer campaign",
+    discipline: "UGC",
     work: ["aditya-birla-capital-campaign"],
     heroClip: 8,
   },
@@ -139,7 +144,7 @@ export const caseStudyList: CaseStudy[] = [
     client: "Aditya Birla Health Insurance",
     campaign: "100% Health & 100% Health Insurance",
     vertical: "Studios",
-    discipline: "Reels",
+    discipline: ["Event shoot", "Aftermovie"],
     work: ["abhi-health-content"],
     heroClip:
       "studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance",
@@ -149,8 +154,8 @@ export const caseStudyList: CaseStudy[] = [
     client: "Genesis Studios",
     campaign: "Income Protect",
     vertical: "Studios",
-    discipline: "Reels",
-    work: ["studios-selected-production"],
+    discipline: "Motion graphics & design",
+    work: ["studios-motion-design"],
     heroClip: "studios-7-draft6-income-protect",
   },
   {
@@ -158,7 +163,7 @@ export const caseStudyList: CaseStudy[] = [
     client: "Aditya Birla Capital",
     campaign: "Bombay Running Crew",
     vertical: "Influence",
-    discipline: "Influencer campaign",
+    discipline: "Influencer community campaign",
     work: ["aditya-birla-capital-campaign"],
     heroClip: 13,
   },
@@ -176,7 +181,7 @@ export const caseStudyList: CaseStudy[] = [
     client: "Aditya Birla Capital",
     campaign: "BTS with Vikrant Massey",
     vertical: "Influence",
-    discipline: "Celebrity content",
+    discipline: ["BTS", "Celebrity"],
     work: ["aditya-birla-capital-campaign"],
     heroClip: 2,
   },
@@ -185,7 +190,7 @@ export const caseStudyList: CaseStudy[] = [
     client: "Aditya Birla Health Insurance",
     campaign: "World Menopause Day",
     vertical: "Studios",
-    discipline: "Reels",
+    discipline: ["Studios", "Shoot & post"],
     work: ["abhi-health-content"],
     heroClip: "studios-final-menopause-abhi-02",
   },
@@ -212,7 +217,7 @@ export const caseStudyList: CaseStudy[] = [
     client: "Bharat",
     campaign: "AI Avatar",
     vertical: "AI Labs",
-    discipline: "AI avatar",
+    discipline: ["AI avatar", "Founder-led"],
     work: ["ai-avatar-bharat"],
     heroClip: "ai-lab-bharat-bharat",
   },
@@ -221,14 +226,53 @@ export const caseStudyList: CaseStudy[] = [
     client: "Tanvi",
     campaign: "AI Avatar",
     vertical: "AI Labs",
-    discipline: "AI avatar",
+    discipline: ["AI avatar", "Founder-led"],
     work: ["ai-avatar-tanvi"],
     heroClip: "ai-lab-tanvi-uiiui",
   },
 ];
 
+/**
+ * THE SLIDER'S ORDER, Genesis's for the first five: Adi, Vikrant, Akash's
+ * #JumpForHealth, Bharat, Mahindra Finance. The rest follow in an order that
+ * alternates clients and divisions so no two neighbours look alike. Anything
+ * not named here keeps its place at the end.
+ */
+const ORDER = [
+  "aditya-birla-capital-brand-performance",
+  "aditya-birla-capital-vikrant-massey",
+  "aditya-birla-capital-jump-for-health",
+  "ai-avatar-bharat",
+  "mahindra-finance-content-production",
+  "abhi-ka-star",
+  "ai-avatar-tanvi",
+  "aditya-birla-capital-lets-face-it",
+  "house-of-hiranandani",
+  "abhi-world-menopause-day",
+  "aditya-birla-capital-bombay-running",
+  "income-protect",
+  "abhi-100-health",
+  "aditya-birla-capital-matcha",
+  "mahindra-finance-influencer-campaign",
+  "aditya-birla-capital-content-campaign",
+];
+
+const rank = (slug: string) => {
+  const index = ORDER.indexOf(slug);
+  return index === -1 ? ORDER.length : index;
+};
+
+export const caseStudyList: CaseStudy[] = [...studies].sort(
+  (a, b) => rank(a.slug) - rank(b.slug),
+);
+
 export function findCaseStudy(slug: string): CaseStudy | undefined {
   return caseStudyList.find((study) => study.slug === slug);
+}
+
+/** A study's labels as a list, whichever way it was written. */
+export function disciplines(study: CaseStudy): string[] {
+  return Array.isArray(study.discipline) ? study.discipline : [study.discipline];
 }
 
 /**

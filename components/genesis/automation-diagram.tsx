@@ -65,10 +65,16 @@ import { cn } from "@/lib/utils";
  * (the SVGs by a narrowed viewBox, the PNGs by a crop to the icon's own ink),
  * so every entry is now roughly square and one shared height makes the set
  * read as one size. The wordmark files stay beside them.
+ *
+ * `colour` KEEPS THE BRAND'S OWN COLOURS, which Genesis asked for. Only the
+ * five marks that have any — Claude, Gemini and the three Google apps — carry
+ * it. The rest are black artwork, their brands' real colour, and still go
+ * through .app-mark so they turn white on the dark theme instead of
+ * disappearing into it.
  */
 const APPLICATIONS = [
   { name: "ChatGPT", src: "/brand/apps/chatgpt.svg", ratio: 1 },
-  { name: "Claude", src: "/brand/apps/claude-mark.png", ratio: 1 },
+  { name: "Claude", src: "/brand/apps/claude-mark.png", ratio: 1, colour: true },
   /* `scale` is the one hand-set number here. Midjourney's mark is line art
      — a hairline boat in a 1024 box — where every other icon is solid, so at
      the shared height its strokes render under a pixel and it reads as an
@@ -76,13 +82,13 @@ const APPLICATIONS = [
   { name: "Midjourney", src: "/brand/apps/midjourney.svg", ratio: 1, scale: 1.3 },
   { name: "Runway", src: "/brand/apps/runway.png", ratio: 1 },
   { name: "Kling", src: "/brand/apps/kling-mark.png", ratio: 0.99 },
-  { name: "Google Gemini", src: "/brand/apps/gemini-mark.png", ratio: 1.01 },
+  { name: "Google Gemini", src: "/brand/apps/gemini-mark.png", ratio: 1.01, colour: true },
   { name: "ElevenLabs", src: "/brand/apps/elevenlabs-mark.png", ratio: 0.63 },
   { name: "Higgsfield", src: "/brand/apps/higgsfield-mark.png", ratio: 1.09 },
   { name: "GitHub", src: "/brand/apps/github-mark.svg", ratio: 1.03 },
-  { name: "Google Docs", src: "/brand/apps/google-docs-mark.svg", ratio: 0.72 },
-  { name: "Google Sheets", src: "/brand/apps/google-sheets-mark.svg", ratio: 0.74 },
-  { name: "Google Drive", src: "/brand/apps/google-drive-mark.png", ratio: 1.12 },
+  { name: "Google Docs", src: "/brand/apps/google-docs-mark.svg", ratio: 0.72, colour: true },
+  { name: "Google Sheets", src: "/brand/apps/google-sheets-mark.svg", ratio: 0.74, colour: true },
+  { name: "Google Drive", src: "/brand/apps/google-drive-mark.png", ratio: 1.12, colour: true },
 ];
 
 /**
@@ -281,7 +287,7 @@ function WideDiagram({ className }: { className?: string }) {
                 width={box.w}
                 height={box.h}
                 preserveAspectRatio="xMidYMid meet"
-                className="app-mark"
+                className={"colour" in app ? undefined : "app-mark"}
               >
                 <title>{app.name}</title>
               </image>
@@ -455,7 +461,7 @@ function TallDiagram({ className }: { className?: string }) {
               width={box.w}
               height={box.h}
               preserveAspectRatio="xMidYMid meet"
-              className="app-mark"
+              className={"colour" in app ? undefined : "app-mark"}
             >
               <title>{app.name}</title>
             </image>

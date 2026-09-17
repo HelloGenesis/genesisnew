@@ -1,6 +1,8 @@
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
+import { GlassButton } from "@/components/genesis/glass-button";
 import { WorkGrid } from "@/components/genesis/work-grid";
+import { footerCta } from "@/lib/home-content";
 import { expandToClips, work, type WorkItem } from "@/lib/work";
 
 /**
@@ -109,6 +111,27 @@ export function Portfolio() {
 
         <Reveal variant="scene" className="fit-window mt-[var(--block-gap)]">
           <WorkGrid items={forHomepage()} rail />
+        </Reveal>
+
+        {/*
+          TWO WAYS ON FROM THE WORK. Back up to the case studies, or down to
+          the brief. "Contact us" is the footer pitch's own button, moved
+          here rather than copied — see FooterCta. Bare hashes, so both
+          scroll in place instead of re-rendering the page.
+        */}
+        <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center gap-3">
+          <GlassButton href="#case-studies" variant="glass" size="lg" arrow>
+            View all case studies
+          </GlassButton>
+          <GlassButton
+            href={footerCta.primaryCta.href.replace(/^\//, "")}
+            variant="brand"
+            size="lg"
+            arrow
+            magnetic
+          >
+            {footerCta.primaryCta.label}
+          </GlassButton>
         </Reveal>
       </div>
     </section>

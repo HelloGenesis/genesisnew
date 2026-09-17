@@ -327,8 +327,13 @@ export function WorkGrid({
                         1074 points on a 800-point laptop. `20vh` caps a tile
                         at about 29vh tall, which keeps both rows and the
                         chrome inside one screen at any window size.
+
+                        LOOSENED FROM 15.5vh TO 22vh at Genesis's request:
+                        the tiles read as thumbnails, and "thoda sa slide
+                        hoga toh chalega" — a little scroll past one screen
+                        is an acceptable price for posters you can read.
                       */
-                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(7rem,min(36vw,15.5vh),14rem)]"
+                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(9rem,min(36vw,22vh),16rem)]"
                     >
                       <WorkTile item={item} variant="fill" onOpen={() => setOpenSlug(item.slug)} />
                     </div>

@@ -159,8 +159,14 @@ function useFanRoom(): boolean {
   was left on the old `clamp(7.5rem,14vw,13rem)`. So on a short window the
   box reserved room for a card half a size larger than the one drawn in it,
   which is the band of nothing Genesis saw under the roster.
+
+  THE HEIGHT BOUND WAS THE ONE BITING. On a laptop 23vh came in well under
+  14vw, so the cards were held to about 180px while the fan had width to
+  spare, and Genesis found them small. 28vh lets the width bound decide on a
+  typical laptop; the fan spans about seven card widths, and 14vw keeps that
+  inside the window.
 */
-const CARD_W = "clamp(6.75rem,min(14vw,23vh),13rem)";
+const CARD_W = "clamp(6.75rem,min(14vw,28vh),15rem)";
 
 export function AvatarFan({
   avatars,

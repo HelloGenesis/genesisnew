@@ -123,13 +123,8 @@ export function ClientLogos() {
       label={clients.label}
       heading={clients.heading}
       headingAccent={clients.headingAccent}
-      body={clients.body}
-      /*
-        Off on phones, at Genesis's request ("remove highlighted text on
-        mobile"). On a narrow screen the line is three rows of caption between
-        the heading and the wall it describes; the marks make the point faster.
-      */
-      bodyClassName="hidden sm:block"
+      /* No standfirst: Genesis took the "Fifteen brands…" line off at every
+         width. The marks make the point. */
       tone="brand"
       origin="center"
       intensity={0.14}
@@ -189,12 +184,14 @@ export function ClientLogos() {
                 plain word.
               */}
               {sector.expands ? (
-                <abbr
-                  title={sector.expands}
-                  className="micro-label !text-faint no-underline"
-                >
-                  {sector.label}
-                </abbr>
+                /* THE FULL FORM IS PRINTED, not hidden in a tooltip —
+                   Genesis wants a reader to see what BFSI stands for. */
+                <span className="micro-label !text-faint">
+                  <abbr title={sector.expands} className="no-underline">
+                    {sector.label}
+                  </abbr>{" "}
+                  ({sector.expands})
+                </span>
               ) : (
                 <span className="micro-label !text-faint">{sector.label}</span>
               )}

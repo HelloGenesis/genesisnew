@@ -309,7 +309,7 @@ export function BrandingDesign() {
             </div>
           </FolderPanel>
 
-          <Pointer className="pointer-events-none absolute -right-12 -bottom-[4.75rem] z-20 hidden w-24 xl:block" />
+          <Pointer className="pointer-events-none absolute -right-14 -bottom-[4.5rem] z-20 hidden w-28 xl:block" />
         </Reveal>
 
         {/* ─── The positioning ──────────────────────────────────────── */}
@@ -317,9 +317,8 @@ export function BrandingDesign() {
           delay={0.06}
           className="relative isolate order-2 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-2 xl:w-auto xl:max-w-none"
         >
-          {/* The Genesis N itself, in its own yellow, blurred just enough to
-              sit behind the glass while still reading as the N. Showing
-              above and below the folder, where the reference has its shape. */}
+          {/* The Genesis N behind the glass, showing above and below the
+              folder, where the reference has its shape. */}
           <div
             aria-hidden
             /*
@@ -329,14 +328,19 @@ export function BrandingDesign() {
               yellow slab leaking out from under it. Full size from sm, where
               there is room for it to be what it is.
             */
-            className="pointer-events-none absolute top-1/2 left-1/2 -z-10 aspect-[306/500] h-[106%] -translate-x-[42%] -translate-y-1/2 opacity-65 sm:h-[132%] sm:opacity-100"
+            className="pointer-events-none absolute top-1/2 left-1/2 -z-10 aspect-[798/1167] h-[106%] -translate-x-[42%] -translate-y-1/2 opacity-65 sm:h-[132%] sm:opacity-100"
           >
+            {/*
+              THE FLUFFY N, Genesis's soft 3D render of the mark, in place of
+              the flat yellow one. It is already soft-edged, so the blur that
+              the flat mark needed to sit behind the glass is only a touch.
+            */}
             <Image
-              src="/brand/genesis-n.png"
+              src="/brand/genesis-n-fluffy.png"
               alt=""
               fill
-              sizes="340px"
-              className="object-contain blur-[5px]"
+              sizes="420px"
+              className="object-contain blur-[1.5px]"
             />
           </div>
 
@@ -350,7 +354,7 @@ export function BrandingDesign() {
             */
             contentClassName="flex flex-col justify-center px-6 pt-8 pb-14 sm:min-h-[min(16rem,26vh)] sm:px-10 sm:pb-16 xl:min-h-[min(26rem,34vh)]"
           >
-            <h3 className="text-[2rem] leading-[1.04] font-semibold tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
+            <h3 className="text-[2rem] leading-[1.04] font-normal tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
               Branding
               <br />
               Positioning,
@@ -514,31 +518,23 @@ function ArrowCircle({
  * reference: black, lit at the rim in the accent. Decoration only.
  */
 function Pointer({ className }: { className?: string }) {
+  /*
+    GENESIS'S OWN 3D CURSOR, replacing the arrow drawn here in SVG. The file
+    is trimmed to its ink, so the box below is the cursor itself and the
+    placement classes at the call site still put its tip where the old one
+    sat.
+  */
   return (
-    <svg
+    <Image
+      src="/brand/pointer-3d.png"
+      alt=""
       aria-hidden
-      viewBox="-10 -10 80 104"
-      className={cn("overflow-visible", className)}
-      style={{ filter: "drop-shadow(0 0 10px rgb(255 197 22 / 0.55)) drop-shadow(0 18px 24px rgb(0 0 0 / 0.6))" }}
-    >
-      <defs>
-        <linearGradient id="bd-pointer-rim" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffc516" />
-          <stop offset="100%" stopColor="#ffc516" />
-        </linearGradient>
-        <linearGradient id="bd-pointer-body" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#242426" />
-          <stop offset="100%" stopColor="#000000" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M0 0 L0 64 L16 49 L28 76 L41 70 L29 44 L51 44 Z"
-        fill="url(#bd-pointer-body)"
-        stroke="url(#bd-pointer-rim)"
-        strokeWidth="3.5"
-        strokeLinejoin="round"
-      />
-    </svg>
+      width={360}
+      height={289}
+      sizes="7rem"
+      className={cn("h-auto", className)}
+      style={{ filter: "drop-shadow(0 18px 24px rgb(0 0 0 / 0.55))" }}
+    />
   );
 }
 

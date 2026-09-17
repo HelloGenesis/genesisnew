@@ -163,11 +163,12 @@ export function WorkDetail({ item }: { item: WorkItem }) {
       )}
 
       {/*
-        THE NAME LEADS ON A PHONE ("ye text upar aana chahiye"). Stacked, the
-        player filled the first screen and the reader had to scroll past a
-        film to learn whose it was. From `sm` up the order is as before.
+        THE NAME LEADS, AT EVERY WIDTH. It went above the player on a phone
+        first ("ye text upar aana chahiye") and Genesis has asked for the same
+        on desktop: a window that opens on a film with no headline over it
+        does not say what the film is.
       */}
-      <header className="-order-1 flex flex-col gap-3 sm:order-none">
+      <header className="-order-1 flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="micro-label text-brand-ink">{item.vertical}</span>
           <span aria-hidden className="text-faint">
@@ -175,7 +176,7 @@ export function WorkDetail({ item }: { item: WorkItem }) {
           </span>
           <span className="micro-label !text-faint">{item.format}</span>
         </div>
-        <h1 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
+        <h1 className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
           {item.client}
         </h1>
         <p className="text-lead leading-relaxed text-ash">{item.title}</p>

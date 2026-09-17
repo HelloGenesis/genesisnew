@@ -25,6 +25,8 @@ export type Poster = {
   title: string;
   /** e.g. "Brand Film", "Product Reel". */
   category: string;
+  /** Further labels, drawn as pills after `category` ("two tabs"). */
+  extraCategories?: string[];
   client?: string;
   meta?: string[];
   /** Optional real artwork. Falls back to a generated gradient. */
@@ -205,9 +207,17 @@ export function PosterCard({
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(0_0_0/0.45)_0%,rgb(0_0_0/0.26)_12%,rgb(0_0_0/0.12)_24%,rgb(0_0_0/0.04)_36%,transparent_50%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(var(--n-angle),rgb(0_0_0/0.92)_0%,rgb(0_0_0/0.86)_12%,rgb(0_0_0/0.74)_24%,rgb(0_0_0/0.58)_38%,rgb(0_0_0/0.4)_52%,rgb(0_0_0/0.24)_66%,rgb(0_0_0/0.12)_78%,rgb(0_0_0/0.04)_90%,transparent_100%)]" />
 
-        <span className="glass absolute left-3 top-3 rounded-full px-3 py-1 text-micro font-medium tracking-wide text-bone">
-          {poster.category}
-        </span>
+        {/* Room is left on the right for the play glyph. */}
+        <div className="absolute left-3 right-14 top-3 flex flex-wrap gap-1.5">
+          {[poster.category, ...(poster.extraCategories ?? [])].map((label) => (
+            <span
+              key={label}
+              className="glass rounded-full px-3 py-1 text-micro font-medium tracking-wide text-bone"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
 
         {/*
           ONLY WHERE THERE IS FOOTAGE. The glyph was painted on all four cards
