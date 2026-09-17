@@ -404,7 +404,7 @@ export const aiContent = {
       reel: ["ai-lab-bharat-bharat"] as string[], stills: [] as string[] },
     { id: "shivam", portrait: "/avatars/shivam.jpg", name: "Shivam", role: "Founder & CEO | Genesis",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
-      reel: ["ai-lab-shivam-sh1"] as string[], stills: [] as string[] },
+      reel: ["ai-lab-shivam-sh1", "ai-lab-shivam-sh2"] as string[], stills: [] as string[] },
   ],
   // The deck's own subtitle for the division, verbatim, in place of four
   // categories written before the guidelines existed.

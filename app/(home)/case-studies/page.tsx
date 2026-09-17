@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { Atmosphere } from "@/components/genesis/atmosphere";
-import { CaseStudyBody } from "@/components/genesis/case-study-body";
+import { CaseStudyGrid, type CaseStudyCard } from "@/components/genesis/case-study-grid";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
@@ -11,12 +11,16 @@ import {
   videoOnlyStudies,
   type CaseStudyCopy,
 } from "@/lib/case-study-copy";
-import type { ReelId } from "@/lib/work";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
-import { cn } from "@/lib/utils";
-import { VIDEO_GUARD } from "@/lib/video-guard";
-import { reelClip, reelPoster } from "@/lib/work";
+import {
+  reelClip,
+  reelPoster,
+  work,
+  workFilters,
+  type ReelId,
+  type WorkItem,
+} from "@/lib/work";
 
 export const metadata: Metadata = {
   title: "Case Studies",
@@ -25,37 +29,29 @@ export const metadata: Metadata = {
 };
 
 /**
- * /case-studies — every study, one row each, film and write-up side by side.
+ * /case-studies — the whole set as a work index, after Schbang's /work.
  *
- * IT IS A PAGE AGAIN. The route was folded into the homepage slider and
- * redirected there; Genesis asked for "View all case studies" to open a page
- * of its own with the whole set on it, so the redirect for this path is gone
- * (the per-study URLs still redirect — there are no per-study pages).
- *
- * THE SIDES ALTERNATE, as asked: write-up left and film right, then the
- * other way round, so a long page reads as a rhythm rather than a column.
- * On a phone every row stacks write-up first.
- *
- * THE FILM KEEPS ITS OWN SHAPE. No aspect box: the video sizes itself from
- * the file, portrait or landscape, and is only capped in height so a 9:16
- * film does not stand taller than the window.
+ * Filter chips over a grid of reel cards — client in bold, one line under
+ * it — and each study opens over the page in the layout Genesis drew:
+ * headline across the top, film on the left, copy on the right, arrows to
+ * step through the rest. See CaseStudyGrid and CaseStudyView.
  *
  * THE COPY IS GENESIS'S, from their case-study master, matched to the
  * portfolio clip each study describes. Four pieces — FOY, Dove, L'Oréal and
- * HT Brunch — are here as films only, at Genesis's request. See
- * lib/case-study-copy for what was held back and why.
+ * HT Brunch — are films only, at Genesis's request. See lib/case-study-copy
+ * for what was held back and why.
  */
 export default function CaseStudiesPage() {
+  const pieces = cards.map((card) => pieceFor(card.clip)).filter(
+    (piece): piece is WorkItem => piece !== undefined,
+  );
+
   return (
     <Atmosphere
       tone="brand"
       origin="top"
       intensity={0.2}
-      /*
-        overflow-CLIP, not hidden: hidden makes this box a scroll container,
-        and a sticky film inside one sticks to the box, not the window.
-      */
-      className="relative isolate min-h-dvh overflow-clip"
+      className="relative isolate min-h-dvh overflow-hidden"
       style={{ background: "var(--page-ground-compact)" }}
     >
       <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pt-36 pb-24">
@@ -71,15 +67,12 @@ export default function CaseStudiesPage() {
           </h1>
         </Reveal>
 
-        <ol className="mt-16 flex flex-col gap-24 sm:gap-32">
-          {ordered.map((entry, index) =>
-            "headline" in entry ? (
-              <StudyRow key={entry.n} copy={entry} index={index} />
-            ) : (
-              <FilmRow key={entry.n} brand={entry.brand} clip={entry.clip} />
-            ),
-          )}
-        </ol>
+        <Reveal delay={0.05} className="mt-10">
+          <CaseStudyGrid
+            cards={cards}
+            filters={workFilters(pieces)}
+          />
+        </Reveal>
 
         <Reveal className="mt-24 flex flex-wrap items-center gap-3">
           <GlassButton href="/#library" variant="glass" size="lg" arrow>
@@ -94,59 +87,44 @@ export default function CaseStudiesPage() {
   );
 }
 
+/** The portfolio piece a clip belongs to, whose facets the card borrows. */
+function pieceFor(clip: ReelId): WorkItem | undefined {
+  return work.find((item) => item.reel?.some((id) => String(id) === String(clip)));
+}
+
+function facetsFor(clip: ReelId): string[] {
+  const piece = pieceFor(clip);
+  if (!piece) return [];
+  return [piece.vertical, piece.format, ...(piece.tags ?? [])];
+}
+
+function media(clip: ReelId) {
+  return {
+    poster: mediaUrl(reelPoster(clip)),
+    preview: mediaUrl(reelClip(clip)),
+    film: filmUrl(clip),
+  };
+}
+
 /*
   ORDER: the homepage slider's first — Genesis chose that order — then every
-  other study in the master document's own order.
+  other study in the master document's own order, the film-only pieces in
+  their place.
 */
 const featured = caseStudyList
   .map((study) => study.copy)
-  .filter((n): n is number => n !== undefined);
+  .filter((n, i, all): n is number => n !== undefined && all.indexOf(n) === i);
+
 type Entry = CaseStudyCopy | (typeof videoOnlyStudies)[number];
 
 const ordered: Entry[] = [
   ...featured
-    .filter((n, i) => featured.indexOf(n) === i)
     .map((n) => caseStudyCopy.find((copy) => copy.n === n))
     .filter((copy): copy is CaseStudyCopy => copy !== undefined),
-  // The rest in the master's own order, the film-only pieces in their place.
   ...[...caseStudyCopy.filter((copy) => !featured.includes(copy.n)), ...videoOnlyStudies].sort(
     (a, b) => a.n - b.n,
   ),
 ];
-
-/** A piece shown as its film alone, centred, with no write-up. */
-function FilmRow({ brand, clip }: { brand: string; clip: ReelId }) {
-  return (
-    <li className="flex justify-center">
-      <Reveal>
-        <Film clip={clip} label={`${brand} campaign film by Genesis Media`} />
-      </Reveal>
-    </li>
-  );
-}
-
-function Film({ clip, label }: { clip: ReelId; label?: string }) {
-  return (
-    <video
-      poster={mediaUrl(reelPoster(clip))}
-      controls
-      playsInline
-      preload="none"
-      aria-label={label}
-      {...VIDEO_GUARD}
-      /*
-        Its own aspect ratio: no box, no crop. A fixed HEIGHT and an auto
-        width, so the width comes from the file's own shape. Auto on both let
-        the frame size itself from the 720px poster and then jump when the
-        1080p film loaded; a set height cannot jump.
-      */
-      className="h-[min(78vh,42rem)] w-auto max-w-full rounded-panel border border-[var(--glass-border)] bg-ink object-contain shadow-[0_24px_70px_-24px_rgb(0_0_0/0.8)]"
-    >
-      {filmUrl(clip) && <source src={filmUrl(clip)} type="video/mp4" />}
-      <source src={mediaUrl(reelClip(clip))} type="video/mp4" />
-    </video>
-  );
-}
 
 /** The slider's labels for a study where it has a card, else its division. */
 function labelsFor(copy: CaseStudyCopy): string[] {
@@ -154,51 +132,24 @@ function labelsFor(copy: CaseStudyCopy): string[] {
   return card ? disciplines(card) : [copy.division];
 }
 
-function StudyRow({ copy, index }: { copy: CaseStudyCopy; index: number }) {
-  const flipped = index % 2 === 1;
-
-  return (
-    <li id={copy.slug} className="grid scroll-mt-32 items-start gap-8 lg:grid-cols-2 lg:gap-16">
-      <Reveal className={cn("flex flex-col gap-6", flipped && "lg:order-2")}>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="micro-label !text-faint">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-          {labelsFor(copy).map((label) => (
-            <span
-              key={label}
-              className="glass-chip rounded-full px-3 py-1 text-micro font-medium tracking-wide text-bone"
-            >
-              {label}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="micro-label text-brand-ink">
-            {copy.brand} · {copy.campaign}
-          </p>
-          <h2 className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-            {copy.headline}
-          </h2>
-        </div>
-
-        <CaseStudyBody copy={copy} compact />
-      </Reveal>
-
-      {/*
-        The film stays beside its write-up while the text scrolls past it,
-        so a long study never leaves the reader looking at an empty column.
-      */}
-      <Reveal
-        delay={0.06}
-        className={cn(
-          "flex justify-center lg:sticky lg:top-28",
-          flipped ? "lg:order-1 lg:justify-start" : "lg:justify-end",
-        )}
-      >
-        <Film clip={copy.clip} />
-      </Reveal>
-    </li>
-  );
-}
+const cards: (CaseStudyCard & { clip: ReelId })[] = ordered.map((entry) =>
+  "headline" in entry
+    ? {
+        key: entry.slug,
+        clip: entry.clip,
+        brand: entry.brand,
+        line: entry.headline,
+        labels: labelsFor(entry),
+        facets: facetsFor(entry.clip),
+        copy: entry,
+        ...media(entry.clip),
+      }
+    : {
+        key: `film-${entry.n}`,
+        clip: entry.clip,
+        brand: entry.brand,
+        labels: [],
+        facets: facetsFor(entry.clip),
+        ...media(entry.clip),
+      },
+);

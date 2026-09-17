@@ -3,6 +3,8 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { getLenis } from "./smooth-scroll";
 
@@ -52,12 +54,27 @@ import { getLenis } from "./smooth-scroll";
  * AND IT IS SHAPED LIKE A WINDOW, which Genesis asked for in the same
  * message: a title bar with the three buttons, the red one closing it.
  */
+/**
+ * Stepping through a set without closing the window — Genesis's "left/right
+ * arrow to view the portfolio", everywhere a piece opens. Labels name the
+ * destination so a screen reader announces where the arrow goes.
+ */
+export type OverlayPager = {
+  onPrevious: () => void;
+  onNext: () => void;
+  previousLabel: string;
+  nextLabel: string;
+  /** "3 / 16" — where the reader is, so the loop has edges. */
+  position?: string;
+};
+
 export function Overlay({
   open,
   label,
   onClose,
   children,
   className,
+  pager,
 }: {
   open: boolean;
   /** Read out as the dialog's name. */
@@ -65,6 +82,7 @@ export function Overlay({
   onClose: () => void;
   children: ReactNode;
   className?: string;
+  pager?: OverlayPager;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const opener = useRef<Element | null>(null);
@@ -76,8 +94,10 @@ export function Overlay({
     it back, bouncing focus to the opener and back each time.
   */
   const close = useRef(onClose);
+  const paging = useRef(pager);
   useEffect(() => {
     close.current = onClose;
+    paging.current = pager;
   });
 
   useEffect(() => {
@@ -97,6 +117,28 @@ export function Overlay({
         event.preventDefault();
         close.current();
         return;
+      }
+      /*
+        ARROW KEYS STEP THE SET, except where they already mean something: a
+        video with controls seeks with them and a field moves its caret.
+      */
+      if (
+        paging.current &&
+        (event.key === "ArrowLeft" || event.key === "ArrowRight")
+      ) {
+        const el = document.activeElement;
+        const busy =
+          el instanceof HTMLInputElement ||
+          el instanceof HTMLTextAreaElement ||
+          el instanceof HTMLSelectElement ||
+          el instanceof HTMLVideoElement ||
+          (el instanceof HTMLElement && el.isContentEditable);
+        if (!busy) {
+          event.preventDefault();
+          if (event.key === "ArrowLeft") paging.current.onPrevious();
+          else paging.current.onNext();
+          return;
+        }
       }
       if (event.key !== "Tab") return;
       const focusable = panel.current?.querySelectorAll<HTMLElement>(
@@ -231,9 +273,78 @@ export function Overlay({
 
           {/* The content, scrolling inside the window rather than moving it. */}
           <div className="overflow-y-auto overscroll-contain p-6 sm:p-9">{children}</div>
+
+          {pager?.position && (
+            <span className="pointer-events-none absolute right-4 top-2.5 text-micro tabular-nums text-ash">
+              {pager.position}
+            </span>
+          )}
         </div>
+
+        {/*
+          THE ARROWS SIT OUTSIDE THE WINDOW, on the backdrop at the screen's
+          edges, where a gallery's controls are looked for — and fixed, so
+          they stay put while the window scrolls. On a phone the window runs
+          nearly edge to edge and they sit over its sides.
+        */}
+        {pager && (
+          <>
+            <PagerButton side="left" label={pager.previousLabel} onClick={pager.onPrevious} />
+            <PagerButton side="right" label={pager.nextLabel} onClick={pager.onNext} />
+          </>
+        )}
       </div>
     </div>,
     document.body,
   );
+}
+
+function PagerButton({
+  side,
+  label,
+  onClick,
+}: {
+  side: "left" | "right";
+  label: string;
+  onClick: () => void;
+}) {
+  const Icon = side === "left" ? ChevronLeft : ChevronRight;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseDown={(event) => event.stopPropagation()}
+      aria-label={label}
+      className={cn(
+        "fixed top-1/2 z-[101] grid size-11 -translate-y-1/2 place-items-center rounded-full",
+        "border border-white/20 bg-black/55 text-white backdrop-blur-md transition-colors hover:bg-black/80",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+        side === "left" ? "left-2 sm:left-5" : "right-2 sm:right-5",
+      )}
+    >
+      <Icon className="size-5" aria-hidden />
+    </button>
+  );
+}
+
+/**
+ * The pager for a list: wraps at both ends, names each destination.
+ * Returns undefined when there is nothing to step to.
+ */
+export function pagerFor<T>(
+  items: readonly T[],
+  index: number,
+  go: (item: T) => void,
+  name: (item: T) => string,
+): OverlayPager | undefined {
+  if (index < 0 || items.length < 2) return undefined;
+  const previous = items[(index - 1 + items.length) % items.length];
+  const next = items[(index + 1) % items.length];
+  return {
+    onPrevious: () => go(previous),
+    onNext: () => go(next),
+    previousLabel: `Previous: ${name(previous)}`,
+    nextLabel: `Next: ${name(next)}`,
+    position: `${index + 1} / ${items.length}`,
+  };
 }

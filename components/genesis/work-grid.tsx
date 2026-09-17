@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { findWork, matchesFilter, workFilters, type WorkItem } from "@/lib/work";
 import { cn } from "@/lib/utils";
+import { pagerFor } from "./overlay";
 import { WorkDialog } from "./work-dialog";
 import { WorkTile } from "./work-tile";
 
@@ -58,6 +59,10 @@ export function WorkGrid({
   const visible = useMemo(
     () => items.filter((item) => matchesFilter(item, filter)),
     [items, filter],
+  );
+  const pieces = useMemo(
+    () => visible.filter((item, i) => visible.findIndex((v) => v.slug === item.slug) === i),
+    [visible],
   );
 
   /*
@@ -369,6 +374,17 @@ export function WorkGrid({
       <WorkDialog
         item={openSlug ? (findWork(openSlug) ?? null) : null}
         onClose={() => setOpenSlug(null)}
+        /*
+          Arrows step through the pieces the reader can see, in the grid's
+          order — one stop per piece, not per clip, since the window shows a
+          piece and all of its clips.
+        */
+        pager={pagerFor(
+          pieces,
+          pieces.findIndex((piece) => piece.slug === openSlug),
+          (piece) => setOpenSlug(piece.slug),
+          (piece) => `${piece.client}, ${piece.title}`,
+        )}
       />
     </div>
   );

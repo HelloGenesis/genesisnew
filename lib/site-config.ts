@@ -125,7 +125,8 @@ export const navItems: NavItem[] = [
     forms: the whole catalogue lives in the portfolio section, and each piece
     opens over the landing page rather than on a page of its own.
   */
-  { label: "Work", href: "/#library" },
+  // "Portfolio", Genesis's name for the section this goes to.
+  { label: "Portfolio", href: "/#library" },
   { label: "Case Studies", href: "/#case-studies" },
   /*
     THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable

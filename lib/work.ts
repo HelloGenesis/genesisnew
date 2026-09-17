@@ -546,7 +546,7 @@ const catalogue: WorkItem[] = [
     title: "AI Avatar Content",
     vertical: "AI Labs",
     format: "AI Content",
-    reel: ["ai-lab-shivam-sh1"],
+    reel: ["ai-lab-shivam-sh1", "ai-lab-shivam-sh2"],
   },
 
 ];
@@ -613,6 +613,7 @@ export const CLIP_LABELS: Record<ReelId, string> = {
   "ai-lab-tanvi-photos": "Tanvi — Photo Series",
   "ai-lab-bharat-bharat": "Bharat",
   "ai-lab-shivam-sh1": "Shivam",
+  "ai-lab-shivam-sh2": "Shivam",
   2: "BTS with Vikrant Massey",
   3: "#LetsFaceIt 2024",
   8: "#JumpForHealth",

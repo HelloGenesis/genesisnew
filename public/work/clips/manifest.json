@@ -80,6 +80,16 @@
     "poster": "/work/posters/ai-lab-shivam-sh1.jpg"
   },
   {
+    "slug": "ai-lab-shivam-sh2",
+    "driveId": "1bYXKT6mzsWhMC6eqvYfDGGjax9QfmgXK",
+    "name": "sh2.mp4",
+    "folder": "AI Lab / Shivam",
+    "description": null,
+    "masterBytes": 1673164,
+    "clip": "/work/clips/ai-lab-shivam-sh2.mp4",
+    "poster": "/work/posters/ai-lab-shivam-sh2.jpg"
+  },
+  {
     "slug": "ai-lab-sinet-english-v004",
     "driveId": "102JA9QdepBT5GfPlvdCucvDxm_MHuVOl",
     "name": "sinet_english_v004.mp4",

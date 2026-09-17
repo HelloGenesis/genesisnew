@@ -1683,3 +1683,31 @@ body:has(main.scene-dark) header {
     from { transform: translate3d(0, 0, 0); }
     to { transform: translate3d(-50%, 0, 0); }
 }
+
+/*
+  GENESIS'S 3D CURSOR, site-wide, at their request. Only for a real pointer —
+  touch screens have no cursor to replace. 32px is the size every browser
+  honours without falling back near the screen edge; image-set hands a sharp
+  64px file to retina displays at the same 32px size. The hotspot (1 1) is
+  the arrow's tip, measured from the file. Text fields keep the I-beam, since
+  a pointer over a field hides where the caret will land.
+*/
+@media (pointer: fine) {
+    html,
+    a,
+    button,
+    [role="button"],
+    label,
+    summary,
+    select {
+        cursor:
+            image-set(url("/brand/cursor-32.png") 1x, url("/brand/cursor-64.png") 2x) 1 1,
+            auto;
+    }
+
+    input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+    textarea,
+    [contenteditable="true"] {
+        cursor: text;
+    }
+}

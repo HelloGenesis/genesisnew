@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { PosterRail, type Poster } from "@/components/genesis/poster-card";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
+import { pagerFor } from "@/components/genesis/overlay";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { caseStudiesPage, caseStudyList, disciplines, leadClip } from "@/lib/case-studies";
@@ -175,6 +176,12 @@ export function CaseStudies() {
       <CaseStudyDialog
         study={caseStudyList.find((s) => s.slug === openSlug) ?? null}
         onClose={() => setOpenSlug(null)}
+        pager={pagerFor(
+          caseStudyList,
+          caseStudyList.findIndex((s) => s.slug === openSlug),
+          (s) => setOpenSlug(s.slug),
+          (s) => s.client,
+        )}
       />
     </SectionShell>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import type { WorkItem } from "@/lib/work";
-import { Overlay } from "./overlay";
+import { Overlay, type OverlayPager } from "./overlay";
 import { WorkDetail } from "./work-detail";
 
 /**
@@ -15,9 +15,11 @@ import { WorkDetail } from "./work-detail";
 export function WorkDialog({
   item,
   onClose,
+  pager,
 }: {
   item: WorkItem | null;
   onClose: () => void;
+  pager?: OverlayPager;
 }) {
   return (
     <Overlay
@@ -25,6 +27,7 @@ export function WorkDialog({
       label={item ? `${item.client}, ${item.title}` : "Project"}
       onClose={onClose}
       className="max-w-5xl"
+      pager={pager}
     >
       {item && <WorkDetail item={item} />}
     </Overlay>
