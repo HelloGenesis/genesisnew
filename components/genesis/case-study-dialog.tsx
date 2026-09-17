@@ -2,6 +2,7 @@
 
 import { type CaseStudy, disciplines, leadClip } from "@/lib/case-studies";
 import { findCopy } from "@/lib/case-study-copy";
+import { clipRatio } from "@/lib/clip-shape";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
 import { reelClip, reelPoster } from "@/lib/work";
@@ -50,6 +51,7 @@ export function CaseStudyDialog({
           film={clip === undefined ? undefined : filmUrl(clip)}
           preview={clip === undefined ? undefined : mediaUrl(reelClip(clip))}
           copy={copy}
+          ratio={clip === undefined ? undefined : clipRatio(clip)}
           fallback={
             /*
               THE HONEST EMPTY STATE: a study with no write-up says so rather

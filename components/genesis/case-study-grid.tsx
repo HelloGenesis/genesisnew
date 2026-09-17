@@ -23,6 +23,8 @@ export type CaseStudyCard = {
   /** Full film where Drive serves one; the preview otherwise. */
   film?: string;
   copy?: CaseStudyCopy;
+  /** The film's width over height. */
+  ratio: number;
 };
 
 /**
@@ -172,6 +174,7 @@ function Study({ card }: { card: CaseStudyCard }) {
       film={card.film}
       preview={card.preview}
       copy={card.copy}
+      ratio={card.ratio}
     />
   );
 }

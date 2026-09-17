@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import type { CaseStudyCopy } from "@/lib/case-study-copy";
+import { cn } from "@/lib/utils";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { CaseStudyBody } from "./case-study-body";
 
@@ -30,7 +31,10 @@ export function CaseStudyView({
   preview,
   copy,
   fallback,
+  ratio = 9 / 16,
 }: {
+  /** The film's width over height; see lib/clip-shape. */
+  ratio?: number;
   labels: string[];
   headline?: string;
   subheadline: string;
@@ -41,6 +45,8 @@ export function CaseStudyView({
   /** Shown in the copy column when there is no write-up. */
   fallback?: ReactNode;
 }) {
+  const landscape = ratio > 1;
+
   return (
     <article className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
@@ -51,9 +57,19 @@ export function CaseStudyView({
         {headline && <p className="text-lead leading-relaxed text-ash">{subheadline}</p>}
       </header>
 
-      <div className="grid items-start gap-8 md:grid-cols-[minmax(0,20rem)_1fr] lg:gap-12">
+      {/*
+        A PORTRAIT FILM takes the narrow left column Genesis drew; a
+        LANDSCAPE one would be a strip in it, so it spans the window above
+        the copy instead. Either way the frame is the film's own shape.
+      */}
+      <div
+        className={cn(
+          "grid items-start gap-8 lg:gap-12",
+          landscape ? "grid-cols-1" : "md:grid-cols-[minmax(0,20rem)_1fr]",
+        )}
+      >
         {(film || preview) && (
-          <div className="flex justify-center md:sticky md:top-0">
+          <div className={cn("flex justify-center", !landscape && "md:sticky md:top-0")}>
             <video
               key={film ?? preview}
               poster={poster}
@@ -62,12 +78,16 @@ export function CaseStudyView({
               playsInline
               preload="metadata"
               {...VIDEO_GUARD_CLIENT}
+              style={{ aspectRatio: ratio }}
               /*
-                Its own shape: a fixed height, the width from the file, capped
-                by the column. 9:16 at 20rem wide is 35.5rem tall, which is
-                also as tall as the window lets it be.
+                A fixed height and the width from the ratio, capped by the
+                column — so a portrait film is a reel and a landscape one is
+                a screen, and neither is cropped.
               */
-              className="aspect-[9/16] h-[min(70vh,35.5rem)] w-auto max-w-full rounded-2xl border border-[var(--glass-border)] bg-ink object-contain"
+              className={cn(
+                "w-auto max-w-full rounded-2xl border border-[var(--glass-border)] bg-ink object-contain",
+                landscape ? "h-[min(62vh,34rem)]" : "h-[min(70vh,35.5rem)]",
+              )}
             >
               {film && <source src={film} type="video/mp4" />}
               {preview && <source src={preview} type="video/mp4" />}

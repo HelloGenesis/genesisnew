@@ -6,6 +6,8 @@ import { mediaUrl } from "@/lib/media-url";
 import { isPending } from "@/lib/home-content";
 import { filmUrl } from "@/lib/films";
 import { reelClip, reelPoster } from "@/lib/work";
+import { clipRatio, isLandscape } from "@/lib/clip-shape";
+import { cn } from "@/lib/utils";
 import { avatars, AVATAR_TINT, type Avatar } from "@/lib/avatars";
 import { VIDEO_GUARD } from "@/lib/video-guard";
 
@@ -165,7 +167,11 @@ export function AvatarDetail({
 
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {avatar.reel.map((clip) => (
-                <li key={clip}>
+                /*
+                  EACH FILM IN ITS OWN FRAME. A landscape one takes two
+                  columns so it is not a thumbnail-sized strip.
+                */
+                <li key={clip} className={cn(isLandscape(clip) && "col-span-2")}>
                   {/*
                     The full film when Drive serves it, the preview when it
                     does not — the same fallback the portfolio's detail uses,
@@ -177,7 +183,8 @@ export function AvatarDetail({
                     controls
                     preload="none"
                     {...VIDEO_GUARD}
-                    className="aspect-[9/13] w-full rounded-card border border-[var(--glass-border)] bg-ink object-cover"
+                    style={{ aspectRatio: clipRatio(clip) }}
+                    className="w-full rounded-card border border-[var(--glass-border)] bg-ink object-contain"
                   >
                     {filmUrl(clip) && <source src={filmUrl(clip)} type="video/mp4" />}
                     <source src={mediaUrl(reelClip(clip))} type="video/mp4" />

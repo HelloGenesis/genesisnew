@@ -11,6 +11,7 @@ import {
   videoOnlyStudies,
   type CaseStudyCopy,
 } from "@/lib/case-study-copy";
+import { clipRatio } from "@/lib/clip-shape";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
 import {
@@ -100,6 +101,7 @@ function facetsFor(clip: ReelId): string[] {
 
 function media(clip: ReelId) {
   return {
+    ratio: clipRatio(clip),
     poster: mediaUrl(reelPoster(clip)),
     preview: mediaUrl(reelClip(clip)),
     film: filmUrl(clip),
