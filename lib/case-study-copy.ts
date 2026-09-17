@@ -332,132 +332,6 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "clip": 21
   },
   {
-    "n": 10,
-    "division": "Influence",
-    "headline": "How FOY Turned a K-Beauty Sale Into 9,000+ Comments",
-    "brand": "FOY",
-    "industry": "Beauty and personal care",
-    "service": "Influencer marketing, creator strategy and social content",
-    "campaign": "FOY K-Beauty Sale",
-    "highlight": "1.3M+ views, 30K+ likes and 9K+ comments.",
-    "flagged": false,
-    "brief": [
-      "Beauty creators combined product discovery with a direct response mechanic, using comments to express interest and continue the shopping journey. The structure gave a promotional sale a measurable social action.",
-      "The work had to feel native to creator feeds while protecting the campaign's central message. That meant building a brief with enough structure for consistency and enough freedom for creators to remain credible with their own audiences."
-    ],
-    "approach": [
-      "The strategic choice was to make \"comment-first content turned reach into visible intent\" the organising idea. Instead of treating creators as media placements, Genesis used their familiar formats, communities and storytelling habits to make the campaign easier to understand and more likely to be shared.",
-      "The approach worked because the brand message entered formats audiences already understood. A repeatable creative device made the campaign recognisable, while creator variation prevented the work from feeling mass-produced."
-    ],
-    "execution": [
-      "Campaign idea and creator-content framework",
-      "Creator briefing, coordination and approval management",
-      "Social-first video production and platform-ready delivery"
-    ],
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "results": [
-      "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
-    ],
-    "takeaway": "FOY K-Beauty Sale demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
-    "slug": "foy-k-beauty-sale",
-    "keyword": "beauty influencer marketing campaign",
-    "clip": 22
-  },
-  {
-    "n": 11,
-    "division": "Influence",
-    "headline": "How Dove Turned a Hair-Repair Benefit Into a Creator-Led Ritual",
-    "brand": "Dove",
-    "industry": "Beauty and personal care",
-    "service": "Influencer marketing, creator strategy and social content",
-    "campaign": "Dove — Pause, Reverse, Play",
-    "highlight": null,
-    "flagged": false,
-    "brief": [
-      "Genesis worked with beauty creator Shalini Samuel to turn a dense benefit story into a memorable three-step idea: pause the damage, reverse it with Dove and play on. Demonstration made the proposition easy to follow.",
-      "The work had to feel native to creator feeds while protecting the campaign's central message. That meant building a brief with enough structure for consistency and enough freedom for creators to remain credible with their own audiences."
-    ],
-    "approach": [
-      "The strategic choice was to make \"a repair benefit expressed as a simple ritual\" the organising idea. Instead of treating creators as media placements, Genesis used their familiar formats, communities and storytelling habits to make the campaign easier to understand and more likely to be shared. The approach worked because the brand message entered formats audiences already understood. A repeatable creative device made the campaign recognisable, while creator variation prevented the work from feeling mass-produced."
-    ],
-    "execution": [
-      "Campaign idea and creator-content framework",
-      "Creator briefing, coordination and approval management",
-      "Social-first video production and platform-ready delivery"
-    ],
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "results": [
-      "Performance data was not included in the approved campaign material, so this case focuses on the confirmed strategy, production system and delivered output. For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
-    ],
-    "takeaway": "Dove — Pause, Reverse, Play demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
-    "slug": "dove-pause-reverse-play",
-    "keyword": "beauty influencer marketing campaign",
-    "clip": 27
-  },
-  {
-    "n": 12,
-    "division": "Influence",
-    "headline": "How L'Oréal Professionnel Used Creator Content to Show Visible Hair Transformation",
-    "brand": "L'Oréal Professionnel",
-    "industry": "Beauty and personal care",
-    "service": "Influencer marketing, creator strategy and social content",
-    "campaign": "L'Oréal Professionnel Absolut Repair",
-    "highlight": null,
-    "flagged": false,
-    "brief": [
-      "Genesis built a creator-led before-and-after story around the Absolut Repair Hair Mask, balancing premium product explanation with a visible routine and finish.",
-      "The work had to feel native to creator feeds while protecting the campaign's central message. That meant building a brief with enough structure for consistency and enough freedom for creators to remain credible with their own audiences."
-    ],
-    "approach": [
-      "The strategic choice was to make \"professional authority through visible transformation\" the organising idea. Instead of treating creators as media placements, Genesis used their familiar formats, communities and storytelling habits to make the campaign easier to understand and more likely to be shared.",
-      "The approach worked because the brand message entered formats audiences already understood. A repeatable creative device made the campaign recognisable, while creator variation prevented the work from feeling mass-produced."
-    ],
-    "execution": [
-      "Campaign idea and creator-content framework",
-      "Creator briefing, coordination and approval management",
-      "Social-first video production and platform-ready delivery"
-    ],
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "results": [
-      "Performance data was not included in the approved campaign material, so this case focuses on the confirmed strategy, production system and delivered output. For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
-    ],
-    "takeaway": "L'Oréal Professionnel Absolut Repair demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
-    "slug": "loreal-professionnel-absolut-repair",
-    "keyword": "beauty influencer marketing campaign",
-    "clip": 28
-  },
-  {
-    "n": 13,
-    "division": "Influence",
-    "headline": "How Genesis Media Amplified an HT Brunch Cover With Arjun Rampal and Gabriella Demetriades",
-    "brand": "HT Brunch",
-    "industry": "Media and entertainment",
-    "service": "Celebrity content, creative direction and media amplification",
-    "campaign": "Arjun Rampal & Gabriella Demetriades x HT Brunch",
-    "highlight": "1M+ reach and 180K+ views.",
-    "flagged": false,
-    "brief": [
-      "Genesis connected celebrity talent, visual direction and strategic media placement for an HT Brunch cover story designed to work as both premium editorial and a digital awareness asset.",
-      "The work had to feel native to creator feeds while protecting the campaign's central message. That meant building a brief with enough structure for consistency and enough freedom for creators to remain credible with their own audiences."
-    ],
-    "approach": [
-      "The strategic choice was to make \"premium editorial amplified for digital reach\" the organising idea. Instead of treating creators as media placements, Genesis used their familiar formats, communities and storytelling habits to make the campaign easier to understand and more likely to be shared. The approach worked because the brand message entered formats audiences already understood. A repeatable creative device made the campaign recognisable, while creator variation prevented the work from feeling mass-produced."
-    ],
-    "execution": [
-      "Campaign idea and creator-content framework",
-      "Creator briefing, coordination and approval management",
-      "Social-first video production and platform-ready delivery"
-    ],
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "results": [
-      "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
-    ],
-    "takeaway": "Arjun Rampal & Gabriella Demetriades x HT Brunch demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
-    "slug": "arjun-rampal-and-gabriella-demetriades-x-ht-brunch",
-    "keyword": "celebrity content production",
-    "clip": 26
-  },
-  {
     "n": 14,
     "division": "Influence",
     "headline": "How Genesis Media Turned Everyday Care Into a Relatable Mother's Day Story",
@@ -1312,6 +1186,36 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "slug": "manthan-power-of-ten",
     "keyword": "event content production",
     "clip": "studios-abhi-ex-coms"
+  }
+];
+
+/**
+ * FILM ONLY, NO WRITE-UP. Genesis asked for FOY, Dove, L'Oréal Professionnel
+ * and the Arjun Rampal & Gabriella Demetriades x HT Brunch piece to keep
+ * their videos on /case-studies without a case study beside them, so their
+ * copy is removed from this file rather than hidden. `n` keeps each in the
+ * master document's position; `brand` is only the video's accessible name.
+ */
+export const videoOnlyStudies: { n: number; brand: string; clip: ReelId }[] = [
+  {
+    "n": 10,
+    "brand": "FOY",
+    "clip": 22
+  },
+  {
+    "n": 11,
+    "brand": "Dove",
+    "clip": 27
+  },
+  {
+    "n": 12,
+    "brand": "L'Oréal Professionnel",
+    "clip": 28
+  },
+  {
+    "n": 13,
+    "brand": "HT Brunch",
+    "clip": 26
   }
 ];
 

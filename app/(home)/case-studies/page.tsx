@@ -6,7 +6,12 @@ import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { caseStudiesPage, caseStudyList, disciplines } from "@/lib/case-studies";
-import { caseStudyCopy, type CaseStudyCopy } from "@/lib/case-study-copy";
+import {
+  caseStudyCopy,
+  videoOnlyStudies,
+  type CaseStudyCopy,
+} from "@/lib/case-study-copy";
+import type { ReelId } from "@/lib/work";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
@@ -16,7 +21,7 @@ import { reelClip, reelPoster } from "@/lib/work";
 export const metadata: Metadata = {
   title: "Case Studies",
   description:
-    "Forty campaigns by Genesis Media across influencer marketing, AI content and video production — for Aditya Birla, Mahindra Finance, Dove, L'Oréal, House of Hiranandani and more.",
+    "Campaigns by Genesis Media across influencer marketing, AI content and video production — for Aditya Birla, Mahindra Finance, House of Hiranandani and more.",
 };
 
 /**
@@ -35,9 +40,10 @@ export const metadata: Metadata = {
  * the file, portrait or landscape, and is only capped in height so a 9:16
  * film does not stand taller than the window.
  *
- * THE COPY IS GENESIS'S, from their case-study master: all forty studies,
- * headline and write-up each, matched to the portfolio clip they describe.
- * See lib/case-study-copy for what was held back from it and why.
+ * THE COPY IS GENESIS'S, from their case-study master, matched to the
+ * portfolio clip each study describes. Four pieces — FOY, Dove, L'Oréal and
+ * HT Brunch — are here as films only, at Genesis's request. See
+ * lib/case-study-copy for what was held back and why.
  */
 export default function CaseStudiesPage() {
   return (
@@ -66,9 +72,13 @@ export default function CaseStudiesPage() {
         </Reveal>
 
         <ol className="mt-16 flex flex-col gap-24 sm:gap-32">
-          {ordered.map((copy, index) => (
-            <StudyRow key={copy.n} copy={copy} index={index} />
-          ))}
+          {ordered.map((entry, index) =>
+            "headline" in entry ? (
+              <StudyRow key={entry.n} copy={entry} index={index} />
+            ) : (
+              <FilmRow key={entry.n} brand={entry.brand} clip={entry.clip} />
+            ),
+          )}
         </ol>
 
         <Reveal className="mt-24 flex flex-wrap items-center gap-3">
@@ -91,13 +101,52 @@ export default function CaseStudiesPage() {
 const featured = caseStudyList
   .map((study) => study.copy)
   .filter((n): n is number => n !== undefined);
-const ordered: CaseStudyCopy[] = [
+type Entry = CaseStudyCopy | (typeof videoOnlyStudies)[number];
+
+const ordered: Entry[] = [
   ...featured
     .filter((n, i) => featured.indexOf(n) === i)
     .map((n) => caseStudyCopy.find((copy) => copy.n === n))
     .filter((copy): copy is CaseStudyCopy => copy !== undefined),
-  ...caseStudyCopy.filter((copy) => !featured.includes(copy.n)),
+  // The rest in the master's own order, the film-only pieces in their place.
+  ...[...caseStudyCopy.filter((copy) => !featured.includes(copy.n)), ...videoOnlyStudies].sort(
+    (a, b) => a.n - b.n,
+  ),
 ];
+
+/** A piece shown as its film alone, centred, with no write-up. */
+function FilmRow({ brand, clip }: { brand: string; clip: ReelId }) {
+  return (
+    <li className="flex justify-center">
+      <Reveal>
+        <Film clip={clip} label={`${brand} campaign film by Genesis Media`} />
+      </Reveal>
+    </li>
+  );
+}
+
+function Film({ clip, label }: { clip: ReelId; label?: string }) {
+  return (
+    <video
+      poster={mediaUrl(reelPoster(clip))}
+      controls
+      playsInline
+      preload="none"
+      aria-label={label}
+      {...VIDEO_GUARD}
+      /*
+        Its own aspect ratio: no box, no crop. A fixed HEIGHT and an auto
+        width, so the width comes from the file's own shape. Auto on both let
+        the frame size itself from the 720px poster and then jump when the
+        1080p film loaded; a set height cannot jump.
+      */
+      className="h-[min(78vh,42rem)] w-auto max-w-full rounded-panel border border-[var(--glass-border)] bg-ink object-contain shadow-[0_24px_70px_-24px_rgb(0_0_0/0.8)]"
+    >
+      {filmUrl(clip) && <source src={filmUrl(clip)} type="video/mp4" />}
+      <source src={mediaUrl(reelClip(clip))} type="video/mp4" />
+    </video>
+  );
+}
 
 /** The slider's labels for a study where it has a card, else its division. */
 function labelsFor(copy: CaseStudyCopy): string[] {
@@ -148,23 +197,7 @@ function StudyRow({ copy, index }: { copy: CaseStudyCopy; index: number }) {
           flipped ? "lg:order-1 lg:justify-start" : "lg:justify-end",
         )}
       >
-        <video
-          poster={mediaUrl(reelPoster(copy.clip))}
-          controls
-          playsInline
-          preload="none"
-          {...VIDEO_GUARD}
-          /*
-            Its own aspect ratio: no box, no crop. A fixed HEIGHT and an
-            auto width, so the width comes from the file's own shape. Auto
-            on both let the frame size itself from the 720px poster and
-            then jump when the 1080p film loaded; a set height cannot jump.
-          */
-          className="h-[min(78vh,42rem)] w-auto max-w-full rounded-panel border border-[var(--glass-border)] bg-ink object-contain shadow-[0_24px_70px_-24px_rgb(0_0_0/0.8)]"
-        >
-          {filmUrl(copy.clip) && <source src={filmUrl(copy.clip)} type="video/mp4" />}
-          <source src={mediaUrl(reelClip(copy.clip))} type="video/mp4" />
-        </video>
+        <Film clip={copy.clip} />
       </Reveal>
     </li>
   );
