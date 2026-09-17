@@ -1686,11 +1686,13 @@ body:has(main.scene-dark) header {
 
 /*
   GENESIS'S 3D CURSOR, site-wide, at their request. Only for a real pointer —
-  touch screens have no cursor to replace. 32px is the size every browser
-  honours without falling back near the screen edge; image-set hands a sharp
-  64px file to retina displays at the same 32px size. The hotspot (1 1) is
-  the arrow's tip, measured from the file. Text fields keep the I-beam, since
-  a pointer over a field hides where the caret will land.
+  touch screens have no cursor to replace. Sized to a system cursor — 24px
+  tall, about 16 wide — because the file is a tall 3D arrow and anything
+  larger reads as a sticker rather than a pointer; image-set hands a sharp
+  48px file to retina displays at the same size. The art is rotated upright
+  from Genesis's original, which lies at 36 degrees. The hotspot (1 0) is the
+  arrow's tip, measured from the file. Text fields keep the I-beam, since a
+  pointer over a field hides where the caret will land.
 */
 @media (pointer: fine) {
     html,
@@ -1701,7 +1703,7 @@ body:has(main.scene-dark) header {
     summary,
     select {
         cursor:
-            image-set(url("/brand/cursor-32.png") 1x, url("/brand/cursor-64.png") 2x) 1 1,
+            image-set(url("/brand/cursor-24.png") 1x, url("/brand/cursor-48.png") 2x) 1 0,
             auto;
     }
 
