@@ -1,4 +1,5 @@
 import { isPending } from "./home-content";
+import { findCopy } from "./case-study-copy";
 import { findWork, type ReelId, type Vertical } from "./work";
 
 /**
@@ -56,6 +57,12 @@ export type CaseStudy = {
   strategy?: string;
   execution?: string;
   results?: CaseMetric[];
+  /**
+   * Which study in Genesis's case-study master this card is (lib/
+   * case-study-copy, numbered 1-40). Where set, its brand, headline and
+   * write-up replace this entry's own — see `caseStudyList`.
+   */
+  copy?: number;
   /** Slugs in lib/work.ts that belong to this campaign. */
   work?: string[];
 };
@@ -63,13 +70,17 @@ export type CaseStudy = {
 const studies: CaseStudy[] = [
   {
     slug: "mahindra-finance-influencer-campaign",
+    copy: 35,
     client: "Mahindra Finance",
-    vertical: "Influence",
-    discipline: "Influencer + content campaign",
-    work: ["mahindra-finance-influencer-campaign"],
+    vertical: "Studios",
+    discipline: "Event film",
+    work: ["mahindra-finance-brand-film"],
+    heroClip: "studios-mahindra-cut-44",
+    campaign: "Founders' Day 2025",
   },
   {
     slug: "aditya-birla-capital-content-campaign",
+    copy: 1,
     client: "Aditya Birla Capital",
     vertical: "Influence",
     discipline: "Content & campaign",
@@ -96,6 +107,7 @@ const studies: CaseStudy[] = [
    */
   {
     slug: "aditya-birla-capital-brand-performance",
+    copy: 15,
     client: "Aditya Birla Capital",
     campaign: "Adi · AI Avatar",
     vertical: "AI Labs",
@@ -105,6 +117,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "mahindra-finance-content-production",
+    copy: 8,
     client: "Mahindra Finance",
     vertical: "Studios",
     discipline: "UGC",
@@ -123,6 +136,7 @@ const studies: CaseStudy[] = [
    */
   {
     slug: "aditya-birla-capital-jump-for-health",
+    copy: 2,
     client: "Aditya Birla Capital",
     campaign: "#JumpForHealth",
     vertical: "Influence",
@@ -132,6 +146,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "abhi-ka-star",
+    copy: 27,
     client: "Aditya Birla Health Insurance",
     campaign: "ABHI Ka Star",
     vertical: "Studios",
@@ -141,6 +156,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "abhi-100-health",
+    copy: 38,
     client: "Aditya Birla Health Insurance",
     campaign: "100% Health & 100% Health Insurance",
     vertical: "Studios",
@@ -151,6 +167,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "income-protect",
+    copy: 33,
     client: "Genesis Studios",
     campaign: "Income Protect",
     vertical: "Studios",
@@ -160,6 +177,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "aditya-birla-capital-bombay-running",
+    copy: 6,
     client: "Aditya Birla Capital",
     campaign: "Bombay Running Crew",
     vertical: "Influence",
@@ -169,6 +187,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "aditya-birla-capital-lets-face-it",
+    copy: 4,
     client: "Aditya Birla Capital",
     campaign: "#LetsFaceIt 2024",
     vertical: "Influence",
@@ -178,6 +197,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "aditya-birla-capital-vikrant-massey",
+    copy: 3,
     client: "Aditya Birla Capital",
     campaign: "BTS with Vikrant Massey",
     vertical: "Influence",
@@ -187,6 +207,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "abhi-world-menopause-day",
+    copy: 28,
     client: "Aditya Birla Health Insurance",
     campaign: "World Menopause Day",
     vertical: "Studios",
@@ -196,6 +217,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "house-of-hiranandani",
+    copy: 17,
     client: "House of Hiranandani",
     campaign: "Brand Content",
     vertical: "AI Labs",
@@ -205,6 +227,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "aditya-birla-capital-matcha",
+    copy: 6,
     client: "Aditya Birla Capital",
     campaign: "Matcha",
     vertical: "Influence",
@@ -214,6 +237,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "ai-avatar-bharat",
+    copy: 18,
     client: "Bharat",
     campaign: "AI Avatar",
     vertical: "AI Labs",
@@ -223,6 +247,7 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "ai-avatar-tanvi",
+    copy: 19,
     client: "Tanvi",
     campaign: "AI Avatar",
     vertical: "AI Labs",
@@ -262,9 +287,27 @@ const rank = (slug: string) => {
   return index === -1 ? ORDER.length : index;
 };
 
-export const caseStudyList: CaseStudy[] = [...studies].sort(
-  (a, b) => rank(a.slug) - rank(b.slug),
-);
+/*
+  THE MASTER'S COPY WINS. A card linked to a study takes that study's brand
+  name — the PDF files clips 1-15 under Aditya Birla Health Insurance, not
+  Capital — and its headline and write-up. The brief, approach and execution
+  are carried as the three narrative fields, which is also what marks the
+  study published.
+*/
+export const caseStudyList: CaseStudy[] = [...studies]
+  .sort((a, b) => rank(a.slug) - rank(b.slug))
+  .map((study) => {
+    const copy = study.copy === undefined ? undefined : findCopy(study.copy);
+    if (!copy) return study;
+    return {
+      ...study,
+      client: copy.brand,
+      headline: copy.headline,
+      problem: copy.brief.join("\n\n"),
+      strategy: copy.approach.join("\n\n"),
+      execution: copy.execution.join(" · "),
+    };
+  });
 
 export function findCaseStudy(slug: string): CaseStudy | undefined {
   return caseStudyList.find((study) => study.slug === slug);

@@ -1,7 +1,9 @@
 "use client";
 
 import { type CaseStudy, disciplines, isPublished, leadClip } from "@/lib/case-studies";
+import { findCopy } from "@/lib/case-study-copy";
 import { filmUrl } from "@/lib/films";
+import { CaseStudyBody } from "./case-study-body";
 import { mediaUrl } from "@/lib/media-url";
 import { reelClip, reelPoster } from "@/lib/work";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
@@ -25,7 +27,8 @@ export function CaseStudyDialog({
 }) {
   const published = study ? isPublished(study) : false;
   const clip = study ? leadClip(study) : undefined;
-  const sections = study
+  const copy = study?.copy === undefined ? undefined : findCopy(study.copy);
+  const sections = study && !copy
     ? [
         { label: "The problem", body: study.problem },
         { label: "The strategy", body: study.strategy },
@@ -42,16 +45,30 @@ export function CaseStudyDialog({
       {study && (
         <>
           <p className="micro-label !text-brand">{disciplines(study).join(" · ")}</p>
-          <h2 className="mt-3 text-balance text-h3 font-normal leading-[1.08] tracking-tight text-bone sm:text-h2">
-            {study.client}
-          </h2>
-          {study.campaign && (
-            <p className="mt-2 text-lead leading-relaxed text-bone/80">{study.campaign}</p>
-          )}
-          {study.headline && !study.headline.startsWith("TODO") && (
-            <p className="mt-3 text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              {study.headline}
-            </p>
+          {/*
+            THE HEADLINE LEADS where the study has one — the client and
+            campaign become the line above it. Without one, the client is
+            the title, as before.
+          */}
+          {study.headline && !study.headline.startsWith("TODO") ? (
+            <>
+              <p className="mt-3 text-small text-ash">
+                {study.client}
+                {copy ? ` · ${copy.campaign}` : study.campaign ? ` · ${study.campaign}` : ""}
+              </p>
+              <h2 className="mt-2 text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
+                {study.headline}
+              </h2>
+            </>
+          ) : (
+            <>
+              <h2 className="mt-3 text-balance text-h3 font-normal leading-[1.08] tracking-tight text-bone sm:text-h2">
+                {study.client}
+              </h2>
+              {study.campaign && (
+                <p className="mt-2 text-lead leading-relaxed text-bone/80">{study.campaign}</p>
+              )}
+            </>
           )}
 
           {/*
@@ -95,6 +112,9 @@ export function CaseStudyDialog({
               )}
             </div>
           )}
+
+          {/* The master document's write-up, where this card has one. */}
+          {copy && <CaseStudyBody copy={copy} className="mt-8" />}
 
           {study.results && study.results.length > 0 && (
             <ul className="mt-7 grid gap-4 sm:grid-cols-3">

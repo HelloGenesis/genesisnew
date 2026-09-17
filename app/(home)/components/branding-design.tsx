@@ -309,7 +309,7 @@ export function BrandingDesign() {
             </div>
           </FolderPanel>
 
-          <Pointer className="pointer-events-none absolute -right-14 -bottom-[4.5rem] z-20 hidden w-28 xl:block" />
+          <Pointer className="pointer-events-none absolute -right-14 -bottom-[3.75rem] z-20 hidden w-28 xl:block" />
         </Reveal>
 
         {/* ─── The positioning ──────────────────────────────────────── */}
@@ -415,7 +415,12 @@ export function BrandingDesign() {
 
       <Reveal
         delay={0.15}
-        className="mt-4 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3"
+        /*
+          MORE AIR ABOVE THE BUTTONS FROM xl, where the 3D cursor hangs off
+          the work folder's corner: at mt-4 its tip sat on "Build a brand"
+          ("thoda sa distance banado").
+        */
+        className="mt-4 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3 xl:mt-20"
       >
         <GlassButton
           href="/#contact"
