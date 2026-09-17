@@ -119,24 +119,26 @@ export function PosterCard({
         // the container width to the pixel, so `snap-x snap-mandatory` was
         // inert, `no-scrollbar` hid a scrollbar that could never appear, and
         // the negative right margin advertised a bleed that did not exist.
-        priority ? "w-[clamp(15rem,26vw,21rem)]" : "w-[clamp(12rem,20vw,18rem)]",
+        /*
+          REEL-SHAPED AT EVERY SIZE. The card was 2:3 with its height capped
+          at 46vh, so on a laptop — width from vw, height from vh — the cap
+          bit first and the poster came out wider than 2:3, nothing like the
+          9:16 footage inside it. The cap is on the WIDTH now, as a share of
+          the window's height, so the ratio below always holds.
+        */
+        priority
+          ? "w-[min(clamp(15rem,26vw,21rem),calc(60vh*9/16))]"
+          : "w-[min(clamp(12rem,20vw,18rem),calc(54vh*9/16))]",
         className,
       )}
     >
       <div
         /*
-          One ratio for every poster now. The exception here was for ten
-          173x200 mockup stills with their caption printed along the bottom
-          edge, which lost half that caption when cropped to 2:3 — those files
-          and the rule that protected them are both gone.
-
-          Arbitrary-value syntax: Tailwind v4 has no bare-fraction aspect-2/3.
+          One ratio for every poster: 9:16, the footage's own, so a reel
+          fills its card instead of being cropped to a print-poster shape.
+          Arbitrary-value syntax: Tailwind v4 has no bare-fraction aspect.
         */
-        /* The card is 2:3, so its WIDTH sets how tall the shelf stands. On
-           a short laptop four across came to more than half the window on
-           their own; the cap trades a little of the poster's foot for the
-           section fitting the screen. */
-        className="relative w-full aspect-[2/3] max-h-[46vh]"
+        className="relative w-full aspect-[9/16]"
         style={
           poster.image
             ? { backgroundImage: `url(${poster.image})`, backgroundSize: "cover" }
