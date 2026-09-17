@@ -114,13 +114,13 @@ export function Portfolio() {
         </Reveal>
 
         {/*
-          TWO WAYS ON FROM THE WORK. Back up to the case studies, or down to
-          the brief. "Contact us" is the footer pitch's own button, moved
+          TWO WAYS ON FROM THE WORK. Out to the full case-studies page, or
+          down to the brief. "Contact us" is the footer pitch's own button, moved
           here rather than copied — see FooterCta. Bare hashes, so both
           scroll in place instead of re-rendering the page.
         */}
         <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center gap-3">
-          <GlassButton href="#case-studies" variant="glass" size="lg" arrow>
+          <GlassButton href="/case-studies" variant="glass" size="lg" arrow>
             View all case studies
           </GlassButton>
           <GlassButton

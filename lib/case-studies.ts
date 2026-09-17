@@ -98,9 +98,9 @@ const studies: CaseStudy[] = [
     slug: "aditya-birla-capital-brand-performance",
     client: "Aditya Birla Capital",
     campaign: "Adi · AI Avatar",
-    vertical: "Influence",
+    vertical: "AI Labs",
     discipline: "AI avatar",
-    work: ["aditya-birla-capital-campaign"],
+    work: ["aditya-birla-capital-ai-content"],
     heroClip: 29,
   },
   {

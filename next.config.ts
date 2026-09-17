@@ -43,7 +43,6 @@ const nextConfig: NextConfig = {
     return [
       { source: "/our-work", destination: "/#library", permanent: false },
       { source: `/work/${slug}`, destination: "/#library", permanent: false },
-      { source: "/case-studies", destination: "/#case-studies", permanent: false },
       { source: `/case-studies/${slug}`, destination: "/#case-studies", permanent: false },
       { source: `/avatars/${slug}`, destination: "/#ai-lab", permanent: false },
       { source: "/influencer-campaigns", destination: "/#influence", permanent: false },
