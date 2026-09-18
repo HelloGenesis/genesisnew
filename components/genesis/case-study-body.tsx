@@ -66,6 +66,14 @@ export function CaseStudyBody({
 
       {!compact && <Block label="Results and impact" paragraphs={copy.results} />}
       {!compact && copy.takeaway && <Block label="Takeaway" paragraphs={[copy.takeaway]} />}
+
+      {/*
+        Genesis's own note on this copy, at the foot of every study it is
+        shown in — the windows and the study pages alike.
+      */}
+      <p className="border-t border-[var(--glass-border)] pt-4 text-micro text-faint">
+        Generated using AI, might have errors.
+      </p>
     </div>
   );
 }

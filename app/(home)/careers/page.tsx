@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 
 import { GenesisForm } from "@/components/genesis/genesis-form";
+import { JsonLd } from "@/components/genesis/json-ld";
 import { GlowWord } from "@/components/genesis/glow-word";
 import { Atmosphere } from "@/components/genesis/atmosphere";
 import { Reveal, RevealGroup, RevealItem } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { careersPage } from "@/lib/page-content";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Careers",
-  description: careersPage.body,
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Careers at a Gen Z Creative Agency in Mumbai",
+  description:
+    "Work at Genesis Media in Mumbai. We hire in content production, editing, creative direction, strategy, influencer partnerships, design, AI and engineering.",
+  path: "/careers",
+});
 
 /**
  * /careers — the application, on the page's own ground.
@@ -46,6 +50,7 @@ export default function CareersPage() {
       */
       style={{ background: "var(--page-ground-compact)" }}
     >
+      <JsonLd data={breadcrumbJsonLd([{ name: "Careers", path: "/careers" }])} />
       <div className="relative z-[2] mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center justify-center px-6 py-32 text-center">
         <Reveal>
           <SectionLabel dot tone="brand" className="justify-center">

@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import { Atmosphere } from "@/components/genesis/atmosphere";
 import { CaseStudyGrid, type CaseStudyCard } from "@/components/genesis/case-study-grid";
 import { GlassButton } from "@/components/genesis/glass-button";
+import { JsonLd } from "@/components/genesis/json-ld";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
-import { caseStudiesPage, caseStudyList, disciplines } from "@/lib/case-studies";
+import { caseStudiesPage, caseStudyList } from "@/lib/case-studies";
+import { labelsFor } from "@/lib/case-study-pages";
 import {
   caseStudyCopy,
   videoOnlyStudies,
@@ -14,6 +16,7 @@ import {
 import { clipRatio } from "@/lib/clip-shape";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 import {
   reelClip,
   reelPoster,
@@ -23,11 +26,12 @@ import {
   type WorkItem,
 } from "@/lib/work";
 
-export const metadata: Metadata = {
-  title: "Case Studies",
+export const metadata: Metadata = pageMetadata({
+  title: "Case Studies: Influencer, Video & AI Work",
   description:
-    "Campaigns by Genesis Media across influencer marketing, AI content and video production — for Aditya Birla, Mahindra Finance, House of Hiranandani and more.",
-};
+    "Case studies from Genesis Media: influencer campaigns, video production and AI content for Aditya Birla Health Insurance, Mahindra Finance, HDFC Bank and more.",
+  path: "/case-studies",
+});
 
 /**
  * /case-studies — the whole set as a work index, after Schbang's /work.
@@ -55,6 +59,7 @@ export default function CaseStudiesPage() {
       className="relative isolate min-h-dvh overflow-hidden"
       style={{ background: "var(--page-ground-compact)" }}
     >
+      <JsonLd data={breadcrumbJsonLd([{ name: "Case Studies", path: "/case-studies" }])} />
       <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pt-36 pb-24">
         <Reveal>
           <SectionLabel dot tone="brand">
@@ -91,6 +96,9 @@ export default function CaseStudiesPage() {
             Contact us
           </GlassButton>
         </Reveal>
+
+        {/* Genesis's note on the case-study copy, at the foot of the page. */}
+        <p className="mt-12 text-micro text-faint">Generated using AI, might have errors.</p>
       </div>
     </Atmosphere>
   );
@@ -136,16 +144,12 @@ const ordered: Entry[] = [
   ),
 ];
 
-/** The slider's labels for a study where it has a card, else its division. */
-function labelsFor(copy: CaseStudyCopy): string[] {
-  const card = caseStudyList.find((study) => study.copy === copy.n);
-  return card ? disciplines(card) : [copy.division];
-}
-
 const cards: (CaseStudyCard & { clip: ReelId })[] = ordered.map((entry) =>
   "headline" in entry
     ? {
         key: entry.slug,
+        /* The study's own page — the card is a link to it. See CaseStudyGrid. */
+        href: `/case-studies/${entry.slug}`,
         clip: entry.clip,
         brand: entry.brand,
         line: entry.headline,

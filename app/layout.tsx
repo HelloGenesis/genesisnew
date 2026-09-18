@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 
+import { INDEXABLE, SITE_URL } from "@/lib/seo";
+import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -53,16 +55,40 @@ const mont = localFont({
   fallback: ["system-ui", "sans-serif"],
 });
 
+/*
+  THE DEFAULTS, for the few routes that do not build their own metadata —
+  the 404 and /insider. Every marketing page replaces all of this through
+  pageMetadata() in lib/seo, which is where the reasoning lives.
+
+  metadataBase IS THE PRODUCTION ORIGIN, NOT APP_BASE_URL. That variable is
+  the Auth0 SDK's and is deliberately left unset on Vercel previews, so it
+  made canonicals, og:url and share images follow whichever host built the
+  page. SITE_URL does not move.
+*/
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Genesis Media",
-    template: "%s · Genesis Media",
+    default: siteConfig.name,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    "Genesis Media is an AI-first creative and content agency.",
-  metadataBase: process.env.APP_BASE_URL
-    ? new URL(process.env.APP_BASE_URL)
-    : undefined,
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  openGraph: {
+    type: "website",
+    siteName: siteConfig.name,
+    locale: "en_IN",
+    images: [{ url: "/og", width: 1200, height: 630, alt: siteConfig.name }],
+  },
+  twitter: { card: "summary_large_image" },
+  ...(INDEXABLE ? {} : { robots: { index: false, follow: false } }),
+  /*
+    Search Console ownership by meta tag, for when DNS verification is not an
+    option. Set GOOGLE_SITE_VERIFICATION to the token Search Console gives;
+    unset, nothing is printed.
+  */
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

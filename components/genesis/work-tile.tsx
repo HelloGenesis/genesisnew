@@ -134,8 +134,10 @@ export function WorkTile({
             muted
             loop
             playsInline
-            // Nothing but the header until someone hovers.
-            preload="metadata"
+            // Nothing at all until the tile scrolls into view: the poster is
+            // painted, and useInViewPlayback starts the load on arrival.
+            // "metadata" fetched every tile's file on page load.
+            preload="none"
             aria-hidden
             {...VIDEO_GUARD_CLIENT}
             className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.03]"

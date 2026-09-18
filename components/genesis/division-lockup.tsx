@@ -466,7 +466,14 @@ export function DivisionLockup({
           alt=""
           width={lockup.width}
           height={lockup.height}
-          priority={priority}
+          /*
+            `preload`, not `priority`: Next 16 deprecated the latter for the
+            former, with the same behaviour — eager, plus a preload hint in
+            the head. High fetch priority because the only caller that asks
+            is the hero, whose names are the homepage's LCP element.
+          */
+          preload={priority}
+          fetchPriority={priority ? "high" : undefined}
           sizes={fluid ? FLUID_SIZES : `(min-width: 640px) ${maxWidth}px, 100vw`}
           className="h-auto w-full"
           /*
@@ -482,7 +489,8 @@ export function DivisionLockup({
             alt=""
             width={lockup.width}
             height={lockup.height}
-            priority={priority}
+            preload={priority}
+            fetchPriority={priority ? "high" : undefined}
             sizes={fluid ? FLUID_SIZES : `(min-width: 640px) ${maxWidth}px, 100vw`}
             className={cn("absolute inset-0 h-auto w-full")}
             style={{ opacity: "var(--logo-invert, 0)" }}

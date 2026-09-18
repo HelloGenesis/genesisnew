@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
 
 import { GenesisForm } from "@/components/genesis/genesis-form";
+import { JsonLd } from "@/components/genesis/json-ld";
 import { Reveal } from "@/components/genesis/reveal";
 import { SlideUp } from "@/components/genesis/slide-up";
 import { creatorPage } from "@/lib/page-content";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "For Creators",
-  description: creatorPage.body,
-};
+/*
+  "Influencer registration" because that is the phrase — the old site's page
+  for this form was /influencer-registration-form, which now redirects here.
+*/
+export const metadata: Metadata = pageMetadata({
+  title: "Influencer Registration: Join Our Roster",
+  description:
+    "Creators and influencers: join the Genesis Media roster for paid brand campaigns with clear briefs, agreed fees and on-time payments, across every niche.",
+  path: "/creator",
+});
 
 /**
  * /creator — the roster form, and nothing else.
@@ -37,6 +45,7 @@ export default function CreatorPage() {
   return (
     <SlideUp>
       <main className="relative isolate min-h-dvh overflow-hidden pb-32 pt-32 sm:pt-40">
+        <JsonLd data={breadcrumbJsonLd([{ name: "I'm a Creator", path: "/creator" }])} />
         {/*
           ONE COLUMN, so the headline sits on the same left edge as the first
           field rather than floating over a form centred beneath it.

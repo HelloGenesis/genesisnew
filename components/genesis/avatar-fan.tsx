@@ -385,7 +385,12 @@ export function AvatarFan({
               {avatar.portrait && (
                 <Image
                   src={avatar.portrait}
-                  alt=""
+                  /*
+                    Named for image search. The button's aria-label already
+                    names the card for a screen reader, and a button's
+                    contents are presentational, so this is not read twice.
+                  */
+                  alt={`${avatar.name}, AI avatar by Genesis AI Lab`}
                   fill
                   sizes="(min-width: 880px) 14vw, 46vw"
                   className="object-cover"

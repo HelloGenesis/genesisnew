@@ -8,7 +8,9 @@ import { pagerFor } from "@/components/genesis/overlay";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { caseStudiesPage, caseStudyList, disciplines, leadClip } from "@/lib/case-studies";
+import { caseStudyPath } from "@/lib/case-study-pages";
 import { findWork, reelClip, reelPoster } from "@/lib/work";
+import { clipRatio } from "@/lib/clip-shape";
 import { mediaUrl } from "@/lib/media-url";
 import { SectionShell } from "./section-shell";
 
@@ -74,10 +76,14 @@ export function CaseStudies() {
 
     return {
       id: study.slug,
+      ratio: id === undefined ? undefined : clipRatio(id),
       category: disciplines(study)[0],
       extraCategories: disciplines(study).slice(1),
       image,
       clip,
+      /* The study's page: the poster links there and still opens the window
+         on a plain click. See PosterCard. */
+      href: caseStudyPath(study.copy),
       /*
         THE COMPANY NAME AND NOTHING ELSE on the card ("itna saara content
         nahi chahiye"): the labels above, the reel, the client below. The

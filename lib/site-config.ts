@@ -25,7 +25,38 @@ export const siteConfig = {
   tagline: "Empowering brands with influencer marketing, creative content & technology.",
   description:
     "Genesis is a Gen Z-led full-service agency where strategy, content and technology come together to build iconic brands.",
-  url: "https://genesismedia.co",
+  /*
+    THE CANONICAL ORIGIN, AND IT IS THE WWW HOST ON PURPOSE. The site this
+    replaces is served from www.genesismedia.co — the bare domain 301s to it —
+    so every URL Google has indexed for Genesis is on www. Launching on the
+    bare domain would be a host migration on top of a platform migration, for
+    no gain. If the Vercel project is set up with the bare domain as primary
+    instead, change it here (or set SITE_URL) and nowhere else: canonicals,
+    Open Graph, the sitemap, robots.txt and the JSON-LD all read it from
+    lib/seo.ts.
+  */
+  url: "https://www.genesismedia.co",
+  /*
+    NAP — name, address, phone — for the Organization schema. Written once so
+    the schema and anything that prints the address later cannot disagree.
+
+    The office, as Genesis gave it. Panvel is in the Mumbai Metropolitan
+    Region, which is why the copy says Mumbai and the schema says Panvel.
+    Keep this identical to the Google Business Profile, character for
+    character.
+  */
+  address: {
+    streetAddress: "104, Plot-122/123, Sector-10, New Panvel East" as string | undefined,
+    postalCode: "410206" as string | undefined,
+    locality: "Panvel",
+    region: "Maharashtra",
+    country: "IN",
+  },
+  /** The two accounts the footer links to. Read by SocialStars and the schema. */
+  social: {
+    instagram: "https://www.instagram.com/genesismedia.co/",
+    linkedin: "https://www.linkedin.com/company/genesismediaa/",
+  },
   /**
    * Genesis's business WhatsApp line. Written the way a person writes a phone
    * number rather than the way wa.me wants it — the button strips everything
@@ -153,18 +184,34 @@ export const navItems: NavItem[] = [
 export const homeHref = "/#services";
 
 /**
- * The four divisions, with their full names and blurbs.
+ * THE FOUR DIVISION PAGES, and the homepage section each one is the long
+ * form of.
  *
- * NO LONGER IN THE FOOTER — see footerNav, which Genesis rewrote. Kept
- * because it is the one place the four are written out in full with a line
- * each, and it is a short walk from here to a sitemap or a division index.
+ * WHY THE DIVISIONS HAVE URLS AGAIN. They were folded into the landing page
+ * as anchors — /#influence and the rest — and an anchor is not a page to a
+ * search engine: Google indexes one document at "/", so none of the four
+ * could rank for its own service, and "influencer marketing agency" had
+ * nothing to land on. Each is now a real, server-rendered route with its own
+ * title, copy and schema.
+ *
+ * THE ONE-PAGE SCROLL IS UNTOUCHED. Every link to a division carries the
+ * page's URL, which is what a crawler follows; on the homepage itself
+ * SmoothScroll maps a plain click on one of these to its `section` and
+ * scrolls there, exactly as the old anchor did. A visitor on "/" sees no
+ * difference. From any other page, or with cmd-click, the link opens the
+ * division's own page.
  */
-export const capabilities: NavItem[] = [
-  { label: "Genesis Influence", href: "/#influence", blurb: "Creator-led growth" },
-  { label: "Genesis Studios", href: "/#studios", blurb: "Production & content" },
-  { label: "Genesis AI Labs", href: "/#ai-lab", blurb: "Creative technology" },
-  { label: "Genesis Brand & Design", href: "/#brand-design", blurb: "Identity & communication" },
-];
+export const divisionPages = [
+  { label: "Influencer Marketing", href: "/influencer-marketing", section: "influence", blurb: "Creator-led growth" },
+  { label: "Content Production", href: "/content-production", section: "studios", blurb: "Production & content" },
+  { label: "AI Content & Automation", href: "/ai-content-automation", section: "ai-lab", blurb: "Creative technology" },
+  { label: "Brand & Design", href: "/brand-design", section: "brand-design", blurb: "Identity & communication" },
+] as const;
+
+/** The homepage section a division page stands for, keyed by its path. */
+export const sectionForPage: Record<string, string> = Object.fromEntries(
+  divisionPages.map((page) => [page.href, page.section]),
+);
 
 /** The one navigation item that is meant to look like an action. */
 export const primaryCta = { label: "Start a Project", href: "/#contact" } as const;
@@ -192,8 +239,19 @@ export const primaryCta = { label: "Start a Project", href: "/#contact" } as con
  * accounts yet was promising something the site does not do. /insider itself
  * is untouched and still reachable by typing it — see robots.ts, which keeps
  * it out of search.
+ *
+ * SERVICES IS THE THIRD COLUMN, and it is the four division pages. The
+ * footer is on every page, so this is what gives each division a link from
+ * every other page on the site — the internal linking a new URL needs before
+ * it can rank. "Influencer Marketing" moved here from Work; the other three
+ * are new. On the homepage they still scroll, like every link in this footer
+ * (see divisionPages).
  */
 export const footerNav: { heading: string; items: NavItem[] }[] = [
+  {
+    heading: "Services",
+    items: divisionPages.map(({ label, href }) => ({ label, href })),
+  },
   {
     heading: "Work",
     items: [
@@ -201,12 +259,11 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
         THESE SCROLL, THEY DO NOT NAVIGATE. Genesis's instruction is that the
         footer should take you to the section rather than open a new page —
         which is right for a single-page site: a reader at the bottom clicking
-        "Influencer Marketing" wants the block they just scrolled past, not a
-        fresh document and a lost scroll position.
+        "Campaigns" wants the block they just scrolled past, not a fresh
+        document and a lost scroll position.
 
         Only the two that have no section of their own still navigate.
       */
-      { label: "Influencer Marketing", href: "/#influence" },
       { label: "Campaigns", href: "/#library" },
       { label: "Library", href: "/#library" },
       { label: "Case Studies", href: "/#case-studies" },

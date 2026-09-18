@@ -5,6 +5,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { useEffect } from "react";
 
+import { sectionForPage } from "@/lib/site-config";
+
 /**
  * Lenis smooth scrolling, wired directly into GSAP.
  *
@@ -90,10 +92,16 @@ function installAnchorScrolling(lenis: Lenis | null): () => void {
     if (!href) return;
 
     // Same-document hashes only: "#work" and "/#work" when already on "/".
+    const onHome = window.location.pathname === "/";
     let hash = "";
     if (href.startsWith("#")) hash = href;
-    else if (href.startsWith("/#") && window.location.pathname === "/")
-      hash = href.slice(1);
+    else if (href.startsWith("/#") && onHome) hash = href.slice(1);
+    /*
+      A DIVISION PAGE, CLICKED FROM THE HOMEPAGE, scrolls to its section.
+      The link is the real URL so a crawler can find the page; the reader on
+      the landing page gets the scroll they always had. See divisionPages.
+    */
+    else if (onHome && sectionForPage[href]) hash = `#${sectionForPage[href]}`;
     else return;
 
     const target = resolve(hash);

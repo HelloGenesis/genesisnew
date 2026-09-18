@@ -9,7 +9,7 @@ import { useInViewPlayback } from "./use-in-view-playback";
 
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
+import { cn, isPlainClick } from "@/lib/utils";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 
 /**
@@ -42,6 +42,11 @@ export type Poster = {
   /** Where the poster leads. A poster that opens nothing is a picture of
    *  work rather than a way into it. */
   href?: string;
+  /**
+   * The film's width over height (lib/clip-shape). Omitted means 9:16. A
+   * landscape poster keeps the reels' height and grows wide instead.
+   */
+  ratio?: number;
 };
 
 /**
@@ -104,6 +109,10 @@ export function PosterCard({
     the cards on screen hold a decoder. See useInViewPlayback.
   */
   const videoRef = useInViewPlayback<HTMLVideoElement>();
+  const ratio = poster.ratio ?? 9 / 16;
+  const reelWidth = priority
+    ? "min(clamp(15rem,26vw,21rem),calc(60vh*9/16))"
+    : "min(clamp(12rem,20vw,18rem),calc(54vh*9/16))";
 
   const card = (
     <motion.article
@@ -126,11 +135,20 @@ export function PosterCard({
           9:16 footage inside it. The cap is on the WIDTH now, as a share of
           the window's height, so the ratio below always holds.
         */
-        priority
-          ? "w-[min(clamp(15rem,26vw,21rem),calc(60vh*9/16))]"
-          : "w-[min(clamp(12rem,20vw,18rem),calc(54vh*9/16))]",
         className,
       )}
+      /*
+        A LANDSCAPE FILM KEEPS ITS SHAPE ("landscape hai toh landscape hi
+        rakho"). The reel width is the unit; a landscape poster is as TALL as
+        a reel (width x 16/9) and as wide as its own ratio makes that, so the
+        rail's row stays level and the film is not cropped to a strip.
+      */
+      style={{
+        width:
+          ratio > 1
+            ? `calc(${reelWidth} * 16 / 9 * ${ratio.toFixed(4)})`
+            : reelWidth,
+      }}
     >
       <div
         /*
@@ -138,12 +156,13 @@ export function PosterCard({
           fills its card instead of being cropped to a print-poster shape.
           Arbitrary-value syntax: Tailwind v4 has no bare-fraction aspect.
         */
-        className="relative w-full aspect-[9/16]"
-        style={
-          poster.image
+        className="relative w-full"
+        style={{
+          aspectRatio: ratio > 1 ? ratio : 9 / 16,
+          ...(poster.image
             ? { backgroundImage: `url(${poster.image})`, backgroundSize: "cover" }
-            : { backgroundImage: placeholderArt(poster.id) }
-        }
+            : { backgroundImage: placeholderArt(poster.id) }),
+        }}
       >
         {/*
           The footage, behind every scrim and control the card draws.
@@ -161,7 +180,9 @@ export function PosterCard({
             muted
             loop
             playsInline
-            preload="metadata"
+            /* Loaded when it scrolls into view (useInViewPlayback), not on
+               page load — the poster is already on screen. */
+            preload="none"
             aria-hidden
             {...VIDEO_GUARD_CLIENT}
             className="absolute inset-0 size-full object-cover"
@@ -272,6 +293,31 @@ export function PosterCard({
     with a click handler. That is what makes it reachable by Tab and operable
     with Space and Enter for free.
   */
+  /*
+    BOTH, WHERE THE POSTER HAS A PAGE AND THE CALLER A WINDOW. The case-study
+    rail opens studies over the page, and every study now has a URL of its
+    own. So the poster is a link to that URL — what a crawler, a cmd-click or
+    a middle click follows — and a plain click opens the window instead.
+  */
+  if (onSelect && poster.href) {
+    return (
+      <Link
+        href={poster.href}
+        prefetch={false}
+        onClick={(event) => {
+          if (!isPlainClick(event)) return;
+          event.preventDefault();
+          onSelect(poster.id);
+        }}
+        aria-haspopup="dialog"
+        aria-label={`${poster.client ?? poster.title}, ${poster.title}`}
+        className="block shrink-0 rounded-panel text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      >
+        {card}
+      </Link>
+    );
+  }
+
   if (onSelect) {
     return (
       <button

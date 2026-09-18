@@ -154,8 +154,15 @@ export function Services() {
           heading, and deleting the visible one and leaving nothing would put
           the homepage back to having none — the bug fixed three commits ago.
         */}
+        {/*
+          WHAT THE AGENCY IS, IN THE WORDS PEOPLE SEARCH. It read "four
+          divisions, one creative system", which is the design's idea and no
+          one's query. The four names around the orb say exactly this in
+          pictures; the heading says it in text.
+        */}
         <h1 className="sr-only">
-          Genesis Media — four divisions, one creative system
+          Genesis Media: influencer marketing, content production, AI content
+          and brand design agency in Mumbai
         </h1>
 
         {/*
@@ -275,6 +282,14 @@ export function Services() {
               */}
               <Link
                 href={service.href}
+                /*
+                  NO PREFETCH. On this page a plain click scrolls to the
+                  division's section rather than navigating (SmoothScroll), so
+                  prefetching the four division pages would fetch four
+                  documents nobody here opens. The href is for crawlers and
+                  for cmd-click.
+                */
+                prefetch={false}
                 className="group flex w-full flex-col rounded-sm outline-none transition-transform duration-300 ease-out focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-transparent motion-safe:hover:-translate-y-0.5"
               >
                 {/*
@@ -339,6 +354,14 @@ export function Services() {
                     sit at four different heights on hover.
                   */
                   taglineClassName="hidden lg:block mt-3 min-h-[2.7em] text-small leading-[1.35] text-balance sm:text-small opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none lg:[@media(hover:none)]:opacity-100"
+                  /*
+                    ABOVE THE FOLD, SO NOT LAZY. These four names are the
+                    homepage's Largest Contentful Paint — measured, Brand &
+                    Design's is the LCP element — and a lazy image is fetched
+                    only after layout proves it is on screen, at low priority.
+                    Four small PNGs; the orb's canvas is not an LCP candidate.
+                  */
+                  priority
                 />
               </Link>
             </RevealItem>

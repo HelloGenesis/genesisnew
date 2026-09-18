@@ -1,3 +1,4 @@
+import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 /**
@@ -63,12 +64,13 @@ function LinkedInMark() {
 const SOCIALS = [
   {
     label: "Instagram",
-    href: "https://www.instagram.com/genesismedia.co/",
+    // From siteConfig, which the Organization schema's `sameAs` also reads.
+    href: siteConfig.social.instagram,
     Mark: InstagramMark,
   },
   {
     label: "LinkedIn",
-    href: "https://www.linkedin.com/company/genesismediaa/",
+    href: siteConfig.social.linkedin,
     Mark: LinkedInMark,
   },
 ];

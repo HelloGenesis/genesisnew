@@ -420,12 +420,18 @@ function OrbitCard({
             the link opens, and the photograph is what a sighted reader sees.
           */}
         </div>
+        {/*
+          INSIDE THE LINK, which is the whole point of it. It sat after
+          CardShell, so the <a> held nothing but an alt="" photograph: eleven
+          links with no name at all, announced as bare links and followed by
+          crawlers with no anchor text. In here it IS the link's name.
+        */}
+        <span className="sr-only">
+          {[creator.label, creator.followers, creator.instagram ? "on Instagram" : ""]
+            .filter(Boolean)
+            .join(", ")}
+        </span>
       </CardShell>
-      <span className="sr-only">
-        {[creator.label, creator.followers, creator.instagram ? "on Instagram" : ""]
-          .filter(Boolean)
-          .join(", ")}
-      </span>
     </motion.div>
   );
 }

@@ -26,3 +26,29 @@ const twMerge = extendTailwindMerge({
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * A plain left click — the only kind a link may take over.
+ *
+ * For the cards that are LINKS TO A PAGE AND ALSO OPEN A WINDOW: a plain
+ * click opens the window, as it always did, and everything else — cmd- or
+ * ctrl-click, shift-click, a middle click — is left to the browser, which
+ * opens the page. The href is what a crawler follows either way.
+ */
+export function isPlainClick(event: {
+  button: number
+  metaKey: boolean
+  ctrlKey: boolean
+  shiftKey: boolean
+  altKey: boolean
+  defaultPrevented: boolean
+}) {
+  return (
+    !event.defaultPrevented &&
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey
+  )
+}

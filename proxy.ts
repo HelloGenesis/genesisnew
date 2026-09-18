@@ -63,8 +63,9 @@ export const config = {
   matcher: [
     /*
      * Everything except static assets and metadata files. The Auth0 SDK needs
-     * this broad a matcher for rolling sessions to work.
+     * this broad a matcher for rolling sessions to work. `og` is the share
+     * cards (app/og) — images, with no session to roll.
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|og).*)",
   ],
 };

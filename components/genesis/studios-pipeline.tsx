@@ -443,7 +443,8 @@ function StageClip({
       muted
       loop
       playsInline
-      preload="metadata"
+      // Loaded on arrival by useInViewPlayback; the poster covers until then.
+      preload="none"
       aria-label={`${label} — Genesis Studios work`}
       {...VIDEO_GUARD_CLIENT}
       /*

@@ -112,20 +112,16 @@ export function SiteFooter() {
             LINKS NOW, NOT PRINTED WORDS. This read "Privacy · Terms" as plain
             text with nothing behind it, which is the one thing a footer must
             not do — a visitor looking for a policy found the word and no page.
-            Both routes exist and are interim; see lib/legal.ts.
-
-            TODO(legal): counsel-reviewed copy required before launch.
+            Privacy only: Genesis removed the terms page, and /terms
+            redirects to /privacy. The policy is their own copy; see
+            lib/legal.ts.
           */}
           <p className="flex items-center gap-2">
             <Link
               href="/privacy"
               className="transition-colors hover:text-bone"
             >
-              Privacy
-            </Link>
-            <span aria-hidden>·</span>
-            <Link href="/terms" className="transition-colors hover:text-bone">
-              Terms
+              Privacy Policy
             </Link>
           </p>
         </div>

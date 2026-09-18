@@ -116,9 +116,10 @@ export const services = {
        * "Genesis." four more times around a Genesis logo is a stutter.
        */
       short: "Influence",
-      /* Where the Brain sends you. Two verticals have a page of their own;
-         the other two anchor to their homepage section until they do. */
-      href: "/#influence",
+      /* Where the Brain sends you: the division's own page, which on the
+         homepage scrolls to its section instead (see divisionPages in
+         lib/site-config). The URL is for crawlers and new tabs. */
+      href: "/influencer-marketing",
       /*
        * PIPES, NOT COMMAS. Genesis asked for the separator in every division
        * tagline to be a pipe. It is the deck's own convention for these lists
@@ -169,7 +170,7 @@ export const services = {
         "Pitch Decks & Brand Collaterals",
       ],
       short: "Brand & Design",
-      href: "/#brand-design",
+      href: "/brand-design",
       // See the note on Influence above — read off the 2026 lockup.
       caption: "Branding Positioning | Design & Collaterals",
       ramp: "linear-gradient(100deg, #f0dcff 0%, #f5a3cd 50%, #ffbe8f 100%)",
@@ -192,7 +193,7 @@ export const services = {
         "Founder-Led Content",
       ],
       short: "Studios",
-      href: "/#studios",
+      href: "/content-production",
       // The one that already agreed with its lockup, bar capitalisation.
       caption: "Strategy | Scripting & Content Production",
       ramp: "linear-gradient(100deg, #ff9147 0%, #ffb057 58%, #ffd27a 100%)",
@@ -216,7 +217,7 @@ export const services = {
         "AI-Powered Automations, Games & Apps",
       ],
       short: "AI Lab",
-      href: "/#ai-lab",
+      href: "/ai-content-automation",
       // See the note on Influence above — read off the 2026 lockup.
       caption: "Avatars | Multilingual Content | Games & Apps",
       ramp: "linear-gradient(100deg, #ff8fb8 0%, #ffa25c 100%)",

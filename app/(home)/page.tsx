@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { siteConfig } from "@/lib/site-config";
+import { pageMetadata } from "@/lib/seo";
 import { AiContent } from "./components/ai-content";
 import { BrandingDesign } from "./components/branding-design";
 import { CaseStudies } from "./components/case-studies";
@@ -11,12 +11,19 @@ import { Portfolio } from "./components/portfolio";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
 
-export const metadata: Metadata = {
-  title: {
-    absolute: `${siteConfig.name} · ${siteConfig.tagline}`,
-  },
-  description: siteConfig.description,
-};
+/*
+  THE TITLE WAS THE TAGLINE — 91 characters, so every result showed "Genesis
+  Media · Empowering brands with influencer marketing, creative co…" and cut
+  off before saying what the agency is or where. Brand first, then the three
+  things people search for, then the city, inside 60.
+*/
+export const metadata: Metadata = pageMetadata({
+  title: "Genesis Media | Influencer, Content & AI Agency in Mumbai",
+  absoluteTitle: true,
+  description:
+    "Genesis Media is a Gen Z-led agency in Mumbai for influencer marketing, UGC, video production, AI avatars and brand design, working with brands across India.",
+  path: "/",
+});
 
 /**
  * Homepage — the Genesis ecosystem, in the order the brief asks for.

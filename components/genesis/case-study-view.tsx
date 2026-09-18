@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { CaseStudyCopy } from "@/lib/case-study-copy";
@@ -20,7 +21,8 @@ import { CaseStudyBody } from "./case-study-body";
  * The film takes a narrow column at its own 9:16 shape and stays in view
  * while the copy beside it scrolls; on a phone the two stack, film first.
  * Used by both windows that open a study — the homepage slider's and
- * /case-studies' — so they cannot drift apart.
+ * /case-studies' — and by the study's own page at /case-studies/<slug>, so
+ * the three cannot drift apart.
  */
 export function CaseStudyView({
   labels,
@@ -32,6 +34,9 @@ export function CaseStudyView({
   copy,
   fallback,
   ratio = 9 / 16,
+  headingAs: Heading = "h2",
+  autoPlay = true,
+  pageHref,
 }: {
   /** The film's width over height; see lib/clip-shape. */
   ratio?: number;
@@ -44,6 +49,18 @@ export function CaseStudyView({
   copy?: CaseStudyCopy;
   /** Shown in the copy column when there is no write-up. */
   fallback?: ReactNode;
+  /** h1 on the study's own page, where the headline is the page's title. */
+  headingAs?: "h1" | "h2";
+  /**
+   * The windows start the film because a click opened them; the page does
+   * not, because nobody asked, and an unmuted autoplay is blocked anyway.
+   */
+  autoPlay?: boolean;
+  /**
+   * The study's own page. Given in the windows, so a study a reader wants to
+   * send someone has a URL to send.
+   */
+  pageHref?: string;
 }) {
   const landscape = ratio > 1;
 
@@ -51,9 +68,9 @@ export function CaseStudyView({
     <article className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
         {labels.length > 0 && <p className="micro-label !text-brand">{labels.join(" · ")}</p>}
-        <h2 className="text-balance text-h3 font-semibold leading-[1.1] tracking-tight text-bone sm:text-h2">
+        <Heading className="text-balance text-h3 font-semibold leading-[1.1] tracking-tight text-bone sm:text-h2">
           {headline ?? subheadline}
-        </h2>
+        </Heading>
         {headline && <p className="text-lead leading-relaxed text-ash">{subheadline}</p>}
       </header>
 
@@ -74,7 +91,7 @@ export function CaseStudyView({
               key={film ?? preview}
               poster={poster}
               controls
-              autoPlay
+              autoPlay={autoPlay}
               playsInline
               preload="metadata"
               {...VIDEO_GUARD_CLIENT}
@@ -97,6 +114,14 @@ export function CaseStudyView({
 
         <div className="min-w-0">
           {copy ? <CaseStudyBody copy={copy} /> : fallback}
+          {pageHref && (
+            <Link
+              href={pageHref}
+              className="mt-8 inline-flex text-small text-brand-ink underline-offset-4 transition-colors hover:text-bone hover:underline"
+            >
+              Open as a page →
+            </Link>
+          )}
         </div>
       </div>
     </article>

@@ -1,9 +1,11 @@
 import { GlassNav } from "@/components/genesis/glass-nav";
+import { JsonLd } from "@/components/genesis/json-ld";
 import { PageAtmosphere } from "@/components/genesis/page-atmosphere";
 import { SmoothScroll } from "@/components/genesis/smooth-scroll";
 import { QuickContact } from "@/components/genesis/quick-contact";
 import { SiteFooter } from "@/components/genesis/site-footer";
 import { WhatsappButton } from "@/components/genesis/whatsapp-button";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
 /**
  * Marketing shell. The floating nav is fixed-position and lives here rather
@@ -17,6 +19,12 @@ export default function HomeLayout({
 }) {
   return (
     <>
+      {/*
+        WHO GENESIS IS, ON EVERY PAGE. Organization and WebSite, once, here —
+        every page's own nodes (a Service, a case study's film) point back to
+        these by @id rather than restating the company. See lib/seo.
+      */}
+      <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
       <SmoothScroll />
       <GlassNav />
       {/*
