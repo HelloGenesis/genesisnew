@@ -28,25 +28,95 @@ import { isDriveConfigured, parseServiceAccount } from "./google-drive";
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 
 /**
- * The tab written to, and the columns, in order.
+ * ONE TAB PER FORM, each with that form's own columns.
  *
- * The header is written once, when the sheet is empty, so a fresh spreadsheet
- * becomes readable without anyone having to set it up by hand. It is never
- * rewritten — if someone renames a column to suit how they work, that is
- * their sheet and this has no business correcting it.
+ * Every submission used to land in one "Submissions" tab with eight fixed
+ * columns, so the fields that mattered most on each form — an influencer's
+ * rates and handles, a project's budget and timeline, an applicant's CV link
+ * — had no column at all and were lost to the sheet. Genesis set up four tabs
+ * in one spreadsheet and named them; these titles must match theirs exactly.
+ *
+ * Every tab reads Received, Source, the form's fields, then Status. Status is
+ * the team's own follow-up column and is never written here — the header
+ * includes it so a freshly created tab comes out complete.
+ *
+ * The header is written only into an EMPTY first row, so a fresh tab is
+ * readable without setup; it is never rewritten — if someone renames a column
+ * to suit how they work, that is their sheet.
  */
-const TAB = "Submissions";
-const HEADER = [
-  "Received",
-  "Type",
-  "Name",
-  "Email",
-  "Company",
-  "Phone",
-  "Message",
-  "Source",
-] as const;
+export type SheetTab = "brand" | "quick" | "influencer" | "career";
 
+const TABS: Record<SheetTab, { title: string; columns: [header: string, field: string][] }> = {
+  brand: {
+    title: "Project Enquiries",
+    columns: [
+      ["Name", "name"],
+      ["Company", "company"],
+      ["Email", "email"],
+      ["Phone", "phone"],
+      ["Website or social", "website"],
+      ["What do you need?", "need"],
+      ["Budget range", "budget"],
+      ["Timeline", "timeline"],
+      ["Project brief", "message"],
+    ],
+  },
+  quick: {
+    title: "Quick Contact",
+    columns: [
+      ["Name", "name"],
+      ["Company", "company"],
+      ["Email", "email"],
+      ["Phone", "phone"],
+      ["What can we help you with?", "message"],
+    ],
+  },
+  influencer: {
+    title: "Influencer Onboarding",
+    columns: [
+      ["Name", "name"],
+      ["Email", "email"],
+      ["Phone", "phone"],
+      ["Platforms", "platforms"],
+      ["What brings you to us?", "goals"],
+      ["Instagram link", "instagram"],
+      ["YouTube link", "youtube"],
+      ["IG reel cost (₹)", "igReelCost"],
+      ["YT integrated (₹)", "ytReelCost"],
+      ["Previous brands", "previousBrands"],
+      ["Picture link", "picture"],
+      ["Comments", "message"],
+      ["Consent to pitch", "consent"],
+    ],
+  },
+  career: {
+    title: "Careers",
+    columns: [
+      ["First name", "name"],
+      ["Last name", "lastName"],
+      ["Email", "email"],
+      ["Contact number", "phone"],
+      ["Position", "position"],
+      ["Portfolio or CV link", "portfolio"],
+      ["About yourself", "message"],
+    ],
+  },
+};
+
+function headerFor(tab: SheetTab): string[] {
+  return ["Received", "Source", ...TABS[tab].columns.map(([header]) => header), "Status"];
+}
+
+/** Column letter for a 1-based index (1 → A, 27 → AA). */
+function column(n: number): string {
+  let out = "";
+  for (let i = n; i > 0; i = Math.floor((i - 1) / 26)) {
+    out = String.fromCharCode(65 + ((i - 1) % 26)) + out;
+  }
+  return out;
+}
+
+/** The legacy single-row shape, kept for the older contact action. */
 export type SubmissionRow = {
   type: string;
   name: string;
@@ -57,7 +127,6 @@ export type SubmissionRow = {
   source?: string | null;
 };
 
-/** True when a real service account AND a spreadsheet id are both present. */
 export function isSheetsConfigured(): boolean {
   const id = process.env.GOOGLE_SHEETS_ID;
   return isDriveConfigured() && Boolean(id && id.trim() !== "");
@@ -102,7 +171,7 @@ function getSheets() {
  * Failing here must not stop the append either: if the tab already exists this
  * throws a duplicate error, which is the success case.
  */
-async function ensureTab(spreadsheetId: string): Promise<void> {
+async function ensureTab(spreadsheetId: string, title: string): Promise<void> {
   try {
     const sheets = getSheets();
     const meta = await sheets.spreadsheets.get({
@@ -110,12 +179,12 @@ async function ensureTab(spreadsheetId: string): Promise<void> {
       fields: "sheets.properties.title",
     });
     const titles = (meta.data.sheets ?? []).map((s) => s.properties?.title);
-    if (titles.includes(TAB)) return;
+    if (titles.includes(title)) return;
 
     await sheets.spreadsheets.batchUpdate({
       spreadsheetId,
       requestBody: {
-        requests: [{ addSheet: { properties: { title: TAB } } }],
+        requests: [{ addSheet: { properties: { title } } }],
       },
     });
   } catch {
@@ -124,26 +193,22 @@ async function ensureTab(spreadsheetId: string): Promise<void> {
   }
 }
 
-/**
- * Writes the header row if — and only if — the sheet has nothing in it.
- *
- * Failing here must not stop the append: a missing header is cosmetic, a lost
- * lead is not.
- */
-async function ensureHeader(spreadsheetId: string): Promise<void> {
+async function ensureHeader(spreadsheetId: string, tab: SheetTab): Promise<void> {
+  const { title } = TABS[tab];
+  const header = headerFor(tab);
   try {
     const sheets = getSheets();
     const existing = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${TAB}!A1:H1`,
+      range: `'${title}'!A1:${column(header.length)}1`,
     });
     if (existing.data.values && existing.data.values.length > 0) return;
 
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${TAB}!A1`,
+      range: `'${title}'!A1`,
       valueInputOption: "RAW",
-      requestBody: { values: [[...HEADER]] },
+      requestBody: { values: [header] },
     });
   } catch {
     // See above.
@@ -151,23 +216,35 @@ async function ensureHeader(spreadsheetId: string): Promise<void> {
 }
 
 /**
- * Appends one submission. Returns whether it landed.
+ * One submission, as a row in its form's tab.
  *
- * NEVER THROWS. It is called from a server action that has already accepted a
- * visitor's enquiry, and a Sheets outage is not something to show them or a
- * reason to lose what they typed — the caller decides what to do with `false`.
+ * `values` is keyed by the form's field names; anything missing is an empty
+ * cell. Received is written in India time as a person reads it, since the
+ * sheet is read by people, not parsed. Never throws — a Sheets outage returns
+ * false and the caller decides what the visitor is told.
  */
-export async function appendSubmission(row: SubmissionRow): Promise<boolean> {
+export async function appendToTab(
+  tab: SheetTab,
+  values: Record<string, string | undefined | null>,
+  source?: string | null,
+): Promise<boolean> {
   const spreadsheetId = process.env.GOOGLE_SHEETS_ID?.trim();
   if (!spreadsheetId || !isSheetsConfigured()) return false;
 
+  const { title, columns } = TABS[tab];
+  const received = new Date().toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
   try {
-    await ensureTab(spreadsheetId);
-    await ensureHeader(spreadsheetId);
+    await ensureTab(spreadsheetId, title);
+    await ensureHeader(spreadsheetId, tab);
 
     await getSheets().spreadsheets.values.append({
       spreadsheetId,
-      range: `${TAB}!A:H`,
+      range: `'${title}'!A:${column(columns.length + 2)}`,
       valueInputOption: "RAW",
       /*
         INSERT_ROWS, not OVERWRITE. Overwrite appends after the last row the
@@ -177,22 +254,30 @@ export async function appendSubmission(row: SubmissionRow): Promise<boolean> {
       */
       insertDataOption: "INSERT_ROWS",
       requestBody: {
-        values: [
-          [
-            new Date().toISOString(),
-            row.type,
-            row.name,
-            row.email,
-            row.company ?? "",
-            row.phone ?? "",
-            row.message ?? "",
-            row.source ?? "",
-          ],
-        ],
+        values: [[received, source ?? "", ...columns.map(([, field]) => values[field] ?? "")]],
       },
     });
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * The older contact action's entry point. Its form is no longer on any page;
+ * anything that still arrives through it is a short enquiry, so it goes to
+ * Quick Contact with its type noted in Source.
+ */
+export async function appendSubmission(row: SubmissionRow): Promise<boolean> {
+  return appendToTab(
+    "quick",
+    {
+      name: row.name,
+      email: row.email,
+      company: row.company,
+      phone: row.phone,
+      message: row.message,
+    },
+    [row.source, row.type].filter(Boolean).join(" · "),
+  );
 }

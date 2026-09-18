@@ -11,9 +11,15 @@ import {
   FORMS,
   isFormKind,
   schemaFor,
+  type FormKind,
 } from "@/lib/forms";
 import { SubmissionType } from "@/lib/generated/prisma/enums";
-import { appendSubmission, isSheetsConfigured } from "@/lib/google-sheets";
+import {
+  appendSubmission,
+  appendToTab,
+  isSheetsConfigured,
+  type SheetTab,
+} from "@/lib/google-sheets";
 
 /**
  * Contact / waitlist submission.
@@ -201,6 +207,16 @@ export async function submitContactForm(
  * reasons: validate, reject bots, rate limit, persist, audit. Nothing touches
  * the database before validation passes.
  */
+/** Which tab of the submissions spreadsheet each form writes to. */
+const SHEET_TAB: Record<FormKind, SheetTab> = {
+  brand: "brand",
+  quick: "quick",
+  influencer: "influencer",
+  // The older creator form is on no page; if it is used it is an influencer.
+  creator: "influencer",
+  career: "career",
+};
+
 export async function submitGenesisForm(
   _previous: SubmissionState,
   formData: FormData,
@@ -310,15 +326,19 @@ export async function submitGenesisForm(
     };
   }
 
-  const sheeted = await appendSubmission({
-    type: spec.submissionType,
-    name: data.name!,
-    email: data.email!,
-    company: data.company,
-    phone: data.phone,
-    message: data.message,
-    source: data.source,
-  });
+  /*
+    EVERY ANSWER TO ITS FORM'S OWN TAB. Checkbox groups are joined into one
+    cell and the consent box reads as Yes, so a row says what the person
+    answered rather than how the form encoded it.
+  */
+  const cells: Record<string, string> = {};
+  for (const field of spec.fields) {
+    const value = (parsed.data as Record<string, unknown>)[field.name];
+    if (Array.isArray(value)) cells[field.name] = value.join(", ");
+    else if (field.type === "consent") cells[field.name] = value ? "Yes" : "No";
+    else if (value !== undefined && value !== null) cells[field.name] = String(value);
+  }
+  const sheeted = await appendToTab(SHEET_TAB[kind], cells, data.source);
 
   if (!isDatabaseConfigured()) {
     return sheeted
