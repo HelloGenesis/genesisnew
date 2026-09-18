@@ -247,7 +247,10 @@ export function AiContent() {
               costs height too — 12 of them were 100 points of section that
               nothing was drawn in. See the note on this section's split.
             */}
-            <figure className="mx-auto mt-6 max-w-[40rem] sm:mt-10">
+            {/* 46rem, not 40: the board grew wider so its strands could
+                read, and capping it at the old measure would only scale the
+                whole thing down again. */}
+            <figure className="mx-auto mt-6 max-w-[46rem] sm:mt-10">
               <AutomationSources />
             </figure>
 

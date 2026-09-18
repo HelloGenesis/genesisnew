@@ -177,17 +177,23 @@ export function AutomationSources({ className }: { className?: string }) {
 }
 
 function WideDiagram({ className }: { className?: string }) {
-  const width = 760;
+  const width = 940;
   /*
     THE CANVAS GREW WITH THE LIST. Seven labels a side at the old 300 units
     left 36 units between baselines for 16-unit type, which is lines of text
     touching. At 420 they sit 56 apart, the spacing four of them had.
   */
   const height = 420;
-  const hub = { x: 246, y: height / 2, w: 268, h: 92 };
-  /* Where the strands start, and therefore how much room a logo has: 140
-     units outside the dot, which is what the widest mark needs. */
-  const leftX = 168;
+  /*
+    ROOM FOR THE STRANDS TO READ. The canvas was 760 with the dots 78 units
+    from the node, so twelve curves turned and met inside a gap barely wider
+    than a logo — "congested", and the lines the picture is about were the
+    part that disappeared. The canvas is 940 now and the node is no wider, so
+    each strand has about 170 units of horizontal run before it arrives.
+  */
+  const hub = { x: (width - 268) / 2, y: height / 2, w: 268, h: 92 };
+  /* Where the strands start, and therefore how much room a logo has. */
+  const leftX = 166;
   const rightX = width - leftX;
   const half = Math.ceil(APPLICATIONS.length / 2);
   const sides = [
@@ -263,7 +269,7 @@ function WideDiagram({ className }: { className?: string }) {
             its label flat and arrives at the node flat. A quadratic curves out
             at an angle and reads as a wire under tension.
           */
-          const d = `M ${side.x} ${y} C ${side.x + 96 * side.dir} ${y}, ${arrive - 96 * side.dir} ${hub.y}, ${arrive} ${hub.y}`;
+          const d = `M ${side.x} ${y} C ${side.x + 120 * side.dir} ${y}, ${arrive - 120 * side.dir} ${hub.y}, ${arrive} ${hub.y}`;
           const stroke = side.dir === 1 ? "url(#gm-ai-line)" : "url(#gm-ai-line-flip)";
           return (
             <g key={app.name}>
