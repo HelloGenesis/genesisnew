@@ -96,7 +96,7 @@ export function CaseStudies() {
   return (
     <SectionShell
       id="case-studies"
-      label={caseStudiesPage.label}
+      /* No eyebrow label: Genesis took "Case studies" off — the heading says it. */
       heading={caseStudiesPage.heading}
       headingAccent={caseStudiesPage.headingAccent}
       /*
