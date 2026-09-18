@@ -127,7 +127,8 @@ export const navItems: NavItem[] = [
   */
   // "Portfolio", Genesis's name for the section this goes to.
   { label: "Portfolio", href: "/#library" },
-  { label: "Case Studies", href: "/#case-studies" },
+  // The page, not the homepage rail: Genesis asked the bar to open it.
+  { label: "Case Studies", href: "/case-studies" },
   /*
     THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable
     from the nav — the only routes to them were a button inside a section you

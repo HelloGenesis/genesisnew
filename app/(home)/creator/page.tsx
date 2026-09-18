@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { GenesisForm } from "@/components/genesis/genesis-form";
-import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { Reveal } from "@/components/genesis/reveal";
 import { SlideUp } from "@/components/genesis/slide-up";
 import { creatorPage } from "@/lib/page-content";
@@ -45,28 +44,12 @@ export default function CreatorPage() {
         <div className="relative z-[2] mx-auto w-full max-w-2xl px-6">
           <Reveal>
             {/*
-              THE WORDMARK, NOT THE WORDS. The mark exists; setting the brand
-              name in type on a page that uses the artwork everywhere else was
-              the one place it was being redrawn by hand.
-
-              It stays an h1, and the sr-only name is what a screen reader and
-              a crawler read — so this is still a heading carrying the
-              company's name, not a picture where a heading should be.
-
-              `aspect-[8.8/1]`, not `w-auto`: GenesisMark holds two `fill`
-              images, which are absolutely positioned and contribute no
-              intrinsic size, so w-auto resolved to zero and the mark rendered
-              0x40. The artwork's ratio has to be declared for the height to
-              imply a width.
+              THE PAGE'S OWN TITLE. It was the Genesis wordmark under "Work
+              with"; Genesis asked for the form to name itself instead, so
+              the mark comes off and the heading is words again.
             */}
-            <h1 className="flex flex-col gap-y-3 text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
-              <span>{creatorPage.heading}</span>
-              <span className="sr-only">Genesis Media</span>
-              <GenesisMark
-                aria-hidden
-                className="h-[0.78em] w-auto shrink-0 aspect-[8.8/1]"
-                sizes="(min-width: 640px) 384px, 80vw"
-              />
+            <h1 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
+              {creatorPage.heading}
             </h1>
           </Reveal>
 

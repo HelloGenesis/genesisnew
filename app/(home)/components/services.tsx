@@ -192,7 +192,16 @@ export function Services() {
             {/* The orb is bound by the window's HEIGHT as well as its width: it is
               the one thing in the hero that can push the four names off a
               short screen. */}
-            <div className="relative mx-auto w-[min(62vw,17rem,36vh)] lg:-mx-[11%] lg:w-[min(122%,52vh)]">
+            {/*
+              CENTRED BY TRANSLATE, NOT BY MARGINS. The overrun used to be
+              negative margins of 11% a side, which only centres while the
+              width fills the space they open. On a laptop the height bound
+              (52vh) wins and the box is narrower than that — so it sat
+              pinned to the left edge of the opened space, 20px off centre,
+              which is what Genesis saw. Half the column plus a translate of
+              half the box centres it at any width. Grown a little with it.
+            */}
+            <div className="relative mx-auto w-[min(62vw,17rem,36vh)] lg:left-1/2 lg:mx-0 lg:w-[min(130%,58vh)] lg:-translate-x-1/2">
               <NeuralOrb />
 
               {/*

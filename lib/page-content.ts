@@ -46,7 +46,12 @@ export const influencerPage = {
 
 export const creatorPage = {
   label: "I'm a creator",
-  heading: "Work with",
+  /*
+    GENESIS'S OWN NAME FOR THIS PAGE. It read "Work with" over the wordmark,
+    which said who the form is from rather than what it is; a creator landing
+    here wants to know they are in the right place.
+  */
+  heading: "Influencer onboarding form",
   headingAccent: "Genesis",
   body:
     "We run campaigns for brands that pay on time and brief properly. If you make content people actually watch, we'd like you on the roster.",
