@@ -62,12 +62,27 @@ export const heroReel = {
 
 // The spec replaces the old services section with exactly these five, and asks
 // that the AI tooling be visible in the framing.
+/*
+ * THE POSITIONING STATEMENT IS BACK, AND IT IS THE FIRST THING ON THE PAGE.
+ *
+ * The board ran headerless for a round — the orb and four names and nothing
+ * written. Genesis's read is that a visitor arriving cold cannot tell what
+ * the company IS from a diagram alone, and that the first few seconds have to
+ * answer it without scrolling. So two lines go back above the composition:
+ * the claim the picture makes, and what it means in plain words.
+ *
+ * NO AGENCY LANGUAGE IN EITHER. "An AI-native culture and growth studio
+ * building the future of influence" was the old standfirst and it is exactly
+ * the register Genesis has asked the whole site to drop — future-facing
+ * narratives, culture-first ecosystems, transformative experiences. The
+ * replacement names the five things sold and stops.
+ */
 export const services = {
-  label: "What we do",
-  heading: "Four divisions,",
-  headingAccent: "one system",
+  label: "",
+  heading: "Four divisions.",
+  headingAccent: "One creative system.",
   body:
-    "Genesis is an AI-native culture and growth studio building the future of influence. Human creativity, AI generation, creator marketing and performance thinking in one creative system.",
+    "We help brands grow through creators, content, AI, technology and design.",
   /*
    * THE FOUR DIVISIONS, named by the brand guidelines rather than by us.
    *
@@ -121,21 +136,23 @@ export const services = {
          lib/site-config). The URL is for crawlers and new tabs. */
       href: "/influencer-marketing",
       /*
-       * PIPES, NOT COMMAS. Genesis asked for the separator in every division
-       * tagline to be a pipe. It is the deck's own convention for these lists
-       * and it reads as a set of capabilities rather than as a sentence that
-       * ran out of room. The ampersand before the last pair stays, which is
-       * how Genesis wrote the example.
+       * MIDDOTS, AND THE PLAINEST POSSIBLE WORDS.
        *
-       * READ OFF THE 2026 LOCKUP, verbatim. Each division's artwork carries
-       * its tagline burned in under the wordmark, and this string is set
-       * beneath the same lockup rendered as live text — so where the two
-       * disagree the page is contradicting its own logo. Three of the four
-       * did: the pipes are the old separators and "UGC activations",
-       * "Positioning" and the pipe-delimited AI Lab list are not what the
-       * new artwork says.
+       * These four lines are the only description of the four divisions a
+       * visitor gets before scrolling, so Genesis has written them as flat
+       * lists of what each one sells: Influence is influencer marketing,
+       * celebrity partnerships and UGC, and nothing else needs saying. Two
+       * things changed with that. The separator is a middot rather than a
+       * pipe, which is what the rest of the site's capability strips use; and
+       * the wording is Genesis's own from the final feedback rather than the
+       * lockup artwork's, which still carries the older phrasing burned in.
+       *
+       * WHERE THEY DISAGREE, THESE WIN. The tagline is rendered as live text
+       * under a name-only crop of the lockup (`nameOnly`), so the artwork's
+       * own version is never on screen beside this one — which is what makes
+       * it safe for the two to differ while the artwork is re-cut.
        */
-      caption: "Influencer Marketing | Celeb Partnerships & UGC",
+      caption: "Influencer Marketing · Celebrity Partnerships · UGC",
       /*
        * ONE GRADIENT PER DIVISION, from the deck's "What we do" board, where
        * each name is set in its own warm-to-cool ramp rather than in the
@@ -172,7 +189,7 @@ export const services = {
       short: "Brand & Design",
       href: "/brand-design",
       // See the note on Influence above — read off the 2026 lockup.
-      caption: "Branding Positioning | Design & Collaterals",
+      caption: "Strategy · Identity · Design",
       ramp: "linear-gradient(100deg, #f0dcff 0%, #f5a3cd 50%, #ffbe8f 100%)",
       body: "Identity systems, brand guidelines, motion design and the rules that keep a brand recognisable everywhere it appears.",
     },
@@ -195,7 +212,7 @@ export const services = {
       short: "Studios",
       href: "/content-production",
       // The one that already agreed with its lockup, bar capitalisation.
-      caption: "Strategy | Scripting & Content Production",
+      caption: "Strategy · Scripting · Content Production",
       ramp: "linear-gradient(100deg, #ff9147 0%, #ffb057 58%, #ffd27a 100%)",
       body: "Creative direction, strategy, scripting, production and post, plus the product and interactive work. All of it built to hold up on any feed.",
     },
@@ -219,7 +236,7 @@ export const services = {
       short: "AI Lab",
       href: "/ai-content-automation",
       // See the note on Influence above — read off the 2026 lockup.
-      caption: "Avatars | Multilingual Content | Games & Apps",
+      caption: "AI Content · Avatars · Automation · Games & Apps",
       ramp: "linear-gradient(100deg, #ff8fb8 0%, #ffa25c 100%)",
       body: "AI avatars and influencers, image and video generation, digital fashion, and the automation that compresses a content workflow from weeks into days.",
     },

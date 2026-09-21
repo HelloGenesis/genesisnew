@@ -140,6 +140,31 @@ const SETTLE_RAMP = 2600;
 const CREST = 0.095;
 
 /**
+ * THE BREATH — a slow swell of the whole sphere, on its own cycle.
+ *
+ * Genesis: "the orb should never feel fully static … a very slow breathing
+ * effect, around 6-8 seconds per cycle … it should feel alive, not like a
+ * looping animation asset."
+ *
+ * It is deliberately separate from the wave. The wave is weather ON the
+ * surface — crests travelling across a sphere of fixed size — and at any
+ * instant it leaves the silhouette roughly where it was. The breath moves the
+ * silhouette itself, which is the thing that reads as being alive, and it is
+ * the one motion here slow enough that you notice it only by looking away and
+ * back.
+ *
+ * 1.8% EITHER SIDE, WHICH IS A CEILING RATHER THAN A CHOICE. The projection
+ * already puts the widest point at 1.053x the radius, a crest adds CREST and
+ * the pointer lift another 7.5%: 0.4 x 1.095 x 1.053 x 1.075 = 0.496 of the
+ * span, which is the whole box. The breath multiplies the RADIUS, so anything
+ * over about 0.8% would shave the outermost ring at the top of the swell.
+ * The radius therefore comes down by the same amount the breath can add, and
+ * the sphere is the same size at the top of its breath as it used to be flat.
+ */
+const BREATH = 0.018;
+const BREATH_PERIOD = 7_000;
+
+/**
  * THE SURFACE IS SOUND, not noise.
  *
  * The first pass displaced the sphere with 3D gradient noise alone, and it
@@ -460,9 +485,49 @@ const EASE_OUT = (t: number) => 1 - Math.pow(1 - t, 3);
 
 type Ripple = { x: number; y: number; born: number };
 
-export function NeuralOrb({ className }: { className?: string }) {
+/**
+ * Where the sphere should lean when nobody is pointing at it, in units of its
+ * own radius from the centre: x to the right, y down, each roughly -1 to 1.
+ *
+ * WHAT IT IS FOR. Genesis asked for the orb to answer each division —
+ * Influence top-left, AI Lab top-right, Studios bottom-right, Brand & Design
+ * bottom-left — "so the full composition feels like one connected system
+ * rather than separate objects around a centre graphic". The board hands the
+ * hovered division's corner down here and the sphere turns and lights toward
+ * it exactly as it does for a real cursor, because it IS the same code path:
+ * a focus is a synthetic pointer placed on the sphere.
+ *
+ * A REAL POINTER ALWAYS WINS. If the reader's cursor is inside the section,
+ * that is what the sphere answers; the focus only drives it when the hover
+ * came from a keyboard, from a touch, or from the pointer being over a name
+ * outside the orb's own box.
+ */
+export type OrbFocus = { x: number; y: number };
+
+export function NeuralOrb({
+  focus = null,
+  className,
+}: {
+  focus?: OrbFocus | null;
+  className?: string;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /*
+    THE PROP CROSSES INTO THE LOOP THROUGH A REF, not through the effect's
+    dependency list. The render loop is built once — thirteen thousand points,
+    a sprite cache and six listeners — and re-running that effect every time a
+    reader moves between two division names would rebuild all of it several
+    times a second. The ref is read at the top of each frame instead.
+  */
+  const focusRef = useRef<OrbFocus | null>(focus);
+  /** The loop's own `start`, so a focus arriving while it is parked can wake it. */
+  const startRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    focusRef.current = focus;
+    startRef.current?.();
+  }, [focus]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -646,7 +711,7 @@ export function NeuralOrb({ className }: { className?: string }) {
         was 0.17; reducing the wobble bought that back and the sphere takes
         it, because the reference sphere fills its frame.
       */
-      radius = span * 0.4;
+      radius = span * 0.393;
       /*
         BIG ENOUGH TO OVERLAP. At this density the points sit about 5px apart
         on screen, so a dot drawn smaller than that leaves gaps and the eye
@@ -690,6 +755,44 @@ export function NeuralOrb({ className }: { className?: string }) {
       const cx = width / 2;
       const cy = height / 2;
       const frozen = still.matches;
+
+      /*
+        THE DIVISION FOCUS, RESOLVED AS A POINTER. A real cursor in the
+        section always wins — the reader's own hand is not something to
+        override — so this only takes effect when there is none.
+
+        0.58 of the radius, not 1.0: placed on the silhouette the excited
+        patch would be half off the back of the sphere and read as a bright
+        edge rather than as the surface leaning toward a name. At 0.58 the
+        glow sits inside the near face, in the quadrant the division occupies,
+        which is what Genesis asked for — "a subtle internal gradient/glow
+        reaction is enough".
+
+        The lean is damped to 0.85 of a cursor's for the same reason: the
+        pointer is somewhere specific and the sphere should chase it, while a
+        hovered name is a direction and the sphere should only incline.
+      */
+      const focused = focusRef.current;
+      const leading = !hasPointer && focused !== null;
+      if (leading) {
+        pointerX = cx + focused.x * radius * 0.58;
+        pointerY = cy + focused.y * radius * 0.58;
+        targetYaw = focused.x * LEAN_YAW * 0.85;
+        targetPitch = -focused.y * LEAN_PITCH * 0.85;
+      }
+      /** True when anything — cursor or division — is exciting the surface. */
+      const excited = hasPointer || leading;
+      /*
+        Nothing is asking for a lean, so it eases home. Without this the last
+        hovered division's angle would simply stick: `place` only writes the
+        targets while a cursor is moving, and `onLeave` only fires for a
+        cursor leaving the section — a division un-hovered by the keyboard
+        passes neither.
+      */
+      if (!excited) {
+        targetYaw = 0;
+        targetPitch = 0;
+      }
 
       /*
         THE SETTLE. Zero until the sphere has been on screen for a beat, then
@@ -747,6 +850,20 @@ export function NeuralOrb({ className }: { className?: string }) {
         frozen ? 0 : settle * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(now * 0.00026)));
       const amplitude = CREST * ampFactor;
       const reach = radius * REACH;
+      /*
+        THE BREATH. Applied to the PROJECTED radius rather than to the unit
+        positions, so it costs one multiply a frame instead of one per point,
+        and so it cannot interact with the wave field — which is sampled on
+        the undisplaced position and would otherwise be re-scaled under it
+        every frame and boil.
+
+        Frozen under Reduce Motion, like everything else here: a sphere that
+        keeps swelling is exactly the ambient movement that setting asks us to
+        stop.
+      */
+      const scaled =
+        radius *
+        (frozen ? 1 : 1 + BREATH * Math.sin((now / BREATH_PERIOD) * Math.PI * 2));
 
       ctx.clearRect(0, 0, width, height);
       ctx.globalCompositeOperation = onLight ? "multiply" : "lighter";
@@ -763,7 +880,7 @@ export function NeuralOrb({ className }: { className?: string }) {
         */
         let target = 0;
         if (near[i] > 0.45) {
-          if (hasPointer) {
+          if (excited) {
             const dx = screen[i * 2] - pointerX;
             const dy = screen[i * 2 + 1] - pointerY;
             const d = Math.sqrt(dx * dx + dy * dy);
@@ -830,8 +947,8 @@ export function NeuralOrb({ className }: { className?: string }) {
         const front = (depth + 1) / 2;
         near[i] = front;
 
-        const px = cx + sx3 * radius * scale;
-        const py = cy - sy3 * radius * scale;
+        const px = cx + sx3 * scaled * scale;
+        const py = cy - sy3 * scaled * scale;
         screen[i * 2] = px;
         screen[i * 2 + 1] = py;
 
@@ -928,7 +1045,7 @@ export function NeuralOrb({ className }: { className?: string }) {
       */
       flare *= 0.94;
       const corePulse = frozen ? 0.5 : 0.5 + 0.5 * Math.sin(now * 0.00042);
-      const coreSize = radius * (0.6 + corePulse * 0.06 + flare * 0.22);
+      const coreSize = scaled * (0.6 + corePulse * 0.06 + flare * 0.22);
       /*
         The nucleus is a WHITE blob, and white is the identity value for
         multiply — on paper it would paint precisely nothing while still
@@ -952,8 +1069,25 @@ export function NeuralOrb({ className }: { className?: string }) {
       ctx.globalCompositeOperation = "source-over";
     };
 
+    /*
+      Frames since anything was asking the sphere to move. Only consulted
+      under Reduce Motion, where the loop exists solely to answer the reader —
+      see `shouldRun`. A second of quiet and it parks itself again rather than
+      holding a 60Hz loop open to render an identical frame.
+    */
+    let quiet = 0;
+
     const loop = (now: number) => {
       render(now);
+      if (still.matches && !hasPointer && focusRef.current === null) {
+        quiet += 1;
+        if (quiet > 60) {
+          stop();
+          return;
+        }
+      } else {
+        quiet = 0;
+      }
       frame = requestAnimationFrame(loop);
     };
 
@@ -965,12 +1099,17 @@ export function NeuralOrb({ className }: { className?: string }) {
      * section, and stops again when it leaves.
      */
     const shouldRun = () =>
-      visible && !document.hidden && (!still.matches || hasPointer);
+      visible &&
+      !document.hidden &&
+      (!still.matches || hasPointer || focusRef.current !== null);
 
     const start = () => {
       if (frame || !shouldRun()) return;
+      quiet = 0;
       frame = requestAnimationFrame(loop);
     };
+    /* So a focus arriving from the board can wake a parked loop. */
+    startRef.current = start;
 
     const stop = () => {
       if (!frame) return;
@@ -1105,6 +1244,7 @@ export function NeuralOrb({ className }: { className?: string }) {
 
     return () => {
       stop();
+      startRef.current = null;
       observer.disconnect();
       watcher.disconnect();
       zone.removeEventListener("pointermove", onMove);
@@ -1130,13 +1270,48 @@ export function NeuralOrb({ className }: { className?: string }) {
         and repainting it 60 times a second to have it not change would be
         pure waste.
       */}
+      {/*
+        IT BREATHES AND IT LEANS. Two things ride on this wash that the canvas
+        cannot carry cheaply.
+
+        THE BREATH is the same seven-second cycle the sphere is on, as a CSS
+        animation rather than a per-frame repaint — the halo swelling with the
+        body is most of what sells the breath at all, because a fixed glow
+        around a moving silhouette reads as the sphere sliding inside its own
+        light. `orb-breathe` is defined in globals.css and is suppressed under
+        Reduce Motion by the global reset there.
+
+        THE LEAN is the focus, translated a few per cent of the box toward the
+        hovered division. Genesis asked for the internal gradient to react
+        more strongly than the sphere itself does, and this is the part that
+        does it: the canvas turns by a fraction of a radian while the light
+        inside it actually moves toward the name. A transform, so it is
+        composited rather than repainted, and on the same 700ms as the board's
+        own hover so the two arrive together.
+      */}
+      {/*
+        TWO BOXES FOR TWO TRANSFORMS, and that is a cascade fact rather than a
+        style. A CSS animation sits ABOVE inline styles in the cascade, so a
+        `transform` in the keyframes and a `transform` in the style attribute
+        are not composed — the animation simply wins and the lean never
+        happens. The outer box carries the lean, the inner one the breath.
+      */}
       <div
-        className="absolute inset-[10%] rounded-full blur-2xl"
+        className="absolute inset-[10%] transition-transform duration-700 ease-out"
         style={{
-          background:
-            "radial-gradient(circle at 50% 46%, rgb(255 197 22 / 0.10) 0%, rgb(247 113 158 / 0.07) 38%, rgb(122 60 255 / 0.08) 64%, transparent 78%)",
+          transform: focus
+            ? `translate3d(${(focus.x * 5).toFixed(2)}%, ${(focus.y * 5).toFixed(2)}%, 0)`
+            : undefined,
         }}
-      />
+      >
+        <div
+          className="orb-breathe size-full rounded-full blur-2xl"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 46%, rgb(255 197 22 / 0.10) 0%, rgb(247 113 158 / 0.07) 38%, rgb(122 60 255 / 0.08) 64%, transparent 78%)",
+          }}
+        />
+      </div>
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
     </div>
   );

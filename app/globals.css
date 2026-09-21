@@ -1713,3 +1713,82 @@ body:has(main.scene-dark) header {
         cursor: text;
     }
 }
+
+/* --- The orb's breath -------------------------------------------------------
+   Genesis: "the orb should never feel fully static … a very slow breathing
+   effect … around 6-8 seconds per cycle".
+
+   The sphere itself breathes on the canvas (see BREATH in neural-orb.tsx);
+   this is its halo, which has to be on the SAME cycle or the light reads as
+   sliding around a body that is moving independently of it. Seven seconds,
+   matching BREATH_PERIOD — if one changes, change both.
+
+   Scale AND opacity, because a glow that only grows reads as a zoom. Kept
+   under two per cent: the wash is already blurred, so at this size the eye
+   reads it as the light gathering rather than as the element resizing.
+
+   The reduced-motion block at the top of this file collapses every animation
+   to 0.01ms, so this stops there without needing its own guard. */
+@keyframes orb-breathe {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.88;
+    }
+    50% {
+        transform: scale(1.018);
+        opacity: 1;
+    }
+}
+
+.orb-breathe {
+    animation: orb-breathe 7s ease-in-out infinite;
+}
+
+/* --- Black <-> White, as a dissolve ----------------------------------------
+   Genesis: "smooth Black ↔ White theme transition … around 300-500ms. Avoid
+   instant flashes between themes."
+
+   WHY A CLASS AND NOT A PERMANENT TRANSITION. Putting a 400ms colour
+   transition on everything, always, is the usual way to do this and it is
+   wrong twice over: every hover on the site inherits it, so a nav link takes
+   400ms to light rather than its own 300, and every section that reveals with
+   a colour change gains a lag it was not designed for. The switch stamps
+   `data-theme-transition` for the length of the crossfade and takes it off
+   again, so the cost is paid once per click by the one interaction that wants
+   it — see ThemeToggle.
+
+   `!important` because it has to beat the element's own transition for those
+   400ms; taking the attribute off returns every control to its own timing.
+
+   WHAT CANNOT CROSSFADE is a gradient: --page-ground is a seven-stop ramp and
+   CSS interpolates `background-image` between two of those only where both
+   sides are the same shape, which these are — same angle, same stop count —
+   so the page ground does fade. Anything painted by `background-image` with a
+   different stop count will still cut, which is why the theme blocks in this
+   file keep their ramps structurally identical. */
+:root[data-theme-transition],
+:root[data-theme-transition] *,
+:root[data-theme-transition] *::before,
+:root[data-theme-transition] *::after {
+    transition:
+        background-color 400ms ease,
+        background-image 400ms ease,
+        border-color 400ms ease,
+        color 400ms ease,
+        fill 400ms ease,
+        stroke 400ms ease,
+        opacity 400ms ease,
+        box-shadow 400ms ease !important;
+}
+
+/* The one exception: a transform mid-theme-change is not a colour and holding
+   it for 400ms makes every hovered control drift. */
+@media (prefers-reduced-motion: reduce) {
+    :root[data-theme-transition],
+    :root[data-theme-transition] *,
+    :root[data-theme-transition] *::before,
+    :root[data-theme-transition] *::after {
+        transition: none !important;
+    }
+}

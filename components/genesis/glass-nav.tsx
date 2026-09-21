@@ -23,9 +23,27 @@ import { cn } from "@/lib/utils";
  * near-transparent over the hero and condenses into a heavier blur once the
  * page scrolls, so it never competes with the hero headline.
  */
-/** One definition for every top-level nav control, link or button. */
-const NAV_LINK =
-  "whitespace-nowrap rounded-full px-2.5 py-2 text-small text-ash transition-colors duration-200 hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+/**
+ * One definition for every top-level nav control, link or button.
+ *
+ * THE HOVER IS A RULE THAT GROWS, not only a wash. Genesis asked for smoother
+ * micro-interactions on the bar, and a background tint alone is the weakest
+ * hover a link can have: it tells you the target's BOX, which on a pill with
+ * 10px of padding is barely larger than the word. A hairline drawn from the
+ * centre outward is read as the word itself responding, and it is one
+ * pseudo-element with a scale transform — composited, never a layout.
+ *
+ * `after:origin-center` with `scale-x-0` is what makes it grow from the
+ * middle; growing from the left reads as a progress bar filling.
+ */
+const NAV_LINK = cn(
+  "relative whitespace-nowrap rounded-full px-2.5 py-2 text-small text-ash",
+  "transition-colors duration-300 hover:bg-[var(--hover-wash)] hover:text-bone",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+  "after:pointer-events-none after:absolute after:inset-x-2.5 after:bottom-1 after:h-px",
+  "after:origin-center after:scale-x-0 after:bg-brand after:transition-transform after:duration-300 after:ease-out",
+  "hover:after:scale-x-100 focus-visible:after:scale-x-100 motion-reduce:after:transition-none",
+);
 
 export function GlassNav() {
   const [condensed, setCondensed] = useState(false);
@@ -100,8 +118,22 @@ export function GlassNav() {
   });
 
   return (
-    <header
+    <motion.header
       ref={headerRef}
+      /*
+        THE FIRST BEAT OF THE PAGE'S ENTRANCE. Genesis's load sequence is
+        navbar, then the orb, then the wordmark, then the four verticals — so
+        the bar is what opens it, and DivisionBoard's own delays are measured
+        against this arriving at roughly 0.36s.
+
+        It is also the only entrance the bar has: it is `fixed`, so it can
+        neither be revealed on scroll nor be part of any section's stagger.
+        8px and a fade, because a pill that flies in from off-screen is the
+        dramatic version Genesis explicitly did not ask for.
+      */
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 sm:pt-6"
     >
       {/*
@@ -208,11 +240,19 @@ export function GlassNav() {
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeToggle className="hidden lg:inline-flex" />
 
+          {/*
+            "SLIGHT MOVEMENT/GLOW ON START A PROJECT", which is Genesis's
+            one specific note about this cluster. A 1px lift and a soft halo
+            in the brand — enough that the button reads as the live thing on
+            the bar, short of the pulsing CTA every template ships with. The
+            shadow is on the accent at 28%, so it is a warmth around the pill
+            rather than a ring drawn on it.
+          */}
           <GlassButton
             href={primaryCta.href}
             variant="brand"
             size="sm"
-            className="hidden sm:inline-flex"
+            className="hidden transition-[transform,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-px motion-safe:hover:shadow-[0_6px_20px_-6px_rgb(255_197_22/0.55)] sm:inline-flex"
             arrow
           >
             {primaryCta.label}
@@ -282,6 +322,6 @@ export function GlassNav() {
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   );
 }

@@ -69,7 +69,24 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   const toggle = () => {
     const next: Theme = isLight ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", next);
+    /*
+      THE CROSSFADE, ARMED FOR EXACTLY ONE TRANSITION.
+
+      Genesis asked for the two themes to feel like one site being re-lit
+      rather than two sites being swapped, and named the timing: 300-500ms, no
+      instant flash. `data-theme-transition` turns on a 400ms colour
+      transition across the whole document (see globals.css) and is taken off
+      the moment it has served — a permanent one would slow every hover and
+      every reveal on the page by the same amount.
+
+      420ms, not 400: the attribute has to outlive the transition it starts,
+      or removing it mid-fade snaps the remaining distance, which is the flash
+      this exists to remove.
+    */
+    const root = document.documentElement;
+    root.setAttribute("data-theme-transition", "");
+    window.setTimeout(() => root.removeAttribute("data-theme-transition"), 420);
+    root.setAttribute("data-theme", next);
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
