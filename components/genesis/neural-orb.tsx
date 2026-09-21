@@ -1305,13 +1305,36 @@ export function NeuralOrb({
         }}
       >
         <div
-          className="orb-breathe size-full rounded-full blur-2xl"
+          className="orb-breathe orb-wash size-full rounded-full blur-2xl"
           style={{
             background:
               "radial-gradient(circle at 50% 46%, rgb(255 197 22 / 0.10) 0%, rgb(247 113 158 / 0.07) 38%, rgb(122 60 255 / 0.08) 64%, transparent 78%)",
           }}
         />
       </div>
+
+      {/*
+        THE BLOOM, ON BLACK ONLY — "very subtle bloom around the orb", and
+        the thing that makes the dark theme cinematic rather than merely
+        dark.
+
+        IT REACHES PAST THE SPHERE, which is the whole difference between it
+        and the wash above. The wash is inset 10% and reads as the core's own
+        light; this is inset -18%, so it spills into the section around the
+        silhouette the way a practical light does. Under the canvas, so the
+        dots always sit on top of it.
+
+        `--orb-bloom` is 0 on paper. See the note in globals.css: a bloom on
+        a light ground is not subtle, it is a grey smudge, and Genesis asked
+        for the white theme's glows to stay softer than the black one's.
+      */}
+      <div
+        className="orb-bloom orb-breathe absolute inset-[-18%] -z-10 rounded-full blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 48%, rgb(255 197 22 / 0.07) 0%, rgb(247 113 158 / 0.05) 42%, rgb(122 60 255 / 0.05) 66%, transparent 76%)",
+        }}
+      />
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
     </div>
   );

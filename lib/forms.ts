@@ -458,6 +458,17 @@ export function schemaFor(spec: FormSpec) {
 
   // Honeypot: real users never see it, so anything in it is a bot.
   shape.hp = z.string().max(0).optional().or(z.literal(""));
+  /*
+    HOW LONG THE FORM WAS OPEN, in milliseconds, written by the browser when
+    the fields mounted. See TOO_FAST_MS in app/actions/contact.ts for what is
+    done with it and why this is not a CAPTCHA.
+
+    Typed loosely on purpose: it is a signal, not a field. A missing or
+    unparseable value must not produce a validation error on a real person's
+    submission — the action decides what to do with it, and the only thing
+    this schema owes it is not to strip it.
+  */
+  shape.ts = z.string().max(20).optional().or(z.literal(""));
   shape.source = z.string().trim().max(120).optional().or(z.literal(""));
 
   return z.object(shape);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useEffect, useId, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
 import { submitGenesisForm, type SubmissionState } from "@/app/actions/contact";
@@ -58,6 +58,15 @@ export function GenesisForm({
   const spec = FORMS[kind];
   const [state, formAction] = useActionState(submitGenesisForm, INITIAL);
   const formId = useId();
+  /*
+    Written in an effect rather than as `Date.now()` in the render, so the
+    value is the browser's own clock at mount and not the server's at build
+    time. See the field itself below.
+  */
+  const openedAt = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (openedAt.current) openedAt.current.value = String(Date.now());
+  }, []);
 
   if (state.status === "success") {
     return (
@@ -84,6 +93,32 @@ export function GenesisForm({
         <label htmlFor={`${formId}-hp`}>Leave this empty</label>
         <input id={`${formId}-hp`} name="hp" type="text" tabIndex={-1} autoComplete="off" />
       </div>
+
+      {/*
+        WHEN THE FORM OPENED — the second half of the invisible spam gate, and
+        the reason there is no CAPTCHA on this site.
+
+        Genesis: "add CAPTCHA only if required. Prefer lightweight/invisible
+        protection. The objective is to prevent spam without adding
+        unnecessary friction for genuine leads." A challenge is friction paid
+        by every genuine lead to stop a problem this form has not got: it
+        already carries a honeypot and a per-IP rate limit, and this adds the
+        third signal those two miss — a script that posts the moment the page
+        parses. A person cannot fill even the shortest of these forms in under
+        two and a half seconds; a bot does it in tens of milliseconds.
+
+        IT IS SET BY THE BROWSER, NOT BY THE SERVER, and that is not laziness
+        about forgery. A server-rendered timestamp would be baked into a
+        cached document, so every visitor served from the edge cache would
+        submit the same "opened at" — which is either always too fast or never
+        is, depending on the age of the cache entry.
+
+        Forgeable, obviously, like the honeypot. Neither is a security
+        control; both are cheap filters that cost a real person nothing, which
+        is exactly the trade Genesis asked for. If real spam ever arrives in
+        volume this is where a challenge goes.
+      */}
+      <input ref={openedAt} type="hidden" name="ts" defaultValue="" />
 
       {!compact && (
         <header className="mb-4 flex flex-col gap-2">

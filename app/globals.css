@@ -509,7 +509,7 @@
    OS in both directions.
    -------------------------------------------------------------------------- */
 :root[data-theme="light"] {
-    --surface-base: #ffffff;
+    --surface-base: #faf9f6;
 
     /* The light theme's own ground. Same drift, same order, at paper values —
        THE PALETTE'S OWN OFF-WHITE, #f9f9f9, with the accent warming the
@@ -525,7 +525,7 @@
         #fffcf0 54%,
         #fbfaf6 72%,
         #fffdf4 88%,
-        #ffffff 100%
+        #fdfcfa 100%
     );
 
     /*
@@ -546,7 +546,7 @@
         180deg,
         #f9f9f9 0%,
         #fffdf4 48%,
-        #ffffff 100%
+        #fdfcfa 100%
     );
 
     --glow-ink: 122 96 0;
@@ -556,11 +556,11 @@
     --glow-text-alpha: 0;
     --glow-cast: 0.45;
     --chapter-ground: #000000;
-    --chapter-blend: #ffffff;
+    --chapter-blend: #faf9f6;
     --surface-ink: #f9f9f9;
-    --surface-raised: #ffffff;
-    --surface-panel: #ffffff;
-    --surface-float: #ffffff;
+    --surface-raised: #fdfcfa;
+    --surface-panel: #fdfcfa;
+    --surface-float: #fdfcfa;
     --ink-strong: #000000;
     --ink-muted: #4b4b4d;
     --ink-faint: #6e6d72;
@@ -619,7 +619,7 @@
 /* System preference, only when no explicit choice has been stamped. */
 @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]):not([data-theme="light"]) {
-        --surface-base: #ffffff;
+        --surface-base: #faf9f6;
 
         /* The light theme's own ground. Same drift, same order, at paper
            values — see --page-ground in the dark block. Worst stop here is
@@ -633,7 +633,7 @@
             #fffcf0 54%,
             #fbfaf6 72%,
             #fffdf4 88%,
-            #ffffff 100%
+            #fdfcfa 100%
         );
 
         /*
@@ -654,7 +654,7 @@
             180deg,
             #f9f9f9 0%,
             #fffdf4 48%,
-            #ffffff 100%
+            #fdfcfa 100%
         );
 
         --glow-ink: 122 96 0;
@@ -664,11 +664,11 @@
         --glow-text-alpha: 0;
         --glow-cast: 0.45;
         --chapter-ground: #000000;
-        --chapter-blend: #ffffff;
+        --chapter-blend: #faf9f6;
         --surface-ink: #f9f9f9;
-        --surface-raised: #ffffff;
-        --surface-panel: #ffffff;
-        --surface-float: #ffffff;
+        --surface-raised: #fdfcfa;
+        --surface-panel: #fdfcfa;
+        --surface-float: #fdfcfa;
         --ink-strong: #000000;
         --ink-muted: #4b4b4d;
         --ink-faint: #6e6d72;
@@ -1134,7 +1134,7 @@ li:hover .client-mark {
    the pattern the rest of this file uses: an explicit choice, and the system
    preference when no choice has been stamped. */
 :root[data-theme="light"] .scene-charcoal {
-    --surface-base: #ffffff;
+    --surface-base: #faf9f6;
     --surface-ink: #f9f9f9;
     background-color: transparent;
     background-image: none;
@@ -1142,7 +1142,7 @@ li:hover .client-mark {
 
 @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]):not([data-theme="light"]) .scene-charcoal {
-        --surface-base: #ffffff;
+        --surface-base: #faf9f6;
         --surface-ink: #f9f9f9;
         background-color: transparent;
         background-image: none;
@@ -1790,5 +1790,65 @@ body:has(main.scene-dark) header {
     :root[data-theme-transition] *::before,
     :root[data-theme-transition] *::after {
         transition: none !important;
+    }
+}
+
+/* --- Black = cinematic, White = editorial ----------------------------------
+   Genesis's note on the two themes is a warning as much as a brief: "the
+   black and white versions should use the same interaction and animation
+   system. Do not make them feel like two separately designed websites … only
+   these things should change: background, text contrast, glow intensity,
+   shadows, lighting."
+
+   So this file holds ONE list of things that differ, and it is exactly that
+   list. Every timing, every transform, every hover and every entrance is
+   written once in the components and is identical in both themes — which is
+   why the difference has to be expressed as tokens rather than as per-theme
+   markup. If a change to one theme ever needs a different element, it has
+   stopped being a re-lighting and become a second design.
+
+   THE ORB IS THE HERO IN BOTH, and the one thing that must not be doubled:
+   "do not introduce too many glowing elements. The orb should remain the
+   hero." So only the orb's own wash is turned up on black, and nothing else
+   on the page gains a glow with it. */
+:root {
+    /* Dark is the default, and the cinematic one. */
+    --orb-wash: 1.35;
+    --orb-bloom: 1;
+}
+
+.orb-wash {
+    opacity: var(--orb-wash);
+}
+
+/* THE BLOOM — a second, much wider and much fainter halo, on black only.
+
+   It is a separate element rather than another stop on the wash because the
+   two want different radii: the wash sits inside the sphere's own box and
+   reads as its core, and this reaches well past the silhouette, which is what
+   "a very subtle bloom around the orb" means. Stacked as stops on one
+   gradient they would have to share a box, and the bloom would either be cut
+   off at the sphere's edge or drag the core's light outward with it.
+
+   It is OFF on paper, and that is Genesis's instruction rather than a taste
+   call: white is "premium + editorial", and a bloom on a light ground is not
+   subtle, it is a grey smudge. */
+.orb-bloom {
+    opacity: var(--orb-bloom);
+}
+
+/* …and on paper, softer on both counts. "Keep shadows/glows softer than
+   black. The orb should retain depth and not look flat" — so the wash is
+   reduced rather than removed: taken to zero the sphere is a flat field of
+   dots on paper, which is the failure that instruction names. */
+:root[data-theme="light"] {
+    --orb-wash: 0.7;
+    --orb-bloom: 0;
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) {
+        --orb-wash: 0.7;
+        --orb-bloom: 0;
     }
 }

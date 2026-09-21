@@ -207,6 +207,24 @@ export async function submitContactForm(
  * reasons: validate, reject bots, rate limit, persist, audit. Nothing touches
  * the database before validation passes.
  */
+/**
+ * The floor on how fast a human can complete one of these forms.
+ *
+ * 2.5 SECONDS, AND IT IS DELIBERATELY FAR BELOW THE REAL FIGURE. The shortest
+ * form here is four fields; nobody types a name, an email and a message in
+ * under two and a half seconds, and a bot does it in tens of milliseconds.
+ * The gap between those two numbers is enormous, so the threshold sits at the
+ * bottom of it rather than at a realistic completion time — a user with a
+ * password manager and autofill can be surprisingly quick, and every false
+ * positive here is a lead silently dropped.
+ *
+ * This, the honeypot and the per-IP rate limit are the whole of the site's
+ * spam protection, and between them they are the answer to Genesis's "add
+ * CAPTCHA only if required — prefer lightweight/invisible protection". None
+ * of the three is visible to a person or costs them a keystroke.
+ */
+const TOO_FAST_MS = 2_500;
+
 /** Which tab of the submissions spreadsheet each form writes to. */
 const SHEET_TAB: Record<FormKind, SheetTab> = {
   brand: "brand",
@@ -265,6 +283,32 @@ export async function submitGenesisForm(
 
   // Silently accept honeypot hits: telling a bot it failed only helps it.
   if (data.hp) {
+    return { status: "success", message: spec.successMessage };
+  }
+
+  /*
+    AND SILENTLY ACCEPT ANYTHING FILLED IN FASTER THAN A PERSON CAN TYPE.
+
+    The same treatment as the honeypot, for the same reason: a script told it
+    was rejected learns what to change, and a script told it succeeded does
+    not. `ts` is the browser's clock at the moment the fields mounted — see
+    the note on the field in GenesisForm, which also explains why this is the
+    site's spam protection instead of a CAPTCHA.
+
+    A MISSING OR UNREADABLE VALUE PASSES, and that is the important half. The
+    field is JavaScript-set, so it is empty for anyone whose scripts failed to
+    run, and it is a string from a form post, so it can hold anything. A real
+    person with a broken bundle must not be turned away by an anti-spam
+    heuristic: the honeypot and the rate limit still cover them, and a false
+    negative here costs nothing while a false positive costs a lead.
+
+    A clock skewed into the future gives a negative elapsed time, which is not
+    "too fast" and is not treated as such — only a value that is present,
+    finite and between zero and the threshold counts.
+  */
+  const opened = Number(data.ts);
+  const elapsed = Number.isFinite(opened) && opened > 0 ? Date.now() - opened : null;
+  if (elapsed !== null && elapsed >= 0 && elapsed < TOO_FAST_MS) {
     return { status: "success", message: spec.successMessage };
   }
 

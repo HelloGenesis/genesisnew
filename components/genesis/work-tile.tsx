@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import { type WorkItem } from "@/lib/work";
 import { cn } from "@/lib/utils";
+import { PriorityMark } from "./priority-mark";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { useInViewPlayback } from "./use-in-view-playback";
 
@@ -188,9 +189,12 @@ export function WorkTile({
                 backgroundSize: "32px 32px",
               }}
             />
-            <span className="glass-chip relative w-fit max-w-full truncate rounded-full px-2.5 py-1 text-micro text-white/90">
-              {item.format}
-            </span>
+            <div className="relative flex max-w-full items-center gap-1.5">
+              {item.featured && <PriorityMark className="shrink-0" />}
+              <span className="glass-chip min-w-0 truncate rounded-full px-2.5 py-1 text-micro text-white/90">
+                {item.format}
+              </span>
+            </div>
             <div className="relative">
               {/*
                 Balanced and hyphenated, because the longest client on the list
@@ -251,9 +255,21 @@ export function WorkTile({
                   "linear-gradient(180deg, rgb(0 0 0 / 0.5) 0%, transparent 100%)",
               }}
             />
-            <span className="glass-chip absolute left-3 top-3 max-w-[calc(100%-1.5rem)] truncate rounded-full px-2.5 py-1 text-micro text-white/90">
-              {item.format}
-            </span>
+            {/*
+              THE MARKER SITS WITH THE CHIP, NOT OVER THE PICTURE. Genesis
+              asked for a Genesis marker on featured work, and the two places
+              it could go are the corner of the frame or beside the label
+              already there. In the corner it is a badge floating on a
+              photograph; in the row it reads as part of the same caption and
+              takes the same scrim, which is the difference between hierarchy
+              and decoration. See PriorityMark.
+            */}
+            <div className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] items-center gap-1.5">
+              {item.featured && <PriorityMark className="shrink-0" />}
+              <span className="glass-chip min-w-0 truncate rounded-full px-2.5 py-1 text-micro text-white/90">
+                {item.format}
+              </span>
+            </div>
 
             <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
               <p className="truncate text-small font-medium text-white">
