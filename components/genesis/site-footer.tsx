@@ -38,14 +38,14 @@ export function SiteFooter() {
           than a row of boxes.
         */}
         {/*
-          FOUR COLUMNS, AND THE CONTACT BLOCK IS ONE OF THEM. The footer nav
-          grew from three groups to three plus the ecosystem, which with the
-          mark's column made five across a four-column grid — so the last one
-          wrapped underneath on its own. `lg:grid-cols-4` with the nav's three
-          groups fits exactly; if a fifth group is ever added, change this
-          number with it rather than letting it wrap.
+          THE COLUMN COUNT HAS TO MATCH THE GROUP COUNT. The mark's block plus
+          the nav's groups fill this grid exactly — three columns for the mark
+          and the two remaining groups. It was four while the ecosystem column
+          existed; with that gone, four would leave a quarter of the panel
+          empty. Add a group and raise this number with it rather than letting
+          the last one wrap underneath on its own.
         */}
-        <div className="glass glass-strong glass-lit grid gap-12 rounded-panel p-8 sm:grid-cols-2 sm:p-12 lg:grid-cols-4">
+        <div className="glass glass-strong glass-lit grid gap-12 rounded-panel p-8 sm:grid-cols-2 sm:p-12 lg:grid-cols-3">
           <Reveal>
             <GenesisMark />
             {/*

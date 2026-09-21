@@ -5,7 +5,6 @@ import { AiContent } from "./components/ai-content";
 import { BrandingDesign } from "./components/branding-design";
 import { CaseStudies } from "./components/case-studies";
 import { ClientLogos } from "./components/client-logos";
-import { Events } from "./components/events";
 import { FooterCta } from "./components/footer-cta";
 import { InfluencerMarketing } from "./components/influencer-marketing";
 import { Portfolio } from "./components/portfolio";
@@ -107,24 +106,7 @@ export default function HomePage() {
       <BrandingDesign />
 
       {/*
-        09 — EVENTS & EXPERIENCES, THE LAST THING GENESIS DOES BEFORE THE
-        WORK ITSELF.
-
-        Genesis's running order for the page is a single question per section
-        — who are we, who has trusted us, what have we achieved, how do we
-        work with creators, how do we make content, how do we use AI, how do
-        we improve workflows, how do we build the brand — and this is the one
-        it was missing: how do we create real-world experiences. It is the
-        right last answer, because it is the only one that leaves the screen.
-
-        NOT A FIFTH DIVISION. It sits after the four rather than among them,
-        and it announces itself with a label rather than a lockup. See the
-        note on the component.
-      */}
-      <Events />
-
-      {/*
-        10 — THE PORTFOLIO, once every division has had its say.
+        09 — THE PORTFOLIO, once every division has had its say.
 
         It was merged into the client wall for a round. Genesis's order splits
         them again, and at these two depths that is right: the wall answers
@@ -133,7 +115,7 @@ export default function HomePage() {
       */}
       <Portfolio />
 
-      {/* 11 — let's build something iconic. */}
+      {/* 10 — let's build something iconic. */}
       <FooterCta />
     </main>
   );

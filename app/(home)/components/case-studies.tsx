@@ -5,6 +5,7 @@ import { useState } from "react";
 import { PosterRail, type Poster } from "@/components/genesis/poster-card";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { pagerFor } from "@/components/genesis/overlay";
+import { ProofBar } from "@/components/genesis/proof-bar";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { caseStudiesPage, caseStudyList, disciplines, leadClip } from "@/lib/case-studies";
@@ -172,10 +173,29 @@ export function CaseStudies() {
         </div>
       </Reveal>
       {/*
+        THE FIGURES, DIRECTLY UNDER THE EVIDENCE AND ABOVE THE WAY OUT.
+
+        This bar was at the foot of the Influence section. Genesis asked for it
+        above Influence, and then above this section's own button as well —
+        which is the better of the two placements and worth saying why. The
+        posters above are the proof that the work lands; these are the scale it
+        lands at. Between them and "See the work" the number is read as the
+        summary of what has just been shown, where under the button it was a
+        band floating in the join between two sections, belonging to neither.
+
+        It also fixes an attribution problem the old placement was hiding: two
+        of these four figures are the COMPANY's, not the creator division's —
+        50+ campaigns and 30+ brands come from the journey board (see
+        lib/proof) — so at the foot of Influence half of them claimed a
+        narrower thing than they mean.
+      */}
+      <ProofBar className="mt-10" />
+
+      {/*
         The section is a trailer; the page is the thing. Without this the rail
         was a dead end — four posters and no way to read any of them.
       */}
-      <Reveal delay={0.1} className="mt-10">
+      <Reveal delay={0.1} className="mt-8">
         <GlassButton href="/#library" variant="glass" arrow>
           See the work
         </GlassButton>

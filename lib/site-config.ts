@@ -290,28 +290,23 @@ export const primaryCta = { label: "Start a Project", href: "/#contact" } as con
  * (see divisionPages).
  */
 /**
- * THE ECOSYSTEM, WHICH IS THE POINT OF THIS RESTRUCTURE.
+ * Footer groupings.
  *
- * Genesis's instruction: "the footer should make it clear that Genesis is
- * broader than just the media business." It was three columns of media links
- * — Services, Work, Genesis — so a visitor who reached the bottom of the page
- * learned that Genesis Media does four things, and nothing about GenesisDrip
- * or Genesis Estate existing at all.
+ * NO "GENESIS ECOSYSTEM" COLUMN. One was built — GenesisDrip and Genesis
+ * Estate, sitting beside the media links rather than under them, because they
+ * are siblings of Genesis Media rather than sections of it — and Genesis has
+ * since asked for both off the site entirely. The column went with them: two
+ * groups short of its only reason to exist, it would have been a heading over
+ * nothing.
  *
- * Four columns now, and the middle one is the whole change: Genesis Media's
- * own pages in the first, the WIDER GROUP in the second, and everything a
- * person might want to DO in the third. That ordering is deliberate — the
- * ecosystem sits beside the media links rather than under them, because it is
- * a sibling of Genesis Media rather than a section of it.
+ * The structure it introduced stays, because that part was not about the
+ * ecosystem: Genesis Media's own pages in the first column, everything a
+ * person might want to DO in the second.
  *
- * GENESIS ESTATE LEAVES THE SITE and GenesisDrip does not. Estate has its own
- * destination; Drip has a page here that explains it and hands over to
- * Instagram, which is exactly what Genesis asked for.
- *
- * WHAT CAME OFF. "Campaigns" and "Library" both pointed at /#library — two
- * labels for one destination, which is the same fault as the two Log In links
- * that were removed from here for the same reason. Library survives under the
- * name the section now uses for itself.
+ * WHAT CAME OFF WITH THE RESTRUCTURE. "Campaigns" and "Library" both pointed
+ * at /#library — two labels for one destination, which is the same fault as
+ * the two Log In links that were removed from here for the same reason.
+ * Library survives under the name the section now uses for itself.
  */
 export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
@@ -329,26 +324,12 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
       { label: "Work", href: "/#library" },
       { label: "Case Studies", href: "/case-studies" },
       ...divisionPages.map(({ label, href }) => ({ label, href })),
-      { label: "Events", href: "/#events" },
-    ],
-  },
-  {
-    heading: "Genesis Ecosystem",
-    items: [
-      { label: "GenesisDrip", href: "/genesisdrip" },
       /*
-        LEAVES THE SITE. Genesis asked for "Genesis Estate →" in the footer,
-        redirecting to the Estate page — the arrow in their own label is the
-        convention for that, and `external` is what actually makes it open in
-        its own tab with the usual pair of rel tokens.
-
-        TODO(content): THE DESTINATION. Genesis Estate's URL has not been
-        given. Until it is, this points at the property films in the
-        portfolio, which is the Estate work the site actually holds — a link
-        to a guessed domain is a link to somebody else's website. Set the URL
-        here and add `external: true`; nothing else changes.
+        NO "EVENTS" LINK. There was one, pointing at /#events, and that
+        section has been removed — a footer link to an anchor that does not
+        exist scrolls nowhere and reads as a broken site. The event work is
+        still reachable: it is a division in the portfolio's filter row.
       */
-      { label: "Genesis Estate →", href: "/#library" },
     ],
   },
   {

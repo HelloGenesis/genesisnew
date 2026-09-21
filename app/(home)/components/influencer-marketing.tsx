@@ -1,11 +1,11 @@
-import { BarChart3, Globe, Sparkles, Target, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import Link from "next/link";
 
 import { CreatorConstellation } from "@/components/genesis/creator-constellation";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
-import { influencer, isPending, services } from "@/lib/home-content";
+import { influencer, services } from "@/lib/home-content";
 
 /*
   ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller ("buttons on same
@@ -32,12 +32,7 @@ const MOBILE_CTA =
  * Genesis's own artwork for this exact section.
  */
 
-const STAT_ICONS = [Target, BarChart3, Sparkles, Globe];
-
 export function InfluencerMarketing() {
-  // An unconfirmed figure is omitted, never printed as a placeholder.
-  const stats = influencer.stats.filter((stat) => !isPending(stat.value));
-
   return (
     <section
       id="influence"
@@ -250,52 +245,19 @@ export function InfluencerMarketing() {
           </Reveal>
         </div>
 
-        {/* The figures bar — the CTA lives inside it, as in the mockup. */}
         {/*
-          The stat bento is off on phones ("remove the bentogrid, only
-          mobile"): below the constellation it was a fourth consecutive block
-          of numbers, and the 1,00,000+ card already leads the section.
+          THE FIGURES BAR IS NOT HERE ANY MORE — it is a band of its own,
+          above this section. See components/genesis/proof-bar.
+
+          WHY IT LEFT. Genesis asked for it above Influence, and the move
+          fixed something the placement had been hiding: two of those four
+          figures are the COMPANY's, not this division's. 50+ campaigns and
+          30+ brands come from the journey board and 50M+ reach and 20+
+          platforms from the Influence mockup (see lib/proof), so printed at
+          the foot of this section half of them were claiming to be about
+          creator work specifically. Between the case studies and this
+          section they read as what they are.
         */}
-        <Reveal delay={0.24} className="mt-8 hidden sm:block">
-          <div className="glass glass-lit flex flex-col gap-6 rounded-panel px-5 py-5 sm:px-6 lg:flex-row lg:items-center">
-            <div className="grid flex-1 grid-cols-2 gap-y-3 sm:gap-y-5 md:grid-cols-4">
-              {stats.map((stat, index) => {
-                const Icon = STAT_ICONS[index] ?? Globe;
-                const highlight = index === 0;
-
-                return (
-                  <div
-                    key={stat.label}
-                    className={cnJoin(
-                      "flex items-center gap-4 px-1",
-                      index > 0 ? "lg:border-l lg:border-white/10 lg:pl-6" : "",
-                    )}
-                  >
-                    <span
-                      className={cnJoin(
-                        "grid size-10 shrink-0 place-items-center rounded-card border",
-                        highlight
-                          ? "border-brand/35 bg-brand/10 text-brand-ink"
-                          : "border-white/12 bg-white/5 text-bone",
-                      )}
-                    >
-                      <Icon className="size-5" aria-hidden />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-h3 font-medium leading-none tracking-tight text-bone">
-                        {stat.value}
-                      </span>
-                      <span className="mt-2 block text-small leading-tight text-ash">
-                        {stat.label}
-                      </span>
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-          </div>
-        </Reveal>
 
         {/*
           TWO ACTIONS, both specific, and BELOW the figures rather than inside
@@ -342,9 +304,4 @@ export function InfluencerMarketing() {
       </div>
     </section>
   );
-}
-
-/** Local join so this file needs no extra import for two conditional classes. */
-function cnJoin(...parts: string[]) {
-  return parts.filter(Boolean).join(" ");
 }
