@@ -110,7 +110,7 @@ const studies: CaseStudy[] = [
     copy: 15,
     client: "Aditya Birla Capital",
     campaign: "Adi · AI Avatar",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     discipline: "AI avatar",
     work: ["aditya-birla-capital-ai-content"],
     heroClip: 29,
@@ -220,7 +220,7 @@ const studies: CaseStudy[] = [
     copy: 17,
     client: "House of Hiranandani",
     campaign: "Brand Content",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     discipline: "Real estate",
     work: ["house-of-hiranandani-content"],
     heroClip: 32,
@@ -240,7 +240,7 @@ const studies: CaseStudy[] = [
     copy: 18,
     client: "Bharat",
     campaign: "AI Avatar",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     discipline: ["AI avatar", "Founder-led"],
     work: ["ai-avatar-bharat"],
     heroClip: "ai-lab-bharat-bharat",
@@ -250,10 +250,81 @@ const studies: CaseStudy[] = [
     copy: 19,
     client: "Tanvi",
     campaign: "AI Avatar",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     discipline: ["AI avatar", "Founder-led"],
     work: ["ai-avatar-tanvi"],
     heroClip: "ai-lab-tanvi-uiiui",
+  },
+
+  /* ── Events & experiences ────────────────────────────────────────────
+     GENESIS ASKED FOR THIS CATEGORY AND FOR IT TO BE SUBSTANTIAL: "add an
+     Events category/tag within the case studies and portfolio. Include NHPS
+     and the other relevant school events, corporate events, brand events
+     from the corporate events deck … do not add only one event case study.
+     Use enough event work to make the capability feel established."
+
+     TWO ARE HERE AND THE REST ARE OWED. The corporate events deck has not
+     been shared, and an events shelf filled with invented school names,
+     invented attendances and invented scopes would be the worst kind of
+     placeholder on this site — every one of those is a claim about a real
+     institution. So these two carry ONLY what is already known: NHPS by
+     name, because Genesis named it, and the two event films that are
+     actually in the catalogue.
+
+     WHAT EACH CARD NEEDS BEFORE IT IS A CASE STUDY. Genesis's own list:
+     event or client name, event type, what Genesis handled, and the scale,
+     attendance or execution highlights where available. `problem`,
+     `strategy`, `execution` and `results` are exactly those four slots, and
+     until at least one is written `isPublished` keeps the card from
+     promising a page it cannot open. Fill them in and the studies appear.
+
+     TODO(content): the corporate events deck — NHPS's own numbers, and the
+     other school, corporate and brand events to go beside it.
+  */
+  {
+    slug: "nhps-school-event",
+    client: "NHPS",
+    campaign: "School event",
+    vertical: "Events",
+    discipline: ["School event", "Experiential"],
+  },
+  {
+    /*
+      The two films the catalogue already holds. They are one card rather
+      than two because they are one body of work at this depth — and because
+      UMANG and Utsav are event names with no client attached to either (see
+      the note in lib/work), so two cards would be two bylines that do not
+      exist.
+    */
+    slug: "genesis-event-films",
+    client: "Genesis Events",
+    campaign: "UMANG & Utsav",
+    vertical: "Events",
+    discipline: ["Event shoot", "Aftermovie"],
+    work: ["genesis-event-films"],
+    heroClip: "studios-utsav-aftermovie",
+  },
+  {
+    /*
+      GENESISDRIP, Genesis's own nightlife and event IP.
+
+      "IT DOES NOT NEED TO DOMINATE THE SECTION, but it should be visible
+      enough to represent our nightlife/event IP work." So it is one card
+      with the five tags Genesis gave it, sitting among the events rather
+      than ahead of them, and the page at /genesisdrip is where anyone who
+      wants more goes.
+
+      TODO(assets): "use strong GenesisDrip visuals where available." None
+      have been shared, so this card is typographic — which the poster rail
+      already handles, and which is the right failure: a nightlife IP
+      represented by somebody else's footage would be worse than one
+      represented by its own name.
+    */
+    slug: "genesisdrip",
+    client: "GenesisDrip",
+    campaign: "Nightlife IP",
+    vertical: "Events",
+    discipline: ["Events", "IP", "Nightlife", "Experiential", "Community"],
   },
 ];
 
@@ -280,6 +351,17 @@ const ORDER = [
   "aditya-birla-capital-matcha",
   "mahindra-finance-influencer-campaign",
   "aditya-birla-capital-content-campaign",
+  /*
+    THE EVENTS BLOCK SITS LAST IN THE RAIL, TOGETHER. Not because it matters
+    least — the interleaving above exists so no two neighbours look alike,
+    and these three are the only cards on the board with no footage behind
+    them, so scattering them through the rail would put three typographic
+    posters at three separate points among the films. Grouped, they read as
+    a capability; scattered, as three gaps.
+  */
+  "genesis-event-films",
+  "nhps-school-event",
+  "genesisdrip",
 ];
 
 const rank = (slug: string) => {

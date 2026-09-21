@@ -364,7 +364,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
   },
   {
     "n": 15,
-    "division": "AI Labs",
+    "division": "AI Lab",
     "headline": "Inside Genesis Media's AI Content Production for ABHI Activ Yuva — Adi & Diya",
     "brand": "Aditya Birla Health Insurance",
     "industry": "Health insurance and wellness",
@@ -395,7 +395,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
   },
   {
     "n": 16,
-    "division": "AI Labs",
+    "division": "AI Lab",
     "headline": "Inside Genesis Media's AI Content Production for SINet Seervi Township",
     "brand": "SINet Seervi Township",
     "industry": "Real estate",
@@ -427,7 +427,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
   },
   {
     "n": 17,
-    "division": "AI Labs",
+    "division": "AI Lab",
     "headline": "Inside Genesis Media's AI Content Production for House of Hiranandani — Maitri Park",
     "brand": "House of Hiranandani",
     "industry": "Real estate",
@@ -458,7 +458,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
   },
   {
     "n": 18,
-    "division": "AI Labs",
+    "division": "AI Lab",
     "headline": "Inside Genesis Media's AI Content Production for Advocate Bharat",
     "brand": "Advocate Bharat",
     "industry": "Legal education",
@@ -488,7 +488,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
   },
   {
     "n": 19,
-    "division": "AI Labs",
+    "division": "AI Lab",
     "headline": "Inside Genesis Media's AI Content Production for Custom AI Avatar Prototypes",
     "brand": "Genesis Media",
     "industry": "Marketing and communications",

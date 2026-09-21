@@ -6,7 +6,7 @@ import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { SocialStars } from "@/components/genesis/social-stars";
 import { Reveal } from "@/components/genesis/reveal";
 import { footerCta } from "@/lib/home-content";
-import { footerNav, siteConfig } from "@/lib/site-config";
+import { footerNav, siteConfig, telHref } from "@/lib/site-config";
 
 /**
  * The site footer — contact sheet, navigation, copyright, ghosted wordmark.
@@ -37,6 +37,14 @@ export function SiteFooter() {
           top edge, so it reads as one pane the content sits inside rather
           than a row of boxes.
         */}
+        {/*
+          FOUR COLUMNS, AND THE CONTACT BLOCK IS ONE OF THEM. The footer nav
+          grew from three groups to three plus the ecosystem, which with the
+          mark's column made five across a four-column grid — so the last one
+          wrapped underneath on its own. `lg:grid-cols-4` with the nav's three
+          groups fits exactly; if a fifth group is ever added, change this
+          number with it rather than letting it wrap.
+        */}
         <div className="glass glass-strong glass-lit grid gap-12 rounded-panel p-8 sm:grid-cols-2 sm:p-12 lg:grid-cols-4">
           <Reveal>
             <GenesisMark />
@@ -48,12 +56,36 @@ export function SiteFooter() {
               type at the bottom of it. The column keeps what a footer is
               actually for: the mark, the address, and the social accounts.
             */}
-            <a
-              href={`mailto:${footerCta.email}`}
-              className="mt-6 inline-block text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
-            >
-              {footerCta.email}
-            </a>
+            {/*
+              TWO WAYS TO REACH A PERSON, not one. The footer had an email
+              address and nothing else — and Genesis asked for the business
+              line added and made "clickable on mobile", which is the part
+              that matters: a printed number on a phone is a number you have
+              to memorise and retype, and a tel: link is one tap.
+
+              IT IS CLICKABLE EVERYWHERE, not only on mobile. A desktop
+              browser hands tel: to whatever the reader has set up — FaceTime,
+              Skype, Teams, nothing — and a link that occasionally does
+              nothing is a better failure than a number that never does
+              anything. `telHref` strips it to the plus and the digits; the
+              readable spacing stays on screen.
+            */}
+            <div className="mt-6 flex flex-col gap-2">
+              <a
+                href={`mailto:${footerCta.email}`}
+                className="inline-block w-fit text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
+              >
+                {footerCta.email}
+              </a>
+              {telHref() && (
+                <a
+                  href={telHref()}
+                  className="inline-block w-fit text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
+                >
+                  {siteConfig.phone}
+                </a>
+              )}
+            </div>
 
             {/* "Social Media Icons (like stars)" — the lockup's star, repeated. */}
             <SocialStars className="mt-6 -ml-3" />

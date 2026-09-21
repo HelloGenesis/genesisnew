@@ -44,6 +44,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/case-studies"), lastModified: built, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/careers"), lastModified: built, changeFrequency: "weekly", priority: 0.6 },
     { url: absoluteUrl("/creator"), lastModified: built, changeFrequency: "monthly", priority: 0.6 },
+    /*
+      GENESISDRIP. A real page with its own title and description, so it is
+      listed — and at a low priority on purpose: it is an introduction that
+      hands over to Instagram rather than a page anyone should land on from a
+      search for Genesis Media. See app/(home)/genesisdrip.
+    */
+    { url: absoluteUrl("/genesisdrip"), lastModified: built, changeFrequency: "monthly", priority: 0.4 },
     { url: absoluteUrl("/privacy"), lastModified: LEGAL_UPDATED, changeFrequency: "yearly", priority: 0.2 },
   ];
 

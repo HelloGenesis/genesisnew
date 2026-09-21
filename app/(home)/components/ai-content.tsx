@@ -218,7 +218,7 @@ export function AiContent() {
         */}
         <GlassButton
           href="#library"
-          selectsFilter="AI Labs"
+          selectsFilter="AI Lab"
           variant="glass"
           arrow
           className={MOBILE_CTA}

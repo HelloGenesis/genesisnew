@@ -60,12 +60,25 @@ export type FormKind =
   | "career"
   | "influencer";
 
-/** The four verticals plus the two honest answers a prospect might give. */
+/**
+ * What a prospect is asking for: the four divisions, the fifth capability,
+ * and the two honest answers.
+ *
+ * EVENTS IS ON THE LIST NOW. Genesis asked for Events & Experiences to be
+ * visible as a capability, and a form that offers four choices to someone
+ * who arrived from the events section makes them pick a wrong one — which is
+ * worse than not asking, because the answer lands in a sheet and gets
+ * routed on.
+ *
+ * "AI LAB", SINGULAR. It is the division's name everywhere else on the site,
+ * and a form is the last place it should be spelled differently.
+ */
 const NEEDS = [
   "Genesis Influence",
   "Genesis Studios",
-  "Genesis AI Labs",
+  "Genesis AI Lab",
   "Genesis Brand & Design",
+  "Genesis Events",
   "Multiple services",
   "Not sure yet",
 ] as const;

@@ -85,6 +85,20 @@ export const siteConfig = {
    */
   whatsapp: "+91 96534 54848",
   /**
+   * THE BUSINESS LINE, AND IT IS THE SAME NUMBER AS THE WHATSAPP ONE.
+   *
+   * Written as its own field rather than read off `whatsapp` because the two
+   * are not the same fact: `whatsapp` is an input to a URL builder that
+   * strips everything but the digits, and this is a phone number PRINTED for
+   * a person to read and tap. The day Genesis has a landline for the office
+   * and a mobile for WhatsApp, this changes and that one does not.
+   *
+   * Genesis asked for it added and for it to be clickable on mobile, which
+   * is what `telHref` below is for — a tel: URI wants the digits and the
+   * plus and nothing else.
+   */
+  phone: "+91 96534 54848",
+  /**
    * THE MESSAGE THE CHAT OPENS WITH, so the visitor never faces an empty
    * compose box. Two jobs: read like something a person would actually send,
    * and tell Genesis where the lead came from — a message that opens with the
@@ -123,6 +137,18 @@ export const siteConfig = {
  * nobody is worse than no link, and every caller has to be able to render
  * something else instead.
  */
+/**
+ * The number as a `tel:` URI: the plus and the digits, nothing else.
+ *
+ * Spaces in a tel: href are legal and some dialers still mis-parse them, and
+ * every other formatting character (brackets, dashes) reliably breaks one, so
+ * the readable form lives in siteConfig and the machine form is derived.
+ */
+export function telHref(number: string = siteConfig.phone) {
+  const digits = number.replace(/[^\d+]/g, "");
+  return digits ? `tel:${digits}` : undefined;
+}
+
 export function whatsappLink(message: string = siteConfig.whatsappMessage) {
   const number = siteConfig.whatsapp.replace(/\D/g, "");
   if (!number) return undefined;
@@ -263,36 +289,75 @@ export const primaryCta = { label: "Start a Project", href: "/#contact" } as con
  * are new. On the homepage they still scroll, like every link in this footer
  * (see divisionPages).
  */
+/**
+ * THE ECOSYSTEM, WHICH IS THE POINT OF THIS RESTRUCTURE.
+ *
+ * Genesis's instruction: "the footer should make it clear that Genesis is
+ * broader than just the media business." It was three columns of media links
+ * — Services, Work, Genesis — so a visitor who reached the bottom of the page
+ * learned that Genesis Media does four things, and nothing about GenesisDrip
+ * or Genesis Estate existing at all.
+ *
+ * Four columns now, and the middle one is the whole change: Genesis Media's
+ * own pages in the first, the WIDER GROUP in the second, and everything a
+ * person might want to DO in the third. That ordering is deliberate — the
+ * ecosystem sits beside the media links rather than under them, because it is
+ * a sibling of Genesis Media rather than a section of it.
+ *
+ * GENESIS ESTATE LEAVES THE SITE and GenesisDrip does not. Estate has its own
+ * destination; Drip has a page here that explains it and hands over to
+ * Instagram, which is exactly what Genesis asked for.
+ *
+ * WHAT CAME OFF. "Campaigns" and "Library" both pointed at /#library — two
+ * labels for one destination, which is the same fault as the two Log In links
+ * that were removed from here for the same reason. Library survives under the
+ * name the section now uses for itself.
+ */
 export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
-    heading: "Services",
-    items: divisionPages.map(({ label, href }) => ({ label, href })),
-  },
-  {
-    heading: "Work",
+    heading: "Genesis Media",
     items: [
       /*
-        THESE SCROLL, THEY DO NOT NAVIGATE. Genesis's instruction is that the
-        footer should take you to the section rather than open a new page —
-        which is right for a single-page site: a reader at the bottom clicking
-        "Campaigns" wants the block they just scrolled past, not a fresh
-        document and a lost scroll position.
-
-        Only the two that have no section of their own still navigate.
+        THESE SCROLL, THEY DO NOT NAVIGATE (except the two that have no
+        section). Genesis's instruction is that the footer should take you to
+        the section rather than open a new page, which is right for a
+        single-page site: a reader at the bottom clicking "Events" wants the
+        block they just scrolled past, not a fresh document and a lost scroll
+        position. The division hrefs are real pages, and SmoothScroll maps
+        them to their sections while you are on the homepage.
       */
-      { label: "Campaigns", href: "/#library" },
-      { label: "Library", href: "/#library" },
-      { label: "Case Studies", href: "/#case-studies" },
+      { label: "Work", href: "/#library" },
+      { label: "Case Studies", href: "/case-studies" },
+      ...divisionPages.map(({ label, href }) => ({ label, href })),
+      { label: "Events", href: "/#events" },
     ],
   },
   {
-    heading: "Genesis",
+    heading: "Genesis Ecosystem",
+    items: [
+      { label: "GenesisDrip", href: "/genesisdrip" },
+      /*
+        LEAVES THE SITE. Genesis asked for "Genesis Estate →" in the footer,
+        redirecting to the Estate page — the arrow in their own label is the
+        convention for that, and `external` is what actually makes it open in
+        its own tab with the usual pair of rel tokens.
+
+        TODO(content): THE DESTINATION. Genesis Estate's URL has not been
+        given. Until it is, this points at the property films in the
+        portfolio, which is the Estate work the site actually holds — a link
+        to a guessed domain is a link to somebody else's website. Set the URL
+        here and add `external: true`; nothing else changes.
+      */
+      { label: "Genesis Estate →", href: "/#library" },
+    ],
+  },
+  {
+    heading: "General",
     items: [
       { label: "Start a Project", href: "/#contact" },
       /*
         The same chat, with the same message, as AI Lab's own CTA — built
-        from whatsappLink below rather than typed out, so the two cannot
-        drift. It is the only external link in the footer.
+        from whatsappLink rather than typed out, so the two cannot drift.
       */
       {
         label: "Build Your AI Avatar",
@@ -307,6 +372,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
       },
       { label: "I'm a Creator", href: "/creator" },
       { label: "Careers", href: "/careers" },
+      { label: "Contact", href: "/#contact" },
     ],
   },
 ];

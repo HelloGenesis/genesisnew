@@ -46,11 +46,11 @@ export function aspectFor(item: WorkItem): string {
   */
   if (
     item.format === "Reels" ||
-    item.format === "User-Generated Content (UGC)"
+    item.format === "UGC"
   ) {
     return "aspect-[9/13]";
   }
-  if (item.format === "Event Shoots" || item.format === "Photo Gallery") {
+  if (item.format === "Event Shoot" || item.format === "Photo Gallery") {
     return "aspect-[4/3]";
   }
   return "aspect-[4/5]";

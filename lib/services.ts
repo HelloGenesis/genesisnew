@@ -266,7 +266,7 @@ export const servicePages: ServicePage[] = [
   {
     slug: "ai-content-automation",
     division: "AI Lab",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     seo: {
       title: "AI Avatars, AI Content & Automation Agency",
       description:

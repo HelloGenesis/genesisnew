@@ -53,14 +53,21 @@ import { isPending, services } from "./home-content";
 export const CATEGORIES = [
   "Influencer Campaigns",
   "Reels",
-  "User-Generated Content (UGC)",
+  "UGC",
   "AI Content",
-  "Event Shoots",
-  "Launch Films",
+  "Event Shoot",
+  "Launch Film",
   "Photo Gallery",
-  "Product Explainers",
+  "Product Explainer",
   /* Added at Genesis's request for the animated and designed pieces. */
-  "Motion Graphics & Design",
+  "Motion Graphics",
+  /*
+    IDENTITY WORK IS NOT MOTION GRAPHICS, which is the only other label this
+    list had for anything designed rather than shot. Brand & Design's two
+    pieces — Tripgate's identity and the Activ Health logo redesign — needed
+    a name that is true, and the card chip is where a visitor reads it.
+  */
+  "Brand Identity",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
@@ -73,14 +80,42 @@ export type Category = (typeof CATEGORIES)[number];
  * Insurance — is the same one the sectors strip carries, and it lives with
  * that strip in lib/home-content rather than being retyped here.
  *
- * "AI Labs" is deliberately NOT here. It is already one of the four verticals
- * and the filter row offers those first, so declaring it a second time would
- * print the same chip twice.
+ * "AI Lab" is deliberately NOT here. It is a division, and divisions are the
+ * filter row now; declaring it a second time would give the same thing two
+ * vocabularies again, which is the exact fault this pass removed.
  */
+/*
+  THE CARD TAGS, AND THAT IS NOW THE WHOLE OF THIS LIST'S JOB.
+
+  These used to be the second half of the filter row, beside the formats and
+  one vertical — which is the mix Genesis called out: "the current filter
+  system mixes verticals, capabilities, formats and industries … AI Labs is a
+  vertical, Influencer Campaigns a capability, Reels a format, Real Estate an
+  industry. This feels inconsistent."
+
+  The row is the six divisions now (see workFilters). Everything here is a
+  small tag printed on the project card instead, which is where a mixed
+  vocabulary is fine — a card can be a Reel, for BFSI, shot at a corporate
+  event, and saying so is useful; offering those three as peers in a filter
+  bar is not.
+
+  THEY STILL FILTER, though nothing offers them. `matchesFilter` matches on
+  tags as well as verticals, so a CTA elsewhere on the page can still ask the
+  grid for a specific slice — and a tag that no chip prints cannot confuse
+  anyone browsing.
+*/
 export const WORK_TAGS = [
   "Real Estate",
   "Food & Beverage (F&B)",
   "BFSI",
+  /* The events vocabulary, from Genesis's own tag list. */
+  "School Events",
+  "Corporate Events",
+  "Brand Activations",
+  "Nightlife",
+  "Experiential",
+  "IP",
+  "Community",
 ] as const;
 
 export type WorkTag = (typeof WORK_TAGS)[number];
@@ -92,11 +127,38 @@ export type WorkTag = (typeof WORK_TAGS)[number];
  * own order rather than in whatever order the catalogue happens to mention
  * them. It was a bare union, which a filter builder cannot iterate.
  */
+/**
+ * THE FILTER ROW, AND THE ONLY THING IN IT.
+ *
+ * Genesis's simplification: "All · Influence · Studios · AI Lab · Brand &
+ * Design · Events · Creatives", with everything else demoted to a tag on the
+ * card. One kind of thing per row, which is what the old one did not have.
+ *
+ * TWO ARE NEW AND ONE IS RENAMED.
+ *
+ *   EVENTS is the capability Genesis asked to make visible on the site —
+ *     corporate events, school experiences, launches, nightlife IPs and
+ *     on-ground activations. It is deliberately NOT a fifth division at the
+ *     level of the core four (it has no lockup and no place on the Brain);
+ *     it is a shelf in the portfolio and a section of its own.
+ *
+ *   CREATIVES is the design and animation output — the motion graphics,
+ *     explainers and designed pieces that are neither a shoot nor a campaign
+ *     and had nowhere to be filed.
+ *
+ *   "AI LABS" IS "AI LAB", singular, which is what the division is called
+ *     everywhere else on the site: on the Brain, in the nav, on its own
+ *     section and in its lockup. The plural survived here from before the
+ *     2026 naming and made the filter row the one place the division had a
+ *     different name.
+ */
 export const VERTICALS = [
   "Influence",
   "Studios",
-  "AI Labs",
+  "AI Lab",
   "Brand & Design",
+  "Events",
+  "Creatives",
 ] as const;
 
 export type Vertical = (typeof VERTICALS)[number];
@@ -227,7 +289,7 @@ const catalogue: WorkItem[] = [
     slug: "aditya-birla-capital-ai-content",
     client: "Aditya Birla Capital Health Insurance",
     title: "AI Content",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     format: "Reels",
     tags: ["BFSI"],
     reel: [29, 30, 31],
@@ -245,7 +307,7 @@ const catalogue: WorkItem[] = [
     client: "HDFC",
     title: "Content Production",
     vertical: "Studios",
-    format: "User-Generated Content (UGC)",
+    format: "UGC",
     tags: ["BFSI"],
     /*
       IT HAD NO FOOTAGE UNTIL NOW. This entry existed on a client name alone
@@ -344,7 +406,7 @@ const catalogue: WorkItem[] = [
     slug: "house-of-hiranandani-content",
     client: "House of Hiranandani",
     title: "Brand Content",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     format: "Reels",
     tags: ["Real Estate"],
     reel: [32],
@@ -407,7 +469,7 @@ const catalogue: WorkItem[] = [
     client: "Aditya Birla Health Insurance",
     title: "Activ Travel Plan Explainers",
     vertical: "Studios",
-    format: "Product Explainers",
+    format: "Product Explainer",
     tags: ["BFSI"],
     reel: [
       "studios-activ-travel-leisure-plan-finalhd-1",
@@ -419,7 +481,7 @@ const catalogue: WorkItem[] = [
     client: "Aditya Birla Health Insurance",
     title: "Leadership & Internal Films",
     vertical: "Studios",
-    format: "Launch Films",
+    format: "Launch Film",
     tags: ["BFSI"],
     reel: [
       "studios-mr-mayank-bathwal-ceo-aditya-birla-health-insurance",
@@ -431,7 +493,7 @@ const catalogue: WorkItem[] = [
     client: "Mahindra Finance",
     title: "Brand Film",
     vertical: "Studios",
-    format: "Launch Films",
+    format: "Launch Film",
     tags: ["BFSI"],
     reel: ["studios-mahindra-cut-44"],
   },
@@ -444,11 +506,24 @@ const catalogue: WorkItem[] = [
     reel: ["studios-tripagetet"],
   },
   {
+    /*
+      EVENTS IS A DIVISION IN THE PORTFOLIO NOW, and this is the work that was
+      already here waiting for it. UMANG 2024 and the Utsav aftermovie were
+      filed under Studios because that is who shot them — true, and useless to
+      anyone asking whether Genesis does events at all, which is the
+      capability Genesis asked to make visible.
+
+      TODO(content): THE CLIENTS. UMANG and Utsav are EVENT names, not client
+      names, and nothing in either file says whose events they were. They are
+      under Genesis's own byline rather than attributed to a school or a
+      company that would be invented here. Name them and they move.
+    */
     slug: "genesis-event-films",
-    client: "Genesis Studios",
+    client: "Genesis Events",
     title: "Event Films",
-    vertical: "Studios",
-    format: "Event Shoots",
+    vertical: "Events",
+    format: "Event Shoot",
+    tags: ["Experiential"],
     reel: ["studios-umang-2024", "studios-utsav-aftermovie"],
   },
   {
@@ -481,10 +556,16 @@ const catalogue: WorkItem[] = [
      * work, not shoots.
      */
     slug: "studios-motion-design",
-    client: "Genesis Studios",
-    title: "Motion Graphics & Design",
-    vertical: "Studios",
-    format: "Motion Graphics & Design",
+    client: "Genesis Creatives",
+    title: "Motion Graphics",
+    /*
+      CREATIVES, NOT STUDIOS. Genesis added the filter and this is what it is
+      for: pixel-art explainers and an app walkthrough are DESIGNED rather
+      than shot, and filing them beside the brand films made the one row a
+      designer would look for the one row that did not exist.
+    */
+    vertical: "Creatives",
+    format: "Motion Graphics",
     reel: [
       "studios-7-draft6-income-protect",
       "studios-1-draft-9-eat-move-heal",
@@ -495,8 +576,8 @@ const catalogue: WorkItem[] = [
     slug: "abhi-activ-yuva-ai-explainers",
     client: "Aditya Birla Health Insurance",
     title: "Activ Yuva Explainers",
-    vertical: "AI Labs",
-    format: "Product Explainers",
+    vertical: "AI Lab",
+    format: "Product Explainer",
     tags: ["BFSI"],
     reel: [
       "ai-lab-1-2-9x16-main-product-explainer-activ-yuva",
@@ -507,7 +588,7 @@ const catalogue: WorkItem[] = [
     slug: "sinet-ai-film",
     client: "SiNet",
     title: "AI Brand Film",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     format: "AI Content",
     reel: ["ai-lab-sinet-english-v004"],
   },
@@ -522,7 +603,7 @@ const catalogue: WorkItem[] = [
     slug: "ai-avatar-tanvi",
     client: "Tanvi · AI Avatar",
     title: "AI Avatar Content",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     format: "AI Content",
     featured: true,
     reel: [
@@ -535,16 +616,54 @@ const catalogue: WorkItem[] = [
     slug: "ai-avatar-bharat",
     client: "Bharat · AI Avatar",
     title: "AI Avatar Content",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     format: "AI Content",
     featured: true,
     reel: ["ai-lab-bharat-bharat"],
+  },
+  /*
+   * BRAND & DESIGN'S OWN WORK, IN THE CATALOGUE AT LAST.
+   *
+   * The division had real, shipped work on the site — Tripgate's identity and
+   * guidelines, and the Activ Health app's logo redesign, both shown in its
+   * own section with their artwork — and NONE of it was in the portfolio. The
+   * consequence was visible the moment the filter row became the six
+   * divisions: Brand & Design was the one chip that never appeared, because
+   * `workFilters` only offers a division with work behind it. A portfolio
+   * that cannot show you a brand's identity work is not a portfolio of this
+   * company.
+   *
+   * `art` IS THE FINISHED MARK, not a video poster. These two are the first
+   * pieces in the catalogue whose artwork is a still rather than a frame of a
+   * clip — the tile handles that already (`hasArt` without `clip` simply does
+   * not play), which is why they need no new shape.
+   *
+   * TODO(assets): Tripgate has no image on disk; its section renders its
+   * locked palette as live hex values rather than a picture. It therefore
+   * gets the typographic tile, which is the honest one — a palette is not a
+   * logo, and cropping five swatches into a thumbnail would suggest it was.
+   */
+  {
+    slug: "tripgate-branding",
+    client: "TripGate",
+    title: "Branding & Guidelines",
+    vertical: "Brand & Design",
+    format: "Brand Identity",
+  },
+  {
+    slug: "activ-health-logo",
+    client: "Aditya Birla Health Insurance",
+    title: "Activ Health App — Logo Redesign",
+    vertical: "Brand & Design",
+    format: "Brand Identity",
+    tags: ["BFSI"],
+    art: "/brand/activ-health/5.png",
   },
   {
     slug: "ai-avatar-shivam",
     client: "Shivam · AI Avatar",
     title: "AI Avatar Content",
-    vertical: "AI Labs",
+    vertical: "AI Lab",
     format: "AI Content",
     reel: ["ai-lab-shivam-sh1", "ai-lab-shivam-sh2"],
   },
@@ -692,24 +811,24 @@ export const featuredWork = work.filter((item) => item.featured);
  */
 export function workFilters(items: WorkItem[]): string[] {
   /*
-    GENESIS'S TWELVE, AND ONLY THOSE. This offered all four verticals as well
-    — Influence, Studios, AI Labs and Brand & Design — which was three chips
-    they never asked for. Their list is the eight formats, the three sectors
-    and AI Labs; the note on WORK_TAGS says as much, explaining that AI Labs
-    is left out of the sector list precisely because it arrives as a vertical.
-    That was true, but the row then printed the other three alongside it.
+    ONE VOCABULARY, IN THE BRAND'S OWN ORDER.
 
-    Influence and Studios stay in the DATA — every piece still carries its
-    vertical, the portfolio's division shelves are built from it, and the
-    reorganisation that came out of Genesis's Drive depends on it. What
-    changed is only what the filter row offers.
+    This used to return twelve chips of four different kinds — one vertical,
+    eight formats and three industries — which is the inconsistency Genesis
+    asked to fix. It returns the divisions, and nothing else: a reader
+    filtering a portfolio is asking "which part of Genesis made this", and
+    every other question ("is it a reel?", "is it for a bank?") is answered by
+    looking at the card.
+
+    THE ROW STILL ONLY OFFERS WHAT HAS WORK BEHIND IT. Printing all six when
+    two match nothing gives a visitor two ways to empty the grid, so a
+    division appears the moment something is filed under it — which is also
+    what keeps Events and Creatives honest while their catalogues fill.
   */
-  const aiLabs = items.some((i) => i.vertical === "AI Labs") ? ["AI Labs"] : [];
-  const formats = CATEGORIES.filter((c) => items.some((i) => i.format === c));
-  const tags = WORK_TAGS.filter((t) =>
-    items.some((i) => i.tags?.includes(t)),
-  );
-  return ["All", ...aiLabs, ...formats, ...tags];
+  return [
+    "All",
+    ...VERTICALS.filter((v) => items.some((i) => i.vertical === v)),
+  ];
 }
 
 /**
@@ -841,7 +960,7 @@ export const WORK_ROWS: WorkRow[] = [
     title: "Reels & short form",
     blurb: "Shot vertical, cut for the feed.",
     test: (i) =>
-      i.format === "Reels" || i.format === "User-Generated Content (UGC)",
+      i.format === "Reels" || i.format === "UGC",
   },
   {
     id: "campaigns",
@@ -903,7 +1022,26 @@ export const WORK_ROWS: WorkRow[] = [
     id: "ai-labs",
     title: "Genesis.AI Lab",
     division: divisionOf("Genesis.AILab", "AI Lab"),
-    test: (i) => i.vertical === "AI Labs",
+    test: (i) => i.vertical === "AI Lab",
+  },
+  {
+    /*
+      THE TWO NEW SHELVES. Neither takes a `division` lockup, and that is
+      deliberate rather than a missing asset: Events and Creatives are
+      capabilities in the portfolio, not a fifth and sixth division at the
+      level of the four on the Brain. A blurb does the job a lockup does for
+      the others.
+    */
+    id: "events",
+    title: "Events & experiences",
+    blurb: "Corporate, school and brand events, launches and activations.",
+    test: (i) => i.vertical === "Events",
+  },
+  {
+    id: "creatives",
+    title: "Creatives",
+    blurb: "Motion graphics, design and animated explainers.",
+    test: (i) => i.vertical === "Creatives",
   },
   {
     /*
@@ -918,9 +1056,9 @@ export const WORK_ROWS: WorkRow[] = [
     title: "Films & explainers",
     blurb: "Brand films, product explainers and event coverage.",
     test: (i) =>
-      i.format === "Launch Films" ||
-      i.format === "Product Explainers" ||
-      i.format === "Event Shoots",
+      i.format === "Launch Film" ||
+      i.format === "Product Explainer" ||
+      i.format === "Event Shoot",
   },
 ];
 

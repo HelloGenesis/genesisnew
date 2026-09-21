@@ -1,4 +1,4 @@
-import { siteConfig } from "@/lib/site-config";
+import { siteConfig, whatsappLink } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,6 +43,36 @@ function YouTubeMark() {
   );
 }
 
+/**
+ * WhatsApp, drawn rather than imported, like the other two.
+ *
+ * Genesis asked for "a small WhatsApp icon beside Instagram … keep it
+ * subtle", and subtle is what decides the drawing: the brand's own glyph is a
+ * white handset inside a filled green speech bubble, which in a row of two
+ * hairline outlines would read as a button someone had pasted in. This is the
+ * same handset and the same bubble as a 2px stroke in the row's own colour,
+ * so it sits with its neighbours and takes the same hover.
+ */
+function WhatsAppMark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      {/* The bubble, with its tail at the bottom-left, as the mark has it. */}
+      <path
+        d="M3.4 20.6l1.3-4.1A8.4 8.4 0 1 1 8 19.4l-4.6 1.2Z"
+        strokeLinejoin="round"
+      />
+      {/*
+        The handset. Drawn as the mark's own hooked stroke rather than as a
+        telephone glyph — at 20px a receiver with a body and a cord is mud.
+      */}
+      <path
+        d="M9 8.4c.3-.1.6 0 .8.3l.7 1.2c.1.3.1.6-.1.8l-.5.5a5 5 0 0 0 2.4 2.4l.5-.5c.2-.2.5-.2.8-.1l1.2.7c.3.2.4.5.3.8-.2.8-1 1.4-1.9 1.3a6.9 6.9 0 0 1-5.7-5.7c-.1-.9.5-1.6 1.3-1.8Z"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function LinkedInMark() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -61,12 +91,32 @@ function LinkedInMark() {
   It comes back the day there is a channel to point it at — the mark below is
   kept for exactly that.
 */
-const SOCIALS = [
+const SOCIALS: {
+  label: string;
+  href: string | undefined;
+  Mark: () => React.JSX.Element;
+}[] = [
   {
     label: "Instagram",
     // From siteConfig, which the Organization schema's `sameAs` also reads.
     href: siteConfig.social.instagram,
     Mark: InstagramMark,
+  },
+  /*
+    WHATSAPP SITS BESIDE INSTAGRAM, which is the order Genesis asked for and
+    also the order of how people actually reach them: the feed first, then
+    the conversation.
+
+    IT CAN BE UNDEFINED, and the row handles that rather than rendering a
+    dead icon. `whatsappLink` returns undefined when there is no number in
+    siteConfig — the same switch the floating button and the footer's avatar
+    link already honour — so emptying that field removes this icon instead of
+    leaving one that opens a chat with nobody.
+  */
+  {
+    label: "WhatsApp",
+    href: whatsappLink(),
+    Mark: WhatsAppMark,
   },
   {
     label: "LinkedIn",
@@ -78,7 +128,7 @@ const SOCIALS = [
 export function SocialStars({ className }: { className?: string }) {
   return (
     <ul className={cn("flex items-center gap-2", className)}>
-      {SOCIALS.map(({ label, href, Mark }) => (
+      {SOCIALS.filter((social) => social.href).map(({ label, href, Mark }) => (
         <li key={label} className="relative">
           <a
             href={href}

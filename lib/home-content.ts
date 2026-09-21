@@ -1144,3 +1144,88 @@ export const footerCta = {
   // TODO(contact): confirm the routing address.
   email: "hello@genesismedia.co",
 } as const;
+
+// --- Events & experiences ---------------------------------------------------
+
+/**
+ * EVENTS, AS A CAPABILITY RATHER THAN A FIFTH DIVISION.
+ *
+ * Genesis's instruction is precise about the level: "add Events & Experiences
+ * as a visible capability on the website. For now, this does not need to
+ * become a fifth main vertical at the same level as the core four." So it
+ * gets a section, a portfolio shelf, a filter chip and a footer link — and no
+ * lockup, no place on the Brain, and no gradient of its own. The Brain stays
+ * a picture of four things.
+ *
+ * WHY IT NEEDED SAYING AT ALL. Genesis has run fifteen hundred events (see
+ * proof.events, from their own journey board) and the site mentioned it
+ * nowhere: two event films sat in the portfolio filed under Studios, which is
+ * who shot them, and a visitor asking "do they do events" had no way to find
+ * out. A capability this large being invisible is not a design decision.
+ *
+ * THE SERVICE LABELS ARE GENESIS'S OWN SEVEN, in their order. They are
+ * deliberately concrete — a school looking for a school event and a brand
+ * looking for an activation should both find their own words here rather than
+ * "experiential solutions".
+ */
+export const events = {
+  label: "Events & Experiences",
+  heading: "Ideas that go",
+  headingAccent: "beyond the screen.",
+  body:
+    "From corporate events and school experiences to launches, nightlife IPs and on-ground activations, we create experiences built to engage people in the real world.",
+  services: [
+    "Corporate Events",
+    "Brand Activations",
+    "School Events",
+    "Launches",
+    "IP Events",
+    "Artist Events",
+    "Experiential Marketing",
+  ],
+  /*
+    THE ONE FIGURE THIS SECTION HAS, and it is the company's own rather than
+    one written to fill the layout. Genesis's journey board records 1,500+
+    successful events and nothing else on the site has ever printed it.
+  */
+  stat: proof.events,
+  primaryCta: { label: "Explore Event Work", href: "#library" },
+} as const;
+
+// --- GenesisDrip ------------------------------------------------------------
+
+/**
+ * GENESISDRIP — the nightlife and event IP, inside the Genesis ecosystem.
+ *
+ * Genesis asked for three things and they are three different places:
+ *   - a case study in the portfolio (lib/case-studies),
+ *   - a link under "Genesis Ecosystem" in the footer (lib/site-config),
+ *   - "a simple GenesisDrip page/section … that can briefly explain what
+ *     GenesisDrip is and then link/redirect users to the GenesisDrip
+ *     Instagram page for current events and content".
+ *
+ * This is the copy for the third. It is deliberately short: the instruction
+ * is that the page explains and then hands over, so anything longer would be
+ * competing with the Instagram feed it exists to send people to.
+ *
+ * TODO(content): THE INSTAGRAM HANDLE. Genesis named the account but not its
+ * URL, and a link to a guessed handle is a link to somebody else's account.
+ * `instagram` below is the one field the page needs before it ships — set it
+ * and the button appears; until then the page offers the enquiry form
+ * instead, which is the same degradation the WhatsApp button uses.
+ *
+ * TODO(assets): "use strong GenesisDrip visuals where available." None have
+ * been shared, so the page is typographic. It is built to take a poster the
+ * day one arrives.
+ */
+export const drip = {
+  name: "GenesisDrip",
+  label: "Genesis ecosystem",
+  heading: "Nights that become",
+  headingAccent: "their own thing.",
+  body:
+    "GenesisDrip is Genesis's own nightlife and event IP: a series built with artists, venues and a community that turns up for it. Everything current lives on Instagram.",
+  tags: ["Events", "IP", "Nightlife", "Experiential", "Community"],
+  /** See the TODO above. Empty means the page falls back to the enquiry form. */
+  instagram: "",
+} as const;
