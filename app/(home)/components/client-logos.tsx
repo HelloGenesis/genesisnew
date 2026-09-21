@@ -165,18 +165,74 @@ export function ClientLogos() {
         Set at the wall's own weight, not louder. It is the same micro-label
         it always was; what changed is what it is a caption FOR.
       */}
+      {/*
+        ONE LINE, MOVING, FADED AT BOTH ENDS — and the same mechanism the
+        logo rails above it use, which is the point.
+
+        WHAT IT WAS. A wrapping flex row: one swipeable line on a phone, and
+        from `sm` up a centred block that wrapped. Ten sectors with BFSI's
+        full expansion in them is about 150 characters, so on every desktop
+        width it broke into two ragged rows — the second one a short,
+        off-centre tail of three words under a full first line. Read as a
+        paragraph that had run out of room rather than as a caption strip.
+
+        SO IT MOVES INSTEAD OF WRAPPING. A marquee has no second row by
+        construction: length costs horizontal distance rather than vertical
+        space, so the strip is one line at every width and stays one line if
+        an eleventh sector is added. It is the same component as the marks
+        above, so the caption now behaves like the thing it is a caption for.
+
+        SPACE ON BOTH SIDES, WHICH IS WHY IT IS NOT FULL-BLEED. The two logo
+        rails deliberately run the whole viewport — a wall of marks reads as
+        continuing past the screen. This is a line of type and is held to the
+        section's own measure, so the strip starts and ends where the
+        heading above it does, with page either side of it.
+
+        AND IT FADES AT BOTH ENDS. That is LogoMarquee's own mask, and here it
+        is doing more than tidying an edge: it is what stops a word being cut
+        in half at the boundary. A sector dissolving reads as a list
+        continuing; a sector guillotined reads as a bug.
+      */}
       <Reveal delay={0.1} className="mt-10">
-        <ul
+        <LogoMarquee
           /*
-            ONE SWIPEABLE LINE ON A PHONE ("woh sec 2 bfsi copy wala scroller
-            me daalo only on mobile"). Wrapped, ten sectors made a ragged
-            three-row block; as a single line it reads as the caption strip it
-            is. From `sm` up it wraps and centres exactly as before.
+            SLOWER THAN THE MARKS, which run at 52 and 60 seconds. Those are
+            logos and are recognised at a glance; these are words and have to
+            be READ, and a caption travelling at the speed of a logo wall is
+            one a reader chases. Hovering stops it altogether — LogoMarquee's
+            own behaviour, and worth having here specifically, because someone
+            who wants to check whether their category is on the list can hold
+            the strip still while they look.
           */
-          className="no-scrollbar -mx-6 flex items-center gap-x-3 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:justify-center sm:gap-y-2 sm:overflow-visible sm:px-0"
-        >
-          {clients.sectors.map((sector, index) => (
-            <li key={sector.label} className="flex shrink-0 items-center gap-3">
+          speedSeconds={72}
+          /*
+            TIGHT, BECAUSE EACH ITEM BRINGS ITS OWN DOT. The logo rails use
+            the 40px default, which suits objects with their own silhouettes.
+            Here 12px either side of a middot reproduces the spacing the
+            static line had.
+          */
+          gapClassName="gap-3"
+          /*
+            A LONG FADE, WHICH IS WHERE THE SPACE ON EITHER SIDE COMES FROM.
+            The logo rails use 6% because they run the full viewport and the
+            fade is only dissolving a mark at the screen's edge. This strip
+            stops at the section's own measure, so at 6% the words were still
+            almost solid where the column ends and the line read as running
+            into the margin. At 12% each end has a visible run-up, and the
+            strip sits inside the page rather than against it.
+          */
+          fadePercent={12}
+          items={clients.sectors.map((sector) => (
+            /*
+              THE DOT TRAVELS WITH ITS SECTOR, rather than being drawn between
+              pairs the way the static list did it. In a loop there is no
+              "last" item to leave bare: the tenth sector is followed by the
+              first, so a separator that skips the end would drop one join
+              out of every ten and the strip would read ". . . REAL ESTATE
+              BFSI . . ." once a cycle. Every item ending in a dot makes the
+              wrap identical to every other join.
+            */
+            <span key={sector.label} className="flex items-center gap-3">
               {/*
                 An <abbr> only where there is something to expand. Wrapping
                 every sector in one would announce "abbreviation" before
@@ -186,23 +242,23 @@ export function ClientLogos() {
               {sector.expands ? (
                 /* THE FULL FORM IS PRINTED, not hidden in a tooltip —
                    Genesis wants a reader to see what BFSI stands for. */
-                <span className="micro-label !text-faint">
+                <span className="micro-label !text-faint whitespace-nowrap">
                   <abbr title={sector.expands} className="no-underline">
                     {sector.label}
                   </abbr>{" "}
                   ({sector.expands})
                 </span>
               ) : (
-                <span className="micro-label !text-faint">{sector.label}</span>
-              )}
-              {index < clients.sectors.length - 1 && (
-                <span aria-hidden className="text-brand">
-                  ·
+                <span className="micro-label !text-faint whitespace-nowrap">
+                  {sector.label}
                 </span>
               )}
-            </li>
+              <span aria-hidden className="text-brand">
+                ·
+              </span>
+            </span>
           ))}
-        </ul>
+        />
       </Reveal>
     </SectionShell>
   );
