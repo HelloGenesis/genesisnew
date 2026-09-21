@@ -20,8 +20,19 @@ import { Studios } from "./components/studios";
 export const metadata: Metadata = pageMetadata({
   title: "Genesis Media | Influencer, Content & AI Agency in Mumbai",
   absoluteTitle: true,
+  /*
+    THE FULL OFFERING, NOT THE OLD POSITIONING. This said "a Gen Z-led agency
+    in Mumbai for influencer marketing, UGC, video production, AI avatars and
+    brand design" — a description of the company as it was two divisions ago.
+    Genesis asked for it replaced: the business is broader now, and events,
+    automation, games and apps were all invisible to anyone reading this in a
+    result.
+
+    Mumbai stays. It is the one thing in here that is a ranking signal rather
+    than a claim, and the address in siteConfig backs it.
+  */
   description:
-    "Genesis Media is a Gen Z-led agency in Mumbai for influencer marketing, UGC, video production, AI avatars and brand design, working with brands across India.",
+    "Genesis Media is a creative company in Mumbai: influencer marketing, content production, AI content and avatars, branding and design, automation, games, apps and events.",
   path: "/",
 });
 

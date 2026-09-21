@@ -23,8 +23,24 @@ export const siteConfig = {
   // TODO(copy): pulled from the current genesismedia.co hero (docs/reference/
   // img-019). Confirm before launch — the live site has a typo in "Technolgy".
   tagline: "Empowering brands with influencer marketing, creative content & technology.",
+  /*
+    NOT "A GEN Z-LED FULL-SERVICE AGENCY" ANY MORE, at Genesis's instruction,
+    and the reason is that it has stopped being true rather than that it
+    reads badly. The business now sells influencer marketing, content
+    production, AI content and avatars, branding, design, games, apps,
+    automation, events and interactive work — and "full-service agency" is
+    the line that makes a buyer assume the first two and none of the rest.
+
+    IT IS LONG, AND THAT IS THE POINT OF THIS ONE. This string is the
+    Organization schema's description and the fallback meta description: a
+    place where naming the ten things is worth more than a sharp sentence,
+    because it is read by machines matching a query to a company. The SHORT
+    version of the same claim is the homepage's own standfirst — "We help
+    brands grow through creators, content, AI, technology and design" — which
+    is what a person reads.
+  */
   description:
-    "Genesis is a Gen Z-led full-service agency where strategy, content and technology come together to build iconic brands.",
+    "Genesis Media is a creative company specialising in influencer marketing, content production, AI solutions, branding, design, games, apps, automation, events and interactive digital experiences.",
   /*
     THE CANONICAL ORIGIN, AND IT IS THE WWW HOST ON PURPOSE. The site this
     replaces is served from www.genesismedia.co — the bare domain 301s to it —

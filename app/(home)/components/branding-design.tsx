@@ -149,9 +149,13 @@ export function BrandingDesign() {
         tagline: services.items[1].caption,
         ramp: services.items[1].ramp,
       }}
-      /* The tagline under the lockup is hidden: the middle folder says it,
-         large, one scroll below. Printed twice it reads as a stutter. */
-      taglineClassName="hidden"
+      /*
+        THE TAGLINE IS BACK UNDER THE LOCKUP. It was hidden because the middle
+        folder was printing the same line at 46px; that folder now carries
+        the division's claim instead, so there is nothing left to stutter
+        against and the caption does the job it does in every other division.
+      */
+      body={branding.body}
       align="center"
       tone="brand"
       origin="top-left"
@@ -354,10 +358,25 @@ export function BrandingDesign() {
             */
             contentClassName="flex flex-col justify-center px-6 pt-8 pb-14 sm:min-h-[min(16rem,26vh)] sm:px-10 sm:pb-16 xl:min-h-[min(26rem,34vh)]"
           >
+            {/*
+              THE CLAIM, NOT THE CAPABILITY LIST.
+
+              This folder read "Branding Positioning, Design & Collaterals"
+              set across four lines — the division's own tagline, at 46px, on
+              the biggest surface in the section. Two problems with that, and
+              Genesis's final copy fixes both. It repeated the line printed
+              under the lockup at the top of the section (which is why the
+              lockup's tagline had to be hidden to stop the stutter), and it
+              is a list of services where the largest type on a division's
+              block should be the reason to buy them.
+
+              "Build a brand people remember." is theirs. The ramp moves to
+              the half that carries the idea.
+            */}
             <h3 className="text-[2rem] leading-[1.04] font-normal tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
-              Branding
+              Build a
               <br />
-              Positioning,
+              brand
               <br />
               {/* `clone` so each line carries the whole ramp, orange at its
                   start and violet at its end, as both do in the reference. */}
@@ -365,9 +384,9 @@ export function BrandingDesign() {
                 className="bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
                 style={{ backgroundImage: HEADLINE_RAMP }}
               >
-                Design &amp;
+                people
                 <br />
-                Collaterals
+                remember.
               </span>
             </h3>
             <ArrowCircle

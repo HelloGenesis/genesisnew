@@ -100,15 +100,17 @@ export function CaseStudies() {
       heading={caseStudiesPage.heading}
       headingAccent={caseStudiesPage.headingAccent}
       /*
-        NO STANDFIRST. Genesis asked for the paragraph to come off this
-        section — "Not a gallery — the problem, what we decided to do about
-        it, and what changed…" was a promise made beside four posters that
-        cannot keep it yet, and `align="split"` existed only to give that
-        paragraph a column of its own. With it gone the heading takes the
-        full width and the rail sits directly under it. The copy is still in
-        lib/case-studies for the /case-studies page, which is where it is
-        true.
+        A STANDFIRST AGAIN — BUT NOT THE ONE THAT CAME OFF.
+
+        The paragraph removed from here was the /case-studies page's: "Not a
+        gallery… every study ends in a number the client agreed to", which is
+        a promise four posters on the homepage cannot keep. Genesis asked for
+        a supporting line under this heading and wrote one that does not make
+        that promise: it says what the rail is — campaigns, content and
+        creative work, chosen for outcomes — and leaves the numbers to the
+        studies themselves. See `lead` in lib/case-studies.
       */
+      body={caseStudiesPage.lead}
       align="left"
       tone="brand"
       origin="top-right"

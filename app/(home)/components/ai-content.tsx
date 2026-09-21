@@ -49,11 +49,22 @@ export function AiContent() {
         ramp: services.items[3].ramp,
       }}
       /*
-        NO `body` HERE. The section's copy used to sit in the header beside
-        the lockup; Genesis asked for it below the avatars and above the
-        buttons, which is where it now renders — see further down. Passing it
-        here as well would print it twice.
+        THE UMBRELLA CLAIM, OVER THE WHOLE DIVISION.
+
+        This header carried the lockup and nothing else, and Genesis's read
+        of the result is the reason for the change: avatars, multilingual
+        content, games, apps and automation "can otherwise feel
+        disconnected", so the section needs one message that is true of all
+        of them before the blocks start. It is the mark, then the claim, then
+        the scope — and only then the roster.
+
+        The avatar copy further down is untouched and is now doing the job it
+        was written for: introducing the AVATARS, rather than standing in as
+        the section's only heading.
       */
+      heading={aiContent.heading}
+      headingAccent={aiContent.headingAccent}
+      body={aiContent.body}
       tone="brand"
       origin="center"
       intensity={0.14}
@@ -212,7 +223,7 @@ export function AiContent() {
           arrow
           className={MOBILE_CTA}
         >
-          View AI Content
+          View AI Work
         </GlassButton>
       </Reveal>
     </SectionShell>
@@ -228,6 +239,22 @@ export function AiContent() {
         each.
       */}
       <SectionShell id="ai-automation" tone="brand" origin="center" intensity={0.12}>
+      {/*
+        "AI BEYOND CONTENT." — the hinge, and the reason this block reads as
+        part of AI Lab rather than as a service that wandered in.
+
+        Everything above it is content a brand publishes; this is software
+        running inside a brand's operations, and without a sentence marking
+        the turn a reader has to work out for themselves why the two are
+        filed together. Genesis asked for a transition rather than a second
+        heading, so it is set small and quiet above the card — a hand-off,
+        not a title.
+      */}
+      <Reveal className="mb-6 text-center sm:mb-8">
+        <p className="text-balance text-lead font-normal italic text-brand-ink sm:text-h3">
+          {aiContent.automation.transition}
+        </p>
+      </Reveal>
       <Reveal delay={0.06}>
         <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-5 py-[calc(var(--section-pad)*1.6)] shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10">
           <div className="mx-auto w-full max-w-5xl text-center">

@@ -29,10 +29,10 @@ export function AutomationCtas({ className }: { className?: string }) {
     <div className={className}>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <GlassButton variant="brand" arrow onClick={() => setOpen(true)}>
-          Start Automating
+          Explore AI Automation
         </GlassButton>
         <GlassButton href="#contact" variant="glass" arrow>
-          Contact Us
+          Talk to Us
         </GlassButton>
       </div>
 

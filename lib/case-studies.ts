@@ -348,7 +348,24 @@ export function isPublished(study: CaseStudy): boolean {
 export const caseStudiesPage = {
   label: "Case studies",
   heading: "Work that",
-  headingAccent: "moved a number",
+  headingAccent: "moved a number.",
   body:
     "Not a gallery. The problem, what we decided to do about it, and what changed. Every study here ends in a number the client agreed to.",
+  /*
+    THE HOMEPAGE RAIL'S OWN STANDFIRST, and it is a different sentence from
+    `body` on purpose.
+
+    `body` is written for the /case-studies PAGE, where every card below it
+    is a published study and the promise "ends in a number the client agreed
+    to" is one the page keeps. On the homepage the same line sat over four
+    posters that mostly cannot keep it yet, so it was taken off and the
+    heading stood alone — which Genesis then read as a section with nothing
+    under its title.
+
+    This is the line they wrote for that slot. It says what the rail IS
+    without promising what each card contains, which is the difference that
+    lets it ship today.
+  */
+  lead:
+    "Selected campaigns, content and creative work built to deliver real business outcomes.",
 } as const;

@@ -52,6 +52,16 @@ export function FooterCta() {
           span both columns because they are marked `half: false`.
         */}
         <Reveal delay={0.1} className="mt-4" id="contact">
+          {/*
+            WHAT TO PUT IN THE BOX, AND WHY. The pitch above is the
+            invitation; this is the instruction, and without it the brief
+            field reads as an essay question that a visitor with a real
+            enquiry will skip. Genesis wrote the line and asked for the form
+            around it to stay short.
+          */}
+          <p className="mb-6 max-w-2xl text-pretty text-small leading-relaxed text-ash sm:text-body">
+            {footerCta.formLead}
+          </p>
           <GenesisForm kind="brand" source="/#contact" />
         </Reveal>
       </div>

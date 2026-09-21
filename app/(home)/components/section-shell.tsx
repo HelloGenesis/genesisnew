@@ -131,15 +131,33 @@ export function SectionShell({
                 />
               </Reveal>
             ) : (
-              <>
-            {label && (
+              label && (
               <Reveal className={align === "split" ? "lg:col-start-1" : undefined}>
                 <SectionLabel dot tone={tone === "neutral" ? "brand" : tone}>
                   {label}
                 </SectionLabel>
               </Reveal>
+              )
             )}
 
+            {/*
+              THE LOCKUP AND THE HEADING ARE NO LONGER ALTERNATIVES.
+
+              They were: a section announced itself EITHER with its division
+              mark OR with a label and a heading. That held while a division's
+              mark was the whole announcement — and it stopped holding the
+              moment Genesis asked each division for an umbrella claim as
+              well. AI Lab is the case that broke it: the mark says which
+              division this is, and "Create more. Without creating everything
+              from scratch." says what the division is FOR, and a section
+              carrying avatars, multilingual content, games, apps and
+              automation needs both or the blocks under it read as five
+              unrelated services.
+
+              So the lockup replaces the LABEL, which is the thing it is
+              actually the same kind of as, and the heading renders under
+              either. A section passing only a division is unchanged.
+            */}
             {heading && (
               <Reveal delay={0.05} className={align === "split" ? "lg:col-start-1" : undefined}>
                 <Heading
@@ -159,9 +177,6 @@ export function SectionShell({
                   )}
                 </Heading>
               </Reveal>
-            )}
-
-              </>
             )}
 
             {body && (

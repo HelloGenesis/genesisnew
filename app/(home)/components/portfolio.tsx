@@ -81,30 +81,28 @@ export function Portfolio() {
     >
       <div className="relative z-[2] mx-auto w-full max-w-6xl px-6">
         <Reveal>
-          <SectionLabel dot tone="brand">
-            Everything we&rsquo;ve made
-          </SectionLabel>
           {/*
-            GENESIS'S OWN NAME FOR THIS SECTION, from the deck, which calls
-            the board Portfolio | Case Studies. The separator is its own muted
-            span rather than typed into either half, so at this size it reads
-            as a divider between two names instead of hyphenating one long one.
+            ONE NAME PER THING, WHICH IS THE WHOLE OF GENESIS'S NOTE HERE.
 
-            ON ONE LINE, which Genesis asked for and which the balancer was
-            actively working against. `text-balance` splits a heading across
-            roughly equal lines as soon as it can, so at the h1 size this one
-            broke after "Portfolio -" and dropped "Case Studies" underneath —
-            two lines for a title that fits in one. `whitespace-nowrap` holds
-            it together and the size steps down until the viewport is wide
-            enough to carry it, so it never runs off a phone.
+            This heading read "Portfolio - Case Studies", the deck's own name
+            for the board — and on a site that ALSO has a case-studies section
+            four blocks up and a /case-studies page in the nav, using the two
+            words interchangeably is the confusion Genesis asked to end.
+            Portfolio and Case Studies are different things: one is everything
+            made, the other is the written argument with a number at the end.
+
+            So this section says what it is and nothing else. "Explore our
+            work" invites, "Everything we've made" describes, and the case
+            studies keep their own name for their own section. The button
+            below still leads to them.
           */}
-          <h2 className="mt-4 whitespace-nowrap text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2 lg:text-h1">
-            Portfolio{" "}
-            <span aria-hidden className="text-faint">
-              -
-            </span>{" "}
+          <SectionLabel dot tone="brand">
+            Explore our work
+          </SectionLabel>
+          <h2 className="mt-4 text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2 lg:text-h1">
+            Everything{" "}
             <span className="font-serif font-normal italic text-brand-ink">
-              Case Studies
+              we&rsquo;ve made.
             </span>
           </h2>
         </Reveal>

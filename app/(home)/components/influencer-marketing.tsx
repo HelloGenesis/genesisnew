@@ -74,6 +74,24 @@ export function InfluencerMarketing() {
             tagline={services.items[0].caption}
             ramp={services.items[0].ramp}
           />
+          {/*
+            THE PROMISE, UNDER THE MARK. The section had the lockup and then
+            went straight into chips, a ring and a paragraph — so the one
+            thing it never said was what the division is FOR. Genesis's line
+            is the answer and it belongs directly under the name, in the same
+            place every other division's claim sits.
+
+            SMALLER THAN A SECTION HEADING. At text-h1 this pushed the
+            constellation off a laptop screen, and the lockup above it is
+            already carrying the section's announcement — this is the
+            sentence under the sign, not a second sign.
+          */}
+          <h3 className="mt-5 max-w-2xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
+            {influencer.heading}{" "}
+            <span className="font-serif font-normal italic text-brand-ink">
+              {influencer.headingAccent}
+            </span>
+          </h3>
         </Reveal>
 
         {/*
@@ -308,16 +326,17 @@ export function InfluencerMarketing() {
             arrow
             className={MOBILE_CTA}
           >
-            Plan Influencer Campaign
+            Plan an Influencer Campaign
           </GlassButton>
           <GlassButton
-            href="/#case-studies"
+            href="#library"
+            selectsFilter="Influence"
             variant="glass"
             size="lg"
             arrow
             className={MOBILE_CTA}
           >
-            View Case Studies
+            View Influence Work
           </GlassButton>
         </Reveal>
       </div>

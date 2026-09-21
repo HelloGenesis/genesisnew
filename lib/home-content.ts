@@ -295,8 +295,27 @@ export const caseStudies = {
 // and AI content to speed up your content workflows and engagement."
 export const aiContent = {
   label: "AI Lab",
-  heading: "Speed up the workflow,",
-  headingAccent: "not the standard",
+  /*
+    ONE UMBRELLA CLAIM OVER THE WHOLE DIVISION, which is the thing this
+    section did not have.
+
+    AI Lab carries avatars, multilingual content, games, apps and automation,
+    and "speed up the workflow, not the standard" is a line about only one of
+    those — so the four blocks under it read as four unrelated services that
+    happened to be filed together. Genesis named the problem and wrote the
+    fix: "Create more. Without creating everything from scratch." is true of
+    an avatar, a translated cut, a generated asset and an automated
+    handover alike, which is what makes it an umbrella rather than a slogan.
+  */
+  heading: "Create more. Without creating",
+  headingAccent: "everything from scratch.",
+  /*
+    WHAT THE DIVISION ACTUALLY BUILDS, in one sentence, because the heading
+    above is a claim and a claim over a wall of avatars needs its scope said
+    plainly underneath. This is the standfirst the section never had.
+  */
+  body:
+    "We build AI-powered content and digital experiences for brands, founders and creators: from realistic AI avatars and multilingual content to automation, games, apps and interactive experiences.",
   /*
    * THE COPY ABOVE THE ROSTER, and all three lines of it are Genesis's own.
    *
@@ -325,13 +344,13 @@ export const aiContent = {
      * with a capital T — which is what makes it a standfirst rather than a
      * sentence that has been cut in half.
      */
-    heading: "AI Content & Avatars",
-    lead: "Tailored for founders, creators, influencers, and artists that look real. For Real!",
+    heading: "Your digital presence, built to scale.",
+    lead: "Tailored for founders, creators, influencers and artists. Avatars that look real. For real.",
     /*
      * The caption to the roster, printed UNDER the faces. "One Setup.
      * Real-Time. Every Time" used to head it and Genesis has taken it off.
      */
-    line: "Automated AI Content for Your Brand and Personal Social Media.",
+    line: "Create realistic AI avatars and turn them into consistent content for your brand or personal social media.",
   },
   /*
    * THE AUTOMATION BLOCK, Genesis's copy verbatim. It is the third claim in
@@ -342,9 +361,23 @@ export const aiContent = {
    * gets the diagrams and its own heading rather than another paragraph.
    */
   automation: {
-    heading: "Automate Your Business with AI",
+    /*
+      "AI BEYOND CONTENT." — the sentence that makes this block belong here.
+
+      Automation was the one part of AI Lab that read as a different company's
+      service: everything above it is content a brand publishes, and this is
+      software running inside a brand's own operations. Genesis asked for a
+      transition rather than a heading, and that is the right instrument — it
+      names the hinge ("beyond content") instead of starting a new section.
+
+      It is a separate field from `heading` because it is set differently:
+      small, above the rule, as a hand-off. Folded into the heading it would
+      just be a longer heading.
+    */
+    transition: "AI beyond content.",
+    heading: "Automate the work behind your business.",
     body:
-      "We build AI-powered workflows for MSMEs, SMEs, startups, and growing businesses to automate repetitive tasks, simplify operations, and save time.",
+      "We build AI-powered workflows for startups, SMEs, MSMEs and growing businesses, connecting the tools you already use to reduce repetitive work, simplify operations and save time.",
     /*
      * The three-beat close Genesis wrote under the paragraph. It is set on
      * its own line rather than folded into the body: three fragments read as
@@ -462,10 +495,19 @@ export const aiContent = {
  */
 export const studios = {
   label: "Genesis Studios",
-  heading: "Production at",
-  headingAccent: "the standard",
+  /*
+    THE SECTION AND ITS PIPELINE SAID THE SAME THING TWICE. "Production at
+    the standard" over a paragraph about the pipeline, and then "From brief
+    to final cut" over a diagram of the pipeline, on the same screen.
+
+    Genesis's final copy gives this division ONE heading — "From brief to
+    final cut." — so the section takes it and the pipeline board below loses
+    its own, becoming what it always was: the picture under the claim.
+  */
+  heading: "From brief to",
+  headingAccent: "final cut.",
   body:
-    "Creative direction, scripting, shoot and post. The whole pipeline in-house, so a campaign never loses its thread between the idea and the published cut.",
+    "Strategy, scripting, production and post: one connected studio system built for every screen.",
   /*
    * THE CAPABILITY LIST, REPLACED BY GENESIS'S OWN.
    *
@@ -507,15 +549,32 @@ export const studios = {
    */
   pipeline: {
     heading: "From brief to",
-    headingAccent: "final cut",
+    headingAccent: "final cut.",
     lead:
       "Strategy, scripting, production and post: one connected studio system built for every screen.",
+    /*
+      THE FIVE STOPS, AS GENESIS NAMED THEM IN THE FINAL PASS. Two changes,
+      and both are about what the word on the label promises.
+
+      "SCRIPT" IS "CONCEPT & SCRIPT". The stage was already doing both — its
+      own body line reads "Concept, script, storyboard" — and naming it
+      Script alone made the stop before the camera sound like transcription
+      rather than the place the idea is decided.
+
+      "EDIT" IS "POST", for the same reason in reverse: colour, sound and
+      motion are on the line under it and none of them is editing.
+
+      AND THE LAST LINE IS "READY TO PUBLISH", not ready to play. Genesis
+      asked for the change specifically. Play is what a viewer does; publish
+      is what the client does, and this is the stage where the work becomes
+      theirs.
+    */
     stages: [
       { n: "01", name: "Brief", body: "Goal, audience, format" },
-      { n: "02", name: "Script", body: "Concept, script, storyboard" },
+      { n: "02", name: "Concept & Script", body: "Idea, script, storyboard" },
       { n: "03", name: "Shoot", body: "Direction, set, performance" },
-      { n: "04", name: "Edit", body: "Cut, colour, sound, motion" },
-      { n: "05", name: "Deliver", body: "Every platform. Ready to play." },
+      { n: "04", name: "Post", body: "Edit, colour, sound, motion" },
+      { n: "05", name: "Deliver", body: "Every platform. Ready to publish." },
     ],
   },
   /**
@@ -631,10 +690,19 @@ export const influencer = {
    * claim they already make rather than one inferred here.
    */
   moreNiches: 56,
-  heading: "Influencer marketing,",
-  headingAccent: "UGC & celebrity",
+  /*
+    THE HEADING IS THE PROMISE, NOT THE SERVICE LIST. It read "Influencer
+    marketing, UGC & celebrity", which is the division's tagline set large —
+    and the tagline is already printed under the lockup directly above it, so
+    the section opened by saying the same three words twice in two sizes.
+
+    Genesis's line says what the service is FOR, which is the only part a
+    brand is weighing: the right voices for the right audience.
+  */
+  heading: "The right voices for",
+  headingAccent: "the right audience.",
   body:
-    "From discovery to delivery, we connect brands with the right voices. Creators across every genre, and celebrity collaborations at the top end.",
+    "From creator discovery to campaign delivery, we connect brands with creators who fit the audience, the idea and the platform: from niche communities to celebrity partnerships.",
   databaseStat: {
     ...proof.creatorDatabase,
     /* NO LABEL. Genesis asked for the "Influencer database" caption gone
@@ -713,8 +781,14 @@ export const influencer = {
  */
 export const branding = {
   label: "Branding & design",
-  heading: "Identity that survives",
-  headingAccent: "contact with the feed",
+  /*
+    "IDENTITY THAT SURVIVES CONTACT WITH THE FEED" was a good line and it is
+    the register Genesis has asked the whole site to drop: a metaphor a
+    reader has to unpack before they know what is being sold. Theirs says the
+    same thing in words a marketing head would use out loud.
+  */
+  heading: "Build a brand",
+  headingAccent: "people remember.",
   /*
    * "Content production" came off the capabilities list at Genesis's
    * instruction and was still sitting in this line, one paragraph above the
@@ -723,7 +797,7 @@ export const branding = {
    * own tagline says it does.
    */
   body:
-    "Brand guidelines, design, motion videos and brand collaterals, built for the sixth-second crop and not just the pitch deck.",
+    "From positioning and visual identity to campaign systems and everyday brand communication, we design brands to stay consistent wherever they show up.",
   work: [
     /*
       TRIPGATE'S LOCKED PALETTE, read off Genesis's own guidelines slide —
@@ -755,13 +829,26 @@ export const branding = {
     Collaterals") and were missing from the list under it, while content
     production is Studios' whole job and was being claimed here as well.
   */
+  /*
+    WHAT WE MAKE, IN GENESIS'S OWN SIX AND IN THEIR ORDER.
+
+    "CURATED CONTENT" IS GONE, at their instruction — "it feels vague within
+    this section", and they are right for a specific reason: every other item
+    here is an artefact with a deliverable behind it, and that one is a
+    posture. Strategy takes its place at the head of the list, which is also
+    where the work actually starts.
+
+    "Brand guidelines" and "Visual identity" survive with clearer names;
+    "Brand Strategy & Positioning" is new and is the one a brand arrives
+    looking for.
+  */
   capabilities: [
-    "Brand guidelines",
-    "Visual identity",
-    "Motion design",
-    "Campaign toolkits",
-    "Curated content",
-    "Brand collaterals",
+    "Brand Strategy & Positioning",
+    "Visual Identity",
+    "Brand Guidelines",
+    "Campaign Toolkits",
+    "Motion Design",
+    "Brand Collaterals",
   ],
 } as const;
 
@@ -777,11 +864,25 @@ export const clients = {
    * what the heading now says and carries the sectors instead, which is the
    * one thing twenty-nine marks cannot tell you on their own.
    */
-  /* NO EYEBROW. Genesis asked for "Trusted by" off this section: the
-     heading already says "Our clients" and the marks say the rest. */
+  /*
+    "TRUSTED BY BRANDS ACROSS INDUSTRIES", WHICH IS THE ARGUMENT — and it is
+    a reversal, written down because it reads as one.
+
+    The eyebrow used to say "Trusted by" and Genesis took it off on the
+    grounds that "Our clients" plus the marks said everything. Their final
+    read is the other way: "Our Clients" is a filing label, and what the wall
+    is actually evidence of is the RANGE — a company that has shipped for a
+    bank, a beauty brand and a school is a different proposition from one
+    with fifteen logos from one category. So the claim goes in the heading,
+    and the sector strip under the marks is the proof of it rather than a
+    caption.
+
+    No eyebrow still. Three lines of type over a logo wall is the crowding
+    the eyebrow was removed for, and this heading does not need announcing.
+  */
   label: "",
-  heading: "Our",
-  headingAccent: "clients",
+  heading: "Trusted by brands",
+  headingAccent: "across industries.",
   /*
    * THE REAL LOGO FILES, at last. This was a list of NAMES rendered as text
    * wordmarks under a standing TODO ("Ask tanvi"); it is Genesis's own
@@ -1028,8 +1129,17 @@ export const insider = {
 
 export const footerCta = {
   heading: "Let's build something",
-  headingAccent: "iconic",
+  headingAccent: "iconic.",
   body: "Tell us what you're launching. We'll tell you how we'd approach it.",
+  /*
+    THE LINE OVER THE FORM ITSELF, which is a different job from the pitch
+    above it. The pitch is the invitation; this is the instruction — it tells
+    a visitor what to put in the box, and says why, so the brief field stops
+    reading as an essay question. Genesis wrote it and asked for the form to
+    stay short around it.
+  */
+  formLead:
+    "Tell us what you're building, launching or trying to solve. A little context helps us make the first conversation useful.",
   primaryCta: { label: "Contact us", href: "/#contact" },
   // TODO(contact): confirm the routing address.
   email: "hello@genesismedia.co",
