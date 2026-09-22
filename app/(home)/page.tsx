@@ -80,23 +80,30 @@ export default function HomePage() {
       <Services />
 
       {/*
-        02-03 — WHO THE WORK WAS FOR, DIRECTLY UNDER THE ORB.
+        02 — WORK THAT MOVED A NUMBER, DIRECTLY UNDER THE ORB.
 
-        Genesis has given the page's running order and the client wall is
-        second in it. That is the credential, and a credential is worth
-        nothing on screen seven: a visitor who has just met a diagram of four
-        divisions wants to know whether anyone has actually hired them before
-        they read another word. The sector strip leads and the marks follow,
-        so the categories are a key to the rail rather than a footnote to it.
-      */}
-      <ClientLogos />
-
-      {/*
-        04 — WORK THAT MOVED A NUMBER. The strongest thing the page has to
-        say, and it sits directly above the divisions: the result first, then
-        the four explanations of how it was got.
+        The strongest thing the page has to say, and it now says it first. It
+        carries the figures bar at its foot, so the block reads as a single
+        argument: here is the work, here is the scale it was done at.
       */}
       <CaseStudies />
+
+      {/*
+        03 — AND THEN WHO IT WAS FOR.
+
+        The client wall used to sit above the case studies, on the reasoning
+        that a visitor wants to know somebody has hired Genesis before they
+        read another word. Genesis has since put it below, and that is the
+        better order for the same reason the case studies lead: a logo wall
+        answers "is this a real company", which is a smaller question than
+        "can they do the thing", and the posters answer the bigger one. Read
+        after the work, thirty marks stop being a credential asking to be
+        taken on trust and become the client list behind what was just shown.
+
+        The sector strip stays under the marks, so the categories are a key
+        to the rail rather than a footnote to it.
+      */}
+      <ClientLogos />
 
       {/* 05-08 — the four verticals, in the brief's order. AI Lab carries the
           automation picture inside its own block. */}

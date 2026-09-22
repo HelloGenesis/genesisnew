@@ -1,10 +1,18 @@
+"use client";
+
+import { useState } from "react";
 import { Users } from "lucide-react";
 import Link from "next/link";
 
 import { LogoMarquee } from "@/components/genesis/logo-marquee";
 import { softRadial } from "@/lib/soft-gradient";
 
-import { CreatorConstellation } from "@/components/genesis/creator-constellation";
+import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
+import { pagerFor } from "@/components/genesis/overlay";
+import { ReelPair } from "@/components/genesis/reel-pair";
+import type { CaseStudy } from "@/lib/case-studies";
+import { caseStudyForClip, caseStudyPathForClip } from "@/lib/case-study-pages";
+import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
@@ -35,7 +43,47 @@ const MOBILE_CTA =
  * Genesis's own artwork for this exact section.
  */
 
+/**
+ * THE INFLUENCE WORK THE REEL BLOCKS PLAY.
+ *
+ * Every clip the catalogue files under the Influence vertical, one block
+ * each. `expandToClips` is what turns a handful of engagements into the
+ * couple of dozen reels the arrows walk through — Aditya Birla alone is
+ * fifteen cuts, and a pair at a time is a long enough run that the arrows are
+ * worth pressing.
+ *
+ * A BLOCK IS A LINK ONLY WHERE THERE IS A STUDY BEHIND IT. Most of this work
+ * has one; the rest plays as footage rather than as a target, and becomes
+ * clickable the day a study is written with no change here.
+ *
+ * Computed at module scope: it is derived from static data and would
+ * otherwise be rebuilt on every render of a component that re-renders
+ * whenever the dialog opens or the arrows are pressed.
+ */
+const INFLUENCE_REELS = expandToClips(
+  work.filter((item) => item.vertical === "Influence"),
+)
+  .filter((item) => item.reel?.length)
+  .map((item) => {
+    const clip = item.key?.slice(item.slug.length + 1) ?? "";
+    return {
+      id: item.key ?? item.slug,
+      clip: reelClip(clip),
+      poster: reelPoster(clip),
+      label: item.client,
+      href: caseStudyPathForClip(clip),
+      study: caseStudyForClip(clip),
+    };
+  });
+
 export function InfluencerMarketing() {
+  /*
+    WHICH STUDY IS OPEN OVER THE PAGE. The same window the case-study posters,
+    the Studios stage cards and the AI rail open — Genesis's rule is that a
+    study opens where the reader already is.
+  */
+  const [study, setStudy] = useState<CaseStudy | null>(null);
+
   return (
     <section
       id="influence"
@@ -281,37 +329,28 @@ export function InfluencerMarketing() {
             </Reveal>
           </div>
 
+          {/*
+            TWO REELS AND ARROWS, NOT ELEVEN FACES.
+
+            This was the creator constellation — portraits drifting on two
+            orbits round a wireframe globe. It was built to Genesis's own
+            mockup and it answered a question nobody asks: a brand weighing up
+            an influencer agency wants to know what the WORK looks like, not
+            who the creators are. Genesis asked for reels instead, "content
+            dekhne ke liye", and kept the arrows.
+
+            The creator roster is not lost — it is still the source of the
+            constellation's data in lib/home-content, and the eleven names and
+            their Instagram links are one component away if this block ever
+            wants a face in it again.
+          */}
           <Reveal delay={0.2} direction="left" variant="scene" className="order-2 lg:order-none">
-            {/*
-              The mockup labels these by niche and follower count, not by
-              celebrity name — the named celebrity collaborations are a
-              separate list and do not ride the orbits.
-
-              CAPPED, BECAUSE IT SETS THE SECTION'S HEIGHT. The constellation
-              is `aspect-[850/620] w-full`, so in a 708px column it stood 516px
-              tall — taller than the entire left column beside it, which made
-              it, not the copy, the thing deciding how far the section ran. A
-              36rem cap puts it at 420px, under the copy's own height, so the
-              grid is now as tall as its text and the orbits stop being the
-              reason the CTA is below the fold.
-            */}
-            {/*
-              BIGGER, AT GENESIS'S REQUEST. The cap was 36rem, set when this
-              block was the tallest thing in the section and was deciding how
-              far Influence ran. Two things have changed since: the niches are
-              a single moving line rather than three wrapped rows, and the
-              figures bar has left this section entirely for the case studies.
-              Both came out of the column beside it, so the ring can take the
-              height back without pushing the CTAs below the fold.
-
-              44rem, not uncapped. The constellation is `aspect-[850/620]`, so
-              every rem of width is three quarters of a rem of height — left
-              to fill a 708px column it stood 516px tall and was once again
-              the thing setting the section's height rather than the copy.
-            */}
-            <CreatorConstellation
-              creators={influencer.creators.map((c) => ({ ...c }))}
-              className="lg:max-w-[52rem]"
+            <ReelPair
+              reels={INFLUENCE_REELS.map((reel) => ({
+                ...reel,
+                onOpen: reel.study ? () => setStudy(reel.study ?? null) : undefined,
+              }))}
+              className="mx-auto max-w-[26rem] lg:max-w-[30rem]"
             />
           </Reveal>
         </div>
@@ -371,6 +410,26 @@ export function InfluencerMarketing() {
           </GlassButton>
         </Reveal>
       </div>
+
+      {/*
+        THE STUDY, OVER THE PAGE. The pager walks the reels in their own
+        order, so "next" from a piece is the piece beside it in the run rather
+        than whatever is next in the case-study ordering.
+      */}
+      <CaseStudyDialog
+        study={study}
+        onClose={() => setStudy(null)}
+        pager={pagerFor(
+          INFLUENCE_REELS.map((reel) => reel.study).filter(
+            (entry): entry is CaseStudy => Boolean(entry),
+          ),
+          INFLUENCE_REELS.filter((reel) => reel.study).findIndex(
+            (reel) => reel.study?.slug === study?.slug,
+          ),
+          (entry) => setStudy(entry),
+          (entry) => entry.client,
+        )}
+      />
     </section>
   );
 }

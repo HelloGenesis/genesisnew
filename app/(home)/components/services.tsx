@@ -132,8 +132,27 @@ export function Services() {
           demoting it would leave the homepage with none. Heading order in the
           DOM is about structure, not about vertical position.
         */}
-        <h1 className="mx-auto mt-10 max-w-2xl text-balance text-center text-body font-normal leading-relaxed text-bone/85 sm:mt-12 sm:text-lead">
-          {services.body}
+        {/*
+          BIGGER THAN A STANDFIRST, because it is the only sentence in the
+          section. It was set at body size when it sat ABOVE the orb as a
+          sub-line under a heading; with the heading gone and the line moved
+          below the composition it is the one piece of copy the section has,
+          and it was reading as a caption on the diagram rather than as the
+          thing the diagram illustrates.
+
+          STILL WELL UNDER A SECTION HEADING. The orb is the hero here and a
+          sentence at h1 would take its job — this is one step up, not four.
+        */}
+        <h1 className="mx-auto mt-10 max-w-3xl text-balance text-center text-lead font-normal leading-snug text-bone/85 sm:mt-12 sm:text-h3">
+          {services.body}{" "}
+          {/*
+            UPRIGHT, NOT THE SERIF ITALIC every other accent on this site
+            uses. Those are single words inside a HEADING, where the change of
+            face reads as emphasis; this is most of a sentence in body copy,
+            and italicising twelve words of it would read as a quotation. The
+            colour is doing the work on its own.
+          */}
+          <span className="text-brand-ink">{services.bodyAccent}</span>
         </h1>
       </div>
     </section>

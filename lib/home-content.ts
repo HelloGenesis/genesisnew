@@ -81,8 +81,17 @@ export const services = {
   label: "",
   heading: "Four divisions.",
   headingAccent: "One creative system.",
-  body:
-    "We help brands grow through creators, content, AI, technology and design.",
+  /*
+    SPLIT AT "CREATORS", so the list of what Genesis actually sells can carry
+    the accent while the lead-in stays quiet. Genesis: "creators ke aage se
+    yellow."
+
+    It is the right half to light. "We help brands grow through" is a
+    construction; everything after it is the answer to what the company does,
+    and it is the part a visitor is scanning for.
+  */
+  body: "We help brands grow through",
+  bodyAccent: "creators, content, AI, technology and design.",
   /*
    * THE FOUR DIVISIONS, named by the brand guidelines rather than by us.
    *
