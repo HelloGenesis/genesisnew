@@ -344,7 +344,15 @@ export const aiContent = {
      * with a capital T — which is what makes it a standfirst rather than a
      * sentence that has been cut in half.
      */
-    heading: "Your digital presence, built to scale.",
+    /*
+      SPLIT IN TWO, so it can be set the way the section's own heading is.
+      Genesis asked for this line to use "the same colour scheme as Create
+      more. Without creating everything from scratch." — which is bone with a
+      serif-italic accent in the brand, not the avatars ramp it used to wear.
+      A two-part heading is what that treatment needs.
+    */
+    heading: "AI Avatars.",
+    headingAccent: "Built for You.",
     lead: "Tailored for founders, creators, influencers and artists. Avatars that look real. For real.",
     /*
      * The caption to the roster, printed UNDER the faces. "One Setup.

@@ -1,11 +1,19 @@
-import type { CSSProperties } from "react";
+"use client";
+
+import { useState, type CSSProperties } from "react";
 
 import { Sparkles } from "lucide-react";
 
 import { AutomationSources } from "@/components/genesis/automation-diagram";
 import { AutomationCtas } from "@/components/genesis/automation-ctas";
 import { AvatarFan } from "@/components/genesis/avatar-fan";
+import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { GlassButton } from "@/components/genesis/glass-button";
+import { pagerFor } from "@/components/genesis/overlay";
+import { WarpRail, type WarpItem } from "@/components/genesis/warp-rail";
+import type { CaseStudy } from "@/lib/case-studies";
+import { caseStudyForClip, caseStudyPathForClip } from "@/lib/case-study-pages";
+import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
 import { siteConfig, whatsappLink } from "@/lib/site-config";
@@ -29,7 +37,48 @@ const MOBILE_CTA =
  * board. Real avatar stills replace the placeholder grounds when they land.
  */
 
+/**
+ * THE AI PORTFOLIO THE WARP RAIL PLAYS.
+ *
+ * Every clip the catalogue files under AI Lab, one card each, in the order
+ * the catalogue holds them. `expandToClips` is what turns four engagements
+ * into the dozen cards a corridor needs — a rail of four pieces is a row, not
+ * a corridor, and the division's whole argument is volume.
+ *
+ * A CARD IS A LINK ONLY WHERE THERE IS A STUDY BEHIND IT. Most of this work
+ * has one; the SiNet film and the Activ Yuva explainers do not yet, and they
+ * ride the rail as footage rather than as targets. Write one and they become
+ * clickable with no change here.
+ *
+ * Computed at module scope: it is derived from static data and would
+ * otherwise be rebuilt on every render of a client component that re-renders
+ * whenever the dialog opens.
+ */
+type AiCard = Omit<WarpItem, "onOpen"> & { study?: CaseStudy };
+
+const AI_WORK: AiCard[] = expandToClips(
+  work.filter((item) => item.vertical === "AI Lab"),
+)
+  .filter((item) => item.reel?.length)
+  .map((item) => {
+    const clip = item.key?.slice(item.slug.length + 1) ?? "";
+    return {
+      id: item.key ?? item.slug,
+      clip: reelClip(clip),
+      poster: reelPoster(clip),
+      label: item.client,
+      href: caseStudyPathForClip(clip),
+      study: caseStudyForClip(clip),
+    };
+  });
+
 export function AiContent() {
+  /*
+    WHICH STUDY IS OPEN OVER THE PAGE. Same window the Studios stage cards and
+    the case-study posters use — Genesis's rule is that a study opens where
+    the reader already is, and this rail is the third way into one.
+  */
+  const [study, setStudy] = useState<CaseStudy | null>(null);
   /*
     Undefined when there is no number in site-config, exactly as the floating
     button handles it. The button falls back to the enquiry form rather than
@@ -107,6 +156,41 @@ export function AiContent() {
         centred rows — so there is nothing left to scroll and a scroller with
         no overflow only invites a sideways drag that goes nowhere.
       */}
+      {/*
+        THE WORK, BEFORE THE AVATARS — and full-bleed, because a corridor that
+        stops at the container's edge is a box with pictures in it.
+
+        Genesis's order for this section: the mark, the claim, then the
+        portfolio, then the avatars. That is the right way round for the
+        argument it makes. "Create more without creating everything from
+        scratch" is a claim about OUTPUT, and the avatars are one of the
+        tools; showing the output first means the roster underneath reads as
+        the explanation rather than as the pitch.
+
+        --warp-card and --warp-h are set here rather than in the component
+        because they are this composition's proportions: the card is a share
+        of the viewport so the corridor holds its shape from a phone to a
+        wide display, and the frame is tall enough to fit the card's 3:4 plus
+        the room the turned ones need as they scale back.
+      */}
+      <Reveal variant="scene" className="relative left-1/2 mt-10 w-screen -translate-x-1/2">
+        <div
+          style={
+            {
+              "--warp-card": "clamp(8.5rem, 15vw, 13rem)",
+              "--warp-h": "clamp(14rem, 25vw, 21rem)",
+            } as CSSProperties
+          }
+        >
+          <WarpRail
+            items={AI_WORK.map((card) => ({
+              ...card,
+              onOpen: card.study ? () => setStudy(card.study ?? null) : undefined,
+            }))}
+          />
+        </div>
+      </Reveal>
+
       <Reveal
         variant="scene"
         className="relative left-1/2 mt-12 w-screen -translate-x-1/2 overflow-hidden"
@@ -135,11 +219,22 @@ export function AiContent() {
             under it is plain, because two gradients stacked is where a block
             stops having a hierarchy.
           */}
-          <h3
-            className="ramp-text text-balance text-h2 font-normal leading-[1.05] tracking-tight sm:text-h1"
-            style={{ "--ramp": "var(--ramp-avatars)" } as CSSProperties}
-          >
-            {aiContent.avatarsIntro.heading}
+          {/*
+            SET LIKE THE SECTION'S OWN HEADING, not in the avatars ramp.
+
+            Genesis asked for "the same colour scheme as Create more. Without
+            creating everything from scratch" — which is bone with the accent
+            in serif italic brand. It used to wear --ramp-avatars, and with
+            the warp rail now sitting between the two headings that was the
+            problem: a gradient headline under a plain one read as a
+            different section starting rather than as the second half of this
+            one. Matching them is what holds AI Lab together as one block.
+          */}
+          <h3 className="text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
+            {aiContent.avatarsIntro.heading}{" "}
+            <span className="font-serif font-normal italic text-brand-ink">
+              {aiContent.avatarsIntro.headingAccent}
+            </span>
           </h3>
           <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
             {aiContent.avatarsIntro.lead}
@@ -315,6 +410,27 @@ export function AiContent() {
       </Reveal>
 
       </SectionShell>
+
+      {/*
+        THE STUDY, OVER THE PAGE. The pager walks the rail's own cards in rail
+        order, so "next" from a piece is the piece beside it rather than
+        whatever is next in the case-study ordering. Cards with no study are
+        not stops on that walk.
+      */}
+      <CaseStudyDialog
+        study={study}
+        onClose={() => setStudy(null)}
+        pager={pagerFor(
+          AI_WORK.map((card) => card.study).filter(
+            (entry): entry is CaseStudy => Boolean(entry),
+          ),
+          AI_WORK.filter((card) => card.study).findIndex(
+            (card) => card.study?.slug === study?.slug,
+          ),
+          (entry) => setStudy(entry),
+          (entry) => entry.client,
+        )}
+      />
     </>
   );
 }
