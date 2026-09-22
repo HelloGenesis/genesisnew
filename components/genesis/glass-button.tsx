@@ -104,7 +104,16 @@ export function GlassButton({
   disabled,
   quickContact,
 }: GlassButtonProps) {
-  const { x, y, magneticProps } = useMagnetic(0.18);
+  /*
+    RESTRAINED, AND CAPPED. 0.18 with no ceiling meant a button's travel was a
+    function of its own width — the widest CTA on the page swam a long way
+    under the cursor while a short one next to it hardly moved, which Genesis
+    reported as buttons moving far too much. 6px is enough for the pill to
+    feel like it has weight and little enough that the label never leaves the
+    cursor behind; every button now travels the same distance whatever its
+    label says.
+  */
+  const { x, y, magneticProps } = useMagnetic(0.12, 6);
 
   const classes = cn(
     /*

@@ -54,12 +54,22 @@ export function QuickContact() {
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0) return;
+      /* The browser keeps anything that is not a plain left click: cmd-click,
+         middle-click and shift-click all mean "open this somewhere else". */
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const trigger = (event.target as Element | null)?.closest?.(
         "[data-quick-contact]",
       );
       if (!(trigger instanceof HTMLElement)) return;
 
       event.preventDefault();
+      /*
+        AND STOP IT HERE. next/link's handler sits between this and the
+        element; it stands down on defaultPrevented, but SmoothScroll's own
+        capture handler deliberately returns for these triggers, so nothing
+        else is going to stop the event on their behalf.
+      */
+      event.stopPropagation();
       const name = trigger.dataset.quickContact || "cta";
 
       /*
@@ -83,8 +93,28 @@ export function QuickContact() {
       setSource(name);
     };
 
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
+    /*
+      CAPTURE PHASE, AND IT IS THE WHOLE REASON THESE BUTTONS WORK AT ALL.
+
+      This was on the bubble phase, where it never ran. The chain:
+      SmoothScroll catches anchor clicks on document in CAPTURE and
+      deliberately returns for anything carrying `data-quick-contact`, leaving
+      them to this handler. But "leaving them" means the click then reaches
+      React, whose listeners are bound to the ROOT CONTAINER — below document
+      — so next/link handled it first, called preventDefault and pushed the
+      hash. By the time the event bubbled back up to document, this handler's
+      own `defaultPrevented` guard was true and it bailed every time.
+
+      THE SYMPTOM WAS A BUTTON THAT LOOKED LIKE IT WORKED. Every contextual
+      CTA on the site quietly scrolled to the enquiry form instead of doing
+      its job: the page moves, something happens, nothing is logged. Genesis
+      found it by clicking one and not getting WhatsApp.
+
+      On capture this runs before next/link is reached, prevents the default
+      and stops the event there.
+    */
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
   }, []);
 
   useEffect(() => {

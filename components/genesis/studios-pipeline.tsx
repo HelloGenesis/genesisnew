@@ -72,12 +72,33 @@ const STRENGTH = [0.3, 0.475, 0.65, 0.825, 1];
  * their opening frame is a white title card, so the first and last stage
  * were plain slabs where every other card was a photograph.
  */
+/*
+  ALL FIVE HAVE A WRITTEN STUDY BEHIND THEM NOW, which is the change.
+
+  Genesis: "video 1 and video 5 are not linked in genesis studios with their
+  case studies." They were not, and could not be: UMANG 2024 belongs to the
+  event films, whose card has no write-up, and the Activ Travel explainer has
+  no study at all. No amount of linking code fixes a clip with nothing to link
+  to, so the CLIPS themselves changed — these five are the Studios clips that
+  DO have a published study, and every card in the row now opens one.
+
+  WHAT WENT AND WHAT CAME. Out: umang-2024 (no study), 1x1 (unnamed selected
+  production, no study), activ-travel-leisure (no study). In: the three ABHI
+  and Genesis pieces that are written up — 100% health, menopause day and
+  Income Protect. Mahindra and Abhi Ka Star stay.
+
+  STILL ORDERED BY SHAPE, which is what lets each card grow across the row
+  without anything being cropped into a shape it was not shot in. Only one
+  Studios clip with a study is landscape (Mahindra's 16:9 cut), so it leads
+  and the four portrait reels follow — see SHAPE, whose second frame came in
+  from 4:3 to square to meet them.
+*/
 const CLIPS = [
-  "studios-umang-2024",
   "studios-mahindra-cut-44",
-  "studios-1x1",
+  "studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance",
+  "studios-final-menopause-abhi-02",
   "studios-abhi-ka-star",
-  "studios-activ-travel-leisure-plan-finalhd-1",
+  "studios-7-draft6-income-protect",
 ];
 
 /**
@@ -110,12 +131,25 @@ const CLIPS = [
   keep their shapes at every width — which is what Genesis asked for twice
   now, most recently "phone me box ka size difference nahi aa raaha".
 */
+/*
+  THE SECOND FRAME CAME IN FROM 4:3 TO SQUARE, and the last went out to 3:4.
+
+  The row's job is to grow from a wide film to a tall reel, and the frames
+  have to stay near the shapes of the clips actually in them — a card crops to
+  fill, so a 9:16 reel in a 4:3 frame shows about two fifths of its height.
+  With only one landscape clip left that has a study behind it (see CLIPS),
+  four of the five frames now hold portrait footage, so the progression starts
+  its descent one step earlier and finishes a little taller.
+
+  Still monotonic: 1.78, 1.0, 0.83, 0.8, 0.75. The spans are untouched, so the
+  cards grow across the row exactly as they did.
+*/
 const SHAPE = [
   { span: "0.78fr", aspect: "aspect-[16/9]" },
-  { span: "0.9fr", aspect: "aspect-[4/3]" },
-  { span: "1fr", aspect: "aspect-square" },
-  { span: "1.12fr", aspect: "aspect-[5/6]" },
-  { span: "1.2fr", aspect: "aspect-[4/5]" },
+  { span: "0.9fr", aspect: "aspect-square" },
+  { span: "1fr", aspect: "aspect-[5/6]" },
+  { span: "1.12fr", aspect: "aspect-[4/5]" },
+  { span: "1.2fr", aspect: "aspect-[3/4]" },
 ];
 
 const accent = (alpha: number) => `rgb(255 197 22 / ${alpha})`;

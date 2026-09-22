@@ -118,13 +118,13 @@ export function Portfolio() {
           scroll in place instead of re-rendering the page.
         */}
         <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center gap-3">
-          <GlassButton href="/case-studies" variant="glass" size="lg" arrow>
+          <GlassButton href="/case-studies" variant="glass" arrow>
             View all case studies
           </GlassButton>
           <GlassButton
             href={footerCta.primaryCta.href.replace(/^\//, "")}
             variant="brand"
-            size="lg"
+           
             arrow
             magnetic
           >

@@ -71,24 +71,61 @@ export function InfluencerMarketing() {
             tagline={services.items[0].caption}
             ramp={services.items[0].ramp}
           />
-          {/*
-            THE PROMISE, UNDER THE MARK. The section had the lockup and then
-            went straight into chips, a ring and a paragraph — so the one
-            thing it never said was what the division is FOR. Genesis's line
-            is the answer and it belongs directly under the name, in the same
-            place every other division's claim sits.
+        </Reveal>
 
-            SMALLER THAN A SECTION HEADING. At text-h1 this pushed the
-            constellation off a laptop screen, and the lockup above it is
-            already carrying the section's announcement — this is the
-            sentence under the sign, not a second sign.
-          */}
-          <h3 className="mt-5 max-w-2xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
-            {influencer.heading}{" "}
-            <span className="font-serif font-normal italic text-brand-ink">
-              {influencer.headingAccent}
-            </span>
-          </h3>
+        {/*
+          THE CATEGORIES SIT UNDER THE MARK, CENTRED, AND ACROSS THE WHOLE
+          SECTION — "categories jo hai unko just below the logo in the centre".
+
+          THEY WERE IN THE LEFT COLUMN, above the copy, which gave a rail of
+          ten moving chips about 40% of the width to move in: the loop came
+          round every few seconds and a reader scanning for their own category
+          had to catch it. Full width it is a slow band under the division's
+          name, which is also where a reader looks for "what kind of creators"
+          before they read anything else.
+
+          The heading and the copy that used to sit here have moved down into
+          the column, left-aligned. See the note there.
+        */}
+        <Reveal delay={0.06} className="mt-6">
+          <LogoMarquee
+            /*
+              SLOWER AGAIN, NOW THAT THE RAIL IS THE FULL WIDTH. A marquee's
+              apparent speed is its track length over its duration — the same
+              90s that read as a gentle drift in a 40% column is nearly three
+              times the distance here. 150s keeps it at the pace it had.
+            */
+            speedSeconds={150}
+            gapClassName="gap-2"
+            fadePercent={10}
+            items={[
+              ...influencer.niches.map((niche) => (
+                <span
+                  key={niche}
+                  className="block whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
+                >
+                  {niche}
+                </span>
+              )),
+              /*
+                The board's own "+56 More". Ten named against sixty-six
+                covered is Genesis's figure from Genesis's artwork, and it is
+                the whole point of listing categories at all — a brand whose
+                own niche is not among the ten needs to be told the list is a
+                sample, not the extent of it.
+
+                It rides IN the loop rather than being pinned at the end,
+                because a loop has no end: pinned outside the marquee it would
+                sit still while the categories it qualifies travel past it.
+              */
+              <span
+                key="more"
+                className="block whitespace-nowrap rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-brand-ink"
+              >
+                +{influencer.moreNiches} more
+              </span>,
+            ]}
+          />
         </Reveal>
 
         {/*
@@ -141,67 +178,24 @@ export function InfluencerMarketing() {
               A list, semantically, because that is what it is.
             */}
             {/*
-              THE NICHES MOVE NOW, on the same marquee as the client wall and
-              the sector strip.
+              THE PROMISE, LEFT-ALIGNED AND IN THE COLUMN — "the right voices
+              wale text ko left me karo".
 
-              WHAT THEY WERE. A wrapping row of chips: one swipeable line on a
-              phone, and from `sm` up a block that wrapped. Eleven chips in a
-              column this narrow wrapped to three ragged rows, which is a
-              third of this section's left column spent on a list that is
-              meant to be scanned rather than read.
-
-              MOVING, IT IS ONE ROW AT EVERY WIDTH, and the chips pass a
-              reader rather than the reader hunting them. It also stops the
-              row's height depending on how many niches there are — a twelfth
-              costs horizontal distance instead of another line.
-
-              IT FADES AT BOTH ENDS, which is the other half of what Genesis
-              asked for here, and it is LogoMarquee's own mask doing it. That
-              matters more for chips than for the sector strip: a chip is a
-              drawn object with a border, so one clipped at the boundary reads
-              as a broken pill where a faded one reads as a row continuing.
+              IT WAS CENTRED UNDER THE LOCKUP. That put three centred blocks
+              in a row above a two-column grid, and the heading was the one
+              that suffered: a centred line over a left-aligned paragraph
+              reads as a caption that has come loose from its text. Down here
+              it opens the column it belongs to, the copy runs directly under
+              it on the same left edge, and the section's order is the one
+              Genesis asked for — mark, categories, promise, copy.
             */}
-            <Reveal delay={0.06} className="order-2 min-w-0 lg:order-none">
-              <LogoMarquee
-                /*
-                  SLOWER THAN THE SECTOR STRIP'S 72s, because this rail is a
-                  fraction of its width — a marquee's apparent speed is its
-                  track length over its duration, so the same number here
-                  would move the chips visibly faster. Hovering stops it, which
-                  is what lets a brand actually look for their own category.
-                */
-                speedSeconds={90}
-                gapClassName="gap-2"
-                fadePercent={8}
-                items={[
-                  ...influencer.niches.map((niche) => (
-                    <span
-                      key={niche}
-                      className="block whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
-                    >
-                      {niche}
-                    </span>
-                  )),
-                  /*
-                    The board's own "+56 More". Ten named against sixty-six
-                    covered is Genesis's figure from Genesis's artwork, and it
-                    is the whole point of listing categories at all — a brand
-                    whose own niche is not among the ten needs to be told the
-                    list is a sample, not the extent of it.
-
-                    It rides IN the loop rather than being pinned at the end,
-                    because a loop has no end: pinned outside the marquee it
-                    would sit still while the categories it qualifies travel
-                    past it.
-                  */
-                  <span
-                    key="more"
-                    className="block whitespace-nowrap rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-brand-ink"
-                  >
-                    +{influencer.moreNiches} more
-                  </span>,
-                ]}
-              />
+            <Reveal delay={0.08} className="order-3 min-w-0 lg:order-none">
+              <h3 className="max-w-xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
+                {influencer.heading}{" "}
+                <span className="font-serif font-normal italic text-brand-ink">
+                  {influencer.headingAccent}
+                </span>
+              </h3>
             </Reveal>
 
             <Reveal delay={0.1} className="order-4 lg:order-none">
@@ -277,7 +271,7 @@ export function InfluencerMarketing() {
             </Reveal>
           </div>
 
-          <Reveal delay={0.2} direction="left" variant="scene" className="order-3 lg:order-none">
+          <Reveal delay={0.2} direction="left" variant="scene" className="order-2 lg:order-none">
             {/*
               The mockup labels these by niche and follower count, not by
               celebrity name — the named celebrity collaborations are a
@@ -307,7 +301,7 @@ export function InfluencerMarketing() {
             */}
             <CreatorConstellation
               creators={influencer.creators.map((c) => ({ ...c }))}
-              className="lg:max-w-[44rem]"
+              className="lg:max-w-[52rem]"
             />
           </Reveal>
         </div>
@@ -351,7 +345,6 @@ export function InfluencerMarketing() {
             href="/#contact"
             quickContact="influence:plan-a-campaign"
             variant="brand"
-            size="lg"
             arrow
             className={MOBILE_CTA}
           >
@@ -361,7 +354,6 @@ export function InfluencerMarketing() {
             href="#library"
             selectsFilter="Influence"
             variant="glass"
-            size="lg"
             arrow
             className={MOBILE_CTA}
           >

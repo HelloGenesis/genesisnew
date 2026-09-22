@@ -67,7 +67,7 @@ export function Studios() {
             href="/#contact"
             quickContact="studios:plan-a-shoot"
             variant="brand"
-            size="lg"
+           
             arrow
             className={MOBILE_CTA}
           >
@@ -80,7 +80,7 @@ export function Studios() {
             the same place as this one is not worth keeping — so it is gone
             rather than re-pointed.
           */}
-          <GlassButton href="/#library" variant="ghost" size="lg" arrow className={MOBILE_CTA}>
+          <GlassButton href="/#library" variant="ghost" arrow className={MOBILE_CTA}>
             View the whole library
           </GlassButton>
         </Reveal>

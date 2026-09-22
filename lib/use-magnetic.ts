@@ -10,8 +10,12 @@ import { useCallback, type PointerEvent } from "react";
  *
  * Returns spring-damped x/y offsets plus the handlers to spread onto the
  * element. Honours `prefers-reduced-motion` by pinning the offsets to zero.
+ *
+ * `strength` is the fraction of the pointer's distance from the centre that
+ * the element follows; `maxOffset` caps that in pixels. See the note on the
+ * clamp for why the second one matters more than the first.
  */
-export function useMagnetic(strength = 0.35) {
+export function useMagnetic(strength = 0.35, maxOffset = Infinity) {
   const prefersReducedMotion = useReducedMotion();
 
   const rawX = useMotionValue(0);
@@ -31,10 +35,28 @@ export function useMagnetic(strength = 0.35) {
       const offsetX = event.clientX - (bounds.left + bounds.width / 2);
       const offsetY = event.clientY - (bounds.top + bounds.height / 2);
 
-      rawX.set(offsetX * strength);
-      rawY.set(offsetY * strength);
+      /*
+        THE TRAVEL IS CAPPED, AND THAT IS THE FIX FOR "BUTTONS MOVING TOO
+        MUCH" rather than the strength being lowered alone.
+
+        The offset is a fraction of the distance from the element's CENTRE, so
+        how far a thing can travel is set by how big it is: at one strength, a
+        200px-wide button reaches five times the offset of a 40px one. On a
+        row of buttons that is the fault Genesis reported — "Plan an
+        Influencer Campaign" swimming under the cursor while "See the work"
+        beside it barely moved. It reads as the wide button being broken
+        rather than as a shared effect.
+
+        A ceiling in PIXELS makes the behaviour a property of the interaction
+        instead of a property of the element's width, so every button in a row
+        moves the same distance however long its label is.
+      */
+      const clamp = (v: number) =>
+        Math.max(-maxOffset, Math.min(maxOffset, v * strength));
+      rawX.set(clamp(offsetX));
+      rawY.set(clamp(offsetY));
     },
-    [prefersReducedMotion, rawX, rawY, strength],
+    [prefersReducedMotion, rawX, rawY, strength, maxOffset],
   );
 
   const onPointerLeave = useCallback(() => {

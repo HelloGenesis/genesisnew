@@ -187,9 +187,18 @@ export function CreatorConstellation({
         its width is what decides how tall it stands: on a tablet the column
         went full width and the ring alone was 560 points of a 1024 screen.
         The max-width is that ratio expressed against vh, which holds the
-        whole constellation inside 58vh however wide the column gets.
+        whole constellation inside a share of the window however wide the
+        column gets.
+
+        44vh, UP FROM 31 — "woh circle ghumne wale ko bada karo". This cap,
+        not the column's max-width, is what was actually deciding the ring's
+        size: at 31vh on a 900-point window it was held to 425px however much
+        room the column had, which is why raising the column cap on its own
+        changed nothing. Two blocks have since left the column beside it (the
+        niches moved out and the figures bar left the section entirely), so
+        the height is there to spend.
       */
-      className="relative isolate mx-auto aspect-[850/620] w-full max-w-[calc(31vh*850/620)]"
+      className="relative isolate mx-auto aspect-[850/620] w-full max-w-[calc(44vh*850/620)]"
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
     >

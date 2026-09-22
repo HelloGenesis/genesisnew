@@ -702,7 +702,7 @@ export const influencer = {
   heading: "The right voices for",
   headingAccent: "the right audience.",
   body:
-    "From creator discovery to campaign delivery, we connect brands with creators who fit the audience, the idea and the platform: from niche communities to celebrity partnerships.",
+    "From creator discovery to campaign delivery, we connect brands with creators who fit the audience, the idea and the platform, from niche communities to celebrity partnerships.",
   databaseStat: {
     ...proof.creatorDatabase,
     /*
