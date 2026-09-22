@@ -1,3 +1,4 @@
+import { softRadial } from "@/lib/soft-gradient";
 import { cn } from "@/lib/utils";
 
 /**
@@ -78,9 +79,14 @@ const SPECTRUM_COLOUR = [
 /** Every source stacked into one background-image. */
 function spectrumWash(sources: typeof SPECTRUM_NEUTRAL) {
   return sources
-    .map(
-      (s) =>
-        `radial-gradient(${s.size} at ${s.at}, rgb(${s.color} / calc(${s.alpha} * var(--spectrum, 1))) 0%, transparent 70%)`,
+    .map((s) =>
+      /*
+        SOFT STOPS, NOT A LINEAR RAMP. These were `0% -> transparent 70%`,
+        which fades at a constant rate and then stops dead — and that break in
+        the slope is a visible circle, which is what Genesis has been seeing
+        across the whole site. See lib/soft-gradient.
+      */
+      softRadial(`${s.size} at ${s.at}`, s.color, s.alpha, "var(--spectrum, 1)"),
     )
     .join(", ");
 }
@@ -109,7 +115,12 @@ export function Aurora({
       */
       className={cn("seamless pointer-events-none absolute inset-0 overflow-hidden", className)}
       style={{
-        background: `radial-gradient(60% 50% at ${position}, rgb(${color} / ${intensity}) 0%, rgb(${color} / ${intensity * 0.35}) 35%, transparent 70%)`,
+        /*
+          Three linear stops out to 70% drew an edge at 70% and a second,
+          fainter one at 35% where the rate changed. One smooth falloff has
+          neither. See lib/soft-gradient.
+        */
+        background: softRadial(`60% 50% at ${position}`, color, intensity),
       }}
     />
   );

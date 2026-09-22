@@ -6,6 +6,7 @@ import { PosterRail, type Poster } from "@/components/genesis/poster-card";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { pagerFor } from "@/components/genesis/overlay";
 import { ProofBar } from "@/components/genesis/proof-bar";
+import { softRadial } from "@/lib/soft-gradient";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { caseStudiesPage, caseStudyList, disciplines, leadClip } from "@/lib/case-studies";
@@ -128,8 +129,12 @@ export function CaseStudies() {
             aria-hidden
             className="pointer-events-none absolute -inset-x-10 -inset-y-8"
             style={{
-              background:
-                "radial-gradient(closest-side, rgb(255 197 22 / 0.3) 0%, rgb(255 197 22 / 0.12) 42%, transparent 76%)",
+              /*
+                The bloom the posters sit in. It was three linear stops, and
+                the change of rate at 42% drew a second ring inside the one
+                its last stop drew at 76%. See lib/soft-gradient.
+              */
+              background: softRadial("closest-side", "255 197 22", 0.3),
             }}
           />
           {/*

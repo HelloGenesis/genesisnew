@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+import { softRadial } from "@/lib/soft-gradient";
+
 /**
  * ONE ATMOSPHERE FOR THE WHOLE PAGE, instead of one per section.
  *
@@ -168,9 +170,20 @@ const COLOUR: Source[] = [
  */
 function field(sources: Source[]) {
   return sources
-    .map(
-      (s) =>
-        `radial-gradient(${s.rx} ${s.ry} at ${s.x} ${s.y}, rgb(${s.color} / calc(${s.alpha} * var(--spectrum, 1))) 0%, transparent 100%)`,
+    .map((s) =>
+      /*
+        SOFT STOPS. This ran to 100% already, so the wash reached zero at the
+        ellipse's own edge — and still showed a circle, because a LINEAR fade
+        changes at a constant rate right up to that edge and then stops. It is
+        the slope that has to arrive at zero, not just the value. See
+        lib/soft-gradient.
+      */
+      softRadial(
+        `${s.rx} ${s.ry} at ${s.x} ${s.y}`,
+        s.color,
+        s.alpha,
+        "var(--spectrum, 1)",
+      ),
     )
     .join(", ");
 }

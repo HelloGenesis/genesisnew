@@ -2,6 +2,7 @@ import { Users } from "lucide-react";
 import Link from "next/link";
 
 import { LogoMarquee } from "@/components/genesis/logo-marquee";
+import { softRadial } from "@/lib/soft-gradient";
 
 import { CreatorConstellation } from "@/components/genesis/creator-constellation";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
@@ -52,7 +53,16 @@ export function InfluencerMarketing() {
         className="seamless pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(46% 38% at 24% 16%, rgb(214 210 214 / 0.11) 0%, transparent 68%), radial-gradient(50% 44% at 8% 92%, rgb(255 197 22 / 0.16) 0%, transparent 70%), radial-gradient(60% 50% at 88% 40%, rgb(255 197 22 / 0.07) 0%, transparent 72%)",
+            /*
+              Three washes that each faded linearly to a hard last stop, which
+              is three visible circles over one section. Same geometry, soft
+              falloff — see lib/soft-gradient.
+            */
+            [
+              softRadial("46% 38% at 24% 16%", "214 210 214", 0.11),
+              softRadial("50% 44% at 8% 92%", "255 197 22", 0.16),
+              softRadial("60% 50% at 88% 40%", "255 197 22", 0.07),
+            ].join(", "),
         }}
       />
 

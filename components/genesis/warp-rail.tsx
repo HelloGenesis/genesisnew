@@ -316,34 +316,21 @@ export function WarpRail({
       className={cn(
         "relative w-full overflow-hidden",
         /*
-          THE CORRIDOR'S OWN LIGHT, in the brand rather than the reference's
-          green. It sits BEHIND the cards and is what the middle of the run
-          appears to be lit by: the card square to the reader is at full
-          strength over it and the ones turning away fall into the dark at the
-          edges. Genesis asked for their own colours, and this is where they
-          go.
+          NO COLOUR BEHIND THE CARDS ANY MORE.
 
-          WIDER AND STRONGER than the first pass, because the cards overlap
-          now — a narrow, faint wash behind a continuous wall of work does
-          nothing at all, where behind a sparse row it at least filled the
-          gaps. It reads as the light the corridor is lit by rather than as a
-          shape sitting under it.
-        */
-        "before:pointer-events-none before:absolute before:inset-y-[-15%] before:left-1/2 before:z-0 before:w-[68%] before:-translate-x-1/2",
-        "before:bg-[radial-gradient(ellipse_at_center,rgb(255_197_22/0.22)_0%,rgb(247_113_158/0.11)_42%,rgb(122_60_255/0.07)_64%,transparent_78%)]",
-        /*
-          AND THE LIGHT AT THE END OF IT. A narrow vertical beam on the
-          corridor's axis, behind the cards, so it shows between the panels
-          and burns brightest where they are furthest away and dimmest.
-          The reference has one and it is doing real work: it gives the run a
-          destination, which is the difference between a curved wall and a
-          corridor you are looking down.
+          There was a brand wash here and a beam down the axis, and Genesis's
+          read was that they were doing nothing worth the noise — "fokat ka".
+          They were right, and the reason is that both were built for a
+          composition that no longer exists. The wash filled the gaps a sparse
+          row left, and the beam gave a vanishing point to a corridor. This is
+          a row of upright panels with small, even gaps: there is nothing for
+          a wash to fill, and no tunnel for a beam to end.
 
-          Brand yellow rather than the reference's green, as Genesis asked.
+          What was actually visible of them was their own edges — a soft-edged
+          ellipse and a vertical smear sitting behind the work, read as
+          shapes rather than as light. The section's Atmosphere already lights
+          this block, and it lights the whole of it rather than a patch.
         */
-        "after:pointer-events-none after:absolute after:inset-y-[-8%] after:left-1/2 after:z-0 after:w-[9%] after:-translate-x-1/2",
-        "after:bg-[linear-gradient(180deg,transparent,rgb(255_197_22/0.28)_22%,rgb(255_229_150/0.42)_50%,rgb(255_197_22/0.28)_78%,transparent)]",
-        "after:blur-[22px]",
         /* And the ends dissolve rather than cut, as every rail here does. */
         "[mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]",
         className,
