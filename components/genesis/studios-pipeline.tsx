@@ -89,10 +89,10 @@ const STRENGTH = [0.3, 0.475, 0.65, 0.825, 1];
   and Genesis pieces that are written up — 100% health, menopause day and
   Income Protect. Mahindra and Abhi Ka Star stay.
 
-  STILL ORDERED BY SHAPE. Only one Studios clip with a study behind it is
-  landscape (Mahindra's 16:9 cut), so it leads and the four portrait reels
-  follow. The frames themselves are unchanged — see the note on SHAPE for why
-  they were opened out to meet the reels and then put back.
+  THE ONE LANDSCAPE FILM LEADS. Only one Studios clip with a study behind it
+  is 16:9 — Mahindra's cut — and it takes the first stage, where the frame is
+  widest relative to its height and the crop is therefore gentlest. The four
+  portrait reels follow into frames shaped like them. See SHAPE.
 */
 const CLIPS = [
   "studios-mahindra-cut-44",
@@ -105,57 +105,54 @@ const CLIPS = [
 /**
  * The shape of each stage's card, and how much of the row it takes.
  *
- * NOT FIVE EQUAL BOXES, AND NOT RANDOM ONES EITHER. Genesis asked first for
- * unequal cards — "like horizontal and then a square / should look like
- * videos of different duration" — and then, seeing them, for the variation
- * to be a PROGRESSION rather than a scatter: "harr ek me size badte jaaye
- * not uneven". Both notes point the same way once you take the scrubber
- * seriously. A clip's width on a timeline is its duration, and this row runs
- * Brief to Deliver: the work accumulates, so the cards should grow with it.
- * Uneven widths said the five stages differ in length for no reason anybody
- * could read.
+ * IT GROWS, BUT NOT FROM NOTHING — and that distinction is the fix for
+ * "ye aise ghutan me kyu hai".
  *
- * So every step is wider AND taller than the one before it — 0.74 of a share
- * of the track up to 1.25, with the shape turning from landscape through
- * square to portrait, which is what makes the height climb faster than the
- * width. Measured at 1440: 85, 134, 205, 292 and 341 points tall.
+ * WHAT WAS WRONG. Genesis asked twice for the cards to grow across the row
+ * ("harr ek me size badte jaaye"), and the first pass delivered it by moving
+ * BOTH the width and the aspect: 0.78 of a share up to 1.25, with the shape
+ * turning from 16:9 through square to 4:5. Compounding the two made the range
+ * enormous — measured at 1152, the five stood 94, 145, 214, 288 and 321
+ * points. Four times taller at the end than at the start.
  *
- * The shapes follow each clip's own orientation (see CLIPS), so the growth
- * costs no cropping.
+ * The cards bottom-align, so that range did not read as growth. It read as a
+ * starved first card under 227 points of empty section, then a second one
+ * barely better, and only the last three looking like anything. The thing
+ * Genesis pointed at is real: the row had a hole in it where its opening
+ * should be.
+ *
+ * SO THE GROWTH COMES FROM THE WIDTH ALONE NOW. One aspect for all five, and
+ * the spans run 0.88 to 1.10 instead of 0.78 to 1.25. Each card is still
+ * wider and taller than the one before it — 228 points up to 286 at 1152 —
+ * but the first one arrives already worth looking at, and the void above it
+ * drops from 227 points to about 60. The scrubber over the row is what
+ * actually carries the sense of a run: numbered 01 to 05 with the accent
+ * filling as it goes.
+ *
+ * THE RANGE IS BOUNDED BY A CAP THAT IS NOT IN THIS FILE'S CONTROL. StageClip
+ * holds every card to `max-h-[32vh]` so the section can fit a screen, and the
+ * first attempt at this ran straight into it: cards three, four and five all
+ * came out at exactly 225 points, so the row grew for two steps and then
+ * stopped dead, which reads as a bug rather than as a design. The aspect is
+ * 5:6 rather than 4:5 and the span range is narrower precisely so the tallest
+ * card lands just UNDER that ceiling at the sizes it actually gets rendered
+ * at. Widen these and the top of the run flattens again.
+ *
+ * AND THE SHAPE NOW MATCHES THE FOOTAGE. Four of the five clips are 9:16
+ * social cuts (see CLIPS), so a portrait frame is the one that crops them
+ * least; the old progression put two of them in landscape frames and showed
+ * about two fifths of their height. The one landscape film leads the row,
+ * where the crop is gentlest because that card is the widest relative to its
+ * height.
  */
-/*
-  THE GROWTH RUNS ON A PHONE TOO. It was taken off the small screen to kill
-  the whitespace under the first cards, but that was the wrong culprit: the
-  gap came from the rail being a row of FLEX items, which stretch to the
-  tallest of them, so a short card carried 300 points of nothing under its
-  caption. `items-start` on the row fixes that at the source and the cards
-  keep their shapes at every width — which is what Genesis asked for twice
-  now, most recently "phone me box ka size difference nahi aa raaha".
-*/
-/*
-  THE FRAMES ARE BACK TO THEIR ORIGINAL PROGRESSION, and that is a height
-  decision rather than a shape one.
+const CARD_ASPECT = "aspect-[5/6]";
 
-  They were opened out — square, 5:6, 4:5, 3:4 — so the four portrait reels
-  that now fill this row would sit in frames closer to their own shape. It
-  worked and it cost 120 points of section, because a card's aspect is what
-  turns its width into height and every frame had got taller. Measured,
-  Studios went to 943 points against a 768 window, and this section's standing
-  rule is that it fits one screen.
-
-  SO THE CROP IS THE THING THAT GIVES. A 9:16 reel in the 4:3 second frame
-  shows about two fifths of its height, which is a real loss — but three of
-  the five frames were already cropping portrait footage this way before any
-  of this changed, so it is the treatment the row has always had rather than a
-  new compromise. Only the second card is affected; the first is a native 16:9
-  film and the last three sit in frames near their own shape.
-*/
 const SHAPE = [
-  { span: "0.78fr", aspect: "aspect-[16/9]" },
-  { span: "0.9fr", aspect: "aspect-[4/3]" },
-  { span: "1fr", aspect: "aspect-square" },
-  { span: "1.12fr", aspect: "aspect-[5/6]" },
-  { span: "1.2fr", aspect: "aspect-[4/5]" },
+  { span: "0.88fr", aspect: CARD_ASPECT },
+  { span: "0.935fr", aspect: CARD_ASPECT },
+  { span: "0.99fr", aspect: CARD_ASPECT },
+  { span: "1.045fr", aspect: CARD_ASPECT },
+  { span: "1.1fr", aspect: CARD_ASPECT },
 ];
 
 const accent = (alpha: number) => `rgb(255 197 22 / ${alpha})`;
@@ -569,7 +566,16 @@ function StageClip({
         them inside a short laptop screen, cropping a little off a portrait
         reel rather than pushing the section past one screen.
       */
-      className={cn("w-full object-cover", aspect, "md:max-h-[32vh]")}
+      /*
+        36vh, UP FROM 32. The cap exists so the tallest card fits a short
+        laptop, and at 32 it was cutting into the row's own progression: the
+        last two cards both landed on it and came out identical, so the run
+        grew for three steps and then stopped, which reads as a fault rather
+        than as a design. Four points of viewport height is the difference
+        between the ceiling being a safety net and being the thing deciding
+        the layout. See SHAPE, whose range is set against this number.
+      */
+      className={cn("w-full object-cover", aspect, "md:max-h-[36vh]")}
     />
   );
 }
