@@ -10,10 +10,10 @@ import { cn } from "@/lib/utils";
 /**
  * The warp rail — a corridor of work, drifting past the reader.
  *
- * WHAT IT IS FOR. AI Lab's argument is volume: the division's whole claim is
- * "create more without creating everything from scratch", and the honest way
- * to show that is a lot of finished work moving past you rather than four
- * tiles in a grid. Genesis pointed at a reference doing exactly this and
+ * WHAT IT IS FOR. AI Lab's argument is volume — work "created with AI, built
+ * for your brand", made at a rate a studio could not otherwise hold — and the
+ * honest way to show that is a lot of finished work moving past you rather
+ * than four tiles in a grid. Genesis pointed at a reference doing exactly this and
  * asked for it in our colours.
  *
  * THE PERSPECTIVE IS THE POINT, and it is why this does not reuse

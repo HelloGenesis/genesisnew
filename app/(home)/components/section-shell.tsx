@@ -173,11 +173,10 @@ export function SectionShell({
               mark was the whole announcement — and it stopped holding the
               moment Genesis asked each division for an umbrella claim as
               well. AI Lab is the case that broke it: the mark says which
-              division this is, and "Create more. Without creating everything
-              from scratch." says what the division is FOR, and a section
-              carrying avatars, multilingual content, games, apps and
-              automation needs both or the blocks under it read as five
-              unrelated services.
+              division this is, and "Created with AI. Built for your brand."
+              says what the division is FOR, and a section carrying avatars,
+              multilingual content, games, apps and automation needs both or
+              the blocks under it read as five unrelated services.
 
               So the lockup replaces the LABEL, which is the thing it is
               actually the same kind of as, and the heading renders under

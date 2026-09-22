@@ -309,15 +309,20 @@ export const aiContent = {
     section did not have.
 
     AI Lab carries avatars, multilingual content, games, apps and automation,
-    and "speed up the workflow, not the standard" is a line about only one of
-    those — so the four blocks under it read as four unrelated services that
-    happened to be filed together. Genesis named the problem and wrote the
-    fix: "Create more. Without creating everything from scratch." is true of
-    an avatar, a translated cut, a generated asset and an automated
-    handover alike, which is what makes it an umbrella rather than a slogan.
+    and the line it inherited — "speed up the workflow, not the standard" —
+    was about only one of those, so the blocks under it read as unrelated
+    services that happened to be filed together.
+
+    "CREATE MORE. WITHOUT CREATING EVERYTHING FROM SCRATCH." replaced it and
+    has now been replaced in turn, and the second swap is the better line for
+    a reason worth recording: the old one described GENESIS's process. It said
+    what the studio avoids doing, which is an efficiency claim, and a brand
+    reading it has to work out what that buys them. Genesis's new line names
+    the method and the beneficiary in five words — made with AI, made for
+    you — and the second half is the half that was missing.
   */
-  heading: "Create more. Without creating",
-  headingAccent: "everything from scratch.",
+  heading: "Created with AI.",
+  headingAccent: "Built for your brand.",
   /*
     WHAT THE DIVISION ACTUALLY BUILDS, in one sentence, because the heading
     above is a claim and a claim over a wall of avatars needs its scope said

@@ -162,10 +162,10 @@ export function AiContent() {
 
         Genesis's order for this section: the mark, the claim, then the
         portfolio, then the avatars. That is the right way round for the
-        argument it makes. "Create more without creating everything from
-        scratch" is a claim about OUTPUT, and the avatars are one of the
-        tools; showing the output first means the roster underneath reads as
-        the explanation rather than as the pitch.
+        argument it makes. "Created with AI. Built for your brand." is a
+        claim about OUTPUT, and the avatars are one of the tools; showing the
+        output first means the roster underneath reads as the explanation
+        rather than as the pitch.
 
         --warp-card and --warp-h are set here rather than in the component
         because they are this composition's proportions: the card is a share
