@@ -42,18 +42,35 @@ export const proof = {
     note: "Journey board.",
   },
 
+  /*
+    BOTH GIVEN DIRECTLY BY GENESIS, which settles two more of this file's open
+    conflicts — see `reach` below for the same thing happening to the third.
+
+    CAMPAIGNS keeps its number and changes its verb. The journey board said
+    50+, the Influence mockup 500+ and the brief 70; Genesis has confirmed 50+
+    and called them DELIVERED rather than developed, which is the more useful
+    word — developed describes work that was made, delivered describes work
+    that shipped, and this is a list of campaigns that ran.
+
+    BRANDS moves to 45+, which is neither of the two figures on record: the
+    journey board said 30+ and the mockup 200+. That is the point of asking
+    rather than splitting the difference, and it is also a sanity check the
+    old number was failing — the client wall alone carries thirty marks, so
+    "30+ brands collaborated" was claiming barely more than the logos on the
+    same page could be counted to.
+  */
   campaigns: {
     value: "50+",
-    label: "Campaigns developed",
-    confirmed: false,
-    note: "Journey board says 50+. The Influence mockup says 500+. The brief says 70. Journey board used — it is the company's own record rather than a design comp.",
+    label: "Campaigns delivered",
+    confirmed: true,
+    note: "Given directly by Genesis, settling the 50+/500+/70 split between the journey board, the Influence mockup and the brief.",
   },
 
   brands: {
-    value: "30+",
+    value: "45+",
     label: "Brands collaborated",
-    confirmed: false,
-    note: "Journey board says 30+. The Influence mockup says 200+. Journey board used, same reason. Note the client logo board lists 18 named brands.",
+    confirmed: true,
+    note: "Given directly by Genesis. Supersedes the journey board's 30+ and the Influence mockup's 200+.",
   },
 
   /*

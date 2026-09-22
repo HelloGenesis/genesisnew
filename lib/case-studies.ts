@@ -364,20 +364,14 @@ export const caseStudiesPage = {
   body:
     "Not a gallery. The problem, what we decided to do about it, and what changed. Every study here ends in a number the client agreed to.",
   /*
-    THE HOMEPAGE RAIL'S OWN STANDFIRST, and it is a different sentence from
-    `body` on purpose.
+    NO `lead` ANY MORE. The homepage rail had its own standfirst for a round —
+    "Selected campaigns, content and creative work built to deliver real
+    business outcomes" — and Genesis has replaced it with the figures bar. A
+    heading claiming work that moved a number, followed by a sentence
+    promising outcomes, was the same claim twice in prose; the numbers are the
+    evidence for it instead.
 
-    `body` is written for the /case-studies PAGE, where every card below it
-    is a published study and the promise "ends in a number the client agreed
-    to" is one the page keeps. On the homepage the same line sat over four
-    posters that mostly cannot keep it yet, so it was taken off and the
-    heading stood alone — which Genesis then read as a section with nothing
-    under its title.
-
-    This is the line they wrote for that slot. It says what the rail IS
-    without promising what each card contains, which is the difference that
-    lets it ship today.
+    `body` below stays, because it is the /case-studies PAGE's and that page
+    still uses it.
   */
-  lead:
-    "Selected campaigns, content and creative work built to deliver real business outcomes.",
 } as const;

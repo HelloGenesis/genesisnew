@@ -102,23 +102,44 @@ export function CaseStudies() {
       heading={caseStudiesPage.heading}
       headingAccent={caseStudiesPage.headingAccent}
       /*
-        A STANDFIRST AGAIN — BUT NOT THE ONE THAT CAME OFF.
+        NO STANDFIRST. THE FIGURES ARE THE STANDFIRST.
 
-        The paragraph removed from here was the /case-studies page's: "Not a
-        gallery… every study ends in a number the client agreed to", which is
-        a promise four posters on the homepage cannot keep. Genesis asked for
-        a supporting line under this heading and wrote one that does not make
-        that promise: it says what the rail is — campaigns, content and
-        creative work, chosen for outcomes — and leaves the numbers to the
-        studies themselves. See `lead` in lib/case-studies.
+        "Selected campaigns, content and creative work built to deliver real
+        business outcomes" stood here, and Genesis asked for the box in its
+        place. That is the better line by some distance, because it is not a
+        line: a heading that says "work that moved a number" followed by a
+        sentence promising outcomes is the same claim twice in prose, where
+        the same heading followed by 50+, 45+, 500M+ and 20+ is the claim and
+        then the evidence for it.
+
+        It also puts the figures where they are read as the SECTION's, not the
+        rail's. Under the posters they summarised the four cards above them;
+        under the heading they are the scale of everything the section is
+        about to show.
       */
-      body={caseStudiesPage.lead}
       align="left"
       tone="brand"
       origin="top-right"
       intensity={0.2}
     >
-      <Reveal variant="scene">
+      {/*
+        THE FIGURES, IN THE SLOT THE STANDFIRST HELD.
+
+        This bar has been three places in three passes — the foot of
+        Influence, then under this section's posters, now under its heading —
+        and each move was Genesis narrowing in on the same thing: the numbers
+        belong to the company, not to whichever block they happen to sit
+        beside. Here they read as the scale of the work, with the posters
+        underneath as the examples.
+
+        It also removes an attribution problem the first placement had: two of
+        these four are the COMPANY's figures rather than the creator
+        division's (see lib/proof), so at the foot of Influence half of them
+        claimed something narrower than they mean.
+      */}
+      <ProofBar />
+
+      <Reveal variant="scene" className="mt-[var(--block-gap)]">
         {/*
           The stage. img-025 sits its rail inside a broad brand bloom rather
           than on flat black — that glow is what makes the posters read as lit
@@ -177,25 +198,6 @@ export function CaseStudies() {
           </div>
         </div>
       </Reveal>
-      {/*
-        THE FIGURES, DIRECTLY UNDER THE EVIDENCE AND ABOVE THE WAY OUT.
-
-        This bar was at the foot of the Influence section. Genesis asked for it
-        above Influence, and then above this section's own button as well —
-        which is the better of the two placements and worth saying why. The
-        posters above are the proof that the work lands; these are the scale it
-        lands at. Between them and "See the work" the number is read as the
-        summary of what has just been shown, where under the button it was a
-        band floating in the join between two sections, belonging to neither.
-
-        It also fixes an attribution problem the old placement was hiding: two
-        of these four figures are the COMPANY's, not the creator division's —
-        50+ campaigns and 30+ brands come from the journey board (see
-        lib/proof) — so at the foot of Influence half of them claimed a
-        narrower thing than they mean.
-      */}
-      <ProofBar className="mt-10" />
-
       {/*
         The section is a trailer; the page is the thing. Without this the rail
         was a dead end — four posters and no way to read any of them.
