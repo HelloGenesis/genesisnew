@@ -233,9 +233,22 @@
     --fs-h2: 2.5rem;
     --fs-h3: 1.75rem;
     --fs-lead: 1.1875rem;
-    /* Section padding, top and bottom, and the height of a division lockup. */
+    /*
+       Section padding, top and bottom, and the height of a division lockup.
+
+       THE LOCKUP GREW BY HALF, AND IT GREW HERE so it grows everywhere.
+       Genesis asked for AI Lab's mark to be bigger and then for "harr ek
+       vertical logo ka size uniform" — and measured, the four were ALREADY
+       uniform: 44px apiece at this window. The odd one out was the one that
+       had just been raised on its own. So the ask is not that one section
+       differ, it is that all four be larger, which is a single number.
+
+       IT STAYS RESPONSIVE. Every step below scales with it, so the mark still
+       comes down on a short laptop the way the type and the padding do —
+       which a per-section pixel height would have opted that division out of.
+    */
     --section-pad: 2.25rem;
-    --lockup-h: 58px;
+    --lockup-h: 84px;
     /* The gap between a section's header and its content, and between that
        content and the buttons under it. Steps with everything else. */
     --block-gap: 1.75rem;
@@ -926,7 +939,7 @@
         --fs-h3: 1.55rem;
         --fs-lead: 1.125rem;
         --section-pad: 1.75rem;
-        --lockup-h: 50px;
+        --lockup-h: 72px;
         --block-gap: 1.35rem;
     }
 }
@@ -938,7 +951,7 @@
         --fs-h3: 1.4rem;
         --fs-lead: 1.0625rem;
         --section-pad: 1.35rem;
-        --lockup-h: 44px;
+        --lockup-h: 62px;
         --block-gap: 1.1rem;
     }
 }
@@ -950,7 +963,7 @@
         --fs-h3: 1.3rem;
         --fs-lead: 1rem;
         --section-pad: 1.1rem;
-        --lockup-h: 38px;
+        --lockup-h: 52px;
         --block-gap: 0.9rem;
     }
 }

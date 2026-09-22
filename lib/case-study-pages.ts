@@ -1,4 +1,4 @@
-import { caseStudyList, disciplines, isPublished } from "./case-studies";
+import { caseStudyList, disciplines, isPublished, type CaseStudy } from "./case-studies";
 import { caseStudyCopy, type CaseStudyCopy } from "./case-study-copy";
 import { clipRatio } from "./clip-shape";
 import { filmUrl } from "./films";
@@ -176,6 +176,25 @@ export function relatedStudies(page: CaseStudyPage, count = 3): CaseStudyPage[] 
  * a client's name and an empty page is worse than no link.
  */
 export function caseStudyPathForClip(id: ReelId | undefined): string | undefined {
+  const study = caseStudyForClip(id);
+  return study && caseStudyPath(study.copy);
+}
+
+/**
+ * The STUDY behind a clip, rather than its URL.
+ *
+ * WHY BOTH EXIST. `caseStudyPathForClip` answers "where does this link go",
+ * which is what an <a href> needs so a crawler can follow it and a reader can
+ * cmd-click it into a tab. This answers "what is the study", which is what a
+ * dialog needs to render it over the page without navigating anywhere. The
+ * same card wants both — see StudiosPipeline, where the href is the honest
+ * destination and the click is intercepted.
+ *
+ * The matching rules are `caseStudyPathForClip`'s, and deliberately shared:
+ * its own body now calls this, so a clip can never resolve to one study for
+ * the link and a different one for the window.
+ */
+export function caseStudyForClip(id: ReelId | undefined): CaseStudy | undefined {
   if (id === undefined) return undefined;
 
   const direct = caseStudyList.find((study) => study.heroClip === id);
@@ -184,6 +203,24 @@ export function caseStudyPathForClip(id: ReelId | undefined): string | undefined
   );
 
   const study = direct ?? viaWork;
-  if (!study || !isPublished(study)) return undefined;
-  return caseStudyPath(study.copy);
+  return study && isPublished(study) ? study : undefined;
+}
+
+/**
+ * The study a PAGE slug belongs to — "activ-one-bts-with-vikrant-massey" back
+ * to the entry in the catalogue.
+ *
+ * THE TWO VOCABULARIES ARE NOT THE SAME and this is the bridge. A study in
+ * lib/case-studies has its own slug ("aditya-birla-capital-vikrant-massey")
+ * and a `copy` number pointing into the master, which has a slug of its own —
+ * and it is the MASTER'S slug that the URL is built from. Anything holding a
+ * URL-shaped reference (a creator's `caseStudy`, a link somebody pasted) is
+ * therefore speaking the second language and has to be translated before a
+ * dialog can render it.
+ */
+export function caseStudyForPageSlug(slug: string | undefined): CaseStudy | undefined {
+  if (!slug) return undefined;
+  const page = caseStudyPages.find((entry) => entry.slug === slug);
+  if (!page) return undefined;
+  return caseStudyList.find((study) => study.copy === page.copy.n);
 }

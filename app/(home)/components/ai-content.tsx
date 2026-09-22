@@ -65,6 +65,22 @@ export function AiContent() {
       heading={aiContent.heading}
       headingAccent={aiContent.headingAccent}
       body={aiContent.body}
+      /*
+        THE COPY UNDER THE MARK STEPS BACK — "uske niche ka copy usse chota."
+
+        NO PER-SECTION LOCKUP HEIGHT ANY MORE. AI Lab briefly carried its own,
+        and Genesis's follow-up settled it: every vertical's mark is the same
+        size, and they are all bigger now. That is one number in globals.css
+        (--lockup-h), not a prop here — see the note on it.
+
+        WHAT STAYS IS THE HALF THAT WAS ABOUT THIS SECTION. A larger mark over
+        an unchanged section heading is two things competing to be the
+        announcement, and the mark loses because the heading is longer. A step
+        down for the heading and the tagline lets the picture say which
+        division and the sentence say what it is for.
+      */
+      headingClassName="text-h3 sm:text-h2 lg:text-h2"
+      taglineClassName="text-small sm:text-body"
       tone="brand"
       origin="center"
       intensity={0.14}

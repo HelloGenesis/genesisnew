@@ -33,6 +33,7 @@ export function SectionShell({
   bodyClassName,
   headingClassName,
   taglineClassName,
+  lockupHeight,
 }: {
   id?: string;
   label?: string;
@@ -81,8 +82,17 @@ export function SectionShell({
    * beside them.
    */
   headingClassName?: string;
-  /** Passed to the division lockup's tagline. Brand & Design hides it. */
+  /** Passed to the division lockup's tagline. */
   taglineClassName?: string;
+  /**
+   * How tall the division lockup stands, in px.
+   *
+   * THE DEFAULT IS ONE SIZE FOR EVERY DIVISION, which is right until a
+   * section wants its mark to be the thing you see first. AI Lab asks for a
+   * bigger one, and takes its heading DOWN a step to pay for it — a mark and
+   * a heading at full size in the same header are two announcements.
+   */
+  lockupHeight?: number;
 }) {
   const Heading = headingAs;
   return (
@@ -140,6 +150,7 @@ export function SectionShell({
                   name={division.name}
                   tagline={division.tagline}
                   ramp={division.ramp}
+                  {...(lockupHeight ? { height: lockupHeight } : {})}
                   as={headingAs}
                   taglineClassName={taglineClassName}
                 />

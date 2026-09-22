@@ -1,13 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 
 import { animate, motion, useAnimationFrame, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 
+import type { CaseStudy } from "@/lib/case-studies";
+import { caseStudyForPageSlug } from "@/lib/case-study-pages";
 import { mediaUrl } from "@/lib/media-url";
+import { CaseStudyDialog } from "./case-study-dialog";
 import { cn } from "@/lib/utils";
 
 /**
@@ -151,6 +153,13 @@ export function CreatorConstellation({
   });
 
   const orbiting = creators.filter((creator) => !creator.feature);
+  /*
+    WHICH STUDY IS OPEN OVER THE PAGE. The cards used to navigate to
+    /case-studies/<slug>; Genesis asked for the study to open where the reader
+    already is. Held as the study itself rather than as a slug because the
+    dialog wants the object and there is exactly one open at a time.
+  */
+  const [study, setStudy] = useState<CaseStudy | null>(null);
 
   /*
     LEFT AND RIGHT, BETWEEN INFLUENCERS. Genesis asked for the constellation to
@@ -232,6 +241,7 @@ export function CreatorConstellation({
           key={creator.id}
           creator={creator}
           angle={angle}
+          onOpenStudy={() => setStudy(caseStudyForPageSlug(creator.caseStudy) ?? null)}
           /*
             The feature card barely moves; the rest are spread evenly — by
             their position among the ORBITING cards, not among all of them.
@@ -278,6 +288,18 @@ export function CreatorConstellation({
           </button>
         ))}
       </div>
+
+      {/*
+        THE STUDY, OVER THE PAGE — the same window the case-study posters and
+        the Studios stage cards open, so every route into a study on this page
+        behaves identically and none of them costs a reader their place.
+
+        NO PAGER. The posters walk a rail and the stage cards walk a row;
+        these eleven faces are not an ordered set of studies — three have one
+        and eight do not — so "next" would either skip most of the ring or
+        walk a list the reader cannot see. Close and pick another face.
+      */}
+      <CaseStudyDialog study={study} onClose={() => setStudy(null)} />
     </div>
   );
 }
@@ -353,11 +375,14 @@ function OrbitCard({
   angle,
   offset,
   radius,
+  onOpenStudy,
 }: {
   creator: Creator;
   angle: MotionValue<number>;
   offset: number;
   radius: number;
+  /** Opens this creator's study over the page. Undefined where there is none. */
+  onOpenStudy?: () => void;
 }) {
   const rad = (deg: number) => ((deg + offset) * Math.PI) / 180;
   // Fixed precision: Framer serialises style values at reduced precision during
@@ -411,6 +436,7 @@ function OrbitCard({
             : creator.instagram
         }
         external={!creator.caseStudy}
+        onOpen={creator.caseStudy ? onOpenStudy : undefined}
         /*
           NO HOVER RING. A yellow outline snapped around whichever card the
           pointer crossed, and on a ring that is already drifting under the
@@ -535,25 +561,50 @@ function PlatformBadge({
 function CardShell({
   href,
   external = true,
+  onOpen,
   className,
   children,
 }: {
   href?: string;
   /**
    * Whether the destination leaves the site. An external card opens a new tab
-   * with the rel tokens that stop it reaching back into this one; an internal
-   * one navigates in place, like every other link here.
+   * with the rel tokens that stop it reaching back into this one.
    */
   external?: boolean;
+  /**
+   * Opens the study over the page instead of navigating to it.
+   *
+   * Genesis: "kisi video ko click kiya toh uska case study udhar hi khulna
+   * chahiye, page redirect nahi." A face on this ring is the same kind of
+   * target as a stage card in Studios, and both now open the same window.
+   */
+  onOpen?: () => void;
   className?: string;
   children: React.ReactNode;
 }) {
   if (!href) return <div className={className}>{children}</div>;
   if (!external) {
+    /*
+      A REAL ANCHOR WITH A REAL HREF, WHOSE PLAIN CLICK IS INTERCEPTED — and
+      a bare <a> rather than a <Link>, so next/link is not in the path to
+      fight over the click. The href is the study's own URL, so a crawler
+      follows it and cmd-click still opens a tab: every click carrying a
+      modifier or a different button is handed straight to the browser.
+    */
     return (
-      <Link href={href} className={className}>
+      <a
+        href={href}
+        onClick={(event) => {
+          if (!onOpen) return;
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          if (event.button !== 0) return;
+          event.preventDefault();
+          onOpen();
+        }}
+        className={className}
+      >
         {children}
-      </Link>
+      </a>
     );
   }
   return (

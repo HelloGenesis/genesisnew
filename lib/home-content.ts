@@ -315,7 +315,7 @@ export const aiContent = {
     plainly underneath. This is the standfirst the section never had.
   */
   body:
-    "We build AI-powered content and digital experiences for brands, founders and creators: from realistic AI avatars and multilingual content to automation, games, apps and interactive experiences.",
+    "We build AI-powered content and digital experiences for brands, founders and creators, from realistic AI avatars and multilingual content to automation, games, apps and interactive experiences.",
   /*
    * THE COPY ABOVE THE ROSTER, and all three lines of it are Genesis's own.
    *
@@ -507,7 +507,7 @@ export const studios = {
   heading: "From brief to",
   headingAccent: "final cut.",
   body:
-    "Strategy, scripting, production and post: one connected studio system built for every screen.",
+    "Strategy, scripting, production and post, one connected studio system built for every screen.",
   /*
    * THE CAPABILITY LIST, REPLACED BY GENESIS'S OWN.
    *
@@ -551,7 +551,7 @@ export const studios = {
     heading: "From brief to",
     headingAccent: "final cut.",
     lead:
-      "Strategy, scripting, production and post: one connected studio system built for every screen.",
+      "Strategy, scripting, production and post, one connected studio system built for every screen.",
     /*
       THE FIVE STOPS, AS GENESIS NAMED THEM IN THE FINAL PASS. Two changes,
       and both are about what the word on the label promises.

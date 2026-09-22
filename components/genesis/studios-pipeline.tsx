@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { Reveal } from "@/components/genesis/reveal";
 import { studios } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
-import Link from "next/link";
 
-import { caseStudyPathForClip } from "@/lib/case-study-pages";
+import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
+import { pagerFor } from "@/components/genesis/overlay";
+import type { CaseStudy } from "@/lib/case-studies";
+import { caseStudyForClip, caseStudyPathForClip } from "@/lib/case-study-pages";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { useInViewPlayback } from "@/components/genesis/use-in-view-playback";
 import { cn } from "@/lib/utils";
@@ -87,11 +89,10 @@ const STRENGTH = [0.3, 0.475, 0.65, 0.825, 1];
   and Genesis pieces that are written up — 100% health, menopause day and
   Income Protect. Mahindra and Abhi Ka Star stay.
 
-  STILL ORDERED BY SHAPE, which is what lets each card grow across the row
-  without anything being cropped into a shape it was not shot in. Only one
-  Studios clip with a study is landscape (Mahindra's 16:9 cut), so it leads
-  and the four portrait reels follow — see SHAPE, whose second frame came in
-  from 4:3 to square to meet them.
+  STILL ORDERED BY SHAPE. Only one Studios clip with a study behind it is
+  landscape (Mahindra's 16:9 cut), so it leads and the four portrait reels
+  follow. The frames themselves are unchanged — see the note on SHAPE for why
+  they were opened out to meet the reels and then put back.
 */
 const CLIPS = [
   "studios-mahindra-cut-44",
@@ -132,24 +133,29 @@ const CLIPS = [
   now, most recently "phone me box ka size difference nahi aa raaha".
 */
 /*
-  THE SECOND FRAME CAME IN FROM 4:3 TO SQUARE, and the last went out to 3:4.
+  THE FRAMES ARE BACK TO THEIR ORIGINAL PROGRESSION, and that is a height
+  decision rather than a shape one.
 
-  The row's job is to grow from a wide film to a tall reel, and the frames
-  have to stay near the shapes of the clips actually in them — a card crops to
-  fill, so a 9:16 reel in a 4:3 frame shows about two fifths of its height.
-  With only one landscape clip left that has a study behind it (see CLIPS),
-  four of the five frames now hold portrait footage, so the progression starts
-  its descent one step earlier and finishes a little taller.
+  They were opened out — square, 5:6, 4:5, 3:4 — so the four portrait reels
+  that now fill this row would sit in frames closer to their own shape. It
+  worked and it cost 120 points of section, because a card's aspect is what
+  turns its width into height and every frame had got taller. Measured,
+  Studios went to 943 points against a 768 window, and this section's standing
+  rule is that it fits one screen.
 
-  Still monotonic: 1.78, 1.0, 0.83, 0.8, 0.75. The spans are untouched, so the
-  cards grow across the row exactly as they did.
+  SO THE CROP IS THE THING THAT GIVES. A 9:16 reel in the 4:3 second frame
+  shows about two fifths of its height, which is a real loss — but three of
+  the five frames were already cropping portrait footage this way before any
+  of this changed, so it is the treatment the row has always had rather than a
+  new compromise. Only the second card is affected; the first is a native 16:9
+  film and the last three sit in frames near their own shape.
 */
 const SHAPE = [
   { span: "0.78fr", aspect: "aspect-[16/9]" },
-  { span: "0.9fr", aspect: "aspect-square" },
-  { span: "1fr", aspect: "aspect-[5/6]" },
-  { span: "1.12fr", aspect: "aspect-[4/5]" },
-  { span: "1.2fr", aspect: "aspect-[3/4]" },
+  { span: "0.9fr", aspect: "aspect-[4/3]" },
+  { span: "1fr", aspect: "aspect-square" },
+  { span: "1.12fr", aspect: "aspect-[5/6]" },
+  { span: "1.2fr", aspect: "aspect-[4/5]" },
 ];
 
 const accent = (alpha: number) => `rgb(255 197 22 / ${alpha})`;
@@ -195,6 +201,21 @@ const ICONS: Record<string, React.ReactNode> = {
 
 export function StudiosPipeline() {
   const { heading, headingAccent, lead, stages } = studios.pipeline;
+  /*
+    WHICH STUDY IS OPEN OVER THE PAGE, and there is no route involved.
+
+    Genesis: "kisi video ko click kiya toh uska case study udhar hi khulna
+    chahiye, page redirect nahi." These cards linked to /case-studies/<slug>,
+    which took a reader off the landing page and lost their scroll position
+    in the middle of the story the page is telling — and this site's rule is
+    already that nothing but the two forms changes page.
+
+    THE STUDIES ARE RESOLVED ONCE, HERE, not per card in the render. Each is
+    a search over the catalogue (clip -> work -> study), and doing it inside
+    the map would run it on every re-render of every card.
+  */
+  const studies = CLIPS.map((id) => caseStudyForClip(id));
+  const [open, setOpen] = useState<CaseStudy | null>(null);
 
   /*
     ARROWS FOR THE PHONE RAIL ("manually scroll rakho - and arrow button as
@@ -211,14 +232,29 @@ export function StudiosPipeline() {
 
   return (
     <div>
-      <Reveal className="mx-auto max-w-2xl text-center">
+      {/*
+        WIDE ENOUGH FOR ONE LINE — "one single line".
+
+        The measure was max-w-2xl, 672px, and this sentence is about 95
+        characters: at the standfirst's own size it needs roughly 900, so it
+        broke into a full line and a short orphaned tail under a centred
+        heading. A measure that narrow is right for a paragraph and wrong for
+        a single sentence meant to be read in one pass.
+
+        NO `whitespace-nowrap`, deliberately. Forcing one line would make it
+        overflow a laptop rather than wrap, and this section already has to
+        fit a screen on a phone. Given room it takes one line; given less it
+        wraps, which is the same behaviour at every width rather than a rule
+        that holds until it suddenly breaks.
+      */}
+      <Reveal className="mx-auto max-w-5xl text-center">
         <h3 className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
           {heading}{" "}
           <span className="font-serif font-normal italic text-brand-ink">
             {headingAccent}
           </span>
         </h3>
-        <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+        <p className="mx-auto mt-3 max-w-none text-pretty text-body leading-relaxed text-ash sm:text-lead">
           {lead}
         </p>
       </Reveal>
@@ -363,6 +399,11 @@ export function StudiosPipeline() {
                   */}
                   <CardFrame
                     href={caseStudyPathForClip(CLIPS[index])}
+                    onOpen={
+                      studies[index]
+                        ? () => setOpen(studies[index] ?? null)
+                        : undefined
+                    }
                     className="w-full overflow-hidden rounded-2xl border bg-ink"
                     style={{
                       borderColor: accent(s * 0.55),
@@ -468,6 +509,29 @@ export function StudiosPipeline() {
           ))}
         </div>
       </Reveal>
+
+      {/*
+        THE STUDY, OVER THE PAGE. Same window the case-study posters open, so
+        a reader who clicks a stage card and a reader who clicks a poster get
+        the same thing — and both keep their place on the landing page.
+
+        THE PAGER WALKS THE ROW, not the whole catalogue. Its list is the five
+        stages' own studies, in stage order, so "next" from the Shoot card is
+        Post rather than whatever happens to be next in the case-study
+        ordering. `filter(Boolean)` is there because a stage with no study is
+        not a stop on that walk; today all five have one, and the row should
+        not start skipping silently if that changes.
+      */}
+      <CaseStudyDialog
+        study={open}
+        onClose={() => setOpen(null)}
+        pager={pagerFor(
+          studies.filter((study): study is CaseStudy => Boolean(study)),
+          studies.findIndex((study) => study?.slug === open?.slug),
+          (study) => setOpen(study),
+          (study) => study.client,
+        )}
+      />
     </div>
   );
 }
@@ -526,25 +590,48 @@ function StageClip({
  */
 function CardFrame({
   href,
+  onOpen,
   className,
   style,
   children,
 }: {
   href?: string;
+  /** Opens the study over the page. Absent, the card is not a target at all. */
+  onOpen?: () => void;
   className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
 }) {
-  if (!href) {
+  if (!href || !onOpen) {
     return (
       <div className={className} style={style}>
         {children}
       </div>
     );
   }
+  /*
+    A REAL ANCHOR WITH A REAL HREF, WHOSE PLAIN CLICK IS INTERCEPTED.
+
+    The study opens over the page — that is the instruction — but it must not
+    cost the things an <a> gives for free. The href is the study's own URL, so
+    a crawler follows it, the status bar shows where it goes, and cmd-click,
+    middle-click and "open in new tab" all still work: those carry a modifier
+    or a different button, and the guard below lets every one of them through
+    to the browser.
+
+    A plain left click is the only one taken. `preventDefault` stops the
+    navigation; nothing needs stopping beyond that, because next/link is not
+    in this path — this is a bare anchor, deliberately, and not a <Link>.
+  */
   return (
-    <Link
+    <a
       href={href}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (event.button !== 0) return;
+        event.preventDefault();
+        onOpen();
+      }}
       className={cn(
         className,
         "group/stage block outline-none transition-transform duration-300 ease-out",
@@ -554,6 +641,6 @@ function CardFrame({
       style={style}
     >
       {children}
-    </Link>
+    </a>
   );
 }
