@@ -6,14 +6,14 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
-import { homeHref, navItems, primaryCta } from "@/lib/site-config";
+import { homeHref, navItems, primaryCta, type NavItem } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 /**
@@ -223,13 +223,17 @@ export function GlassNav() {
           it was meant to be: mark left, links centre, actions right.
         */}
         <ul className="hidden flex-1 items-center justify-center gap-1 lg:flex">
-          {navItems.map((item) => (
-            <li key={item.label}>
-              <Link href={item.href} className={NAV_LINK}>
-                {item.label}
-              </Link>
-            </li>
-          ))}
+          {navItems.map((item) =>
+            item.children ? (
+              <NavMenu key={item.label} item={item} />
+            ) : (
+              <li key={item.label}>
+                <Link href={item.href} className={NAV_LINK}>
+                  {item.label}
+                </Link>
+              </li>
+            ),
+          )}
         </ul>
 
         {/*
@@ -305,6 +309,29 @@ export function GlassNav() {
                   >
                     {item.label}
                   </Link>
+                  {/*
+                    THE SUBMENU IS ALWAYS OPEN ON A PHONE, which is the right
+                    call rather than a shortcut. A sheet is already a
+                    disclosure — the reader opened it — so putting a second
+                    one inside it makes the four divisions two taps deep in a
+                    menu with six items in it. They are indented under their
+                    parent and that is the whole treatment.
+                  */}
+                  {item.children && (
+                    <ul className="mb-1 ml-3 flex flex-col border-l border-[var(--glass-border)] pl-3">
+                      {item.children.map((child) => (
+                        <li key={child.label}>
+                          <Link
+                            href={child.href}
+                            onClick={() => setMenuOpen(false)}
+                            className="block rounded-card px-3 py-2.5 text-small text-faint transition-colors hover:bg-[var(--hover-wash)] hover:text-bone"
+                          >
+                            {child.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>
@@ -323,5 +350,133 @@ export function GlassNav() {
         )}
       </AnimatePresence>
     </motion.header>
+  );
+}
+
+/**
+ * One nav item that is a menu — Services, and today the only one.
+ *
+ * IT OPENS ON HOVER AND ON CLICK, AND THAT IS TWO DIFFERENT AUDIENCES RATHER
+ * THAN A BELT-AND-BRACES. Hover is what a pointer user expects from a bar
+ * like this and costs them nothing; it is also unreachable from a keyboard
+ * and from every touch screen, where the first tap would otherwise follow the
+ * trigger's own href and the menu would never be seen at all. The click
+ * handler covers both, so the panel is reachable by pointer, by tab and by
+ * thumb.
+ *
+ * THE TRIGGER IS A BUTTON, NOT A LINK, for the same reason. A link whose
+ * click is swallowed to open a menu lies to the status bar and to anyone
+ * middle-clicking it. The Brain — where the trigger would have gone — is the
+ * first item INSIDE the panel instead, so nothing is lost.
+ *
+ * THE PANEL CLOSES ON ESCAPE AND ON LEAVING, and a focus leaving the
+ * subtree closes it too: tabbing past the last division should not leave a
+ * panel hanging over the page.
+ */
+function NavMenu({ item }: { item: NavItem }) {
+  const [open, setOpen] = useState(false);
+  const holder = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <li
+      ref={holder}
+      className="relative"
+      onPointerEnter={() => setOpen(true)}
+      onPointerLeave={() => setOpen(false)}
+      onBlur={(event) => {
+        /* Only when focus has left the whole item, not when it moves between
+           the trigger and the links inside. */
+        if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+          setOpen(false);
+        }
+      }}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="true"
+        onClick={() => setOpen((was) => !was)}
+        className={cn(NAV_LINK, "inline-flex items-center gap-1")}
+      >
+        {item.label}
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            "size-3.5 transition-transform duration-300",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            /*
+              A BRIDGE OF PADDING, not a gap. The panel sits below the trigger
+              and the pointer has to cross the space between them; with a
+              margin that space is outside the item, `pointerleave` fires
+              halfway there and the menu shuts under the cursor. Padding keeps
+              it inside the hover target.
+            */
+            className="absolute left-1/2 top-full z-10 w-[19rem] -translate-x-1/2 pt-3"
+          >
+            <ul className="glass glass-strong glass-lit flex flex-col gap-0.5 rounded-panel p-2">
+              {item.children?.map((child) => (
+                <li key={child.label}>
+                  <Link
+                    href={child.href}
+                    onClick={() => setOpen(false)}
+                    className="block rounded-card px-3 py-2.5 transition-colors hover:bg-[var(--hover-wash)]"
+                  >
+                    <span className="block text-small text-bone">{child.label}</span>
+                    {/*
+                      The blurb has been in NavItem since the first version of
+                      this file, described as "used by the Capabilities menu"
+                      — a menu that was removed before it shipped. This is
+                      that menu, and it is what the field was for: four
+                      division names alone read as a list of departments,
+                      where a line each says what you would go there to buy.
+                    */}
+                    {child.blurb && (
+                      <span className="mt-0.5 block text-micro text-faint">
+                        {child.blurb}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+              {/*
+                THE BRAIN, LAST. It is where the trigger's own href points and
+                a reader who wants the picture rather than the list should be
+                able to get there — but it belongs under the four, not over
+                them, because it is the overview and they are the answer.
+              */}
+              <li className="mt-1 border-t border-[var(--glass-border)] pt-1">
+                <Link
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-card px-3 py-2.5 text-small text-faint transition-colors hover:bg-[var(--hover-wash)] hover:text-bone"
+                >
+                  All four divisions
+                </Link>
+              </li>
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </li>
   );
 }

@@ -16,6 +16,18 @@ export type NavItem = {
    * in the footer is the only one today — it opens WhatsApp.
    */
   external?: boolean;
+  /**
+   * Turns this item into a menu rather than a link.
+   *
+   * The bar has exactly one — Services, holding the four divisions. It is
+   * written as data rather than special-cased in GlassNav so the desktop bar
+   * and the mobile sheet can render the same tree two ways without either of
+   * them deciding what is in it.
+   *
+   * An item with children still carries an `href`: it is where the menu goes
+   * if a reader clicks the trigger itself, and it is what a crawler follows.
+   */
+  children?: NavItem[];
 };
 
 export const siteConfig = {
@@ -206,64 +218,6 @@ export function ctaWhatsappLink(source?: string | null) {
   return whatsappLink(CTA_MESSAGES[key] ?? siteConfig.whatsappMessage);
 }
 
-/**
- * Primary navigation — four items, and that is the whole bar.
- *
- * THE FOUR VERTICALS ARE OFF IT, at Genesis's instruction. Influence,
- * Studios, AI Labs and Brand & Design each had a link here; they are now
- * reached from the Brain, which is the first thing on the page and is a
- * picture of exactly that choice. Naming them twice — once as a row of small
- * grey words in a pill, once as four gradient marks around the orb — made the
- * pill compete with the composition that was built to be the way in.
- *
- * WORK AND CASE STUDIES ARE TWO ITEMS, NOT ONE. They were briefly merged
- * into a single "Work | Case Studies" link — that was a misreading of the
- * brief and Genesis corrected it. They are different things and they go to
- * different places:
- *
- *   WORK is the Portfolio — the full library of films, reels and campaigns at
- *     /our-work. Browsing.
- *   CASE STUDIES is the written argument: the problem, what was decided, and
- *     the number the client agreed to. It scrolls to that section on the
- *     homepage, whose own button leads on to the full studies.
- *
- * Merging them pointed both readings at the library, so anyone looking for
- * the results got a wall of thumbnails.
- *
- * WHAT THIS BUYS BACK. Eight items needed about 1150px alongside the
- * wordmark, the toggle and the CTA, which is why the full bar waited for xl
- * and every laptop under 1280 got the hamburger. Five short ones fit
- * comfortably at lg — "Work" and "Case Studies" together are narrower than
- * the single "Work | Case Studies" they replace.
- */
-export const navItems: NavItem[] = [
-  /*
-    WORK SCROLLS, IT DOES NOT NAVIGATE. This was "/our-work" and Genesis's
-    report was that clicking it took them off the homepage to a page they did
-    not want. The portfolio grid is already ON the homepage, so the nav item
-    named after it should land there: #library is the section, and as a hash
-    it scrolls from anywhere on the homepage while still loading the homepage
-    from any other route.
-
-    /our-work has since been removed altogether, with every page but the two
-    forms: the whole catalogue lives in the portfolio section, and each piece
-    opens over the landing page rather than on a page of its own.
-  */
-  // "Portfolio", Genesis's name for the section this goes to.
-  { label: "Portfolio", href: "/#library" },
-  // The page, not the homepage rail: Genesis asked the bar to open it.
-  { label: "Case Studies", href: "/case-studies" },
-  /*
-    THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable
-    from the nav — the only routes to them were a button inside a section you
-    had to scroll to first, which for a creator or an applicant who arrived
-    looking for exactly this is not a route at all. Genesis asked for them up
-    here by name.
-  */
-  { label: "I'm a Creator", href: "/creator" },
-  { label: "Career", href: "/careers" },
-  { label: "Contact", href: "/#contact" },
-];
 
 /**
  * WHERE THE WORDMARK GOES.
@@ -305,6 +259,86 @@ export const divisionPages = [
 export const sectionForPage: Record<string, string> = Object.fromEntries(
   divisionPages.map((page) => [page.href, page.section]),
 );
+
+/*
+  DECLARED AFTER divisionPages AND homeHref, WHICH IS A REAL CONSTRAINT AND
+  NOT A TIDYING CHOICE. The Services menu builds its children from the first
+  and its own href from the second, and a `const` cannot be read above its own
+  declaration — the module threw at import before this moved. If the bar ever
+  stops depending on either, it can go back up top.
+*/
+/**
+ * Primary navigation — four items, and that is the whole bar.
+ *
+ * THE FOUR VERTICALS ARE OFF IT, at Genesis's instruction. Influence,
+ * Studios, AI Labs and Brand & Design each had a link here; they are now
+ * reached from the Brain, which is the first thing on the page and is a
+ * picture of exactly that choice. Naming them twice — once as a row of small
+ * grey words in a pill, once as four gradient marks around the orb — made the
+ * pill compete with the composition that was built to be the way in.
+ *
+ * WORK AND CASE STUDIES ARE TWO ITEMS, NOT ONE. They were briefly merged
+ * into a single "Work | Case Studies" link — that was a misreading of the
+ * brief and Genesis corrected it. They are different things and they go to
+ * different places:
+ *
+ *   WORK is the Portfolio — the full library of films, reels and campaigns at
+ *     /our-work. Browsing.
+ *   CASE STUDIES is the written argument: the problem, what was decided, and
+ *     the number the client agreed to. It scrolls to that section on the
+ *     homepage, whose own button leads on to the full studies.
+ *
+ * Merging them pointed both readings at the library, so anyone looking for
+ * the results got a wall of thumbnails.
+ *
+ * WHAT THIS BUYS BACK. Eight items needed about 1150px alongside the
+ * wordmark, the toggle and the CTA, which is why the full bar waited for xl
+ * and every laptop under 1280 got the hamburger. Five short ones fit
+ * comfortably at lg — "Work" and "Case Studies" together are narrower than
+ * the single "Work | Case Studies" they replace.
+ */
+export const navItems: NavItem[] = [
+  /*
+    SERVICES, AND IT IS THE ONE MENU ON THE BAR.
+
+    IT REPLACED "PORTFOLIO", at Genesis's instruction, and the trade is a good
+    one. Portfolio pointed at #library — a section a reader reaches by
+    scrolling anyway, and one the footer, the case-study section and three
+    division CTAs all already link to. The four divisions had no route from
+    the bar at all: they were taken off it when the Brain became the first
+    thing on the page, on the reasoning that a diagram of four names is a
+    better way in than four grey words. That holds for a visitor who LANDS on
+    the homepage and fails for everyone else — from a case study, a division
+    page or a form, there was no way to reach Influence but to go home first.
+
+    A MENU RATHER THAN FOUR ITEMS, because four more links across the bar is
+    what was removed. Folded behind one word they cost the width of one word.
+
+    The href is the Brain. A reader who clicks the trigger instead of picking
+    from the menu gets the picture the menu is a text version of.
+  */
+  {
+    label: "Services",
+    href: homeHref,
+    children: divisionPages.map(({ label, href, blurb }) => ({
+      label,
+      href,
+      blurb,
+    })),
+  },
+  // The page, not the homepage rail: Genesis asked the bar to open it.
+  { label: "Case Studies", href: "/case-studies" },
+  /*
+    THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable
+    from the nav — the only routes to them were a button inside a section you
+    had to scroll to first, which for a creator or an applicant who arrived
+    looking for exactly this is not a route at all. Genesis asked for them up
+    here by name.
+  */
+  { label: "I'm a Creator", href: "/creator" },
+  { label: "Career", href: "/careers" },
+  { label: "Contact", href: "/#contact" },
+];
 
 /** The one navigation item that is meant to look like an action. */
 export const primaryCta = { label: "Start a Project", href: "/#contact" } as const;
