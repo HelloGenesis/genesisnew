@@ -80,7 +80,21 @@ export function ProofBar({ className }: { className?: string }) {
                 <div
                   key={stat.label}
                   className={cn(
-                    "flex items-center gap-4 px-1",
+                    "group/stat flex items-center gap-4 px-1",
+                    /*
+                      HOVER, AND IT IS THE HIGHLIGHT MOVING RATHER THAN A NEW
+                      EFFECT. Genesis asked for "hover features interaction
+                      wale" on this bar, and the cheapest honest answer was
+                      already sitting in it: the first cell wears the brand
+                      treatment, so pointing at any cell gives that cell the
+                      same treatment. Nothing new is invented, and a reader
+                      learns what the accent means by moving the pointer.
+
+                      The lift is 2px. A figures bar is furniture, not a
+                      control, and anything further reads as a card asking to
+                      be clicked — which it is not.
+                    */
+                    "transition-transform duration-300 ease-out motion-safe:hover:-translate-y-0.5",
                     /*
                       The rules divide the row only where the row IS a row.
                       Two-up on a phone, every cell would need a rule on a
@@ -93,9 +107,23 @@ export function ProofBar({ className }: { className?: string }) {
                   <span
                     className={cn(
                       "grid size-10 shrink-0 place-items-center rounded-card border",
+                      "transition-colors duration-300 ease-out",
                       highlight
                         ? "border-brand/35 bg-brand/10 text-brand-ink"
-                        : "border-white/12 bg-white/5 text-bone",
+                        : [
+                            "border-white/12 bg-white/5 text-bone",
+                            /*
+                              The resting cells take the accent on approach.
+                              Scoped with `group/stat` rather than a bare
+                              `group` because this bar sits inside sections
+                              that have groups of their own — an unnamed one
+                              would fire on whichever ancestor happened to be
+                              nearest.
+                            */
+                            "group-hover/stat:border-brand/35",
+                            "group-hover/stat:bg-brand/10",
+                            "group-hover/stat:text-brand-ink",
+                          ],
                     )}
                   >
                     <Icon className="size-5" aria-hidden />
@@ -119,7 +147,7 @@ export function ProofBar({ className }: { className?: string }) {
                     <span className="block text-h3 font-medium leading-none tracking-tight text-bone">
                       {stat.value}
                     </span>
-                    <span className="mt-2 block text-small leading-tight text-ash">
+                    <span className="mt-2 block text-small leading-tight text-ash transition-colors duration-300 ease-out group-hover/stat:text-bone">
                       {stat.label}
                     </span>
                   </span>

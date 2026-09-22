@@ -5,6 +5,9 @@ import { useRef } from "react";
 import { Reveal } from "@/components/genesis/reveal";
 import { studios } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
+import Link from "next/link";
+
+import { caseStudyPathForClip } from "@/lib/case-study-pages";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { useInViewPlayback } from "@/components/genesis/use-in-view-playback";
 import { cn } from "@/lib/utils";
@@ -309,7 +312,23 @@ export function StudiosPipeline() {
                   alignment with a card whose height changed.
                 */}
                 <div className="relative mt-3 flex items-end md:mt-0">
-                  <div
+                  {/*
+                    THE CARD OPENS ITS STUDY, where one is written. Genesis:
+                    "genesis studios me bhi clicking the videos shd open its
+                    case study." The lookup runs clip -> work -> study and
+                    returns nothing for a clip with no published write-up, so
+                    a stage whose footage has no story behind it renders as
+                    the plain frame it always was rather than as a link to
+                    somewhere invented. Two of the five have studies today;
+                    the rest become links the moment one is written, with no
+                    change here.
+
+                    `CardFrame` is what keeps that from being an if-statement
+                    around forty lines of styling — same border, same glow,
+                    same box, different element.
+                  */}
+                  <CardFrame
+                    href={caseStudyPathForClip(CLIPS[index])}
                     className="w-full overflow-hidden rounded-2xl border bg-ink"
                     style={{
                       borderColor: accent(s * 0.55),
@@ -321,7 +340,7 @@ export function StudiosPipeline() {
                       label={stage.name}
                       aspect={SHAPE[index].aspect}
                     />
-                  </div>
+                  </CardFrame>
 
                   {index < stages.length - 1 && (
                     <span
@@ -454,5 +473,53 @@ function StageClip({
       */
       className={cn("w-full object-cover", aspect, "md:max-h-[32vh]")}
     />
+  );
+}
+
+/**
+ * A stage card's frame: a link to its case study, or a plain box.
+ *
+ * ONE SET OF STYLES, TWO ELEMENTS. The border colour, the glow and the
+ * rounding are per-stage values computed from that stage's position in the
+ * run, so branching at the call site would mean writing them twice and
+ * keeping them in step by hand. This branches on the element and nothing
+ * else.
+ *
+ * THE HOVER ONLY EXISTS ON THE LINK, which is the point: a card that lifts
+ * when you point at it has promised a click, and three of the five stages
+ * have no study to open. A reader should be able to tell which is which
+ * without clicking to find out.
+ */
+function CardFrame({
+  href,
+  className,
+  style,
+  children,
+}: {
+  href?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  if (!href) {
+    return (
+      <div className={className} style={style}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      className={cn(
+        className,
+        "group/stage block outline-none transition-transform duration-300 ease-out",
+        "motion-safe:hover:-translate-y-1",
+        "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+      )}
+      style={style}
+    >
+      {children}
+    </Link>
   );
 }

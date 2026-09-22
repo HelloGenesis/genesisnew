@@ -128,16 +128,25 @@ const SETTLE_RAMP = 2600;
  * below is sized against. Push the amplitude up without shrinking the radius
  * and the crests are simply cut off by the edge of the canvas.
  *
- * DOWN FROM 0.17 AT GENESIS'S REQUEST — "reduce the wobble of the brain". At
- * that amplitude the swells were deep enough to be read as the outline
- * moving rather than as light crossing a surface. The pointer lean came down
- * with it, from 0.3/0.2 to 0.2/0.13, because a sphere that leans a third of a
- * radian at the cursor is the other half of what "wobble" describes; and the
- * noise term, which is the one that bends the silhouette, went 0.1 to 0.06.
+ * DOWN FROM 0.17, THEN FROM 0.095, BOTH TIMES AT GENESIS'S REQUEST. The first
+ * cut answered "reduce the wobble of the brain"; the second answers "bohot
+ * zyada hi wobble ho raha hai, thoda circle maintain kare" — it should hold
+ * its circle. The pointer lean came down with the first cut, from 0.3/0.2 to
+ * 0.2/0.13, because a sphere that leans a third of a radian at the cursor is
+ * the other half of what "wobble" describes.
+ *
+ * WHY THE SPHERE DOES NOT GET SMALLER WHEN THIS DOES, which looks like it
+ * should follow and does not. A crest is a displacement either side of the
+ * surface and it averages to zero, so the silhouette a reader actually reads
+ * sits at the projected radius whatever the amplitude is. CREST only sets how
+ * far the extremes travel from it. Cutting it therefore buys headroom against
+ * the canvas edge and changes nothing about how big the orb looks, which is
+ * why `radius` is left where it is.
+ *
  * The wave is still there. It is weather on the surface now, not motion of
  * the whole body.
  */
-const CREST = 0.095;
+const CREST = 0.055;
 
 /**
  * THE BREATH — a slow swell of the whole sphere, on its own cycle.
@@ -201,11 +210,22 @@ const WAVES = [
 ] as const;
 
 /**
- * A little noise on top, so the interference is not perfectly regular. Kept
- * small deliberately: this is the term that bends the outline, and it is the
- * reason the first version lost its shape.
+ * A little noise on top, so the interference is not perfectly regular.
+ *
+ * THIS IS THE TERM THAT BENDS THE OUTLINE, and it is the reason the first
+ * version lost its shape. The three WAVES above are smooth, low-order
+ * functions of position: they travel over the sphere and leave its silhouette
+ * broadly round. Noise does not — it is uncorrelated between neighbouring
+ * points, so it is what turns a circle into a lumpy one.
+ *
+ * SO IT IS THE FIRST THING TO CUT when Genesis asks the orb to hold its
+ * circle, and it has come down harder than CREST did: 0.1 to 0.06 on the
+ * first pass, and 0.06 to 0.032 on this one. Halving it roughly halves the
+ * raggedness of the outline while leaving the travelling swells, which are
+ * the part that makes the surface read as alive rather than as a printed
+ * texture.
  */
-const NOISE_WEIGHT = 0.06;
+const NOISE_WEIGHT = 0.032;
 const FIELD_SCALE = 0.95;
 const FIELD_SPEED = 0.1;
 

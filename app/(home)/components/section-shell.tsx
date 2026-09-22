@@ -31,6 +31,7 @@ export function SectionShell({
   className,
   contentClassName,
   bodyClassName,
+  headingClassName,
   taglineClassName,
 }: {
   id?: string;
@@ -67,6 +68,19 @@ export function SectionShell({
   contentClassName?: string;
   /** Extra classes on the body paragraph's wrapper. The client wall hides it on phones. */
   bodyClassName?: string;
+  /**
+   * Overrides the section heading's own classes — in practice, its size.
+   *
+   * THE DEFAULT IS THE PAGE'S LOUDEST TYPE and not every section wants it. It
+   * is right for a section whose heading is the argument (Work that moved a
+   * number) and wrong for one whose heading is a caption on something else:
+   * the client wall's job is the marks, and at the same size as every other
+   * h2 its line was competing with the logos underneath it.
+   *
+   * Appended last so tailwind-merge resolves it over the defaults rather than
+   * beside them.
+   */
+  headingClassName?: string;
   /** Passed to the division lockup's tagline. Brand & Design hides it. */
   taglineClassName?: string;
 }) {
@@ -164,6 +178,7 @@ export function SectionShell({
                   className={cn(
                     "mt-6 text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone",
                     "sm:text-h1 lg:text-h1",
+                    headingClassName,
                   )}
                 >
                   {heading}

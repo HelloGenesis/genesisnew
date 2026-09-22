@@ -123,6 +123,14 @@ export function ClientLogos() {
       label={clients.label}
       heading={clients.heading}
       headingAccent={clients.headingAccent}
+      /*
+        A STEP DOWN FROM THE PAGE'S SECTION SIZE. This heading is a caption on
+        the wall beneath it, not an argument of its own — and at the default
+        h1 it was the largest thing on the screen, competing with the thirty
+        marks it is meant to introduce. One step smaller and the logos are the
+        loudest thing in their own section again.
+      */
+      headingClassName="text-h3 sm:text-h2 lg:text-h2"
       /* No standfirst: Genesis took the "Fifteen brands…" line off at every
          width. The marks make the point. */
       tone="brand"

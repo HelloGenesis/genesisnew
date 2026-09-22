@@ -90,37 +90,51 @@ export function Services() {
 
       <div className="relative z-[2] mx-auto w-full max-w-7xl px-6">
         {/*
-          ONE H1, AND IT IS VISIBLE AGAIN. The page needs exactly one
-          top-level heading, and for the round this section had no header it
-          was carried by an sr-only line — correct, and a tell that the
-          visible page had stopped saying what it was. The heading below is
-          that same claim, on screen.
+          ONE LINE OVER THE ORB, NOT TWO. Genesis has taken "Four divisions.
+          One creative system." off at their own request — the four names
+          around the sphere already say it, in pictures, and a heading
+          restating the diagram directly above the diagram is the stutter this
+          page keeps having to remove.
 
-          THE WORDS PEOPLE SEARCH GO IN THE SUB-LINE, not the heading. "Four
-          divisions. One creative system." is the design's idea and nobody's
-          query; "creators, content, AI, technology and design" is what a
-          brand actually types. Both are in the h1's own block, so the pair
-          reads as one statement to a crawler as well as to a reader.
+          WHAT STAYS IS THE ONE A CRAWLER AND A STRANGER BOTH NEED. "We help
+          brands grow through creators, content, AI, technology and design" is
+          the plain-English positioning, and it is what a brand actually types
+          into a search box — where "one creative system" is the design's own
+          idea and nobody's query.
+
+          SO THIS LINE IS THE H1 NOW. The page needs exactly one top-level
+          heading; deleting the visible one and leaving nothing would put the
+          homepage back to having none, which is a bug this file has already
+          fixed twice. Promoting the survivor costs no layout and keeps the
+          document structure honest.
+
+          IT IS SET AT BODY SIZE ON PURPOSE. An h1 is a role, not a type
+          scale, and this one sits above the composition that is meant to be
+          the hero — at heading size it would take the orb's job. Slightly up
+          from the old sub-line, which was sized to sit under something.
         */}
-        <div className="text-center">
-          <h1 className="text-balance text-h3 font-normal leading-[1.08] tracking-tight text-bone sm:text-h2">
-            {services.heading}{" "}
-            <span className="font-serif font-normal italic text-brand-ink">
-              {services.headingAccent}
-            </span>
-          </h1>
-          {/*
-            LEGIBLE, NOT DECORATIVE. Genesis flagged the small descriptions on
-            this section as too faint in the light theme specifically. This
-            one is --ink-strong at 80% rather than the --ash token the page's
-            standfirsts use, which on paper measures better than 7:1.
-          */}
-          <p className="mx-auto mt-3 max-w-xl text-balance text-small leading-relaxed text-bone/80 sm:mt-4 sm:text-body">
-            {services.body}
-          </p>
-        </div>
-
         <DivisionBoard />
+
+        {/*
+          THE LINE SITS UNDER THE COMPOSITION, NOT OVER IT — "sabse pehle orb
+          aur four verticals".
+
+          It was above, which meant the first thing on the page was a sentence
+          and the picture the page is built around came second. Genesis's
+          order puts the diagram first and the words under it as the caption:
+          you see one body with four things in orbit, and then you read what
+          that is. A visitor who understands the picture never has to read the
+          line at all, which is the whole argument for having the picture.
+
+          IT IS STILL THE H1. A heading below its content is unusual to write
+          and perfectly ordinary to read — the document needs exactly one
+          top-level heading and this is the only text in the section, so
+          demoting it would leave the homepage with none. Heading order in the
+          DOM is about structure, not about vertical position.
+        */}
+        <h1 className="mx-auto mt-10 max-w-2xl text-balance text-center text-body font-normal leading-relaxed text-bone/85 sm:mt-12 sm:text-lead">
+          {services.body}
+        </h1>
       </div>
     </section>
   );

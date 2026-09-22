@@ -272,7 +272,7 @@ function WideDiagram({ className }: { className?: string }) {
           const d = `M ${side.x} ${y} C ${side.x + 120 * side.dir} ${y}, ${arrive - 120 * side.dir} ${hub.y}, ${arrive} ${hub.y}`;
           const stroke = side.dir === 1 ? "url(#gm-ai-line)" : "url(#gm-ai-line-flip)";
           return (
-            <g key={app.name}>
+            <g key={app.name} className="gm-app">
               {/* The base: always whole, always visible. */}
               <path d={d} fill="none" stroke={stroke} strokeWidth="1.25" opacity="0.4" />
               {/* And the highlight travelling along it. */}
@@ -448,7 +448,7 @@ function TallDiagram({ className }: { className?: string }) {
         const box = logoBox(app, markSize);
         const centre = side === -1 ? x - 12 - slot / 2 : x + 12 + slot / 2;
         return (
-          <g key={app.name}>
+          <g key={app.name} className="gm-app">
             <path d={d} fill="none" stroke={stroke} strokeWidth="1.4" opacity="0.6" />
             <path
               d={d}

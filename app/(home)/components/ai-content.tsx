@@ -264,10 +264,6 @@ export function AiContent() {
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
               {aiContent.automation.body}
             </p>
-            <p className="mx-auto mt-3 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:text-lead">
-              {aiContent.automation.kicker}
-            </p>
-
             {/*
               THE DIAGRAM IS CAPPED NARROWER THAN THE CARD, at 40rem rather
               than 52. An SVG scales with its width, so every rem of measure
@@ -281,7 +277,23 @@ export function AiContent() {
               <AutomationSources />
             </figure>
 
-            <AutomationCtas className="mt-6 sm:mt-10" />
+            {/*
+              THE THREE-BEAT CLOSE, MOVED UNDER THE PICTURE.
+
+              It sat directly below the paragraph, which made the block open
+              with three pieces of prose in a row before anything was shown —
+              and put the section's most quotable line where a reader was
+              still being told what the service is. Genesis asked for it
+              between the diagram and the buttons, which is the right slot for
+              what it actually is: not an introduction but a CONCLUSION. The
+              diagram demonstrates the workflow, this says what the workflow
+              buys, and the buttons ask for the meeting.
+            */}
+            <p className="mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead">
+              {aiContent.automation.kicker}
+            </p>
+
+            <AutomationCtas className="mt-6 sm:mt-8" />
           </div>
         </div>
       </Reveal>

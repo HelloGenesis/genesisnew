@@ -1,9 +1,9 @@
-import { caseStudyList, disciplines } from "./case-studies";
+import { caseStudyList, disciplines, isPublished } from "./case-studies";
 import { caseStudyCopy, type CaseStudyCopy } from "./case-study-copy";
 import { clipRatio } from "./clip-shape";
 import { filmUrl } from "./films";
 import { mediaUrl } from "./media-url";
-import { reelClip, reelPoster } from "./work";
+import { findWork, reelClip, reelPoster, type ReelId } from "./work";
 
 /**
  * ONE PAGE PER WRITTEN STUDY, at /case-studies/<slug>.
@@ -141,4 +141,49 @@ export function relatedStudies(page: CaseStudyPage, count = 3): CaseStudyPage[] 
       (other) => other.slug !== page.slug && other.copy.division === page.copy.division,
     )
     .slice(0, count);
+}
+
+/**
+ * The published study a given CLIP belongs to, as a path under /case-studies.
+ *
+ * WHY THIS IS A SEARCH AND NOT A LOOKUP. A clip id addresses a file; a study
+ * names the WORK it covers, and a piece of work owns several clips. So the
+ * link between a video on screen and the story behind it runs
+ * clip -> work item -> study, and no one of those three holds the whole
+ * chain. Two ways in, in order of confidence:
+ *
+ *   ITS OWN HERO. A study that names this exact clip as its `heroClip` is the
+ *     strongest possible match — that is the film the study leads with.
+ *   ITS PARENT ENGAGEMENT. Otherwise, find the catalogue piece whose `reel`
+ *     contains this clip and return a study that covers that piece. Fifteen
+ *     Aditya Birla cuts belong to one engagement, and a reader clicking the
+ *     ninth of them means the campaign, not the file.
+ *
+ * IT LIVES HERE AND NOT IN lib/case-studies, WHICH IS A CYCLE AND NOT A
+ * preference. It needs `caseStudyPath` to turn a study into a URL, and that
+ * lives in this file — which already imports `caseStudyList` from
+ * case-studies. Putting the function on the other side of that edge made the
+ * two modules import each other, and the build failed the way a circular
+ * import always does: "Cannot access 'i' before initialization", from a
+ * route that touches neither function. The rule is one-directional —
+ * case-studies holds the DATA, this file holds everything that needs a page.
+ *
+ * UNDEFINED WHERE THERE IS NO STUDY, which is the common case and must stay
+ * cheap to handle. Genesis asked that clicking a video open its case study;
+ * where none is written, there is nothing to open, and a caller is expected
+ * to render something unclickable rather than invent a destination. It also
+ * returns undefined for a study that exists but is not PUBLISHED — a link to
+ * a client's name and an empty page is worse than no link.
+ */
+export function caseStudyPathForClip(id: ReelId | undefined): string | undefined {
+  if (id === undefined) return undefined;
+
+  const direct = caseStudyList.find((study) => study.heroClip === id);
+  const viaWork = caseStudyList.find((study) =>
+    study.work?.some((slug) => findWork(slug)?.reel?.includes(id)),
+  );
+
+  const study = direct ?? viaWork;
+  if (!study || !isPublished(study)) return undefined;
+  return caseStudyPath(study.copy);
 }

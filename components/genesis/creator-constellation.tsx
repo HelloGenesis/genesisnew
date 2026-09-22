@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 import { animate, motion, useAnimationFrame, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -46,6 +47,22 @@ export type Creator = {
    * clicks on their image they can be redirected to their instagram".
    */
   instagram?: string;
+  /**
+   * The slug of the case study this creator appears in, under /case-studies.
+   *
+   * IT WINS OVER `instagram`, which is Genesis's correction: "right now
+   * clicking any of the profile opens their instagram — I want ki jab click
+   * kare influencer pe unse juda hua case study khule." A face on this ring
+   * is evidence of work, and the work is the thing a visitor came to see;
+   * their Instagram is a detour off the site in the middle of the pitch.
+   *
+   * A CREATOR WITHOUT ONE STILL OPENS INSTAGRAM. Only three of the eleven are
+   * mapped so far (see lib/home-content), so falling through preserves the
+   * behaviour every other card already had rather than making eight of them
+   * dead. It also means adding a study is one line of data, here and nowhere
+   * else.
+   */
+  caseStudy?: string;
   /** Portrait cropped from the mockup; a warm gradient stands in without one. */
   image?: string;
   /** The one large, near-centre card. */
@@ -364,18 +381,27 @@ function OrbitCard({
       )}
     >
       {/*
-        THE WHOLE CARD IS THE LINK, which is Genesis's instruction when they
-        supplied the roster: a click on the photograph opens that creator's
-        Instagram. A plain <a> rather than next/link because it leaves the
-        site, with the usual pair of rel tokens so the new tab cannot reach
-        back into this one, and target=_blank so a reader who follows one
-        does not lose their place on the page.
+        THE WHOLE CARD IS THE LINK, and where it goes has changed. It opened
+        the creator's Instagram; Genesis asked for it to open the case study
+        that creator worked on, and to keep Instagram for the ones that have
+        no study yet. See `caseStudy` on the type.
 
-        Anyone without a handle falls back to a div, so a roster that is only
-        half supplied still renders rather than linking nowhere.
+        A STUDY IS AN INTERNAL PAGE AND INSTAGRAM IS NOT, which is why
+        CardShell has to decide between two kinds of anchor rather than just
+        swapping an href. A study opens in the same tab, like every other link
+        on this site; Instagram opens in its own with the usual rel tokens, so
+        a reader who follows one does not lose their place on the page.
+
+        Anyone with neither falls back to a div, so a roster that is only half
+        supplied still renders rather than linking nowhere.
       */}
       <CardShell
-        href={creator.instagram}
+        href={
+          creator.caseStudy
+            ? `/case-studies/${creator.caseStudy}`
+            : creator.instagram
+        }
+        external={!creator.caseStudy}
         /*
           NO HOVER RING. A yellow outline snapped around whichever card the
           pointer crossed, and on a ring that is already drifting under the
@@ -426,8 +452,21 @@ function OrbitCard({
           links with no name at all, announced as bare links and followed by
           crawlers with no anchor text. In here it IS the link's name.
         */}
+        {/*
+          The link's accessible name has to say where it GOES, not only who is
+          in the picture — "Vikrant Massey" and "Vikrant Massey, on Instagram"
+          are different promises, and now a third one is possible.
+        */}
         <span className="sr-only">
-          {[creator.label, creator.followers, creator.instagram ? "on Instagram" : ""]
+          {[
+            creator.label,
+            creator.followers,
+            creator.caseStudy
+              ? "view the case study"
+              : creator.instagram
+                ? "on Instagram"
+                : "",
+          ]
             .filter(Boolean)
             .join(", ")}
         </span>
@@ -486,14 +525,28 @@ function PlatformBadge({
  */
 function CardShell({
   href,
+  external = true,
   className,
   children,
 }: {
   href?: string;
+  /**
+   * Whether the destination leaves the site. An external card opens a new tab
+   * with the rel tokens that stop it reaching back into this one; an internal
+   * one navigates in place, like every other link here.
+   */
+  external?: boolean;
   className?: string;
   children: React.ReactNode;
 }) {
   if (!href) return <div className={className}>{children}</div>;
+  if (!external) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
       {children}

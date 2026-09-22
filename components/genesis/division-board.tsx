@@ -29,8 +29,9 @@ import { cn } from "@/lib/utils";
  *     lift of 6px TOWARD THE SPHERE rather than straight up, which is what
  *     turns four things arranged around a centre into four things attached to
  *     it.
- *   ITS DESCRIPTION brightens and rises. It is legible at rest (see the note
- *     on the tagline classes) and takes full contrast on approach.
+ *   ITS DESCRIPTION fades in and rises. It is hidden at rest on any device
+ *     that can hover, and permanently visible on one that cannot — see the
+ *     note on the tagline classes.
  *   THE OTHER THREE drop back to 45%. This is the part that actually
  *     answers "I am currently interacting with AI Lab" — a highlight with no
  *     contrast against its neighbours is just a highlight.
@@ -196,7 +197,13 @@ export function DivisionBoard() {
         transform would be dropped until the first pointer move.
       */
       style={{ "--par-x": 0, "--par-y": 0 } as React.CSSProperties}
-      className="mt-8 grid grid-cols-2 items-center gap-x-5 gap-y-6 sm:mt-10 lg:grid-cols-[1fr_minmax(0,20rem)_1fr] lg:grid-rows-2 lg:gap-x-8 lg:gap-y-12 xl:grid-cols-[1fr_minmax(0,26rem)_1fr] xl:gap-x-12"
+      /*
+        NO TOP MARGIN. This board is the first thing in its section now — the
+        positioning line moved underneath it — so the space above it is the
+        section's own padding. The margin was here to clear a heading that is
+        no longer above it.
+      */
+      className="grid grid-cols-2 items-center gap-x-5 gap-y-6 lg:grid-cols-[1fr_minmax(0,20rem)_1fr] lg:grid-rows-2 lg:gap-x-8 lg:gap-y-12 xl:grid-cols-[1fr_minmax(0,26rem)_1fr] xl:gap-x-12"
     >
       <motion.div
         initial={still ? false : { opacity: 0, scale: 0.94 }}
@@ -336,28 +343,38 @@ export function DivisionBoard() {
                 */
                 nameOnly
                 /*
-                  READABLE AT REST, FULL ON APPROACH — and that is a change of
-                  mind Genesis made explicitly.
+                  HIDDEN UNTIL POINTED AT — back to what it was, at Genesis's
+                  instruction ("sirf hover hone pe dikhe, jaise pehle tha").
 
-                  It used to be opacity:0 until hovered. The instruction now
-                  is that a visitor should understand the four divisions
+                  IT WAS ALWAYS-ON FOR A ROUND, and the reasoning is worth
+                  keeping because it was not wrong, only outvoted: the written
+                  feedback asked that a visitor understand the four divisions
                   "within the first few seconds without having to scroll
-                  further", which a hidden subtitle cannot do, and separately
-                  that the descriptions are "too faint, especially in the
-                  white version". So the line is always there at 70%, and
-                  pointing at it takes it to full and lifts it 4px — "fade in
-                  + move slightly upward instead of simply appearing".
+                  further", which a hidden subtitle cannot do. Living with it,
+                  Genesis's read is that four permanent captions crowd the
+                  composition — the board is a diagram, and four lines of grey
+                  type under four gradient names turns it into a menu. The
+                  heading above the orb now carries the first-few-seconds job
+                  on its own.
 
-                  IT STILL RESERVES ITS SPACE. Opacity and transform only,
-                  never mounting, so moving between the four names cannot push
-                  the other three around. The min-height keeps the four marks
-                  on one line as the taglines wrap to one line or two at
-                  different widths.
+                  IT STILL FADES IN AND RISES rather than simply appearing,
+                  which was a separate instruction and survives this one: the
+                  line sits 4px low at rest and settles as it fades up.
 
-                  ON THE PHONE TOO, at 11px. It was `hidden lg:block`, which
-                  meant the one device where the descriptions matter most —
-                  no hover, no second chance — was the one that never got
-                  them.
+                  ONLY WHERE THERE IS A HOVER TO GIVE. `@media (hover: hover)`
+                  is what hides it — so a touch screen, which can never
+                  produce the hover this is gated on, shows the line
+                  permanently instead of hiding it forever. That is the one
+                  part that is deliberately NOT "jaise pehle tha": the old
+                  version was `hidden lg:block`, so on a phone the
+                  descriptions did not exist at all, and "show it on hover" is
+                  not an instruction a device without hover can carry out.
+
+                  IT RESERVES ITS SPACE EITHER WAY. Opacity and transform
+                  only, never mounting, so moving between the four names
+                  cannot push the other three around. The min-height keeps the
+                  four marks on one line as the taglines wrap to one line or
+                  two at different widths.
                 */
                 taglineClassName={cn(
                   /*
@@ -370,9 +387,17 @@ export function DivisionBoard() {
                     two halves of the board printed straight through each
                     other. It wraps.
                   */
-                  "mt-2 block min-h-[2.7em] whitespace-normal text-balance text-[0.6875rem] leading-[1.4] text-bone/70 sm:mt-3 sm:text-small",
+                  "mt-2 block min-h-[2.7em] whitespace-normal text-balance text-[0.6875rem] leading-[1.4] text-bone sm:mt-3 sm:text-small",
+                  /*
+                    The resting state, on pointer devices only: invisible and
+                    sitting 4px low, so revealing it is a fade AND a rise. A
+                    touch screen matches neither selector and keeps the
+                    defaults above, which is the line permanently visible.
+                  */
+                  "[@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",
                   "transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none",
-                  "group-hover:translate-y-[-4px] group-hover:text-bone group-focus-visible:translate-y-[-4px] group-focus-visible:text-bone",
+                  "group-hover:translate-y-0 group-hover:opacity-100",
+                  "group-focus-visible:translate-y-0 group-focus-visible:opacity-100",
                 )}
                 /*
                   ABOVE THE FOLD, SO NOT LAZY. These four names are the

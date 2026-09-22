@@ -156,6 +156,57 @@ export function whatsappLink(message: string = siteConfig.whatsappMessage) {
 }
 
 /**
+ * WHAT A CONTEXTUAL CTA SAYS WHEN IT OPENS WHATSAPP.
+ *
+ * Genesis: "for every contact us type button open whatsapp. Jisko ek main
+ * form bharna hoga woh bharega, par waise me jo bhi hai direct whatsapp
+ * karo." So the buttons scattered through the sections stop opening a popup
+ * form and open a chat instead; the long enquiry form at the foot of the page
+ * stays exactly where it is for anyone who wants to fill one in.
+ *
+ * WHY IT IS A PREFIX MATCH ON THE CTA'S OWN NAME. Every one of those buttons
+ * already carries a source string — "influence:plan-a-campaign",
+ * "brand-design:build-a-brand", "case-study:<slug>" — which existed so the
+ * form submission could record which CTA produced it. That string is exactly
+ * the context a first WhatsApp message wants, and it is already threaded to
+ * the one place that handles these clicks, so nothing new has to be wired:
+ * the part before the colon names the division and picks the sentence.
+ *
+ * THE MESSAGE NAMES THE DIVISION AND NOTHING ELSE. It is written into the
+ * visitor's own compose box, so a wrong guess is worse than a vague one —
+ * "I'd like to talk about an influencer campaign" is true of every button
+ * under Influence, where anything more specific would be putting words in
+ * someone's mouth about a page they may have only scrolled past.
+ */
+const CTA_MESSAGES: Record<string, string> = {
+  influence:
+    "Hi Genesis! I'd like to talk about an influencer campaign.",
+  studios:
+    "Hi Genesis! I'd like to talk about content production with Genesis Studios.",
+  "ai-labs": "Hi Genesis! I'd like to talk about AI content and automation.",
+  "ai-lab": "Hi Genesis! I'd like to talk about AI content and automation.",
+  "brand-design": "Hi Genesis! I'd like to talk about branding and design.",
+  "case-study":
+    "Hi Genesis! I was reading one of your case studies and I'd like to talk about a project.",
+  "case-studies":
+    "Hi Genesis! I was reading your case studies and I'd like to talk about a project.",
+};
+
+/**
+ * The chat link for a contextual CTA, or undefined when there is no number.
+ *
+ * UNDEFINED IS A REAL ANSWER and every caller has to handle it — the same
+ * switch the floating button and the footer's avatar link already honour.
+ * Emptying `whatsapp` in siteConfig puts every one of these buttons back to
+ * opening the enquiry form rather than leaving them opening a chat with
+ * nobody.
+ */
+export function ctaWhatsappLink(source?: string | null) {
+  const key = (source ?? "").split(":")[0];
+  return whatsappLink(CTA_MESSAGES[key] ?? siteConfig.whatsappMessage);
+}
+
+/**
  * Primary navigation — four items, and that is the whole bar.
  *
  * THE FOUR VERTICALS ARE OFF IT, at Genesis's instruction. Influence,

@@ -705,11 +705,30 @@ export const influencer = {
     "From creator discovery to campaign delivery, we connect brands with creators who fit the audience, the idea and the platform: from niche communities to celebrity partnerships.",
   databaseStat: {
     ...proof.creatorDatabase,
-    /* NO LABEL. Genesis asked for the "Influencer database" caption gone
-       from this card on both mobile and desktop; the figure and the line
-       under it already say what it is. */
-    label: "",
-    description: "A curated network of creators across every niche and platform.",
+    /*
+      THE LABEL IS BACK, AND IT IS A DIFFERENT LABEL.
+
+      It was "Influencer database" and Genesis had it removed on the grounds
+      that the figure and the line under it already said what it was. Their
+      read now is that "1,00,000+" alone is a number with no noun — the
+      description under it starts "A curated network of creators", so a
+      reader has to get to the second line before they know what has been
+      counted.
+
+      "Influencer network" rather than "Influencer database": the same thing,
+      in the word the rest of the site uses for it, and the one Genesis wrote
+      this time.
+    */
+    label: "Influencer network",
+    /*
+      "NETWORK" COMES OUT OF THIS LINE because the label above it now says it.
+      With both, the card read "1,00,000+ Influencer network / A curated
+      network of creators across every niche and platform" — the same noun
+      twice in two lines, which is the stutter this codebase keeps having to
+      fix. What the description is actually for is the RANGE, so that is all
+      it says now.
+    */
+    description: "Curated across every niche and every platform.",
   },
   /**
    * These four are read off Genesis's own mockup (spec page 7), which states
@@ -746,12 +765,39 @@ export const influencer = {
    * Photographs live in public/creators/influencers, resized from the files
    * Genesis supplied.
    */
+  /*
+   * `caseStudy` IS THE STUDY THIS CREATOR ACTUALLY APPEARS IN, as a slug
+   * under /case-studies.
+   *
+   * WHY IT EXISTS. Genesis asked that clicking a face in the constellation
+   * open the work that creator did rather than their Instagram — "jab click
+   * kare influencer pe unse juda hua case study khule". A creator without one
+   * still falls through to Instagram, which is what every card did before;
+   * this is an upgrade per creator, not a change of behaviour for all of
+   * them.
+   *
+   * ONLY THREE ARE SET, AND EVERY ONE IS READ RATHER THAN INFERRED. A wrong
+   * link here is a claim that a named person worked on a named brand's
+   * campaign, so the bar is that the connection is written down somewhere:
+   *
+   *   VIKRANT MASSEY and KAMYA SIDANA are named in the case-study copy
+   *     itself — "BTS Content Featuring Vikrant Massey", "With Yoga Creator
+   *     Kamya Sidana". Certain.
+   *   AAKASH SALUNKE is read off Genesis's own shorthand for the slider's
+   *     running order, which calls the third card "Akash's #JumpForHealth".
+   *     The study's own copy does not name him, so this one is Genesis's
+   *     attribution rather than the document's. Correct it here if it is the
+   *     wrong Akash.
+   *
+   * TODO(content): the other eight. Name the campaign each of them worked on
+   * and it becomes one line each — nothing else has to change.
+   */
   creators: [
-    { id: "vikrant-massey", label: "Vikrant Massey", name: "Vikrant Massey", image: "/creators/influencers/vikrant-massey.jpg", instagram: "https://www.instagram.com/vikrantmassey/", feature: true },
+    { id: "vikrant-massey", label: "Vikrant Massey", name: "Vikrant Massey", image: "/creators/influencers/vikrant-massey.jpg", instagram: "https://www.instagram.com/vikrantmassey/", caseStudy: "activ-one-bts-with-vikrant-massey", feature: true },
     { id: "rashmi-rai", label: "Rashmi Rai", name: "Rashmi Rai", image: "/creators/influencers/rashmi-rai.jpg", instagram: "https://www.instagram.com/rashmiraiofficial/" },
     { id: "gunika-sethi", label: "Gunika Sethi", name: "Gunika Sethi", image: "/creators/influencers/gunika-sethi.jpg", instagram: "https://www.instagram.com/tryology_with_gunika/" },
-    { id: "kamya-sidana", label: "Kamya Sidana", name: "Kamya Sidana", image: "/creators/influencers/kamya-sidana.jpg", instagram: "https://www.instagram.com/yogawithkamya_/" },
-    { id: "aakash-salunke", label: "Aakash Salunke", name: "Aakash Salunke", image: "/creators/influencers/aakash-salunke.jpg", instagram: "https://www.instagram.com/aakash_itis/" },
+    { id: "kamya-sidana", label: "Kamya Sidana", name: "Kamya Sidana", image: "/creators/influencers/kamya-sidana.jpg", instagram: "https://www.instagram.com/yogawithkamya_/", caseStudy: "abhi-yogabae" },
+    { id: "aakash-salunke", label: "Aakash Salunke", name: "Aakash Salunke", image: "/creators/influencers/aakash-salunke.jpg", instagram: "https://www.instagram.com/aakash_itis/", caseStudy: "abhi-jump-for-health-2023" },
     { id: "lord-manish", label: "Lord Manish", name: "Lord Manish", image: "/creators/influencers/lord-manish.jpg", instagram: "https://www.instagram.com/lordmanish_/" },
     { id: "parvi-sharma", label: "Parvi Sharma", name: "Parvi Sharma", image: "/creators/influencers/parvi-sharma.jpg", instagram: "https://www.instagram.com/parviisharrma/" },
     { id: "vidhi-oswal", label: "Vidhi Oswal", name: "Vidhi Oswal", image: "/creators/influencers/vidhi-oswal.jpg", instagram: "https://www.instagram.com/vidhioswal_/" },

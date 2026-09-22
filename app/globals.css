@@ -1852,3 +1852,68 @@ body:has(main.scene-dark) header {
         --orb-bloom: 0;
     }
 }
+
+/* --- The automation board's tools answer the pointer ------------------------
+   Genesis: "make those logos interactive — u can add like hover feature of
+   something."
+
+   WHAT A HOVER SAYS HERE, and it is the one thing this picture is about: this
+   tool is connected to AI Lab. So pointing at a logo does not decorate the
+   logo — it lights the STRAND running from it to the node, which is the
+   sentence the diagram is making. The mark itself only comes up to full
+   strength and grows a little, as confirmation that the thing under the
+   cursor is what just changed.
+
+   TRANSFORMS INSIDE AN SVG NEED `transform-box`. By default a transform on an
+   SVG child is resolved against the VIEWPORT's origin, not the element's own
+   box, so `scale(1.12)` on a logo sitting 700 units to the right of the
+   origin throws it off the canvas rather than growing it in place.
+   `fill-box` plus a centre origin makes it behave the way it would in HTML.
+
+   NOT A CONTROL. There is no link behind these and the cursor is left alone —
+   a tool logo that highlights and then does nothing when clicked is a worse
+   experience than one that never invited the click. */
+.gm-app image {
+    transition:
+        transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 320ms ease-out;
+    transform-box: fill-box;
+    transform-origin: center;
+    opacity: 0.82;
+}
+
+.gm-app:hover image {
+    transform: scale(1.14);
+    opacity: 1;
+}
+
+/* The strand. `opacity` as a CSS property beats the `opacity="0.4"`
+   presentation attribute on the element, which is what lets the base path be
+   dimmed in the markup and lifted from here. */
+.gm-app path {
+    transition: opacity 320ms ease-out;
+}
+
+.gm-app:hover path {
+    opacity: 1;
+}
+
+/* And the node the strand leaves from. */
+.gm-app circle {
+    transition:
+        r 320ms cubic-bezier(0.22, 1, 0.36, 1),
+        fill 320ms ease-out;
+}
+
+.gm-app:hover circle {
+    r: 4.5;
+    fill: #ffc516;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gm-app image,
+    .gm-app path,
+    .gm-app circle {
+        transition: none;
+    }
+}

@@ -5,10 +5,29 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { GenesisForm } from "./genesis-form";
 import { FORMS } from "@/lib/forms";
+import { ctaWhatsappLink } from "@/lib/site-config";
 import { getLenis } from "./smooth-scroll";
 
 /**
- * The quick lead popup — form C.
+ * What a contextual CTA does — which is now open WhatsApp, and only falls
+ * back to being the quick lead popup.
+ *
+ * GENESIS'S INSTRUCTION: "for every contact us type button open whatsapp …
+ * jisko ek main form bharna hoga woh bharega, par waise me jo bhi hai direct
+ * whatsapp karo." A popup form is three fields and a submit between a warm
+ * lead and a conversation; a chat is one tap and lands in a thread somebody
+ * actually answers. The long enquiry form at the foot of the homepage is
+ * untouched, which is the "whoever needs to fill the form will" half.
+ *
+ * ONE EDIT, TWELVE BUTTONS, and that is the point of having done this with a
+ * delegated listener in the first place. Every contextual CTA on the site —
+ * Plan an Influencer Campaign, Build a brand, Contact Us on the case studies,
+ * the hero button on each division page — already routes through here. None
+ * of them needed touching to change where they go.
+ *
+ * THE POPUP IS STILL HERE, as the fallback when `siteConfig.whatsapp` is
+ * empty. That is the same switch the floating button honours: a button that
+ * opens a chat with nobody is worse than one that opens a form.
  *
  * OPENED BY A DATA ATTRIBUTE, not by a prop. Any control anywhere on the site
  * opts in by carrying `data-quick-contact` (optionally with a value naming the
@@ -41,8 +60,27 @@ export function QuickContact() {
       if (!(trigger instanceof HTMLElement)) return;
 
       event.preventDefault();
+      const name = trigger.dataset.quickContact || "cta";
+
+      /*
+        STRAIGHT TO THE CHAT, with the division already named in the compose
+        box — see ctaWhatsappLink, which reads the part of this CTA's name
+        before the colon.
+
+        `noopener` because a new tab handed a window.opener can navigate the
+        page that opened it. WhatsApp will not, and the tab is opened from a
+        string this code built rather than from anything a page supplied, so
+        neither half of that is a live risk here — it is set because the cost
+        is nothing and the habit is what stops the one case that matters.
+      */
+      const chat = ctaWhatsappLink(name);
+      if (chat) {
+        window.open(chat, "_blank", "noopener,noreferrer");
+        return;
+      }
+
       openerRef.current = trigger;
-      setSource(trigger.dataset.quickContact || "cta");
+      setSource(name);
     };
 
     document.addEventListener("click", onClick);

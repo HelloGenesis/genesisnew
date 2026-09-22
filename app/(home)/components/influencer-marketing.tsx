@@ -1,6 +1,8 @@
 import { Users } from "lucide-react";
 import Link from "next/link";
 
+import { LogoMarquee } from "@/components/genesis/logo-marquee";
+
 import { CreatorConstellation } from "@/components/genesis/creator-constellation";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
@@ -138,33 +140,68 @@ export function InfluencerMarketing() {
 
               A list, semantically, because that is what it is.
             */}
+            {/*
+              THE NICHES MOVE NOW, on the same marquee as the client wall and
+              the sector strip.
+
+              WHAT THEY WERE. A wrapping row of chips: one swipeable line on a
+              phone, and from `sm` up a block that wrapped. Eleven chips in a
+              column this narrow wrapped to three ragged rows, which is a
+              third of this section's left column spent on a list that is
+              meant to be scanned rather than read.
+
+              MOVING, IT IS ONE ROW AT EVERY WIDTH, and the chips pass a
+              reader rather than the reader hunting them. It also stops the
+              row's height depending on how many niches there are — a twelfth
+              costs horizontal distance instead of another line.
+
+              IT FADES AT BOTH ENDS, which is the other half of what Genesis
+              asked for here, and it is LogoMarquee's own mask doing it. That
+              matters more for chips than for the sector strip: a chip is a
+              drawn object with a border, so one clipped at the boundary reads
+              as a broken pill where a faded one reads as a row continuing.
+            */}
             <Reveal delay={0.06} className="order-2 min-w-0 lg:order-none">
-              <ul
+              <LogoMarquee
                 /*
-                  One swipeable line on a phone ("add scroller for this as well
-                  only on mobile"); from `sm` up it wraps as before.
+                  SLOWER THAN THE SECTOR STRIP'S 72s, because this rail is a
+                  fraction of its width — a marquee's apparent speed is its
+                  track length over its duration, so the same number here
+                  would move the chips visibly faster. Hovering stops it, which
+                  is what lets a brand actually look for their own category.
                 */
-                className="no-scrollbar -mx-6 flex gap-2 overflow-x-auto px-6 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
-              >
-                {influencer.niches.map((niche) => (
-                  <li
-                    key={niche}
-                    className="shrink-0 rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
+                speedSeconds={90}
+                gapClassName="gap-2"
+                fadePercent={8}
+                items={[
+                  ...influencer.niches.map((niche) => (
+                    <span
+                      key={niche}
+                      className="block whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
+                    >
+                      {niche}
+                    </span>
+                  )),
+                  /*
+                    The board's own "+56 More". Ten named against sixty-six
+                    covered is Genesis's figure from Genesis's artwork, and it
+                    is the whole point of listing categories at all — a brand
+                    whose own niche is not among the ten needs to be told the
+                    list is a sample, not the extent of it.
+
+                    It rides IN the loop rather than being pinned at the end,
+                    because a loop has no end: pinned outside the marquee it
+                    would sit still while the categories it qualifies travel
+                    past it.
+                  */
+                  <span
+                    key="more"
+                    className="block whitespace-nowrap rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-brand-ink"
                   >
-                    {niche}
-                  </li>
-                ))}
-                {/*
-                  The board's own "+56 More". Ten named against sixty-six
-                  covered is Genesis's figure from Genesis's artwork, and it
-                  is the whole point of listing categories at all — a brand
-                  whose own niche is not among the ten needs to be told the
-                  list is a sample, not the extent of it.
-                */}
-                <li className="shrink-0 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-brand-ink">
-                  +{influencer.moreNiches} more
-                </li>
-              </ul>
+                    +{influencer.moreNiches} more
+                  </span>,
+                ]}
+              />
             </Reveal>
 
             <Reveal delay={0.1} className="order-4 lg:order-none">
@@ -186,7 +223,7 @@ export function InfluencerMarketing() {
                   {influencer.databaseStat.value}
                 </span>{" "}
                 <span className="font-serif text-h3 italic text-brand-ink">
-                  influencers
+                  {influencer.databaseStat.label}
                 </span>
               </p>
             </Reveal>
@@ -204,8 +241,24 @@ export function InfluencerMarketing() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-h3 font-medium leading-none tracking-tight text-bone">
-                    {influencer.databaseStat.value}
+                  {/*
+                    THE FIGURE AND WHAT IT COUNTS, ON ONE LINE.
+
+                    It was the number alone. Genesis's note is "1,00,000+
+                    influencer network" — and the reason it needs saying is
+                    that a bare "1,00,000+" is a quantity with no noun, so a
+                    reader had to reach the second line before they knew what
+                    had been counted. The label is set in the same serif
+                    italic the mobile version already used for it, which is
+                    what keeps the two treatments one design.
+                  */}
+                  <p className="leading-none tracking-tight text-bone">
+                    <span className="text-h3 font-medium">
+                      {influencer.databaseStat.value}
+                    </span>{" "}
+                    <span className="font-serif text-lead italic text-brand-ink">
+                      {influencer.databaseStat.label}
+                    </span>
                   </p>
                   <p className="mt-2 text-small leading-relaxed text-ash">
                     {influencer.databaseStat.description}
@@ -238,9 +291,23 @@ export function InfluencerMarketing() {
               grid is now as tall as its text and the orbits stop being the
               reason the CTA is below the fold.
             */}
+            {/*
+              BIGGER, AT GENESIS'S REQUEST. The cap was 36rem, set when this
+              block was the tallest thing in the section and was deciding how
+              far Influence ran. Two things have changed since: the niches are
+              a single moving line rather than three wrapped rows, and the
+              figures bar has left this section entirely for the case studies.
+              Both came out of the column beside it, so the ring can take the
+              height back without pushing the CTAs below the fold.
+
+              44rem, not uncapped. The constellation is `aspect-[850/620]`, so
+              every rem of width is three quarters of a rem of height — left
+              to fill a 708px column it stood 516px tall and was once again
+              the thing setting the section's height rather than the copy.
+            */}
             <CreatorConstellation
               creators={influencer.creators.map((c) => ({ ...c }))}
-              className="lg:max-w-[36rem]"
+              className="lg:max-w-[44rem]"
             />
           </Reveal>
         </div>
