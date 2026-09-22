@@ -186,23 +186,17 @@ export function AiContent() {
                 enough to hold it with the turned ones tucked behind.
               */
               /*
-                SMALLER AND SHORTER THAN THE LAST PASS, because the corridor
-                MAGNIFIES its outermost cards rather than shrinking them —
-                they are the near ones. At 18vw the edge panels rendered
-                around 40% larger again and filled the viewport top to bottom,
-                which is what made the rail read as a wall pressed against the
-                glass instead of a run you are looking down. 12vw is the card
-                at the FAR end; the near ones arrive at roughly the size the
-                old centre card was.
+                THE CARD IS THE BIGGEST IT HAS BEEN, and it can be now that
+                nothing comes forward: the middle card renders at exactly this
+                width and every other one is smaller, so the number is a
+                ceiling rather than a starting point. The cylinder versions
+                had to be sized small because their edge panels were
+                magnified past it.
               */
-              "--warp-card": "clamp(7rem, 12vw, 11rem)",
+              "--warp-card": "clamp(8.5rem, 15vw, 14rem)",
               /*
-                THE FRAME IS SHORTER THAN THE NEAREST CARD, ON PURPOSE. The
-                corridor magnifies its outermost panels — measured, 280 points
-                against the far card's 179 — so a frame tall enough to contain
-                them would be mostly empty either side of the middle. Cutting
-                the near ones top and bottom is what the reference does too:
-                the walls run past the opening rather than ending inside it.
+                And the frame only has to hold the largest card plus a little
+                air, for the same reason.
               */
               "--warp-h": "clamp(14rem, 24vw, 22rem)",
             } as CSSProperties
