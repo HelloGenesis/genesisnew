@@ -39,37 +39,41 @@ import { cn } from "@/lib/utils";
  */
 
 /**
- * THE CYLINDER'S RADIUS, as a multiple of one card's width.
+ * THE CORRIDOR'S RADIUS, as a multiple of one card's width.
  *
- * THIS IS THE NUMBER THAT MAKES IT A CORRIDOR. The cards sit on the outside
- * of an upright cylinder whose far side is behind the screen, so how far a
- * card has turned and how far back it has gone are the SAME fact rather than
- * two effects tuned to look related. A small radius is a tight barrel — the
- * neighbours are already steeply turned and the run disappears within a
- * couple of cards. A large one flattens back into a row.
+ * THE CARDS ARE ON THE INSIDE OF THE CURVE, NOT THE OUTSIDE — and getting
+ * that backwards is what made the first two attempts wrong in a way no amount
+ * of tuning could fix.
  *
- * 2.6, AND THE FIRST TRY AT 2.05 WAS TOO TIGHT. A barrel that small projects
- * its whole arc into the middle of the frame: the cards piled into a block
- * about a third of the width with empty dark either side, which is a barrel
- * rather than a corridor. At 2.6 the run fans out to roughly two thirds of
- * the frame, the neighbour stands at about 19 degrees and the fourth card out
- * is at 75 — turned hard, still legible as a picture.
+ * A CONVEX arc (cards on the outside of a cylinder, centre nearest) is
+ * coverflow: one big card in the middle, neighbours turning away and
+ * shrinking. That is what was built, and it is a different object from the
+ * reference — there the cards at the EDGES are the large ones, angled inward,
+ * and the run gets smaller and flatter toward the middle. You are not looking
+ * at a row of cards. You are looking DOWN a corridor whose walls are made of
+ * them, with the vanishing point in the centre of the frame.
+ *
+ * So the arc is concave: z runs toward the reader as the angle grows, and
+ * each card turns to face the axis. The middle of the run is the far end of
+ * the corridor.
+ *
+ * 3.05 puts four cards on each wall between the centre and the frame edge,
+ * the nearest of them at about 77 degrees.
  */
-const RADIUS = 2.6;
+const RADIUS = 3.05;
 
 /**
  * The viewing distance, also in card widths.
  *
- * It is the strength of the effect: the shorter it is, the harder the near
- * card blooms and the faster the far ones fall away.
- *
- * 4.2, AND THIS IS THE OTHER HALF OF WHY THE FIRST ATTEMPT LOOKED SMALL. At
- * 2.6 the viewer was so close that a card only a quarter-turn round the
- * cylinder had already shrunk by a third, so the arc collapsed inward faster
- * than it spread outward and the run never reached the edges of its frame.
- * Standing further back keeps the depth cue without eating the width.
+ * IT HAS A FLOOR THAT THE CONVEX VERSION DID NOT. With the arc curving toward
+ * the reader, a card near the end of the run has real positive z — and as z
+ * approaches the viewing distance its projected size runs away to infinity.
+ * At 7.6 against a radius of 3.05 the nearest card sits at about a third of
+ * the way to the eye and renders around 40% larger than the far ones, which
+ * is the proportion the reference has. Shorten this and the outer cards
+ * balloon off the frame.
  */
-const VIEW = 4.2;
+const VIEW = 7.6;
 
 /** Px per second. Slow: the cards are meant to be looked at, not counted. */
 const SPEED = 40;
@@ -77,13 +81,15 @@ const SPEED = 40;
 /**
  * Arc between one card and the next, as a share of a card's width.
  *
- * UNDER 1, SO THEY OVERLAP. At 1 the cards merely touch, and the moment the
- * perspective pulls the outer ones back it opens gaps between them — which is
- * exactly what the first version looked like: a sparse row of thumbnails
- * floating in the dark rather than a wall of work. At 0.82 the turned cards
- * tuck behind their neighbours and the run reads as continuous.
+ * 0.9, WHICH IS A COMPROMISE BETWEEN TWO FAILURES EITHER SIDE OF IT. At 0.82
+ * on a CONCAVE arc the near cards — which are magnified, not shrunk — buried
+ * each other and the wall became a folded strip with nothing readable on it.
+ * At a clean 1.0 the arc spacing is right at the far end and the projection
+ * then spreads the near ones apart, so the corridor opens gaps exactly where
+ * it should look most solid. Just under one card width closes those without
+ * the panels swallowing one another.
  */
-const STEP = 0.82;
+const STEP = 0.9;
 
 export type WarpItem = {
   /** Stable key, and the clip this card plays. */
@@ -157,7 +163,12 @@ export function WarpRail({
         being pixel constants that only look right at one viewport.
       */
       box.style.perspective = `${(width * VIEW).toFixed(0)}px`;
-      rail.style.transform = `translateZ(${(-radius).toFixed(0)}px)`;
+      /*
+        NO PULL-BACK ON THE TRACK. The convex version needed one to bring the
+        front of its cylinder to the screen. A concave arc already has its far
+        end at z = 0 and comes forward from there, so translating the track
+        would push the whole corridor into the reader's eye.
+      */
       /*
         The list is rendered TWICE (see the track below), so the loop wraps by
         subtracting the width of one copy — every card plus the gap that
@@ -188,38 +199,56 @@ export function WarpRail({
           ONE PERSPECTIVE FOR THE WHOLE RAIL, WHICH IS THE ACTUAL FIX.
 
           The first version gave every card its own `perspective()` inside its
-          own transform. That is a separate projection per card, so there is
-          no shared vanishing point: the cards turned, but they stayed evenly
-          spaced and evenly sized, and the row read as a flat strip of tilted
-          thumbnails — which is what Genesis called mid, correctly. It also
-          made the turn, the pull-back and the shrink three hand-tuned numbers
-          pretending to be one effect.
+          own transform: a separate projection per card, so there was no
+          shared vanishing point. The cards turned but stayed evenly spaced
+          and evenly sized, which is a flat strip of tilted thumbnails.
 
-          The perspective now lives on the viewport (see `measure`) and the
-          cards sit on a real cylinder: `rotateY(θ) translateZ(radius)` places
-          a card on its surface facing outward, and the track's own
-          `translateZ(-radius)` brings the front of that cylinder to the
-          screen. θ is just the arc length over the radius.
+          The second was a real cylinder and still the wrong object. It was
+          CONVEX — cards on the outside, centre nearest — which is coverflow:
+          one big card in the middle, neighbours turning away. The reference
+          is the other way round. Its large cards are at the EDGES, angled
+          inward, and the run shrinks toward the middle, because you are
+          looking down a corridor with the vanishing point in the centre of
+          the frame.
 
-          Everything else falls out of it. The far cards are smaller because
-          they ARE further away; the spacing compresses toward the edges
-          because that is what a cylinder does under perspective; and there is
-          no `scale` term left at all.
+          SO THE ARC IS CONCAVE. `z` grows with the angle rather than
+          shrinking, putting the middle of the run at the far end and bringing
+          the edges toward the reader, and each card turns by -θ to face back
+          at the axis: the left wall faces right, the right wall faces left.
+          The perspective lives on the viewport, so all of them share one
+          vanishing point.
+
+          Everything else falls out of the geometry. The edge cards are larger
+          because they ARE nearer; the middle ones are small and nearly square
+          to the eye because they are far away. No `scale` term anywhere.
         */
         const theta = rel / radius;
         const away = Math.abs(theta);
-        cards[i].style.transform = `rotateY(${((theta * 180) / Math.PI).toFixed(2)}deg) translateZ(${radius.toFixed(0)}px)`;
+        const x = radius * Math.sin(theta);
+        const z = radius * (1 - Math.cos(theta));
+        cards[i].style.transform = `translate3d(${x.toFixed(1)}px,0,${z.toFixed(1)}px) rotateY(${((-theta * 180) / Math.PI).toFixed(2)}deg)`;
+
         /*
-          Past about 83 degrees a card is edge-on and then facing away. It
-          fades out rather than being drawn as a hairline, which otherwise
-          reads as a bright seam at each end of the run.
+          DEPTH IS READ AS LIGHT, NOT ONLY AS SIZE. The far end of a corridor
+          is darker, and without that the small central cards read as small
+          rather than as distant.
+
+          The taper past 1.3 radians is the end of the run: a card there is
+          about to pass the eye, where the projection would throw it across
+          the whole frame. It goes out before it can.
         */
-        cards[i].style.opacity =
-          away > 1.45 ? "0" : `${Math.max(0, 1 - Math.pow(away / 1.45, 1.7)).toFixed(3)}`;
-        /* Only the cards facing the reader are targets. A 70-degree sliver is
-           not something anyone is trying to click. */
-        cards[i].style.pointerEvents = away > 0.6 ? "none" : "auto";
-        cards[i].style.zIndex = `${100 - Math.round(away * 50)}`;
+        const lit = 0.62 + 0.38 * Math.min(1, away / 1.05);
+        const taper = away > 1.5 ? 0 : away > 1.3 ? (1.5 - away) / 0.2 : 1;
+        cards[i].style.opacity = (lit * taper).toFixed(3);
+        /*
+          Only the cards square enough to read are targets; a steeply angled
+          panel is not something anyone is trying to click.
+
+          NO z-index. The track preserves 3D, so the browser sorts these by
+          their real depth — and a z-index would flatten that back into paint
+          order, putting far cards over near ones at the seams.
+        */
+        cards[i].style.pointerEvents = away > 0.85 || taper < 1 ? "none" : "auto";
       }
     };
 
@@ -315,6 +344,19 @@ export function WarpRail({
         */
         "before:pointer-events-none before:absolute before:inset-y-[-15%] before:left-1/2 before:z-0 before:w-[68%] before:-translate-x-1/2",
         "before:bg-[radial-gradient(ellipse_at_center,rgb(255_197_22/0.22)_0%,rgb(247_113_158/0.11)_42%,rgb(122_60_255/0.07)_64%,transparent_78%)]",
+        /*
+          AND THE LIGHT AT THE END OF IT. A narrow vertical beam on the
+          corridor's axis, behind the cards, so it shows between the panels
+          and burns brightest where they are furthest away and dimmest.
+          The reference has one and it is doing real work: it gives the run a
+          destination, which is the difference between a curved wall and a
+          corridor you are looking down.
+
+          Brand yellow rather than the reference's green, as Genesis asked.
+        */
+        "after:pointer-events-none after:absolute after:inset-y-[-8%] after:left-1/2 after:z-0 after:w-[9%] after:-translate-x-1/2",
+        "after:bg-[linear-gradient(180deg,transparent,rgb(255_197_22/0.28)_22%,rgb(255_229_150/0.42)_50%,rgb(255_197_22/0.28)_78%,transparent)]",
+        "after:blur-[22px]",
         /* And the ends dissolve rather than cut, as every rail here does. */
         "[mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]",
         className,
