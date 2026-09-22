@@ -56,11 +56,24 @@ export const proof = {
     note: "Journey board says 30+. The Influence mockup says 200+. Journey board used, same reason. Note the client logo board lists 18 named brands.",
   },
 
+  /*
+    SETTLED BY GENESIS, AND IT WAS THE SHARPEST CONFLICT IN THIS FILE. The
+    Influence mockup said 50M+ and the brief said 500M+ — a factor of ten
+    apart, so one of them was a typo and nothing in either document said
+    which. That is exactly the kind of question this file exists to hold open
+    rather than quietly pick a side on.
+
+    Genesis has now given the figure directly: "500M+ views generated". Both
+    halves of that are the answer — the number resolves the conflict, and
+    "views" resolves what was being counted, which "content reach" left
+    vague enough that a reader could have taken it as impressions,
+    followers or reach in the platform sense.
+  */
   reach: {
-    value: "50M+",
-    label: "Content reach",
-    confirmed: false,
-    note: "Influence mockup says 50M+. The brief says 500M+ — a factor of ten apart, so one is a typo and we cannot tell which.",
+    value: "500M+",
+    label: "Views generated",
+    confirmed: true,
+    note: "Given directly by Genesis, settling the 50M+/500M+ split between the Influence mockup and the brief.",
   },
 
   platforms: {
