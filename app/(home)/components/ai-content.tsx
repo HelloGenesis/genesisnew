@@ -177,8 +177,16 @@ export function AiContent() {
         <div
           style={
             {
-              "--warp-card": "clamp(8.5rem, 15vw, 13rem)",
-              "--warp-h": "clamp(14rem, 25vw, 21rem)",
+              /*
+                BIGGER AND TALLER THAN THE FIRST PASS. The cards were 15vw at
+                3:4 and Genesis's read was that the whole thing looked mid
+                next to the reference — half of that was the projection (see
+                WarpRail) and half was simply scale. A 5:8 card at this width
+                is the proportion the reference uses, and the frame is tall
+                enough to hold it with the turned ones tucked behind.
+              */
+              "--warp-card": "clamp(9.5rem, 18vw, 16rem)",
+              "--warp-h": "clamp(18rem, 30vw, 27rem)",
             } as CSSProperties
           }
         >
@@ -351,21 +359,16 @@ export function AiContent() {
       */}
       <SectionShell id="ai-automation" tone="brand" origin="center" intensity={0.12}>
       {/*
-        "AI BEYOND CONTENT." — the hinge, and the reason this block reads as
-        part of AI Lab rather than as a service that wandered in.
+        NO TRANSITION LINE. "AI beyond content." stood here as a hand-off into
+        the automation block, on the reasoning that everything above it is
+        content a brand publishes and this is software running inside a
+        brand's operations. Genesis has taken it off.
 
-        Everything above it is content a brand publishes; this is software
-        running inside a brand's operations, and without a sentence marking
-        the turn a reader has to work out for themselves why the two are
-        filed together. Genesis asked for a transition rather than a second
-        heading, so it is set small and quiet above the card — a hand-off,
-        not a title.
+        The block does not need it any more either: the heading under it
+        already says "Automate the work behind your business", which names the
+        turn in the same breath as the offer, where the hinge was saying it
+        twice.
       */}
-      <Reveal className="mb-6 text-center sm:mb-8">
-        <p className="text-balance text-lead font-normal italic text-brand-ink sm:text-h3">
-          {aiContent.automation.transition}
-        </p>
-      </Reveal>
       <Reveal delay={0.06}>
         <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-5 py-[calc(var(--section-pad)*1.6)] shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10">
           <div className="mx-auto w-full max-w-5xl text-center">

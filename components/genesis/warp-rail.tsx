@@ -38,15 +38,52 @@ import { cn } from "@/lib/utils";
  * layout sixty times a second for as long as the section is on screen.
  */
 
-/** How far a card at the edge of the frame turns away from the reader. */
-const TURN = 42;
-/** How far back it goes, in px, and how much smaller it gets. */
-const DEPTH = 220;
-const SHRINK = 0.22;
+/**
+ * THE CYLINDER'S RADIUS, as a multiple of one card's width.
+ *
+ * THIS IS THE NUMBER THAT MAKES IT A CORRIDOR. The cards sit on the outside
+ * of an upright cylinder whose far side is behind the screen, so how far a
+ * card has turned and how far back it has gone are the SAME fact rather than
+ * two effects tuned to look related. A small radius is a tight barrel — the
+ * neighbours are already steeply turned and the run disappears within a
+ * couple of cards. A large one flattens back into a row.
+ *
+ * 2.6, AND THE FIRST TRY AT 2.05 WAS TOO TIGHT. A barrel that small projects
+ * its whole arc into the middle of the frame: the cards piled into a block
+ * about a third of the width with empty dark either side, which is a barrel
+ * rather than a corridor. At 2.6 the run fans out to roughly two thirds of
+ * the frame, the neighbour stands at about 19 degrees and the fourth card out
+ * is at 75 — turned hard, still legible as a picture.
+ */
+const RADIUS = 2.6;
+
+/**
+ * The viewing distance, also in card widths.
+ *
+ * It is the strength of the effect: the shorter it is, the harder the near
+ * card blooms and the faster the far ones fall away.
+ *
+ * 4.2, AND THIS IS THE OTHER HALF OF WHY THE FIRST ATTEMPT LOOKED SMALL. At
+ * 2.6 the viewer was so close that a card only a quarter-turn round the
+ * cylinder had already shrunk by a third, so the arc collapsed inward faster
+ * than it spread outward and the run never reached the edges of its frame.
+ * Standing further back keeps the depth cue without eating the width.
+ */
+const VIEW = 4.2;
+
 /** Px per second. Slow: the cards are meant to be looked at, not counted. */
-const SPEED = 34;
-/** Space between two cards, in px. */
-const GAP = 22;
+const SPEED = 40;
+
+/**
+ * Arc between one card and the next, as a share of a card's width.
+ *
+ * UNDER 1, SO THEY OVERLAP. At 1 the cards merely touch, and the moment the
+ * perspective pulls the outer ones back it opens gaps between them — which is
+ * exactly what the first version looked like: a sparse row of thumbnails
+ * floating in the dark rather than a wall of work. At 0.82 the turned cards
+ * tuck behind their neighbours and the run reads as continuous.
+ */
+const STEP = 0.82;
 
 export type WarpItem = {
   /** Stable key, and the clip this card plays. */
@@ -96,6 +133,7 @@ export function WarpRail({
     */
     let width = 0;
     let stride = 0;
+    let radius = 0;
     let half = 0;
     let total = 0;
     let frame = 0;
@@ -111,7 +149,15 @@ export function WarpRail({
         gains a margin.
       */
       width = cards[0]?.offsetWidth ?? 0;
-      stride = width + GAP;
+      stride = width * STEP;
+      radius = width * RADIUS;
+      /*
+        The viewing distance and the track's pull-back are derived from the
+        measured card too, so the whole corridor scales with it rather than
+        being pixel constants that only look right at one viewport.
+      */
+      box.style.perspective = `${(width * VIEW).toFixed(0)}px`;
+      rail.style.transform = `translateZ(${(-radius).toFixed(0)}px)`;
       /*
         The list is rendered TWICE (see the track below), so the loop wraps by
         subtracting the width of one copy — every card plus the gap that
@@ -123,61 +169,57 @@ export function WarpRail({
     };
 
     const paint = () => {
-      const centre = box.clientWidth / 2;
-      if (stride === 0) return;
+      if (stride === 0 || radius === 0) return;
       for (let i = 0; i < cards.length; i += 1) {
         /*
-          Where this card sits relative to the middle of the frame, as a
-          fraction of a half-width: 0 dead centre, ±1 at the edges. Cards
-          beyond the frame keep going past ±1 and are simply clamped, so one
-          that is about to enter is already turned rather than snapping.
-
-          THE TRACK IS CENTRED ON THE FRAME, not hung off its left edge: the
-          run is offset by half a viewport so the corridor opens in the
-          middle of the section rather than everything entering from the
-          left with dead space beside it.
-        */
-        /*
           WRAPPED INTO A BAND CENTRED ON THE FRAME, which is the difference
-          between a corridor and a queue.
+          between a corridor and a queue. Taking the position modulo the FULL
+          track and folding the far half negative puts half the cards either
+          side of the middle at every moment, including the first frame; the
+          run then cycles through that band rather than marching along it.
 
-          The first version laid the cards out from the middle and ran them
-          rightward, wrapping only once one had left on the left. At rest that
-          put every card on the right of centre and nothing at all on the
-          left: half a corridor, with the opening off to one side. It also
-          never recovered, because a card leaving the left was sent past the
-          END of the second copy rather than into the gap behind it.
-
-          Taking the position modulo the FULL track and folding the far half
-          negative puts half the cards either side of the middle at every
-          moment, including the first frame. The run then cycles through that
-          band rather than marching along it.
+          `rel` is ARC LENGTH along the cylinder, not a screen position — the
+          projection below turns it into one.
         */
         let rel = ((i * stride - offset) % total + total) % total;
         if (rel > total / 2) rel -= total;
-        const x = centre - width / 2 + rel;
-        const d = rel / centre;
-        const clamped = Math.max(-1.35, Math.min(1.35, d));
-        const away = Math.abs(clamped);
 
         /*
-          THE LOOP OWNS ONLY THE 3D PART. Vertical centring is done by layout
-          — the positioner is full-height and centres its card with flexbox —
-          and this is why. `transform` is ONE property: the moment the loop
-          writes it, any `-translate-y-1/2` from a class is gone. Putting the
-          half-height shift back into this string looks like the fix and is
-          not, because a percentage there resolves against the transformed
-          box rather than the card, so the cards drifted up by an amount that
-          changed with their scale. Layout has no such ambiguity.
+          ONE PERSPECTIVE FOR THE WHOLE RAIL, WHICH IS THE ACTUAL FIX.
+
+          The first version gave every card its own `perspective()` inside its
+          own transform. That is a separate projection per card, so there is
+          no shared vanishing point: the cards turned, but they stayed evenly
+          spaced and evenly sized, and the row read as a flat strip of tilted
+          thumbnails — which is what Genesis called mid, correctly. It also
+          made the turn, the pull-back and the shrink three hand-tuned numbers
+          pretending to be one effect.
+
+          The perspective now lives on the viewport (see `measure`) and the
+          cards sit on a real cylinder: `rotateY(θ) translateZ(radius)` places
+          a card on its surface facing outward, and the track's own
+          `translateZ(-radius)` brings the front of that cylinder to the
+          screen. θ is just the arc length over the radius.
+
+          Everything else falls out of it. The far cards are smaller because
+          they ARE further away; the spacing compresses toward the edges
+          because that is what a cylinder does under perspective; and there is
+          no `scale` term left at all.
         */
-        cards[i].style.transform = `translate3d(${x.toFixed(1)}px,0,0) perspective(1100px) rotateY(${(-clamped * TURN).toFixed(2)}deg) translateZ(${(-away * DEPTH).toFixed(1)}px) scale(${(1 - away * SHRINK).toFixed(3)})`;
+        const theta = rel / radius;
+        const away = Math.abs(theta);
+        cards[i].style.transform = `rotateY(${((theta * 180) / Math.PI).toFixed(2)}deg) translateZ(${radius.toFixed(0)}px)`;
         /*
-          The edges dim as well as turn. Without it the corridor's walls are
-          as loud as the piece in the middle and the composition has no
-          subject.
+          Past about 83 degrees a card is edge-on and then facing away. It
+          fades out rather than being drawn as a hairline, which otherwise
+          reads as a bright seam at each end of the run.
         */
-        cards[i].style.opacity = `${Math.max(0.18, 1 - away * 0.72).toFixed(3)}`;
-        cards[i].style.zIndex = `${100 - Math.round(away * 100)}`;
+        cards[i].style.opacity =
+          away > 1.45 ? "0" : `${Math.max(0, 1 - Math.pow(away / 1.45, 1.7)).toFixed(3)}`;
+        /* Only the cards facing the reader are targets. A 70-degree sliver is
+           not something anyone is trying to click. */
+        cards[i].style.pointerEvents = away > 0.6 ? "none" : "auto";
+        cards[i].style.zIndex = `${100 - Math.round(away * 50)}`;
       }
     };
 
@@ -259,16 +301,22 @@ export function WarpRail({
         "relative w-full overflow-hidden",
         /*
           THE CORRIDOR'S OWN LIGHT, in the brand rather than the reference's
-          green. It sits BEHIND the cards and is what the middle of the row
-          appears to be lit by — the cards nearest the centre are at full
-          opacity over it, and the ones turning away fall into the dark at
-          the edges. Genesis asked for their own colours; this and the mask
-          below are the whole of it.
+          green. It sits BEHIND the cards and is what the middle of the run
+          appears to be lit by: the card square to the reader is at full
+          strength over it and the ones turning away fall into the dark at the
+          edges. Genesis asked for their own colours, and this is where they
+          go.
+
+          WIDER AND STRONGER than the first pass, because the cards overlap
+          now — a narrow, faint wash behind a continuous wall of work does
+          nothing at all, where behind a sparse row it at least filled the
+          gaps. It reads as the light the corridor is lit by rather than as a
+          shape sitting under it.
         */
-        "before:pointer-events-none before:absolute before:inset-y-0 before:left-1/2 before:z-0 before:w-[46%] before:-translate-x-1/2",
-        "before:bg-[radial-gradient(ellipse_at_center,rgb(255_197_22/0.16)_0%,rgb(247_113_158/0.08)_45%,transparent_72%)]",
+        "before:pointer-events-none before:absolute before:inset-y-[-15%] before:left-1/2 before:z-0 before:w-[68%] before:-translate-x-1/2",
+        "before:bg-[radial-gradient(ellipse_at_center,rgb(255_197_22/0.22)_0%,rgb(247_113_158/0.11)_42%,rgb(122_60_255/0.07)_64%,transparent_78%)]",
         /* And the ends dissolve rather than cut, as every rail here does. */
-        "[mask-image:linear-gradient(90deg,transparent,black_14%,black_86%,transparent)]",
+        "[mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]",
         className,
       )}
       style={{ height: "var(--warp-h)" }}
@@ -330,10 +378,28 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
     The card is the visible object: a share of the viewport wide, 3:4, which
     is the shape most of this footage is shot in.
   */
+  /*
+    CENTRED BY MARGIN, NOT BY TRANSFORM. Every positioner sits at the middle
+    of the rail and is moved from there by the cylinder — so its resting place
+    has to be the centre, and it cannot use `-translate-x-1/2` to get there
+    because the loop owns `transform` outright. A negative margin of half a
+    card does the same job in a property nothing else is writing.
+
+    `backface-visibility` matters here for the same reason the opacity ramp
+    does: a card past ninety degrees is showing its back, and a mirrored still
+    of somebody's work is a worse artefact than a missing one.
+
+    NO `preserve-3d` ON THIS BOX. The track needs it, because its children ARE
+    positioned in three dimensions. The positioner's child is a flat card that
+    should be rasterised as one plane and then projected — given a 3D context
+    of its own, its border, video and caption each become separately
+    positioned layers, which is how a card like this ends up with its caption
+    detaching from its frame at a steep angle.
+  */
   const positioner =
-    "absolute inset-y-0 left-0 flex w-[var(--warp-card)] items-center will-change-transform";
+    "absolute inset-y-0 left-1/2 ml-[calc(var(--warp-card)/-2)] flex w-[var(--warp-card)] items-center will-change-transform [backface-visibility:hidden]";
   const card =
-    "relative w-full overflow-hidden rounded-2xl border border-white/12 bg-ink shadow-[0_18px_40px_-18px_rgb(0_0_0/0.8)] aspect-[3/4]";
+    "relative w-full overflow-hidden rounded-[1.25rem] border border-white/10 bg-ink shadow-[0_30px_60px_-24px_rgb(0_0_0/0.9)] aspect-[5/8]";
 
   if (!item.href || !item.onOpen) {
     return (

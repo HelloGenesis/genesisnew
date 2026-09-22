@@ -370,19 +370,12 @@ export const aiContent = {
    */
   automation: {
     /*
-      "AI BEYOND CONTENT." — the sentence that makes this block belong here.
-
-      Automation was the one part of AI Lab that read as a different company's
-      service: everything above it is content a brand publishes, and this is
-      software running inside a brand's own operations. Genesis asked for a
-      transition rather than a heading, and that is the right instrument — it
-      names the hinge ("beyond content") instead of starting a new section.
-
-      It is a separate field from `heading` because it is set differently:
-      small, above the rule, as a hand-off. Folded into the heading it would
-      just be a longer heading.
+      NO `transition` FIELD ANY MORE. "AI beyond content." sat above this
+      block as a hand-off into it and Genesis has removed it. The heading
+      below carries the same turn — "the work behind your business" is itself
+      the distinction from the content above — so the hinge was saying it
+      twice.
     */
-    transition: "AI beyond content.",
     heading: "Automate the work behind your business.",
     body:
       "We build AI-powered workflows for startups, SMEs, MSMEs and growing businesses, connecting the tools you already use to reduce repetitive work, simplify operations and save time.",
