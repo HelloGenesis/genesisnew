@@ -2,7 +2,7 @@
 
 import { type CaseStudy, disciplines, leadClip } from "@/lib/case-studies";
 import { findCopy } from "@/lib/case-study-copy";
-import { caseStudyPath } from "@/lib/case-study-pages";
+import { campaignFilms, caseStudyPath } from "@/lib/case-study-pages";
 import { clipRatio } from "@/lib/clip-shape";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
@@ -53,6 +53,13 @@ export function CaseStudyDialog({
           preview={clip === undefined ? undefined : mediaUrl(reelClip(clip))}
           copy={copy}
           ratio={clip === undefined ? undefined : clipRatio(clip)}
+          /*
+            EVERY FILM THE CAMPAIGN CAN CLAIM, lead first — Genesis asked for
+            a study to show all of its videos rather than the one it leads
+            with. `campaignClips` decides which those are; the note on it
+            explains why that is not simply every reel of the engagement.
+          */
+          clips={campaignFilms(study)}
           pageHref={caseStudyPath(study.copy)}
           fallback={
             /*

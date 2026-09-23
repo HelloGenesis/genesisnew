@@ -21,6 +21,7 @@ import {
 import { servicePageForVertical } from "@/lib/services";
 import { divisionPages } from "@/lib/site-config";
 import { Breadcrumbs, StudyCard } from "../../components/service-page";
+import { campaignFilmsForSlug } from "@/lib/case-study-pages";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -137,6 +138,13 @@ export default async function CaseStudyPage({ params }: Props) {
             preview={page.preview}
             copy={copy}
             ratio={page.ratio}
+            /*
+              EVERY FILM THE CAMPAIGN CAN CLAIM. Genesis asked for a study to
+              show all of its videos rather than the one it leads with; see
+              `campaignClips` for which those are and why it is not simply
+              every reel of the engagement.
+            */
+            clips={campaignFilmsForSlug(page.slug)}
           />
         </div>
 

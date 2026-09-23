@@ -9,6 +9,7 @@ import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { CaseStudyView } from "./case-study-view";
 import { Overlay, pagerFor } from "./overlay";
 import { useInViewPlayback } from "./use-in-view-playback";
+import { campaignFilmsForSlug } from "@/lib/case-study-pages";
 
 /** One card on /case-studies, with everything resolved on the server. */
 export type CaseStudyCard = {
@@ -269,6 +270,12 @@ function Study({ card }: { card: CaseStudyCard }) {
       preview={card.preview}
       copy={card.copy}
       ratio={card.ratio}
+      /*
+        The card holds the study's PAGE href rather than the study itself, so
+        the slug is read off the end of it — see campaignFilmsForSlug. A
+        film-only card has no href and no study, and gets no strip.
+      */
+      clips={campaignFilmsForSlug(card.href?.split("/").pop())}
       pageHref={card.href}
     />
   );

@@ -1,5 +1,5 @@
 import { caseStudyList, disciplines, isPublished, type CaseStudy } from "./case-studies";
-import { caseStudyCopy, type CaseStudyCopy } from "./case-study-copy";
+import { caseStudyCopy, findCopy, type CaseStudyCopy } from "./case-study-copy";
 import { clipRatio } from "./clip-shape";
 import { filmUrl } from "./films";
 import { mediaUrl } from "./media-url";
@@ -223,4 +223,79 @@ export function caseStudyForPageSlug(slug: string | undefined): CaseStudy | unde
   const page = caseStudyPages.find((entry) => entry.slug === slug);
   if (!page) return undefined;
   return caseStudyList.find((study) => study.copy === page.copy.n);
+}
+
+/**
+ * Every clip this study's campaign can honestly claim, lead first.
+ *
+ * WHY IT IS NOT JUST "THE WORK'S REELS". Genesis asked for a study to show
+ * all of its campaign's videos — "uske saare campaign ke videos dikhne
+ * chahiye" — and the obvious implementation over-claims badly. A catalogue
+ * entry is an ENGAGEMENT, not a campaign: `aditya-birla-capital-campaign`
+ * holds fifteen clips, and the master splits those across fifteen separate
+ * studies. Showing all fifteen under each would put the Vikrant Massey BTS
+ * inside the Matcha study and vice versa — fifteen claims that the campaign
+ * included work it did not.
+ *
+ * THE MASTER ALREADY RESOLVES IT, one clip per study, and that is what makes
+ * this safe. A clip named as some OTHER study's own film belongs to that
+ * study; a clip named by nobody belongs to whichever engagement holds it.
+ * So Mahindra's Shubh Utsav study — clip 16 of an engagement holding 16 to
+ * 20 — gets all five, because nothing else claims 17 to 20. An ABHI study
+ * gets its own clip and nothing else, because its fourteen neighbours are
+ * each another study's lead.
+ *
+ * THAT IS WHY THE STRIP IS SOMETIMES ONE VIDEO LONG, and it should be. The
+ * alternative is a page claiming footage it cannot account for.
+ */
+const CLAIMED_CLIPS = new Set(caseStudyCopy.map((entry) => String(entry.clip)));
+
+export function campaignClips(study: CaseStudy): ReelId[] {
+  const copy = study.copy === undefined ? undefined : findCopy(study.copy);
+  const lead = copy?.clip ?? study.heroClip;
+
+  const all = (study.work ?? []).flatMap((slug) => findWork(slug)?.reel ?? []);
+  const mine = all.filter(
+    (id) => String(id) === String(lead) || !CLAIMED_CLIPS.has(String(id)),
+  );
+
+  /* Lead first, then the rest in catalogue order, with no repeats. */
+  const ordered = lead === undefined ? mine : [lead, ...mine];
+  return [...new Map(ordered.map((id) => [String(id), id])).values()];
+}
+
+/** One film in a campaign strip, ready for CaseStudyView. */
+export type CampaignFilm = {
+  id: string;
+  poster: string;
+  film: string;
+  ratio: number;
+};
+
+/**
+ * `campaignClips` resolved into playable descriptors.
+ *
+ * ONE PLACE, THREE CALLERS. Both windows that open a study and the study's
+ * own page need this list, and each of them holds the study in a different
+ * shape — a CaseStudy, a card, a page. Building the URLs here rather than at
+ * each call site is what stops the three from disagreeing about which film a
+ * thumbnail plays.
+ *
+ * THE DRIVE MASTER WHERE THERE IS ONE, THE LOCAL PREVIEW OTHERWISE. `filmUrl`
+ * returns undefined with Drive off, which is the default — so without the
+ * fallback every thumbnail would swap the player to nothing.
+ */
+export function campaignFilms(study: CaseStudy): CampaignFilm[] {
+  return campaignClips(study).map((id) => ({
+    id: String(id),
+    poster: mediaUrl(reelPoster(id)),
+    film: filmUrl(id) ?? mediaUrl(reelClip(id)),
+    ratio: clipRatio(id),
+  }));
+}
+
+/** The same, for a caller holding the study's PAGE slug rather than the study. */
+export function campaignFilmsForSlug(slug: string | undefined): CampaignFilm[] {
+  const study = caseStudyForPageSlug(slug);
+  return study ? campaignFilms(study) : [];
 }
