@@ -1,6 +1,12 @@
 import Image from "next/image";
 
 import { GlassButton } from "@/components/genesis/glass-button";
+import {
+  caseStudyForClip,
+  caseStudyPath,
+  caseStudyPathForClip,
+  studiesForWork,
+} from "@/lib/case-study-pages";
 import { isPending } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
 import { filmUrl } from "@/lib/films";
@@ -39,6 +45,30 @@ export function WorkDetail({ item }: { item: WorkItem }) {
     page the moment the footage was connected.
   */
   const rest = (item.reel ?? []).slice(1);
+
+  /*
+    THE WRITTEN STUDIES BEHIND THIS PIECE, deduped by URL.
+
+    A catalogue entry is an engagement and a study is one campaign inside it,
+    so the relationship is one-to-many: Mahindra's five cuts are one study,
+    Aditya Birla's fifteen are six. Both cases are handled below rather than
+    picking a clip's study and calling it the piece's.
+  */
+  const studies = [
+    ...new Set(
+      [
+        ...(item.reel ?? []).map((id) =>
+          caseStudyForClip(id) ? caseStudyPathForClip(id) : undefined,
+        ),
+        /*
+          AND THE STUDIES WRITTEN ABOUT THE PIECE ITSELF. A piece with no
+          film — Tripgate's identity, the Activ Health logo — has no clip to
+          look a study up by, and both of those now have one.
+        */
+        ...studiesForWork(item.slug).map((study) => caseStudyPath(study.copy)),
+      ].filter((path): path is string => Boolean(path)),
+    ),
+  ];
 
   return (
     <article className="flex flex-col gap-8">
@@ -229,10 +259,31 @@ export function WorkDetail({ item }: { item: WorkItem }) {
 
       <footer className="flex flex-wrap items-center gap-3 border-t border-[var(--glass-border)] pt-8">
         {/*
-          The case-study link appears only when there is a case study. A "View
-          Full Case Study" button that goes nowhere is the single most
-          annoying thing a portfolio can do to someone evaluating an agency.
+          THE CASE-STUDY LINK, WHICH THIS COMMENT HAS BEEN PROMISING AND THE
+          MARKUP NEVER DELIVERED. It said "the case-study link appears only
+          when there is a case study" above a footer that had one button in
+          it, and that button was "Start a project" — so a reader who had just
+          watched Mahindra's campaign in this window had no way from here to
+          the write-up about it, on a site whose whole argument is the
+          write-ups.
+
+          ONE STUDY, ONE BUTTON, NAMED. Several, and naming one of them would
+          be picking a campaign out of an engagement at random, so it points
+          at the index where all of them are. None, and nothing renders — a
+          "View Full Case Study" button that goes nowhere is the single most
+          annoying thing a portfolio can do to someone evaluating an agency,
+          which is what the old comment was right about.
         */}
+        {studies.length === 1 && (
+          <GlassButton href={studies[0]} variant="brand" arrow>
+            Read the case study
+          </GlassButton>
+        )}
+        {studies.length > 1 && (
+          <GlassButton href="/case-studies" variant="brand" arrow>
+            {studies.length} case studies
+          </GlassButton>
+        )}
         <GlassButton href="/#contact" variant="glass" arrow>
           Start a project
         </GlassButton>

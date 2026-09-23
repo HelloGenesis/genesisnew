@@ -208,6 +208,59 @@ export function caseStudyPathForClip(id: ReelId | undefined): string | undefined
  * its own body now calls this, so a clip can never resolve to one study for
  * the link and a different one for the window.
  */
+/**
+ * THE WRITE-UPS WITH NO CARD, AS STUDIES.
+ *
+ * lib/case-studies holds a hand-curated list of cards — the ones the homepage
+ * rail shows — and each names the study in the master it stands for. Twenty-
+ * one of the master's forty-two have no card: they are real, published,
+ * reachable pages at /case-studies/<slug> and they appear on the index, but
+ * nothing in `caseStudyList` points at them.
+ *
+ * THAT IS WHY MOST OF STUDIOS WAS NOT CLICKABLE. `caseStudyForClip` walked
+ * cards only, so a clip whose study had no card resolved to nothing and the
+ * rail rendered it as plain footage — four of twenty-one Studios clips linked,
+ * none of the two event films, and Genesis reported it twice ("video 1 and
+ * video 5 are not linked in genesis studios", "these videos are still not
+ * interactive").
+ *
+ * The link was in the data the whole time: every copy entry carries the
+ * portfolio `clip` it describes. So a cardless write-up is turned into the
+ * same shape a card becomes after `caseStudyList` merges its copy in — same
+ * fields, same source, derived rather than typed — and the rest of the site
+ * cannot tell the two apart. Writing twenty-one cards by hand would have been
+ * the same information entered a second time, with a second chance to be
+ * wrong.
+ *
+ * A CARD STILL WINS. Where one exists it carries editorial choices a copy
+ * entry does not have — the discipline pills, the campaign name, which clip
+ * leads — so these are consulted only after the card lookups fail.
+ */
+const cardedCopy = new Set(
+  caseStudyList.map((study) => study.copy).filter((n): n is number => n !== undefined),
+);
+
+const cardlessStudies: CaseStudy[] = caseStudyCopy
+  .filter((copy) => !cardedCopy.has(copy.n) && copy.clip !== undefined)
+  .map((copy) => ({
+    /* The master's own slug. No card uses it, and it is only ever a key: the
+       URL is built from `copy` by caseStudyPath, as for any other study. */
+    slug: copy.slug,
+    client: copy.brand,
+    campaign: copy.campaign,
+    vertical: copy.division,
+    /* One pill, the division — the same fallback `labelsFor` uses for a study
+       with no card. A card's hand-written pills are an editorial choice and
+       there is nothing here to derive them from. */
+    discipline: copy.division,
+    heroClip: copy.clip,
+    copy: copy.n,
+    headline: copy.headline,
+    problem: copy.brief.join("\n\n"),
+    strategy: copy.approach.join("\n\n"),
+    execution: copy.execution.join(" · "),
+  }));
+
 export function caseStudyForClip(id: ReelId | undefined): CaseStudy | undefined {
   if (id === undefined) return undefined;
 
@@ -270,7 +323,32 @@ export function caseStudyForClip(id: ReelId | undefined): CaseStudy | undefined 
       findWork(slug)?.reel?.some((entry) => String(entry) === key),
     ),
   );
-  return onEntry.length === 1 ? onEntry[0] : undefined;
+  if (onEntry.length === 1) return onEntry[0];
+
+  /*
+    LAST, THE WRITE-UPS WITH NO CARD — see `cardlessStudies`. This is a hero
+    match like `direct` above, on the master's own `clip` field, so it is as
+    exact as the first lookup; it runs last only because a card outranks a
+    derived study where both describe the same clip.
+  */
+  return cardlessStudies.find((study) => String(study.heroClip) === key);
+}
+
+/**
+ * Every published study that covers a CATALOGUE PIECE, by its slug.
+ *
+ * WHY THIS EXISTS ALONGSIDE `caseStudyForClip`. That one starts from a file
+ * and is what a video on screen needs. This starts from the piece, which is
+ * what the portfolio's own window has — and it is the only route that works
+ * for a piece with no film at all. Brand & Design's two entries are an
+ * identity system and a logo exploration; both have written studies and
+ * neither has a clip, so a clip-first lookup can never reach them.
+ */
+export function studiesForWork(slug: string | undefined): CaseStudy[] {
+  if (!slug) return [];
+  return caseStudyList.filter(
+    (study) => isPublished(study) && study.work?.includes(slug),
+  );
 }
 
 /**
@@ -384,9 +462,26 @@ export function campaignFilmsForSlug(slug: string | undefined): CampaignFilm[] {
 export function uniqueStudies(
   studies: readonly (CaseStudy | undefined)[],
 ): CaseStudy[] {
-  const seen = new Map<string, CaseStudy>();
+  /*
+    KEYED ON THE COPY, NOT THE SLUG, and that is the second half of a fix the
+    first half of which only went part way.
+
+    Two cards can stand for ONE write-up: "aditya-birla-capital-bombay-running"
+    and "aditya-birla-capital-matcha" are different clips of one campaign and
+    both carry `copy: 6`, so both render the All For Health study and both
+    link to the same URL. Deduping by slug kept both, so the window's pager
+    stepped from a study to itself — identical headline, identical body, only
+    the film behind it different — which is the "left right buttons are not
+    working" report all over again in the one place it survived.
+
+    A study with no copy number falls back to its slug, which is what the old
+    behaviour was for everything.
+  */
+  const seen = new Map<string | number, CaseStudy>();
   for (const study of studies) {
-    if (study && !seen.has(study.slug)) seen.set(study.slug, study);
+    if (!study) continue;
+    const key = study.copy ?? study.slug;
+    if (!seen.has(key)) seen.set(key, study);
   }
   return [...seen.values()];
 }
