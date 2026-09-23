@@ -61,6 +61,18 @@ export type NavItem = {
    * and these are what it covers.
    */
   items?: string[];
+  /**
+   * The division's SHORT name — "Influence", "AI Lab" — which is the key
+   * DivisionLockup's artwork is filed under.
+   *
+   * It is not the same string as `label`. The label is what the route is
+   * called ("AI Content & Automation"); this is what the division is called
+   * on its own mark, and the two deliberately differ because one is a
+   * service description and the other is a brand name.
+   */
+  short?: string;
+  /** The division's gradient, for the lockup's text fallback. */
+  ramp?: string;
 };
 
 export const siteConfig = {
@@ -392,7 +404,20 @@ export const navItems: NavItem[] = [
         seen.add(key);
         return true;
       });
-      return { label, href, blurb, items };
+      return {
+        label,
+        href,
+        blurb,
+        items,
+        /*
+          THE DIVISION'S OWN MARK, at Genesis's request — the name-only
+          artwork rather than the route's name set in type. `short` is the
+          key DivisionLockup files it under; `ramp` is only ever used by that
+          component's text fallback, for a division whose artwork is missing.
+        */
+        short: division?.short,
+        ramp: division?.ramp,
+      };
     }),
   },
   // The page, not the homepage rail: Genesis asked the bar to open it.

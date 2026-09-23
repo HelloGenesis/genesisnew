@@ -53,6 +53,26 @@ export function WorkGrid({
   className?: string;
 }) {
   const [filter, setFilter] = useState("All");
+  /*
+    THE RAIL STANDS DOWN FOR A SMALL FILTER, and this is what Genesis was
+    looking at when they said the portfolio was not categorised. It was — the
+    chips worked and returned the right pieces. What broke was the LAYOUT they
+    returned into.
+
+    The rail is two strips that slide, dealt alternately, with the bottom one
+    laid out right-to-left so the pair travel in opposite directions. That
+    needs enough tiles to fill both: Events has two pieces, so it drew one
+    tile at the left of the top strip and one stranded at the RIGHT edge of
+    the bottom one, with the whole width empty between them. Brand & Design
+    has one and drew a single tile beside a void. It reads as a broken
+    section rather than as a category with two things in it.
+
+    Ten is two strips of five, which is about a screenful — under that the
+    grid below says the same thing without the emptiness, and it is the
+    layout /case-studies and the division pages already use. The chips, the
+    filtering and the dialog are untouched; only the shape changes.
+  */
+  const RAIL_MIN = 10;
   /* Which piece is open over the page, by slug: a clip tile opens its whole engagement. */
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const filters = useMemo(() => workFilters(items), [items]);
@@ -60,6 +80,7 @@ export function WorkGrid({
     () => items.filter((item) => matchesFilter(item, filter)),
     [items, filter],
   );
+  /* Declared after `visible`, which it reads. */
   const pieces = useMemo(
     () => visible.filter((item, i) => visible.findIndex((v) => v.slug === item.slug) === i),
     [visible],
@@ -81,6 +102,8 @@ export function WorkGrid({
     document.addEventListener("click", onClickAnywhere, true);
     return () => document.removeEventListener("click", onClickAnywhere, true);
   }, [filters]);
+
+  const slides = rail && visible.length >= RAIL_MIN;
 
   const rowA = useRef<HTMLDivElement>(null);
   const rowB = useRef<HTMLDivElement>(null);
@@ -125,7 +148,12 @@ export function WorkGrid({
     would otherwise have tried to animate every one of those fractional steps.
   */
   useEffect(() => {
-    if (!rail) return;
+    /*
+      `slides`, not `rail` — a filter too small for two strips renders the
+      grid, and the drift loop would then be holding a 60Hz timer over two
+      refs that point at nothing.
+    */
+    if (!slides) return;
     const box = railBox.current;
     const strips = [rowA.current, rowB.current].filter(
       (el): el is HTMLDivElement => el !== null,
@@ -218,7 +246,7 @@ export function WorkGrid({
         el.removeEventListener("wheel", touched);
       }
     };
-  }, [rail, visible]);
+  }, [slides, visible]);
 
   return (
     <div className={className}>
@@ -287,7 +315,7 @@ export function WorkGrid({
         means `aspectFor` no longer has a say here — the cell decides, and the
         tile fills it.
       */}
-      {rail ? (
+      {slides ? (
         <div ref={railBox} className="relative">
           {/*
             TWO ROWS THAT SLIDE ON THEIR OWN, IN OPPOSITE DIRECTIONS.

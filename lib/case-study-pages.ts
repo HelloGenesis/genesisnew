@@ -320,3 +320,27 @@ export function campaignFilmsForSlug(slug: string | undefined): CampaignFilm[] {
   const study = caseStudyForPageSlug(slug);
   return study ? campaignFilms(study) : [];
 }
+
+/**
+ * The studies behind a list of clips, deduplicated, in first-seen order.
+ *
+ * WHY IT EXISTS. Both rails map one card per CLIP, and several clips of one
+ * engagement resolve to the same study — the Influence reels produced twenty
+ * entries covering far fewer studies. Handed to `pagerFor` that list makes
+ * the window's arrows look broken: "next" moves to the following INDEX, which
+ * is usually the same study again, so the panel is replaced with identical
+ * content and nothing appears to happen. It reported "1 / 20" while having
+ * nowhere near twenty places to go.
+ *
+ * Deduped, the arrows step from one study to a different one every time and
+ * the position count is the truth.
+ */
+export function uniqueStudies(
+  studies: readonly (CaseStudy | undefined)[],
+): CaseStudy[] {
+  const seen = new Map<string, CaseStudy>();
+  for (const study of studies) {
+    if (study && !seen.has(study.slug)) seen.set(study.slug, study);
+  }
+  return [...seen.values()];
+}

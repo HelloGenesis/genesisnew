@@ -121,22 +121,28 @@ const CLIPS = [
  * Genesis pointed at is real: the row had a hole in it where its opening
  * should be.
  *
- * SO THE GROWTH COMES FROM THE WIDTH ALONE NOW. One aspect for all five, and
- * the spans run 0.88 to 1.10 instead of 0.78 to 1.25. Each card is still
- * wider and taller than the one before it — 228 points up to 286 at 1152 —
- * but the first one arrives already worth looking at, and the void above it
- * drops from 227 points to about 60. The scrubber over the row is what
- * actually carries the sense of a run: numbered 01 to 05 with the accent
- * filling as it goes.
+ * SO THE GROWTH COMES FROM THE WIDTH ALONE. One aspect for all five, and the
+ * spans carry the progression — which keeps every card upright and correctly
+ * shaped for the 9:16 footage in it, where the old version turned the frames
+ * landscape at one end and portrait at the other.
  *
- * THE RANGE IS BOUNDED BY A CAP THAT IS NOT IN THIS FILE'S CONTROL. StageClip
- * holds every card to `max-h-[32vh]` so the section can fit a screen, and the
- * first attempt at this ran straight into it: cards three, four and five all
- * came out at exactly 225 points, so the row grew for two steps and then
- * stopped dead, which reads as a bug rather than as a design. The aspect is
- * 5:6 rather than 4:5 and the span range is narrower precisely so the tallest
- * card lands just UNDER that ceiling at the sizes it actually gets rendered
- * at. Widen these and the top of the run flattens again.
+ * 0.78 TO 1.22, AND THE FIRST COMPRESSION WENT TOO FAR. Fixing the hole took
+ * the range down to 0.88–1.10, which at 1152 is 228 points up to 286 — a
+ * rise of a quarter across five cards, and Genesis's read was that the boxes
+ * had stopped varying at all. They were nearly right: a 25% spread over that
+ * distance reads as five cards that are the same size and slightly wrong.
+ *
+ * At 0.78–1.22 the run is 200 up to 314, half as tall again at the end, and
+ * the first card is still a card rather than the 94-point stamp the original
+ * four-times range left it as. The void above it is about 114 points, which
+ * is the row bottom-aligning and reads as depth rather than as a gap.
+ *
+ * THE RANGE IS BOUNDED BY A CAP THAT IS NOT IN THIS FILE. StageClip holds
+ * every card to a vh ceiling so the section fits a screen, and this has hit
+ * it twice: at 32vh three cards came out identical, and widening the spans
+ * without raising it would flatten the top of the run again. It is 42vh now,
+ * which clears a 314-point card on an 800-point window. Widen these further
+ * and raise that with them, or check the tallest card against it first.
  *
  * AND THE SHAPE NOW MATCHES THE FOOTAGE. Four of the five clips are 9:16
  * social cuts (see CLIPS), so a portrait frame is the one that crops them
@@ -148,11 +154,11 @@ const CLIPS = [
 const CARD_ASPECT = "aspect-[5/6]";
 
 const SHAPE = [
-  { span: "0.88fr", aspect: CARD_ASPECT },
-  { span: "0.935fr", aspect: CARD_ASPECT },
-  { span: "0.99fr", aspect: CARD_ASPECT },
-  { span: "1.045fr", aspect: CARD_ASPECT },
-  { span: "1.1fr", aspect: CARD_ASPECT },
+  { span: "0.78fr", aspect: CARD_ASPECT },
+  { span: "0.89fr", aspect: CARD_ASPECT },
+  { span: "1fr", aspect: CARD_ASPECT },
+  { span: "1.11fr", aspect: CARD_ASPECT },
+  { span: "1.22fr", aspect: CARD_ASPECT },
 ];
 
 const accent = (alpha: number) => `rgb(255 197 22 / ${alpha})`;
@@ -567,15 +573,15 @@ function StageClip({
         reel rather than pushing the section past one screen.
       */
       /*
-        36vh, UP FROM 32. The cap exists so the tallest card fits a short
-        laptop, and at 32 it was cutting into the row's own progression: the
-        last two cards both landed on it and came out identical, so the run
-        grew for three steps and then stopped, which reads as a fault rather
-        than as a design. Four points of viewport height is the difference
-        between the ceiling being a safety net and being the thing deciding
-        the layout. See SHAPE, whose range is set against this number.
+        42vh, HAVING BEEN 32 AND THEN 36. The cap exists so the tallest card
+        fits a short laptop, and it keeps turning into the thing that decides
+        the layout instead: at 32 three cards came out identical, and at 36 it
+        would clip the widened progression SHAPE now carries. Each rise was
+        the ceiling getting out of the way of a range Genesis asked to be more
+        visible. 42vh clears a 314-point card on an 800-point window, which is
+        the tallest this row produces at the page's own measure.
       */
-      className={cn("w-full object-cover", aspect, "md:max-h-[36vh]")}
+      className={cn("w-full object-cover", aspect, "md:max-h-[42vh]")}
     />
   );
 }

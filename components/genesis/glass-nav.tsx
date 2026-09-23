@@ -10,6 +10,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { DivisionLockup } from "./division-lockup";
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
@@ -452,7 +453,24 @@ function NavMenu({ item }: { item: NavItem }) {
             */
             className="fixed left-1/2 top-[4.5rem] z-10 w-[min(64rem,calc(100vw-2rem))] -translate-x-1/2 pt-3"
           >
-            <div className="glass glass-strong glass-lit rounded-panel p-6">
+            {/*
+              OPAQUE, NOT GLASS — "itna transparent kyu hai, dikh hi nahi raha
+              kuch", and the report is exact.
+
+              Glass is a translucent fill over a blur, which works for the nav
+              pill: that sits over one scene at a time and is 64 points tall,
+              so whatever shows through is a smear. This panel is 500 points
+              of small type hanging over the middle of a page, and what showed
+              through was the FOOTER — its links, its column headings and its
+              giant ghosted wordmark — interleaved with the menu's own text at
+              almost the same weight. Two sets of words in one space is not a
+              legibility problem to be tuned, it is a panel that needs a floor.
+
+              `--surface-raised` is the page's own raised ground and is opaque
+              in both themes, so the blur below it is belt and braces now
+              rather than the thing doing the work.
+            */}
+            <div className="rounded-panel border border-[var(--glass-border)] bg-[var(--surface-raised)] p-6 shadow-float backdrop-blur-xl">
               <div className="grid gap-x-6 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
                 {item.children?.map((child) => (
                   <div key={child.label}>
@@ -470,11 +488,37 @@ function NavMenu({ item }: { item: NavItem }) {
                       onClick={() => setOpen(false)}
                       className="group/col block"
                     >
-                      <span className="block text-small font-medium text-bone transition-colors group-hover/col:text-brand-ink">
-                        {child.label}
-                      </span>
+                      {/*
+                        THE DIVISION'S OWN MARK, NAME ONLY — Genesis asked for
+                        the short lockup here rather than the route's name set
+                        in type. `nameOnly` is the artwork with the symbol and
+                        the tagline cropped away, which is exactly what a
+                        column heading wants: the four are normalised to one
+                        letter height, so they line up the way four text
+                        headings would while carrying the brand's gradients.
+
+                        The lockup's own tagline is hidden — the blurb under
+                        it already does that job, in the words the nav uses
+                        for the route rather than the ones the artwork
+                        carries.
+                      */}
+                      {child.short ? (
+                        <DivisionLockup
+                          name={child.short}
+                          tagline=""
+                          ramp={child.ramp ?? ""}
+                          as="h3"
+                          nameOnly
+                          height={20}
+                          taglineClassName="hidden"
+                        />
+                      ) : (
+                        <span className="block text-small font-medium text-bone transition-colors group-hover/col:text-brand-ink">
+                          {child.label}
+                        </span>
+                      )}
                       {child.blurb && (
-                        <span className="mt-0.5 block text-micro text-faint">
+                        <span className="mt-1.5 block text-micro text-faint">
                           {child.blurb}
                         </span>
                       )}

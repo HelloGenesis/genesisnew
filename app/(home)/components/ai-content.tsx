@@ -12,7 +12,11 @@ import { GlassButton } from "@/components/genesis/glass-button";
 import { pagerFor } from "@/components/genesis/overlay";
 import { WarpRail, type WarpItem } from "@/components/genesis/warp-rail";
 import type { CaseStudy } from "@/lib/case-studies";
-import { caseStudyForClip, caseStudyPathForClip } from "@/lib/case-study-pages";
+import {
+  caseStudyForClip,
+  caseStudyPathForClip,
+  uniqueStudies,
+} from "@/lib/case-study-pages";
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
@@ -71,6 +75,9 @@ const AI_WORK: AiCard[] = expandToClips(
       study: caseStudyForClip(clip),
     };
   });
+
+/** The distinct studies the rail covers, for the window's pager. */
+const AI_STUDIES = uniqueStudies(AI_WORK.map((card) => card.study));
 
 export function AiContent() {
   /*
@@ -441,13 +448,10 @@ export function AiContent() {
       <CaseStudyDialog
         study={study}
         onClose={() => setStudy(null)}
+        /* Deduped — see the note in Influence and `uniqueStudies`. */
         pager={pagerFor(
-          AI_WORK.map((card) => card.study).filter(
-            (entry): entry is CaseStudy => Boolean(entry),
-          ),
-          AI_WORK.filter((card) => card.study).findIndex(
-            (card) => card.study?.slug === study?.slug,
-          ),
+          AI_STUDIES,
+          AI_STUDIES.findIndex((entry) => entry.slug === study?.slug),
           (entry) => setStudy(entry),
           (entry) => entry.client,
         )}

@@ -11,7 +11,11 @@ import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { pagerFor } from "@/components/genesis/overlay";
 import { ReelPair } from "@/components/genesis/reel-pair";
 import type { CaseStudy } from "@/lib/case-studies";
-import { caseStudyForClip, caseStudyPathForClip } from "@/lib/case-study-pages";
+import {
+  caseStudyForClip,
+  caseStudyPathForClip,
+  uniqueStudies,
+} from "@/lib/case-study-pages";
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
@@ -75,6 +79,9 @@ const INFLUENCE_REELS = expandToClips(
       study: caseStudyForClip(clip),
     };
   });
+
+/** The distinct studies the reels cover, for the window's pager. */
+const INFLUENCE_STUDIES = uniqueStudies(INFLUENCE_REELS.map((reel) => reel.study));
 
 export function InfluencerMarketing() {
   /*
@@ -418,13 +425,16 @@ export function InfluencerMarketing() {
       <CaseStudyDialog
         study={study}
         onClose={() => setStudy(null)}
+        /*
+          DEDUPED, OR THE ARROWS DO NOTHING. Several reels of one engagement
+          resolve to the same study, so the raw list had twenty entries
+          covering far fewer studies — "next" stepped to the following index,
+          which was usually the same study, and the window replaced its
+          content with identical content. See `uniqueStudies`.
+        */
         pager={pagerFor(
-          INFLUENCE_REELS.map((reel) => reel.study).filter(
-            (entry): entry is CaseStudy => Boolean(entry),
-          ),
-          INFLUENCE_REELS.filter((reel) => reel.study).findIndex(
-            (reel) => reel.study?.slug === study?.slug,
-          ),
+          INFLUENCE_STUDIES,
+          INFLUENCE_STUDIES.findIndex((entry) => entry.slug === study?.slug),
           (entry) => setStudy(entry),
           (entry) => entry.client,
         )}
