@@ -328,6 +328,16 @@ export function GlassNav() {
                           >
                             {child.label}
                           </Link>
+                          {/*
+                            THE SERVICES ARE ON THE DESKTOP PANEL AND NOT
+                            HERE. Four divisions with their three or four
+                            services each is nineteen rows of unclickable
+                            text inside a sheet a reader opened to navigate —
+                            it would push Contact off the bottom of a phone
+                            to describe columns they cannot click. The
+                            division names are the navigation; the services
+                            are what the wide panel has room to explain.
+                          */}
                         </li>
                       ))}
                     </ul>
@@ -431,49 +441,80 @@ function NavMenu({ item }: { item: NavItem }) {
               halfway there and the menu shuts under the cursor. Padding keeps
               it inside the hover target.
             */
-            className="absolute left-1/2 top-full z-10 w-[19rem] -translate-x-1/2 pt-3"
+            /*
+              FOUR COLUMNS, CENTRED ON THE BAR RATHER THAN ON THE TRIGGER.
+
+              A panel this wide hung under one word would run off the right
+              of a 1280 screen — "Services" sits left of centre. It is pinned
+              to the viewport's middle instead and capped at the page's own
+              measure, so it lines up with the content underneath it the way
+              a mega-menu should.
+            */
+            className="fixed left-1/2 top-[4.5rem] z-10 w-[min(64rem,calc(100vw-2rem))] -translate-x-1/2 pt-3"
           >
-            <ul className="glass glass-strong glass-lit flex flex-col gap-0.5 rounded-panel p-2">
-              {item.children?.map((child) => (
-                <li key={child.label}>
-                  <Link
-                    href={child.href}
-                    onClick={() => setOpen(false)}
-                    className="block rounded-card px-3 py-2.5 transition-colors hover:bg-[var(--hover-wash)]"
-                  >
-                    <span className="block text-small text-bone">{child.label}</span>
+            <div className="glass glass-strong glass-lit rounded-panel p-6">
+              <div className="grid gap-x-6 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
+                {item.children?.map((child) => (
+                  <div key={child.label}>
                     {/*
-                      The blurb has been in NavItem since the first version of
-                      this file, described as "used by the Capabilities menu"
-                      — a menu that was removed before it shipped. This is
-                      that menu, and it is what the field was for: four
-                      division names alone read as a list of departments,
-                      where a line each says what you would go there to buy.
+                      THE COLUMN HEADING IS THE ONLY LINK IN IT. The services
+                      under it have no pages of their own, and inventing
+                      anchors for them would be inventing content — so the
+                      division is the destination and the list is what it
+                      covers. Making the heading the link also means the
+                      largest target in each column is the one that goes
+                      somewhere.
                     */}
-                    {child.blurb && (
-                      <span className="mt-0.5 block text-micro text-faint">
-                        {child.blurb}
+                    <Link
+                      href={child.href}
+                      onClick={() => setOpen(false)}
+                      className="group/col block"
+                    >
+                      <span className="block text-small font-medium text-bone transition-colors group-hover/col:text-brand-ink">
+                        {child.label}
                       </span>
+                      {child.blurb && (
+                        <span className="mt-0.5 block text-micro text-faint">
+                          {child.blurb}
+                        </span>
+                      )}
+                    </Link>
+
+                    {child.items && child.items.length > 0 && (
+                      <ul className="mt-3 flex flex-col gap-1.5 border-t border-[var(--glass-border)] pt-3">
+                        {child.items.map((service) => (
+                          /*
+                            PLAIN TEXT, NOT LINKS. A row that highlights on
+                            hover and then does nothing when clicked is worse
+                            than one that never invited the click; these are
+                            a description of the column, and the heading
+                            above them is how you get there.
+                          */
+                          <li key={service} className="text-micro leading-snug text-ash">
+                            {service}
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                  </Link>
-                </li>
-              ))}
+                  </div>
+                ))}
+              </div>
+
               {/*
-                THE BRAIN, LAST. It is where the trigger's own href points and
-                a reader who wants the picture rather than the list should be
-                able to get there — but it belongs under the four, not over
-                them, because it is the overview and they are the answer.
+                THE BRAIN, LAST AND ACROSS THE FOOT. It is where the trigger's
+                own href points and a reader who wants the picture rather than
+                the list should be able to get there — but it belongs under
+                the four, not over them, because it is the overview and they
+                are the answer.
               */}
-              <li className="mt-1 border-t border-[var(--glass-border)] pt-1">
-                <Link
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="block rounded-card px-3 py-2.5 text-small text-faint transition-colors hover:bg-[var(--hover-wash)] hover:text-bone"
-                >
-                  All four divisions
-                </Link>
-              </li>
-            </ul>
+              <Link
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="mt-6 block border-t border-[var(--glass-border)] pt-4 text-small text-faint transition-colors hover:text-bone"
+              >
+                See all four divisions →
+              </Link>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

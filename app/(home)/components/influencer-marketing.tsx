@@ -156,33 +156,20 @@ export function InfluencerMarketing() {
             speedSeconds={150}
             gapClassName="gap-2"
             fadePercent={10}
-            items={[
-              ...influencer.niches.map((niche) => (
-                <span
-                  key={niche}
-                  className="block whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
-                >
-                  {niche}
-                </span>
-              )),
-              /*
-                The board's own "+56 More". Ten named against sixty-six
-                covered is Genesis's figure from Genesis's artwork, and it is
-                the whole point of listing categories at all — a brand whose
-                own niche is not among the ten needs to be told the list is a
-                sample, not the extent of it.
-
-                It rides IN the loop rather than being pinned at the end,
-                because a loop has no end: pinned outside the marquee it would
-                sit still while the categories it qualifies travel past it.
-              */
+            /*
+              NO "+56 MORE" CHIP ANY MORE. Ten categories plus a count of the
+              rest was a stand-in for the list; Genesis has now given the
+              list, so the rail carries all of it. A chip saying there are
+              more, sitting beside all of them, would be counting itself.
+            */
+            items={influencer.niches.map((niche) => (
               <span
-                key="more"
-                className="block whitespace-nowrap rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-brand-ink"
+                key={niche}
+                className="block whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
               >
-                +{influencer.moreNiches} more
-              </span>,
-            ]}
+                {niche}
+              </span>
+            ))}
           />
         </Reveal>
 
@@ -274,7 +261,19 @@ export function InfluencerMarketing() {
                 <span className="text-[2.25rem] font-normal">
                   {influencer.databaseStat.value}
                 </span>{" "}
-                <span className="font-serif text-h3 italic text-brand-ink">
+                {/*
+                  THE SAME FACE AS THE FIGURE BESIDE IT — "keep the font
+                  consistent". This was serif italic, which is the site's
+                  HEADING accent: right for one word inside a headline, wrong
+                  here, where it sits directly against a sans figure at the
+                  same size and reads as two fonts colliding rather than as
+                  one line with a highlight. The colour does the work on its
+                  own, as it does in the positioning line on the Brain.
+
+                  The heading above this block keeps its serif italic, because
+                  that one IS a headline.
+                */}
+                <span className="text-h3 text-brand-ink">
                   {influencer.databaseStat.label}
                 </span>
               </p>
@@ -308,7 +307,7 @@ export function InfluencerMarketing() {
                     <span className="text-h3 font-medium">
                       {influencer.databaseStat.value}
                     </span>{" "}
-                    <span className="font-serif text-lead italic text-brand-ink">
+                    <span className="text-lead text-brand-ink">
                       {influencer.databaseStat.label}
                     </span>
                   </p>

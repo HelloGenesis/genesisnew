@@ -3,6 +3,33 @@
  * Defined once so the nav, footer, sitemap and mobile menu never drift.
  */
 
+/*
+  ONE-DIRECTIONAL, AND CHECKED. The Services menu lists each division's own
+  services, which live with the division copy in home-content — so this file
+  reads that one. home-content imports only lib/proof and nothing imports
+  site-config from either, so there is no cycle; keep it that way, because a
+  cycle between two data modules fails at import with an error that names
+  neither of them (see the one case-study-pages hit).
+*/
+import { services } from "./home-content";
+
+/**
+ * Which homepage section each division's service card belongs to.
+ *
+ * `services.items` is keyed by the brand's own names — "Genesis.Influence",
+ * "Genesis.AILab" — and `divisionPages` by route and section. Joining them
+ * needs one table, and it lives here rather than in either list because it is
+ * a fact about the PAIR: getting a key wrong returns undefined and silently
+ * drops a column rather than failing, so it is worth having somewhere
+ * obvious.
+ */
+const sectionForDivision: Record<string, string> = {
+  "Genesis.Influence": "influence",
+  "Genesis.Studios": "studios",
+  "Genesis.AILab": "ai-lab",
+  "Genesis.BrandDesign": "brand-design",
+};
+
 export type NavItem = {
   label: string;
   href: string;
@@ -28,6 +55,12 @@ export type NavItem = {
    * if a reader clicks the trigger itself, and it is what a crawler follows.
    */
   children?: NavItem[];
+  /**
+   * The individual services under a menu column. Plain strings, not links:
+   * there are no per-service pages, so the column's own heading is the link
+   * and these are what it covers.
+   */
+  items?: string[];
 };
 
 export const siteConfig = {
@@ -320,11 +353,47 @@ export const navItems: NavItem[] = [
   {
     label: "Services",
     href: homeHref,
-    children: divisionPages.map(({ label, href, blurb }) => ({
-      label,
-      href,
-      blurb,
-    })),
+    /*
+      FOUR COLUMNS, ONE PER VERTICAL, each listing that vertical's own
+      services — "4 sections (our verticals) and uske niche jitne bhi mere
+      subtext hai woh mere services hai, sabko alag alag karke likhna".
+
+      THE SERVICES ARE BUILT FROM TWO LISTS, MERGED. Each division already
+      carries a `caption` (the middot line under its name on the Brain) and a
+      `services` array (read off page 3 of the credentials deck). The caption
+      is the headline set — the three or four things the division is
+      announced by — and the deck list is the fuller one. Taking the caption
+      first and appending anything the deck adds gives a menu that opens with
+      the words a reader has already seen on the page and then goes deeper,
+      which is the order a menu should reveal things in.
+
+      DEDUPED CASE-INSENSITIVELY, because the two lists overlap and spell
+      differently: the caption says "Influencer Marketing" and the deck says
+      the same with different capitals in places. Two entries a letter apart
+      in one column reads as a mistake.
+
+      EVERY SERVICE POINTS AT ITS DIVISION'S PAGE. There are no per-service
+      pages and inventing anchors for them would be inventing content; what a
+      reader gets is the division that does it, which is the honest
+      destination and the one that exists.
+    */
+    children: divisionPages.map(({ label, href, blurb, section }) => {
+      const division = services.items.find(
+        (item) => sectionForDivision[item.title] === section,
+      );
+      const listed = [
+        ...(division?.caption.split("·").map((part) => part.trim()) ?? []),
+        ...(division?.services ?? []),
+      ];
+      const seen = new Set<string>();
+      const items = listed.filter((name) => {
+        const key = name.toLowerCase();
+        if (!name || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      return { label, href, blurb, items };
+    }),
   },
   // The page, not the homepage rail: Genesis asked the bar to open it.
   { label: "Case Studies", href: "/case-studies" },

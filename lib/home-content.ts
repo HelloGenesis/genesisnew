@@ -217,11 +217,25 @@ export const services = {
         "Strategy, Scripting & Production",
         "Reels, Podcasts & Product Videos",
         "Founder-Led Content",
+        /*
+          MOTION GRAPHICS, at Genesis's request, and it belongs in both
+          places: the caption is what appears under the mark on the Brain and
+          in the section, and this list is what the Services menu adds to it.
+          The menu merges the two and dedupes, so naming it here as well as
+          in the caption costs nothing and means the deck list stays a true
+          record of what Studios sells.
+
+          It is also already work the catalogue holds — the pixel-art
+          explainers and the app walkthrough, filed under the Creatives
+          vertical since the filter pass. Studios was selling it and not
+          saying so.
+        */
+        "Motion Graphics",
       ],
       short: "Studios",
       href: "/content-production",
       // The one that already agreed with its lockup, bar capitalisation.
-      caption: "Strategy · Scripting · Content Production",
+      caption: "Strategy · Scripting · Content Production · Motion Graphics",
       ramp: "linear-gradient(100deg, #ff9147 0%, #ffb057 58%, #ffd27a 100%)",
       body: "Creative direction, strategy, scripting, production and post, plus the product and interactive work. All of it built to hold up on any feed.",
     },
@@ -322,14 +336,23 @@ export const aiContent = {
     you — and the second half is the half that was missing.
   */
   heading: "Created with AI.",
-  headingAccent: "Built for your brand.",
+  headingAccent: "Built for Your Brand.",
   /*
     WHAT THE DIVISION ACTUALLY BUILDS, in one sentence, because the heading
     above is a claim and a claim over a wall of avatars needs its scope said
     plainly underneath. This is the standfirst the section never had.
   */
+  /*
+    GENESIS'S OWN TWO SENTENCES, and the pair does a job the single sentence
+    it replaces could not. The old line was a list of everything AI Lab
+    makes; these two are an invitation and an offer — here is what we have
+    made, and we can make it for you, including the part after the making.
+    "Automate the process from ideas and scripts to ready-to-post content" is
+    the sentence that connects this block to the automation one below it,
+    which used to need a transition line to do the same job.
+  */
   body:
-    "We build AI-powered content and digital experiences for brands, founders and creators, from realistic AI avatars and multilingual content to automation, games, apps and interactive experiences.",
+    "See what we've created using AI, from videos and visuals to branded content. We can build the same for your brand and automate the process from ideas and scripts to ready-to-post content.",
   /*
    * THE COPY ABOVE THE ROSTER, and all three lines of it are Genesis's own.
    *
@@ -365,14 +388,28 @@ export const aiContent = {
       serif-italic accent in the brand, not the avatars ramp it used to wear.
       A two-part heading is what that treatment needs.
     */
-    heading: "AI Avatars.",
-    headingAccent: "Built for You.",
-    lead: "Tailored for founders, creators, influencers and artists. Avatars that look real. For real.",
+    /*
+      "BUILD YOUR OWN AI AVATAR", which is an instruction to the reader rather
+      than a description of the product. Genesis's line, and the better of the
+      two: "AI Avatars. Built for You." names a thing that exists, where this
+      names something the reader can have. The accent takes the half that is
+      about them.
+    */
+    heading: "Build Your Own",
+    headingAccent: "AI Avatar.",
+    lead: "We create realistic AI avatars for founders, creators, artists and brands. Use your avatar to create consistent content, showcase your products or services, and reduce the need for repeated shoots. We can automate the entire content workflow too.",
     /*
      * The caption to the roster, printed UNDER the faces. "One Setup.
      * Real-Time. Every Time" used to head it and Genesis has taken it off.
      */
-    line: "Create realistic AI avatars and turn them into consistent content for your brand or personal social media.",
+    /*
+      NO LINE UNDER THE ROSTER ANY MORE. It said "create realistic AI avatars
+      and turn them into consistent content", which is now the opening clause
+      of `lead` above — Genesis's new copy absorbed it. Printed in both places
+      the section would introduce the avatars, show them, and then introduce
+      them again.
+    */
+    line: "",
   },
   /*
    * THE AUTOMATION BLOCK, Genesis's copy verbatim. It is the third claim in
@@ -449,26 +486,43 @@ export const aiContent = {
     TODO(assets): Ivaanat and Jesko — their folders are empty.
     Stills still take image paths.
   */
+  /*
+    `kind` SAYS WHICH KIND OF AVATAR EACH ONE IS, and Genesis asked for it on
+    the cards because the roster mixes two things that look identical and are
+    not. Four of these are AI avatars OF REAL PEOPLE — Genesis's own founder
+    and head of creative among them — and three are original characters who
+    exist only as avatars. A viewer cannot tell by looking, which is the
+    point of the work and also the reason it has to be labelled: a card
+    reading "Shivam, Founder & CEO" over a synthesised face, with nothing
+    saying so, is the one thing this section must not be ambiguous about.
+  */
   avatars: [
-    { id: "ivaanat", portrait: "/avatars/ivaanat.jpg", name: "Ivaanat", role: "Fashion & Beauty" as string | undefined,
+    { id: "ivaanat",
+      kind: "Virtual AI Avatar", portrait: "/avatars/ivaanat.jpg", name: "Ivaanat", role: "Fashion & Beauty" as string | undefined,
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: [] as string[], stills: [] as string[] },
-    { id: "tanvi", portrait: "/avatars/tanvi.jpg", name: "Tanvi", role: "Head of Creative | Genesis" as string | undefined,
+    { id: "tanvi",
+      kind: "AI Avatar · Real Person", portrait: "/avatars/tanvi.jpg", name: "Tanvi", role: "Head of Creative | Genesis" as string | undefined,
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: ["ai-lab-tanvi-uiiui", "ai-lab-tanvi-b2813828", "ai-lab-tanvi-photos"] as string[], stills: [] as string[] },
-    { id: "jesko", portrait: "/avatars/jesko.jpg", name: "Jesko", role: "DJ | Techno artist",
+    { id: "jesko",
+      kind: "AI Avatar · Real Person", portrait: "/avatars/jesko.jpg", name: "Jesko", role: "DJ | Techno artist",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: [] as string[], stills: [] as string[] },
-    { id: "adi", portrait: "/avatars/adi.jpg", name: "Adi", role: "Aditya Birla Health Insurance",
+    { id: "adi",
+      kind: "Virtual AI Avatar", portrait: "/avatars/adi.jpg", name: "Adi", role: "Aditya Birla Health Insurance",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: ["29", "ai-lab-1-2-9x16-main-product-explainer-activ-yuva", "31"] as string[], stills: [] as string[] },
-    { id: "diya", portrait: "/avatars/diya.jpg", name: "Diya", role: "Aditya Birla Health Insurance",
+    { id: "diya",
+      kind: "Virtual AI Avatar", portrait: "/avatars/diya.jpg", name: "Diya", role: "Aditya Birla Health Insurance",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: ["30", "ai-lab-2-1-9x16-health-returns-activ-yuva", "31"] as string[], stills: [] as string[] },
-    { id: "bharat", portrait: "/avatars/bharat.jpg", name: "Bharat", role: "Advocate",
+    { id: "bharat",
+      kind: "AI Avatar · Real Person", portrait: "/avatars/bharat.jpg", name: "Bharat", role: "Advocate",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: ["ai-lab-bharat-bharat"] as string[], stills: [] as string[] },
-    { id: "shivam", portrait: "/avatars/shivam.jpg", name: "Shivam", role: "Founder & CEO | Genesis",
+    { id: "shivam",
+      kind: "AI Avatar · Real Person", portrait: "/avatars/shivam.jpg", name: "Shivam", role: "Founder & CEO | Genesis",
       bio: undefined as string | undefined, languages: [] as string[], useCases: [] as string[],
       reel: ["ai-lab-shivam-sh1", "ai-lab-shivam-sh2"] as string[], stills: [] as string[] },
   ],
@@ -687,24 +741,87 @@ export const influencer = {
    *
    * Named in the board's own order, down one side and then the other.
    */
+  /*
+    GENESIS'S FULL LIST, 56 OF THEM, replacing the ten that stood for it.
+
+    The rail used to show ten categories and a "+56 more" chip — Genesis's own
+    figure from their influencer board, where ten named against sixty-six
+    covered was the point being made. That was a stand-in, and the reason it
+    had to exist is gone: this is the list.
+
+    IT IS A LONGER RAIL AND THAT COSTS NOTHING. The categories ride a marquee
+    (see the note at the call site), so length is horizontal distance rather
+    than vertical space — fifty-six chips take the same room on the page as
+    ten and simply take longer to come round. The speed is set against the
+    track's length there, not here.
+
+    ORDERED AS GENESIS WROTE THEM, which is by family rather than
+    alphabetically: beauty's four together, finance's five, tech's five. A
+    brand scanning for their own category finds its neighbours on the way.
+  */
   niches: [
     "Fashion",
-    "Finance",
-    "Gaming",
-    "Tech",
-    "Parenting",
-    "Fitness",
     "Beauty",
+    "Skincare",
+    "Haircare",
+    "Makeup",
     "Lifestyle",
     "Food",
     "Travel",
+    "Fitness",
+    "Health & Wellness",
+    "Yoga",
+    "Nutrition",
+    "Finance",
+    "Investing",
+    "Personal Finance",
+    "FinTech",
+    "Banking & Insurance",
+    "Technology",
+    "Gadgets",
+    "Gaming",
+    "Esports",
+    "AI & Emerging Tech",
+    "Business",
+    "Entrepreneurship",
+    "Startups",
+    "Marketing",
+    "Advertising & Creative",
+    "Education",
+    "Study Abroad",
+    "Career & Jobs",
+    "Parenting",
+    "Mom Creators",
+    "Kids & Family",
+    "Relationships & Dating",
+    "Comedy",
+    "Entertainment",
+    "Movies & OTT",
+    "Music",
+    "DJs & Electronic Music",
+    "Dance",
+    "Art & Illustration",
+    "Photography",
+    "Filmmaking",
+    "Automobiles",
+    "Bikes & Motorsports",
+    "Sports",
+    "Cricket",
+    "Football",
+    "Real Estate",
+    "Home & Interiors",
+    "Architecture",
+    "Luxury",
+    "Hospitality",
+    "Restaurants & Cafés",
+    "Sustainability",
+    "Pets & Animals",
   ] as string[],
-  /**
-   * What the board counts beyond the ten it names. Genesis's own figure from
-   * their own artwork — ten listed against sixty-six covered — so it is a
-   * claim they already make rather than one inferred here.
-   */
-  moreNiches: 56,
+  /*
+    NO `moreNiches`. It was the count behind the "+56 more" chip — ten listed
+    against sixty-six covered — and with the full list above there is nothing
+    left for it to qualify.
+  */
   /*
     THE HEADING IS THE PROMISE, NOT THE SERVICE LIST. It read "Influencer
     marketing, UGC & celebrity", which is the division's tagline set large —
@@ -758,7 +875,19 @@ export const influencer = {
     lib/proof.ts, which records the conflict rather than picking a side
     silently.
   */
-  stats: [proof.campaigns, proof.brands, proof.reach, proof.platforms],
+  /*
+    GENESIS'S OWN ORDER, AND IT IS AN ARGUMENT RATHER THAN A LIST. Views,
+    videos, campaigns, brands — the outcome first, then the output that
+    produced it, then the work, then who it was for. Reading right to left it
+    is the same sentence backwards: 45 brands hired us for 50 campaigns, we
+    made 300 videos, they were seen 500 million times.
+
+    PLATFORMS COMES OUT. It described distribution where the other three
+    describe output, and it was the last figure on the site with a single
+    source and no corroboration. The number stays in lib/proof for anything
+    that wants it later.
+  */
+  stats: [proof.reach, proof.videos, proof.campaigns, proof.brands],
   /**
    * THE CONSTELLATION CARDS — real creators, supplied by Genesis with their
    * photographs and their Instagram handles.

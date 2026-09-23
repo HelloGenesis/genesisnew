@@ -197,9 +197,30 @@ export function caseStudyPathForClip(id: ReelId | undefined): string | undefined
 export function caseStudyForClip(id: ReelId | undefined): CaseStudy | undefined {
   if (id === undefined) return undefined;
 
-  const direct = caseStudyList.find((study) => study.heroClip === id);
+  /*
+    COMPARED AS STRINGS, AND THAT IS A BUG FIX RATHER THAN A STYLE.
+
+    A ReelId is `number | string` — the first Drive folder numbered its files
+    1..42 and the second named them — so the catalogue holds `16` while a
+    caller that parsed the id out of a composed key holds `"16"`. Both rails
+    do exactly that (`item.key.slice(...)`), so `heroClip === id` and
+    `reel.includes(id)` were false for every numbered clip on the site: the
+    Influence reels were not links at all and the AI rail linked only its
+    named clips.
+
+    It looked like missing data rather than a type mismatch, which is what
+    made it survive — a clip with no study renders as plain footage by
+    design, so eight of thirteen working looked like eight of thirteen having
+    studies written.
+  */
+  const key = String(id);
+  const direct = caseStudyList.find(
+    (study) => study.heroClip !== undefined && String(study.heroClip) === key,
+  );
   const viaWork = caseStudyList.find((study) =>
-    study.work?.some((slug) => findWork(slug)?.reel?.includes(id)),
+    study.work?.some((slug) =>
+      findWork(slug)?.reel?.some((entry) => String(entry) === key),
+    ),
   );
 
   const study = direct ?? viaWork;

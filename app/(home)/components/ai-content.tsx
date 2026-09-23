@@ -271,15 +271,21 @@ export function AiContent() {
         <AvatarFan avatars={aiContent.avatars} className="mt-5 sm:mt-6" />
 
         {/*
-          THE LINE SITS UNDER THE ROSTER, at Genesis's request. Above it, it
-          was a third line of introduction before anything had been shown;
-          under the faces it reads as the caption to them, which is the job
-          that sentence is doing — the same move Brand & Design's standfirst
-          made for the same reason.
+          THE CAPTION UNDER THE ROSTER, WHERE THERE IS ONE.
+
+          It used to be "create realistic AI avatars and turn them into
+          consistent content", and Genesis's new copy opens the block with
+          that same sentence — so printed here as well the section would
+          introduce the avatars, show them, and introduce them again. The
+          field is empty rather than deleted because the slot is still the
+          right one for a caption, and rendering nothing is one condition
+          rather than a component change the day another line arrives.
         */}
-        <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead">
-          {aiContent.avatarsIntro.line}
-        </p>
+        {aiContent.avatarsIntro.line && (
+          <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead">
+            {aiContent.avatarsIntro.line}
+          </p>
+        )}
       </Reveal>
 
       {/*
@@ -354,7 +360,7 @@ export function AiContent() {
           arrow
           className={MOBILE_CTA}
         >
-          View AI Work
+          Explore AI Work
         </GlassButton>
       </Reveal>
     </SectionShell>

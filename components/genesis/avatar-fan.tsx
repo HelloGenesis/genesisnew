@@ -77,6 +77,13 @@ type Avatar = {
   id: string;
   name: string;
   role?: string | undefined;
+  /**
+   * Which KIND of avatar this is — one built from a real person, or an
+   * original character. See the note in lib/home-content: the roster mixes
+   * the two and a viewer cannot tell by looking, which is both the point of
+   * the work and the reason it has to be said.
+   */
+  kind?: string | undefined;
   /** The supplied card, 1080x1920. Absent for an avatar not yet shot. */
   portrait?: string | undefined;
 };
@@ -337,7 +344,7 @@ export function AvatarFan({
               type="button"
               onClick={() => setOpenId(avatar.id)}
               aria-haspopup="dialog"
-              aria-label={`${avatar.name}${avatar.role ? `, ${avatar.role}` : ""}`}
+              aria-label={`${avatar.name}${avatar.role ? `, ${avatar.role}` : ""}${avatar.kind ? `, ${avatar.kind}` : ""}`}
               className={cn(
                 "pointer-events-auto block w-full rounded-[1.25rem] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
               )}
@@ -409,6 +416,34 @@ export function AvatarFan({
                     "linear-gradient(0deg, rgb(0 0 0 / 0.88) 0%, rgb(0 0 0 / 0.45) 46%, transparent 100%)",
                 }}
               />
+
+              {/*
+                THE KIND, AT THE TOP OF THE CARD.
+
+                Top rather than with the name, and that is deliberate: the
+                name and role at the foot are what the avatar IS in the
+                fiction — "Shivam, Founder & CEO" — and this is the note
+                saying the face is synthesised. Stacked into the same block
+                the two would read as one caption and the disclosure would
+                blur into the byline it is qualifying. At the opposite corner
+                it is unmistakably a label ON the picture.
+
+                It is a chip because the fan overlaps its cards: bare type at
+                this size over another card's photograph is unreadable,
+                where a chip carries its own ground.
+              */}
+              {avatar.kind && (
+                <span
+                  className={cn(
+                    "glass-chip absolute left-2 top-2 z-[1] max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 font-medium uppercase text-white/90",
+                    fan
+                      ? "text-[clamp(0.36rem,0.66vw,0.55rem)] tracking-[0.1em]"
+                      : "text-[0.5rem] tracking-[0.08em]",
+                  )}
+                >
+                  {avatar.kind}
+                </span>
+              )}
 
               <figcaption
                 className={cn(

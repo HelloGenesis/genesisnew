@@ -61,14 +61,14 @@ export const proof = {
   */
   campaigns: {
     value: "50+",
-    label: "Campaigns delivered",
+    label: "Campaigns",
     confirmed: true,
     note: "Given directly by Genesis, settling the 50+/500+/70 split between the journey board, the Influence mockup and the brief.",
   },
 
   brands: {
     value: "45+",
-    label: "Brands collaborated",
+    label: "Brands",
     confirmed: true,
     note: "Given directly by Genesis. Supersedes the journey board's 30+ and the Influence mockup's 200+.",
   },
@@ -86,11 +86,35 @@ export const proof = {
     vague enough that a reader could have taken it as impressions,
     followers or reach in the platform sense.
   */
+  /*
+    THE LABELS LOST THEIR VERBS on Genesis's own re-listing of the set —
+    "Campaigns", "Brands", not "Campaigns delivered" and "Brands
+    collaborated". Four cells in a row is a table of quantities, and a verb on
+    each one is four words a reader has to parse to learn nothing: 45+ beside
+    "Brands" already means brands worked with. The two that KEPT a verb kept
+    it because the noun alone is ambiguous — "views" and "videos" could be
+    anyone's, where generated and produced say they are Genesis's.
+  */
   reach: {
     value: "500M+",
     label: "Views generated",
     confirmed: true,
     note: "Given directly by Genesis, settling the 50M+/500M+ split between the Influence mockup and the brief.",
+  },
+
+  /*
+    GIVEN DIRECTLY BY GENESIS, with no prior source to conflict with — it is
+    the first figure on this list that was simply stated rather than
+    reconciled. It replaces "20+ platforms covered" in the figures bar, and
+    it is the better of the two: a platform count describes distribution,
+    where a video count describes OUTPUT, which is what the three figures
+    beside it are also about.
+  */
+  videos: {
+    value: "300+",
+    label: "Videos produced",
+    confirmed: true,
+    note: "Given directly by Genesis.",
   },
 
   platforms: {

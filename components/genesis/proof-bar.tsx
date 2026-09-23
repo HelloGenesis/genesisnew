@@ -1,4 +1,4 @@
-import { BarChart3, Globe, Sparkles, Target } from "lucide-react";
+import { Building2, Clapperboard, Eye, Globe, Target } from "lucide-react";
 
 import { Reveal } from "@/components/genesis/reveal";
 import { influencer, isPending } from "@/lib/home-content";
@@ -40,7 +40,13 @@ import { cn } from "@/lib/utils";
  * is a four-up today and would be a three-up without complaint.
  */
 
-const STAT_ICONS = [Target, BarChart3, Sparkles, Globe];
+/*
+  ONE ICON PER FIGURE, IN THE ORDER lib/home-content LISTS THEM — views,
+  videos, campaigns, brands. Positional, which is fragile enough to be worth
+  saying out loud: reorder `influencer.stats` and these have to move with it,
+  or the brands cell wears a clapperboard.
+*/
+const STAT_ICONS = [Eye, Clapperboard, Target, Building2];
 
 export function ProofBar({ className }: { className?: string }) {
   const stats = influencer.stats.filter((stat) => !isPending(stat.value));
