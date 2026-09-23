@@ -12,6 +12,7 @@ import Link from "next/link";
 
 import { cn, isPlainClick } from "@/lib/utils";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
+import { watchReader } from "@/lib/slider";
 
 /**
  * Movie-poster card — the "Genesis Netflix" unit (img-025, img-026, img-013).
@@ -368,6 +369,13 @@ export function PosterCard({
   const { ref: railRef, style: railStyle } = useEdgeFade<HTMLDivElement>();
 
   /*
+    WHETHER THE READER IS MOVING THE RAIL — a finger, a swipe coasting, an
+    arrow gliding. The drift waits for that and resumes the instant it ends;
+    see watchReader in lib/slider.
+  */
+  const reader = useRef<ReturnType<typeof watchReader> | null>(null);
+
+  /*
     A SLIDER, NOT JUST A SCROLLER. With sixteen posters the rail runs well
     past the window, and a trackpad swipe is not something every visitor
     thinks to try. The arrows step one card at a time, measured from the
@@ -378,6 +386,8 @@ export function PosterCard({
     const rail = railRef.current;
     const card = rail?.firstElementChild as HTMLElement | null;
     if (!rail || !card) return;
+    // Held from this frame, before the smooth scroll's first event arrives.
+    reader.current?.touch();
     const max = rail.scrollWidth - rail.clientWidth;
     const atEnd = direction === 1 && rail.scrollLeft >= max - 2;
     const atStart = direction === -1 && rail.scrollLeft <= 2;
@@ -404,12 +414,6 @@ export function PosterCard({
     stuttered in place. The portfolio strips dropped snap for the same reason.
   */
   const box = useRef<HTMLDivElement>(null);
-  const holdUntil = useRef(0);
-  const hold = useCallback((ms: number) => {
-    // Never shortens a longer hold already in place — leaving the rail
-    // right after an arrow press must not cut that press's pause short.
-    holdUntil.current = Math.max(holdUntil.current, Date.now() + ms);
-  }, []);
 
   useEffect(() => {
     const el = box.current;
@@ -431,8 +435,9 @@ export function PosterCard({
     };
     const leave = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
+      // Moves again the instant the mouse leaves — "jaise hi hatau waise hi
+      // chalu hojaye".
       hovering = false;
-      hold(1500);
     };
     const focusIn = (event: FocusEvent) => {
       focused = (event.target as Element).matches(":focus-visible");
@@ -440,17 +445,15 @@ export function PosterCard({
     const focusOut = () => {
       focused = false;
     };
-    const touched = () => hold(4000);
     el.addEventListener("pointerenter", enter);
     el.addEventListener("pointerleave", leave);
     el.addEventListener("focusin", focusIn);
     el.addEventListener("focusout", focusOut);
-    el.addEventListener("pointerdown", touched, { passive: true });
-    el.addEventListener("touchstart", touched, { passive: true });
-    el.addEventListener("wheel", touched, { passive: true });
 
     const rail = railRef.current;
     if (!rail) return;
+    const watcher = watchReader(rail);
+    reader.current = watcher;
     const SPEED = 30; // px per second
     let direction = 1;
     // Kept as a float and only written while running: a browser may round
@@ -471,7 +474,7 @@ export function PosterCard({
         !focused &&
         !dialogOpen &&
         !document.hidden &&
-        Date.now() >= holdUntil.current &&
+        !watcher.busy() &&
         max > 0;
 
       if (!running) {
@@ -487,6 +490,7 @@ export function PosterCard({
           direction = 1;
         }
         rail.scrollLeft = offset;
+        watcher.wrote();
       }
       frame = requestAnimationFrame(tick);
     };
@@ -517,11 +521,10 @@ export function PosterCard({
       el.removeEventListener("pointerleave", leave);
       el.removeEventListener("focusin", focusIn);
       el.removeEventListener("focusout", focusOut);
-      el.removeEventListener("pointerdown", touched);
-      el.removeEventListener("touchstart", touched);
-      el.removeEventListener("wheel", touched);
+      watcher.dispose();
+      reader.current = null;
     };
-  }, [railRef, hold]);
+  }, [railRef]);
 
   return (
     <div ref={box} className="relative">
@@ -569,7 +572,6 @@ export function PosterCard({
         direction="left"
         label="Previous case study"
         onClick={() => {
-          hold(8000);
           step(-1);
         }}
         className="!grid left-3 sm:left-6"
@@ -578,7 +580,6 @@ export function PosterCard({
         direction="right"
         label="Next case study"
         onClick={() => {
-          hold(8000);
           step(1);
         }}
         className="!grid right-3 sm:right-6"

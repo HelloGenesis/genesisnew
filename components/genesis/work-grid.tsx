@@ -11,6 +11,7 @@ import { pagerFor } from "./overlay";
 import { VideoDialog } from "./video-dialog";
 import { WorkDialog } from "./work-dialog";
 import { WorkTile } from "./work-tile";
+import { watchReader } from "@/lib/slider";
 
 /**
  * The work grid — filters plus tiles, used by both the homepage Work section
@@ -110,7 +111,15 @@ export function WorkGrid({
 
   const rowA = useRef<HTMLDivElement>(null);
   const rowB = useRef<HTMLDivElement>(null);
+  /*
+    WHETHER THE READER IS MOVING EITHER STRIP — see watchReader in
+    lib/slider. The drift gives way to a finger or a gliding arrow and
+    resumes the instant it ends.
+  */
+  const readers = useRef<ReturnType<typeof watchReader>[]>([]);
   const page = useCallback((direction: 1 | -1) => {
+    // Held from this frame, before the smooth scroll's first event arrives.
+    for (const reader of readers.current) reader.touch();
     /*
       BOTH ROWS MOVE, IN OPPOSITE DIRECTIONS, which is Genesis's "upar wala
       right scroll, niche wala left scroll". The bottom row is laid out
@@ -167,35 +176,26 @@ export function WorkGrid({
     const SPEED = 26; // px per second
     const lanes = strips.map((el) => ({
       el,
+      reader: watchReader(el),
       rtl: el.dir === "rtl",
       step: 1,
       offset: Math.abs(el.scrollLeft),
     }));
     let onScreen = false;
     let hovering = false;
-    let holdUntil = 0;
     let frame = 0;
     let last = performance.now();
 
-
-    const hold = (ms: number) => {
-      holdUntil = performance.now() + ms;
-    };
     const enter = () => {
       hovering = true;
     };
+    // Moves again the instant the mouse leaves.
     const leave = () => {
       hovering = false;
-      hold(900);
     };
-    const touched = () => hold(3500);
     box.addEventListener("pointerenter", enter);
     box.addEventListener("pointerleave", leave);
-    for (const el of strips) {
-      el.addEventListener("pointerdown", touched, { passive: true });
-      el.addEventListener("touchstart", touched, { passive: true });
-      el.addEventListener("wheel", touched, { passive: true });
-    }
+    readers.current = lanes.map((lane) => lane.reader);
 
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
@@ -211,10 +211,10 @@ export function WorkGrid({
       */
       const rect = box.getBoundingClientRect();
       onScreen = rect.bottom > 0 && rect.top < window.innerHeight;
-      const running = onScreen && !hovering && now > holdUntil && !document.hidden;
+      const running = onScreen && !hovering && !document.hidden;
       for (const lane of lanes) {
         const max = lane.el.scrollWidth - lane.el.clientWidth;
-        if (!running || max <= 0) {
+        if (!running || max <= 0 || lane.reader.busy()) {
           /* Follow the reader's own scrolling, so the drift resumes from there. */
           lane.offset = Math.abs(lane.el.scrollLeft);
           continue;
@@ -234,6 +234,7 @@ export function WorkGrid({
           lane.step = 1;
         }
         lane.el.scrollLeft = lane.rtl ? -lane.offset : lane.offset;
+        lane.reader.wrote();
       }
       frame = requestAnimationFrame(tick);
     };
@@ -243,11 +244,8 @@ export function WorkGrid({
       cancelAnimationFrame(frame);
       box.removeEventListener("pointerenter", enter);
       box.removeEventListener("pointerleave", leave);
-      for (const el of strips) {
-        el.removeEventListener("pointerdown", touched);
-        el.removeEventListener("touchstart", touched);
-        el.removeEventListener("wheel", touched);
-      }
+      for (const lane of lanes) lane.reader.dispose();
+      readers.current = [];
     };
   }, [slides, visible]);
 

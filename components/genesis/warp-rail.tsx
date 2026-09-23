@@ -7,6 +7,7 @@ import { useInViewPlayback } from "./use-in-view-playback";
 import { mediaUrl } from "@/lib/media-url";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { cn } from "@/lib/utils";
+import { SLIDER_RESUME_MS } from "@/lib/slider";
 
 /**
  * The warp rail — a corridor of work, drifting past the reader.
@@ -174,6 +175,17 @@ export function WarpRail({
       press from fighting the drift for a frame and jumping.
     */
     let glide = 0;
+    /*
+      WHEN THE DRIFT MAY RESUME. Every way a reader moves the rail — an arrow
+      once its glide has landed, a swipe, a drag, the mouse leaving — holds
+      the drift for SLIDER_RESUME_MS, the same pause every rail uses. It used
+      to pick up the instant a hand let go, which reads as the rail pulling
+      away from the reader.
+    */
+    let holdUntil = 0;
+    const holdDrift = () => {
+      holdUntil = performance.now() + SLIDER_RESUME_MS;
+    };
 
     const measure = () => {
       /*
@@ -281,8 +293,11 @@ export function WarpRail({
         const move = glide * Math.min(1, GLIDE * delta);
         offset += move;
         glide -= move;
-        if (Math.abs(glide) < 0.5) glide = 0;
-      } else if (!hovering && !still.matches) {
+        if (Math.abs(glide) < 0.5) {
+          glide = 0;
+          holdDrift();
+        }
+      } else if (!hovering && !still.matches && now >= holdUntil) {
         offset += SPEED * delta;
       }
 
@@ -326,6 +341,7 @@ export function WarpRail({
     };
     const leave = () => {
       hovering = false;
+      holdDrift();
     };
     box.addEventListener("pointerenter", enter);
     box.addEventListener("pointerleave", leave);
@@ -348,6 +364,7 @@ export function WarpRail({
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? width : 1;
       offset += event.deltaX * unit;
       glide = 0;
+      holdDrift();
       start();
     };
     box.addEventListener("wheel", onWheel, { passive: false });
@@ -376,6 +393,7 @@ export function WarpRail({
       start();
     };
     const onUp = () => {
+      if (dragX !== null) holdDrift();
       dragX = null;
       hovering = false;
     };

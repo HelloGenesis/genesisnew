@@ -9,6 +9,7 @@ import { useInViewPlayback } from "./use-in-view-playback";
 import { mediaUrl } from "@/lib/media-url";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { cn } from "@/lib/utils";
+import { watchReader } from "@/lib/slider";
 
 /**
  * The Influence reels: a two-card slider, with arrows to walk the rest.
@@ -43,19 +44,22 @@ import { cn } from "@/lib/utils";
  *   ONLY WHILE IT IS ON SCREEN. Off screen the clips are paused by
  *     useInViewPlayback anyway, so advancing there would burn through the
  *     run and leave a reader arriving at the tail.
- *   NOT WHILE ANYONE IS LOOKING AT IT. Hovering or tabbing into the block
- *     holds the row still. Swapping a reel out from under a pointer that
- *     has stopped on it is the classic carousel failure.
- *   NOT RIGHT AFTER A PRESS OR A SWIPE. A timer that moves the row the
- *     moment the reader has put it somewhere is fighting them, so it waits
- *     eight seconds after the last one. It used to stop for good — and on a
- *     phone, where the first swipe comes within seconds, that meant the
- *     auto-slide Genesis asked for was barely ever seen ("auto slide bhi ho").
+ *   NOT WHILE ANYONE IS LOOKING AT IT. A mouse over the block, or keyboard
+ *     focus in it, holds the row still, and it moves again the instant the
+ *     mouse leaves — "hover karu toh ruke, jaise hi hatau waise hi chalu".
+ *   NOT WHILE THE READER IS MOVING IT. A finger on the row, a swipe still
+ *     coasting, an arrow still gliding — the drift waits for all of them and
+ *     then resumes at once (SLIDER_RESUME_MS is zero; see lib/slider).
  *   NOT AT ALL UNDER REDUCED MOTION, which is what that setting is for.
  *
- * SEVEN SECONDS, which is about two loops of a four-second cut — long enough
- * to watch a reel rather than catch it, short enough that a reader who stays
- * for the copy beside it sees several.
+ * A CONTINUOUS DRIFT, NOT A STEP — "need continuous slide here auto". It
+ * moved one card every seven seconds, which read as a carousel ticking rather
+ * than as a wall of work going by. It now glides at DRIFT px a second, the
+ * speed of the case-study poster rail, and loops without a seam: the row
+ * carries a second copy of the reels, and when the first copy has passed the
+ * position folds back by exactly its width, which lands on an identical
+ * frame. That is also why the row no longer snaps — snapping would pull a
+ * drifting row back to a card edge every frame.
  */
 
 export type Reel = {
@@ -69,10 +73,8 @@ export type Reel = {
   onOpen?: () => void;
 };
 
-/** How long the row holds before it moves on by one card. See the note above. */
-const AUTO_MS = 7_000;
-/** How long a press or swipe pauses it before it carries on. */
-const RESUME_MS = 8_000;
+/** The drift, in px a second — the poster rail's speed. See the note above. */
+const DRIFT = 30;
 
 export function ReelPair({
   reels,
@@ -83,11 +85,11 @@ export function ReelPair({
 }) {
   const still = useReducedMotion();
   /*
-    WHEN THE READER LAST WORKED IT. A press or a swipe pauses the row for
-    RESUME_MS and then it carries on — see the note above.
+    WHETHER THE READER IS MOVING IT. Holds the drift while a finger or a
+    swipe or an arrow's glide is in progress, and lets go the moment it
+    stops — see watchReader in lib/slider.
   */
-  const [touchedAt, setTouchedAt] = useState(0);
-  const takeOver = () => setTouchedAt(Date.now());
+  const reader = useRef<ReturnType<typeof watchReader> | null>(null);
   /*
     TWO REASONS TO HOLD, TRACKED SEPARATELY, and that is a bug fix rather than
     bookkeeping. Written as one `running` flag, a pointer leaving the block
@@ -98,7 +100,6 @@ export function ReelPair({
   */
   const [visible, setVisible] = useState(false);
   const [held, setHeld] = useState(false);
-  const [tick, setTick] = useState(0);
   const box = useRef<HTMLDivElement>(null);
   const { ref: rail, style: fadeStyle } = useEdgeFade<HTMLDivElement>({ ramp: 120, max: 16 });
 
@@ -119,10 +120,25 @@ export function ReelPair({
     return () => observer.disconnect();
   }, []);
 
+  /** Only loop when there is more than fits; two reels just sit there. */
+  const loops = reels.length > 2;
+
   /**
-   * One card along, either way, wrapping at both ends so an arrow never
-   * dead-ends. A card's step is read off the second card's offset rather
-   * than computed from a width, so it includes the gap at every breakpoint.
+   * THE WIDTH OF ONE COPY of the reels — the distance at which the second
+   * copy lines up exactly where the first began. Read off the first card of
+   * the second copy, so it includes every gap at every breakpoint.
+   */
+  const period = useCallback(() => {
+    const el = rail.current;
+    const twin = el?.children[reels.length] as HTMLElement | undefined;
+    const first = el?.children[0] as HTMLElement | undefined;
+    return twin && first ? twin.offsetLeft - first.offsetLeft : 0;
+  }, [rail, reels.length]);
+
+  /**
+   * One card along, either way. With the row doubled there is no end to
+   * dead-end on: before a step would run off either side, the position is
+   * folded by one period onto the identical frame, then the step is taken.
    */
   const step = useCallback(
     (direction: 1 | -1) => {
@@ -133,33 +149,82 @@ export function ReelPair({
         cards.length > 1
           ? (cards[1] as HTMLElement).offsetLeft - (cards[0] as HTMLElement).offsetLeft
           : el.clientWidth;
-      const travel = el.scrollWidth - el.clientWidth;
-      const behavior = still ? "auto" : "smooth";
-      if (direction > 0 && el.scrollLeft >= travel - 4) {
-        el.scrollTo({ left: 0, behavior });
-      } else if (direction < 0 && el.scrollLeft <= 4) {
-        el.scrollTo({ left: travel, behavior });
-      } else {
-        el.scrollBy({ left: direction * card, behavior });
+      reader.current?.touch();
+      const span = period();
+      if (span > 0) {
+        if (direction < 0 && el.scrollLeft < card) el.scrollTo({ left: el.scrollLeft + span });
+        if (direction > 0 && el.scrollLeft + card > span) el.scrollTo({ left: el.scrollLeft - span });
       }
+      el.scrollBy({ left: direction * card, behavior: still ? "auto" : "smooth" });
     },
-    [rail, still],
+    [rail, still, period],
   );
 
   /*
-    THE TIMER. Keyed on `tick`, so each advance restarts the clock rather than
-    queueing — and a hover that pauses mid-cycle gives a full interval when it
-    resumes rather than an abrupt move.
+    THE DRIFT. One loop while the row is on screen, reading the reasons to
+    hold every frame rather than restarting on each — so a hover or a swipe
+    simply stops it adding distance, and it picks up again from wherever the
+    reader left it.
+
+    The position is kept as a float and written back each frame: at 30px a
+    second a frame's step is half a pixel, and a browser rounds scrollLeft,
+    so reading it back and adding to it would round to nothing. When the
+    reader has moved the row themselves the float is re-read from it.
   */
   useEffect(() => {
-    if (still || !visible || held || reels.length < 3) return;
-    const wait = Math.max(AUTO_MS, touchedAt + RESUME_MS - Date.now());
-    const id = window.setTimeout(() => {
-      step(1);
-      setTick((n) => n + 1);
-    }, wait);
-    return () => window.clearTimeout(id);
-  }, [still, touchedAt, visible, held, reels.length, step, tick]);
+    const el = rail.current;
+    if (!el) return;
+    const watcher = watchReader(el);
+    reader.current = watcher;
+    return () => {
+      watcher.dispose();
+      reader.current = null;
+    };
+  }, [rail]);
+
+  useEffect(() => {
+    const el = rail.current;
+    if (!el || still || !visible || !loops) return;
+    let frame = 0;
+    let last = performance.now();
+    let at = el.scrollLeft;
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const resting = held || (reader.current?.busy() ?? false);
+      const dialogOpen = document.querySelector("[role=dialog]") !== null;
+      if (resting || dialogOpen) {
+        at = el.scrollLeft;
+      } else {
+        const span = period();
+        at += DRIFT * dt;
+        if (span > 0 && at >= span) at -= span;
+        el.scrollTo({ left: at });
+        reader.current?.wrote();
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [rail, still, visible, held, loops, period]);
+
+  /*
+    A reader who scrolls by hand past the second copy is folded back the same
+    way, so swiping never reaches an end either.
+  */
+  useEffect(() => {
+    const el = rail.current;
+    if (!el || !loops) return;
+    const onScroll = () => {
+      const span = period();
+      if (span > 0 && el.scrollLeft >= span + el.clientWidth) {
+        el.scrollTo({ left: el.scrollLeft - span });
+        reader.current?.wrote();
+      }
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [rail, loops, period]);
 
   if (reels.length === 0) return null;
 
@@ -187,28 +252,29 @@ export function ReelPair({
         A REAL SLIDER, TWO CARDS WIDE — "actual slider wala hi dalo, sirf do
         blocks jitna ho fir fade hojaye". It swapped a fixed pair on a timer,
         which could not be swiped and showed nothing of what came next. Now
-        every reel is in one row that scrolls and snaps card by card; the
-        window is two cards and a little, and the edge mask (useEdgeFade)
+        every reel is in one row that drifts on its own and swipes by hand;
+        the window is two cards and a little, and the edge mask (useEdgeFade)
         fades whatever runs past it into the page — on the side that has more
         only, so the first card is never dimmed.
       */}
       <div
         ref={rail}
         style={fadeStyle}
-        onPointerDown={takeOver}
-        onWheel={takeOver}
         /*
           -my/py: a scrolling row clips on both axes, so the hover lift and
           the card shadow need room inside it or they are cut flat.
         */
-        className="no-scrollbar -my-3 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain py-3 sm:gap-4"
+        className="no-scrollbar -my-3 flex gap-3 overflow-x-auto overscroll-x-contain py-3 sm:gap-4"
       >
-        {reels.map((reel) => (
-          <div
-            key={reel.id}
-            className="w-[44%] shrink-0 snap-start"
-          >
-            <ReelBlock reel={reel} scroller={visible ? rail : undefined} />
+        {(loops ? [...reels, ...reels] : reels).map((reel, index) => (
+          <div key={`${reel.id}-${index}`} className="w-[44%] shrink-0">
+            <ReelBlock
+              reel={reel}
+              scroller={visible ? rail : undefined}
+              /* The second copy is scenery for the loop: out of the tab
+                 order and unread, but still a working card to click. */
+              echo={index >= reels.length}
+            />
           </div>
         ))}
       </div>
@@ -225,10 +291,7 @@ export function ReelPair({
             <button
               key={direction}
               type="button"
-              onClick={() => {
-                takeOver();
-                step(direction);
-              }}
+              onClick={() => step(direction)}
               aria-label={direction < 0 ? "Previous reel" : "Next reel"}
               className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] text-bone transition-colors hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
@@ -248,10 +311,13 @@ export function ReelPair({
 function ReelBlock({
   reel,
   scroller,
+  echo = false,
 }: {
   reel: Reel;
   scroller?: RefObject<HTMLElement | null>;
+  echo?: boolean;
 }) {
+  const quiet = echo ? ({ "aria-hidden": true, tabIndex: -1 } as const) : {};
   const video = useInViewPlayback<HTMLVideoElement>(mediaUrl(reel.poster), scroller);
 
   const inner = (
@@ -286,7 +352,11 @@ function ReelBlock({
     "relative block aspect-[9/16] w-full overflow-hidden rounded-2xl border border-white/10 bg-ink shadow-[0_24px_50px_-22px_rgb(0_0_0/0.85)]";
 
   if (!reel.onOpen) {
-    return <div className={box}>{inner}</div>;
+    return (
+      <div className={box} aria-hidden={echo || undefined}>
+        {inner}
+      </div>
+    );
   }
 
   const lift =
@@ -306,6 +376,7 @@ function ReelBlock({
         aria-label={`Open ${reel.label}`}
         onClick={() => reel.onOpen?.()}
         className={cn(box, lift)}
+        {...quiet}
       >
         {inner}
       </button>
@@ -328,6 +399,7 @@ function ReelBlock({
         reel.onOpen?.();
       }}
       className={cn(box, lift)}
+      {...quiet}
     >
       {inner}
     </a>
