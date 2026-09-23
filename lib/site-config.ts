@@ -75,6 +75,12 @@ export type NavItem = {
 
 export const siteConfig = {
   name: "Genesis Media",
+  /**
+   * The company behind the brand, as Genesis wants it on the copyright line.
+   * `name` stays the brand: it is what every title, share card and search
+   * result says, and those should read "Genesis Media".
+   */
+  legalName: "Genesis Events and Media Group",
   // TODO(copy): pulled from the current genesismedia.co hero (docs/reference/
   // img-019). Confirm before launch — the live site has a typo in "Technolgy".
   tagline: "Empowering brands with influencer marketing, creative content & technology.",

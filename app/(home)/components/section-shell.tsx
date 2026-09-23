@@ -31,6 +31,7 @@ export function SectionShell({
   className,
   contentClassName,
   bodyClassName,
+  bodyTextClassName,
   headingClassName,
   taglineClassName,
   lockupHeight,
@@ -69,6 +70,8 @@ export function SectionShell({
   contentClassName?: string;
   /** Extra classes on the body paragraph's wrapper. The client wall hides it on phones. */
   bodyClassName?: string;
+  /** Extra classes on the body paragraph itself — a section that needs its own measure. */
+  bodyTextClassName?: string;
   /**
    * Overrides the section heading's own classes — in practice, its size.
    *
@@ -211,6 +214,7 @@ export function SectionShell({
                     "text-pretty text-body text-ash sm:text-lead",
                     align === "split" ? "max-w-md lg:mt-0" : "mt-6 max-w-2xl",
                     align === "center" && "mx-auto",
+                    bodyTextClassName,
                   )}
                 >
                   {body}

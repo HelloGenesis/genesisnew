@@ -11,14 +11,14 @@ import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { pagerFor } from "@/components/genesis/overlay";
 import { WarpRail, type WarpItem } from "@/components/genesis/warp-rail";
-import { WorkDialog } from "@/components/genesis/work-dialog";
+import { VideoDialog, type OpenVideo } from "@/components/genesis/video-dialog";
 import type { CaseStudy } from "@/lib/case-studies";
 import {
   caseStudyForClip,
   caseStudyPathForClip,
   uniqueStudies,
 } from "@/lib/case-study-pages";
-import { expandToClips, findWork, reelClip, reelPoster, work } from "@/lib/work";
+import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
 import { siteConfig, whatsappLink } from "@/lib/site-config";
@@ -61,8 +61,8 @@ const MOBILE_CTA =
  */
 type AiCard = Omit<WarpItem, "onOpen"> & {
   study?: CaseStudy;
-  /** The catalogue piece this clip came out of — the fallback destination. */
-  piece: string;
+  /** The clip itself, for the video window a card with no study opens. */
+  clipId: string;
 };
 
 const AI_WORK: AiCard[] = expandToClips(
@@ -78,7 +78,7 @@ const AI_WORK: AiCard[] = expandToClips(
       label: item.client,
       href: caseStudyPathForClip(clip),
       study: caseStudyForClip(clip),
-      piece: item.slug,
+      clipId: clip,
     };
   });
 
@@ -86,13 +86,13 @@ const AI_WORK: AiCard[] = expandToClips(
 const AI_STUDIES = uniqueStudies(AI_WORK.map((card) => card.study));
 
 /*
-  THE PIECES BEHIND THE CARDS THAT HAVE NO STUDY — see the note on the rail
-  below. Deduped and in rail order, so the work window's arrows walk them the
-  way the corridor is arranged.
+  THE CARDS WITH NO STUDY, in rail order — each opens its own clip in the
+  video window, and the window's arrows walk these.
 */
-const AI_PIECES = [...new Set(AI_WORK.filter((card) => !card.study).map((card) => card.piece))]
-  .map((slug) => findWork(slug))
-  .filter((piece): piece is NonNullable<typeof piece> => piece !== undefined);
+const AI_VIDEOS: OpenVideo[] = AI_WORK.filter((card) => !card.study).map((card) => ({
+  id: card.clipId,
+  label: card.label,
+}));
 
 export function AiContent() {
   /*
@@ -101,11 +101,13 @@ export function AiContent() {
     the reader already is, and this rail is the third way into one.
   */
   const [study, setStudy] = useState<CaseStudy | null>(null);
+  /* Which clip the study opens on — the card that was clicked. */
+  const [studyClip, setStudyClip] = useState<string | undefined>(undefined);
   /*
-    AND WHICH PIECE OF WORK, for a card with no study behind it. See the note
-    on the rail below: every card opens something.
+    AND WHICH CLIP, for a card with no study behind it: the video alone.
+    Every card opens something.
   */
-  const [piece, setPiece] = useState<string | null>(null);
+  const [video, setVideo] = useState<OpenVideo | null>(null);
   /*
     Undefined when there is no number in site-config, exactly as the floating
     button handles it. The button falls back to the enquiry form rather than
@@ -141,6 +143,13 @@ export function AiContent() {
       heading={aiContent.heading}
       headingAccent={aiContent.headingAccent}
       body={aiContent.body}
+      /*
+        TWO LINES ON A DESKTOP — "isko bhi two lines me karo". At the shell's
+        default 42rem it ran to three. Measured, it sets in two from 820px;
+        53rem leaves room for the font to load a hair wider, and `balance`
+        splits it into two even lines rather than a full one and a stub.
+      */
+      bodyTextClassName="lg:max-w-[53rem] lg:text-balance"
       /*
         THE COPY UNDER THE MARK STEPS BACK — "uske niche ka copy usse chota."
 
@@ -258,8 +267,11 @@ export function AiContent() {
             items={AI_WORK.map((card) => ({
               ...card,
               onOpen: card.study
-                ? () => setStudy(card.study ?? null)
-                : () => setPiece(card.piece),
+                ? () => {
+                    setStudy(card.study ?? null);
+                    setStudyClip(card.clipId);
+                  }
+                : () => setVideo({ id: card.clipId, label: card.label }),
             }))}
           />
         </div>
@@ -286,7 +298,7 @@ export function AiContent() {
           of itself. Two gradients stacked is where the block stopped having
           a hierarchy.
         */}
-        <div className="mx-auto max-w-3xl px-6 text-center">
+        <div className="mx-auto max-w-3xl px-6 text-center lg:max-w-none">
           {/*
             THE HEADLINE IS "AI CONTENT & AVATARS", which Genesis identified
             as the main line. It wears the AI Lab ramp; the qualification
@@ -310,7 +322,15 @@ export function AiContent() {
               {aiContent.avatarsIntro.headingAccent}
             </span>
           </h3>
-          <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+          {/*
+            TWO LINES ON A LAPTOP AND UP — "this in two lines only please".
+            It is three sentences, about 2,100px of text at this size, so two
+            lines need a 70rem measure; that fits from xl. Below xl there is
+            not the width for two, so it balances into three even lines
+            rather than two full ones and a stub. The heading above stays at
+            its own width; only the copy widens.
+          */}
+          <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead lg:max-w-[60rem] lg:text-balance xl:max-w-[70rem]">
             {aiContent.avatarsIntro.lead}
           </p>
 
@@ -494,29 +514,32 @@ export function AiContent() {
       */}
       <CaseStudyDialog
         study={study}
+        startClip={studyClip}
         onClose={() => setStudy(null)}
         /* Deduped — see the note in Influence and `uniqueStudies`. */
         pager={pagerFor(
           AI_STUDIES,
           AI_STUDIES.findIndex((entry) => entry.slug === study?.slug),
-          (entry) => setStudy(entry),
+          (entry) => {
+            setStudy(entry);
+            setStudyClip(undefined);
+          },
           (entry) => entry.client,
         )}
       />
 
       {/*
-        THE WORK ITSELF, for the cards with no study. Same window the
-        portfolio grid opens; its arrows walk the rail's other studyless
-        pieces in rail order.
+        THE VIDEO ALONE, for the cards with no study — "jiska nahi hai uski
+        sirf video play ho". Its arrows walk the rail's other studyless cards.
       */}
-      <WorkDialog
-        item={piece ? (findWork(piece) ?? null) : null}
-        onClose={() => setPiece(null)}
+      <VideoDialog
+        video={video}
+        onClose={() => setVideo(null)}
         pager={pagerFor(
-          AI_PIECES,
-          AI_PIECES.findIndex((entry) => entry.slug === piece),
-          (entry) => setPiece(entry.slug),
-          (entry) => `${entry.client}, ${entry.title}`,
+          AI_VIDEOS,
+          AI_VIDEOS.findIndex((entry) => String(entry.id) === String(video?.id)),
+          (entry) => setVideo(entry),
+          (entry) => entry.label,
         )}
       />
     </>

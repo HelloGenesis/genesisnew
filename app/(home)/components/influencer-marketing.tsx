@@ -10,14 +10,14 @@ import { softRadial } from "@/lib/soft-gradient";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { pagerFor } from "@/components/genesis/overlay";
 import { ReelPair } from "@/components/genesis/reel-pair";
-import { WorkDialog } from "@/components/genesis/work-dialog";
+import { VideoDialog, type OpenVideo } from "@/components/genesis/video-dialog";
 import type { CaseStudy } from "@/lib/case-studies";
 import {
   caseStudyForClip,
   caseStudyPathForClip,
   uniqueStudies,
 } from "@/lib/case-study-pages";
-import { expandToClips, findWork, reelClip, reelPoster, work } from "@/lib/work";
+import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
@@ -78,9 +78,9 @@ const CLIP_REELS = expandToClips(
       label: item.client,
       href: caseStudyPathForClip(clip),
       study: caseStudyForClip(clip),
-      /* The catalogue piece behind the clip — where a reel with no study
-         goes. See the note at the ReelPair. */
-      piece: item.slug,
+      /* The clip itself: where a study opens, and what a reel with no
+         study plays. See the note at the ReelPair. */
+      clipId: clip,
     };
   });
 
@@ -123,12 +123,10 @@ const INFLUENCE_REELS = (() => {
 /** The distinct studies the reels cover, for the window's pager. */
 const INFLUENCE_STUDIES = uniqueStudies(INFLUENCE_REELS.map((reel) => reel.study));
 
-/* The pieces behind the reels with no study, deduped and in reel order. */
-const INFLUENCE_PIECES = [
-  ...new Set(INFLUENCE_REELS.filter((reel) => !reel.study).map((reel) => reel.piece)),
-]
-  .map((slug) => findWork(slug))
-  .filter((piece): piece is NonNullable<typeof piece> => piece !== undefined);
+/* The reels with no study, in reel order — the video window's arrows walk these. */
+const INFLUENCE_VIDEOS: OpenVideo[] = INFLUENCE_REELS.filter((reel) => !reel.study).map(
+  (reel) => ({ id: reel.clipId, label: reel.label }),
+);
 
 export function InfluencerMarketing() {
   /*
@@ -137,8 +135,10 @@ export function InfluencerMarketing() {
     study opens where the reader already is.
   */
   const [study, setStudy] = useState<CaseStudy | null>(null);
-  /* And which piece of work, for a reel with no study behind it. */
-  const [piece, setPiece] = useState<string | null>(null);
+  /* Which clip the study opens on — the reel that was clicked. */
+  const [studyClip, setStudyClip] = useState<string | undefined>(undefined);
+  /* And which clip, for a reel with no study behind it: the video alone. */
+  const [video, setVideo] = useState<OpenVideo | null>(null);
 
   return (
     <section
@@ -407,19 +407,22 @@ export function InfluencerMarketing() {
           */}
           <Reveal delay={0.2} direction="left" variant="scene" className="order-4 md:order-2 lg:order-none">
             {/*
-              BOTH REELS OPEN SOMETHING. Fourteen of these twenty-eight clips
-              have a written study; the rest — The WorldGrad, FOY, L'Oreal, HT
-              Brunch and nine of the Aditya Birla cuts — have none, and were
-              rendering as footage a reader could not click. A reel with no
-              study opens the portfolio's own window on the piece it belongs
-              to instead, which is the same fallback the AI Lab rail uses.
+              EVERY REEL OPENS SOMETHING. Fourteen of these twenty-eight clips
+              have a written study, and open it on the reel that was clicked.
+              The rest — The WorldGrad, FOY, L'Oreal, HT Brunch and nine of the
+              Aditya Birla cuts — have none, and play on their own in the video
+              window: "jiska nahi hai uski sirf video play ho". Same rule as
+              the AI Lab rail and the portfolio.
             */}
             <ReelPair
               reels={INFLUENCE_REELS.map((reel) => ({
                 ...reel,
                 onOpen: reel.study
-                  ? () => setStudy(reel.study ?? null)
-                  : () => setPiece(reel.piece),
+                  ? () => {
+                      setStudy(reel.study ?? null);
+                      setStudyClip(reel.clipId);
+                    }
+                  : () => setVideo({ id: reel.clipId, label: reel.label }),
               }))}
               className="mx-auto max-w-[26rem] lg:max-w-[30rem]"
             />
@@ -489,6 +492,7 @@ export function InfluencerMarketing() {
       */}
       <CaseStudyDialog
         study={study}
+        startClip={studyClip}
         onClose={() => setStudy(null)}
         /*
           DEDUPED, OR THE ARROWS DO NOTHING. Several reels of one engagement
@@ -500,20 +504,23 @@ export function InfluencerMarketing() {
         pager={pagerFor(
           INFLUENCE_STUDIES,
           INFLUENCE_STUDIES.findIndex((entry) => entry.slug === study?.slug),
-          (entry) => setStudy(entry),
+          (entry) => {
+            setStudy(entry);
+            setStudyClip(undefined);
+          },
           (entry) => entry.client,
         )}
       />
 
-      {/* The work itself, for the reels with no study. */}
-      <WorkDialog
-        item={piece ? (findWork(piece) ?? null) : null}
-        onClose={() => setPiece(null)}
+      {/* The video alone, for the reels with no study. */}
+      <VideoDialog
+        video={video}
+        onClose={() => setVideo(null)}
         pager={pagerFor(
-          INFLUENCE_PIECES,
-          INFLUENCE_PIECES.findIndex((entry) => entry.slug === piece),
-          (entry) => setPiece(entry.slug),
-          (entry) => `${entry.client}, ${entry.title}`,
+          INFLUENCE_VIDEOS,
+          INFLUENCE_VIDEOS.findIndex((entry) => String(entry.id) === String(video?.id)),
+          (entry) => setVideo(entry),
+          (entry) => entry.label,
         )}
       />
     </section>

@@ -331,6 +331,68 @@ export function WarpRail({
     box.addEventListener("pointerleave", leave);
 
     /*
+      A TRACKPAD SWIPE AND A FINGER DRAG MOVE IT, like every other rail on
+      the page — "jaise baaki sliders trackpad se slide karke move kar paate
+      hain, woh isme bhi daalo". The others are native scroll boxes and get
+      both for free; this one is a transform the loop writes, so it has to
+      take the input itself. Both write straight into `offset`, the one
+      position the loop owns, and cancel any arrow glide in flight so the two
+      cannot pull against each other.
+
+      Only a SIDEWAYS wheel is taken. A vertical one is the page scrolling
+      and passes through untouched; claiming it would trap the reader here.
+    */
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+      event.preventDefault();
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? width : 1;
+      offset += event.deltaX * unit;
+      glide = 0;
+      start();
+    };
+    box.addEventListener("wheel", onWheel, { passive: false });
+
+    /*
+      A drag on a touch screen, with `touch-action: pan-y` on the box so a
+      vertical swipe still scrolls the page. Past a few pixels it is a drag,
+      not a tap, and the click that follows is swallowed so letting go does
+      not open the card under the finger.
+    */
+    let dragX: number | null = null;
+    let dragged = 0;
+    const onDown = (event: PointerEvent) => {
+      if (event.pointerType !== "touch") return;
+      dragX = event.clientX;
+      dragged = 0;
+    };
+    const onMove = (event: PointerEvent) => {
+      if (dragX === null) return;
+      const dx = event.clientX - dragX;
+      dragX = event.clientX;
+      dragged += Math.abs(dx);
+      offset -= dx;
+      glide = 0;
+      hovering = true;
+      start();
+    };
+    const onUp = () => {
+      dragX = null;
+      hovering = false;
+    };
+    const onClickCapture = (event: MouseEvent) => {
+      if (dragged > 8) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      dragged = 0;
+    };
+    box.addEventListener("pointerdown", onDown);
+    box.addEventListener("pointermove", onMove);
+    box.addEventListener("pointerup", onUp);
+    box.addEventListener("pointercancel", onUp);
+    box.addEventListener("click", onClickCapture, true);
+
+    /*
       Only a visible rail runs. This is a 60Hz loop writing sixteen transforms
       a frame; three sections below the fold it has no business being awake.
     */
@@ -365,6 +427,12 @@ export function WarpRail({
       watcher.disconnect();
       box.removeEventListener("pointerenter", enter);
       box.removeEventListener("pointerleave", leave);
+      box.removeEventListener("wheel", onWheel);
+      box.removeEventListener("pointerdown", onDown);
+      box.removeEventListener("pointermove", onMove);
+      box.removeEventListener("pointerup", onUp);
+      box.removeEventListener("pointercancel", onUp);
+      box.removeEventListener("click", onClickCapture, true);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [items.length]);
@@ -386,7 +454,8 @@ export function WarpRail({
       <div
         ref={viewport}
         className={cn(
-          "relative w-full overflow-hidden",
+          // pan-y: a finger drag sideways is ours, a vertical one is the page's.
+          "relative w-full touch-pan-y overflow-hidden",
           /*
           NO COLOUR BEHIND THE CARDS ANY MORE.
 
@@ -408,9 +477,19 @@ export function WarpRail({
         )}
         style={{ height: "var(--warp-h)" }}
       >
+        {/*
+          POINTER-EVENTS-NONE ON THE TRACK, and it is what makes the cards
+          clickable at all. The track is a flat box at z=0 filling the rail,
+          and every card sits BEHIND that plane (see the loop: z is never
+          positive). In a preserve-3d context hit-testing respects depth, so
+          every click on every card landed on the track instead and nothing
+          opened — Genesis: "click karu toh window me open hona chahiye". The
+          loop sets pointer-events on each card itself, so the cards still
+          decide which of them are targets.
+        */}
         <div
           ref={track}
-          className="absolute inset-0 [transform-style:preserve-3d]"
+          className="pointer-events-none absolute inset-0 [transform-style:preserve-3d]"
           aria-label="Selected AI work"
         >
           {doubled.map((item, index) => (

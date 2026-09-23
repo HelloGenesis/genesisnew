@@ -147,7 +147,7 @@ export function SiteFooter() {
 
         <div className="mt-10 flex flex-col gap-2 border-t border-white/10 py-8 text-small text-faint sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+            {siteConfig.legalName}
           </p>
           {/*
             LINKS NOW, NOT PRINTED WORDS. This read "Privacy · Terms" as plain

@@ -1,16 +1,17 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
+import { useEdgeFade } from "./use-edge-fade";
 import { useInViewPlayback } from "./use-in-view-playback";
 import { mediaUrl } from "@/lib/media-url";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { cn } from "@/lib/utils";
 
 /**
- * Two reels at a time, with arrows to walk the rest.
+ * The Influence reels: a two-card slider, with arrows to walk the rest.
  *
  * WHAT IT REPLACED. A constellation: eleven creator portraits drifting on two
  * orbits around a wireframe globe, with the same arrows underneath. It was
@@ -21,16 +22,14 @@ import { cn } from "@/lib/utils";
  * nobody had. Genesis asked for two reel blocks and arrows instead: "content
  * dekhne ke liye".
  *
- * TWO, NOT A RAIL OF SIX. This block sits in one half of a two-column section
- * beside the copy, so a rail would give each piece about 150 points of width
- * — a 9:16 reel at that size is a thumbnail. Two fill the column at a size
- * where you can actually see what was shot, which is the entire point of
- * replacing the portraits with footage.
- *
- * THE ARROWS STEP BY TWO, so a press swaps both panels for two pieces the
- * reader has not seen. Stepping by one slides a piece from one side to the
- * other and asks them to notice which of the two is new, which is more work
- * than looking at a reel deserves.
+ * TWO CARDS WIDE, AND NOW A REAL SLIDER. This sits in one half of a
+ * two-column section beside the copy, so a rail of six would give each piece
+ * about 150 points — a 9:16 reel at that size is a thumbnail. It was a fixed
+ * pair that swapped on a timer; Genesis asked for "actual slider wala, sirf
+ * do blocks jitna ho fir fade hojaye". So every reel sits in one row that
+ * swipes and snaps, the window shows two and the edge of a third, and the
+ * edge mask fades the rest into the page. The arrows step one card, which on
+ * a scrolling row reads as movement rather than as a swap to decode.
  *
  * AND IT ADVANCES ON ITS OWN. Genesis asked for an auto-scroller here. Two
  * reels out of twenty-eight is a small window onto the work, and a reader who
@@ -45,11 +44,13 @@ import { cn } from "@/lib/utils";
  *     useInViewPlayback anyway, so advancing there would burn through the
  *     run and leave a reader arriving at the tail.
  *   NOT WHILE ANYONE IS LOOKING AT IT. Hovering or tabbing into the block
- *     holds the pair still. Swapping a reel out from under a pointer that
+ *     holds the row still. Swapping a reel out from under a pointer that
  *     has stopped on it is the classic carousel failure.
- *   NEVER AFTER A PRESS. Once the reader works the arrows they have taken
- *     over, and a timer that keeps moving afterwards is fighting them. It
- *     stops for good rather than resuming after a pause.
+ *   NOT RIGHT AFTER A PRESS OR A SWIPE. A timer that moves the row the
+ *     moment the reader has put it somewhere is fighting them, so it waits
+ *     eight seconds after the last one. It used to stop for good — and on a
+ *     phone, where the first swipe comes within seconds, that meant the
+ *     auto-slide Genesis asked for was barely ever seen ("auto slide bhi ho").
  *   NOT AT ALL UNDER REDUCED MOTION, which is what that setting is for.
  *
  * SEVEN SECONDS, which is about two loops of a four-second cut — long enough
@@ -68,10 +69,10 @@ export type Reel = {
   onOpen?: () => void;
 };
 
-const EASE = [0.22, 1, 0.36, 1] as const;
-
-/** How long a pair holds before the next one arrives. See the note above. */
+/** How long the row holds before it moves on by one card. See the note above. */
 const AUTO_MS = 7_000;
+/** How long a press or swipe pauses it before it carries on. */
+const RESUME_MS = 8_000;
 
 export function ReelPair({
   reels,
@@ -81,16 +82,12 @@ export function ReelPair({
   className?: string;
 }) {
   const still = useReducedMotion();
-  /**
-   * Which pair is showing, as an index into `reels`, always even.
-   *
-   * HELD AS THE FIRST OF THE PAIR rather than as a page number, because the
-   * list can be odd: `pairs` below rounds up, and the last page then wraps to
-   * the beginning for its second slot rather than rendering a hole.
-   */
-  const [at, setAt] = useState(0);
-  /* Set by the first arrow press, and never unset. See the note above. */
-  const [taken, setTaken] = useState(false);
+  /*
+    WHEN THE READER LAST WORKED IT. A press or a swipe pauses the row for
+    RESUME_MS and then it carries on — see the note above.
+  */
+  const [touchedAt, setTouchedAt] = useState(0);
+  const takeOver = () => setTouchedAt(Date.now());
   /*
     TWO REASONS TO HOLD, TRACKED SEPARATELY, and that is a bug fix rather than
     bookkeeping. Written as one `running` flag, a pointer leaving the block
@@ -101,9 +98,9 @@ export function ReelPair({
   */
   const [visible, setVisible] = useState(false);
   const [held, setHeld] = useState(false);
+  const [tick, setTick] = useState(0);
   const box = useRef<HTMLDivElement>(null);
-
-  const pairs = Math.max(1, Math.ceil(reels.length / 2));
+  const { ref: rail, style: fadeStyle } = useEdgeFade<HTMLDivElement>({ ramp: 120, max: 16 });
 
   /*
     ON SCREEN OR NOT. `rootMargin` is negative on purpose: the block counts as
@@ -122,32 +119,49 @@ export function ReelPair({
     return () => observer.disconnect();
   }, []);
 
+  /**
+   * One card along, either way, wrapping at both ends so an arrow never
+   * dead-ends. A card's step is read off the second card's offset rather
+   * than computed from a width, so it includes the gap at every breakpoint.
+   */
+  const step = useCallback(
+    (direction: 1 | -1) => {
+      const el = rail.current;
+      if (!el) return;
+      const cards = el.children;
+      const card =
+        cards.length > 1
+          ? (cards[1] as HTMLElement).offsetLeft - (cards[0] as HTMLElement).offsetLeft
+          : el.clientWidth;
+      const travel = el.scrollWidth - el.clientWidth;
+      const behavior = still ? "auto" : "smooth";
+      if (direction > 0 && el.scrollLeft >= travel - 4) {
+        el.scrollTo({ left: 0, behavior });
+      } else if (direction < 0 && el.scrollLeft <= 4) {
+        el.scrollTo({ left: travel, behavior });
+      } else {
+        el.scrollBy({ left: direction * card, behavior });
+      }
+    },
+    [rail, still],
+  );
+
   /*
-    THE TIMER. Keyed on `at` through the dependency list, so every advance
-    restarts the clock rather than queueing — and a hover that pauses mid-cycle
-    gives a full interval when it resumes rather than an abrupt swap.
+    THE TIMER. Keyed on `tick`, so each advance restarts the clock rather than
+    queueing — and a hover that pauses mid-cycle gives a full interval when it
+    resumes rather than an abrupt move.
   */
   useEffect(() => {
-    if (still || taken || !visible || held || pairs < 2) return;
+    if (still || !visible || held || reels.length < 3) return;
+    const wait = Math.max(AUTO_MS, touchedAt + RESUME_MS - Date.now());
     const id = window.setTimeout(() => {
-      setAt((current) => ((Math.floor(current / 2) + 1) % pairs) * 2);
-    }, AUTO_MS);
+      step(1);
+      setTick((n) => n + 1);
+    }, wait);
     return () => window.clearTimeout(id);
-  }, [still, taken, visible, held, pairs, at]);
+  }, [still, touchedAt, visible, held, reels.length, step, tick]);
 
   if (reels.length === 0) return null;
-
-  const page = Math.floor(at / 2);
-  const step = (direction: 1 | -1) => {
-    setTaken(true);
-    /* Wraps both ways: the arrows never dead-end. */
-    setAt((current) => {
-      const next = (Math.floor(current / 2) + direction + pairs) % pairs;
-      return next * 2;
-    });
-  };
-
-  const showing = [reels[at % reels.length], reels[(at + 1) % reels.length]];
 
   return (
     <div
@@ -159,48 +173,63 @@ export function ReelPair({
         delegated ones, so tabbing to either reel or to an arrow inside the
         block stops the clock.
       */
-      onPointerEnter={() => setHeld(true)}
+      onPointerEnter={(event) => event.pointerType === "mouse" && setHeld(true)}
       onPointerLeave={() => setHeld(false)}
-      onFocus={() => setHeld(true)}
+      /*
+        KEYBOARD FOCUS ONLY. A tapped arrow keeps focus on a phone, where
+        nothing ever blurs it — so holding on any focus stopped the row for
+        good after the first tap, which read as the auto-slide not working.
+      */
+      onFocus={(event) => event.target.matches(":focus-visible") && setHeld(true)}
       onBlur={() => setHeld(false)}
     >
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        {showing.map((reel, slot) => (
-          /*
-            KEYED ON THE REEL, NOT THE SLOT, which is what makes the change
-            animate at all. Keyed on the slot, React reuses the same two
-            elements and only swaps their `src` — AnimatePresence sees nothing
-            leave or arrive and the panels change with a hard cut, and the
-            <video> keeps playing the old frame until the new file decodes.
-          */
-          <AnimatePresence key={slot} mode="wait" initial={false}>
-            <motion.div
-              key={reel.id}
-              initial={still ? false : { opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={still ? undefined : { opacity: 0, y: -12 }}
-              transition={{ duration: 0.34, ease: EASE, delay: slot * 0.05 }}
-            >
-              <ReelBlock reel={reel} />
-            </motion.div>
-          </AnimatePresence>
+      {/*
+        A REAL SLIDER, TWO CARDS WIDE — "actual slider wala hi dalo, sirf do
+        blocks jitna ho fir fade hojaye". It swapped a fixed pair on a timer,
+        which could not be swiped and showed nothing of what came next. Now
+        every reel is in one row that scrolls and snaps card by card; the
+        window is two cards and a little, and the edge mask (useEdgeFade)
+        fades whatever runs past it into the page — on the side that has more
+        only, so the first card is never dimmed.
+      */}
+      <div
+        ref={rail}
+        style={fadeStyle}
+        onPointerDown={takeOver}
+        onWheel={takeOver}
+        /*
+          -my/py: a scrolling row clips on both axes, so the hover lift and
+          the card shadow need room inside it or they are cut flat.
+        */
+        className="no-scrollbar -my-3 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain py-3 sm:gap-4"
+      >
+        {reels.map((reel) => (
+          <div
+            key={reel.id}
+            className="w-[44%] shrink-0 snap-start"
+          >
+            <ReelBlock reel={reel} scroller={visible ? rail : undefined} />
+          </div>
         ))}
       </div>
 
       {/*
         THE ARROWS THE CONSTELLATION HAD, in the same place and at the same
         size — they were the one part of that block Genesis asked to keep.
-        Hidden entirely when there is only one pair, because a control that
+        Hidden entirely when everything already fits, because a control that
         cannot do anything is worse than no control.
       */}
-      {pairs > 1 && (
+      {reels.length > 2 && (
         <div className="mt-4 flex items-center justify-center gap-3">
           {([-1, 1] as const).map((direction) => (
             <button
               key={direction}
               type="button"
-              onClick={() => step(direction)}
-              aria-label={direction < 0 ? "Previous reels" : "Next reels"}
+              onClick={() => {
+                takeOver();
+                step(direction);
+              }}
+              aria-label={direction < 0 ? "Previous reel" : "Next reel"}
               className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] text-bone transition-colors hover:border-brand hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               {direction < 0 ? (
@@ -210,23 +239,20 @@ export function ReelPair({
               )}
             </button>
           ))}
-          {/*
-            Which pair, for anyone who cannot see the panels change. Not
-            printed: two arrows and a live count of "page 3 of 7" beside a
-            pair of reels is furniture, and the arrows already say there is
-            more. `aria-live` announces it on press.
-          */}
-          <span className="sr-only" aria-live="polite">
-            Reels {page + 1} of {pairs}
-          </span>
         </div>
       )}
     </div>
   );
 }
 
-function ReelBlock({ reel }: { reel: Reel }) {
-  const video = useInViewPlayback<HTMLVideoElement>(mediaUrl(reel.poster));
+function ReelBlock({
+  reel,
+  scroller,
+}: {
+  reel: Reel;
+  scroller?: RefObject<HTMLElement | null>;
+}) {
+  const video = useInViewPlayback<HTMLVideoElement>(mediaUrl(reel.poster), scroller);
 
   const inner = (
     <>
@@ -237,11 +263,10 @@ function ReelBlock({ reel }: { reel: Reel }) {
         loop
         playsInline
         /*
-          These two are the only videos this block has on screen and they are
-          the reason it exists, so unlike a rail of twelve they are worth
-          fetching on arrival rather than on first intersection.
+          Nothing until it is on screen: the row now holds every reel, not
+          two, and useInViewPlayback starts each one as it slides in.
         */
-        preload="metadata"
+        preload="none"
         aria-label={reel.label}
         {...VIDEO_GUARD_CLIENT}
         className="size-full object-cover"

@@ -8,6 +8,7 @@ import { findWork, matchesFilter, workFilters, type WorkItem } from "@/lib/work"
 import { cn } from "@/lib/utils";
 import { CaseStudyDialog } from "./case-study-dialog";
 import { pagerFor } from "./overlay";
+import { VideoDialog } from "./video-dialog";
 import { WorkDialog } from "./work-dialog";
 import { WorkTile } from "./work-tile";
 
@@ -409,9 +410,9 @@ export function WorkGrid({
         click karu toh case study nahi dikh rhe hai". It now opens the same
         study the Case Studies section does, playing the clip that was tapped.
 
-        A clip with no written study still opens the piece window: that is
-        the footage and the facts there are, and it is better than a study
-        window with nothing in it.
+        A clip with no written study plays on its own in the video window —
+        "jiska nahi hai uski sirf video play ho". Only a tile with neither a
+        study nor a clip (a still) falls back to the piece window.
 
         Arrows step through the tiles the reader can see, one stop per tile,
         each opening whichever of the two windows that tile has.
@@ -432,8 +433,21 @@ export function WorkGrid({
               onClose={close}
               pager={pager}
             />
+            <VideoDialog
+              video={
+                open && !openStudy && open.clipId !== undefined
+                  ? { id: open.clipId, label: open.client }
+                  : null
+              }
+              onClose={close}
+              pager={pager}
+            />
             <WorkDialog
-              item={open && !openStudy ? (findWork(open.slug) ?? null) : null}
+              item={
+                open && !openStudy && open.clipId === undefined
+                  ? (findWork(open.slug) ?? null)
+                  : null
+              }
               onClose={close}
               pager={pager}
             />

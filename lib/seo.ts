@@ -211,6 +211,7 @@ export function organizationJsonLd(): JsonLdNode {
     name: siteConfig.name,
     // The old site titled itself "The Genesis Media"; people search both.
     alternateName: ["Genesis", "The Genesis Media"],
+    legalName: siteConfig.legalName,
     url: `${SITE_URL}/`,
     logo: {
       "@type": "ImageObject",

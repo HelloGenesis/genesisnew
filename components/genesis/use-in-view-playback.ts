@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
 import { posterSrc } from "@/lib/poster";
 
@@ -43,8 +43,17 @@ import { posterSrc } from "@/lib/poster";
  *
  * The poster is attached under Reduce Motion as well — a still is exactly
  * what that setting leaves in place of the film.
+ *
+ * `scroller` IS FOR A TILE INSIDE A SIDEWAYS RAIL. The rail clips its own
+ * overflow, and an observer on the viewport cannot see past that clip however
+ * wide its margin — so the next card's poster would only load as it slid in,
+ * and arrive as a black card. Observing against the rail itself lets the
+ * margin reach the cards beside the visible ones.
  */
-export function useInViewPlayback<T extends HTMLVideoElement>(poster?: string) {
+export function useInViewPlayback<T extends HTMLVideoElement>(
+  poster?: string,
+  scroller?: RefObject<HTMLElement | null>,
+) {
   const ref = useRef<T>(null);
 
   useEffect(() => {
@@ -59,11 +68,11 @@ export function useInViewPlayback<T extends HTMLVideoElement>(poster?: string) {
         observer.disconnect();
       },
       // Rails scroll sideways as well as down, so the margin is on both axes.
-      { rootMargin: "150% 150%" },
+      { root: scroller?.current ?? null, rootMargin: "150% 150%" },
     );
     observer.observe(video);
     return () => observer.disconnect();
-  }, [poster]);
+  }, [poster, scroller]);
 
   useEffect(() => {
     const video = ref.current;
