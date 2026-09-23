@@ -1006,21 +1006,30 @@
    the brightness to zero paints every non-transparent pixel black and the
    invert then lifts the lot to one white; the alpha channel is untouched,
    so the shapes keep their edges. */
-.app-mark {
-    filter: brightness(0) invert(1);
-    opacity: 0.85;
+/*
+   The ink for the AI Lab diagram's black logos — read by the <MarkInk> SVG
+   filter in automation-diagram.tsx, which replaced a CSS filter Safari
+   ignores on SVG content. White on the dark theme, black on the light one.
+*/
+:root {
+    --app-mark-ink: #ffffff;
+    --app-mark-opacity: 0.85;
 }
 
-:root[data-theme="light"] .app-mark {
-    filter: brightness(0);
-    opacity: 0.72;
+:root[data-theme="light"] {
+    --app-mark-ink: #000000;
+    --app-mark-opacity: 0.72;
 }
 
 @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]):not([data-theme="light"]) .app-mark {
-        filter: brightness(0);
-        opacity: 0.72;
+    :root:not([data-theme="dark"]):not([data-theme="light"]) {
+        --app-mark-ink: #000000;
+        --app-mark-opacity: 0.72;
     }
+}
+
+.app-mark {
+    opacity: var(--app-mark-opacity);
 }
 
 li:hover .client-mark {

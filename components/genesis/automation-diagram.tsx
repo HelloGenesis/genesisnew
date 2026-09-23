@@ -68,9 +68,9 @@ import { cn } from "@/lib/utils";
  *
  * `colour` KEEPS THE BRAND'S OWN COLOURS, which Genesis asked for. Only the
  * five marks that have any — Claude, Gemini and the three Google apps — carry
- * it. The rest are black artwork, their brands' real colour, and still go
- * through .app-mark so they turn white on the dark theme instead of
- * disappearing into it.
+ * it. The rest are black artwork, their brands' real colour, and are painted
+ * in the theme's ink by <MarkInk> so they turn white on the dark theme
+ * instead of disappearing into it.
  */
 const APPLICATIONS = [
   { name: "ChatGPT", src: "/brand/apps/chatgpt.svg", ratio: 1 },
@@ -103,6 +103,34 @@ const APPLICATIONS = [
  * Square marks take 1.5x the height, which is the opposite correction: an
  * icon set to a wordmark's cap height looks smaller than everything by it.
  */
+/**
+ * THE INK FOR A BLACK MARK, as an SVG filter rather than CSS.
+ *
+ * This was `.app-mark { filter: brightness(0) invert(1) }` — correct in
+ * Chrome and ignored by Safari, which does not apply CSS filter functions to
+ * elements INSIDE an SVG. On a Mac in Safari every monochrome logo here
+ * rendered as its raw black artwork on the dark ground and all but vanished:
+ * "logos colors are fucked up in dark mode". An SVG filter is supported
+ * everywhere: it floods the theme's ink and keeps only the mark's own shape
+ * (SourceAlpha), so antialiased edges survive. The ink and its strength come
+ * from --app-mark-ink / --app-mark-opacity in globals.css (the opacity via
+ * `.app-mark`), which follow the theme toggle like every other token.
+ */
+function MarkInk({ id }: { id: string }) {
+  return (
+    /*
+      `currentColor`, with the colour set through the plain CSS `color`
+      property, rather than a variable inside flood-color — the most widely
+      supported way to theme a filter. The strength is the `.app-mark`
+      opacity on the image itself.
+    */
+    <filter id={id} colorInterpolationFilters="sRGB" style={{ color: "var(--app-mark-ink)" }}>
+      <feFlood floodColor="currentColor" />
+      <feComposite in2="SourceAlpha" operator="in" />
+    </filter>
+  );
+}
+
 function logoBox(app: (typeof APPLICATIONS)[number], height: number) {
   const scale = "scale" in app ? (app.scale as number) : 1;
   const h = height * scale;
@@ -222,6 +250,7 @@ function WideDiagram({ className }: { className?: string }) {
       className={cn("h-auto w-full", className)}
     >
       <defs>
+        <MarkInk id="gm-app-mark" />
         {/*
           THE AI LAB RAMP, which Genesis asked the flowing lines to carry. It
           is the division's own gradient from lib/home-content — pink into
@@ -293,6 +322,7 @@ function WideDiagram({ className }: { className?: string }) {
                 width={box.w}
                 height={box.h}
                 preserveAspectRatio="xMidYMid meet"
+                filter={"colour" in app ? undefined : "url(#gm-app-mark)"}
                 className={"colour" in app ? undefined : "app-mark"}
               >
                 <title>{app.name}</title>
@@ -407,6 +437,7 @@ function TallDiagram({ className }: { className?: string }) {
       className={cn("h-auto w-full", className)}
     >
       <defs>
+        <MarkInk id="gm-app-mark-tall" />
         <linearGradient id="gm-ai-dash-tall" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={width} y2="0">
           <stop offset="0%" stopColor="#ff8fb8" />
           <stop offset="100%" stopColor="#ffa25c" />
@@ -467,6 +498,7 @@ function TallDiagram({ className }: { className?: string }) {
               width={box.w}
               height={box.h}
               preserveAspectRatio="xMidYMid meet"
+              filter={"colour" in app ? undefined : "url(#gm-app-mark-tall)"}
               className={"colour" in app ? undefined : "app-mark"}
             >
               <title>{app.name}</title>
