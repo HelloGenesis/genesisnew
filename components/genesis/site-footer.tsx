@@ -25,6 +25,15 @@ import { footerNav, siteConfig, telHref } from "@/lib/site-config";
 export function SiteFooter() {
   return (
     <Atmosphere
+      /*
+        A REAL <footer>, WHICH THE SITE DID NOT HAVE. This block is the
+        outermost element of every page's closing section, so rendering it as
+        a div left the document with no `contentinfo` landmark anywhere —
+        nothing for a screen reader to jump to, and nothing telling it where
+        the page's content ends and its boilerplate begins. Putting a
+        <footer> INSIDE would have covered only part of what the footer is.
+      */
+      as="footer"
       tone="brand"
       origin="bottom"
       intensity={0.24}

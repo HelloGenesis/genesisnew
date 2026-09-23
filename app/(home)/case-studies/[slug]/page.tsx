@@ -112,7 +112,9 @@ export default async function CaseStudyPage({ params }: Props) {
             headline: copy.headline,
             description: page.seo.description,
             url: absoluteUrl(page.path),
-            image: absoluteUrl(page.poster),
+            /* Omitted rather than pointing at the site root: a study with no
+               picture on disk has no image to declare. */
+            ...(page.poster ? { image: absoluteUrl(page.poster) } : {}),
             genre: copy.industry,
             keywords: copy.keyword,
             inLanguage: "en-IN",

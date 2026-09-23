@@ -212,6 +212,21 @@ export type WorkItem = {
    * component.
    */
   reel?: ReelId[];
+  /**
+   * SHOW THIS PIECE EVEN WITHOUT A PICTURE, as a typographic tile.
+   *
+   * The catalogue drops anything with no footage and no artwork (see `work`
+   * below), which is right for a client relationship nobody has photographed
+   * yet — a portfolio is pictures of work. It is wrong for a piece whose
+   * deliverable is not a picture at all: Tripgate's identity is a locked
+   * palette and a set of rules, it has a published case study behind it, and
+   * without this flag Brand & Design was a division with one tile in it.
+   *
+   * PosterCard already draws the name large over a generated ground when it
+   * has no image, so there is nothing to build — only something to allow.
+   * Set it deliberately, per entry; it is not a default.
+   */
+  typographic?: boolean;
   /** Shown in the homepage Work section. */
   featured?: boolean;
   /**
@@ -661,6 +676,12 @@ const catalogue: WorkItem[] = [
    * locked palette as live hex values rather than a picture. It therefore
    * gets the typographic tile, which is the honest one — a palette is not a
    * logo, and cropping five swatches into a thumbnail would suggest it was.
+   *
+   * THAT WAS THE INTENT AND IT WAS NOT WHAT HAPPENED. The catalogue's own
+   * filter below drops any entry with no picture, so this one never reached a
+   * tile at all and Brand & Design showed as a division with a single piece
+   * in it — while the same work now has a written case study on the site.
+   * `typographic` is the opt-in that makes the comment above true.
    */
   {
     slug: "tripgate-branding",
@@ -668,6 +689,7 @@ const catalogue: WorkItem[] = [
     title: "Branding & Guidelines",
     vertical: "Brand & Design",
     format: "Brand Identity",
+    typographic: true,
   },
   {
     slug: "activ-health-logo",
@@ -783,7 +805,10 @@ export const work: WorkItem[] = catalogue
     stays in the catalogue for when footage arrives, and appears the moment
     a reel or artwork is added.
   */
-  .filter((item) => item.reel?.length || item.art || item.clip || item.poster)
+  .filter(
+    (item) =>
+      item.reel?.length || item.art || item.clip || item.poster || item.typographic,
+  )
   .map((item) => {
     /*
       The lead clip fills in whatever the piece did not state. A piece with a

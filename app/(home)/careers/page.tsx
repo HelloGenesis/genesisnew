@@ -10,7 +10,15 @@ import { careersPage } from "@/lib/page-content";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Careers at a Gen Z Creative Agency in Mumbai",
+  /*
+    NOT "A GEN Z CREATIVE AGENCY" — the last place on the site still saying
+    it. Genesis's note is explicit: "do not position Genesis only as a Gen
+    Z-led full-service agency, because the business is broader now." The
+    homepage, the footer and siteConfig.description were all rewritten to the
+    full offering; this title was missed because it is metadata rather than
+    copy on a page, and it is what Google prints beside the careers link.
+  */
+  title: "Careers at a Creative Company in Mumbai",
   description:
     "Work at Genesis Media in Mumbai. We hire in content production, editing, creative direction, strategy, influencer partnerships, design, AI and engineering.",
   path: "/careers",

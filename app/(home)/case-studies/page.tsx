@@ -67,19 +67,35 @@ export default function CaseStudiesPage() {
             {caseStudiesPage.label}
           </SectionLabel>
           {/*
-            THE PORTFOLIO'S OWN TITLE, which Genesis wrote for this board —
-            the same pair the homepage section carries, with the separator as
-            its own muted span so it reads as a divider between two names.
+            NOT "PORTFOLIO - CASE STUDIES" ANY MORE.
+
+            That pair was the deck's own title for this board and it is the
+            exact thing Genesis asked the site to stop doing: "avoid using
+            Portfolio and Case Studies interchangeably everywhere." The
+            homepage section was fixed at the time and this page was missed,
+            so the site still had one page calling itself both — with a
+            button at the foot of it reading "See the portfolio", pointing at
+            a different section entirely.
+
+            The heading is the one the case studies already have on the
+            homepage, word for word, so a reader arriving here from that
+            section lands on the same name rather than a second one.
           */}
-          <h1 className="mt-6 whitespace-nowrap text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2 lg:text-h1">
-            Portfolio{" "}
-            <span aria-hidden className="text-faint">
-              -
-            </span>{" "}
+          <h1 className="mt-6 text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2 lg:text-h1">
+            {caseStudiesPage.heading}{" "}
             <span className="font-serif font-normal italic text-brand-ink">
-              Case Studies
+              {caseStudiesPage.headingAccent}
             </span>
           </h1>
+          {/*
+            The standfirst Genesis wrote FOR THIS PAGE. It has existed in
+            lib/case-studies all along with a note saying this page uses it,
+            and this page did not — the homepage section dropped its own
+            standfirst for the figures bar and the line was left stranded.
+          */}
+          <p className="mt-5 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+            {caseStudiesPage.body}
+          </p>
         </Reveal>
 
         <Reveal delay={0.05} className="mt-10">

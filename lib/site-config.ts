@@ -293,11 +293,28 @@ export const homeHref = "/#services";
  * difference. From any other page, or with cmd-click, the link opens the
  * division's own page.
  */
+/*
+  TWO NAMES PER DIVISION, AND THEY ARE NOT INTERCHANGEABLE.
+
+  `label` is what the PAGE is about — "Influencer Marketing" — and it is what
+  a breadcrumb, an OG card and a search result want, because it is what
+  somebody types into a search box. `division` is what Genesis CALLS it, the
+  name on the mark around the orb and in the Services menu.
+
+  They were one field, and the footer printed `label`. So the four things a
+  visitor had just learned to call Influence, Studios, AI Lab and Brand &
+  Design were listed at the bottom of the same page as Influencer Marketing,
+  Content Production and AI Content & Automation — four divisions named twice
+  in two vocabularies, which is precisely what Genesis's copy note asks the
+  site to stop doing ("a visitor should immediately understand: Influence =
+  creators & influencer marketing"). Splitting the field lets the footer use
+  the brand's own names without costing the pages their descriptive ones.
+*/
 export const divisionPages = [
-  { label: "Influencer Marketing", href: "/influencer-marketing", section: "influence", blurb: "Creator-led growth" },
-  { label: "Content Production", href: "/content-production", section: "studios", blurb: "Production & content" },
-  { label: "AI Content & Automation", href: "/ai-content-automation", section: "ai-lab", blurb: "Creative technology" },
-  { label: "Brand & Design", href: "/brand-design", section: "brand-design", blurb: "Identity & communication" },
+  { label: "Influencer Marketing", division: "Influence", href: "/influencer-marketing", section: "influence", blurb: "Creator-led growth" },
+  { label: "Content Production", division: "Studios", href: "/content-production", section: "studios", blurb: "Production & content" },
+  { label: "AI Content & Automation", division: "AI Lab", href: "/ai-content-automation", section: "ai-lab", blurb: "Creative technology" },
+  { label: "Brand & Design", division: "Brand & Design", href: "/brand-design", section: "brand-design", blurb: "Identity & communication" },
 ] as const;
 
 /** The homepage section a division page stands for, keyed by its path. */
@@ -502,7 +519,12 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
       */
       { label: "Work", href: "/#library" },
       { label: "Case Studies", href: "/case-studies" },
-      ...divisionPages.map(({ label, href }) => ({ label, href })),
+      /*
+        THE DIVISIONS BY THEIR OWN NAMES — Genesis's footer structure lists
+        "Influence / Studios / AI Lab / Brand & Design", not the page titles.
+        The href is still the division's page; only the word changes.
+      */
+      ...divisionPages.map(({ division, href }) => ({ label: division, href })),
       /*
         NO "EVENTS" LINK. There was one, pointing at /#events, and that
         section has been removed — a footer link to an anchor that does not

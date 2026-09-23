@@ -175,8 +175,20 @@ export function Atmosphere({
   intensity,
   className,
   style,
+  as: Tag = "div",
 }: AuroraProps & {
   children: React.ReactNode;
+  /**
+   * The element this renders as. A div by default, because an atmosphere is
+   * a lighting wrapper and carries no meaning of its own.
+   *
+   * The site footer is the exception and the reason this exists: it is the
+   * outermost element of the page's closing block, so with a div here the
+   * site had no `contentinfo` landmark at all — a screen-reader user could
+   * not jump to the footer on any page, and a `<footer>` nested inside it
+   * would have wrapped only part of what the footer is.
+   */
+  as?: "div" | "footer" | "section" | "aside";
   /**
    * A ground of this section's own.
    *
@@ -198,13 +210,13 @@ export function Atmosphere({
       it shows through. What is left here is the section's own directional
       key light, masked so it cannot reach the boundary either.
     */
-    <div className={cn("relative isolate overflow-hidden", className)} style={style}>
+    <Tag className={cn("relative isolate overflow-hidden", className)} style={style}>
       <Aurora origin={origin} tone={tone} intensity={intensity} />
       {/* No <Grain /> here. It blends `overlay`, this box is `isolate`, and
           a section with no ground of its own gives it nothing to blend with
           — which measured as a hard step at every boundary. PageAtmosphere
           runs one grain layer across the whole document instead. */}
       <div className="relative z-[2]">{children}</div>
-    </div>
+    </Tag>
   );
 }

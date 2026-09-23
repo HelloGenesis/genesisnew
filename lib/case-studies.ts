@@ -404,7 +404,8 @@ export const caseStudiesPage = {
     promising outcomes, was the same claim twice in prose; the numbers are the
     evidence for it instead.
 
-    `body` below stays, because it is the /case-studies PAGE's and that page
-    still uses it.
+    `body` below is the /case-studies PAGE's standfirst. It was unused for a
+    round — the note here said the page used it and the page did not — and it
+    is printed under that page's heading now.
   */
 } as const;

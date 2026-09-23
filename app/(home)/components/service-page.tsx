@@ -216,13 +216,29 @@ export function StudyCard({ study }: { study: CaseStudyPage }) {
       className="group block rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-transparent"
     >
       <div className="relative aspect-[4/5] overflow-hidden rounded-card border border-[var(--glass-border)] bg-ink transition-transform duration-300 group-hover:-translate-y-1">
-        <Image
-          src={study.poster}
-          alt={`${study.copy.brand}, ${study.copy.campaign}`}
-          fill
-          sizes="(min-width: 1024px) 22rem, (min-width: 640px) 33vw, 50vw"
-          className={landscape ? "object-contain" : "object-cover"}
-        />
+        {/*
+          NOT EVERY STUDY HAS A PICTURE. The Brand & Design studies have no
+          film, and Tripgate's identity has no artwork on disk either — its
+          palette lives as hex values — so `poster` is the empty string. An
+          <Image src=""> is a React error and a request for the whole page
+          again, which is what the console was reporting; the card falls back
+          to the typographic treatment the portfolio already uses.
+        */}
+        {study.poster ? (
+          <Image
+            src={study.poster}
+            alt={`${study.copy.brand}, ${study.copy.campaign}`}
+            fill
+            sizes="(min-width: 1024px) 22rem, (min-width: 640px) 33vw, 50vw"
+            className={landscape ? "object-contain" : "object-cover"}
+          />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center px-5">
+            <p className="text-balance text-center text-h3 font-semibold leading-[1.1] tracking-tight text-bone/90">
+              {study.copy.brand}
+            </p>
+          </div>
+        )}
       </div>
       <h3 className="mt-3 text-body font-semibold leading-snug text-bone">
         {study.copy.brand}
