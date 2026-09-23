@@ -224,6 +224,58 @@ const NAME_MAX_RATIO = Math.max(
   ...Object.values(NAME).map((l) => l.width / l.height),
 );
 
+/**
+ * HOW MUCH INK EACH NAME CARRIES, relative to the heaviest — and why the four
+ * are not set at the same height any more.
+ *
+ * GENESIS: "AI Lab kyu chup gaya." On the Brain, and most visibly in the
+ * share card where the whole thing is two inches wide, AI Lab reads as
+ * faded next to the other three. It was measured before being changed, and
+ * the obvious explanations are all wrong: composited over the page's own
+ * ground at display size, the four marks' mean ink luminance is 138, 128,
+ * 138 and 140 — AI Lab is not darker. Its ARTWORK is not weaker either; per
+ * opaque pixel its colour is within a point of Brand & Design's.
+ *
+ * What differs is how much of it there is. At a common height the four cover
+ * 1894, 1472, 1226 and 3171 square pixels of ink: "AI Lab" is two short words
+ * and carries a QUARTER of what "Brand & Design" does. Same height, same
+ * colour, a third of the presence — and shrunk to a thumbnail the smallest
+ * one is the one that disappears.
+ *
+ * EQUAL HEIGHT IS THE WRONG KIND OF EQUAL, which this codebase already knows:
+ * the client logo wall sizes each mark so that "every logo ends up covering a
+ * comparable area — which is what the eye reads as the same size" (see
+ * client-logos). The Brain was the one place still normalising height alone.
+ *
+ * HALF COMPENSATION, NOT FULL. Area goes as the square of the scale, so
+ * equalising it outright would stand AI Lab 61% taller than Brand & Design —
+ * a two-word name towering over a three-word one, which is a different
+ * mistake. The exponent below is a quarter rather than a half, which closes
+ * half the gap in perceived size: AI Lab comes up about 27% on Brand & Design
+ * and the row still reads as one set. It also answers Genesis's older note,
+ * "AI Lab ka logo shd be bigger", which the height-uniform pass overrode.
+ *
+ * The numbers are measured, not guessed: each PNG drawn at its display size,
+ * alpha summed over every pixel. Re-measure if the artwork is re-cut.
+ */
+const NAME_INK: Record<string, number> = {
+  Influence: 1894,
+  Studios: 1472,
+  "AI Lab": 1226,
+  "Brand & Design": 3171,
+};
+
+const NAME_INK_MAX = Math.max(...Object.values(NAME_INK));
+
+/** See NAME_INK. A quarter power closes half the gap in area. */
+const INK_COMPENSATION = 0.25;
+
+function inkScale(name: string): number {
+  const ink = NAME_INK[name];
+  if (!ink) return 1;
+  return (NAME_INK_MAX / ink) ** INK_COMPENSATION;
+}
+
 export function DivisionLockup({
   name,
   tagline,
@@ -379,8 +431,18 @@ export function DivisionLockup({
     the same variable rather than computed here in pixels.
   */
   const lockupH = height === TARGET_HEIGHT ? "var(--lockup-h)" : `${height}px`;
+  /*
+    THE SHARE OF THE COLUMN, lifted for the lighter marks — see NAME_INK.
+    Only the name set is compensated: the board and mark sets carry the
+    GENESIS prefix, which is the same width in all four, so they do not have
+    the imbalance this corrects.
+  */
   const sizing = fluid
-    ? { width: `${((ratio / maxRatio) * 100).toFixed(3)}%` }
+    ? {
+        width: `${(
+          (ratio / maxRatio) * 100 * (nameOnly ? inkScale(name) : 1)
+        ).toFixed(3)}%`,
+      }
     : {
         maxWidth: `calc(${ratio.toFixed(3)} * ${lockupH})`,
         /*
