@@ -235,6 +235,12 @@ export type WorkItem = {
    * slug still has to point at the parent piece, so the two are separated.
    */
   key?: string;
+  /**
+   * The one clip this tile shows, also set only by `expandToClips`. The
+   * portfolio opens a clip's own case study, and the slug alone cannot say
+   * which of an engagement's clips was tapped.
+   */
+  clipId?: ReelId;
 
   // --- The mini case study, per the brief -----------------------------------
   objective?: string;
@@ -896,6 +902,7 @@ export function expandToClips(items: WorkItem[]): WorkItem[] {
     return item.reel.map((id) => ({
       ...item,
       key: `${item.slug}-${id}`,
+      clipId: id,
       clip: mediaUrl(reelClip(id)),
       poster: mediaUrl(reelPoster(id)),
       art: mediaUrl(reelPoster(id)),

@@ -23,10 +23,13 @@ export function CaseStudyDialog({
   study,
   onClose,
   pager,
+  startClip,
 }: {
   study: CaseStudy | null;
   onClose: () => void;
   pager?: OverlayPager;
+  /** Open on this film of the campaign rather than its lead. */
+  startClip?: string;
 }) {
   const clip = study ? leadClip(study) : undefined;
   const copy = study?.copy === undefined ? undefined : findCopy(study.copy);
@@ -60,6 +63,7 @@ export function CaseStudyDialog({
             explains why that is not simply every reel of the engagement.
           */
           clips={campaignFilms(study)}
+          startClip={startClip}
           pageHref={caseStudyPath(study.copy)}
           fallback={
             /*

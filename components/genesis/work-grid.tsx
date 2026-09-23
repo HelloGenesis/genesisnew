@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { type CaseStudy } from "@/lib/case-studies";
+import { caseStudyForClip, studiesForWork } from "@/lib/case-study-pages";
 import { findWork, matchesFilter, workFilters, type WorkItem } from "@/lib/work";
 import { cn } from "@/lib/utils";
+import { CaseStudyDialog } from "./case-study-dialog";
 import { pagerFor } from "./overlay";
 import { WorkDialog } from "./work-dialog";
 import { WorkTile } from "./work-tile";
@@ -73,18 +76,17 @@ export function WorkGrid({
     filtering and the dialog are untouched; only the shape changes.
   */
   const RAIL_MIN = 10;
-  /* Which piece is open over the page, by slug: a clip tile opens its whole engagement. */
-  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  /* Which TILE is open over the page, by its key — one clip, not one piece. */
+  const [openKey, setOpenKey] = useState<string | null>(null);
   const filters = useMemo(() => workFilters(items), [items]);
   const visible = useMemo(
     () => items.filter((item) => matchesFilter(item, filter)),
     [items, filter],
   );
   /* Declared after `visible`, which it reads. */
-  const pieces = useMemo(
-    () => visible.filter((item, i) => visible.findIndex((v) => v.slug === item.slug) === i),
-    [visible],
-  );
+  const openIndex = visible.findIndex((item) => tileKey(item) === openKey);
+  const open = openIndex >= 0 ? visible[openIndex] : null;
+  const openStudy = open ? studyFor(open) : undefined;
 
   /*
     A CTA ELSEWHERE ON THE PAGE CAN ASK FOR A FILTER. AI Lab's "View AI
@@ -368,7 +370,7 @@ export function WorkGrid({
                       */
                       className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(9rem,min(36vw,22vh),16rem)]"
                     >
-                      <WorkTile item={item} variant="fill" onOpen={() => setOpenSlug(item.slug)} />
+                      <WorkTile item={item} variant="fill" onOpen={() => setOpenKey(tileKey(item))} />
                     </div>
                   ))}
                 </div>
@@ -388,7 +390,7 @@ export function WorkGrid({
         >
           {visible.map((item) => (
             <div key={item.key ?? item.slug} className="aspect-[9/13]">
-              <WorkTile item={item} variant="fill" onOpen={() => setOpenSlug(item.slug)} />
+              <WorkTile item={item} variant="fill" onOpen={() => setOpenKey(tileKey(item))} />
             </div>
           ))}
         </div>
@@ -399,21 +401,45 @@ export function WorkGrid({
           Nothing in {filter} yet.
         </p>
       )}
-      <WorkDialog
-        item={openSlug ? (findWork(openSlug) ?? null) : null}
-        onClose={() => setOpenSlug(null)}
-        /*
-          Arrows step through the pieces the reader can see, in the grid's
-          order — one stop per piece, not per clip, since the window shows a
-          piece and all of its clips.
-        */
-        pager={pagerFor(
-          pieces,
-          pieces.findIndex((piece) => piece.slug === openSlug),
-          (piece) => setOpenSlug(piece.slug),
-          (piece) => `${piece.client}, ${piece.title}`,
-        )}
-      />
+      {/*
+        THE CASE STUDY, WHERE THE TAPPED CLIP HAS ONE. This opened the piece
+        window for every tile — the engagement's films and a link out — so a
+        reader tapping a Mahindra reel got five videos and had to click again
+        to read what the campaign was. Genesis: "portfolio me koi bhi video
+        click karu toh case study nahi dikh rhe hai". It now opens the same
+        study the Case Studies section does, playing the clip that was tapped.
+
+        A clip with no written study still opens the piece window: that is
+        the footage and the facts there are, and it is better than a study
+        window with nothing in it.
+
+        Arrows step through the tiles the reader can see, one stop per tile,
+        each opening whichever of the two windows that tile has.
+      */}
+      {(() => {
+        const pager = pagerFor(
+          visible,
+          openIndex,
+          (item) => setOpenKey(tileKey(item)),
+          (item) => `${item.client}, ${item.title}`,
+        );
+        const close = () => setOpenKey(null);
+        return (
+          <>
+            <CaseStudyDialog
+              study={openStudy ?? null}
+              startClip={open?.clipId === undefined ? undefined : String(open.clipId)}
+              onClose={close}
+              pager={pager}
+            />
+            <WorkDialog
+              item={open && !openStudy ? (findWork(open.slug) ?? null) : null}
+              onClose={close}
+              pager={pager}
+            />
+          </>
+        );
+      })()}
     </div>
   );
 }
@@ -470,4 +496,25 @@ export function RailArrow({
       </svg>
     </button>
   );
+}
+
+/** A tile's identity: its clip key where the piece was split into clips. */
+function tileKey(item: WorkItem): string {
+  return item.key ?? item.slug;
+}
+
+/**
+ * The written study a tile opens, if it has one.
+ *
+ * The clip decides first, through the same lookup every other video on the
+ * site uses — including its refusal to guess when an engagement carries
+ * several studies. A tile with no clip (the two design pieces) is answered by
+ * its piece, but only when the piece has exactly one study: anything else
+ * would be choosing for the reader.
+ */
+function studyFor(item: WorkItem): CaseStudy | undefined {
+  const byClip = caseStudyForClip(item.clipId ?? item.reel?.[0]);
+  if (byClip) return byClip;
+  const byPiece = studiesForWork(item.slug);
+  return byPiece.length === 1 ? byPiece[0] : undefined;
 }

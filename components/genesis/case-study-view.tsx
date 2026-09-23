@@ -40,6 +40,7 @@ export function CaseStudyView({
   autoPlay = true,
   pageHref,
   clips,
+  startClip,
 }: {
   /** The film's width over height; see lib/clip-shape. */
   ratio?: number;
@@ -85,13 +86,16 @@ export function CaseStudyView({
    * a single thumbnail in it is furniture.
    */
   clips?: { id: string; poster: string; film: string; ratio: number }[];
+  /** Which of `clips` to open on, by id — the one the reader tapped. */
+  startClip?: string;
 }) {
   /*
     WHICH FILM IS PLAYING. The strip swaps the main player rather than opening
     anything — a study is already a window, and a window inside a window to
     watch the second of five cuts is a door too many.
   */
-  const [playing, setPlaying] = useState(0);
+  const startAt = Math.max(0, clips?.findIndex((clip) => clip.id === startClip) ?? 0);
+  const [playing, setPlaying] = useState(startAt);
 
   /*
     RESET WHEN THE STUDY CHANGES, DURING RENDER RATHER THAN IN AN EFFECT.
@@ -112,11 +116,13 @@ export function CaseStudyView({
     what this component is given; two studies cannot share a lead (see
     campaignClips), so it identifies the campaign as well as a slug would.
   */
-  const campaign = clips?.[0]?.id;
+  // The tapped clip is part of the key: paging from one clip of a campaign
+  // to the next must move the player too, not only a change of campaign.
+  const campaign = `${clips?.[0]?.id}|${startClip ?? ""}`;
   const [seen, setSeen] = useState(campaign);
   if (campaign !== seen) {
     setSeen(campaign);
-    setPlaying(0);
+    setPlaying(startAt);
   }
 
   const current = clips?.[playing];
