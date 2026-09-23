@@ -517,8 +517,22 @@ function NavMenu({ item }: { item: NavItem }) {
                           {child.label}
                         </span>
                       )}
+                      {/*
+                        NOT `text-micro`, WHICH IS THE EYEBROW SCALE.
+
+                        That token carries `letter-spacing: 0.28em` — it is
+                        built for the all-caps labels above a section, where
+                        wide tracking is the whole look. Used for running
+                        words it set this panel's blurbs and service lines in
+                        a register nothing else in the nav uses, so the menu
+                        read as a different typeface from the bar it hangs
+                        off. Genesis: "keep the font uniform bro."
+
+                        `text-small` is the nav's own size, with normal
+                        tracking, which is what the panel they drew shows.
+                      */}
                       {child.blurb && (
-                        <span className="mt-1.5 block text-micro text-faint">
+                        <span className="mt-1.5 block text-small text-faint">
                           {child.blurb}
                         </span>
                       )}
@@ -534,7 +548,7 @@ function NavMenu({ item }: { item: NavItem }) {
                             a description of the column, and the heading
                             above them is how you get there.
                           */
-                          <li key={service} className="text-micro leading-snug text-ash">
+                          <li key={service} className="text-small leading-snug text-ash">
                             {service}
                           </li>
                         ))}
