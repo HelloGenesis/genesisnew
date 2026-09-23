@@ -442,6 +442,8 @@
        stops measured under 2:1 and the title was barely there. The light
        ramp reuses the route palette, which is already checked against white. */
     --ramp-avatars: linear-gradient(100deg, #cbb6ff 0%, #f286b4 40%, #ff9a5c 74%, #ffc46b 100%);
+    /* Services-menu hover: the first stop of the ramp above, the brand violet. */
+    --menu-hover: #cbb6ff;
     --ramp-avatars-soft: linear-gradient(100deg, #b6abdc 0%, #d99cb4 52%, #e0a469 100%);
     --ghost-outline: rgb(255 255 255 / 0.07);
 
@@ -600,6 +602,7 @@
     --route-4: #8a5a00;
     --route-5: #6e5600;
     --ramp-avatars: linear-gradient(100deg, #6d28d9 0%, #a81b6f 42%, #c03a17 74%, #8a5a00 100%);
+    --menu-hover: #6d28d9;
     --ramp-avatars-soft: linear-gradient(100deg, #5f3a9e 0%, #94476b 52%, #7d5320 100%);
     --ghost-outline: rgb(17 17 17 / 0.07);
 
@@ -708,6 +711,7 @@
         --route-4: #8a5a00;
         --route-5: #6e5600;
         --ramp-avatars: linear-gradient(100deg, #6d28d9 0%, #a81b6f 42%, #c03a17 74%, #8a5a00 100%);
+        --menu-hover: #6d28d9;
         --ramp-avatars-soft: linear-gradient(100deg, #5f3a9e 0%, #94476b 52%, #7d5320 100%);
         --ghost-outline: rgb(17 17 17 / 0.07);
 
@@ -800,6 +804,8 @@
        stops measured under 2:1 and the title was barely there. The light
        ramp reuses the route palette, which is already checked against white. */
     --ramp-avatars: linear-gradient(100deg, #cbb6ff 0%, #f286b4 40%, #ff9a5c 74%, #ffc46b 100%);
+    /* Services-menu hover: the first stop of the ramp above, the brand violet. */
+    --menu-hover: #cbb6ff;
     --ramp-avatars-soft: linear-gradient(100deg, #b6abdc 0%, #d99cb4 52%, #e0a469 100%);
 
     --shadow-raised: 0 2px 8px -2px rgb(0 0 0 / 0.6);

@@ -33,8 +33,6 @@ const sectionForDivision: Record<string, string> = {
 export type NavItem = {
   label: string;
   href: string;
-  /** One-line description, used by the Capabilities menu. */
-  blurb?: string;
   /** Marks routes that do not exist until Phase 4. */
   planned?: boolean;
   /**
@@ -311,10 +309,10 @@ export const homeHref = "/#services";
   the brand's own names without costing the pages their descriptive ones.
 */
 export const divisionPages = [
-  { label: "Influencer Marketing", division: "Influence", href: "/influencer-marketing", section: "influence", blurb: "Creator-led growth" },
-  { label: "Content Production", division: "Studios", href: "/content-production", section: "studios", blurb: "Production & content" },
-  { label: "AI Content & Automation", division: "AI Lab", href: "/ai-content-automation", section: "ai-lab", blurb: "Creative technology" },
-  { label: "Brand & Design", division: "Brand & Design", href: "/brand-design", section: "brand-design", blurb: "Identity & communication" },
+  { label: "Influencer Marketing", division: "Influence", href: "/influencer-marketing", section: "influence" },
+  { label: "Content Production", division: "Studios", href: "/content-production", section: "studios" },
+  { label: "AI Content & Automation", division: "AI Lab", href: "/ai-content-automation", section: "ai-lab" },
+  { label: "Brand & Design", division: "Brand & Design", href: "/brand-design", section: "brand-design" },
 ] as const;
 
 /** The homepage section a division page stands for, keyed by its path. */
@@ -406,7 +404,7 @@ export const navItems: NavItem[] = [
       reader gets is the division that does it, which is the honest
       destination and the one that exists.
     */
-    children: divisionPages.map(({ label, href, blurb, section }) => {
+    children: divisionPages.map(({ label, href, section }) => {
       const division = services.items.find(
         (item) => sectionForDivision[item.title] === section,
       );
@@ -426,7 +424,6 @@ export const navItems: NavItem[] = [
       return {
         label,
         href,
-        blurb,
         items,
         /*
           THE DIVISION'S OWN MARK, at Genesis's request — the name-only

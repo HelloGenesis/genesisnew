@@ -497,10 +497,8 @@ function NavMenu({ item }: { item: NavItem }) {
                         letter height, so they line up the way four text
                         headings would while carrying the brand's gradients.
 
-                        The lockup's own tagline is hidden — the blurb under
-                        it already does that job, in the words the nav uses
-                        for the route rather than the ones the artwork
-                        carries.
+                        The lockup's own tagline is hidden too: Genesis wants
+                        the name and nothing under it.
                       */}
                       {child.short ? (
                         <DivisionLockup
@@ -518,38 +516,34 @@ function NavMenu({ item }: { item: NavItem }) {
                         </span>
                       )}
                       {/*
-                        NOT `text-micro`, WHICH IS THE EYEBROW SCALE.
-
-                        That token carries `letter-spacing: 0.28em` — it is
-                        built for the all-caps labels above a section, where
-                        wide tracking is the whole look. Used for running
-                        words it set this panel's blurbs and service lines in
-                        a register nothing else in the nav uses, so the menu
-                        read as a different typeface from the bar it hangs
-                        off. Genesis: "keep the font uniform bro."
-
-                        `text-small` is the nav's own size, with normal
-                        tracking, which is what the panel they drew shows.
+                        NO TAGLINE UNDER THE NAME. "Creator-led growth" and
+                        its three siblings sat here; Genesis asked for all
+                        four gone. The mark is the heading and the services
+                        below say what the division does.
                       */}
-                      {child.blurb && (
-                        <span className="mt-1.5 block text-small text-faint">
-                          {child.blurb}
-                        </span>
-                      )}
                     </Link>
 
                     {child.items && child.items.length > 0 && (
                       <ul className="mt-3 flex flex-col gap-1.5 border-t border-[var(--glass-border)] pt-3">
                         {child.items.map((service) => (
                           /*
-                            PLAIN TEXT, NOT LINKS. A row that highlights on
-                            hover and then does nothing when clicked is worse
-                            than one that never invited the click; these are
-                            a description of the column, and the heading
-                            above them is how you get there.
+                            LINKS, SO THE HOVER IS HONEST. Genesis asked for
+                            the services to turn violet on hover. These were
+                            plain text on purpose — a row that lights up and
+                            then does nothing when clicked is worse than one
+                            that never invited it — so each now goes where its
+                            heading goes: the division's page, which is where
+                            that service is described. The violet is the
+                            brand ramp's first stop (--menu-hover).
                           */
-                          <li key={service} className="text-small leading-snug text-ash">
-                            {service}
+                          <li key={service}>
+                            <Link
+                              href={child.href}
+                              onClick={() => setOpen(false)}
+                              className="block text-small leading-snug text-ash transition-colors duration-200 hover:text-[var(--menu-hover)] focus-visible:text-[var(--menu-hover)] focus-visible:outline-none"
+                            >
+                              {service}
+                            </Link>
                           </li>
                         ))}
                       </ul>
@@ -558,26 +552,6 @@ function NavMenu({ item }: { item: NavItem }) {
                 ))}
               </div>
 
-              {/*
-                THE BRAIN, LAST AND ACROSS THE FOOT. It is where the trigger's
-                own href points and a reader who wants the picture rather than
-                the list should be able to get there — but it belongs under
-                the four, not over them, because it is the overview and they
-                are the answer.
-
-                "EXPLORE ALL DIVISIONS", which is Genesis's wording from the
-                panel they drew. It read "See all four divisions" and the
-                count was doing no work: the four are directly above it, so
-                the sentence spent a word telling a reader something they had
-                just finished looking at.
-              */}
-              <Link
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="mt-6 block border-t border-[var(--glass-border)] pt-4 text-small text-faint transition-colors hover:text-bone"
-              >
-                Explore all divisions →
-              </Link>
             </div>
           </motion.div>
         )}
