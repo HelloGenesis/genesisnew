@@ -377,18 +377,37 @@ const catalogue: WorkItem[] = [
    * one body of work, and the property names survive on the detail page
    * through CLIP_LABELS.
    *
-   * TODO(content): THE CLIENT IS AN INFERENCE. The folder names the properties
-   * and not who they were made for. "Genesis Estate" is Genesis's own
-   * real-estate arm — it appears in their milestones — so attributing their
-   * own property films to it invents no third party, which naming an outside
-   * client would. Correct it if these belong to a brokerage instead.
+   * AI LAB, NOT STUDIOS — and the vertical on this entry was the one guess in
+   * the whole catalogue, which is exactly the entry Genesis caught.
+   *
+   * Every other piece here got its division from Genesis's own Drive, sorted
+   * into Influence, Studios and AI Lab folders, and the numbered clips were
+   * verified file-by-file against the posters already in the repo. These ten
+   * came from a DIFFERENT folder — "Website Content Temporary" — which is not
+   * part of that sorted set and says nothing about who made them. Studios was
+   * inferred from the fact that they are films, which is the kind of
+   * reasoning that looks safe and is not: these are generated, not shot.
+   *
+   * Genesis: "studios me dekho ye AI wali videos kyu hai bhai." The format
+   * goes with the vertical — they were filed as Reels, which describes the
+   * shape rather than how they were made, and AI Content is what the rest of
+   * this division's generated work is called. House of Hiranandani, the
+   * eleventh film of the same folder, has been under AI Lab all along
+   * because it arrived as clip 32 inside the sorted set, so this also ends a
+   * split where one body of work sat in two divisions.
+   *
+   * TODO(content): THE CLIENT IS STILL AN INFERENCE. The folder names the
+   * properties and not who they were made for. "Genesis Estate" is Genesis's
+   * own real-estate arm — it appears in their milestones — so attributing
+   * their own property films to it invents no third party, which naming an
+   * outside client would. Correct it if these belong to a brokerage instead.
    */
   {
     slug: "genesis-estate-property-films",
     client: "Genesis Estate",
     title: "Property Films",
-    vertical: "Studios",
-    format: "Reels",
+    vertical: "AI Lab",
+    format: "AI Content",
     tags: ["Real Estate"],
     reel: [33, 34, 35, 36, 37, 38, 39, 40, 41, 42],
     featured: true,

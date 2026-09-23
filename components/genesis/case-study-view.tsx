@@ -31,6 +31,7 @@ export function CaseStudyView({
   poster,
   film,
   preview,
+  art,
   copy,
   fallback,
   ratio = 9 / 16,
@@ -47,6 +48,14 @@ export function CaseStudyView({
   poster?: string;
   film?: string;
   preview?: string;
+  /**
+   * A still shown where the player would be, for a study with no film.
+   *
+   * Genesis's two Brand & Design studies are a logo exploration and a brand
+   * guideline — there is nothing to play, and a study that renders only text
+   * where every other one leads with a picture looks like a broken one.
+   */
+  art?: string;
   copy?: CaseStudyCopy;
   /** Shown in the copy column when there is no write-up. */
   fallback?: ReactNode;
@@ -133,9 +142,37 @@ export function CaseStudyView({
       <div
         className={cn(
           "grid items-start gap-8 lg:gap-12",
-          landscape ? "grid-cols-1" : "md:grid-cols-[minmax(0,20rem)_1fr]",
+          /*
+            ONE COLUMN WHERE THERE IS NOTHING TO PUT IN THE FIRST ONE. A
+            study with no film and no artwork — Tripgate's identity, whose
+            palette lives as hex values rather than as a file — otherwise
+            reserved a 20rem column for a player that never rendered and set
+            its whole write-up in the narrow half of the window.
+          */
+          landscape || (!film && !preview && !art)
+            ? "grid-cols-1"
+            : "md:grid-cols-[minmax(0,20rem)_1fr]",
         )}
       >
+        {/*
+          ARTWORK INSTEAD OF A PLAYER. Same frame, same column, same sticky
+          behaviour — only the element inside changes, so a design study sits
+          in the layout the film studies already established rather than in a
+          second one written for it.
+        */}
+        {!film && !preview && art && (
+          <div className={cn("flex justify-center", !landscape && "md:sticky md:top-0")}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- one still,
+                whose intrinsic size is unknown here and which next/image would
+                only re-encode; it is already a small PNG committed to /public. */}
+            <img
+              src={art}
+              alt=""
+              className="max-h-[min(62vh,34rem)] w-auto max-w-full rounded-2xl border border-[var(--glass-border)] bg-white object-contain p-6"
+            />
+          </div>
+        )}
+
         {(film || preview) && (
           <div className={cn("flex justify-center", !landscape && "md:sticky md:top-0")}>
             <video

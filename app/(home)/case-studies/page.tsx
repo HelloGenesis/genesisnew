@@ -18,6 +18,7 @@ import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 import {
+  findWork,
   reelClip,
   reelPoster,
   work,
@@ -47,7 +48,7 @@ export const metadata: Metadata = pageMetadata({
  * for what was held back and why.
  */
 export default function CaseStudiesPage() {
-  const pieces = cards.map((card) => pieceFor(card.clip)).filter(
+  const pieces = cards.map((card) => pieceForCard(card)).filter(
     (piece): piece is WorkItem => piece !== undefined,
   );
 
@@ -105,17 +106,56 @@ export default function CaseStudiesPage() {
 }
 
 /** The portfolio piece a clip belongs to, whose facets the card borrows. */
-function pieceFor(clip: ReelId): WorkItem | undefined {
+function pieceFor(clip: ReelId | undefined): WorkItem | undefined {
+  if (clip === undefined) return undefined;
   return work.find((item) => item.reel?.some((id) => String(id) === String(clip)));
 }
 
-function facetsFor(clip: ReelId): string[] {
-  const piece = pieceFor(clip);
-  if (!piece) return [];
-  return [piece.vertical, piece.format, ...(piece.tags ?? [])];
+/**
+ * The piece behind a CARD, which is not always the piece behind a clip.
+ *
+ * A design study has no clip — an identity system is not a film — so the
+ * chain clip → piece cannot start. It reaches its catalogue entry the other
+ * way instead: the study card in lib/case-studies names the work slugs the
+ * study covers, and the first of those is the piece whose division, format
+ * and sectors the filter chips should answer to.
+ */
+function pieceForCard(card: { clip?: ReelId; copy?: CaseStudyCopy }): WorkItem | undefined {
+  const byClip = pieceFor(card.clip);
+  if (byClip) return byClip;
+
+  const study = caseStudyList.find((entry) => entry.copy === card.copy?.n);
+  return study?.work?.[0] ? findWork(study.work[0]) : undefined;
 }
 
-function media(clip: ReelId) {
+function facetsForCard(card: { clip?: ReelId; copy?: CaseStudyCopy }): string[] {
+  const piece = pieceForCard(card);
+  if (piece) return [piece.vertical, piece.format, ...(piece.tags ?? [])];
+
+  /*
+    NO CATALOGUE PIECE, WHICH IS NOT THE SAME AS NO DIVISION. `work` drops
+    any entry with neither footage nor artwork on disk — Tripgate's identity
+    is a locked palette rendered as live hex values, so it has no file and no
+    catalogue entry — and without this the card answered to no chip at all
+    and vanished from every filter including its own division's.
+
+    The study knows its own division. That is the one facet it can state
+    without a piece behind it, and it is the facet the filter row is made of.
+  */
+  return card.copy ? [card.copy.division] : [];
+}
+
+/*
+  THE CARD'S MEDIA, AND ALL FOUR FIELDS ARE OPTIONAL TOGETHER. With no clip
+  there is no poster, no preview and no film; the card falls back to the
+  study's own artwork, and the grid renders it as a picture rather than as a
+  player. `ratio` is 1 so an unphotographed study is a square tile rather
+  than a reel-shaped hole.
+*/
+function media(clip: ReelId | undefined, art: string | undefined) {
+  if (clip === undefined) {
+    return { ratio: 1, poster: art ?? "", preview: undefined, film: undefined };
+  }
   return {
     ratio: clipRatio(clip),
     poster: mediaUrl(reelPoster(clip)),
@@ -144,7 +184,7 @@ const ordered: Entry[] = [
   ),
 ];
 
-const cards: (CaseStudyCard & { clip: ReelId })[] = ordered.map((entry) =>
+const cards: (CaseStudyCard & { clip?: ReelId })[] = ordered.map((entry) =>
   "headline" in entry
     ? {
         key: entry.slug,
@@ -154,16 +194,16 @@ const cards: (CaseStudyCard & { clip: ReelId })[] = ordered.map((entry) =>
         brand: entry.brand,
         line: entry.headline,
         labels: labelsFor(entry),
-        facets: facetsFor(entry.clip),
+        facets: facetsForCard(entry.clip !== undefined ? { clip: entry.clip } : { copy: entry }),
         copy: entry,
-        ...media(entry.clip),
+        ...media(entry.clip, entry.art),
       }
     : {
         key: `film-${entry.n}`,
         clip: entry.clip,
         brand: entry.brand,
         labels: [],
-        facets: facetsFor(entry.clip),
-        ...media(entry.clip),
+        facets: facetsForCard({ clip: entry.clip }),
+        ...media(entry.clip, undefined),
       },
 );

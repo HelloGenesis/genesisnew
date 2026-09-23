@@ -86,8 +86,16 @@ export const ogCards: OgCard[] = [
     path: page.path,
     eyebrow: `Case study · ${page.copy.brand}`,
     title: page.copy.headline,
-    // The committed frame, not mediaUrl's: this is read from disk at build.
-    poster: reelPoster(page.copy.clip).split("/").pop(),
+    /*
+      The committed frame, not mediaUrl's: this is read from disk at build.
+      Undefined for the design studies, which have no film — the card then
+      falls back to the typographic treatment, which is the right one for a
+      logo exploration anyway.
+    */
+    poster:
+      page.copy.clip !== undefined
+        ? reelPoster(page.copy.clip).split("/").pop()
+        : undefined,
     landscape: page.ratio > 1,
   })),
 ];

@@ -64,7 +64,7 @@ const MOBILE_CTA =
  * otherwise be rebuilt on every render of a component that re-renders
  * whenever the dialog opens or the arrows are pressed.
  */
-const INFLUENCE_REELS = expandToClips(
+const CLIP_REELS = expandToClips(
   work.filter((item) => item.vertical === "Influence"),
 )
   .filter((item) => item.reel?.length)
@@ -79,6 +79,42 @@ const INFLUENCE_REELS = expandToClips(
       study: caseStudyForClip(clip),
     };
   });
+
+/**
+ * The reels, ROUND-ROBINED BY STUDY rather than left in catalogue order.
+ *
+ * In catalogue order the first six blocks — three whole pages of the pair —
+ * are Mahindra Finance, because the entry carries five consecutive cuts of
+ * one campaign. Genesis pressed the arrows, clicked, and got the same study
+ * every time: "koi bhi video click karu mahindra finance ka hi case study
+ * khulta hai". The attribution behind it was also wrong and is fixed in
+ * caseStudyForClip; this is the other half, and it is a display problem.
+ *
+ * One pass per round takes the next unseen reel from each study in turn, so
+ * a page of two is two different campaigns and pressing the arrow moves to
+ * two more. Nothing is dropped — a study with more cuts than the others
+ * simply keeps supplying them once the shorter runs are exhausted, so the
+ * tail of the list is the deep campaigns and the head is the variety.
+ *
+ * Reels with no study group under their client, which keeps L'Oreal's two
+ * apart in the same way.
+ */
+const INFLUENCE_REELS = (() => {
+  const runs = new Map<string, typeof CLIP_REELS>();
+  for (const reel of CLIP_REELS) {
+    const group = reel.study?.slug ?? `client:${reel.label}`;
+    runs.set(group, [...(runs.get(group) ?? []), reel]);
+  }
+
+  const queues = [...runs.values()];
+  const out: typeof CLIP_REELS = [];
+  for (let round = 0; out.length < CLIP_REELS.length; round += 1) {
+    for (const queue of queues) {
+      if (queue[round]) out.push(queue[round]);
+    }
+  }
+  return out;
+})();
 
 /** The distinct studies the reels cover, for the window's pager. */
 const INFLUENCE_STUDIES = uniqueStudies(INFLUENCE_REELS.map((reel) => reel.study));

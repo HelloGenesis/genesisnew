@@ -42,7 +42,21 @@ export type CaseStudyCopy = {
   takeaway: string;
   slug: string;
   keyword: string;
-  clip: ReelId;
+  /**
+   * The clip this study leads with. ABSENT FOR DESIGN WORK, which is the one
+   * kind of study Genesis has that is not a film — an identity system and a
+   * logo revamp are pictures, and a study of them has nothing to play. Every
+   * consumer treats the player as optional and falls back to `art`.
+   */
+  clip?: ReelId;
+  /**
+   * A still, for a study with no film. Path under /public.
+   *
+   * It is the only image a design study shows in the window, on the index
+   * card and on its own page; the division's section (branding-design.tsx)
+   * still reads the whole folder for its sketch strip.
+   */
+  art?: string;
 };
 
 export const caseStudyCopy: CaseStudyCopy[] = [
@@ -1186,6 +1200,73 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "slug": "manthan-power-of-ten",
     "keyword": "event content production",
     "clip": "studios-abhi-ex-coms"
+  },
+  /*
+    THE TWO BRAND & DESIGN STUDIES, WRITTEN BY GENESIS RATHER THAN GENERATED.
+
+    Numbered 41 and 42 because the SEO master stops at 40 — it covers film and
+    creator work only, and the division's two pieces (Tripgate's identity and
+    the Activ Health logo) had no write-up anywhere on the site. Genesis sent
+    both as finished copy; it is reproduced here with its own paragraph breaks
+    and nothing added.
+
+    NEITHER HAS A CLIP, and that is the point of `clip` being optional. A logo
+    exploration and a brand guideline have no film to play, so the study shows
+    a still (or, where there is not one on disk yet, the typographic card the
+    rest of the site already uses for unphotographed work).
+  */
+  {
+    "n": 41,
+    "division": "Brand & Design",
+    "headline": "Activ Health App: Making a Familiar Mark Work at App Size",
+    "brand": "Aditya Birla Health Insurance",
+    "industry": "Health insurance and wellness",
+    "service": "Logo icon revamp and concept exploration",
+    "campaign": "Activ Health App Logo",
+    "highlight": null,
+    "flagged": false,
+    "brief": [
+      "The Activ Health App brings health tracking, rewards, policy information and care services into one digital experience. Its logo had to carry that breadth of purpose in a very small space: an app icon.",
+      "The existing symbol already had recognition, but multiple cuts, shadows and an orange gradient made it visually complex. The challenge was to make it clearer and more contemporary while keeping the shape familiar."
+    ],
+    "approach": [
+      "Genesis explored a simplified boomerang form around forward motion, momentum, balance and wellness. The proposed direction reduced visual noise, replaced gradients with solid red and yellow, and used geometry to suggest care without relying on a literal medical symbol."
+    ],
+    "execution": [
+      "Early sketches and form explorations led to a preferred direction; feedback called for red to lead and the ends of the mark to be more symmetrical."
+    ],
+    "executionNote": "The supplied design documents concept exploration and feedback, not a final approved logo or live rollout.",
+    "results": [],
+    "takeaway": "An app identity must remain recognisable when reduced to an icon. The exploration shows how fewer details and stronger geometry can refine a familiar mark for digital use.",
+    "slug": "activ-health-app-logo",
+    "keyword": "app icon logo redesign case study",
+    "art": "/brand/activ-health/5.png"
+  },
+  {
+    "n": 42,
+    "division": "Brand & Design",
+    "headline": "TripGatee: Turning Luxury Travel Into a Consistent Brand World",
+    "brand": "TripGatee",
+    "industry": "Luxury travel",
+    "service": "Brand positioning, visual guidelines and brand applications",
+    "campaign": "TripGatee Brand Identity",
+    "highlight": null,
+    "flagged": false,
+    "brief": [
+      "Luxury travel is experienced through details long before a journey begins. For TripGatee, the opportunity was to make every first impression — from a social post to a letterhead — feel as considered as the trips it curates."
+    ],
+    "approach": [
+      "Genesis built the identity around TripGatee's promise, \u201cEscape the Ordinary, Embrace the Extraordinary.\u201d The positioning presents the brand as a curator of personalised, premium journeys, with a voice designed to feel elegant, aspirational and trustworthy."
+    ],
+    "execution": [
+      "A deep teal master logo anchors the visual system, supported by amber, navy and soft neutrals. Amandine provides expressive headlines while Poppins keeps supporting information clear. The guidelines define logo variations, spacing, minimum sizes and contrast so the identity holds together across formats.",
+      "The system extends into social media templates, a visiting card, letterhead and envelopes. These rules and applications give the team a repeatable way to maintain one recognisable TripGatee presence."
+    ],
+    "executionNote": "",
+    "results": [],
+    "takeaway": "Premium positioning becomes more convincing when it is consistent at every touchpoint. TripGatee's brand work connects its story with the details people actually see.",
+    "slug": "tripgatee-brand-identity",
+    "keyword": "luxury travel brand identity case study"
   }
 ];
 

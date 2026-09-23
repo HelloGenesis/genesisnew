@@ -47,23 +47,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/privacy"), lastModified: LEGAL_UPDATED, changeFrequency: "yearly", priority: 0.2 },
   ];
 
-  const studies: MetadataRoute.Sitemap = caseStudyPages.map((page) => ({
-    url: absoluteUrl(page.path),
-    lastModified: built,
-    changeFrequency: "monthly",
-    priority: 0.7,
-    images: [absoluteUrl(page.poster)],
-    videos: [
-      {
-        title: `${page.copy.campaign} | ${page.copy.brand}`,
-        description: page.seo.description,
-        thumbnail_loc: absoluteUrl(page.poster),
-        content_loc: absoluteUrl(page.film ?? page.preview),
-        publication_date: FILMS_PUBLISHED,
-        family_friendly: "yes",
-      },
-    ],
-  }));
+  const studies: MetadataRoute.Sitemap = caseStudyPages.map((page) => {
+    /*
+      A DESIGN STUDY HAS NO VIDEO. The two Brand & Design pieces are an
+      identity system and a logo exploration — declaring a <video:video> for
+      them with no content_loc is an invalid sitemap entry, so they carry
+      their image and nothing else.
+    */
+    const film = page.film ?? page.preview;
+
+    return {
+      url: absoluteUrl(page.path),
+      lastModified: built,
+      changeFrequency: "monthly",
+      priority: 0.7,
+      images: page.poster ? [absoluteUrl(page.poster)] : undefined,
+      videos: film
+        ? [
+            {
+              title: `${page.copy.campaign} | ${page.copy.brand}`,
+              description: page.seo.description,
+              thumbnail_loc: absoluteUrl(page.poster),
+              content_loc: absoluteUrl(film),
+              publication_date: FILMS_PUBLISHED,
+              family_friendly: "yes",
+            },
+          ]
+        : undefined,
+    };
+  });
 
   return [...pages, ...studies];
 }

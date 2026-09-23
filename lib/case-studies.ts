@@ -255,6 +255,39 @@ const studies: CaseStudy[] = [
     work: ["ai-avatar-tanvi"],
     heroClip: "ai-lab-tanvi-uiiui",
   },
+  /*
+    BRAND & DESIGN'S TWO, and they are the first cards here with no film.
+
+    The division had work in the portfolio and no case study anywhere on the
+    site, so "Work that moved a number" was a rail of four divisions' worth
+    of video with design missing from it entirely. Genesis sent both
+    write-ups; they are copy 41 and 42 (see lib/case-study-copy, which is
+    where the numbering past the SEO master's 40 is explained).
+
+    NO `heroClip`, BECAUSE THERE IS NO CLIP. Both catalogue entries are
+    pictures — the Activ Health card shows the finished mark from
+    /brand/activ-health, and Tripgate has no artwork on disk yet and so gets
+    the typographic tile the rest of the site already uses for unphotographed
+    work. Drop a file into the folder and the card picks it up.
+  */
+  {
+    slug: "activ-health-app-logo",
+    copy: 41,
+    client: "Aditya Birla Health Insurance",
+    campaign: "Activ Health App Logo",
+    vertical: "Brand & Design",
+    discipline: ["Logo design", "Brand identity"],
+    work: ["activ-health-logo"],
+  },
+  {
+    slug: "tripgatee-brand-identity",
+    copy: 42,
+    client: "TripGatee",
+    campaign: "Brand Identity",
+    vertical: "Brand & Design",
+    discipline: ["Brand identity", "Guidelines"],
+    work: ["tripgate-branding"],
+  },
 ];
 
 /**

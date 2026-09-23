@@ -26,8 +26,10 @@ export type CaseStudyCard = {
   labels: string[];
   /** Filter chips this card answers to (division, format, sector). */
   facets: string[];
+  /** The film's poster frame, or a design study's artwork. */
   poster: string;
-  preview: string;
+  /** Absent for a study with no film at all — see `art` on CaseStudyCopy. */
+  preview?: string;
   /** Full film where Drive serves one; the preview otherwise. */
   film?: string;
   copy?: CaseStudyCopy;
@@ -200,11 +202,25 @@ function CardFace({
           "group-focus-visible:ring-2 group-focus-visible:ring-brand",
         )}
         style={
-          landscape
+          landscape || !card.poster
             ? undefined
             : { backgroundImage: `url(${card.poster})`, backgroundSize: "cover" }
         }
       >
+        {/*
+          NO PICTURE, SO THE NAME IS THE PICTURE — the same fallback the
+          portfolio's PosterCard uses, and for the same reason. Tripgate's
+          identity is a locked palette with no file on disk, and a card with
+          an empty background-image is a black rectangle that reads as a
+          failed image rather than as a deliberate card.
+        */}
+        {!card.poster && (
+          <div className="absolute inset-0 grid place-items-center px-5 pb-12">
+            <p className="text-balance text-center text-h3 font-semibold leading-[1.1] tracking-tight text-bone/90">
+              {card.brand}
+            </p>
+          </div>
+        )}
         {/*
           The whole landscape film, centred, over a blurred copy of its own
           frame — so the room above and below it is the film's colour, not a
@@ -217,6 +233,12 @@ function CardFace({
             style={{ backgroundImage: `url(${card.poster})` }}
           />
         )}
+        {/*
+          NO PLAYER WHERE THERE IS NO FILM. The two Brand & Design studies are
+          pictures — a <video> with src="" paints a black rectangle over the
+          artwork the background-image behind it just drew.
+        */}
+        {card.preview && (
         <video
           ref={videoRef}
           src={card.preview}
@@ -239,6 +261,7 @@ function CardFace({
             landscape ? "object-contain" : "object-cover",
           )}
         />
+        )}
         <div className="absolute left-2.5 right-2.5 top-2.5 flex flex-wrap gap-1.5">
           {card.labels.map((label) => (
             <span
@@ -268,6 +291,7 @@ function Study({ card }: { card: CaseStudyCard }) {
       poster={card.poster}
       film={card.film}
       preview={card.preview}
+      art={card.copy?.art}
       copy={card.copy}
       ratio={card.ratio}
       /*

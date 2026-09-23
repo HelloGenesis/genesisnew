@@ -32,8 +32,14 @@ export type CaseStudyPage = {
   copy: CaseStudyCopy;
   /** The slider's labels where the study has a card there, else its division. */
   labels: string[];
+  /**
+   * The still behind the player — a film's poster frame, or, for a design
+   * study with no film, its artwork. Empty where neither exists on disk, in
+   * which case the page draws the typographic card instead.
+   */
   poster: string;
-  preview: string;
+  /** The short preview, absent for a study with no film at all. */
+  preview?: string;
   /** The full-length film where Drive serves one. */
   film?: string;
   ratio: number;
@@ -105,10 +111,18 @@ export const caseStudyPages: CaseStudyPage[] = caseStudyCopy.map((copy) => ({
   path: `/case-studies/${copy.slug}`,
   copy,
   labels: labelsFor(copy),
-  poster: mediaUrl(reelPoster(copy.clip)),
-  preview: mediaUrl(reelClip(copy.clip)),
-  film: filmUrl(copy.clip),
-  ratio: clipRatio(copy.clip),
+  /*
+    A STUDY WITHOUT A FILM. The two Brand & Design studies are an identity
+    system and a logo exploration — there is nothing to play, so they carry a
+    still instead of a clip and every media field below degrades rather than
+    addressing /work/clips/undefined.mp4. `ratio` falls back to 1: the
+    artwork is square-ish and, with no player rendered, it only decides
+    whether the layout treats the study as portrait or landscape.
+  */
+  poster: copy.clip !== undefined ? mediaUrl(reelPoster(copy.clip)) : (copy.art ?? ""),
+  preview: copy.clip !== undefined ? mediaUrl(reelClip(copy.clip)) : undefined,
+  film: copy.clip !== undefined ? filmUrl(copy.clip) : undefined,
+  ratio: copy.clip !== undefined ? clipRatio(copy.clip) : 1,
   seo: { title: titleFor(copy), description: descriptionFor(copy) },
 }));
 
@@ -214,17 +228,49 @@ export function caseStudyForClip(id: ReelId | undefined): CaseStudy | undefined 
     studies written.
   */
   const key = String(id);
-  const direct = caseStudyList.find(
+  const published = caseStudyList.filter(isPublished);
+
+  /* The study that names this exact clip as its hero. Unambiguous, so first. */
+  const direct = published.find(
     (study) => study.heroClip !== undefined && String(study.heroClip) === key,
   );
-  const viaWork = caseStudyList.find((study) =>
+  if (direct) return direct;
+
+  /*
+    FALLING BACK THROUGH THE WORK ENTRY, AND THE OLD `.find()` WAS WRONG.
+
+    One catalogue entry can carry a whole engagement — "aditya-birla-capital-
+    campaign" is fifteen clips — and SIX studies are written off it: five
+    named campaigns plus one that covers the engagement as a whole. The
+    previous code took the FIRST study listing that slug, so eleven of those
+    fifteen reels opened the Vikrant Massey study regardless of what was in
+    them, which is what Genesis caught: "koi bhi video click karu mahindra
+    finance ka hi case study khulta hai" on the pair beside it, and the same
+    collapse underneath.
+
+    So a work entry only answers for a clip when the answer is not a guess:
+
+      one study on the entry  → that study
+      several                 → nothing, and the clip is not a link
+
+    THERE IS NO "CLOSE ENOUGH" HERE, and the obvious fallback was tried and
+    removed. Handing an unplaceable clip to the one study on the entry that
+    claims no hero looked like an umbrella rule — but that study is
+    "aditya-birla-capital-content-campaign", which is Jump For Health 2023: a
+    specific campaign that simply has not been matched to a file yet. It
+    would have replaced one wrong destination with another.
+
+    A clip with no study renders as plain footage by design, so nine of the
+    fifteen Aditya Birla cuts are footage until someone who knows which
+    campaign each belongs to writes the number into `heroClip`. Unlabelled
+    beats mislabelled.
+  */
+  const onEntry = published.filter((study) =>
     study.work?.some((slug) =>
       findWork(slug)?.reel?.some((entry) => String(entry) === key),
     ),
   );
-
-  const study = direct ?? viaWork;
-  return study && isPublished(study) ? study : undefined;
+  return onEntry.length === 1 ? onEntry[0] : undefined;
 }
 
 /**

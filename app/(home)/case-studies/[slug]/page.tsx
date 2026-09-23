@@ -75,13 +75,21 @@ export default async function CaseStudyPage({ params }: Props) {
     else the preview — so the schema never describes a video the page does not
     play. Every master was checked reachable when this was written.
   */
-  const video = videoJsonLd({
-    name: `${copy.campaign} | ${copy.brand}`,
-    description: page.seo.description,
-    thumbnail: page.poster,
-    content: page.film ?? page.preview,
-    path: page.path,
-  });
+  const film = page.film ?? page.preview;
+  /*
+    UNDEFINED FOR A STUDY WITH NO FILM — the two Brand & Design pieces. A
+    VideoObject with no contentUrl is an invalid node, and the CreativeWork
+    below drops its `video` reference with it.
+  */
+  const video = film
+    ? videoJsonLd({
+        name: `${copy.campaign} | ${copy.brand}`,
+        description: page.seo.description,
+        thumbnail: page.poster,
+        content: film,
+        path: page.path,
+      })
+    : undefined;
 
   return (
     <Atmosphere
@@ -109,9 +117,9 @@ export default async function CaseStudyPage({ params }: Props) {
             keywords: copy.keyword,
             inLanguage: "en-IN",
             creator: { "@id": ORGANIZATION_ID },
-            video: { "@id": video["@id"] },
+            ...(video ? { video: { "@id": video["@id"] } } : {}),
           },
-          video,
+          ...(video ? [video] : []),
         ]}
       />
 
@@ -136,6 +144,8 @@ export default async function CaseStudyPage({ params }: Props) {
             poster={page.poster}
             film={page.film}
             preview={page.preview}
+            /* The still a design study shows where a film would play. */
+            art={copy.art}
             copy={copy}
             ratio={page.ratio}
             /*

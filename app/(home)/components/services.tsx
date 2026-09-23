@@ -143,7 +143,23 @@ export function Services() {
           STILL WELL UNDER A SECTION HEADING. The orb is the hero here and a
           sentence at h1 would take its job — this is one step up, not four.
         */}
-        <h1 className="mx-auto mt-10 max-w-3xl text-balance text-center text-lead font-normal leading-snug text-bone/85 sm:mt-12 sm:text-h3">
+        {/*
+          ONE LINE ON A DESKTOP — "in single line". At `max-w-3xl` the
+          sentence broke after "through", so the half Genesis lit in the
+          brand started on a line of its own and read as a list under a
+          heading rather than as the end of the sentence it belongs to.
+
+          The measure goes to 6xl and the line is pinned with `nowrap` from
+          lg. Both are needed: widening alone still lets `text-balance`
+          choose a two-line break, and `nowrap` alone would push the sentence
+          past a 3xl container and out of the section.
+
+          IT STILL WRAPS BELOW lg, where one line of seventy-three characters
+          would either overflow or have to be set at a size nobody can read.
+          `text-balance` is left on for those widths, so the two lines it
+          makes there are of even length.
+        */}
+        <h1 className="mx-auto mt-10 max-w-3xl text-balance text-center text-lead font-normal leading-snug text-bone/85 sm:mt-12 sm:text-h3 lg:max-w-6xl lg:whitespace-nowrap">
           {services.body}{" "}
           {/*
             UPRIGHT, NOT THE SERIF ITALIC every other accent on this site
