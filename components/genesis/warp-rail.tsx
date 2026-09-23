@@ -370,33 +370,47 @@ export function WarpRail({
     box.addEventListener("wheel", onWheel, { passive: false });
 
     /*
-      A drag on a touch screen, with `touch-action: pan-y` on the box so a
-      vertical swipe still scrolls the page. Past a few pixels it is a drag,
-      not a tap, and the click that follows is swallowed so letting go does
-      not open the card under the finger.
+      A DRAG — a finger on a phone, or a press-and-pull with a mouse or a
+      trackpad ("isko bhi slidable using trackpad karo"). `touch-action:
+      pan-y` on the box keeps a vertical swipe scrolling the page. Past a few
+      pixels it is a drag, not a tap: the pointer is captured then (and only
+      then, so a plain click still lands on its card), and the click that
+      follows is swallowed so letting go does not open the card underneath.
     */
     let dragX: number | null = null;
     let dragged = 0;
+    let dragPointer = -1;
     const onDown = (event: PointerEvent) => {
-      if (event.pointerType !== "touch") return;
+      if (event.pointerType !== "touch" && event.button !== 0) return;
       dragX = event.clientX;
       dragged = 0;
+      dragPointer = event.pointerId;
     };
     const onMove = (event: PointerEvent) => {
-      if (dragX === null) return;
+      if (dragX === null || event.pointerId !== dragPointer) return;
       const dx = event.clientX - dragX;
       dragX = event.clientX;
       dragged += Math.abs(dx);
+      if (dragged > 8 && !box.hasPointerCapture(event.pointerId)) {
+        box.setPointerCapture(event.pointerId);
+      }
       offset -= dx;
       glide = 0;
       hovering = true;
       start();
     };
-    const onUp = () => {
+    const onUp = (event: PointerEvent) => {
+      if (event.pointerId !== dragPointer) return;
       if (dragX !== null) holdDrift();
       dragX = null;
-      hovering = false;
+      dragPointer = -1;
+      // A mouse that is still over the rail keeps it held, as a hover does.
+      hovering = event.pointerType === "mouse" && box.matches(":hover");
     };
+    /* An anchor dragged with a mouse starts the browser's own link drag,
+       which ends the pointer stream mid-pull. */
+    const onDragStart = (event: DragEvent) => event.preventDefault();
+    box.addEventListener("dragstart", onDragStart);
     const onClickCapture = (event: MouseEvent) => {
       if (dragged > 8) {
         event.preventDefault();
@@ -451,6 +465,7 @@ export function WarpRail({
       box.removeEventListener("pointerup", onUp);
       box.removeEventListener("pointercancel", onUp);
       box.removeEventListener("click", onClickCapture, true);
+      box.removeEventListener("dragstart", onDragStart);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [items.length]);
@@ -473,7 +488,7 @@ export function WarpRail({
         ref={viewport}
         className={cn(
           // pan-y: a finger drag sideways is ours, a vertical one is the page's.
-          "relative w-full touch-pan-y overflow-hidden",
+          "relative w-full touch-pan-y select-none overflow-hidden",
           /*
           NO COLOUR BEHIND THE CARDS ANY MORE.
 

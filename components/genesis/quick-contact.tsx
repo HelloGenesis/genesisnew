@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { GenesisForm } from "./genesis-form";
 import { FORMS } from "@/lib/forms";
-import { ctaWhatsappLink } from "@/lib/site-config";
+import { ctaContextFor, ctaWhatsappLink, isContactHref } from "@/lib/site-config";
 import { getLenis } from "./smooth-scroll";
 
 /**
@@ -57,9 +57,17 @@ export function QuickContact() {
       /* The browser keeps anything that is not a plain left click: cmd-click,
          middle-click and shift-click all mean "open this somewhere else". */
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const trigger = (event.target as Element | null)?.closest?.(
-        "[data-quick-contact]",
-      );
+      const target = event.target as Element | null;
+      /*
+        A NAMED CTA, OR ANY LINK TO THE ENQUIRY FORM. The second half is
+        Genesis's "jitne bhi CTA hain, directly WhatsApp pe" — the buttons
+        nobody had given a name used to fall through to the form. They now
+        open the chat too, named after the section or page they sit on.
+      */
+      const named = target?.closest?.("[data-quick-contact]");
+      const anchor = target?.closest?.("a");
+      const trigger =
+        named ?? (anchor && isContactHref(anchor.getAttribute("href")) ? anchor : null);
       if (!(trigger instanceof HTMLElement)) return;
 
       event.preventDefault();
@@ -69,8 +77,15 @@ export function QuickContact() {
         capture handler deliberately returns for these triggers, so nothing
         else is going to stop the event on their behalf.
       */
-      event.stopPropagation();
-      const name = trigger.dataset.quickContact || "cta";
+      /*
+        A plain contact link lets the click carry on, so its own handlers
+        still run — the phone menu closes itself on a link tap, and would
+        otherwise stay open behind the chat. preventDefault alone is enough
+        to stop next/link navigating (it stands down on defaultPrevented).
+      */
+      if (named) event.stopPropagation();
+      const name =
+        trigger.dataset.quickContact || ctaContextFor(trigger, window.location.pathname);
 
       /*
         STRAIGHT TO THE CHAT, with the division already named in the compose

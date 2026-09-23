@@ -5,7 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { useEffect } from "react";
 
-import { sectionForPage } from "@/lib/site-config";
+import { sectionForPage, isContactHref } from "@/lib/site-config";
 
 /**
  * Lenis smooth scrolling, wired directly into GSAP.
@@ -90,6 +90,9 @@ function installAnchorScrolling(lenis: Lenis | null): () => void {
 
     const href = anchor.getAttribute("href");
     if (!href) return;
+    /* Nor is any link to the enquiry form: every one of those opens
+       WhatsApp now. See isContactHref. */
+    if (isContactHref(href)) return;
 
     // Same-document hashes only: "#work" and "/#work" when already on "/".
     const onHome = window.location.pathname === "/";

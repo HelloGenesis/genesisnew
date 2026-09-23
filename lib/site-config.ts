@@ -267,6 +267,38 @@ export function ctaWhatsappLink(source?: string | null) {
   return whatsappLink(CTA_MESSAGES[key] ?? siteConfig.whatsappMessage);
 }
 
+/**
+ * WHETHER A LINK IS A "CONTACT US" CTA — one that points at the enquiry form.
+ *
+ * Genesis: "jitne bhi CTA hain, unko niche jo form hai udhar redirect mat
+ * karo, directly WhatsApp pe redirect karo." Only the buttons that had been
+ * given a `quickContact` name opened WhatsApp; every other "Start a Project",
+ * "Contact Us" and "Plan a campaign" still scrolled down to the form. Rather
+ * than naming them one at a time — and missing the next one added — any link
+ * to the form is treated as a WhatsApp CTA (see QuickContact), and the href
+ * stays the form so the button still works with JavaScript off or with no
+ * number configured.
+ */
+export function isContactHref(href: string | null | undefined) {
+  return href === "/#contact" || href === "#contact";
+}
+
+/**
+ * The CTA name for a contact link that was not given one, so its WhatsApp
+ * message can still name what the reader was looking at: the homepage
+ * section the button sits in, else the page it is on. Falls back to the
+ * generic message rather than guessing.
+ */
+export function ctaContextFor(element: Element, pathname: string): string {
+  const section = element.closest("section[id]")?.id;
+  if (section && section in CTA_MESSAGES) return `${section}:cta`;
+  const page = sectionForPage[pathname];
+  if (page) return `${page}:cta`;
+  if (pathname === "/case-studies") return "case-studies:cta";
+  if (pathname.startsWith("/case-studies/")) return "case-study:cta";
+  return "cta";
+}
+
 
 /**
  * WHERE THE WORDMARK GOES.
