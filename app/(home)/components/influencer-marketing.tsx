@@ -289,8 +289,14 @@ export function InfluencerMarketing() {
               it opens the column it belongs to, the copy runs directly under
               it on the same left edge, and the section's order is the one
               Genesis asked for — mark, categories, promise, copy.
+
+              ON A PHONE THE PROMISE AND COPY COME BEFORE THE REELS — "ye copy
+              ko upar karo phone me above the cards". Stacked, the reels are a
+              full screen tall, and the words that say what they are arrived
+              only after them. So below md it reads figure, promise, copy,
+              reels; the tablet grid keeps its figure-and-reels top row.
             */}
-            <Reveal delay={0.08} className="order-3 min-w-0 lg:order-none">
+            <Reveal delay={0.08} className="order-2 min-w-0 md:order-3 lg:order-none">
               <h3 className="max-w-xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
                 {influencer.heading}{" "}
                 <span className="font-serif font-normal italic text-brand-ink">
@@ -299,7 +305,7 @@ export function InfluencerMarketing() {
               </h3>
             </Reveal>
 
-            <Reveal delay={0.1} className="order-4 lg:order-none">
+            <Reveal delay={0.1} className="order-3 md:order-4 lg:order-none">
               <p className="max-w-lg text-pretty text-body leading-relaxed text-ash lg:mt-5">
                 {influencer.body}
               </p>
@@ -399,7 +405,7 @@ export function InfluencerMarketing() {
             their Instagram links are one component away if this block ever
             wants a face in it again.
           */}
-          <Reveal delay={0.2} direction="left" variant="scene" className="order-2 lg:order-none">
+          <Reveal delay={0.2} direction="left" variant="scene" className="order-4 md:order-2 lg:order-none">
             {/*
               BOTH REELS OPEN SOMETHING. Fourteen of these twenty-eight clips
               have a written study; the rest — The WorldGrad, FOY, L'Oreal, HT
