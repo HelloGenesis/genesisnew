@@ -44,7 +44,7 @@ import { getDriveClient } from "@/lib/google-drive";
  * time) and cutting the asked-for bytes out of it. Drive is asked for each
  * block once per region, and never again for the life of the cache.
  *
- * A viewer's response is at most the rest of one block. HTTP allows a server
+ * A viewer's response is at most VIEW_CHUNK, and never crosses a block. HTTP allows a server
  * to answer a range with fewer bytes than were asked for — Content-Range says
  * which — and every browser's media stack simply asks for the next range.
  *
@@ -65,6 +65,17 @@ const CACHE = "public, max-age=31536000, s-maxage=31536000, immutable";
  * than hundreds of cache entries.
  */
 const BLOCK = 8 * 1024 * 1024;
+
+/**
+ * THE MOST A VIEWER IS SENT PER REQUEST: 2MiB, a couple of seconds of a
+ * master. A viewer used to get the rest of the whole 8MiB block, and a
+ * browser downloads all of a response it has been handed — so a tile that
+ * played for one second on a phone still pulled 8-12MB. Galleries play full
+ * films now, so that was most of what made the site slow on a phone. The CDN
+ * still caches whole blocks; this only limits what leaves for the viewer,
+ * and the browser simply asks for the next range as playback needs it.
+ */
+const VIEW_CHUNK = 2 * 1024 * 1024;
 
 /** File sizes, for files whose lookup did not include one. Per process. */
 const sizes = new Map<string, Promise<number | undefined>>();
@@ -245,7 +256,7 @@ export async function GET(
     // the block it starts in, or the end of the range if that comes first.
     const [start] = range;
     const index = Math.floor(start / BLOCK);
-    const end = Math.min(range[1], (index + 1) * BLOCK - 1, size - 1);
+    const end = Math.min(range[1], start + VIEW_CHUNK - 1, (index + 1) * BLOCK - 1, size - 1);
 
     headers.set("Content-Range", `bytes ${start}-${end}/${size}`);
     headers.set("Content-Length", String(end - start + 1));

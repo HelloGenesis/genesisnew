@@ -74,10 +74,72 @@ export function useInViewPlayback<T extends HTMLVideoElement>(
     return () => observer.disconnect();
   }, [poster, scroller]);
 
+  /*
+    A FILM THAT WILL NOT LOAD FALLS BACK TO ITS PREVIEW. Tiles now stream the
+    full Drive film (see reelClip). If Drive refuses one — a quota, a moved
+    file — the tile would sit black; instead it swaps to the four-second cut
+    committed to /public for the same clip, which is always there.
+  */
+  useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    const onError = () => {
+      const match = video.currentSrc.match(/\/api\/media\/films\/([^/?#]+)$/) ??
+        video.src.match(/\/api\/media\/films\/([^/?#]+)$/);
+      if (!match) return;
+      video.src = `/work/clips/${match[1]}`;
+      // The error usually lands before the first play, so start it here if
+      // the tile is on screen; the observer will not fire again until it
+      // leaves and comes back.
+      const box = video.getBoundingClientRect();
+      const onScreen = box.bottom > 0 && box.top < window.innerHeight;
+      if (onScreen && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        void video.play().catch(() => {});
+      }
+    };
+    video.addEventListener("error", onError);
+    return () => video.removeEventListener("error", onError);
+  }, []);
+
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    /*
+      ON A SLOW OR METERED CONNECTION, THE PREVIEW. Tiles stream the full
+      Drive film; on Data Saver or a 2G/3G link that is a download a phone
+      cannot keep up with, so the tile plays the four-second cut instead.
+      Swapped before anything loads (the tiles are preload="none").
+    */
+    if (slowConnection()) {
+      const match = video.src.match(/\/api\/media\/films\/([^/?#]+)$/);
+      if (match) video.src = `/work/clips/${match[1]}`;
+    }
+
+    if (window.matchMedia(PHONE).matches) {
+      /*
+        ONE AT A TIME ON A PHONE. A phone screen routinely holds two or three
+        tiles, and with full-length films behind them each one playing is its
+        own stream and its own decoder — "phone pe everything loads slowly".
+        So on a phone only the tile most in view plays; the rest keep their
+        poster until they become the one in view. See `onPhone` below.
+      */
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          visibility.set(video, entry.isIntersecting ? entry.intersectionRatio : 0);
+          elect();
+        },
+        { threshold: [0, 0.2, 0.4, 0.6, 0.8, 1] },
+      );
+      observer.observe(video);
+      return () => {
+        observer.disconnect();
+        visibility.delete(video);
+        if (current === video) current = null;
+        elect();
+      };
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -103,4 +165,40 @@ export function useInViewPlayback<T extends HTMLVideoElement>(
   }, []);
 
   return ref;
+}
+
+/** A phone, for the one-at-a-time rule: narrow, or a touch screen. */
+const PHONE = "(max-width: 767px), (pointer: coarse)";
+
+/*
+  THE PHONE COORDINATOR — shared by every tile on the page. Each tile reports
+  how much of it is visible; the most visible one (at least a third in view)
+  plays and every other tile is paused. Rails that clip their overflow report
+  their clipped share, so a card half slid out of a slider counts as half.
+*/
+const visibility = new Map<HTMLVideoElement, number>();
+let current: HTMLVideoElement | null = null;
+
+function elect() {
+  let best: HTMLVideoElement | null = null;
+  let bestRatio = 0.34;
+  for (const [video, ratio] of visibility) {
+    if (ratio > bestRatio) {
+      best = video;
+      bestRatio = ratio;
+    }
+  }
+  if (best === current) return;
+  current?.pause();
+  current = best;
+  if (best) void best.play().catch(() => {});
+}
+
+/** Data Saver on, or a connection the browser rates 2G/3G. */
+function slowConnection(): boolean {
+  const connection = (
+    navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
+  ).connection;
+  if (!connection) return false;
+  return Boolean(connection.saveData) || /(^|-)(2g|3g)$/.test(connection.effectiveType ?? "");
 }

@@ -247,7 +247,15 @@ export function InfluencerMarketing() {
           ring caps its own height — and side by side the section comes in
           under one screen.
         */}
-        <div className="fit-window mt-6 grid items-center gap-6 md:grid-cols-[0.82fr_1.18fr] md:gap-6 lg:gap-8">
+        {/*
+          `grid-cols-[minmax(0,1fr)]` BELOW md, and it is a layout fix. With no
+          columns declared the single implicit track sized itself to its
+          widest child's min-content — the reel slider's 26rem — so on a 360px
+          phone the whole column was 416px and the figure, the heading and the
+          reels all ran off the right edge. A minmax(0,…) track cannot grow
+          past the container.
+        */}
+        <div className="fit-window mt-6 grid grid-cols-[minmax(0,1fr)] items-center gap-6 md:grid-cols-[0.82fr_1.18fr] md:gap-6 lg:gap-8">
           {/*
             min-w-0 is load-bearing. A grid item defaults to `min-width: auto`,
             which refuses to shrink below its content's longest unbreakable
@@ -296,8 +304,14 @@ export function InfluencerMarketing() {
               only after them. So below md it reads figure, promise, copy,
               reels; the tablet grid keeps its figure-and-reels top row.
             */}
-            <Reveal delay={0.08} className="order-2 min-w-0 md:order-3 lg:order-none">
-              <h3 className="max-w-xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
+            {/*
+              CENTRED ON A PHONE — "centre align on phone". Stacked in one
+              column under a centred figure, a left-set heading and paragraph
+              read as a second block that had slid to the edge. From md the
+              copy has its own column beside the reels and sets left again.
+            */}
+            <Reveal delay={0.08} className="order-2 min-w-0 text-center md:order-3 md:text-left lg:order-none">
+              <h3 className="mx-auto max-w-xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2 md:mx-0">
                 {influencer.heading}{" "}
                 <span className="font-serif font-normal italic text-brand-ink">
                   {influencer.headingAccent}
@@ -305,8 +319,8 @@ export function InfluencerMarketing() {
               </h3>
             </Reveal>
 
-            <Reveal delay={0.1} className="order-3 md:order-4 lg:order-none">
-              <p className="max-w-lg text-pretty text-body leading-relaxed text-ash lg:mt-5">
+            <Reveal delay={0.1} className="order-3 text-center md:order-4 md:text-left lg:order-none">
+              <p className="mx-auto max-w-lg text-pretty text-body leading-relaxed text-ash md:mx-0 lg:mt-5">
                 {influencer.body}
               </p>
             </Reveal>
@@ -318,8 +332,11 @@ export function InfluencerMarketing() {
               arrow in a panel. On a phone Genesis wants the figure on its
               own, where it reads as the headline it is rather than a widget.
             */}
-            <Reveal delay={0.16} className="order-1 text-center lg:hidden">
-              <p className="leading-none tracking-tight text-bone">
+            <Reveal delay={0.16} className="order-1 min-w-0 text-center lg:hidden">
+              {/* min-w-0 and balance: on a narrow phone the figure and its
+                  label wrap onto two even lines instead of running off the
+                  right edge of the screen. */}
+              <p className="text-balance leading-tight tracking-tight text-bone">
                 <span className="text-[2.25rem] font-normal">
                   {influencer.databaseStat.value}
                 </span>{" "}

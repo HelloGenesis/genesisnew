@@ -13,6 +13,7 @@ import { caseStudyForClip, caseStudyPathForClip } from "@/lib/case-study-pages";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { useInViewPlayback } from "@/components/genesis/use-in-view-playback";
 import { cn } from "@/lib/utils";
+import { reelClip } from "@/lib/work";
 
 /**
  * FROM BRIEF TO FINAL CUT — the five stages of a Studios job, laid out as the
@@ -560,7 +561,7 @@ function StageClip({
   return (
     <video
       ref={ref}
-      src={mediaUrl(`/work/clips/${id}.mp4`)}
+      src={mediaUrl(reelClip(id))}
       muted
       loop
       playsInline

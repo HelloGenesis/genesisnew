@@ -1,3 +1,4 @@
+import { filmUrl } from "./films";
 import { mediaUrl } from "./media-url";
 import { isPending, services } from "./home-content";
 
@@ -798,8 +799,27 @@ export const CLIP_LABELS: Record<ReelId, string> = {
   42: "Sarda Village",
 };
 
-/** Where a clip and its frame live. The naming mirrors Drive. */
-export const reelClip = (n: ReelId) => `/work/clips/${n}.mp4`;
+/**
+ * The four-second preview cut committed to /public — kept as the fallback
+ * for a tile whose full film cannot be fetched (see useInViewPlayback).
+ */
+export const reelPreview = (n: ReelId) => `/work/clips/${n}.mp4`;
+
+/**
+ * WHAT A TILE PLAYS: THE WHOLE FILM, not the four-second preview.
+ *
+ * Every gallery on the site played the preview cut, so every video stopped
+ * after four seconds and looped — "all preview videos are playing only for
+ * 3 seconds, woh full play ho". Genesis chose to stream the Drive originals
+ * straight into the tiles. That is a real weight: the masters run up to
+ * 1080x1920 at ~9Mbps, 30-100MB each, so a screen with several tiles on it
+ * pulls several of those at once. What keeps it bearable is what was already
+ * there — tiles load nothing until they are on screen, pause when they leave
+ * it, and the media route serves films in CDN-cached blocks.
+ *
+ * With Drive switched off (filmUrl undefined) it is the preview, as before.
+ */
+export const reelClip = (n: ReelId) => filmUrl(n) ?? reelPreview(n);
 export const reelPoster = (n: ReelId) => `/work/posters/${n}.jpg`;
 
 export const work: WorkItem[] = catalogue
