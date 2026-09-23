@@ -361,14 +361,13 @@ export function DivisionBoard() {
                   which was a separate instruction and survives this one: the
                   line sits 4px low at rest and settles as it fades up.
 
-                  ONLY WHERE THERE IS A HOVER TO GIVE. `@media (hover: hover)`
-                  is what hides it — so a touch screen, which can never
-                  produce the hover this is gated on, shows the line
-                  permanently instead of hiding it forever. That is the one
-                  part that is deliberately NOT "jaise pehle tha": the old
-                  version was `hidden lg:block`, so on a phone the
-                  descriptions did not exist at all, and "show it on hover" is
-                  not an instruction a device without hover can carry out.
+                  NOT ON A TOUCH SCREEN AT ALL — "phone me logo ke niche ka
+                  subtext hata hi do". A phone has no hover to reveal it
+                  with, so for a while it showed permanently there instead;
+                  on a phone-width board that was four lines of small grey
+                  type crowding the names. A device without hover now gets
+                  the names alone (`hover:none` → hidden, which also drops
+                  its reserved height). A pointer still fades it in on hover.
 
                   IT RESERVES ITS SPACE EITHER WAY. Opacity and transform
                   only, never mounting, so moving between the four names
@@ -391,10 +390,10 @@ export function DivisionBoard() {
                   /*
                     The resting state, on pointer devices only: invisible and
                     sitting 4px low, so revealing it is a fade AND a rise. A
-                    touch screen matches neither selector and keeps the
-                    defaults above, which is the line permanently visible.
+                    touch screen does not show it at all (hover:none below).
                   */
                   "[@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",
+                  "[@media(hover:none)]:hidden",
                   "transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none",
                   "group-hover:translate-y-0 group-hover:opacity-100",
                   "group-focus-visible:translate-y-0 group-focus-visible:opacity-100",

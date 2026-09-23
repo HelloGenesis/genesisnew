@@ -1511,17 +1511,6 @@ body:has(main.scene-dark) header {
     }
 }
 
-/* Seamless marquee: the track is duplicated once, so -50% lands exactly on
-   the start of the copy. Consumed by <LogoMarquee />. */
-@keyframes genesis-marquee {
-    from {
-        transform: translate3d(0, 0, 0);
-    }
-
-    to {
-        transform: translate3d(-50%, 0, 0);
-    }
-}
 
 @layer utilities {
     /* Headline treatment from img-012: bright first line, receding second. */
