@@ -126,6 +126,7 @@ export function SiteFooter() {
                         href={item.href}
                         target="_blank"
                         rel="noopener noreferrer"
+                        data-contact-cta={item.contact ? "" : undefined}
                         className="text-small text-ash transition-colors hover:text-bone"
                       >
                         {item.label}

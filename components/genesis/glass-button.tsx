@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { ctaWhatsappLink, isContactHref } from "@/lib/site-config";
 import { useMagnetic } from "@/lib/use-magnetic";
 import { cn } from "@/lib/utils";
 
@@ -151,6 +152,20 @@ export function GlassButton({
 
   if (href) {
     /*
+      A "CONTACT US" BUTTON IS A WHATSAPP LINK IN THE HTML ITSELF.
+
+      These pointed at the enquiry form and relied on QuickContact's click
+      handler to open WhatsApp instead. That handler only exists once the
+      page's JavaScript has loaded, so a click made while the page was still
+      loading — or on a slow connection, or a stale tab — did what the href
+      said and scrolled to the form. Genesis kept landing there: "itne saare
+      buttons abhi bhi form ko hi redirect kar rhe hai". Rendered as the
+      wa.me link, the button works on its own, before and without script.
+      QuickContact still refines the message to the section it was clicked
+      in (data-contact-cta). With no number configured, it stays the form.
+    */
+    const chat = isContactHref(href) ? ctaWhatsappLink(quickContact) : undefined;
+    /*
       ROUTED, NOT RELOADED — and this was breaking the work dialog.
 
       This branch rendered a bare <a>, so every CTA in the site that carries an
@@ -166,7 +181,8 @@ export function GlassButton({
       before React ever sees it — stays a plain anchor, because handing those
       to the router either fails or costs a needless prefetch.
     */
-    const routed = href.startsWith("/");
+    const target = chat ?? href;
+    const routed = target.startsWith("/");
     const MotionLink = routed ? MOTION_LINK : motion.a;
 
     /*
@@ -180,12 +196,13 @@ export function GlassButton({
       a separate application and never navigate the page, so a blank target
       would leave an empty tab behind.
     */
-    const external = /^https?:\/\//.test(href);
+    const external = /^https?:\/\//.test(target);
 
     return (
       <MotionLink
-        href={href}
+        href={target}
         data-quick-contact={quickContact}
+        data-contact-cta={chat ? "" : undefined}
         /*
           A DECLARATION, NOT A HANDLER. An onClick here never ran: SmoothScroll
           catches anchor clicks on the document in the CAPTURE phase and stops

@@ -42,6 +42,11 @@ export type NavItem = {
    */
   external?: boolean;
   /**
+   * A contact CTA — the chat link above. Marked so QuickContact can name the
+   * page it was clicked from in the message (data-contact-cta).
+   */
+  contact?: boolean;
+  /**
    * Turns this item into a menu rather than a link.
    *
    * The bar has exactly one — Services, holding the four divisions. It is
@@ -268,6 +273,16 @@ export function ctaWhatsappLink(source?: string | null) {
 }
 
 /**
+ * A "Contact" / "Start a Project" entry for the nav and footer data: the
+ * WhatsApp chat itself, so the link works before any script has loaded,
+ * or the enquiry form when there is no number to chat with.
+ */
+export function contactItem(label: string): NavItem {
+  const chat = whatsappLink();
+  return { label, href: chat ?? "/#contact", external: Boolean(chat), contact: true };
+}
+
+/**
  * WHETHER A LINK IS A "CONTACT US" CTA — one that points at the enquiry form.
  *
  * Genesis: "jitne bhi CTA hain, unko niche jo form hai udhar redirect mat
@@ -485,7 +500,7 @@ export const navItems: NavItem[] = [
   */
   { label: "I'm a Creator", href: "/creator" },
   { label: "Career", href: "/careers" },
-  { label: "Contact", href: "/#contact" },
+  contactItem("Contact"),
 ];
 
 /** The one navigation item that is meant to look like an action. */
@@ -573,7 +588,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
   {
     heading: "General",
     items: [
-      { label: "Start a Project", href: "/#contact" },
+      contactItem("Start a Project"),
       /*
         The same chat, with the same message, as AI Lab's own CTA — built
         from whatsappLink rather than typed out, so the two cannot drift.
@@ -591,7 +606,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
       },
       { label: "I'm a Creator", href: "/creator" },
       { label: "Careers", href: "/careers" },
-      { label: "Contact", href: "/#contact" },
+      contactItem("Contact"),
     ],
   },
 ];

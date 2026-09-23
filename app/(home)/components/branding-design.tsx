@@ -9,6 +9,7 @@ import { SwipeHintRail } from "@/components/genesis/swipe-hint-rail";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { branding, services } from "@/lib/home-content";
+import { ctaWhatsappLink, isContactHref } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { SectionShell } from "./section-shell";
 
@@ -508,7 +509,11 @@ function Tile({
   );
 }
 
-/** The circled arrow in the corner of each folder. Opens the quick contact. */
+/**
+ * The circled arrow in the corner of each folder. Opens WhatsApp — as a real
+ * wa.me link, so it works before the page's script has loaded (see the note
+ * in GlassButton). With no number configured it stays the enquiry form.
+ */
 function ArrowCircle({
   href,
   quickContact,
@@ -520,10 +525,14 @@ function ArrowCircle({
   label: string;
   className?: string;
 }) {
+  const chat = isContactHref(href) ? ctaWhatsappLink(quickContact) : undefined;
+  const Anchor = chat ? "a" : Link;
   return (
-    <Link
-      href={href}
+    <Anchor
+      href={chat ?? href}
       data-quick-contact={quickContact}
+      data-contact-cta={chat ? "" : undefined}
+      {...(chat ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       aria-label={label}
       className={cn(
         "grid shrink-0 place-items-center rounded-full border border-white/25 bg-white/[0.04] text-scene transition-colors duration-300 hover:border-brand hover:bg-brand hover:text-black focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none",
@@ -533,7 +542,7 @@ function ArrowCircle({
       <svg aria-hidden viewBox="0 0 24 24" className="size-[45%]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 12h14M13 6l6 6-6 6" />
       </svg>
-    </Link>
+    </Anchor>
   );
 }
 

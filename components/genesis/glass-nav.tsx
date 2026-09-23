@@ -229,7 +229,7 @@ export function GlassNav() {
               <NavMenu key={item.label} item={item} />
             ) : (
               <li key={item.label}>
-                <Link href={item.href} className={NAV_LINK}>
+                <Link href={item.href} {...outbound(item)} className={NAV_LINK}>
                   {item.label}
                 </Link>
               </li>
@@ -305,6 +305,7 @@ export function GlassNav() {
                 <li key={item.label}>
                   <Link
                     href={item.href}
+                    {...outbound(item)}
                     onClick={() => setMenuOpen(false)}
                     className="block rounded-card px-3 py-3 text-small text-ash transition-colors hover:bg-[var(--hover-wash)] hover:text-bone"
                   >
@@ -558,4 +559,19 @@ function NavMenu({ item }: { item: NavItem }) {
       </AnimatePresence>
     </li>
   );
+}
+
+/**
+ * The extra attributes for a nav item that leaves the site — "Contact" is
+ * the WhatsApp chat now (see contactItem). Its own tab, so the visitor's
+ * session on the site is not replaced by WhatsApp Web, and the contact
+ * marker QuickContact reads to name the page in the message.
+ */
+function outbound(item: NavItem) {
+  if (!item.external) return {};
+  return {
+    target: "_blank",
+    rel: "noopener noreferrer",
+    ...(item.contact ? { "data-contact-cta": "" } : {}),
+  };
 }

@@ -58,6 +58,24 @@ export function QuickContact() {
          middle-click and shift-click all mean "open this somewhere else". */
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const target = event.target as Element | null;
+
+      /*
+        A CONTACT CTA THAT IS ALREADY A WHATSAPP LINK — every one now is, in
+        the HTML (see GlassButton). The browser opens it natively; all this
+        does is put the section or page the reader was on into the message,
+        which the server could not know when it rendered the button. No
+        preventDefault and no window.open, so no pop-up blocker can get in
+        the way.
+      */
+      const direct = target?.closest?.("a[data-contact-cta]");
+      if (direct instanceof HTMLAnchorElement) {
+        const name =
+          direct.dataset.quickContact || ctaContextFor(direct, window.location.pathname);
+        const chat = ctaWhatsappLink(name);
+        if (chat) direct.href = chat;
+        return;
+      }
+
       /*
         A NAMED CTA, OR ANY LINK TO THE ENQUIRY FORM. The second half is
         Genesis's "jitne bhi CTA hain, directly WhatsApp pe" — the buttons
