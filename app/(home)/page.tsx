@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { pageMetadata } from "@/lib/seo";
+import { siteConfig } from "@/lib/site-config";
 import { AiContent } from "./components/ai-content";
 import { BrandingDesign } from "./components/branding-design";
 import { CaseStudies } from "./components/case-studies";
@@ -33,6 +34,19 @@ export const metadata: Metadata = pageMetadata({
   */
   description:
     "Genesis Media is a creative company in Mumbai: influencer marketing, content production, AI content and avatars, branding and design, automation, games, apps and events.",
+  /*
+    WHAT A PERSON READS WHEN THE LINK IS FORWARDED — Genesis's own tagline,
+    which is also the line on the share card itself.
+
+    The description above is written for a search result: it names the ten
+    things the business sells, because that is what a query is matched
+    against. In a WhatsApp preview it is given about sixty characters and cut
+    at "influencer marketing,…", so what a forwarded link actually said was
+    the beginning of a list. Genesis: "Empowering brands wala jo tha na pehle
+    woh chahiye." It is theirs, it is one sentence, and it survives the
+    truncation.
+  */
+  shareDescription: siteConfig.tagline,
   path: "/",
 });
 

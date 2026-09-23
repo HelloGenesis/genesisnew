@@ -34,7 +34,51 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   const crawlable = INDEXABLE && host === SITE_HOST;
 
   if (!crawlable) {
-    return { rules: { userAgent: "*", disallow: "/" } };
+    /*
+      SHUT TO SEARCH, OPEN TO LINK PREVIEWS — and that distinction is a bug
+      fix, not a nicety.
+
+      `Disallow: /` for everyone is right for indexers and wrong for the bots
+      that build a share card, because those obey robots.txt too.
+      facebookexternalhit is what WhatsApp sends to read a link's og tags, and
+      on genesismedia.vercel.app it was being told to go away — so a link
+      Genesis forwarded arrived with a title, a grey box and no picture, and
+      no amount of correcting the og:image would have changed it.
+
+      Letting them through costs nothing that the rule above is protecting. A
+      preview bot does not index: it fetches one URL, reads the head, fetches
+      the image and renders a card in one chat. It cannot put a vercel.app
+      copy of the site into anybody's search results, which is the only thing
+      the disallow exists to prevent — and the canonical tag on every page
+      still names the real domain.
+
+      This matters TODAY because the site is being shared from the Vercel
+      host while the domain is still on the old one. It goes on mattering
+      afterwards, for anyone sharing a preview build.
+    */
+    return {
+      rules: [
+        {
+          userAgent: [
+            "facebookexternalhit",
+            "facebookcatalog",
+            "WhatsApp",
+            "Twitterbot",
+            "LinkedInBot",
+            "Slackbot",
+            "Slackbot-LinkExpanding",
+            "Discordbot",
+            "TelegramBot",
+            "SkypeUriPreview",
+            "redditbot",
+            "Iframely",
+            "Embedly",
+          ],
+          allow: "/",
+        },
+        { userAgent: "*", disallow: "/" },
+      ],
+    };
   }
 
   return {

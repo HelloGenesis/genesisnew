@@ -30,6 +30,47 @@ export const SITE_URL = (process.env.SITE_URL || siteConfig.url).replace(
 export const SITE_HOST = new URL(SITE_URL).host;
 
 /**
+ * WHERE THE SHARE CARD IS ACTUALLY FETCHED FROM — which is not always where
+ * the page claims to live, and conflating the two is why a shared link had no
+ * picture in it.
+ *
+ * `og:image` has to be an absolute URL, and it was resolved against
+ * `metadataBase`, which is the CANONICAL origin. That is correct for
+ * `og:url`, the canonical tag and the sitemap: a deployment on
+ * genesismedia.vercel.app is a copy of the site, and the site is
+ * www.genesismedia.co. But an image URL is not a claim about identity, it is
+ * a file to GO AND GET — and www.genesismedia.co is still serving the OLD
+ * site, which has no /og route. So WhatsApp asked the old domain for the card,
+ * got a 404, and drew a preview with no picture. Genesis: "when i send the
+ * link to somebody i want uska metadata fixed."
+ *
+ * So the card is addressed on the host that is really running this build:
+ *
+ *   SITE_URL                        set by hand — someone has confirmed the
+ *                                   canonical host is live, so trust it.
+ *   VERCEL_PROJECT_PRODUCTION_URL   the deployment's stable production alias
+ *                                   (genesismedia.vercel.app), which is what
+ *                                   Genesis is sharing today.
+ *   VERCEL_URL                      the per-deployment host. Last resort: it
+ *                                   changes on every deploy, so a card cached
+ *                                   against it goes stale — still better than
+ *                                   asking a host that 404s.
+ *   siteConfig.url                  local builds, where all of them agree.
+ *
+ * The moment the domain is pointed at Vercel this resolves to the same host
+ * as the canonical and the distinction stops mattering — but it stays,
+ * because the day it matters again is a day nobody is looking at og tags.
+ */
+export const ASSET_ORIGIN = (
+  process.env.SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : siteConfig.url)
+).replace(/\/+$/, "");
+
+/**
  * Whether this BUILD may be indexed.
  *
  * Vercel sets VERCEL_ENV to "production", "preview" or "development". Only
@@ -66,6 +107,19 @@ export type PageSeo = {
   description: string;
   /** The route, e.g. "/careers". Becomes the canonical and og:url. */
   path: string;
+  /**
+   * What a PERSON reads in a chat preview, when that is not what a SEARCH
+   * ENGINE should read.
+   *
+   * The two want opposite things. A meta description is matched against a
+   * query, so naming the ten things Genesis sells is worth more than a sharp
+   * sentence. A WhatsApp card is read by one human in two seconds, and a
+   * comma-separated inventory truncated at "influencer marketing,…" — which
+   * is exactly what Genesis was looking at — says nothing at all.
+   *
+   * Absent, the two are the same string, which is right for most pages.
+   */
+  shareDescription?: string;
   /** Set when the title already carries the brand. The homepage's does. */
   absoluteTitle?: boolean;
   /** og:type. Case studies are articles; everything else is a website. */
@@ -99,16 +153,24 @@ export function pageMetadata(page: PageSeo): Metadata {
       siteName: siteConfig.name,
       locale: "en_IN",
       title: fullTitle,
-      description: page.description,
+      description: page.shareDescription ?? page.description,
       images: [
         {
-          url: ogImagePath(page.path),
+          /*
+            ABSOLUTE, AND ON THE SERVING HOST rather than resolved against
+            metadataBase. See ASSET_ORIGIN — this is the difference between a
+            share card and an empty grey box.
+          */
+          url: new URL(ogImagePath(page.path), `${ASSET_ORIGIN}/`).toString(),
           ...OG_SIZE,
           alt: page.imageAlt ?? fullTitle,
         },
       ],
     },
-    twitter: { card: "summary_large_image" },
+    twitter: {
+      card: "summary_large_image",
+      description: page.shareDescription ?? page.description,
+    },
     ...(INDEXABLE ? {} : { robots: { index: false, follow: false } }),
   };
 }
