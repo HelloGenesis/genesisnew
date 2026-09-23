@@ -110,8 +110,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           render-blocking script; this one earns it because the alternative is
           visible.
 
-          Absent from storage means "follow the OS", so nothing is stamped and
-          the prefers-color-scheme block in globals.css resolves it.
+          DARK IS THE DEFAULT, NOT THE OS. Absent from storage used to mean
+          "follow the OS" — nothing was stamped and the prefers-color-scheme
+          blocks in globals.css resolved it — so a visitor whose laptop is set
+          to light mode met Genesis in the editorial theme on their very first
+          visit, having never asked for it. Genesis: "keep default as dark
+          mode — koi pehli baar khulega toh dark mode hi khule."
+
+          It is the right default for this site rather than a preference. The
+          orb, the division gradients and the whole first section are drawn in
+          light inks that only hold on a dark ground; the light theme is a
+          deliberate second reading of the site, not the one it is designed
+          around. So the first impression is the one Genesis designed.
+
+          THE TOGGLE IS UNAFFECTED. It writes an explicit choice to storage
+          and that choice still wins in both directions and still persists —
+          this only changes what happens when there is nothing stored.
         */}
         {/*
           THROUGH next/script, NOT A BARE <script>, and the reason is a real
@@ -129,7 +143,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           scripts to live in the root layout, which is where this already is.
         */}
         <Script id="genesis-theme-init" strategy="beforeInteractive">
-          {`(function(){try{var t=localStorage.getItem("genesis-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`}
+          {`(function(){try{var t=localStorage.getItem("genesis-theme");document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark")}catch(e){document.documentElement.setAttribute("data-theme","dark")}})()`}
         </Script>
       </head>
       <body

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { RailArrow } from "./work-grid";
 import { useInViewPlayback } from "./use-in-view-playback";
 import { mediaUrl } from "@/lib/media-url";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
@@ -95,6 +96,14 @@ const SPEED = 40;
  */
 const STEP = 1.18;
 
+/**
+ * How fast an arrow press is carried out, as a rate constant rather than a
+ * duration: each frame the rail covers `GLIDE × delta` of whatever distance
+ * is left, so the move starts quickly and settles rather than stopping dead.
+ * 6 lands a card-and-a-bit in about half a second.
+ */
+const GLIDE = 6;
+
 export type WarpItem = {
   /** Stable key, and the clip this card plays. */
   id: string;
@@ -115,6 +124,14 @@ export function WarpRail({
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
+  /*
+    THE ARROWS' WAY IN. The whole animation lives inside one effect — the
+    position, the geometry and the frame loop are all closure variables, and
+    deliberately so: they change sixty times a second and none of them is
+    state React should re-render for. A ref holding the effect's own handler
+    is how a button outside reaches in without any of that becoming state.
+  */
+  const nudge = useRef<((direction: 1 | -1) => void) | null>(null);
 
   useEffect(() => {
     const box = viewport.current;
@@ -149,6 +166,14 @@ export function WarpRail({
     let offset = 0;
     let last = 0;
     let hovering = false;
+    /*
+      HOW FAR THE ARROWS STILL HAVE TO CARRY THE RAIL, in pixels. The loop
+      owns `offset` and nothing outside this effect can reach it, so a press
+      does not move the rail — it adds to the distance the loop is on its way
+      through. That keeps one writer for the position, which is what stops a
+      press from fighting the drift for a frame and jumping.
+    */
+    let glide = 0;
 
     const measure = () => {
       /*
@@ -191,7 +216,7 @@ export function WarpRail({
           side of the middle at every moment, including the first frame; the
           run cycles through that band rather than marching along it.
         */
-        let rel = ((i * stride - offset) % total + total) % total;
+        let rel = (((i * stride - offset) % total) + total) % total;
         if (rel > total / 2) rel -= total;
 
         /*
@@ -217,7 +242,8 @@ export function WarpRail({
         const d = Math.max(-1.4, Math.min(1.4, rel / reach));
         const away = Math.abs(d);
         const z = -away * DEPTH * width;
-        cards[i].style.transform = `translate3d(${rel.toFixed(1)}px,0,${z.toFixed(1)}px) rotateY(${(-d * MAX_TURN).toFixed(2)}deg)`;
+        cards[i].style.transform =
+          `translate3d(${rel.toFixed(1)}px,0,${z.toFixed(1)}px) rotateY(${(-d * MAX_TURN).toFixed(2)}deg)`;
 
         /*
           They fall into the dark at the ends rather than being cut by the
@@ -226,7 +252,10 @@ export function WarpRail({
         */
         const taper =
           away > 1.3 ? 0 : away > 0.82 ? 1 - (away - 0.82) / 0.48 : 1;
-        cards[i].style.opacity = (taper * (0.72 + 0.28 * (1 - away / 1.4))).toFixed(3);
+        cards[i].style.opacity = (
+          taper *
+          (0.72 + 0.28 * (1 - away / 1.4))
+        ).toFixed(3);
         /*
           Only the cards square enough to read are targets; a steeply leaning
           panel at the edge is not something anyone is trying to click.
@@ -242,10 +271,44 @@ export function WarpRail({
     const tick = (now: number) => {
       const delta = last === 0 ? 0 : Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (!hovering && !still.matches) offset += SPEED * delta;
-      if (half > 0 && offset >= half) offset -= half;
+
+      if (glide !== 0) {
+        /*
+          A PRESS SUSPENDS THE DRIFT until it has been served. Left alone the
+          two would add up going forward and cancel going back, so the same
+          press would cover different ground depending on which arrow it was.
+        */
+        const move = glide * Math.min(1, GLIDE * delta);
+        offset += move;
+        glide -= move;
+        if (Math.abs(glide) < 0.5) glide = 0;
+      } else if (!hovering && !still.matches) {
+        offset += SPEED * delta;
+      }
+
+      /*
+        WRAPPED IN BOTH DIRECTIONS, which the drift alone never needed. It
+        only ever counted up, so one subtraction was enough; the left arrow
+        can now take `offset` negative, and without the second branch it would
+        stay there and the row would sit off its band.
+      */
+      if (half > 0) offset = ((offset % half) + half) % half;
+
       paint();
       frame = requestAnimationFrame(tick);
+    };
+
+    /*
+      What the arrows call. A press is worth more than one card — a single
+      stride barely changes what is in the middle of the frame — so it moves
+      three, which swaps out most of what the reader can read.
+    */
+    nudge.current = (direction: 1 | -1) => {
+      if (stride === 0) return;
+      glide += direction * stride * 3;
+      /* A press on a rail that has scrolled out of view should still be
+         served when it comes back, so this does not touch `visible`. */
+      start();
     };
 
     measure();
@@ -296,6 +359,7 @@ export function WarpRail({
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
+      nudge.current = null;
       stop();
       observer.disconnect();
       watcher.disconnect();
@@ -311,11 +375,19 @@ export function WarpRail({
   const doubled = [...items, ...items];
 
   return (
-    <div
-      ref={viewport}
-      className={cn(
-        "relative w-full overflow-hidden",
-        /*
+    /*
+      A WRAPPER SO THE ARROWS ARE NOT CLIPPED. The rail itself is
+      `overflow-hidden` — it has to be, the corridor runs past both edges —
+      so a control positioned on it would be cut in half. This box holds
+      both, and the arrows sit over the gutters where the mask has already
+      faded the work to nothing.
+    */
+    <div className={cn("relative w-full", className)}>
+      <div
+        ref={viewport}
+        className={cn(
+          "relative w-full overflow-hidden",
+          /*
           NO COLOUR BEHIND THE CARDS ANY MORE.
 
           There was a brand wash here and a beam down the axis, and Genesis's
@@ -331,26 +403,50 @@ export function WarpRail({
           shapes rather than as light. The section's Atmosphere already lights
           this block, and it lights the whole of it rather than a patch.
         */
-        /* And the ends dissolve rather than cut, as every rail here does. */
-        "[mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]",
-        className,
-      )}
-      style={{ height: "var(--warp-h)" }}
-    >
-      <div
-        ref={track}
-        className="absolute inset-0 [transform-style:preserve-3d]"
-        aria-label="Selected AI work"
+          /* And the ends dissolve rather than cut, as every rail here does. */
+          "[mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]",
+        )}
+        style={{ height: "var(--warp-h)" }}
       >
-        {doubled.map((item, index) => (
-          <WarpCard
-            key={`${item.id}-${index}`}
-            item={item}
-            /* The duplicate copy is decoration; announcing it twice is noise. */
-            hidden={index >= items.length}
-          />
-        ))}
+        <div
+          ref={track}
+          className="absolute inset-0 [transform-style:preserve-3d]"
+          aria-label="Selected AI work"
+        >
+          {doubled.map((item, index) => (
+            <WarpCard
+              key={`${item.id}-${index}`}
+              item={item}
+              /* The duplicate copy is decoration; announcing it twice is noise. */
+              hidden={index >= items.length}
+            />
+          ))}
+        </div>
       </div>
+
+      {/*
+      THE SAME ARROWS THE PORTFOLIO RAIL HAS, in the same place and at the
+      same size, because they do the same job — Genesis asked for them here
+      ("idhar button daaldo left right ka"). The rail drifts on its own, which
+      shows there is more work than fits; the arrows are how a reader who
+      wants to see a particular piece gets to it without waiting.
+
+      From `sm` up, like the portfolio's. On a phone the cards are a larger
+      share of the screen and a 40px control parked over the artwork covers a
+      real fraction of it, while the drift still shows everything.
+    */}
+      <RailArrow
+        direction="left"
+        label="Previous AI work"
+        onClick={() => nudge.current?.(-1)}
+        className="left-1 sm:left-2"
+      />
+      <RailArrow
+        direction="right"
+        label="Next AI work"
+        onClick={() => nudge.current?.(1)}
+        className="right-1 sm:right-2"
+      />
     </div>
   );
 }
@@ -470,7 +566,8 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
       tabIndex={hidden ? -1 : undefined}
       onClick={(event) => {
         /* Modified clicks belong to the browser: cmd-click still opens a tab. */
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+          return;
         if (event.button !== 0) return;
         event.preventDefault();
         item.onOpen?.();
