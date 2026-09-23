@@ -106,21 +106,22 @@ export function WorkDetail({ item }: { item: WorkItem }) {
               preload="metadata"
               {...VIDEO_GUARD}
               className="absolute inset-0 size-full object-contain"
-            >
-              {/*
-                THE FILM, THEN THE PREVIEW, AS TWO SOURCES. This was a single
-                `src` that was the full film whenever films are switched on —
-                and when a film could not be served (measured: /api/media/
-                films/16.mp4 answered 404) the player sat there empty, because
-                one src has nothing to fall back to. With <source> children the
-                browser moves to the next one on its own when the first fails,
-                so the worst case is the preview cut, never a blank frame.
-              */}
-              {item.reel?.[0] !== undefined && filmUrl(item.reel[0]) && (
-                <source src={filmUrl(item.reel[0])} type="video/mp4" />
-              )}
-              {item.clip && <source src={item.clip} type="video/mp4" />}
-            </video>
+              /*
+                THE FILM, WITH THE PREVIEW HELD BACK. This listed the film and
+                then the preview as two <source>s, so the browser played the
+                four-second cut whenever the film stumbled — even once. The
+                preview now waits in data-preview and is used only if the
+                film fails twice (recoverFilm): a film that genuinely is not
+                there (measured once: /api/media/films/16.mp4 answered 404)
+                still never leaves a blank frame.
+              */
+              src={
+                (item.reel?.[0] !== undefined ? filmUrl(item.reel[0]) : undefined) ?? item.clip
+              }
+              data-preview={
+                item.reel?.[0] !== undefined && filmUrl(item.reel[0]) ? item.clip : undefined
+              }
+            />
           ) : item.art ? (
             <Image
               src={item.art}
@@ -172,11 +173,11 @@ export function WorkDetail({ item }: { item: WorkItem }) {
                   preload="none"
                   {...VIDEO_GUARD}
                   className="aspect-[9/16] w-full rounded-card border border-[var(--glass-border)] bg-ink object-cover"
-                >
-                  {/* Same fallback as the lead: the film if it serves, else the preview. */}
-                  {filmUrl(n) && <source src={filmUrl(n)} type="video/mp4" />}
-                  <source src={mediaUrl(reelClip(n))} type="video/mp4" />
-                </video>
+                  /* The film, with the preview held back for a film that
+                     fails twice — see the lead above. */
+                  src={filmUrl(n) ?? mediaUrl(reelClip(n))}
+                  data-preview={filmUrl(n) ? mediaUrl(reelClip(n)) : undefined}
+                />
                 {/*
                   Only where the file told us what it is. The first thirty-two
                   clips have no name of their own, and a caption reading

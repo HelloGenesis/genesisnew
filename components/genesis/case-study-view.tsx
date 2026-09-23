@@ -184,6 +184,15 @@ export function CaseStudyView({
           <div className={cn("flex justify-center", !landscape && "md:sticky md:top-0")}>
             <video
               key={shownFilm ?? preview}
+              /*
+                THE FILM ALONE. The preview used to follow it as a second
+                <source>, so a film that failed to load played four seconds
+                instead. It is the source only when there is no film (Drive
+                switched off); otherwise it waits in data-preview for a film
+                that fails twice. See recoverFilm.
+              */
+              src={shownFilm ?? preview}
+              data-preview={shownFilm ? preview : undefined}
               // Optimised, not lazy: this is the page's main picture.
               poster={posterSrc(shownPoster, 828)}
               controls
@@ -201,10 +210,7 @@ export function CaseStudyView({
                 "w-auto max-w-full rounded-2xl border border-[var(--glass-border)] bg-ink object-contain",
                 landscape ? "h-[min(62vh,34rem)]" : "h-[min(70vh,35.5rem)]",
               )}
-            >
-              {shownFilm && <source src={shownFilm} type="video/mp4" />}
-              {preview && !current && <source src={preview} type="video/mp4" />}
-            </video>
+            />
           </div>
         )}
 

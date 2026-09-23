@@ -186,10 +186,11 @@ export function AvatarDetail({
                     {...VIDEO_GUARD}
                     style={{ aspectRatio: clipRatio(clip) }}
                     className="w-full rounded-card border border-[var(--glass-border)] bg-ink object-contain"
-                  >
-                    {filmUrl(clip) && <source src={filmUrl(clip)} type="video/mp4" />}
-                    <source src={mediaUrl(reelClip(clip))} type="video/mp4" />
-                  </video>
+                    /* The film, with the preview held back for a film that
+                       fails twice (recoverFilm). */
+                    src={filmUrl(clip) ?? mediaUrl(reelClip(clip))}
+                    data-preview={filmUrl(clip) ? mediaUrl(reelClip(clip)) : undefined}
+                  />
                 </li>
               ))}
 

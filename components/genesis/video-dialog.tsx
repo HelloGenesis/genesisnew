@@ -53,6 +53,8 @@ export function VideoDialog({
             // the previous film's frame up while the next one loads.
             key={String(video.id)}
             src={filmUrl(video.id) ?? mediaUrl(reelClip(video.id))}
+            // Held back for a film that fails twice — see recoverFilm.
+            data-preview={filmUrl(video.id) ? mediaUrl(reelClip(video.id)) : undefined}
             poster={posterSrc(mediaUrl(reelPoster(video.id)), 828)}
             controls
             autoPlay

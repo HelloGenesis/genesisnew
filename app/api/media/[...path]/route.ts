@@ -1,5 +1,7 @@
 import { Readable } from "node:stream";
 
+import { after } from "next/server";
+
 import {
   resolveDriveMedia,
   isSafeMediaPath,
@@ -55,6 +57,14 @@ import { getDriveClient } from "@/lib/google-drive";
  * Node runtime, not edge: googleapis signs its JWT with node:crypto.
  */
 export const runtime = "nodejs";
+
+/*
+  A MINUTE, NOT THE PLATFORM DEFAULT. A cold block is 8MiB read out of Drive,
+  and on a big master that can outlast a short default — at which point the
+  response is cut, the <video> errors, and the window used to fall back to
+  the four-second preview: a film that "only plays 3 seconds".
+*/
+export const maxDuration = 60;
 
 /** A year, which is what /public gets and what an addressed asset should get. */
 const CACHE = "public, max-age=31536000, s-maxage=31536000, immutable";
@@ -199,7 +209,41 @@ export async function GET(
       return new Response(await readDrive(file.id), { status: 200, headers });
     }
 
-    const block = new URL(request.url).searchParams.get("block");
+    const params = new URL(request.url).searchParams;
+
+    /*
+      WARM, AND ANSWER AT ONCE. A gallery tile calls this when it starts
+      playing, so that by the time anyone opens its window the film's first
+      and last blocks are already in this region's CDN cache. The last one
+      matters as much as the first: several masters carry their index (moov)
+      at the END, and a browser cannot show frame one until it has read it.
+      Measured before this, a cold window took up to 12s to start; from the
+      cache it is about one.
+
+      The fetches run after the response (next/server `after`), each read to
+      the end — the CDN only stores a response it has seen completely — and
+      the tiny 204 is itself cached, so a region warms each film once.
+    */
+    if (params.get("warm") !== null) {
+      const last = Math.max(0, Math.ceil(size / BLOCK) - 1);
+      after(async () => {
+        await Promise.all(
+          [...new Set([0, last])].map(async (index) => {
+            const body = await readBlock(request, file.id, index, size);
+            const reader = body.getReader();
+            while (!(await reader.read()).done) {
+              // Drained, so the CDN sees the whole block.
+            }
+          }),
+        );
+      });
+      return new Response(null, {
+        status: 204,
+        headers: { "Cache-Control": "public, max-age=3600, s-maxage=3600" },
+      });
+    }
+
+    const block = params.get("block");
     if (block !== null) {
       // A block, for the CDN. Always a 200 and never a Range, so it is
       // cacheable; out-of-range indices are refused rather than clamped.

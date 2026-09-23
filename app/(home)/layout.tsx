@@ -1,3 +1,4 @@
+import { FilmRecovery } from "@/components/genesis/film-recovery";
 import { GlassNav } from "@/components/genesis/glass-nav";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { PageAtmosphere } from "@/components/genesis/page-atmosphere";
@@ -48,6 +49,8 @@ export default function HomeLayout({
       </PageAtmosphere>
 
       <QuickContact />
+      {/* Film windows retry a film before settling for its preview. */}
+      <FilmRecovery />
       <WhatsappButton />
     </>
   );

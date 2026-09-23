@@ -39,3 +39,35 @@ export const filmsFromDrive = FROM_DRIVE;
 export function filmUrl(n: ReelId): string | undefined {
   return FROM_DRIVE ? `/api/media/films/${n}.mp4` : undefined;
 }
+
+/**
+ * A FILM WINDOW RETRIES ITS FILM BEFORE IT SETTLES FOR THE PREVIEW.
+ *
+ * The windows used to list the film and then the four-second preview as a
+ * second <source>, so any hiccup loading the film — a cold Drive read timing
+ * out on a phone — quietly became a four-second clip. Genesis: "click karu
+ * aur window me open ho, tab toh woh fully play honi chahiye". A window now
+ * carries the film alone as its `src`, and the preview only as
+ * `data-preview`. On an error the film is reloaded once from where it was;
+ * only a second failure (a film that genuinely is not there) shows the
+ * preview, because a blank window is worse than a short one.
+ *
+ * Called by FilmRecovery, one capture listener for the whole page — the
+ * windows include server components, which cannot carry an onError.
+ */
+export function recoverFilm(video: HTMLVideoElement) {
+  if (!/\/api\/media\/films\//.test(video.currentSrc || video.src)) return;
+  if (!video.dataset.retried) {
+    video.dataset.retried = "1";
+    const at = video.currentTime;
+    video.load();
+    if (at > 0) video.currentTime = at;
+    void video.play().catch(() => {});
+    return;
+  }
+  const preview = video.dataset.preview;
+  if (preview) {
+    video.src = preview;
+    void video.play().catch(() => {});
+  }
+}
