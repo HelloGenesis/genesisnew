@@ -33,16 +33,22 @@ export function CaseStudyBody({
         </div>
       )}
 
-      <dl className="grid gap-3 text-small sm:grid-cols-2">
-        <div>
-          <dt className="micro-label">Industry</dt>
-          <dd className="mt-1 text-ash">{copy.industry}</dd>
-        </div>
-        <div>
-          <dt className="micro-label">What we did</dt>
-          <dd className="mt-1 text-ash">{copy.service}</dd>
-        </div>
-      </dl>
+      {/*
+        NO "INDUSTRY / WHAT WE DID" ROW. Genesis: "remove metadeta ajeeb sa."
+
+        It was a two-cell spec sheet dropped between the result and the first
+        paragraph of the story — two tracked-out eyebrow labels over two
+        fragments, in the middle of a piece of writing. Both facts were
+        already on the page anyway: the discipline pills above the headline
+        say what the work was, and the subheadline names the brand and the
+        campaign. It read as form fields in an essay.
+
+        `industry` and `service` STAY IN THE DATA. They are what the page's
+        SEO description and its CreativeWork schema are built from — see
+        descriptionFor in lib/case-study-pages — so removing the fields would
+        take the search result with them. This removes the printing of them,
+        which is the part that was odd to look at.
+      */}
 
       <Block label="The brief" paragraphs={copy.brief} />
       <Block label="Our approach" paragraphs={approach} />
