@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "app/api/media/[...path]/route.ts": {
+      "regions": ["bom1"]
+    }
+  }
+}

@@ -66,6 +66,15 @@ export const runtime = "nodejs";
 */
 export const maxDuration = 60;
 
+/*
+  RUN IN MUMBAI (bom1), set in vercel.json — this route only. Functions
+  default to Washington (iad1); the response header read `bom1::iad1`, so
+  every video byte for a visitor in India went Drive → Washington → Mumbai →
+  phone, and the blocks this route caches were cached in Washington. A 2MB
+  piece took 1.2-1.7s, barely faster than a master plays. Everything else
+  stays in iad1, next to the database in us-east-2.
+*/
+
 /** A year, which is what /public gets and what an addressed asset should get. */
 const CACHE = "public, max-age=31536000, s-maxage=31536000, immutable";
 
