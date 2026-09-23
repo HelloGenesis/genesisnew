@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useInViewPlayback } from "./use-in-view-playback";
 import { mediaUrl } from "@/lib/media-url";
@@ -31,6 +31,30 @@ import { cn } from "@/lib/utils";
  * reader has not seen. Stepping by one slides a piece from one side to the
  * other and asks them to notice which of the two is new, which is more work
  * than looking at a reel deserves.
+ *
+ * AND IT ADVANCES ON ITS OWN. Genesis asked for an auto-scroller here. Two
+ * reels out of twenty-eight is a small window onto the work, and a reader who
+ * does not press the arrows sees the same two for as long as they are in the
+ * section — which is most readers, because an arrow under a video reads as a
+ * control for the video.
+ *
+ * THE RULES IT FOLLOWS, all of them so it cannot become the thing that takes
+ * the page over:
+ *
+ *   ONLY WHILE IT IS ON SCREEN. Off screen the clips are paused by
+ *     useInViewPlayback anyway, so advancing there would burn through the
+ *     run and leave a reader arriving at the tail.
+ *   NOT WHILE ANYONE IS LOOKING AT IT. Hovering or tabbing into the block
+ *     holds the pair still. Swapping a reel out from under a pointer that
+ *     has stopped on it is the classic carousel failure.
+ *   NEVER AFTER A PRESS. Once the reader works the arrows they have taken
+ *     over, and a timer that keeps moving afterwards is fighting them. It
+ *     stops for good rather than resuming after a pause.
+ *   NOT AT ALL UNDER REDUCED MOTION, which is what that setting is for.
+ *
+ * SEVEN SECONDS, which is about two loops of a four-second cut — long enough
+ * to watch a reel rather than catch it, short enough that a reader who stays
+ * for the copy beside it sees several.
  */
 
 export type Reel = {
@@ -45,6 +69,9 @@ export type Reel = {
 };
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+/** How long a pair holds before the next one arrives. See the note above. */
+const AUTO_MS = 7_000;
 
 export function ReelPair({
   reels,
@@ -62,12 +89,57 @@ export function ReelPair({
    * the beginning for its second slot rather than rendering a hole.
    */
   const [at, setAt] = useState(0);
+  /* Set by the first arrow press, and never unset. See the note above. */
+  const [taken, setTaken] = useState(false);
+  /*
+    TWO REASONS TO HOLD, TRACKED SEPARATELY, and that is a bug fix rather than
+    bookkeeping. Written as one `running` flag, a pointer leaving the block
+    set it back to true — including when the reader had hovered and then
+    scrolled the block off screen, because the observer only fires on a
+    crossing and there was none to correct it. The timer then ran on a section
+    nobody was looking at.
+  */
+  const [visible, setVisible] = useState(false);
+  const [held, setHeld] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  const pairs = Math.max(1, Math.ceil(reels.length / 2));
+
+  /*
+    ON SCREEN OR NOT. `rootMargin` is negative on purpose: the block counts as
+    visible once it is properly in the frame rather than the moment one pixel
+    of it crosses the edge, so the first advance does not happen while the
+    reader is still scrolling it into view.
+  */
+  useEffect(() => {
+    const node = box.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { rootMargin: "-15% 0px -15% 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  /*
+    THE TIMER. Keyed on `at` through the dependency list, so every advance
+    restarts the clock rather than queueing — and a hover that pauses mid-cycle
+    gives a full interval when it resumes rather than an abrupt swap.
+  */
+  useEffect(() => {
+    if (still || taken || !visible || held || pairs < 2) return;
+    const id = window.setTimeout(() => {
+      setAt((current) => ((Math.floor(current / 2) + 1) % pairs) * 2);
+    }, AUTO_MS);
+    return () => window.clearTimeout(id);
+  }, [still, taken, visible, held, pairs, at]);
 
   if (reels.length === 0) return null;
 
-  const pairs = Math.max(1, Math.ceil(reels.length / 2));
   const page = Math.floor(at / 2);
   const step = (direction: 1 | -1) => {
+    setTaken(true);
     /* Wraps both ways: the arrows never dead-end. */
     setAt((current) => {
       const next = (Math.floor(current / 2) + direction + pairs) % pairs;
@@ -78,7 +150,20 @@ export function ReelPair({
   const showing = [reels[at % reels.length], reels[(at + 1) % reels.length]];
 
   return (
-    <div className={cn("w-full", className)}>
+    <div
+      ref={box}
+      className={cn("w-full", className)}
+      /*
+        HOLD WHILE ANYONE IS ON IT. `focus`/`blur` rather than the React
+        synthetic focus events' non-bubbling siblings — these are the
+        delegated ones, so tabbing to either reel or to an arrow inside the
+        block stops the clock.
+      */
+      onPointerEnter={() => setHeld(true)}
+      onPointerLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)}
+      onBlur={() => setHeld(false)}
+    >
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {showing.map((reel, slot) => (
           /*
@@ -176,8 +261,31 @@ function ReelBlock({ reel }: { reel: Reel }) {
   const box =
     "relative block aspect-[9/16] w-full overflow-hidden rounded-2xl border border-white/10 bg-ink shadow-[0_24px_50px_-22px_rgb(0_0_0/0.85)]";
 
-  if (!reel.href || !reel.onOpen) {
+  if (!reel.onOpen) {
     return <div className={box}>{inner}</div>;
+  }
+
+  const lift =
+    "outline-none transition-[border-color,transform] duration-300 ease-out hover:border-brand/60 motion-safe:hover:-translate-y-1 focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand";
+
+  /*
+    NO STUDY, SO NO URL — and therefore a button rather than an anchor. The
+    reel opens the portfolio's window on the piece it belongs to, and a piece
+    has no page of its own. See the same note in WarpRail for why an
+    honest-looking `/#library` href is not an option: SmoothScroll takes hash
+    clicks on capture, before React sees them.
+  */
+  if (!reel.href) {
+    return (
+      <button
+        type="button"
+        aria-label={`Open ${reel.label}`}
+        onClick={() => reel.onOpen?.()}
+        className={cn(box, lift)}
+      >
+        {inner}
+      </button>
+    );
   }
 
   return (
@@ -195,12 +303,7 @@ function ReelBlock({ reel }: { reel: Reel }) {
         event.preventDefault();
         reel.onOpen?.();
       }}
-      className={cn(
-        box,
-        "outline-none transition-[border-color,transform] duration-300 ease-out",
-        "hover:border-brand/60 motion-safe:hover:-translate-y-1",
-        "focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand",
-      )}
+      className={cn(box, lift)}
     >
       {inner}
     </a>

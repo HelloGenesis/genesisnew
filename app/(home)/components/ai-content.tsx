@@ -11,13 +11,14 @@ import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { pagerFor } from "@/components/genesis/overlay";
 import { WarpRail, type WarpItem } from "@/components/genesis/warp-rail";
+import { WorkDialog } from "@/components/genesis/work-dialog";
 import type { CaseStudy } from "@/lib/case-studies";
 import {
   caseStudyForClip,
   caseStudyPathForClip,
   uniqueStudies,
 } from "@/lib/case-study-pages";
-import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
+import { expandToClips, findWork, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
 import { siteConfig, whatsappLink } from "@/lib/site-config";
@@ -58,7 +59,11 @@ const MOBILE_CTA =
  * otherwise be rebuilt on every render of a client component that re-renders
  * whenever the dialog opens.
  */
-type AiCard = Omit<WarpItem, "onOpen"> & { study?: CaseStudy };
+type AiCard = Omit<WarpItem, "onOpen"> & {
+  study?: CaseStudy;
+  /** The catalogue piece this clip came out of — the fallback destination. */
+  piece: string;
+};
 
 const AI_WORK: AiCard[] = expandToClips(
   work.filter((item) => item.vertical === "AI Lab"),
@@ -73,11 +78,21 @@ const AI_WORK: AiCard[] = expandToClips(
       label: item.client,
       href: caseStudyPathForClip(clip),
       study: caseStudyForClip(clip),
+      piece: item.slug,
     };
   });
 
 /** The distinct studies the rail covers, for the window's pager. */
 const AI_STUDIES = uniqueStudies(AI_WORK.map((card) => card.study));
+
+/*
+  THE PIECES BEHIND THE CARDS THAT HAVE NO STUDY — see the note on the rail
+  below. Deduped and in rail order, so the work window's arrows walk them the
+  way the corridor is arranged.
+*/
+const AI_PIECES = [...new Set(AI_WORK.filter((card) => !card.study).map((card) => card.piece))]
+  .map((slug) => findWork(slug))
+  .filter((piece): piece is NonNullable<typeof piece> => piece !== undefined);
 
 export function AiContent() {
   /*
@@ -86,6 +101,11 @@ export function AiContent() {
     the reader already is, and this rail is the third way into one.
   */
   const [study, setStudy] = useState<CaseStudy | null>(null);
+  /*
+    AND WHICH PIECE OF WORK, for a card with no study behind it. See the note
+    on the rail below: every card opens something.
+  */
+  const [piece, setPiece] = useState<string | null>(null);
   /*
     Undefined when there is no number in site-config, exactly as the floating
     button handles it. The button falls back to the enquiry form rather than
@@ -209,10 +229,37 @@ export function AiContent() {
             } as CSSProperties
           }
         >
+          {/*
+            EVERY CARD OPENS SOMETHING, which is the fix Genesis reported
+            twice — "these videos are still not interactive".
+
+            Only nine of these twenty-three clips have a written case study.
+            The other fourteen are the ten Genesis Estate property films, the
+            two Activ Yuva explainers, the SiNet film and Shivam's avatar
+            cuts, and none of them has a write-up anywhere on the site. The
+            rail was rendering those as plain footage — correct, in that a
+            link to a study that does not exist is worse than no link, and
+            useless, in that it is the front of the rail and the first five
+            cards a reader sees are all in that group.
+
+            SO THE FALLBACK IS THE WORK ITSELF. A card with no study opens the
+            portfolio's own window on the piece it came from: the film at full
+            size, the rest of that engagement's cuts, and the route on to the
+            case study when one is eventually written. The same window the
+            portfolio grid opens, so it is a pattern the reader has already
+            met rather than a second one invented here.
+
+            NOTHING IS CLAIMED THAT IS NOT TRUE. The work window prints only
+            the fields the catalogue holds and omits the rest — no invented
+            brief, no invented result — which is what makes this honest where
+            pointing the card at somebody else's study would not be.
+          */}
           <WarpRail
             items={AI_WORK.map((card) => ({
               ...card,
-              onOpen: card.study ? () => setStudy(card.study ?? null) : undefined,
+              onOpen: card.study
+                ? () => setStudy(card.study ?? null)
+                : () => setPiece(card.piece),
             }))}
           />
         </div>
@@ -454,6 +501,22 @@ export function AiContent() {
           AI_STUDIES.findIndex((entry) => entry.slug === study?.slug),
           (entry) => setStudy(entry),
           (entry) => entry.client,
+        )}
+      />
+
+      {/*
+        THE WORK ITSELF, for the cards with no study. Same window the
+        portfolio grid opens; its arrows walk the rail's other studyless
+        pieces in rail order.
+      */}
+      <WorkDialog
+        item={piece ? (findWork(piece) ?? null) : null}
+        onClose={() => setPiece(null)}
+        pager={pagerFor(
+          AI_PIECES,
+          AI_PIECES.findIndex((entry) => entry.slug === piece),
+          (entry) => setPiece(entry.slug),
+          (entry) => `${entry.client}, ${entry.title}`,
         )}
       />
     </>

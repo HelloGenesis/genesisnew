@@ -1266,7 +1266,19 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [],
     "takeaway": "Premium positioning becomes more convincing when it is consistent at every touchpoint. TripGatee's brand work connects its story with the details people actually see.",
     "slug": "tripgatee-brand-identity",
-    "keyword": "luxury travel brand identity case study"
+    "keyword": "luxury travel brand identity case study",
+    /*
+      THE CLIENT'S OWN MARK, which was on disk the whole time —
+      public/clients holds thirty files and the logo wall lists fifteen of
+      them, so this one was never on screen anywhere. The card was falling
+      back to the brand name set in type, and Genesis asked for proper logos.
+
+      It is dark ink on transparency, drawn for white paper. Every surface
+      that shows a design study's artwork puts it on a white plate and
+      contains it — see CardFace and StudyCard — which is both what this file
+      needs to be legible and what a logo wants anyway.
+    */
+    "art": "/clients/tripgate.png"
   }
 ];
 

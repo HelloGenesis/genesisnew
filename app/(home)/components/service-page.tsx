@@ -224,7 +224,24 @@ export function StudyCard({ study }: { study: CaseStudyPage }) {
           again, which is what the console was reporting; the card falls back
           to the typographic treatment the portfolio already uses.
         */}
-        {study.poster ? (
+        {study.copy.art ? (
+          /*
+            A DESIGN STUDY'S ARTWORK IS A LOGO, so it is contained on a white
+            plate rather than cropped to fill a 4:5 card — the same treatment
+            the index tile and the study's own page give it. Both files are
+            ink drawn for paper and neither survives `object-cover`.
+          */
+          <div className="absolute inset-0 grid place-items-center bg-white p-5">
+            <Image
+              src={study.copy.art}
+              alt={`${study.copy.brand}, ${study.copy.campaign}`}
+              width={480}
+              height={480}
+              sizes="(min-width: 1024px) 22rem, (min-width: 640px) 33vw, 50vw"
+              className="max-h-full w-auto max-w-full object-contain"
+            />
+          </div>
+        ) : study.poster ? (
           <Image
             src={study.poster}
             alt={`${study.copy.brand}, ${study.copy.campaign}`}

@@ -410,17 +410,19 @@ export const navItems: NavItem[] = [
       const division = services.items.find(
         (item) => sectionForDivision[item.title] === section,
       );
-      const listed = [
-        ...(division?.caption.split("·").map((part) => part.trim()) ?? []),
-        ...(division?.services ?? []),
-      ];
-      const seen = new Set<string>();
-      const items = listed.filter((name) => {
-        const key = name.toLowerCase();
-        if (!name || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+      /*
+        THE DIVISION'S OWN MENU LIST, VERBATIM.
+
+        This used to merge the caption with the credentials deck's services
+        and dedupe the result, which produced columns of different lengths in
+        two different registers — "UGC" directly above "UGC & Regional
+        Campaigns" under Influence, "Strategy" above "Strategy, Scripting &
+        Production" under Studios. Genesis sent the panel they want, five
+        lines per column, and it is written where the rest of the division's
+        copy lives (lib/home-content). Nothing is derived any more, so
+        nothing can drift out of the shape they drew.
+      */
+      const items = [...(division?.menu ?? [])];
       return {
         label,
         href,

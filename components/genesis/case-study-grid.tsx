@@ -184,6 +184,8 @@ function CardFace({
   videoRef: React.RefObject<HTMLVideoElement | null>;
 }) {
   const landscape = card.ratio > 1;
+  /* A design study's own artwork — see the note below. */
+  const art = card.copy?.art;
   return (
     <>
       <div
@@ -202,11 +204,34 @@ function CardFace({
           "group-focus-visible:ring-2 group-focus-visible:ring-brand",
         )}
         style={
-          landscape || !card.poster
+          landscape || !card.poster || art
             ? undefined
             : { backgroundImage: `url(${card.poster})`, backgroundSize: "cover" }
         }
       >
+        {/*
+          ARTWORK IS CONTAINED ON WHITE, NOT CROPPED TO A REEL.
+
+          A design study's picture is a LOGO — the Activ Health mark, the
+          Tripgate wordmark — and `background-size: cover` in a 9:16 tile
+          took a tall slice out of the middle of one and threw the rest away,
+          which on the boomerang meant a blown-up corner of it. Genesis: "use
+          proper logos here."
+
+          The plate is white because both files are ink drawn for paper: one
+          has the white ground baked in and the other is dark on
+          transparency, so on the near-black card it would not be there at
+          all. This is also what the study's own page does with the same
+          artwork, so the tile and the page agree.
+        */}
+        {art && (
+          <div className="absolute inset-0 grid place-items-center bg-white p-6">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a logo of
+                unknown intrinsic size that next/image would only re-encode;
+                both are small PNGs already committed to /public. */}
+            <img src={art} alt="" className="max-h-full max-w-full object-contain" />
+          </div>
+        )}
         {/*
           NO PICTURE, SO THE NAME IS THE PICTURE — the same fallback the
           portfolio's PosterCard uses, and for the same reason. Tripgate's
@@ -214,7 +239,7 @@ function CardFace({
           an empty background-image is a black rectangle that reads as a
           failed image rather than as a deliberate card.
         */}
-        {!card.poster && (
+        {!card.poster && !art && (
           <div className="absolute inset-0 grid place-items-center px-5 pb-12">
             <p className="text-balance text-center text-h3 font-semibold leading-[1.1] tracking-tight text-bone/90">
               {card.brand}

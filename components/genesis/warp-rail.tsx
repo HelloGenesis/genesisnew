@@ -417,11 +417,49 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
   const card =
     "relative w-full overflow-hidden rounded-[1.25rem] border border-white/10 bg-ink shadow-[0_30px_60px_-24px_rgb(0_0_0/0.9)] aspect-[5/8]";
 
-  if (!item.href || !item.onOpen) {
+  if (!item.onOpen) {
     return (
       <div aria-hidden={hidden} className={positioner}>
         <span className={card}>{inner}</span>
       </div>
+    );
+  }
+
+  /*
+    A HANDLER WITH NO URL IS A BUTTON, and getting this wrong cost a round.
+
+    Cards whose clip has no written study open the portfolio's window on the
+    piece instead, and there is no page for a piece — the old /work/<slug>
+    routes redirect to the portfolio section. Giving those cards `/#library`
+    as an honest-looking href did not work and could not: SmoothScroll
+    registers its click listener in the CAPTURE phase precisely so it beats
+    React, so it claimed the hash and scrolled the page before this
+    component's onClick ever ran.
+
+    It is also the right semantics on its own terms. A control that opens a
+    window over the page is a button; an anchor promises a destination, and
+    there is none to promise.
+  */
+  if (!item.href) {
+    return (
+      <button
+        type="button"
+        aria-hidden={hidden}
+        tabIndex={hidden ? -1 : undefined}
+        aria-label={`Open ${item.label}`}
+        onClick={() => item.onOpen?.()}
+        className={cn(positioner, "outline-none")}
+      >
+        <span
+          className={cn(
+            card,
+            "transition-[border-color,box-shadow] duration-300",
+            "hover:border-brand/60 group-focus-visible:border-brand",
+          )}
+        >
+          {inner}
+        </span>
+      </button>
     );
   }
 

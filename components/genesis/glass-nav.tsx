@@ -550,13 +550,19 @@ function NavMenu({ item }: { item: NavItem }) {
                 the list should be able to get there — but it belongs under
                 the four, not over them, because it is the overview and they
                 are the answer.
+
+                "EXPLORE ALL DIVISIONS", which is Genesis's wording from the
+                panel they drew. It read "See all four divisions" and the
+                count was doing no work: the four are directly above it, so
+                the sentence spent a word telling a reader something they had
+                just finished looking at.
               */}
               <Link
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className="mt-6 block border-t border-[var(--glass-border)] pt-4 text-small text-faint transition-colors hover:text-bone"
               >
-                See all four divisions →
+                Explore all divisions →
               </Link>
             </div>
           </motion.div>

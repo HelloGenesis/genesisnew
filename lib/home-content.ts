@@ -139,6 +139,32 @@ export const services = {
        * the prefix off each one, because the centre is saying it — printing
        * "Genesis." four more times around a Genesis logo is a stutter.
        */
+      /*
+       * THE SERVICES MENU'S OWN LIST, five lines, written by Genesis.
+       *
+       * IT IS NOT `services` ABOVE AND IT IS NOT THE CAPTION. The menu used
+       * to be built by merging those two and deduping — caption first, then
+       * the deck's three lines — which gave columns of uneven length in two
+       * registers: "UGC" beside "UGC & Regional Campaigns", "Strategy"
+       * beside "Strategy, Scripting & Production". Genesis sent the panel
+       * they want instead, so the menu gets a list of its own.
+       *
+       * SENTENCE CASE, deliberately, and matching what they drew. Title Case
+       * on five stacked lines reads as five headings; these are a
+       * description of the column and the division's name above them is the
+       * heading.
+       *
+       * The other two fields stay what they are: `caption` is the middot
+       * line under the mark on the Brain, `services` is the credentials
+       * deck's own wording, used where the deck's phrasing is the point.
+       */
+      menu: [
+        "Influencer campaigns",
+        "Celebrity partnerships",
+        "UGC campaigns",
+        "Creator activations",
+        "Regional campaigns",
+      ],
       short: "Influence",
       /* Where the Brain sends you: the division's own page, which on the
          homepage scrolls to its section instead (see divisionPages in
@@ -195,6 +221,14 @@ export const services = {
         "Social-First Design & Campaigns",
         "Pitch Decks & Brand Collaterals",
       ],
+      /* See the note on Influence: the menu's own five lines. */
+      menu: [
+        "Brand strategy",
+        "Visual identity",
+        "Campaign design",
+        "Pitch decks",
+        "Brand guidelines",
+      ],
       short: "Brand & Design",
       href: "/brand-design",
       // See the note on Influence above — read off the 2026 lockup.
@@ -232,6 +266,14 @@ export const services = {
         */
         "Motion Graphics",
       ],
+      /* See the note on Influence: the menu's own five lines. */
+      menu: [
+        "Content strategy",
+        "Scriptwriting",
+        "Video production",
+        "Motion graphics",
+        "Founder content",
+      ],
       short: "Studios",
       href: "/content-production",
       // The one that already agreed with its lockup, bar capitalisation.
@@ -255,6 +297,14 @@ export const services = {
         "Multilingual & Personalised Videos",
         "Scalable AI Content",
         "AI-Powered Automations, Games & Apps",
+      ],
+      /* See the note on Influence: the menu's own five lines. */
+      menu: [
+        "AI visuals & films",
+        "Digital avatars",
+        "Voice & localisation",
+        "AI automation",
+        "Interactive experiences",
       ],
       short: "AI Lab",
       href: "/ai-content-automation",
