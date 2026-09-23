@@ -3,6 +3,7 @@ import Image from "next/image";
 import { AvatarPager } from "@/components/genesis/avatar-pager";
 import { Media } from "@/components/genesis/media";
 import { mediaUrl } from "@/lib/media-url";
+import { posterSrc } from "@/lib/poster";
 import { isPending } from "@/lib/home-content";
 import { filmUrl } from "@/lib/films";
 import { reelClip, reelPoster } from "@/lib/work";
@@ -178,7 +179,7 @@ export function AvatarDetail({
                     since `clip` is one of its ids.
                   */}
                   <video
-                    poster={mediaUrl(reelPoster(clip))}
+                    poster={posterSrc(mediaUrl(reelPoster(clip)))}
                     playsInline
                     controls
                     preload="none"

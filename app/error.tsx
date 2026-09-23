@@ -1,6 +1,5 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
 import { Atmosphere } from "@/components/genesis/atmosphere";
@@ -25,7 +24,10 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    // Imported here rather than at the top so an error boundary — which sits
+    // in every page's tree — does not put the SDK in every page's bundle.
+    // See instrumentation-client.ts.
+    void import("@sentry/nextjs").then((Sentry) => Sentry.captureException(error));
   }, [error]);
 
   return (

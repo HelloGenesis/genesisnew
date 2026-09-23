@@ -1612,13 +1612,18 @@ body:has(main.scene-dark) header {
    instead of across a bar over them. `contain`/`left center` matches the
    images underneath, which are object-contain object-left in the same box.
 
+   THE MASK IS A 480px COPY of the wordmark, not the 1760px original. A CSS
+   mask is fetched at high priority on every page and never resized by the
+   image optimiser, so the original cost 101KB to shape a 120x14 box. Four
+   times the rendered width keeps the edge clean on any retina screen.
+
    `screen`, not `normal`: on the dark lockup a flat white wash would grey
    the ink out as it passed. Screen only ever lightens, so the sweep reads as
    light on the mark rather than paint over it.
 */
 .logo-sheen {
-    -webkit-mask-image: url("/brand/genesis-wordmark-light.png");
-    mask-image: url("/brand/genesis-wordmark-light.png");
+    -webkit-mask-image: url("/brand/genesis-wordmark-mask.png");
+    mask-image: url("/brand/genesis-wordmark-mask.png");
     -webkit-mask-size: contain;
     mask-size: contain;
     -webkit-mask-repeat: no-repeat;

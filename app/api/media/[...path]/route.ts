@@ -1,6 +1,10 @@
 import { Readable } from "node:stream";
 
-import { resolveDriveMedia, isSafeMediaPath } from "@/lib/drive-media";
+import {
+  resolveDriveMedia,
+  isSafeMediaPath,
+  type DriveMediaFile,
+} from "@/lib/drive-media";
 import { getDriveClient } from "@/lib/google-drive";
 
 /**
@@ -10,7 +14,7 @@ import { getDriveClient } from "@/lib/google-drive";
  * Callers do not choose between them; lib/media-url.ts does, from one env
  * flag, so a component never knows where its bytes came from.
  *
- * THE CACHE HEADER IS THE ENTIRE POINT OF THIS ROUTE. Pointing an <img> or a
+ * THE CACHE IS THE ENTIRE POINT OF THIS ROUTE. Pointing an <img> or a
  * <video> straight at a Drive share link is the obvious version of this idea
  * and it is a bad one: it hands every viewer a third-party DNS lookup and TLS
  * handshake, it is rate-limited per file, and Drive answers Range requests
@@ -24,12 +28,122 @@ import { getDriveClient } from "@/lib/google-drive";
  * same contract /public already has — a file in there is cached for a year by
  * the same reasoning.
  *
+ * BUT A CACHE HEADER ALONE NEVER CACHED A SINGLE VIDEO BYTE. Vercel's CDN
+ * will not store a response to a request carrying `Range`, will not store a
+ * 206, and will not store a function response over 20MB. A <video> element
+ * asks for everything by Range, and the films are 30-60MB — so every play of
+ * every film went to Drive, and production answered `x-vercel-cache: MISS` on
+ * the same request twice in a row. The year-long header was a promise
+ * nothing kept.
+ *
+ * SO FILES ARE SERVED IN BLOCKS. Each file is cut into fixed 8MiB blocks,
+ * and each block has its own URL — this route with `?block=N`. A block is a
+ * plain GET with no Range, a 200, and well under the limit, which is exactly
+ * what the CDN does cache. A viewer's Range request is answered by fetching
+ * the one block it falls in from our OWN origin (the CDN, after the first
+ * time) and cutting the asked-for bytes out of it. Drive is asked for each
+ * block once per region, and never again for the life of the cache.
+ *
+ * A viewer's response is at most the rest of one block. HTTP allows a server
+ * to answer a range with fewer bytes than were asked for — Content-Range says
+ * which — and every browser's media stack simply asks for the next range.
+ *
+ * IF THE SELF-FETCH FAILS — a preview behind Deployment Protection, a cold
+ * region timing out — the route reads that block from Drive directly, which
+ * is what it did for every request before. It cannot do worse than that.
+ *
  * Node runtime, not edge: googleapis signs its JWT with node:crypto.
  */
 export const runtime = "nodejs";
 
 /** A year, which is what /public gets and what an addressed asset should get. */
 const CACHE = "public, max-age=31536000, s-maxage=31536000, immutable";
+
+/**
+ * 8MiB. Under the CDN's 20MB ceiling for a streamed function response with
+ * room to spare, and large enough that a film is a handful of blocks rather
+ * than hundreds of cache entries.
+ */
+const BLOCK = 8 * 1024 * 1024;
+
+/** File sizes, for files whose lookup did not include one. Per process. */
+const sizes = new Map<string, Promise<number | undefined>>();
+
+function sizeOf(file: DriveMediaFile): Promise<number | undefined> {
+  if (file.size) return Promise.resolve(file.size);
+  let known = sizes.get(file.id);
+  if (!known) {
+    known = getDriveClient()
+      .files.get({ fileId: file.id, fields: "size", supportsAllDrives: true })
+      .then((response) => (response.data.size ? Number(response.data.size) : undefined))
+      .catch(() => undefined);
+    sizes.set(file.id, known);
+  }
+  return known;
+}
+
+/**
+ * Reads bytes [start, end] of a Drive file as a web stream. The one place
+ * this route talks to Drive.
+ */
+async function readDrive(fileId: string, start?: number, end?: number) {
+  const response = await getDriveClient().files.get(
+    { fileId, alt: "media", supportsAllDrives: true },
+    {
+      responseType: "stream",
+      ...(start !== undefined ? { headers: { Range: `bytes=${start}-${end ?? ""}` } } : {}),
+    },
+  );
+  return Readable.toWeb(response.data as unknown as Readable) as ReadableStream<Uint8Array>;
+}
+
+/** `bytes=500-` / `bytes=500-999` / `bytes=-500`, resolved against the size. */
+function parseRange(header: string | null, size: number): [number, number] | null {
+  const match = header?.match(/^bytes=(\d*)-(\d*)$/);
+  if (!match || (match[1] === "" && match[2] === "")) return null;
+  if (match[1] === "") {
+    // A suffix: the last N bytes.
+    const length = Math.min(Number(match[2]), size);
+    return [size - length, size - 1];
+  }
+  const start = Number(match[1]);
+  const end = match[2] === "" ? size - 1 : Math.min(Number(match[2]), size - 1);
+  return start <= end && start < size ? [start, end] : null;
+}
+
+/** Drops `skip` bytes, then passes `take` bytes, then ends the stream. */
+function slice(stream: ReadableStream<Uint8Array>, skip: number, take: number) {
+  let offset = 0;
+  return stream.pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        const from = Math.max(0, skip - offset);
+        const to = Math.min(chunk.length, skip + take - offset);
+        offset += chunk.length;
+        if (to > from) controller.enqueue(chunk.subarray(from, to));
+        if (offset >= skip + take) controller.terminate();
+      },
+    }),
+  );
+}
+
+/**
+ * One block, from the CDN if it has it. The URL is this route's own, so the
+ * first request in a region fills the cache and the rest are served from it.
+ */
+async function readBlock(request: Request, fileId: string, index: number, size: number) {
+  const url = new URL(request.url);
+  url.search = `?block=${index}`;
+  try {
+    const response = await fetch(url, { headers: { accept: "*/*" } });
+    if (response.ok && response.body) return response.body;
+    await response.body?.cancel();
+  } catch {
+    // Falls through to Drive.
+  }
+  const start = index * BLOCK;
+  return readDrive(fileId, start, Math.min(start + BLOCK, size) - 1);
+}
 
 export async function GET(
   request: Request,
@@ -52,76 +166,93 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
-  // Passed through so the browser can seek inside a video rather than pulling
-  // the whole file to play the middle of it.
-  const range = request.headers.get("range") ?? undefined;
+  const headers = new Headers({
+    "Content-Type": file.mimeType,
+    "Cache-Control": CACHE,
+    // The bytes are ours to serve but they are not ours to let another site
+    // frame or sniff into something else.
+    "X-Content-Type-Options": "nosniff",
+    // Lets the browser ask for a range next time even on a fresh connection.
+    "Accept-Ranges": "bytes",
+  });
 
   try {
-    const drive = getDriveClient();
-    const response = await drive.files.get(
-      { fileId: file.id, alt: "media", supportsAllDrives: true },
-      {
-        responseType: "stream",
-        ...(range ? { headers: { Range: range } } : {}),
-      },
-    );
-
-    const headers = new Headers({
-      "Content-Type": file.mimeType,
-      "Cache-Control": CACHE,
-      // The bytes are ours to serve but they are not ours to let another site
-      // frame or sniff into something else.
-      "X-Content-Type-Options": "nosniff",
-      // Lets the browser ask for a range next time even on a fresh connection.
-      "Accept-Ranges": "bytes",
-    });
+    const size = await sizeOf(file);
 
     /*
-      GAXIOS RETURNS A `Headers` INSTANCE, NOT A PLAIN OBJECT.
-
-      This read them as `response.headers["content-length"]`, which on a
-      Headers is undefined — so the route answered 206 Partial Content with no
-      Content-Range and no Content-Length. That is a malformed partial
-      response: a browser cannot tell how big the file is or which slice it
-      just received, so seeking a video breaks and some players refuse it
-      outright. It looked fine until something actually streamed through here,
-      because a 200 with no Content-Length still plays.
-
-      Read through the accessor, and keep the bracket form as a fallback in
-      case a future version hands back an object again.
+      NO SIZE, NO BLOCKS. Google-native types report none, and without it a
+      block cannot be bounded — so the file is streamed from Drive whole, as
+      it always was. Nothing the site serves today is such a file.
     */
-    const header = (name: string): string | undefined => {
-      const raw = response.headers as unknown;
-      /*
-        DUCK-TYPED, NOT `instanceof Headers`. The constructor is named Headers
-        and the instanceof check still failed: gaxios builds its own undici
-        instance, so its Headers class is a different realm's from the one in
-        this module's scope. Asking whether the thing has a `get` cannot care
-        which copy of the class it came from.
-      */
-      const get = (raw as { get?: unknown }).get;
-      if (typeof get === "function") {
-        const value = (get as (n: string) => string | null).call(raw, name);
-        return value ?? undefined;
+    if (!size) {
+      return new Response(await readDrive(file.id), { status: 200, headers });
+    }
+
+    const block = new URL(request.url).searchParams.get("block");
+    if (block !== null) {
+      // A block, for the CDN. Always a 200 and never a Range, so it is
+      // cacheable; out-of-range indices are refused rather than clamped.
+      const index = Number(block);
+      if (!Number.isInteger(index) || index < 0 || index * BLOCK >= size) {
+        return new Response("Bad block", { status: 400 });
       }
-      const value = (raw as Record<string, unknown>)[name];
-      return typeof value === "string" ? value : undefined;
-    };
+      const start = index * BLOCK;
+      const end = Math.min(start + BLOCK, size) - 1;
+      headers.set("Content-Length", String(end - start + 1));
+      return new Response(await readDrive(file.id, start, end), { status: 200, headers });
+    }
 
-    const length = header("content-length");
-    if (length) headers.set("Content-Length", length);
+    const asked = request.headers.get("range");
+    const range = parseRange(asked, size);
 
-    const contentRange = header("content-range");
-    if (contentRange) headers.set("Content-Range", contentRange);
+    if (asked && !range) {
+      return new Response(null, {
+        status: 416,
+        headers: { "Content-Range": `bytes */${size}` },
+      });
+    }
 
-    const body = Readable.toWeb(
-      response.data as unknown as Readable,
-    ) as ReadableStream<Uint8Array>;
+    if (!range) {
+      /*
+        The whole file, which only a crawler or a direct download asks for —
+        a player always sends a Range. Assembled block by block, so even
+        this is served from the cache.
+      */
+      headers.set("Content-Length", String(size));
+      const count = Math.ceil(size / BLOCK);
+      let index = 0;
+      let current: ReadableStreamDefaultReader<Uint8Array> | null = null;
+      const body = new ReadableStream<Uint8Array>({
+        async pull(controller) {
+          while (true) {
+            if (!current) {
+              if (index >= count) return controller.close();
+              current = (await readBlock(request, file.id, index++, size)).getReader();
+            }
+            const { done, value } = await current.read();
+            if (!done) return controller.enqueue(value);
+            current = null;
+          }
+        },
+        cancel() {
+          void current?.cancel();
+        },
+      });
+      return new Response(body, { status: 200, headers });
+    }
 
-    return new Response(body, {
-      // Drive answers 206 itself when it honours the Range; mirror whatever it
-      // decided rather than asserting 200 over a partial body.
-      status: response.status === 206 ? 206 : 200,
+    // One block's worth at most: from the start of the range to the end of
+    // the block it starts in, or the end of the range if that comes first.
+    const [start] = range;
+    const index = Math.floor(start / BLOCK);
+    const end = Math.min(range[1], (index + 1) * BLOCK - 1, size - 1);
+
+    headers.set("Content-Range", `bytes ${start}-${end}/${size}`);
+    headers.set("Content-Length", String(end - start + 1));
+
+    const stream = await readBlock(request, file.id, index, size);
+    return new Response(slice(stream, start - index * BLOCK, end - start + 1), {
+      status: 206,
       headers,
     });
   } catch {

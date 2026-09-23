@@ -452,14 +452,13 @@ export function WarpRail({
 }
 
 function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
-  const video = useInViewPlayback<HTMLVideoElement>();
+  const video = useInViewPlayback<HTMLVideoElement>(mediaUrl(item.poster));
 
   const inner = (
     <>
       <video
         ref={video}
         src={mediaUrl(item.clip)}
-        poster={mediaUrl(item.poster)}
         muted
         loop
         playsInline

@@ -1097,8 +1097,43 @@ export function NeuralOrb({
     */
     let quiet = 0;
 
+    /*
+      A FRAME BUDGET, measured on the device rather than assumed.
+
+      The density above was benchmarked on a desktop, where 13,000 points cost
+      about 6ms. A mid-range phone is four or five times slower, so the same
+      frame there costs 20–30ms: the loop alone saturates the main thread,
+      every tap waits behind it, and a mobile Lighthouse run measured 6.4s of
+      blocking time on this page. The sphere cannot tell which device it is on
+      until it has drawn a few frames, so it watches its own cost and, when a
+      frame is expensive, draws fewer of them — 30fps, then 20. The motion is
+      slow and continuous enough that the lower rate reads the same; the
+      picture is untouched.
+
+      THE TIMER ONLY SEES THE JAVASCRIPT. Rasterising eight thousand sprites
+      happens after render() returns, so on a phone the real frame costs
+      roughly twice what `cost` reports. Hence the second rule: on a touch
+      screen with no finger on the sphere, it draws at 15fps whatever the
+      timer says. The sphere turns once every 52 seconds — about 20px a second
+      at phone size — so 15fps moves it a pixel and a bit per frame, which the
+      eye cannot tell from 60. A touch brings full rate back for as long as
+      the finger is there, because a ripple is fast and should look it.
+    */
+    let cost = 0;
+    let lastDrawn = 0;
+    const touch = window.matchMedia("(pointer: coarse)");
+
     const loop = (now: number) => {
+      const resting = touch.matches && !hasPointer && focusRef.current === null;
+      const gap = Math.max(resting ? 64 : 0, cost > 12 ? 48 : cost > 6 ? 31 : 0);
+      if (now - lastDrawn < gap) {
+        frame = requestAnimationFrame(loop);
+        return;
+      }
+      lastDrawn = now;
+      const began = performance.now();
       render(now);
+      cost = cost * 0.9 + (performance.now() - began) * 0.1;
       if (still.matches && !hasPointer && focusRef.current === null) {
         quiet += 1;
         if (quiet > 60) {
@@ -1119,6 +1154,7 @@ export function NeuralOrb({
      * section, and stops again when it leaves.
      */
     const shouldRun = () =>
+      ready &&
       visible &&
       !document.hidden &&
       (!still.matches || hasPointer || focusRef.current !== null);
@@ -1136,6 +1172,33 @@ export function NeuralOrb({
       cancelAnimationFrame(frame);
       frame = 0;
     };
+
+    /*
+      NOT UNTIL THE PAGE HAS LOADED AND GONE IDLE. The orb is the first thing
+      on the homepage, so its loop used to start on the same tick the page
+      hydrated — and on a phone it then competed with hydration, the fonts and
+      every other section's first render for the whole of the load. The first
+      frame below is drawn straight away and is the clean, still sphere a
+      visitor is meant to meet first (see THE SETTLE); the motion begins once
+      the browser has nothing more urgent to do. The settle's own hold means
+      nobody sees the difference.
+    */
+    let ready = false;
+    let idle = 0;
+    const wake = () => {
+      ready = true;
+      if (visible && wokeAt === 0) wokeAt = performance.now();
+      start();
+    };
+    const afterLoad = () => {
+      // Safari has no requestIdleCallback; a short timeout stands in.
+      idle =
+        typeof window.requestIdleCallback === "function"
+          ? window.requestIdleCallback(wake, { timeout: 1500 })
+          : window.setTimeout(wake, 300);
+    };
+    if (document.readyState === "complete") afterLoad();
+    else window.addEventListener("load", afterLoad, { once: true });
 
     // Reduce Motion skips the assembly outright and starts fully formed.
     // Reduce Motion: the sphere is simply there, undeformed.
@@ -1239,7 +1302,7 @@ export function NeuralOrb({
           // The assembly starts the first time it is actually seen, not at
           // mount — otherwise it plays to nobody while the reader is still
           // in the hero.
-          if (wokeAt === 0) wokeAt = performance.now();
+          if (ready && wokeAt === 0) wokeAt = performance.now();
           start();
         } else {
           stop();
@@ -1264,6 +1327,9 @@ export function NeuralOrb({
 
     return () => {
       stop();
+      window.removeEventListener("load", afterLoad);
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
+      window.clearTimeout(idle);
       startRef.current = null;
       observer.disconnect();
       watcher.disconnect();

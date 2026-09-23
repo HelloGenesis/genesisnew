@@ -6,6 +6,7 @@ import { useEdgeFade } from "./use-edge-fade";
 import { useCallback, useEffect, useRef } from "react";
 import { RailArrow } from "./work-grid";
 import { useInViewPlayback } from "./use-in-view-playback";
+import { posterSrc } from "@/lib/poster";
 
 import Link from "next/link";
 
@@ -108,7 +109,9 @@ export function PosterCard({
     and nothing at all on a phone. The hook keeps the cost where it was: only
     the cards on screen hold a decoder. See useInViewPlayback.
   */
-  const videoRef = useInViewPlayback<HTMLVideoElement>();
+  const videoRef = useInViewPlayback<HTMLVideoElement>(
+    poster.clip ? poster.image : undefined,
+  );
   const ratio = poster.ratio ?? 9 / 16;
   const reelWidth = priority
     ? "min(clamp(15rem,26vw,21rem),calc(60vh*9/16))"
@@ -159,9 +162,16 @@ export function PosterCard({
         className="relative w-full"
         style={{
           aspectRatio: ratio > 1 ? ratio : 9 / 16,
-          ...(poster.image
-            ? { backgroundImage: `url(${poster.image})`, backgroundSize: "cover" }
-            : { backgroundImage: placeholderArt(poster.id) }),
+          /*
+            A card with a film paints nothing here: the video's poster covers
+            the box, and a background copy of the same frame was a second,
+            eager fetch of every poster on the page. See useInViewPlayback.
+          */
+          ...(poster.clip
+            ? {}
+            : poster.image
+              ? { backgroundImage: `url(${posterSrc(poster.image, 828)})`, backgroundSize: "cover" }
+              : { backgroundImage: placeholderArt(poster.id) }),
         }}
       >
         {/*
@@ -176,7 +186,6 @@ export function PosterCard({
           <video
             ref={videoRef}
             src={poster.clip}
-            poster={poster.image}
             muted
             loop
             playsInline
@@ -454,15 +463,12 @@ export function PosterCard({
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      const rect = el.getBoundingClientRect();
-      const onScreen = rect.bottom > 0 && rect.top < window.innerHeight;
       // A dialog opened from a card is over the page; the rail should wait.
       const dialogOpen = document.querySelector("[role=dialog]") !== null;
       const max = rail.scrollWidth - rail.clientWidth;
       const running =
         !hovering &&
         !focused &&
-        onScreen &&
         !dialogOpen &&
         !document.hidden &&
         Date.now() >= holdUntil.current &&
@@ -484,9 +490,28 @@ export function PosterCard({
       }
       frame = requestAnimationFrame(tick);
     };
-    frame = requestAnimationFrame(tick);
+
+    /*
+      THE LOOP ONLY EXISTS WHILE THE RAIL IS ON SCREEN. It used to run from
+      mount for the life of the page and ask, every frame, whether it was
+      visible — a getBoundingClientRect and a document-wide querySelector
+      sixty times a second from a section most of a visit is spent nowhere
+      near. On a throttled phone profile that was 300ms of main thread in
+      every eight, all of it deciding to do nothing. The observer answers the
+      same question once per crossing instead.
+    */
+    const visibility = new IntersectionObserver(([entry]) => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      if (!entry.isIntersecting) return;
+      offset = rail.scrollLeft;
+      last = performance.now();
+      frame = requestAnimationFrame(tick);
+    });
+    visibility.observe(el);
 
     return () => {
+      visibility.disconnect();
       cancelAnimationFrame(frame);
       el.removeEventListener("pointerenter", enter);
       el.removeEventListener("pointerleave", leave);

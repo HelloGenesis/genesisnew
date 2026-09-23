@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { posterSrc } from "@/lib/poster";
+
 /**
  * Plays a video while it is on screen and pauses it the moment it leaves.
  *
@@ -29,9 +31,39 @@ import { useEffect, useRef } from "react";
  *
  * This was written three times — the Studios reel wall, the work tiles and
  * the case-study posters — before it was written once.
+ *
+ * THE POSTER IS ITS JOB TOO, when one is passed. A `poster` attribute in the
+ * server HTML is fetched on load whatever the video's `preload` says — so a
+ * homepage of 146 preload="none" tiles still pulled every one of their 77
+ * posters (4.2MB) before first interaction. Pass the poster here instead of
+ * to the element and it is attached a screen and a half before the tile
+ * arrives: nobody scrolling at reading speed ever sees it missing, and
+ * nothing below the fold costs anything on load. It goes through posterSrc,
+ * so it arrives as a card-sized WebP rather than the committed JPEG.
+ *
+ * The poster is attached under Reduce Motion as well — a still is exactly
+ * what that setting leaves in place of the film.
  */
-export function useInViewPlayback<T extends HTMLVideoElement>() {
+export function useInViewPlayback<T extends HTMLVideoElement>(poster?: string) {
   const ref = useRef<T>(null);
+
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || !poster) return;
+
+    const src = posterSrc(poster) ?? poster;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        video.poster = src;
+        observer.disconnect();
+      },
+      // Rails scroll sideways as well as down, so the margin is on both axes.
+      { rootMargin: "150% 150%" },
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [poster]);
 
   useEffect(() => {
     const video = ref.current;

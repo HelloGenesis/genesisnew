@@ -31,9 +31,12 @@ export const metadata: Metadata = pageMetadata({
 
     Mumbai stays. It is the one thing in here that is a ranking signal rather
     than a claim, and the address in siteConfig backs it.
+
+    Kept under 160 characters: Google cuts a snippet around there, and at
+    169 the list lost its last item — "events" — in every result.
   */
   description:
-    "Genesis Media is a creative company in Mumbai: influencer marketing, content production, AI content and avatars, branding and design, automation, games, apps and events.",
+    "Genesis Media is a Mumbai creative company: influencer marketing, content production, AI avatars and content, brand design, automation, games, apps and events.",
   /*
     WHAT A PERSON READS WHEN THE LINK IS FORWARDED — Genesis's own tagline,
     which is also the line on the share card itself.

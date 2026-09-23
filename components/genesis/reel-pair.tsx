@@ -226,14 +226,13 @@ export function ReelPair({
 }
 
 function ReelBlock({ reel }: { reel: Reel }) {
-  const video = useInViewPlayback<HTMLVideoElement>();
+  const video = useInViewPlayback<HTMLVideoElement>(mediaUrl(reel.poster));
 
   const inner = (
     <>
       <video
         ref={video}
         src={mediaUrl(reel.clip)}
-        poster={mediaUrl(reel.poster)}
         muted
         loop
         playsInline

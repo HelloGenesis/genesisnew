@@ -9,6 +9,7 @@ import {
 } from "@/lib/case-study-pages";
 import { isPending } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
+import { posterSrc } from "@/lib/poster";
 import { filmUrl } from "@/lib/films";
 import {
   CLIP_LABELS,
@@ -99,7 +100,7 @@ export function WorkDetail({ item }: { item: WorkItem }) {
                 Drive when that is switched on, and undefined when it is not —
                 in which case this is exactly what it was before.
               */
-              poster={item.poster ?? item.art}
+              poster={posterSrc(item.poster ?? item.art, 828)}
               controls
               playsInline
               preload="metadata"
@@ -163,7 +164,7 @@ export function WorkDetail({ item }: { item: WorkItem }) {
             {rest.map((n) => (
               <li key={n} className="flex flex-col gap-2">
                 <video
-                  poster={mediaUrl(reelPoster(n))}
+                  poster={posterSrc(mediaUrl(reelPoster(n)))}
                   muted
                   loop
                   playsInline

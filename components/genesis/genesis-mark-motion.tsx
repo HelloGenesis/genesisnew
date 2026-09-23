@@ -46,6 +46,15 @@ import { cn } from "@/lib/utils";
  * runs anywhere an MP4 plays, and at this size it is nothing: the mark is
  * about 122x16 CSS pixels, so even at 2x it is under 8,000 pixels a frame.
  *
+ * THE KEY RUNS ON THE GPU. It was a JavaScript loop over every pixel of
+ * every frame — getImageData, the arithmetic, putImageData — and cheap as
+ * that sounds at this size, it never stops: it runs on every page, for as
+ * long as the page is open. A mobile Lighthouse profile put a second of main
+ * thread in every eight on it, all of it competing with hydration and input.
+ * The same arithmetic in a fragment shader costs the main thread one texture
+ * upload a frame. The 2D loop stays as the fallback for a browser with no
+ * WebGL, where it is still correct, only slower.
+ *
  * `requestVideoFrameCallback` DRIVES IT where available, so the loop runs
  * once per decoded video frame rather than once per display refresh. rAF is
  * the fallback.
@@ -125,8 +134,6 @@ export function GenesisMarkMotion({ className }: { className?: string }) {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return;
 
     /*
       WHICH FILE IS SHOWING is the theme's business, and --logo-invert is
@@ -157,10 +164,20 @@ export function GenesisMarkMotion({ className }: { className?: string }) {
     let stop = false;
     let handle = 0;
 
+    /*
+      The canvas can hold one kind of context for its life, so WebGL is asked
+      for first and the 2D context only if it is refused.
+    */
+    const gl = keyWithWebGL(canvas);
+    const ctx = gl ? null : canvas.getContext("2d", { willReadFrequently: true });
+    if (!gl && !ctx) return;
+
     const draw = () => {
       if (stop) return;
       const video = light ? lightRef.current : darkRef.current;
-      if (video && video.readyState >= 2) {
+      if (gl && video && video.readyState >= 2) {
+        gl.draw(video, light);
+      } else if (ctx && video && video.readyState >= 2) {
         const { width, height } = canvas;
         ctx.clearRect(0, 0, width, height);
         ctx.drawImage(video, 0, 0, width, height);
@@ -223,6 +240,7 @@ export function GenesisMarkMotion({ className }: { className?: string }) {
     return () => {
       stop = true;
       cancelAnimationFrame(handle);
+      gl?.dispose();
       scheme.removeEventListener("change", readTheme);
       observer.disconnect();
     };
@@ -262,4 +280,100 @@ export function GenesisMarkMotion({ className }: { className?: string }) {
       )}
     </span>
   );
+}
+
+/**
+ * The un-compositing in the 2D loop above, as a fragment shader — the same
+ * formulas, so the two paths draw the same mark.
+ *
+ * The output is premultiplied, which is what a WebGL canvas composites as by
+ * default: ink recovered and then multiplied back by its alpha is simply the
+ * source minus the ground it was exported over, so the shader writes that
+ * directly and never divides.
+ */
+const VERTEX = `
+attribute vec2 p;
+varying vec2 uv;
+void main() {
+  uv = vec2(p.x * 0.5 + 0.5, 0.5 - p.y * 0.5);
+  gl_Position = vec4(p, 0.0, 1.0);
+}`;
+
+const FRAGMENT = `
+precision mediump float;
+varying vec2 uv;
+uniform sampler2D frame;
+uniform bool light;
+void main() {
+  vec3 c = texture2D(frame, uv).rgb;
+  if (light) {
+    // Exported over WHITE: alpha is the distance from white.
+    float a = 1.0 - min(c.r, min(c.g, c.b));
+    gl_FragColor = vec4(clamp(c - (1.0 - a), 0.0, 1.0), a);
+  } else {
+    // Exported over BLACK: alpha is the brightest channel.
+    float a = max(c.r, max(c.g, c.b));
+    gl_FragColor = vec4(c, a);
+  }
+}`;
+
+function keyWithWebGL(canvas: HTMLCanvasElement) {
+  const gl = canvas.getContext("webgl", {
+    premultipliedAlpha: true,
+    antialias: false,
+    depth: false,
+    stencil: false,
+  });
+  if (!gl) return null;
+
+  const compile = (type: number, source: string) => {
+    const shader = gl.createShader(type);
+    if (!shader) return null;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;
+  };
+  const vertex = compile(gl.VERTEX_SHADER, VERTEX);
+  const fragment = compile(gl.FRAGMENT_SHADER, FRAGMENT);
+  const program = gl.createProgram();
+  if (!vertex || !fragment || !program) return null;
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
+  gl.useProgram(program);
+
+  // One triangle strip covering the canvas.
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const position = gl.getAttribLocation(program, "p");
+  gl.enableVertexAttribArray(position);
+  gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+  // The footage is not a power of two, so no mipmaps and no wrapping.
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const lightFlag = gl.getUniformLocation(program, "light");
+
+  return {
+    draw(video: HTMLVideoElement, light: boolean) {
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
+      gl.uniform1i(lightFlag, light ? 1 : 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    },
+    dispose() {
+      gl.deleteTexture(texture);
+      gl.deleteBuffer(buffer);
+      gl.deleteProgram(program);
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
+    },
+  };
 }

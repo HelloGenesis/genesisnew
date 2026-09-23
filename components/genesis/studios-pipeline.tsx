@@ -553,13 +553,14 @@ function StageClip({
     the case-study posters use. Five of these is a cost worth paying where the
     reel wall's thirty-two was not.
   */
-  const ref = useInViewPlayback<HTMLVideoElement>();
+  const ref = useInViewPlayback<HTMLVideoElement>(
+    mediaUrl(`/work/posters/${id}.jpg`),
+  );
 
   return (
     <video
       ref={ref}
       src={mediaUrl(`/work/clips/${id}.mp4`)}
-      poster={mediaUrl(`/work/posters/${id}.jpg`)}
       muted
       loop
       playsInline

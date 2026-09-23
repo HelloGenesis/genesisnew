@@ -5,6 +5,7 @@ import { Play } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 
+import { posterSrc } from "@/lib/poster";
 import { cn } from "@/lib/utils";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 
@@ -79,7 +80,7 @@ export function Reel({
       <video
         ref={videoRef}
         src={src}
-        poster={poster}
+        poster={posterSrc(poster, 828)}
         muted
         loop
         playsInline

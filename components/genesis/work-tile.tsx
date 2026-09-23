@@ -94,7 +94,9 @@ export function WorkTile({
     hook is where it is paid: only the tiles actually on screen ever get a
     decoder. See useInViewPlayback.
   */
-  const videoRef = useInViewPlayback<HTMLVideoElement>();
+  const videoRef = useInViewPlayback<HTMLVideoElement>(
+    item.clip ? (item.poster ?? item.art) : undefined,
+  );
   const hasArt = Boolean(item.clip || item.art);
   const rail = variant === "rail";
   const fill = variant === "fill";
@@ -131,7 +133,6 @@ export function WorkTile({
           <video
             ref={videoRef}
             src={item.clip}
-            poster={item.poster ?? item.art}
             muted
             loop
             playsInline

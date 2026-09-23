@@ -9,6 +9,7 @@ import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { CaseStudyView } from "./case-study-view";
 import { Overlay, pagerFor } from "./overlay";
 import { useInViewPlayback } from "./use-in-view-playback";
+import { posterSrc } from "@/lib/poster";
 import { campaignFilmsForSlug } from "@/lib/case-study-pages";
 
 /** One card on /case-studies, with everything resolved on the server. */
@@ -133,7 +134,9 @@ export function CaseStudyGrid({
 }
 
 function Card({ card, onOpen }: { card: CaseStudyCard; onOpen: () => void }) {
-  const videoRef = useInViewPlayback<HTMLVideoElement>();
+  const videoRef = useInViewPlayback<HTMLVideoElement>(
+    card.preview ? card.poster : undefined,
+  );
   const label = card.line ? `${card.brand}: ${card.line}` : card.brand;
   const className = "group block w-full text-left focus-visible:outline-none";
 
@@ -204,9 +207,10 @@ function CardFace({
           "group-focus-visible:ring-2 group-focus-visible:ring-brand",
         )}
         style={
-          landscape || !card.poster || art
+          // A card with a film leaves the frame to the video's own poster.
+          landscape || !card.poster || art || card.preview
             ? undefined
-            : { backgroundImage: `url(${card.poster})`, backgroundSize: "cover" }
+            : { backgroundImage: `url(${posterSrc(card.poster, 828)})`, backgroundSize: "cover" }
         }
       >
         {/*
@@ -255,7 +259,8 @@ function CardFace({
           <div
             aria-hidden
             className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-2xl"
-            style={{ backgroundImage: `url(${card.poster})` }}
+            // Blurred past recognition, so a 64px frame is all it needs.
+            style={{ backgroundImage: `url(${posterSrc(card.poster, 64)})` }}
           />
         )}
         {/*
@@ -267,7 +272,6 @@ function CardFace({
         <video
           ref={videoRef}
           src={card.preview}
-          poster={card.poster}
           muted
           loop
           playsInline

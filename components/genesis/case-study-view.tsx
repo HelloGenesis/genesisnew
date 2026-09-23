@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
 import type { CaseStudyCopy } from "@/lib/case-study-copy";
+import { posterSrc } from "@/lib/poster";
 import { cn } from "@/lib/utils";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { CaseStudyBody } from "./case-study-body";
@@ -177,7 +178,8 @@ export function CaseStudyView({
           <div className={cn("flex justify-center", !landscape && "md:sticky md:top-0")}>
             <video
               key={shownFilm ?? preview}
-              poster={shownPoster}
+              // Optimised, not lazy: this is the page's main picture.
+              poster={posterSrc(shownPoster, 828)}
               controls
               autoPlay={autoPlay}
               playsInline
@@ -242,7 +244,7 @@ export function CaseStudyView({
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={clip.poster}
+                        src={posterSrc(clip.poster)}
                         alt=""
                         loading="lazy"
                         className="size-full object-cover"
