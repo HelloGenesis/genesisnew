@@ -60,12 +60,14 @@ export function Services() {
         orb and its four names own the screen and the wall starts below it.
       */
       /*
-        NEVER LESS THAN 7.5REM ON TOP FROM lg. --section-pad shrinks with the
+        NEVER LESS THAN 6.5REM ON TOP (7.5 FROM lg), under a nav that ends at
+        ~78px on a phone and ~87px from lg. --section-pad shrinks with the
         window's height, so on a short laptop 3.4 of it came to ~73px while
         the fixed nav ends at ~87px, and Influence and AI Lab sat right under
-        it. The floor keeps a clear gap below the nav at any height.
+        it — and on a 375x667 phone they touched it. The floor keeps a clear
+        gap below the nav at any height.
       */
-      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[calc(var(--section-pad)*3.4)] lg:pt-[max(calc(var(--section-pad)*3.4),7.5rem)]"
+      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[max(calc(var(--section-pad)*3.4),6.5rem)] lg:pt-[max(calc(var(--section-pad)*3.4),7.5rem)]"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme

@@ -232,8 +232,14 @@ export function DivisionBoard() {
           up under the nav ("bohot chipak ke hai"). 100dvh - 23rem keeps the
           orb, the names and the hero inside one screen there; from about
           870px tall 58vh is the smaller bound again and nothing changes.
+
+          115% / 120% OF THE COLUMN, NOT 130%, since the membership buttons
+          arrived under the names: the orb overran its column into the gap
+          and the top-row buttons, which sit level with its widest point,
+          ran into it by up to 15px at 1180 and 1920 wide. Measured at
+          1024-2560 these bounds leave every button 10px+ clear.
         */}
-        <div className="relative mx-auto w-[min(62vw,17rem,36vh)] motion-safe:translate-x-[calc(var(--par-x)*6px)] motion-safe:translate-y-[calc(var(--par-y)*6px)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out lg:left-1/2 lg:mx-0 lg:w-[min(130%,58vh,calc(100dvh-23rem))] lg:-translate-x-1/2 lg:motion-safe:translate-x-[calc(-50%+var(--par-x)*6px)]">
+        <div className="relative mx-auto w-[min(62vw,17rem,36vh)] motion-safe:translate-x-[calc(var(--par-x)*6px)] motion-safe:translate-y-[calc(var(--par-y)*6px)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out lg:left-1/2 lg:mx-0 lg:w-[min(115%,58vh,calc(100dvh-23rem))] xl:w-[min(120%,58vh,calc(100dvh-23rem))] lg:-translate-x-1/2 lg:motion-safe:translate-x-[calc(-50%+var(--par-x)*6px)]">
           <NeuralOrb focus={focus} />
 
           {/*
@@ -268,6 +274,11 @@ export function DivisionBoard() {
         const dimmed = active !== null && !isActive;
         /* Everything except the one being travelled to gets out of the way. */
         const leaving = chosen !== null && chosen !== index;
+        /* The hover lift toward the sphere plus the parallax drift, shared by
+           the name and its membership button so they move as one. */
+        const lift = `translate3d(calc(var(--drift-x, 0px) + ${
+          isActive ? -corner.x * 6 : 0
+        }px), calc(var(--drift-y, 0px) + ${isActive ? -corner.y * 6 : 0}px), 0)`;
         /* This division's membership — the price button under its name. */
         const pricing = verticals.find((vertical) => vertical.short === service.short);
 
@@ -337,11 +348,13 @@ export function DivisionBoard() {
                   per-division direction; as classes that is eight literals
                   that have to stay in step with CORNERS.
                 */
-                transform: `translate3d(calc(var(--drift-x, 0px) + ${
-                  isActive ? -corner.x * 6 : 0
-                }px), calc(var(--drift-y, 0px) + ${isActive ? -corner.y * 6 : 0}px), 0) scale(${
-                  isActive || chosen === index ? 1.035 : 1
-                })`,
+                transform: `${lift} scale(${isActive || chosen === index ? 1.035 : 1})`,
+                /*
+                  SCALED FROM THE ORB-SIDE EDGE, so the growth goes outward
+                  and the inner edge only moves by the lift — which the
+                  membership button below takes too, keeping the two flush.
+                */
+                transformOrigin: corner.x < 0 ? "right center" : "left center",
               }}
             >
               <DivisionLockup
@@ -453,11 +466,13 @@ export function DivisionBoard() {
                   "focus-visible:ring-2 focus-visible:ring-brand",
                   "[@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",
                   "[@media(hover:none)]:hidden",
-                  "transition-[opacity,transform,background-color,border-color] duration-300 ease-out motion-reduce:transition-none",
+                  "transition-[opacity,transform,translate,background-color,border-color] duration-300 ease-out motion-reduce:transition-none",
+                  "motion-safe:[--drift-x:calc(var(--par-x)*2px)] motion-safe:[--drift-y:calc(var(--par-y)*2px)]",
                   "group-hover/vert:pointer-events-auto group-hover/vert:translate-y-0 group-hover/vert:opacity-100",
                   "group-focus-within/vert:pointer-events-auto group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
                   leaving && "opacity-0",
                 )}
+                style={{ transform: lift }}
               >
                 {pricing.home.from}
                 <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
