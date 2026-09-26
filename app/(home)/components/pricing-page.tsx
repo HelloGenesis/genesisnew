@@ -7,6 +7,7 @@ import { GlassButton } from "@/components/genesis/glass-button";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
+import { WorkGrid } from "@/components/genesis/work-grid";
 import { services } from "@/lib/home-content";
 import {
   bookingHref,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/pricing";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
+import { expandToClips, work } from "@/lib/work";
 import { Breadcrumbs } from "./service-page";
 
 /**
@@ -93,7 +95,7 @@ export function PricingPageView({ vertical }: { vertical: VerticalPricing }) {
             <GlassButton href={book} variant="glass" size="lg" arrow className={ENQUIRY_BUTTON}>
               {pricingCommon.booking.cta}
             </GlassButton>
-            <GlassButton href={vertical.workHref} variant="ghost" size="lg" arrow className={ENQUIRY_BUTTON}>
+            <GlassButton href="#work" variant="ghost" size="lg" arrow className={ENQUIRY_BUTTON}>
               View Work
             </GlassButton>
           </Reveal>
@@ -128,7 +130,7 @@ export function PricingPageView({ vertical }: { vertical: VerticalPricing }) {
               <CheckList items={membership.includedLead} className="mt-8" strong />
             )}
 
-            <h3 className="mt-8 text-body font-semibold text-bone">
+            <h3 className="mt-8 font-sans text-body text-bone">
               {membership.includedHeading}
             </h3>
             <CheckList items={membership.included} columns className="mt-4" />
@@ -141,7 +143,7 @@ export function PricingPageView({ vertical }: { vertical: VerticalPricing }) {
                   {membership.turnaround.rows.map((row) => (
                     <div key={row.label}>
                       <dt className="text-small text-ash">{row.label}</dt>
-                      <dd className="text-body font-semibold text-bone">{row.value}</dd>
+                      <dd className="text-body text-bone">{row.value}</dd>
                     </div>
                   ))}
                 </dl>
@@ -165,7 +167,7 @@ export function PricingPageView({ vertical }: { vertical: VerticalPricing }) {
 
             {vertical.addOns?.map((addOn) => (
               <Panel key={addOn.name} title={addOn.name}>
-                <p className="text-body font-semibold text-brand-ink">{addOn.price}</p>
+                <p className="text-body text-brand-ink">{addOn.price}</p>
                 {addOn.body?.map((line) => (
                   <p key={line} className="mt-2 text-small leading-relaxed text-ash">
                     {line}
@@ -191,6 +193,8 @@ export function PricingPageView({ vertical }: { vertical: VerticalPricing }) {
           </Reveal>
         </div>
       </section>
+
+      <VerticalWork vertical={vertical} />
 
       {/* ─── One-time products ─── */}
       <section
@@ -225,6 +229,44 @@ export function PricingPageView({ vertical }: { vertical: VerticalPricing }) {
       <Faq />
       <Closing current={vertical.slug} href="#membership" />
     </main>
+  );
+}
+
+/**
+ * THIS VERTICAL'S WORK, ALL OF IT, ON THE PAGE — "View Work" scrolls here
+ * rather than leaving. Genesis asked for it "jaise homepage par hai": the
+ * homepage portfolio's own grid and two-row rail, given only this
+ * vertical's pieces, featured first. No filter chips — there is only one
+ * vertical to filter to.
+ */
+function VerticalWork({ vertical }: { vertical: VerticalPricing }) {
+  const items = work.filter((item) => item.vertical === vertical.short);
+  if (items.length === 0) return null;
+  const ordered = [...items.filter((i) => i.featured), ...items.filter((i) => !i.featured)];
+  return (
+    <section
+      id="work"
+      aria-labelledby="work-heading"
+      className="relative isolate scroll-mt-24 overflow-hidden py-[var(--section-pad)]"
+    >
+      <div className="relative z-[2] mx-auto w-full max-w-6xl px-6">
+        <Reveal>
+          <SectionLabel dot tone="brand">
+            Explore our work
+          </SectionLabel>
+          <h2
+            id="work-heading"
+            className="mt-4 text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2"
+          >
+            {vertical.division}{" "}
+            <span className="font-serif italic text-brand-ink">work.</span>
+          </h2>
+        </Reveal>
+        <Reveal variant="scene" className="fit-window mt-[var(--block-gap)]">
+          <WorkGrid items={expandToClips(ordered)} showFilters={false} rail />
+        </Reveal>
+      </div>
+    </section>
   );
 }
 
@@ -265,11 +307,11 @@ export function UnlimitedAndEnterprise() {
         <h2 className="mt-4 text-h3 font-normal leading-[1.1] tracking-tight text-bone">
           {pricingCommon.unlimited.name}
         </h2>
-        <p className="mt-2 text-lead font-semibold text-brand-ink">
+        <p className="mt-2 text-lead text-brand-ink">
           {pricingCommon.unlimited.price}
         </p>
         <p className="mt-4 text-body leading-relaxed text-ash">{pricingCommon.unlimited.body}</p>
-        <p className="mt-5 text-small font-semibold text-bone">
+        <p className="mt-5 text-small text-bone">
           {pricingCommon.unlimited.accessLabel}
         </p>
         <CheckList items={pricingCommon.unlimited.access} className="mt-3" />
@@ -327,18 +369,21 @@ export function HowMembershipsWork() {
           {pricingCommon.steps.heading}
         </h2>
       </Reveal>
-      <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ol className="mt-10 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
         {pricingCommon.steps.items.map((step, index) => (
           <Reveal
             as="li"
             key={step.n}
             delay={0.04 * index}
-            className="glass rounded-card p-6"
+            className="border-t border-white/12 pt-6"
           >
-            <p className="text-small tracking-[0.15em] text-brand-ink">
-              {step.n} — {step.title}
+            <span className="block font-display text-h2 font-normal leading-none tracking-tight text-brand-ink">
+              {step.n}
+            </span>
+            <h3 className="mt-6 font-sans text-lead leading-snug text-bone">{step.title}</h3>
+            <p className="mt-2 text-pretty text-small leading-relaxed text-ash sm:text-body">
+              {step.body}
             </p>
-            <p className="mt-3 text-pretty text-body leading-relaxed text-ash">{step.body}</p>
           </Reveal>
         ))}
       </ol>
@@ -363,7 +408,7 @@ export function Faq() {
       <dl className="mt-10 grid gap-x-12 gap-y-8 md:grid-cols-2">
         {pricingCommon.faq.items.map((faq) => (
           <div key={faq.q}>
-            <dt className="text-body font-semibold leading-snug text-bone">{faq.q}</dt>
+            <dt className="text-body leading-snug text-bone">{faq.q}</dt>
             {faq.a.map((line) => (
               <dd key={line} className="mt-2 text-pretty text-body leading-relaxed text-ash">
                 {line}
@@ -412,7 +457,7 @@ function PriceCard({ vertical }: { vertical: VerticalPricing }) {
       </p>
       <div className="mt-6 border-t border-white/10 pt-5">
         <p className="text-small text-ash">Quarterly</p>
-        <p className="mt-1 text-lead font-semibold text-brand-ink">{membership.quarterly.price}</p>
+        <p className="mt-1 text-lead text-brand-ink">{membership.quarterly.price}</p>
         {membership.quarterly.note && (
           <p className="mt-2 text-small leading-relaxed text-ash">{membership.quarterly.note}</p>
         )}
@@ -425,7 +470,7 @@ function PriceCard({ vertical }: { vertical: VerticalPricing }) {
 export function ProductCard({ product }: { product: OneTimeProduct }) {
   return (
     <article className="glass glass-lit flex w-full flex-col rounded-panel p-6 sm:p-8">
-      <h3 className="text-lead font-semibold leading-snug text-bone">{product.name}</h3>
+      <h3 className="font-sans text-lead leading-snug text-bone">{product.name}</h3>
       <p className="mt-3 text-h3 font-normal leading-none tracking-tight text-brand-ink">
         {product.price}
       </p>
@@ -439,7 +484,7 @@ export function ProductCard({ product }: { product: OneTimeProduct }) {
       ))}
       {product.includes && (
         <>
-          <p className="mt-5 text-small font-semibold text-bone">{product.includesLabel}</p>
+          <p className="mt-5 text-small text-bone">{product.includesLabel}</p>
           <CheckList items={product.includes} className="mt-3" />
         </>
       )}
@@ -455,12 +500,12 @@ export function ProductCard({ product }: { product: OneTimeProduct }) {
 function Credits({ credits }: { credits: NonNullable<VerticalPricing["credits"]> }) {
   return (
     <div className="mt-8">
-      <h3 className="text-lead font-semibold leading-snug text-bone">{credits.heading}</h3>
+      <h3 className="font-sans text-lead leading-snug text-bone">{credits.heading}</h3>
       <p className="mt-1 text-body text-ash">{credits.sub}</p>
       <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {credits.tiers.map((tier) => (
           <li key={tier.credits} className="rounded-card border border-white/10 p-4">
-            <p className="text-small font-semibold tracking-wide text-brand-ink">{tier.credits}</p>
+            <p className="text-small tracking-wide text-brand-ink">{tier.credits}</p>
             <ul className="mt-2 flex flex-col gap-1">
               {tier.items.map((item) => (
                 <li key={item} className="text-small leading-snug text-ash">
@@ -472,7 +517,7 @@ function Credits({ credits }: { credits: NonNullable<VerticalPricing["credits"]>
         ))}
       </ul>
       <div className="mt-6 rounded-card border border-white/10 p-5">
-        <p className="text-small font-semibold text-bone">Example</p>
+        <p className="text-small text-bone">Example</p>
         <p className="mt-2 text-small text-ash">You could use 24 credits for:</p>
         {credits.examples.map((example, index) => (
           <p key={example} className="mt-2 text-small leading-snug text-bone">
@@ -514,7 +559,7 @@ export function CheckList({
           <span
             className={cn(
               "text-small leading-snug first-letter:uppercase sm:text-body",
-              strong ? "font-semibold text-bone" : "text-ash",
+              strong ? "text-bone" : "text-ash",
             )}
           >
             {item}

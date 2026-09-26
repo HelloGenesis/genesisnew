@@ -226,8 +226,14 @@ export function DivisionBoard() {
           `-translate-x-1/2` are one property, and a second element just to
           hold 6px of drift is a box that exists for nothing. 6px is the
           middle of Genesis's 4-8.
+
+          THE THIRD BOUND IS FOR SHORT LAPTOPS. The hero copy under the orb
+          made this screen taller, and on a ~750px-high window the names ran
+          up under the nav ("bohot chipak ke hai"). 100dvh - 23rem keeps the
+          orb, the names and the hero inside one screen there; from about
+          870px tall 58vh is the smaller bound again and nothing changes.
         */}
-        <div className="relative mx-auto w-[min(62vw,17rem,36vh)] motion-safe:translate-x-[calc(var(--par-x)*6px)] motion-safe:translate-y-[calc(var(--par-y)*6px)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out lg:left-1/2 lg:mx-0 lg:w-[min(130%,58vh)] lg:-translate-x-1/2 lg:motion-safe:translate-x-[calc(-50%+var(--par-x)*6px)]">
+        <div className="relative mx-auto w-[min(62vw,17rem,36vh)] motion-safe:translate-x-[calc(var(--par-x)*6px)] motion-safe:translate-y-[calc(var(--par-y)*6px)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out lg:left-1/2 lg:mx-0 lg:w-[min(130%,58vh,calc(100dvh-23rem))] lg:-translate-x-1/2 lg:motion-safe:translate-x-[calc(-50%+var(--par-x)*6px)]">
           <NeuralOrb focus={focus} />
 
           {/*
@@ -438,7 +444,7 @@ export function DivisionBoard() {
                 onFocus={() => setActive(index)}
                 onBlur={leave}
                 className={cn(
-                  "mt-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-brand/40 bg-brand/10 px-3.5 text-[0.75rem] font-medium text-brand-ink outline-none sm:text-small",
+                  "mt-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-brand/40 bg-brand/10 px-3.5 text-[0.75rem] text-brand-ink outline-none sm:text-small",
                   "hover:border-brand/70 hover:bg-brand/20",
                   "focus-visible:ring-2 focus-visible:ring-brand",
                   "[@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",

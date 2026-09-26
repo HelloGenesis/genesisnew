@@ -59,7 +59,13 @@ export function Services() {
         with somebody else's section under it. Full height and centred, the
         orb and its four names own the screen and the wall starts below it.
       */
-      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[calc(var(--section-pad)*3.4)]"
+      /*
+        NEVER LESS THAN 7.5REM ON TOP FROM lg. --section-pad shrinks with the
+        window's height, so on a short laptop 3.4 of it came to ~73px while
+        the fixed nav ends at ~87px, and Influence and AI Lab sat right under
+        it. The floor keeps a clear gap below the nav at any height.
+      */
+      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[calc(var(--section-pad)*3.4)] lg:pt-[max(calc(var(--section-pad)*3.4),7.5rem)]"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme

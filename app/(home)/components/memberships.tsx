@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
+import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
@@ -55,28 +56,41 @@ export function Memberships() {
       <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {verticals.map((vertical, index) => {
           const ramp = services.items.find((item) => item.short === vertical.short)?.ramp;
+          /* "Membership from ₹69k/month", set as a label over the price. */
+          const [fromLabel, fromPrice] = vertical.home.from.split(/ (?=₹)/);
           return (
             <Reveal as="li" key={vertical.slug} delay={0.05 * index} className="flex">
               <Link
                 href={pricingPath(vertical.slug)}
                 className="glass glass-lit group relative flex w-full flex-col overflow-hidden rounded-panel p-6 transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
-                <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ backgroundImage: ramp }} />
-                <h3
-                  className="w-fit bg-clip-text text-h3 font-normal leading-[1.1] tracking-tight text-transparent"
-                  style={{ backgroundImage: ramp }}
-                >
-                  {vertical.division.replace(/^Genesis /, "")}
-                </h3>
-                <p className="mt-3 text-pretty text-small leading-relaxed text-ash sm:text-body">
+                <span aria-hidden className="absolute inset-x-0 top-0 h-px opacity-80" style={{ backgroundImage: ramp }} />
+                {/* The division's own name artwork — the same marks as the orb. */}
+                <DivisionLockup
+                  name={vertical.short}
+                  tagline=""
+                  ramp={ramp ?? ""}
+                  as="h3"
+                  nameOnly
+                  height={34}
+                  taglineClassName="hidden"
+                />
+                <p className="mb-6 mt-5 text-pretty text-small leading-relaxed text-ash">
                   {vertical.home.blurb}
                 </p>
-                <span className="mt-auto pt-6">
-                  <span className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-brand/40 bg-brand/10 px-4 text-small font-medium text-brand-ink transition-colors group-hover:border-brand/70 group-hover:bg-brand/20">
-                    {vertical.home.from}
-                    <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
+                <div className="mt-auto flex items-end justify-between gap-3 border-t border-white/10 pt-5">
+                  <p>
+                    <span className="block text-micro uppercase tracking-[0.2em] text-faint">
+                      {fromLabel}
+                    </span>
+                    <span className="mt-2 block text-h3 font-normal leading-none tracking-tight text-bone">
+                      {fromPrice}
+                    </span>
+                  </p>
+                  <span className="grid size-10 shrink-0 place-items-center rounded-full border border-white/15 text-bone transition-colors group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand">
+                    <ArrowUpRight className="size-4" aria-hidden />
                   </span>
-                </span>
+                </div>
               </Link>
             </Reveal>
           );
@@ -89,13 +103,18 @@ export function Memberships() {
           {homeMemberships.steps.heading}
         </h2>
       </Reveal>
-      <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ol className="mt-10 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
         {homeMemberships.steps.items.map((step, index) => (
-          <Reveal as="li" key={step.title} delay={0.05 * index} className="glass rounded-card p-6">
-            <span className="grid size-10 place-items-center rounded-full bg-brand text-small font-semibold text-on-brand">
-              {index + 1}
+          <Reveal
+            as="li"
+            key={step.title}
+            delay={0.05 * index}
+            className="border-t border-white/12 pt-6"
+          >
+            <span className="block font-display text-h2 font-normal leading-none tracking-tight text-brand-ink">
+              {String(index + 1).padStart(2, "0")}
             </span>
-            <h3 className="mt-5 text-lead font-semibold leading-snug text-bone">{step.title}</h3>
+            <h3 className="mt-6 font-sans text-lead leading-snug text-bone">{step.title}</h3>
             <p className="mt-2 text-pretty text-small leading-relaxed text-ash sm:text-body">
               {step.body}
             </p>

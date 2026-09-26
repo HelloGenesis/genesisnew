@@ -111,7 +111,7 @@ export function PricingHubView() {
               label: vertical.division.replace(/^Genesis /, ""),
               content: (
                 <>
-                  <h3 className="text-lead font-semibold text-bone">{vertical.oneTimeHeading}</h3>
+                  <h3 className="font-sans text-lead text-bone">{vertical.oneTimeHeading}</h3>
                   <ul
                     className={cn(
                       "mt-6 grid gap-4 sm:grid-cols-2",
@@ -148,7 +148,7 @@ function MembershipCard({ vertical }: { vertical: VerticalPricing }) {
       {/* The division's own colour, as a hairline across the top of the card. */}
       <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ backgroundImage: ramp }} />
       <div className="flex items-start justify-between gap-4">
-        <h2 className="text-lead font-semibold leading-snug text-bone">{vertical.division}</h2>
+        <h2 className="font-sans text-lead leading-snug text-bone">{vertical.division}</h2>
         <Link
           href={page}
           aria-label={`${vertical.division} — ${membership.name}`}
@@ -164,7 +164,7 @@ function MembershipCard({ vertical }: { vertical: VerticalPricing }) {
         </span>
         <span className="text-small text-ash">{membership.period}</span>
       </p>
-      <p className="mt-4 text-body font-semibold leading-snug text-bone">{membership.tagline}</p>
+      <p className="mt-4 text-body leading-snug text-bone">{membership.tagline}</p>
       <p className="mt-3 text-small leading-relaxed text-ash">{membership.description}</p>
       <CheckList
         items={(membership.includedLead ?? []).concat(membership.included).slice(0, CARD_ITEMS)}
