@@ -180,6 +180,35 @@ export function DivisionBoard() {
 
   const leave = useCallback(() => setActive(null), []);
 
+  /*
+    HOW WIDE EACH TAGLINE ACTUALLY DRAWS, so the membership button can centre
+    under it. The tagline hugs the orb-side edge and is usually narrower than
+    its column (and, under Brand & Design, far narrower than the name), so
+    neither the column nor the name is the line the button belongs to. Read
+    after layout and again whenever the board resizes; null until then, when
+    the button falls back to the name's width.
+  */
+  const [taglineWidths, setTaglineWidths] = useState<(number | null)[]>([]);
+  useEffect(() => {
+    const el = stage.current;
+    if (!el) return;
+    const measure = () => {
+      const lines = el.querySelectorAll<HTMLElement>(".brain-tagline");
+      setTaglineWidths(
+        Array.from(lines, (line) => {
+          const text = line.firstElementChild ?? line;
+          const width = text.getBoundingClientRect().width;
+          return width > 0 ? Math.ceil(width) : null;
+        }),
+      );
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    document.fonts?.ready.then(measure).catch(() => {});
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (departing === null) return;
     const timer = window.setTimeout(() => setDeparting(null), 1300);
@@ -402,7 +431,7 @@ export function DivisionBoard() {
                     two halves of the board printed straight through each
                     other. It wraps.
                   */
-                  "mt-2 block min-h-[2.7em] whitespace-normal text-balance text-[0.6875rem] leading-[1.4] text-bone sm:mt-3 sm:text-small",
+                  "brain-tagline mt-2 block min-h-[2.7em] whitespace-normal text-balance text-[0.6875rem] leading-[1.4] text-bone sm:mt-3 sm:text-small",
                   /*
                     The resting state, on pointer devices only: invisible and
                     sitting 4px low, so revealing it is a fade AND a rise. A
@@ -437,15 +466,22 @@ export function DivisionBoard() {
             */}
             {pricing && (
               /*
-                CENTRED ON THE NAME, NOT THE COLUMN. The mark is narrower than
-                its column and hugs the side nearest the orb, so a button
-                aligned to the column edge sat off-centre under it. This box
-                is the mark's own width (fluidNameWidth), aligned to the same
-                edge by the column's items-*, and the button centres in it.
+                CENTRED UNDER THE TAGLINE — the line directly above it. The
+                tagline hugs the orb-side edge and is rarely the width of the
+                column or of the name (Brand & Design's name fills its column,
+                its tagline a third of it), so centring on either left the
+                button visibly off. This box is the tagline's measured width,
+                aligned to the same edge by the column's items-*, and the
+                button centres in it — spilling evenly both ways when it is
+                the wider of the two.
               */
               <div
                 className="flex justify-center"
-                style={{ width: fluidNameWidth(service.short) }}
+                style={{
+                  width: taglineWidths[index]
+                    ? `${taglineWidths[index]}px`
+                    : fluidNameWidth(service.short),
+                }}
               >
               <Link
                 href={pricingPath(pricing.slug)}
