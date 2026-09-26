@@ -20,6 +20,7 @@ import {
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
+import { bookingHref, findVertical, homeMemberships, joinHref } from "@/lib/pricing";
 import { Reveal } from "@/components/genesis/reveal";
 import { influencer, services } from "@/lib/home-content";
 
@@ -481,23 +482,20 @@ export function InfluencerMarketing() {
           division page is still reachable from the card above.
         */}
         <Reveal delay={0.15} className="mt-5 flex flex-nowrap gap-2 sm:flex-wrap sm:gap-3">
-          <GlassButton
-            href="/#contact"
-            quickContact="influence:plan-a-campaign"
-            variant="brand"
-            arrow
-            className={MOBILE_CTA}
-          >
-            Plan an Influencer Campaign
+          {/*
+            THE PRICING BRIEF'S THREE: "each vertical section's buttons will be
+            changed, and they'll have their own CTA like View work. Book a Call.
+            Join today (Razorpay link)". Join and Book read their links from
+            lib/pricing, and open WhatsApp until Genesis sends the real ones.
+          */}
+          <GlassButton href={joinHref(findVertical("influence")!.membership)} variant="brand" arrow className={MOBILE_CTA}>
+            {homeMemberships.sectionCtas.join}
           </GlassButton>
-          <GlassButton
-            href="#library"
-            selectsFilter="Influence"
-            variant="glass"
-            arrow
-            className={MOBILE_CTA}
-          >
-            View Influence Work
+          <GlassButton href={bookingHref(findVertical("influence")!.division)} variant="glass" arrow className={MOBILE_CTA}>
+            {homeMemberships.sectionCtas.book}
+          </GlassButton>
+          <GlassButton href="#library" selectsFilter="Influence" variant="ghost" arrow className={MOBILE_CTA}>
+            {homeMemberships.sectionCtas.work}
           </GlassButton>
         </Reveal>
       </div>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FolderPanel } from "@/components/genesis/folder-panel";
 import { SwipeHintRail } from "@/components/genesis/swipe-hint-rail";
 import { GlassButton } from "@/components/genesis/glass-button";
+import { bookingHref, findVertical, homeMemberships, joinHref } from "@/lib/pricing";
 import { Reveal } from "@/components/genesis/reveal";
 import { branding, services } from "@/lib/home-content";
 import { ctaWhatsappLink, isContactHref } from "@/lib/site-config";
@@ -442,17 +443,20 @@ export function BrandingDesign() {
         */
         className="mt-4 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3 xl:mt-20"
       >
-        <GlassButton
-          href="/#contact"
-          quickContact="brand-design:build-a-brand"
-          variant="brand"
-          arrow
-          className={MOBILE_CTA}
-        >
-          Build a brand
+        {/*
+          THE PRICING BRIEF'S THREE: "each vertical section's buttons will be
+          changed, and they'll have their own CTA like View work. Book a Call.
+          Join today (Razorpay link)". Join and Book read their links from
+          lib/pricing, and open WhatsApp until Genesis sends the real ones.
+        */}
+        <GlassButton href={joinHref(findVertical("brand-design")!.membership)} variant="brand" arrow className={MOBILE_CTA}>
+          {homeMemberships.sectionCtas.join}
         </GlassButton>
-        <GlassButton href="/#library" variant="glass" arrow className={MOBILE_CTA}>
-          View branding work
+        <GlassButton href={bookingHref(findVertical("brand-design")!.division)} variant="glass" arrow className={MOBILE_CTA}>
+          {homeMemberships.sectionCtas.book}
+        </GlassButton>
+        <GlassButton href="/#library" variant="ghost" arrow className={MOBILE_CTA}>
+          {homeMemberships.sectionCtas.work}
         </GlassButton>
       </Reveal>
     </SectionShell>

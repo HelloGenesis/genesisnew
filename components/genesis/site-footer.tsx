@@ -5,7 +5,9 @@ import { Atmosphere } from "@/components/genesis/atmosphere";
 import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { SocialStars } from "@/components/genesis/social-stars";
 import { Reveal } from "@/components/genesis/reveal";
+import { GlassButton } from "@/components/genesis/glass-button";
 import { footerCta } from "@/lib/home-content";
+import { bookingHref, pricingCommon } from "@/lib/pricing";
 import { footerNav, siteConfig, telHref } from "@/lib/site-config";
 
 /**
@@ -40,6 +42,29 @@ export function SiteFooter() {
       className="relative overflow-hidden pt-14"
     >
       <div className="mx-auto w-full max-w-6xl px-6">
+        {/*
+          THE 15-MINUTE CALL, ON EVERY PAGE — the pricing brief: "ALL the
+          footers will have a 15 min calendar book below". It sits at the head
+          of the footer so it is the last thing a reader meets before the
+          boilerplate. The link is lib/pricing's `bookingUrl`; until Genesis
+          sends the calendar it opens WhatsApp.
+        */}
+        <Reveal className="glass glass-strong glass-lit mb-6 flex flex-col gap-6 rounded-panel p-6 sm:p-10 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="micro-label">{pricingCommon.booking.label}</p>
+            <p className="mt-4 text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone">
+              {pricingCommon.booking.heading}{" "}
+              <span className="text-brand-ink">{pricingCommon.booking.headingAccent}</span>
+            </p>
+            <p className="mt-3 max-w-xl text-body leading-relaxed text-ash">
+              {pricingCommon.booking.body}
+            </p>
+          </div>
+          <GlassButton href={bookingHref("Genesis")} variant="brand" size="lg" arrow className="self-start max-sm:h-11 max-sm:px-6 max-sm:text-small lg:self-auto">
+            {pricingCommon.booking.cta}
+          </GlassButton>
+        </Reveal>
+
         {/*
           Contact details + navigation, on a single sheet of liquid glass —
           the spec marks the footer "//liquid glass". Heavier blur and a lit

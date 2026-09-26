@@ -38,7 +38,13 @@ import { cn } from "@/lib/utils";
  * middle; growing from the left reads as a progress bar filling.
  */
 const NAV_LINK = cn(
-  "relative whitespace-nowrap rounded-full px-2.5 py-2 text-small text-ash",
+  /*
+    A LITTLE TIGHTER BETWEEN lg AND xl, for "Pricing". The sixth item put the
+    bar 15px over at 1024 — "Start a Project" ran out of the pill. 4px off
+    each side of every link, at those widths only, buys it back; from xl the
+    bar has room and is as it was.
+  */
+  "relative whitespace-nowrap rounded-full px-2.5 py-2 text-small text-ash lg:max-xl:px-1.5",
   "transition-colors duration-300 hover:bg-[var(--hover-wash)] hover:text-bone",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
   "after:pointer-events-none after:absolute after:inset-x-2.5 after:bottom-1 after:h-px",

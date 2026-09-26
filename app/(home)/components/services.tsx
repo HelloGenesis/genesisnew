@@ -1,6 +1,7 @@
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionBoard } from "@/components/genesis/division-board";
-import { services } from "@/lib/home-content";
+import { GlassButton } from "@/components/genesis/glass-button";
+import { homeMemberships } from "@/lib/pricing";
 
 /**
  * Section 1 — the Brain: what Genesis is, and the four divisions around it.
@@ -159,17 +160,44 @@ export function Services() {
           `text-balance` is left on for those widths, so the two lines it
           makes there are of even length.
         */}
-        <h1 className="mx-auto mt-10 max-w-3xl text-balance text-center text-lead font-normal leading-snug text-bone/85 sm:mt-12 sm:text-h3 lg:max-w-6xl lg:whitespace-nowrap">
-          {services.body}{" "}
-          {/*
-            UPRIGHT, NOT THE SERIF ITALIC every other accent on this site
-            uses. Those are single words inside a HEADING, where the change of
-            face reads as emphasis; this is most of a sentence in body copy,
-            and italicising twelve words of it would read as a quotation. The
-            colour is doing the work on its own.
-          */}
-          <span className="text-brand-ink">{services.bodyAccent}</span>
-        </h1>
+        {/*
+          THE NEW MODEL, UNDER THE ORB — the pricing brief: "the homepage
+          needs to stop leading with a list of agency services. The new hero
+          should immediately explain the new model." The orb and its four
+          names stay the picture; this replaces the positioning line that
+          captioned it ("We help brands grow through…") with Genesis's hero
+          copy and its two buttons. Still the page's one h1.
+        */}
+        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center text-center sm:mt-10">
+          <h1 className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
+            {homeMemberships.hero.heading}{" "}
+            <span className="font-serif italic text-brand-ink">
+              {homeMemberships.hero.headingAccent}
+            </span>
+          </h1>
+          <p className="mt-3 text-balance text-small leading-relaxed text-ash sm:mt-4 sm:text-lead">
+            {homeMemberships.hero.body}
+          </p>
+          <div className="mt-5 flex flex-nowrap justify-center gap-2 sm:mt-6 sm:gap-3">
+            <GlassButton
+              href="#memberships"
+              variant="brand"
+              arrow
+              className="max-sm:h-10 max-sm:px-4 max-sm:text-[0.8125rem]"
+            >
+              {homeMemberships.hero.explore}
+            </GlassButton>
+            <GlassButton
+              href="/#contact"
+              quickContact="cta"
+              variant="glass"
+              arrow
+              className="max-sm:h-10 max-sm:px-4 max-sm:text-[0.8125rem]"
+            >
+              {homeMemberships.hero.start}
+            </GlassButton>
+          </div>
+        </div>
       </div>
     </section>
   );

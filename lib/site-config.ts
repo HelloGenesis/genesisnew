@@ -491,6 +491,8 @@ export const navItems: NavItem[] = [
   },
   // The page, not the homepage rail: Genesis asked the bar to open it.
   { label: "Case Studies", href: "/case-studies" },
+  // The memberships — the pricing brief puts Pricing on the bar.
+  { label: "Pricing", href: "/pricing" },
   /*
     THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable
     from the nav — the only routes to them were a button inside a section you
@@ -571,6 +573,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
       */
       { label: "Work", href: "/#library" },
       { label: "Case Studies", href: "/case-studies" },
+      { label: "Pricing", href: "/pricing" },
       /*
         THE DIVISIONS BY THEIR OWN NAMES — Genesis's footer structure lists
         "Influence / Studios / AI Lab / Brand & Design", not the page titles.

@@ -2,13 +2,12 @@
 
 import { useState, type CSSProperties } from "react";
 
-import { Sparkles } from "lucide-react";
-
 import { AutomationSources } from "@/components/genesis/automation-diagram";
 import { AutomationCtas } from "@/components/genesis/automation-ctas";
 import { AvatarFan } from "@/components/genesis/avatar-fan";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { GlassButton } from "@/components/genesis/glass-button";
+import { bookingHref, findVertical, homeMemberships, joinHref } from "@/lib/pricing";
 import { pagerFor } from "@/components/genesis/overlay";
 import { WarpRail, type WarpItem } from "@/components/genesis/warp-rail";
 import { VideoDialog, type OpenVideo } from "@/components/genesis/video-dialog";
@@ -21,7 +20,6 @@ import {
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
-import { siteConfig, whatsappLink } from "@/lib/site-config";
 import { SectionShell } from "./section-shell";
 
 /*
@@ -108,14 +106,6 @@ export function AiContent() {
     Every card opens something.
   */
   const [video, setVideo] = useState<OpenVideo | null>(null);
-  /*
-    Undefined when there is no number in site-config, exactly as the floating
-    button handles it. The button falls back to the enquiry form rather than
-    disappearing: "Create Your AI Avatar" is the section's primary action, and
-    a section whose main CTA vanishes because a phone number is unset is worse
-    than one that routes the same intent through the form.
-  */
-  const avatarChat = whatsappLink(siteConfig.avatarWhatsappMessage);
 
   return (
     <>
@@ -403,38 +393,20 @@ export function AiContent() {
         applies when there is no chat link to give.
       */}
       <Reveal delay={0.1} className="mt-[var(--block-gap)] flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
-        <GlassButton
-          href={avatarChat ?? "/#contact"}
-          quickContact={avatarChat ? undefined : "ai-labs:create-an-avatar"}
-          variant="brand"
-          icon={<Sparkles className="size-4" />}
-          arrow
-          className={MOBILE_CTA}
-        >
-          Create Your AI Avatar
+        {/*
+          THE PRICING BRIEF'S THREE: "each vertical section's buttons will be
+          changed, and they'll have their own CTA like View work. Book a Call.
+          Join today (Razorpay link)". Join and Book read their links from
+          lib/pricing, and open WhatsApp until Genesis sends the real ones.
+        */}
+        <GlassButton href={joinHref(findVertical("ai-labs")!.membership)} variant="brand" arrow className={MOBILE_CTA}>
+          {homeMemberships.sectionCtas.join}
         </GlassButton>
-        {/*
-          Into the library, filtered — the same treatment Influence's second
-          button gets. It went to /our-work unfiltered, which is "view AI
-          content" landing on everything Genesis has ever made.
-        */}
-        {/*
-          A BARE "#library", NOT "/#library", and the difference is the whole
-          feature. The routed form is a client navigation to the same page:
-          the section tree re-renders, the work grid comes back with its
-          filter at its initial "All", and the chip this button just asked
-          for is thrown away before the reader arrives. A bare hash is
-          handled by SmoothScroll on capture — no navigation, so the grid
-          keeps the state it was handed.
-        */}
-        <GlassButton
-          href="#library"
-          selectsFilter="AI Lab"
-          variant="glass"
-          arrow
-          className={MOBILE_CTA}
-        >
-          Explore AI Work
+        <GlassButton href={bookingHref(findVertical("ai-labs")!.division)} variant="glass" arrow className={MOBILE_CTA}>
+          {homeMemberships.sectionCtas.book}
+        </GlassButton>
+        <GlassButton href="#library" selectsFilter="AI Lab" variant="ghost" arrow className={MOBILE_CTA}>
+          {homeMemberships.sectionCtas.work}
         </GlassButton>
       </Reveal>
     </SectionShell>

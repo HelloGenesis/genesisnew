@@ -1,4 +1,5 @@
 import { GlassButton } from "@/components/genesis/glass-button";
+import { bookingHref, findVertical, homeMemberships, joinHref } from "@/lib/pricing";
 import { Reveal } from "@/components/genesis/reveal";
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
@@ -63,25 +64,20 @@ export function Studios() {
         </div>
 
         <Reveal delay={0.14} className="mt-[var(--block-gap)] flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
-          <GlassButton
-            href="/#contact"
-            quickContact="studios:plan-a-shoot"
-            variant="brand"
-           
-            arrow
-            className={MOBILE_CTA}
-          >
-            Start a Project
-          </GlassButton>
           {/*
-            "Explore Genesis Studios" used to sit between these two and opened
-            /content-creation. Genesis has asked for everything except the two
-            forms to stay on the landing page, and a third button pointing at
-            the same place as this one is not worth keeping — so it is gone
-            rather than re-pointed.
+            THE PRICING BRIEF'S THREE: "each vertical section's buttons will be
+            changed, and they'll have their own CTA like View work. Book a Call.
+            Join today (Razorpay link)". Join and Book read their links from
+            lib/pricing, and open WhatsApp until Genesis sends the real ones.
           */}
+          <GlassButton href={joinHref(findVertical("studios")!.membership)} variant="brand" arrow className={MOBILE_CTA}>
+            {homeMemberships.sectionCtas.join}
+          </GlassButton>
+          <GlassButton href={bookingHref(findVertical("studios")!.division)} variant="glass" arrow className={MOBILE_CTA}>
+            {homeMemberships.sectionCtas.book}
+          </GlassButton>
           <GlassButton href="/#library" variant="ghost" arrow className={MOBILE_CTA}>
-            View the whole library
+            {homeMemberships.sectionCtas.work}
           </GlassButton>
         </Reveal>
       </div>

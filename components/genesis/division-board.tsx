@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -8,6 +9,7 @@ import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { NeuralOrb, type OrbFocus } from "@/components/genesis/neural-orb";
 import { services } from "@/lib/home-content";
+import { pricingPath, verticals } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 
 /**
@@ -260,6 +262,8 @@ export function DivisionBoard() {
         const dimmed = active !== null && !isActive;
         /* Everything except the one being travelled to gets out of the way. */
         const leaving = chosen !== null && chosen !== index;
+        /* This division's membership — the price button under its name. */
+        const pricing = verticals.find((vertical) => vertical.short === service.short);
 
         return (
           <motion.div
@@ -276,7 +280,13 @@ export function DivisionBoard() {
               delay: ENTER.names + index * ENTER.stagger,
               ease: EASE,
             }}
-            className={cn("flex flex-col", PLACEMENT[index])}
+            /*
+              `group/vert` spans the name AND the price button under it, so
+              moving the pointer from one to the other keeps both showing —
+              the button is a separate link (a link cannot hold a link) and
+              would otherwise vanish the moment the name lost the hover.
+            */
+            className={cn("group/vert flex flex-col", PLACEMENT[index])}
           >
             <Link
               href={service.href}
@@ -396,7 +406,9 @@ export function DivisionBoard() {
                   "[@media(hover:none)]:hidden",
                   "transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none",
                   "group-hover:translate-y-0 group-hover:opacity-100",
+                  "group-hover/vert:translate-y-0 group-hover/vert:opacity-100",
                   "group-focus-visible:translate-y-0 group-focus-visible:opacity-100",
+                  "group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
                 )}
                 /*
                   ABOVE THE FOLD, SO NOT LAZY. These four names are the
@@ -407,6 +419,40 @@ export function DivisionBoard() {
                 priority
               />
             </Link>
+
+            {/*
+              "MEMBERSHIP FROM ₹69K/MONTH", under the name — the pricing
+              brief's vertical card, as a button to that vertical's pricing
+              page. Genesis asked for it to behave exactly like the subtext
+              above it, so it carries the same classes: hidden and 4px low at
+              rest on a pointer device, fading up on hover or focus, and not
+              shown at all on a touch screen. Invisible, it also refuses the
+              pointer, so it cannot be clicked before it has been seen.
+            */}
+            {pricing && (
+              <Link
+                href={pricingPath(pricing.slug)}
+                prefetch={false}
+                onPointerEnter={() => setActive(index)}
+                onPointerLeave={leave}
+                onFocus={() => setActive(index)}
+                onBlur={leave}
+                className={cn(
+                  "mt-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-brand/40 bg-brand/10 px-3.5 text-[0.75rem] font-medium text-brand-ink outline-none sm:text-small",
+                  "hover:border-brand/70 hover:bg-brand/20",
+                  "focus-visible:ring-2 focus-visible:ring-brand",
+                  "[@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",
+                  "[@media(hover:none)]:hidden",
+                  "transition-[opacity,transform,background-color,border-color] duration-300 ease-out motion-reduce:transition-none",
+                  "group-hover/vert:pointer-events-auto group-hover/vert:translate-y-0 group-hover/vert:opacity-100",
+                  "group-focus-within/vert:pointer-events-auto group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
+                  leaving && "opacity-0",
+                )}
+              >
+                {pricing.home.from}
+                <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
+              </Link>
+            )}
           </motion.div>
         );
       })}

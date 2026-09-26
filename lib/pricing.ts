@@ -62,6 +62,8 @@ export type VerticalPricing = {
   short: string;
   /** The existing division page, where the work lives. */
   workHref: string;
+  /** The homepage card: the brief's one-line summary and its price button. */
+  home: { blurb: string; from: string };
   membership: Membership;
   /** Anything the brief prints between the membership and its CTA. */
   addOns?: { name: string; price: string; body?: string[] }[];
@@ -82,6 +84,10 @@ export const verticals: VerticalPricing[] = [
     division: "Genesis Influence",
     short: "Influence",
     workHref: "/influencer-marketing",
+    home: {
+      blurb: "Creator sourcing, negotiation and campaign management.",
+      from: "Membership from ₹69k/month",
+    },
     membership: {
       name: "Influence Desk",
       price: "₹69,000",
@@ -160,6 +166,10 @@ export const verticals: VerticalPricing[] = [
     division: "Genesis AI Labs",
     short: "AI Lab",
     workHref: "/ai-content-automation",
+    home: {
+      blurb: "AI avatars, AI video, product visuals and automated content.",
+      from: "Membership from ₹79k/month",
+    },
     membership: {
       name: "AI Content Engine",
       price: "₹79,000",
@@ -268,6 +278,10 @@ export const verticals: VerticalPricing[] = [
     division: "Genesis Studios",
     short: "Studios",
     workHref: "/content-production",
+    home: {
+      blurb: "Shoots, reels, editing and content production.",
+      from: "Membership from ₹89k/month",
+    },
     membership: {
       name: "Content Studio",
       price: "₹89,000",
@@ -359,6 +373,10 @@ export const verticals: VerticalPricing[] = [
     division: "Genesis Brand & Design",
     short: "Brand & Design",
     workHref: "/brand-design",
+    home: {
+      blurb: "Design, campaigns, decks, collateral and brand systems.",
+      from: "Membership from ₹59k/month",
+    },
     membership: {
       name: "Design Desk",
       price: "₹59,000",
@@ -558,6 +576,59 @@ export const pricingCommon = {
     body: "Book a 15-minute call and we'll help you choose the right membership or project based on your goals.",
     cta: "Book a 15 min call",
   },
+} as const;
+
+/** The homepage's memberships block, in the brief's words. */
+export const homeMemberships = {
+  hero: {
+    heading: "Your creative team.",
+    headingAccent: "On demand.",
+    body: "Influence, AI, Content Production and Design — available through flexible Genesis memberships or one-time projects.",
+    explore: "Explore Memberships",
+    start: "Start a Project",
+  },
+  steps: {
+    heading: "How Genesis Memberships Work",
+    items: [
+      { title: "Subscribe", body: "Choose the creative capability you need." },
+      { title: "Add requests", body: "Submit as many requests to your queue as you like." },
+      { title: "We create", body: "We work through them based on your membership's capacity." },
+      { title: "Review & repeat", body: "Approve, revise, and move on to the next request." },
+    ],
+  },
+  oneTime: {
+    heading: "Need a one-time project instead?",
+    items: [
+      { label: "Performance Creative Sprint — ₹35k", slug: "studios" },
+      { label: "AI Avatar Setup — ₹25k", slug: "ai-labs" },
+      { label: "Brand Launch — ₹95k", slug: "brand-design" },
+      { label: "Logo / Identity projects", slug: "brand-design" },
+      { label: "AI films", slug: "ai-labs" },
+      { label: "Influencer campaigns", slug: "influence" },
+      { label: "Shoots", slug: "studios" },
+      { label: "UGC campaigns", slug: "influence" },
+    ] satisfies { label: string; slug: PricingSlug }[],
+  },
+  enterprise: {
+    label: "Enterprise",
+    heading: "Large campaign? We'll build around you.",
+    cta: "Talk to Genesis Enterprise",
+  },
+  /** The three buttons each vertical section on the homepage now carries. */
+  sectionCtas: { join: "Join Today", book: "Book a Call", work: "View Work" },
+} as const;
+
+/** The /pricing page's opening, in the brief's words. */
+export const pricingHub = {
+  heading: "Creative support, without the",
+  headingAccent: "agency complexity.",
+  body: [
+    "Choose the Genesis team you need — Influence, AI, Content Production or Brand & Design.",
+    "Subscribe for ongoing creative capacity, or start with a one-time project.",
+  ],
+  explore: "Explore Memberships",
+  oneTime: "View One-Time Projects",
+  talk: "Talk to Genesis",
 } as const;
 
 export function findVertical(slug: string) {

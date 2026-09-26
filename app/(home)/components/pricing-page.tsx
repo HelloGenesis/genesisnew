@@ -33,8 +33,8 @@ import { Breadcrumbs } from "./service-page";
  *
  * THE ORDER IS THE BRIEF'S: the membership first, then the one-time products,
  * then Genesis Unlimited and Enterprise for the brief that does not fit, then
- * how a membership runs and the questions, and the 15-minute call last —
- * "all the footers will have a 15 min calendar book below".
+ * how a membership runs and the questions. The 15-minute call is the site
+ * footer's now — "all the footers will have a 15 min calendar book below".
  *
  * NO COPY IS WRITTEN HERE. Every sentence on the page comes from lib/pricing,
  * which is Genesis's document verbatim; this file only arranges it.
@@ -100,29 +100,7 @@ export function PricingPageView({ vertical }: { vertical: VerticalPricing }) {
         </div>
       </Atmosphere>
 
-      {/* ─── Memberships: what the model is ─── */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-[var(--section-pad)]">
-        <Reveal className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-12">
-          <div>
-            <SectionLabel dot tone="brand">
-              {pricingCommon.intro.label}
-            </SectionLabel>
-            <h2 className="mt-6 text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-              {pricingCommon.intro.heading}{" "}
-              <span className="font-serif italic text-brand-ink">
-                {pricingCommon.intro.headingAccent}
-              </span>
-            </h2>
-          </div>
-          <div>
-            <p className="text-pretty text-body leading-relaxed text-ash">
-              {pricingCommon.intro.body}
-            </p>
-            <CheckList items={pricingCommon.intro.points} className="mt-5" />
-            <p className="mt-5 text-small text-faint">{pricingCommon.intro.gst}</p>
-          </div>
-        </Reveal>
-      </section>
+      <MembershipsIntro />
 
       {/* ─── The membership in full ─── */}
       <section
@@ -242,154 +220,181 @@ export function PricingPageView({ vertical }: { vertical: VerticalPricing }) {
         </ul>
       </section>
 
-      {/* ─── Genesis Unlimited + Enterprise ─── */}
-      <section className="mx-auto grid w-full max-w-6xl gap-4 px-6 py-[var(--section-pad)] lg:grid-cols-2">
-        <Reveal className="glass glass-lit flex flex-col rounded-panel p-6 sm:p-10">
-          <p className="micro-label">{pricingCommon.unlimited.label}</p>
-          <h2 className="mt-4 text-h3 font-normal leading-[1.1] tracking-tight text-bone">
-            {pricingCommon.unlimited.name}
-          </h2>
-          <p className="mt-2 text-lead font-semibold text-brand-ink">
-            {pricingCommon.unlimited.price}
-          </p>
-          <p className="mt-4 text-body leading-relaxed text-ash">{pricingCommon.unlimited.body}</p>
-          <p className="mt-5 text-small font-semibold text-bone">
-            {pricingCommon.unlimited.accessLabel}
-          </p>
-          <CheckList items={pricingCommon.unlimited.access} className="mt-3" />
-          <p className="mt-3 text-small leading-relaxed text-ash">
-            {pricingCommon.unlimited.accessNote}
-          </p>
-          <p className="mt-4 text-small leading-relaxed text-faint">
-            {pricingCommon.unlimited.footnote}
-          </p>
-          <div className="mt-auto pt-8">
-            <GlassButton
-              href={enquiryHref(pricingCommon.unlimited.name)}
-              variant="brand"
-              arrow
-              className={ENQUIRY_BUTTON}
-            >
-              {pricingCommon.unlimited.cta}
-            </GlassButton>
-          </div>
-        </Reveal>
+      <UnlimitedAndEnterprise />
+      <HowMembershipsWork />
+      <Faq />
+      <Closing current={vertical.slug} href="#membership" />
+    </main>
+  );
+}
 
-        <Reveal delay={0.08} className="glass glass-lit flex flex-col rounded-panel p-6 sm:p-10">
-          <p className="micro-label">{pricingCommon.enterprise.label}</p>
-          <h2 className="mt-4 text-h3 font-normal leading-[1.1] tracking-tight text-bone">
-            {pricingCommon.enterprise.heading}
-          </h2>
-          <p className="mt-4 text-lead leading-snug text-bone">{pricingCommon.enterprise.lead}</p>
-          <p className="mt-4 text-body leading-relaxed text-ash">{pricingCommon.enterprise.body}</p>
-          <div className="mt-auto pt-8">
-            <GlassButton
-              href={enquiryHref("Genesis Enterprise")}
-              variant="glass"
-              arrow
-              className={ENQUIRY_BUTTON}
-            >
-              {pricingCommon.enterprise.cta}
-            </GlassButton>
-          </div>
-        </Reveal>
-      </section>
+/* ─── Sections shared by the vertical pages and the /pricing hub ─── */
 
-      {/* ─── How memberships work ─── */}
-      <section
-        aria-labelledby="steps-heading"
-        className="mx-auto w-full max-w-6xl px-6 py-[var(--section-pad)]"
-      >
-        <Reveal>
-          <h2
-            id="steps-heading"
-            className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2"
-          >
-            {pricingCommon.steps.heading}
-          </h2>
-        </Reveal>
-        <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {pricingCommon.steps.items.map((step, index) => (
-            <Reveal
-              as="li"
-              key={step.n}
-              delay={0.04 * index}
-              className="glass rounded-card p-6"
-            >
-              <p className="text-small tracking-[0.15em] text-brand-ink">
-                {step.n} — {step.title}
-              </p>
-              <p className="mt-3 text-pretty text-body leading-relaxed text-ash">{step.body}</p>
-            </Reveal>
-          ))}
-        </ol>
-      </section>
-
-      {/* ─── FAQ ─── */}
-      <section
-        aria-labelledby="faq-heading"
-        className="mx-auto w-full max-w-6xl px-6 py-[var(--section-pad)]"
-      >
-        <Reveal>
-          <h2
-            id="faq-heading"
-            className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2"
-          >
-            {pricingCommon.faq.heading}
-          </h2>
-        </Reveal>
-        <dl className="mt-10 grid gap-x-12 gap-y-8 md:grid-cols-2">
-          {pricingCommon.faq.items.map((faq) => (
-            <div key={faq.q}>
-              <dt className="text-body font-semibold leading-snug text-bone">{faq.q}</dt>
-              {faq.a.map((line) => (
-                <dd key={line} className="mt-2 text-pretty text-body leading-relaxed text-ash">
-                  {line}
-                </dd>
-              ))}
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* ─── Closing line ─── */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-[var(--section-pad)] text-center">
-        <Reveal>
-          <h2 className="mx-auto max-w-4xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-            {pricingCommon.closing.heading}{" "}
+export function MembershipsIntro() {
+  return (
+    <section className="mx-auto w-full max-w-6xl px-6 py-[var(--section-pad)]">
+      <Reveal className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-12">
+        <div>
+          <SectionLabel dot tone="brand">
+            {pricingCommon.intro.label}
+          </SectionLabel>
+          <h2 className="mt-6 text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
+            {pricingCommon.intro.heading}{" "}
             <span className="font-serif italic text-brand-ink">
-              {pricingCommon.closing.headingAccent}
+              {pricingCommon.intro.headingAccent}
             </span>
           </h2>
-          <p className="mt-5 text-lead text-ash">{pricingCommon.closing.sub}</p>
-          <div className="mt-8 flex justify-center">
-            <GlassButton href="#membership" variant="brand" size="lg" arrow className={ENQUIRY_BUTTON}>
-              {pricingCommon.closing.cta}
-            </GlassButton>
-          </div>
-          <VerticalSwitcher current={vertical.slug} className="mt-8 justify-center" />
-        </Reveal>
-      </section>
+        </div>
+        <div>
+          <p className="text-pretty text-body leading-relaxed text-ash">
+            {pricingCommon.intro.body}
+          </p>
+          <CheckList items={pricingCommon.intro.points} className="mt-5" />
+          <p className="mt-5 text-small text-faint">{pricingCommon.intro.gst}</p>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
 
-      {/* ─── The 15-minute call, above the footer on every pricing page ─── */}
-      <section className="mx-auto w-full max-w-6xl px-6 pb-[var(--section-pad)]">
-        <Reveal className="glass glass-strong glass-lit flex flex-col gap-6 rounded-panel p-6 sm:p-10 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="micro-label">{pricingCommon.booking.label}</p>
-            <h2 className="mt-4 text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone">
-              {pricingCommon.booking.heading}{" "}
-              <span className="text-brand-ink">{pricingCommon.booking.headingAccent}</span>
-            </h2>
-            <p className="mt-3 max-w-xl text-body leading-relaxed text-ash">
-              {pricingCommon.booking.body}
-            </p>
-          </div>
-          <GlassButton href={book} variant="brand" size="lg" arrow className={ENQUIRY_BUTTON}>
-            {pricingCommon.booking.cta}
+export function UnlimitedAndEnterprise() {
+  return (
+    <section className="mx-auto grid w-full max-w-6xl gap-4 px-6 py-[var(--section-pad)] lg:grid-cols-2">
+      <Reveal className="glass glass-lit flex flex-col rounded-panel p-6 sm:p-10">
+        <p className="micro-label">{pricingCommon.unlimited.label}</p>
+        <h2 className="mt-4 text-h3 font-normal leading-[1.1] tracking-tight text-bone">
+          {pricingCommon.unlimited.name}
+        </h2>
+        <p className="mt-2 text-lead font-semibold text-brand-ink">
+          {pricingCommon.unlimited.price}
+        </p>
+        <p className="mt-4 text-body leading-relaxed text-ash">{pricingCommon.unlimited.body}</p>
+        <p className="mt-5 text-small font-semibold text-bone">
+          {pricingCommon.unlimited.accessLabel}
+        </p>
+        <CheckList items={pricingCommon.unlimited.access} className="mt-3" />
+        <p className="mt-3 text-small leading-relaxed text-ash">
+          {pricingCommon.unlimited.accessNote}
+        </p>
+        <p className="mt-4 text-small leading-relaxed text-faint">
+          {pricingCommon.unlimited.footnote}
+        </p>
+        <div className="mt-auto pt-8">
+          <GlassButton
+            href={enquiryHref(pricingCommon.unlimited.name)}
+            variant="brand"
+            arrow
+            className={ENQUIRY_BUTTON}
+          >
+            {pricingCommon.unlimited.cta}
           </GlassButton>
-        </Reveal>
-      </section>
-    </main>
+        </div>
+      </Reveal>
+
+      <Reveal delay={0.08} className="glass glass-lit flex flex-col rounded-panel p-6 sm:p-10">
+        <p className="micro-label">{pricingCommon.enterprise.label}</p>
+        <h2 className="mt-4 text-h3 font-normal leading-[1.1] tracking-tight text-bone">
+          {pricingCommon.enterprise.heading}
+        </h2>
+        <p className="mt-4 text-lead leading-snug text-bone">{pricingCommon.enterprise.lead}</p>
+        <p className="mt-4 text-body leading-relaxed text-ash">{pricingCommon.enterprise.body}</p>
+        <div className="mt-auto pt-8">
+          <GlassButton
+            href={enquiryHref("Genesis Enterprise")}
+            variant="glass"
+            arrow
+            className={ENQUIRY_BUTTON}
+          >
+            {pricingCommon.enterprise.cta}
+          </GlassButton>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+export function HowMembershipsWork() {
+  return (
+    <section
+      aria-labelledby="steps-heading"
+      className="mx-auto w-full max-w-6xl px-6 py-[var(--section-pad)]"
+    >
+      <Reveal>
+        <h2
+          id="steps-heading"
+          className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2"
+        >
+          {pricingCommon.steps.heading}
+        </h2>
+      </Reveal>
+      <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {pricingCommon.steps.items.map((step, index) => (
+          <Reveal
+            as="li"
+            key={step.n}
+            delay={0.04 * index}
+            className="glass rounded-card p-6"
+          >
+            <p className="text-small tracking-[0.15em] text-brand-ink">
+              {step.n} — {step.title}
+            </p>
+            <p className="mt-3 text-pretty text-body leading-relaxed text-ash">{step.body}</p>
+          </Reveal>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+export function Faq() {
+  return (
+    <section
+      aria-labelledby="faq-heading"
+      className="mx-auto w-full max-w-6xl px-6 py-[var(--section-pad)]"
+    >
+      <Reveal>
+        <h2
+          id="faq-heading"
+          className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2"
+        >
+          {pricingCommon.faq.heading}
+        </h2>
+      </Reveal>
+      <dl className="mt-10 grid gap-x-12 gap-y-8 md:grid-cols-2">
+        {pricingCommon.faq.items.map((faq) => (
+          <div key={faq.q}>
+            <dt className="text-body font-semibold leading-snug text-bone">{faq.q}</dt>
+            {faq.a.map((line) => (
+              <dd key={line} className="mt-2 text-pretty text-body leading-relaxed text-ash">
+                {line}
+              </dd>
+            ))}
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+export function Closing({ current, href }: { current?: string; href: string }) {
+  return (
+    <section className="mx-auto w-full max-w-6xl px-6 py-[var(--section-pad)] text-center">
+      <Reveal>
+        <h2 className="mx-auto max-w-4xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
+          {pricingCommon.closing.heading}{" "}
+          <span className="font-serif italic text-brand-ink">
+            {pricingCommon.closing.headingAccent}
+          </span>
+        </h2>
+        <p className="mt-5 text-lead text-ash">{pricingCommon.closing.sub}</p>
+        <div className="mt-8 flex justify-center">
+          <GlassButton href={href} variant="brand" size="lg" arrow className={ENQUIRY_BUTTON}>
+            {pricingCommon.closing.cta}
+          </GlassButton>
+        </div>
+        <VerticalSwitcher current={current} className="mt-8 justify-center" />
+      </Reveal>
+    </section>
   );
 }
 
@@ -417,7 +422,7 @@ function PriceCard({ vertical }: { vertical: VerticalPricing }) {
   );
 }
 
-function ProductCard({ product }: { product: OneTimeProduct }) {
+export function ProductCard({ product }: { product: OneTimeProduct }) {
   return (
     <article className="glass glass-lit flex w-full flex-col rounded-panel p-6 sm:p-8">
       <h3 className="text-lead font-semibold leading-snug text-bone">{product.name}</h3>
@@ -490,7 +495,7 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function CheckList({
+export function CheckList({
   items,
   columns = false,
   strong = false,
@@ -521,7 +526,7 @@ function CheckList({
 }
 
 /** The four vertical pages, one pill each — so a reader can compare. */
-function VerticalSwitcher({ current, className }: { current: string; className?: string }) {
+export function VerticalSwitcher({ current, className }: { current?: string; className?: string }) {
   return (
     <nav aria-label="Memberships" className={cn("flex flex-wrap gap-2", className)}>
       {verticals.map((vertical) => {

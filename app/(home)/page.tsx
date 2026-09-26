@@ -8,6 +8,7 @@ import { CaseStudies } from "./components/case-studies";
 import { ClientLogos } from "./components/client-logos";
 import { FooterCta } from "./components/footer-cta";
 import { InfluencerMarketing } from "./components/influencer-marketing";
+import { Memberships } from "./components/memberships";
 import { Portfolio } from "./components/portfolio";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
@@ -128,6 +129,13 @@ export default function HomePage() {
       <Studios />
       <AiContent />
       <BrandingDesign />
+      {/*
+        MEMBERSHIPS — the pricing brief's MRR model: the four membership
+        cards, how a membership runs, the one-time projects and Enterprise.
+        After the four verticals, so a reader has met each one before being
+        offered it by the month. The hero's "Explore Memberships" lands here.
+      */}
+      <Memberships />
 
       {/*
         09 — THE PORTFOLIO, once every division has had its say.
