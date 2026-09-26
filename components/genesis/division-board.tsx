@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { DivisionLockup } from "@/components/genesis/division-lockup";
+import { DivisionLockup, fluidNameWidth } from "@/components/genesis/division-lockup";
 import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { NeuralOrb, type OrbFocus } from "@/components/genesis/neural-orb";
 import { services } from "@/lib/home-content";
@@ -436,6 +436,17 @@ export function DivisionBoard() {
               pointer, so it cannot be clicked before it has been seen.
             */}
             {pricing && (
+              /*
+                CENTRED ON THE NAME, NOT THE COLUMN. The mark is narrower than
+                its column and hugs the side nearest the orb, so a button
+                aligned to the column edge sat off-centre under it. This box
+                is the mark's own width (fluidNameWidth), aligned to the same
+                edge by the column's items-*, and the button centres in it.
+              */
+              <div
+                className="flex justify-center"
+                style={{ width: fluidNameWidth(service.short) }}
+              >
               <Link
                 href={pricingPath(pricing.slug)}
                 prefetch={false}
@@ -444,7 +455,7 @@ export function DivisionBoard() {
                 onFocus={() => setActive(index)}
                 onBlur={leave}
                 className={cn(
-                  "mt-2 inline-flex h-8 items-center gap-1.5 rounded-full border border-brand/40 bg-brand/10 px-3.5 text-[0.75rem] text-brand-ink outline-none sm:text-small",
+                  "mt-1 inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-brand/40 bg-brand/10 px-3.5 text-[0.75rem] text-brand-ink outline-none sm:text-small",
                   "hover:border-brand/70 hover:bg-brand/20",
                   "focus-visible:ring-2 focus-visible:ring-brand",
                   "[@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",
@@ -458,6 +469,7 @@ export function DivisionBoard() {
                 {pricing.home.from}
                 <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
               </Link>
+              </div>
             )}
           </motion.div>
         );

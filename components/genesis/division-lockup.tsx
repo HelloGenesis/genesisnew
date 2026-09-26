@@ -276,6 +276,19 @@ function inkScale(name: string): number {
   return (NAME_INK_MAX / ink) ** INK_COMPENSATION;
 }
 
+/**
+ * How wide a `fluid nameOnly` mark draws, as a share of its column — the same
+ * sum the component does below. Exported so something placed UNDER the mark
+ * (the Brain's membership button) can take a box of exactly the mark's width
+ * and centre itself on the name rather than on the column.
+ */
+export function fluidNameWidth(name: string): string | undefined {
+  const lockup = NAME[name];
+  if (!lockup) return undefined;
+  const ratio = lockup.width / lockup.height;
+  return `${((ratio / NAME_MAX_RATIO) * 100 * inkScale(name)).toFixed(3)}%`;
+}
+
 export function DivisionLockup({
   name,
   tagline,
