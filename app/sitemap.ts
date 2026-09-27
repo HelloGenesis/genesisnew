@@ -2,7 +2,6 @@ import type { MetadataRoute } from "next";
 
 import { caseStudyPages } from "@/lib/case-study-pages";
 import { absoluteUrl, FILMS_PUBLISHED } from "@/lib/seo";
-import { pricingPath, verticals } from "@/lib/pricing";
 import { servicePages } from "@/lib/services";
 
 /**
@@ -43,12 +42,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     })),
     { url: absoluteUrl("/pricing"), lastModified: built, changeFrequency: "monthly", priority: 0.8 },
-    ...verticals.map((vertical) => ({
-      url: absoluteUrl(pricingPath(vertical.slug)),
-      lastModified: built,
-      changeFrequency: "monthly" as const,
-      priority: 0.8,
-    })),
     { url: absoluteUrl("/case-studies"), lastModified: built, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/careers"), lastModified: built, changeFrequency: "weekly", priority: 0.6 },
     { url: absoluteUrl("/creator"), lastModified: built, changeFrequency: "monthly", priority: 0.6 },

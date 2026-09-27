@@ -4,10 +4,10 @@ import { pricingHub } from "@/lib/pricing";
 import { pageMetadata } from "@/lib/seo";
 import { PricingHubView } from "../components/pricing-hub";
 
-/** /pricing — every Genesis membership and one-time product. See lib/pricing. */
+/** /pricing — the four verticals' plans and the one-time projects. See lib/pricing. */
 export const metadata: Metadata = pageMetadata({
   title: "Pricing & Memberships",
-  description: `${pricingHub.body[0]} ${pricingHub.body[1]}`,
+  description: pricingHub.body,
   path: "/pricing",
 });
 

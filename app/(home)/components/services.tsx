@@ -1,7 +1,7 @@
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionBoard } from "@/components/genesis/division-board";
 import { GlassButton } from "@/components/genesis/glass-button";
-import { homeMemberships } from "@/lib/pricing";
+import { homeHero } from "@/lib/pricing";
 
 /**
  * Section 1 — the Brain: what Genesis is, and the four divisions around it.
@@ -178,22 +178,22 @@ export function Services() {
         */}
         <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center text-center sm:mt-10">
           <h1 className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-            {homeMemberships.hero.heading}{" "}
+            {homeHero.heading}{" "}
             <span className="font-serif italic text-brand-ink">
-              {homeMemberships.hero.headingAccent}
+              {homeHero.headingAccent}
             </span>
           </h1>
           <p className="mt-3 text-balance text-small leading-relaxed text-ash sm:mt-4 sm:text-lead">
-            {homeMemberships.hero.body}
+            {homeHero.body}
           </p>
           <div className="mt-5 flex flex-nowrap justify-center gap-2 sm:mt-6 sm:gap-3">
             <GlassButton
-              href="#memberships"
+              href="/pricing"
               variant="brand"
               arrow
               className="max-sm:h-10 max-sm:px-4 max-sm:text-[0.8125rem]"
             >
-              {homeMemberships.hero.explore}
+              {homeHero.explore}
             </GlassButton>
             <GlassButton
               href="/#contact"
@@ -202,7 +202,7 @@ export function Services() {
               arrow
               className="max-sm:h-10 max-sm:px-4 max-sm:text-[0.8125rem]"
             >
-              {homeMemberships.hero.start}
+              {homeHero.start}
             </GlassButton>
           </div>
         </div>

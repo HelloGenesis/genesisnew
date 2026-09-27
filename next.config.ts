@@ -73,6 +73,19 @@ const WIX_REDIRECTS = [
   { source: "/post/:post*", destination: "/case-studies" },
 ].map((redirect) => ({ ...redirect, permanent: true }));
 
+/*
+  THE FIRST PRICING BRIEF'S PAGES. /pricing/influence and the other three
+  were a membership page per vertical; the vertical-pages brief moved each
+  vertical's pricing onto the vertical's own page, so each old URL goes there,
+  to its pricing block.
+*/
+const PRICING_REDIRECTS = [
+  { source: "/pricing/influence", destination: "/influencer-marketing#pricing" },
+  { source: "/pricing/ai-labs", destination: "/ai-content-automation#pricing" },
+  { source: "/pricing/studios", destination: "/content-production#pricing" },
+  { source: "/pricing/brand-design", destination: "/brand-design#pricing" },
+].map((redirect) => ({ ...redirect, permanent: true }));
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
@@ -129,6 +142,7 @@ const nextConfig: NextConfig = {
       { source: `/blog/${slug}`, destination: "/", permanent: false },
       { source: "/style-guide", destination: "/", permanent: false },
       ...WIX_REDIRECTS,
+      ...PRICING_REDIRECTS,
     ];
   },
 

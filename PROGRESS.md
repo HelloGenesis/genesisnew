@@ -1014,9 +1014,57 @@ hardware.**
 
 ---
 
+## Vertical pages brief — 2026-09-28
+
+Source: "Website - Vertical pages pricing Design and copy" (49 pages). It
+replaces the first pricing brief. Copy is verbatim; the mockups' light-page
+skin is re-set in the site's own language (dark glass, Mont ExtraLight, brand
+yellow).
+
+**Homepage.** The first pricing brief's additions are removed — the
+Memberships section and the Join / Book / View Work buttons on the four
+vertical sections are back to what `main` had. Section 1 (the Brain, its
+"Membership from" buttons and "Your creative team. On demand.") is kept, as
+asked; its buttons now point at each vertical page's `#pricing`, and
+"Explore Memberships" at /pricing.
+
+**/pricing.** The "vibe" block (One team. One monthly fee. + four vertical
+cards), then "Choose your creative team." — the four verticals' packages
+behind tabs that slide — then one line of logos and the one-time projects
+slider. The old /pricing/<vertical> pages 308 to the vertical pages.
+
+**The four vertical pages** (/influencer-marketing, /ai-content-automation,
+/content-production, /brand-design) are rebuilt to the brief: centred
+breadcrumb + vertical tabs, logos, plans with a Monthly/Quarterly switch
+(quarterly = 3× monthly, no discount, as the brief says), "View What's
+Included" accordion, "Compare Plans" window, add-ons with prices behind a
+button, case studies, work, closing band. Copy lives in `lib/verticals/*`;
+shared pieces in `app/(home)/components/offer/`.
+
+**Every footer** opens with a 15-minute booking calendar (Genesis logo in
+place of the reference's illustration).
+
+**Mont demo font.** Its ExtraLight file draws % * # < > | ~ ° ± † ‰ and the
+arrows as one placeholder glyph. `app/layout.tsx` now gives the face a
+unicode-range that leaves those (and the hairline /) to the fallback font.
+Remove it when the retail files land.
+
+### Still owed by Genesis
+
+| Item | Where it goes |
+| --- | --- |
+| The 15-minute booking calendar link | `bookingUrl` in lib/pricing — until then a picked slot opens WhatsApp |
+| Razorpay link per plan | `joinUrls` in lib/pricing — until then plan buttons open WhatsApp |
+| AI Labs comparison table, Growth + Enterprise columns | The PDF's table is cut off after Starter; lib/verticals/ai-labs.ts compares only what the cards state |
+| "Priority 48-Hour Production" price | Blank in the brief; shows "On request" |
+| Bookable hours for the calendar | Placeholder: weekdays 11:00–17:30 IST |
+| The final /pricing page | The brief says it will follow; the one-time projects are "as of now" |
+
+---
+
 ## Repository
 
-Remote is `https://github.com/gauravv-jainn/genesisnew`, set as `origin`.
+Remote is `https://github.com/HelloGenesis/genesisnew`, set as `origin`. Work goes to the `pricing` branch; `main` is not touched.
 
 Pushing works from this machine; `main` is up to date with `origin/main`.
 

@@ -2,14 +2,12 @@ import type { Metadata } from "next";
 
 import { pageMetadata } from "@/lib/seo";
 import { servicePage } from "@/lib/services";
-import { InfluencerMarketing } from "../components/influencer-marketing";
-import { ServicePageView } from "../components/service-page";
+import { InfluencePageView } from "../components/verticals/influence-page";
 
 /**
- * /influencer-marketing — Genesis.Influence, as a page of its own.
- *
- * The homepage section is the showcase; the copy, schema and links around it
- * are what let this URL rank. See lib/services and ServicePageView.
+ * /influencer-marketing — Genesis Influence, as the vertical-pages brief
+ * lays it out. Metadata and schema still come from lib/services, which is
+ * what this URL ranks on; the page itself is InfluencePageView.
  */
 const page = servicePage("influencer-marketing");
 
@@ -20,5 +18,5 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function InfluencerMarketingPage() {
-  return <ServicePageView page={page} showcase={<InfluencerMarketing />} />;
+  return <InfluencePageView />;
 }

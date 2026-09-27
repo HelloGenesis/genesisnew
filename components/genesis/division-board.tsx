@@ -9,7 +9,7 @@ import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { NeuralOrb, type OrbFocus } from "@/components/genesis/neural-orb";
 import { services } from "@/lib/home-content";
-import { pricingPath, verticals } from "@/lib/pricing";
+import { verticalCards } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 
 /**
@@ -280,7 +280,7 @@ export function DivisionBoard() {
           isActive ? -corner.x * 6 : 0
         }px), calc(var(--drift-y, 0px) + ${isActive ? -corner.y * 6 : 0}px), 0)`;
         /* This division's membership — the price button under its name. */
-        const pricing = verticals.find((vertical) => vertical.short === service.short);
+        const pricing = verticalCards.find((card) => card.short === service.short);
 
         return (
           <motion.div
@@ -440,9 +440,9 @@ export function DivisionBoard() {
             </Link>
 
             {/*
-              "MEMBERSHIP FROM ₹69K/MONTH", under the name — the pricing
-              brief's vertical card, as a button to that vertical's pricing
-              page. Genesis asked for it to behave exactly like the subtext
+              "MEMBERSHIP FROM ₹95K/MONTH", under the name — the pricing
+              brief's vertical card, as a button to the pricing on that
+              vertical's own page. Genesis asked for it to behave exactly like the subtext
               above it, so it carries the same classes: hidden and 4px low at
               rest on a pointer device, fading up on hover or focus, and not
               shown at all on a touch screen. Invisible, it also refuses the
@@ -454,7 +454,7 @@ export function DivisionBoard() {
             */}
             {pricing && (
               <Link
-                href={pricingPath(pricing.slug)}
+                href={`${pricing.href}#pricing`}
                 prefetch={false}
                 onPointerEnter={() => setActive(index)}
                 onPointerLeave={leave}
@@ -474,7 +474,7 @@ export function DivisionBoard() {
                 )}
                 style={{ transform: lift }}
               >
-                {pricing.home.from}
+                {pricing.brain}
                 <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
               </Link>
             )}
