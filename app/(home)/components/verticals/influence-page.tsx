@@ -20,7 +20,7 @@ import { InfluencerMarketing } from "../influencer-marketing";
 import { IconChips, StepsBlock } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { CaseStudiesRow, LogoStrip, WorkSection } from "../offer/page-furniture";
-import { OfferSection } from "../offer/parts";
+import { OfferSection, PlanBand } from "../offer/parts";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("influencer-marketing");
@@ -34,13 +34,24 @@ const planHref = enquiryHref("an influencer campaign");
  */
 export function InfluencePageView() {
   return (
-    <VerticalPage page={page} current="influence">
+    <VerticalPage page={page} current="influence"
+      hiddenTitle
+      primary={{ label: "Start a campaign", href: "#pricing" }}
+      jump={[
+        { id: "pricing", label: "Pricing" },
+        { id: "services", label: "Services" },
+        { id: "process", label: "Process" },
+        { id: "case-studies", label: "Case studies" },
+        { id: "library", label: "Work" },
+      ]}>
       {/* The division's homepage section, unchanged — the brief's own screenshot. */}
       <InfluencerMarketing />
 
       <LogoStrip heading={false} />
 
-      <CampaignPricing />
+      <PlanBand>
+        <CampaignPricing />
+      </PlanBand>
 
       <OfferSection className="pt-0">
         <Reveal className="glass glass-lit rounded-panel p-5 sm:p-6">
@@ -101,6 +112,8 @@ function CampaignPricing() {
                 <span className="mt-1 block text-small text-ash">{campaignPricing.figureSub}</span>
               </p>
             </div>
+
+            <p className="mt-3 max-w-md text-small text-faint">{campaignPricing.example}</p>
 
             <GlassButton href={planHref} variant="brand" size="lg" arrow magnetic className="mt-8">
               {campaignPricing.cta}
@@ -187,7 +200,7 @@ function Services() {
                 </div>
                 <div className="relative z-[1] -mt-8 flex flex-1 flex-col px-5 pb-5">
                   <IconTile name={card.icon} className="bg-[var(--surface-raised)]" />
-                  <h3 className="mt-4 text-lead leading-snug text-bone">{card.title}</h3>
+                  <h3 className="font-sans mt-4 text-lead leading-snug text-bone">{card.title}</h3>
                   <p className="mb-5 mt-2 text-pretty text-small leading-relaxed text-ash">{card.body}</p>
                   <a
                     href="#case-studies"

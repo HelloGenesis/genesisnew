@@ -98,7 +98,7 @@ export const studiosPlans: PlanGrid = {
         "1 active request",
         "Standard project support",
       ],
-      cta: { label: "Start Starter", href: joinHref("studios", "Starter", MONTHLY) },
+      cta: { label: "Start with Starter", href: joinHref("studios", "Starter", MONTHLY) },
     },
     {
       name: "Growth",

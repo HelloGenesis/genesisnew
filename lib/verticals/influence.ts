@@ -6,6 +6,7 @@
  * the pricing card says is the copy under it.
  */
 
+import { proof } from "../proof";
 import { servicePage } from "../services";
 import type { IconName, Steps } from "./types";
 
@@ -21,6 +22,11 @@ export const campaignPricing = {
   figureLabel: "Agency Commission",
   figureSub: "+ creator fees",
   cta: "Start a campaign",
+  /*
+    A WORKED EXAMPLE, because a percentage alone is hard to picture. Pure
+    arithmetic on the brief's own rate — not a quote, and labelled as one.
+  */
+  example: "Example: ₹5,00,000 in creator fees → ₹75,000 Genesis commission.",
   includesLabel: "Includes",
   includes:
     "Strategy, sourcing influencers. Verification, negotiation, briefing, posting & reporting.",
@@ -59,11 +65,20 @@ export const influenceServices = {
   ],
   primary: "Plan a campaign",
   secondary: "View case studies",
+  /*
+    ONE SET OF NUMBERS ACROSS THE SITE. The brief printed "50+ brands worked
+    with" and "1M+ combined views generated" here, beside the homepage's 45+
+    brands and 500M+ views — the figures Genesis confirmed directly and
+    lib/proof records. A buyer who reads 45+ on one page and 50+ on the next
+    stops trusting both, so the two shared figures now come from lib/proof.
+    The two that are Influence's own (influencer campaigns, the creator
+    database) stay as the brief wrote them.
+  */
   stats: [
     { value: "30+", label: "Influencer campaigns" },
     { value: "100K+", label: "Creator database" },
-    { value: "50+", label: "Brands worked with" },
-    { value: "1M+", label: "Combined views generated" },
+    { value: proof.brands.value, label: "Brands worked with" },
+    { value: proof.reach.value, label: "Views generated" },
   ],
   cards: [
     { title: "Influencer Marketing", icon: "users" as IconName, image: "/work/posters/6.jpg" },

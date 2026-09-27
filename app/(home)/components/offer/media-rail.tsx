@@ -101,7 +101,7 @@ export function MediaRail({
                 />
                 <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
               </div>
-              <h3 className="mt-3 text-body leading-snug text-bone">{item.title}</h3>
+              <h3 className="font-sans mt-3 text-body leading-snug text-bone">{item.title}</h3>
               {item.body && <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{item.body}</p>}
               {item.foot}
             </article>

@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { AddOnsBlock } from "../offer/add-ons";
 import { ClosingBand, IconCards, StepsBlock, TurnaroundBlock } from "../offer/blocks";
 import { CaseStudiesRow, LogoStrip, WorkSection } from "../offer/page-furniture";
-import { CheckList, OfferSection, SectionHead } from "../offer/parts";
+import { CheckList, CollapsibleSection, OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { PlanGrid } from "../offer/plan-grid";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VerticalPage } from "../offer/vertical-page";
@@ -37,7 +37,16 @@ const SHOOT_WORK = ["Studios", "Events"];
  */
 export function StudiosPageView() {
   return (
-    <VerticalPage page={page} current="studios">
+    <VerticalPage page={page} current="studios"
+      primary={{ label: "See plans", href: "#pricing" }}
+      jump={[
+        { id: "pricing", label: "Monthly plans" },
+        { id: "included", label: "Every video" },
+        { id: "how-it-works", label: "How it works" },
+        { id: "case-studies", label: "Case studies" },
+        { id: "shoot", label: "Content shoot" },
+        { id: "library", label: "Work" },
+      ]}>
       <VerticalHero
         label={studiosHero.label}
         lines={[studiosHero.heading]}
@@ -112,31 +121,30 @@ export function StudiosPageView() {
       </OfferSection>
 
       {/* SECTION 03 — CONTENT MONTHLY */}
-      <OfferSection>
-        <PlanGrid data={studiosPlans} id="pricing" />
-      </OfferSection>
+      <PlanBand>
+        <OfferSection>
+          <PlanGrid data={studiosPlans} id="pricing" />
+        </OfferSection>
+      </PlanBand>
 
-      {/* SECTION 04 — EVERY VIDEO */}
-      <OfferSection labelledBy="every-video-heading">
-        <SectionHead
-          id="every-video-heading"
-          label={studiosEveryVideo.label}
-          heading={studiosEveryVideo.heading}
-          body={studiosEveryVideo.body}
-        />
-        <IconCards items={studiosEveryVideo.items} columns={3} className="mt-10" />
-      </OfferSection>
+      {/* SECTION 04 — EVERY VIDEO, opened on demand */}
+      <CollapsibleSection
+        id="included"
+        label={studiosEveryVideo.label}
+        heading={studiosEveryVideo.heading}
+        body={studiosEveryVideo.body}
+      >
+        <IconCards items={studiosEveryVideo.items} columns={3} />
+      </CollapsibleSection>
 
-      {/* SECTION 05 — STARTER BREAKDOWN */}
-      <OfferSection labelledBy="starter-heading">
-        <SectionHead
-          id="starter-heading"
-          label={studiosStarter.label}
-          heading={studiosStarter.heading}
-          accent={studiosStarter.headingAccent}
-          body={studiosStarter.body}
-        />
-        <div className="mt-10 grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
+      {/* SECTION 05 — STARTER BREAKDOWN, opened on demand */}
+      <CollapsibleSection
+        label={studiosStarter.label}
+        heading={studiosStarter.heading}
+        accent={studiosStarter.headingAccent}
+        body={studiosStarter.body}
+      >
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
           <IconCards items={studiosStarter.items} columns={3} className="lg:grid-cols-3" />
           <Reveal className="glass glass-lit relative overflow-hidden rounded-panel p-6">
             <Image
@@ -154,7 +162,7 @@ export function StudiosPageView() {
             </div>
           </Reveal>
         </div>
-      </OfferSection>
+      </CollapsibleSection>
 
       {/* SECTION 06 — HOW IT WORKS */}
       <StepsBlock data={studiosHowItWorks} id="how-it-works" />

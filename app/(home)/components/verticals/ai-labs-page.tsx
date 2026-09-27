@@ -19,7 +19,7 @@ import { AddOnsBlock } from "../offer/add-ons";
 import { ClosingBand, FaqBlock, IconCards, StepsBlock, TurnaroundBlock } from "../offer/blocks";
 import { MediaRail } from "../offer/media-rail";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
-import { OfferSection, SectionHead } from "../offer/parts";
+import { CollapsibleSection, OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { PlanGrid } from "../offer/plan-grid";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VerticalPage } from "../offer/vertical-page";
@@ -34,7 +34,16 @@ const page = servicePage("ai-content-automation");
  */
 export function AiLabsPageView() {
   return (
-    <VerticalPage page={page} current="ai-labs">
+    <VerticalPage page={page} current="ai-labs"
+      primary={{ label: "See plans", href: "#pricing" }}
+      jump={[
+        { id: "formats", label: "Formats" },
+        { id: "pricing", label: "Plans" },
+        { id: "included", label: "Every video" },
+        { id: "how-it-works", label: "How it works" },
+        { id: "library", label: "Work" },
+        { id: "faq", label: "FAQs" },
+      ]}>
       <VerticalHero
         label={aiHero.label}
         lines={[aiHero.heading]}
@@ -51,7 +60,7 @@ export function AiLabsPageView() {
       <LogoStrip />
 
       {/* SECTION 2 — SHOW THE OUTPUT */}
-      <OfferSection labelledBy="formats-heading">
+      <OfferSection id="formats" labelledBy="formats-heading">
         <MediaRail
           label={aiFormats.label}
           items={aiFormats.items}
@@ -69,20 +78,21 @@ export function AiLabsPageView() {
       </OfferSection>
 
       {/* SECTION 3 — PRICING */}
-      <OfferSection>
-        <PlanGrid data={aiPlans} id="pricing" />
-      </OfferSection>
+      <PlanBand>
+        <OfferSection>
+          <PlanGrid data={aiPlans} id="pricing" />
+        </OfferSection>
+      </PlanBand>
 
-      {/* SECTION 4 — WHAT EVERY VIDEO INCLUDES */}
-      <OfferSection labelledBy="every-video-heading">
-        <SectionHead
-          id="every-video-heading"
-          label={aiEveryVideo.label}
-          heading={aiEveryVideo.heading}
-          body={aiEveryVideo.body}
-        />
-        <IconCards items={aiEveryVideo.items} className="mt-10" />
-      </OfferSection>
+      {/* SECTION 4 — WHAT EVERY VIDEO INCLUDES, opened on demand */}
+      <CollapsibleSection
+        id="included"
+        label={aiEveryVideo.label}
+        heading={aiEveryVideo.heading}
+        body={aiEveryVideo.body}
+      >
+        <IconCards items={aiEveryVideo.items} />
+      </CollapsibleSection>
 
       {/* SECTION 5 — CAMPAIGN CREATIVES */}
       <OfferSection labelledBy="creatives-heading">
@@ -105,7 +115,7 @@ export function AiLabsPageView() {
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
-              <h3 className="mt-3 text-body leading-snug text-bone">{item.title}</h3>
+              <h3 className="font-sans mt-3 text-body leading-snug text-bone">{item.title}</h3>
               <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{item.body}</p>
             </Reveal>
           ))}

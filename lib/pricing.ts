@@ -119,8 +119,8 @@ export const verticalCards: {
     href: "/ai-content-automation",
     blurb: "AI avatars, AI video, product visuals and automated content.",
     fromLabel: "Membership from",
-    from: "₹95k/month",
-    brain: "Membership from ₹95k/month",
+    from: "₹95K/month",
+    brain: "Membership from ₹95K/month",
   },
   {
     key: "studios",
@@ -129,8 +129,8 @@ export const verticalCards: {
     href: "/content-production",
     blurb: "Shoots, reels, editing and content production.",
     fromLabel: "Membership from",
-    from: "₹85k/month",
-    brain: "Membership from ₹85k/month",
+    from: "₹85K/month",
+    brain: "Membership from ₹85K/month",
   },
   {
     key: "brand-design",
@@ -139,8 +139,8 @@ export const verticalCards: {
     href: "/brand-design",
     blurb: "Design, campaigns, decks, collateral and brand systems.",
     fromLabel: "Membership from",
-    from: "₹65k/month",
-    brain: "Membership from ₹65k/month",
+    from: "₹65K/month",
+    brain: "Membership from ₹65K/month",
   },
 ];
 
@@ -157,6 +157,42 @@ export const pricingHub = {
   plans: {
     label: "Genesis Memberships",
     heading: "Choose your creative team.",
+  },
+  /*
+    THE THREE WAYS GENESIS CHARGES, SAID ONCE, before the tabs — so a reader
+    who opens Influence and finds a commission instead of a membership is
+    not surprised by it.
+  */
+  models: [
+    {
+      label: "One-time project",
+      bestFor: "Trying Genesis, or a single brief.",
+      price: "From ₹25K",
+      tab: null,
+    },
+    {
+      label: "Membership",
+      bestFor: "Content, AI or design every month.",
+      price: "From ₹65K/month",
+      tab: "ai-labs",
+    },
+    {
+      label: "Commission",
+      bestFor: "Running an influencer campaign.",
+      price: "Creator fees + 15%",
+      tab: "influence",
+    },
+  ],
+  /* From the first pricing brief — "How Genesis Memberships Work". */
+  steps: {
+    heading: "How Genesis Memberships Work",
+    items: [
+      { title: "Subscribe", body: "Choose the creative capability you need." },
+      { title: "Add requests", body: "Submit as many requests to your queue as you like." },
+      { title: "We create", body: "We work through them based on your membership's capacity." },
+      { title: "Review & repeat", body: "Approve, revise, and move on to the next request." },
+    ],
+    note: "Onboarding typically starts after successful payment and receipt of the required brand assets and brief.",
   },
   oneTime: {
     label: "One-time projects",
@@ -230,7 +266,15 @@ export const bookingCalendar = {
   */
   slots: ["11:00", "11:30", "12:00", "12:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"],
   timezone: "IST",
-  confirm: "Book this slot",
+  /*
+    "REQUEST", NOT "BOOK", while there is no calendar behind it — a picked slot
+    is a WhatsApp message, and a button that says "Book" promises a
+    confirmed booking the page cannot make. Switches to `confirmLive` the
+    moment `bookingUrl` is set.
+  */
+  confirm: "Request this slot",
+  confirmLive: "Book a 15-minute call",
+  pending: "We'll confirm your slot on WhatsApp.",
 } as const;
 
 /**
@@ -244,4 +288,49 @@ export const homeHero = {
   body: "Influence, AI, Content Production and Design — available through flexible Genesis memberships or one-time projects.",
   explore: "Explore Memberships",
   start: "Start a Project",
+  /*
+    THE WAY IN, IN ONE LINE. The orb's price buttons only appear on hover, so
+    on a phone the homepage never said what Genesis costs. ₹25K is the
+    lowest entry Genesis has set (AI Avatar Setup, a one-time project); ₹65K
+    is the lowest membership (Creative Desk).
+  */
+  entry: "Projects from ₹25K · Memberships from ₹65K/month",
 } as const;
+
+/**
+ * THE TERMS, UNDER EVERY PLAN GRID — the reassurance a buyer looks for
+ * before committing to a monthly fee. Each line is Genesis's own, from the
+ * first pricing brief's FAQ and its GST note.
+ */
+export const planTerms = [
+  "Monthly memberships can be stopped before the next billing cycle.",
+  "Where available, memberships can be paused.",
+  "All membership prices are exclusive of GST.",
+] as const;
+
+/**
+ * WHAT THE PLAN WORDS MEAN. A buyer who does not understand the unit will
+ * not pay for it, and "active request" in particular decides how much a
+ * membership delivers. Only terms the brief itself defines are here; its
+ * wording, lightly joined. TODO(genesis): define "adaptation" and
+ * "premium" vs "standard" video, which the brief uses but never explains.
+ */
+export const planGlossary = [
+  {
+    term: "Active request",
+    meaning:
+      "How many pieces we work on at the same time. Your queue can keep growing; your active request limit determines how many pieces we work on simultaneously.",
+  },
+  {
+    term: "Campaign creatives",
+    meaning:
+      "Finished static marketing assets created around your campaign, product, offer or brand message.",
+  },
+  {
+    term: "Advanced / motion-heavy videos",
+    meaning: "Advanced AI production, heavier animation and complex visual treatments.",
+  },
+] as const;
+
+/** The lowest price a buyer can start at — Genesis's entry pricing. */
+export const entryPrice = "₹25K";

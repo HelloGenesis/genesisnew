@@ -1060,6 +1060,45 @@ Remove it when the retail files land.
 | Bookable hours for the calendar | Placeholder: weekdays 11:00–17:30 IST |
 | The final /pricing page | The brief says it will follow; the one-time projects are "as of now" |
 
+### Conversion pass — 2026-09-28
+
+- One name per vertical in nav, breadcrumbs and footer (Genesis Influence /
+  Studios / AI Labs / Brand & Design). URLs keep their search words.
+- Nav is the buying path only; I'm a Creator and Career live in the footer.
+- Influence stats share lib/proof's confirmed brands (45+) and views (500M+).
+- Homepage: "Projects from ₹25K · Memberships from ₹65K/month" under the
+  promise, and a one-line pricing strip after the verticals. ₹25K is
+  Genesis's entry price.
+- /pricing: tabs are linkable (`/pricing?v=studios`), the three pricing
+  models are explained above them, and "How Genesis Memberships Work" follows.
+- Vertical pages: visible h1 (hero), a sticky "on this page" bar, and a
+  phone call-to-action bar.
+- Calendar says "Request this slot" and that the slot is confirmed on
+  WhatsApp, until `bookingUrl` is set.
+- Vercel Analytics custom events: `whatsapp_click` on every wa.me link and
+  `cta_click` on anything with `data-track` (plans, billing, tabs, jump bar,
+  booking). Custom events need a Vercel Pro plan to appear.
+
+Then, from the design/UX/copy/pricing review:
+
+- /pricing opens its plans panel with the three pricing models as cards —
+  who each is for and where it starts (project from ₹25K, membership from
+  ₹65K/month, commission of creator fees + 15%).
+- Every plan grid carries the brief's terms (stop before the next billing
+  cycle, pause where available, prices exclusive of GST) and a "What these
+  terms mean" glossary built only from definitions the brief gives.
+- Influence shows a worked commission example (₹5,00,000 → ₹75,000).
+- "Start Starter" reads "Start with Starter".
+- Small titles use the text face; Mont ExtraLight is kept for display sizes.
+- "Every video includes" and the Studios Starter breakdown open on demand,
+  and the plans sit on their own full-width band, so the long pages lead
+  with the decision.
+
+Still owed: Razorpay links, testimonials, case-study results, team strip,
+licensed fonts, a real-device speed check, definitions of "adaptation" and
+"premium vs standard video", and decisions on a quarterly incentive and a
+project-to-membership credit.
+
 ---
 
 ## Repository

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionBoard } from "@/components/genesis/division-board";
 import { GlassButton } from "@/components/genesis/glass-button";
@@ -186,6 +188,12 @@ export function Services() {
           <p className="mt-3 text-balance text-small leading-relaxed text-ash sm:mt-4 sm:text-lead">
             {homeHero.body}
           </p>
+          <Link
+            href="/pricing"
+            className="mt-2 text-small text-brand-ink underline-offset-4 transition-colors hover:underline sm:mt-3"
+          >
+            {homeHero.entry}
+          </Link>
           <div className="mt-5 flex flex-nowrap justify-center gap-2 sm:mt-6 sm:gap-3">
             <GlassButton
               href="/pricing"

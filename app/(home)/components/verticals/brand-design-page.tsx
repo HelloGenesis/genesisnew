@@ -22,7 +22,7 @@ import { AddOnsBlock } from "../offer/add-ons";
 import { ClosingBand, StepsBlock, TurnaroundStrip } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { CaseStudiesRow, LogoStrip, WorkSection } from "../offer/page-furniture";
-import { CheckList, OfferSection, SectionHead } from "../offer/parts";
+import { CheckList, OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VerticalPage } from "../offer/vertical-page";
 
@@ -34,7 +34,16 @@ const page = servicePage("brand-design");
  */
 export function BrandDesignPageView() {
   return (
-    <VerticalPage page={page} current="brand-design">
+    <VerticalPage page={page} current="brand-design"
+      primary={{ label: "See plans", href: "#pricing" }}
+      jump={[
+        { id: "pricing", label: "Plans" },
+        { id: "included", label: "What's included" },
+        { id: "how-it-works", label: "How it works" },
+        { id: "overview", label: "Plan overview" },
+        { id: "brand-build", label: "Brand Build" },
+        { id: "case-studies", label: "Case studies" },
+      ]}>
       <VerticalHero
         label={designHero.label}
         lines={[designHero.heading, designHero.headingLine2]}
@@ -50,6 +59,7 @@ export function BrandDesignPageView() {
       <LogoStrip />
 
       {/* SECTION 02 — TWO WAYS TO WORK WITH US */}
+      <PlanBand>
       <OfferSection id="pricing" labelledBy="products-heading">
         <SectionHead
           id="products-heading"
@@ -59,9 +69,10 @@ export function BrandDesignPageView() {
         />
         <ProductCards />
       </OfferSection>
+      </PlanBand>
 
       {/* SECTION 03 — WHAT'S INCLUDED */}
-      <OfferSection labelledBy="included-heading">
+      <OfferSection id="included" labelledBy="included-heading">
         <SectionHead
           id="included-heading"
           label={designIncluded.label}
@@ -74,7 +85,7 @@ export function BrandDesignPageView() {
               <div className="glass glass-lit w-full rounded-panel p-5">
                 <div className="flex items-center gap-3">
                   <IconTile name={group.icon} />
-                  <h3 className="text-body leading-snug text-bone">{group.title}</h3>
+                  <h3 className="font-sans text-body leading-snug text-bone">{group.title}</h3>
                 </div>
                 {group.lead && <p className="mt-4 text-small text-ash">{group.lead}</p>}
                 <ul className="mt-4 space-y-1.5">
@@ -156,7 +167,7 @@ export function ProductCards() {
 
 function PlanOverview() {
   return (
-    <OfferSection labelledBy="overview-heading">
+    <OfferSection id="overview" labelledBy="overview-heading">
       <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
         <Reveal>
           <SectionLabel dot tone="brand">
@@ -255,7 +266,7 @@ function BrandBuild() {
         <ul className="relative mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {brandBuild.groups.map((group) => (
             <li key={group.title} className="rounded-card border border-white/10 bg-white/[0.03] p-5">
-              <h3 className="text-body text-bone">{group.title}</h3>
+              <h3 className="font-sans text-body text-bone">{group.title}</h3>
               {"lead" in group && group.lead && <p className="mt-2 text-small text-ash">{group.lead}</p>}
               <ul className="mt-3 space-y-1.5">
                 {group.items.map((item) => (

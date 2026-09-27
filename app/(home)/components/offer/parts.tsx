@@ -159,3 +159,53 @@ export function Chip({ children, className }: { children: ReactNode; className?:
     </span>
   );
 }
+
+/**
+ * A SECTION A READER OPENS, for detail that supports the decision rather than
+ * making it — "every video includes", the Starter breakdown. The heading stays
+ * in view so the page still says it; the body waits behind "Show details".
+ * A native <details>, so it opens without script and find-in-page reaches it.
+ */
+export function CollapsibleSection({
+  id,
+  label,
+  heading,
+  accent,
+  body,
+  children,
+}: {
+  id?: string;
+  label?: string;
+  heading: string;
+  accent?: string;
+  body?: readonly string[] | string;
+  children: ReactNode;
+}) {
+  return (
+    <OfferSection id={id}>
+      <details className="group">
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <SectionHead
+            label={label}
+            heading={heading}
+            accent={accent}
+            body={body}
+            aside={
+              <span className="mt-5 inline-flex h-10 items-center gap-2 rounded-full border border-brand/50 px-4 text-small text-bone transition-colors group-hover:bg-brand/10">
+                <span className="group-open:hidden">Show details</span>
+                <span className="hidden group-open:inline">Hide details</span>
+                <span aria-hidden className="text-brand-ink transition-transform duration-300 group-open:rotate-45">+</span>
+              </span>
+            }
+          />
+        </summary>
+        <div className="mt-10">{children}</div>
+      </details>
+    </OfferSection>
+  );
+}
+
+/** The plans' own ground — a full-width band, so the pricing reads as the page's centre. */
+export function PlanBand({ children }: { children: ReactNode }) {
+  return <div className="border-y border-[var(--glass-border)] bg-[var(--hover-wash)]">{children}</div>;
+}

@@ -23,7 +23,7 @@ import { builtFor, campaignPricing } from "@/lib/verticals/influence";
 import { studiosAddOns, studiosPlans, studiosShoot, studiosTab, studiosTurnaround } from "@/lib/verticals/studios";
 import type { VerticalKey } from "@/lib/verticals/types";
 import { AddOnsBlock } from "./offer/add-ons";
-import { IconChips, TurnaroundStrip } from "./offer/blocks";
+import { IconChips, StepsBlock, TurnaroundStrip } from "./offer/blocks";
 import { IconTile } from "./offer/icons";
 import { MediaRail } from "./offer/media-rail";
 import { LogoStrip } from "./offer/page-furniture";
@@ -85,12 +85,50 @@ export function PricingHubView() {
             >
               {pricingHub.plans.heading}
             </h2>
+            {/*
+              PICK THE MODEL BEFORE THE PRICE. Genesis charges three ways, and a
+              reader who opens Influence expecting a membership meets a
+              commission instead. The three are set out first, each with who
+              it is for and where it starts.
+            */}
+            <ul className="mt-6 grid gap-3 md:grid-cols-3">
+              {pricingHub.models.map((model) => (
+                <li key={model.label} className="flex">
+                  <a
+                    href={model.tab ? "#plans" : "#one-time"}
+                    data-plan-tab={model.tab ?? undefined}
+                    data-track={`model:${model.label}`}
+                    className="group flex w-full flex-col rounded-panel border border-white/12 bg-white/[0.03] p-5 transition-colors hover:border-brand/50 hover:bg-brand/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="text-lead text-bone">{model.label}</span>
+                      <ArrowRight className="size-4 text-faint transition-colors group-hover:text-brand-ink" aria-hidden />
+                    </span>
+                    <span className="mt-1 text-small text-ash">Best for: {model.bestFor}</span>
+                    <span className="mt-4 text-lead text-brand-ink">{model.price}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
             <div className="mt-8">
               <PlanTabs tabs={tabs()} initial="ai-labs" />
             </div>
           </div>
         </Reveal>
       </section>
+
+      <StepsBlock
+        id="how-memberships-work"
+        data={{
+          label: "Memberships",
+          heading: pricingHub.steps.heading,
+          steps: pricingHub.steps.items.map((step, index) => ({
+            ...step,
+            icon: (["queue", "create", "review", "repeat"] as const)[index],
+          })),
+          note: pricingHub.steps.note,
+        }}
+      />
 
       <LogoStrip heading={false} />
 
@@ -189,7 +227,7 @@ function TabHead({
 }
 
 function SubHeading({ children }: { children: React.ReactNode }) {
-  return <h4 className="mb-4 mt-10 text-body text-bone">{children}</h4>;
+  return <h4 className="font-sans mb-4 mt-10 text-body text-bone">{children}</h4>;
 }
 
 function tabs(): PlanTab[] {
@@ -251,6 +289,7 @@ function tabs(): PlanTab[] {
               </p>
             </div>
           </div>
+          <p className="mt-3 text-small text-faint">{campaignPricing.example}</p>
           <SubHeading>{builtFor.label}</SubHeading>
           <IconChips items={builtFor.items} />
           <div className="mt-8 flex flex-wrap gap-3">

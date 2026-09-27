@@ -9,6 +9,7 @@ import { ClientLogos } from "./components/client-logos";
 import { FooterCta } from "./components/footer-cta";
 import { InfluencerMarketing } from "./components/influencer-marketing";
 import { Portfolio } from "./components/portfolio";
+import { PricingStrip } from "./components/pricing-strip";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
 
@@ -128,6 +129,8 @@ export default function HomePage() {
       <Studios />
       <AiContent />
       <BrandingDesign />
+      {/* How Genesis charges, in one line — see PricingStrip. */}
+      <PricingStrip />
 
       {/*
         09 — THE PORTFOLIO, once every division has had its say.

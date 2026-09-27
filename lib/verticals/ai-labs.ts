@@ -61,7 +61,7 @@ export const aiPlans: PlanGrid = {
       monthly: 95000,
       period: "/ month",
       features: ["6 AI Videos", "1 AI Avatar", "8 Campaign Creatives", "1 Language", "1 Active Request"],
-      cta: { label: "Start Starter", href: joinHref("ai-labs", "Starter", PRODUCT) },
+      cta: { label: "Start with Starter", href: joinHref("ai-labs", "Starter", PRODUCT) },
       note: "Cancel or upgrade your membership as your content needs change.",
     },
     {

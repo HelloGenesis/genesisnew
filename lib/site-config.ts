@@ -362,10 +362,18 @@ export const homeHref = "/#services";
   the brand's own names without costing the pages their descriptive ones.
 */
 export const divisionPages = [
-  { label: "Influencer Marketing", division: "Influence", href: "/influencer-marketing", section: "influence" },
-  { label: "Content Production", division: "Studios", href: "/content-production", section: "studios" },
-  { label: "AI Content & Automation", division: "AI Lab", href: "/ai-content-automation", section: "ai-lab" },
-  { label: "Brand & Design", division: "Brand & Design", href: "/brand-design", section: "brand-design" },
+  /*
+    ONE NAME PER VERTICAL. The labels were the service names ("Influencer
+    Marketing", "Content Production", "AI Content & Automation") while the
+    pages, tabs, pricing and brief all say Genesis Influence / Studios / AI
+    Labs / Brand & Design — four things with two names each. The labels now
+    match the pages. The URLs keep their search words on purpose: those are
+    what people type, and the page titles still carry them.
+  */
+  { label: "Genesis Influence", division: "Influence", href: "/influencer-marketing", section: "influence" },
+  { label: "Genesis Studios", division: "Studios", href: "/content-production", section: "studios" },
+  { label: "Genesis AI Labs", division: "AI Labs", href: "/ai-content-automation", section: "ai-lab" },
+  { label: "Genesis Brand & Design", division: "Brand & Design", href: "/brand-design", section: "brand-design" },
 ] as const;
 
 /** The homepage section a division page stands for, keyed by its path. */
@@ -494,14 +502,12 @@ export const navItems: NavItem[] = [
   // The memberships — the pricing brief puts Pricing on the bar.
   { label: "Pricing", href: "/pricing" },
   /*
-    THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable
-    from the nav — the only routes to them were a button inside a section you
-    had to scroll to first, which for a creator or an applicant who arrived
-    looking for exactly this is not a route at all. Genesis asked for them up
-    here by name.
+    "I'M A CREATOR" AND "CAREER" MOVED TO THE FOOTER. Both were put on the
+    bar at Genesis's request, but a buyer scanning it met two links that are
+    not for them before reaching Contact. The bar now carries only the
+    buying path — Services, Case Studies, Pricing, Contact — and both forms
+    stay one click away in the footer's General column.
   */
-  { label: "I'm a Creator", href: "/creator" },
-  { label: "Career", href: "/careers" },
   contactItem("Contact"),
 ];
 

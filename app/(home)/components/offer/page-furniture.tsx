@@ -90,7 +90,7 @@ export function LogoStrip({ heading = true, className }: { heading?: boolean; cl
  * `verticals` takes more than one: Studios' shoot work is Studios and Events.
  */
 export function WorkSection({
-  id = "work",
+  id = "library",
   verticals,
   label = "Explore our work",
   heading = "Everything",

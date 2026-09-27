@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 
+import { ConversionEvents } from "@/components/genesis/conversion-events";
+
 import { INDEXABLE, SITE_URL } from "@/lib/seo";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
@@ -179,6 +181,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       >
         {children}
         <Analytics />
+        <ConversionEvents />
       </body>
     </html>
   );

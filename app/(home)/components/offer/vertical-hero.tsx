@@ -48,14 +48,14 @@ export function VerticalHero({
         <SectionLabel dot tone="brand">
           {label}
         </SectionLabel>
-        <h2 className="mt-5 text-balance text-h1 font-normal leading-[0.98] tracking-tight text-bone xl:text-[4rem]">
+        <h1 className="mt-5 text-balance text-h1 font-normal leading-[0.98] tracking-tight text-bone xl:text-[4rem]">
           {lines.map((line) => (
             <span key={line} className="block">
               {line}
             </span>
           ))}
           <span className="block font-serif italic text-brand-ink">{accent}</span>
-        </h2>
+        </h1>
         <p className="mt-6 max-w-xl text-pretty text-lead leading-snug text-bone">{lead}</p>
         {body && <p className="mt-3 max-w-xl text-pretty text-body leading-relaxed text-ash">{body}</p>}
         <div className="mt-8 flex flex-wrap gap-3">

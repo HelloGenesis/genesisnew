@@ -7,7 +7,7 @@ import { useId, useState } from "react";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Overlay } from "@/components/genesis/overlay";
 import { Reveal } from "@/components/genesis/reveal";
-import { quarterlyLine } from "@/lib/pricing";
+import { planGlossary, planTerms, quarterlyLine } from "@/lib/pricing";
 import type { Plan, PlanGrid as PlanGridData } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 import { CheckList, SectionHead } from "./parts";
@@ -131,6 +131,7 @@ export function PlanGrid({
           {data.compare && (
             <button
               type="button"
+              data-track="compare-plans"
               onClick={() => setCompareOpen(true)}
               className="glass glass-lit flex items-center gap-4 self-start rounded-panel p-4 text-left transition-colors hover:border-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:p-5"
             >
@@ -146,6 +147,32 @@ export function PlanGrid({
           )}
         </div>
       )}
+
+      {/* The terms and the words, together — see planTerms / planGlossary. */}
+      <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <ul className="flex flex-wrap gap-x-5 gap-y-1">
+          {planTerms.map((term) => (
+            <li key={term} className="flex items-center gap-2 text-small text-faint">
+              <span aria-hidden className="size-1 rounded-full bg-brand" />
+              {term}
+            </li>
+          ))}
+        </ul>
+        <details className="group shrink-0 text-small lg:max-w-md">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-ash transition-colors hover:text-bone [&::-webkit-details-marker]:hidden">
+            What these terms mean
+            <ChevronDown aria-hidden className="size-4 transition-transform duration-300 group-open:rotate-180" />
+          </summary>
+          <dl className="mt-3 space-y-3 rounded-card border border-white/10 p-4">
+            {planGlossary.map((entry) => (
+              <div key={entry.term}>
+                <dt className="text-bone">{entry.term}</dt>
+                <dd className="mt-0.5 text-pretty leading-relaxed text-ash">{entry.meaning}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      </div>
 
       {data.compare && (
         <Overlay open={compareOpen} label="Compare plans" onClose={() => setCompareOpen(false)}>
@@ -234,6 +261,7 @@ export function BillingToggle({
               key={option}
               type="button"
               role="radio"
+              data-track={`billing:${option}`}
               aria-checked={value === option}
               onClick={() => onChange(option)}
               className={cn(
@@ -308,7 +336,7 @@ function PlanCard({ plan, billing }: { plan: Plan; billing: Billing }) {
 
       <CheckList items={plan.features} className="relative mt-6" />
 
-      <div className="relative mt-auto pt-8">
+      <div className="relative mt-auto pt-8" data-track={`plan:${plan.name}`}>
         <GlassButton
           href={plan.cta.href}
           variant={plan.featured ? "brand" : "glass"}

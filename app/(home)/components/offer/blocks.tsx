@@ -38,7 +38,7 @@ export function IconCards({
             <IconTile name={item.icon} />
             <div className="min-w-0">
               {item.label && <p className="micro-label !tracking-[0.18em]">{item.label}</p>}
-              <h3 className={cn("text-body leading-snug text-bone", item.label && "mt-2")}>{item.title}</h3>
+              <h3 className={cn("font-sans text-body leading-snug text-bone", item.label && "mt-2")}>{item.title}</h3>
               {item.body && <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{item.body}</p>}
             </div>
           </div>
@@ -75,7 +75,7 @@ export function StepsBlock({ data, id }: { data: Steps; id?: string }) {
                   {String(index + 1).padStart(2, "0")}
                 </span>
               </div>
-              <h3 className="mt-5 text-body leading-snug text-bone">{step.title}</h3>
+              <h3 className="font-sans mt-5 text-body leading-snug text-bone">{step.title}</h3>
               <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{step.body}</p>
             </div>
             {index < count - 1 && (
@@ -228,7 +228,7 @@ export function ClosingBand({
 /** Questions and answers, each one a native disclosure — no script needed to read them. */
 export function FaqBlock({ heading, items }: { heading: string; items: readonly Faq[] }) {
   return (
-    <OfferSection labelledBy="faq-heading">
+    <OfferSection id="faq" labelledBy="faq-heading">
       <SectionHead id="faq-heading" label="FAQs" heading={heading} align="left" />
       <div className="mt-10 divide-y divide-white/10 border-y border-white/10">
         {items.map((item) => (

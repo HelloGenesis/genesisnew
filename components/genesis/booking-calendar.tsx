@@ -155,16 +155,17 @@ function Picker() {
               ))}
             </ul>
           )}
-          <div className="mt-4">
+          <div className="mt-4" data-track="book-slot">
             {href ? (
               <GlassButton href={href} variant="brand" arrow className="w-full sm:w-auto">
-                {bookingCalendar.confirm}
+                {bookingUrl ? bookingCalendar.confirmLive : bookingCalendar.confirm}
               </GlassButton>
             ) : (
               <GlassButton variant="brand" arrow disabled className="w-full sm:w-auto">
                 {bookingCalendar.confirm}
               </GlassButton>
             )}
+            {!bookingUrl && <p className="mt-3 text-small text-faint">{bookingCalendar.pending}</p>}
           </div>
         </div>
     </>

@@ -40,6 +40,29 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
     selectRef.current = select;
   });
 
+  /*
+    LINKABLE TABS. /pricing?v=studios opens on Studios, so a sales message, an
+    ad or the homepage strip can land a reader on the exact offer, and the
+    address bar follows the tab they pick (replaceState — no history entry
+    per click). Read after mount: the page is static, and the server cannot
+    know the query string.
+  */
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("v") as VerticalKey | null;
+    if (wanted && wanted !== active && tabs.some((tab) => tab.key === wanted)) selectRef.current(wanted);
+    // Only on arrival; later changes come from the tabs themselves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("v") === active) return;
+    // A plain visit to /pricing keeps its clean URL until a tab is chosen.
+    if (!url.searchParams.has("v") && active === (initial ?? tabs[0].key)) return;
+    url.searchParams.set("v", active);
+    window.history.replaceState(window.history.state, "", url);
+  }, [active, initial, tabs]);
+
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       const trigger = (event.target as Element | null)?.closest?.("[data-plan-tab]");
@@ -78,6 +101,7 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
               type="button"
               role="tab"
               data-key={tab.key}
+              data-track={`pricing-tab:${tab.key}`}
               id={`${baseId}-tab-${tab.key}`}
               aria-selected={selected}
               aria-controls={`${baseId}-panel`}
