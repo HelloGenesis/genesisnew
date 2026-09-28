@@ -19,7 +19,7 @@ import {
 import { InfluencerMarketing } from "../influencer-marketing";
 import { IconChips, StepsBlock } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
-import { CaseStudiesRow, LogoStrip, WorkSection } from "../offer/page-furniture";
+import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { OfferSection, PlanBand } from "../offer/parts";
 import { VerticalPage } from "../offer/vertical-page";
 
@@ -74,7 +74,6 @@ export function InfluencePageView() {
         </GlassButton>
       </Reveal>
 
-      <CaseStudiesRow slugs={page.proof} heading="Influencer marketing case studies" />
       <WorkSection verticals={["Influence"]} />
 
       <Closing />

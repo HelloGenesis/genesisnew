@@ -122,18 +122,36 @@ export const siteConfig = {
     NAP — name, address, phone — for the Organization schema. Written once so
     the schema and anything that prints the address later cannot disagree.
 
-    The office, as Genesis gave it. Panvel is in the Mumbai Metropolitan
-    Region, which is why the copy says Mumbai and the schema says Panvel.
-    Keep this identical to the Google Business Profile, character for
-    character.
+    The Mumbai office, as Genesis gave it (28 Sep 2026) — the one the schema
+    names. Keep this identical to the Google Business Profile, character for
+    character. Both offices are listed in `offices`, which the footer prints.
   */
   address: {
-    streetAddress: "104, Plot-122/123, Sector-10, New Panvel East" as string | undefined,
-    postalCode: "410206" as string | undefined,
-    locality: "Panvel",
+    streetAddress:
+      "91SpringBoard, Godrej & Boyce, Bus Depot Gate No 2, Plant 6, Lal Bahadur Shastri Marg, Vikhroli (W)" as
+        | string
+        | undefined,
+    postalCode: "400079" as string | undefined,
+    locality: "Mumbai",
     region: "Maharashtra",
     country: "IN",
   },
+  /** Genesis's two offices, as Genesis gave them (28 Sep 2026). */
+  offices: [
+    {
+      label: "Mumbai",
+      lines: [
+        "91SpringBoard, Godrej & Boyce",
+        "Bus Depot Gate No 2, Plant 6",
+        "Lal Bahadur Shastri Marg, Vikhroli (W)",
+        "Mumbai, Maharashtra 400079, India",
+      ],
+    },
+    {
+      label: "Navi Mumbai",
+      lines: ["004, Sankalp Siddhi", "New Panvel (E), Navi Mumbai", "Maharashtra 410206, India"],
+    },
+  ],
   /** The two accounts the footer links to. Read by SocialStars and the schema. */
   social: {
     instagram: "https://www.instagram.com/genesismedia.co/",

@@ -18,6 +18,7 @@
  */
 
 import { inr, monthlyListFigure, price } from "./money";
+import { taxFor } from "./regions";
 import { oneTimeProjects } from "./pricing";
 import { aiAddOns, aiPlans, aiStarterPack } from "./verticals/ai-labs";
 import { designAddOns, designProducts } from "./verticals/brand-design";
@@ -47,6 +48,10 @@ export type Product = {
   rate?: number;
   /** What the buyer gets — shown under "What's included" on the tile and in the cart. */
   includes?: readonly string[];
+  /** A Studios plan with a monthly shoot in it — the half the AI + Studios combo needs. */
+  withShoot?: boolean;
+  /** Needs a physical shoot — Mumbai only, for now (lib/regions). */
+  inPerson?: boolean;
   /** The most one order may hold — the AI Content Starter is two per brand. */
   maxQty?: number;
 };
@@ -83,11 +88,19 @@ function addOns(data: AddOns, vertical: VerticalKey, group: string): Product[] {
       unit,
       quote: amount === undefined ? item.price : undefined,
       includes: item.includes ?? (item.body ? [item.body.replace(/\.$/, "")] : undefined),
+      inPerson: item.inPerson,
     };
   });
 }
 
-function membership(vertical: VerticalKey, group: string, name: string, rate: number, includes?: readonly string[]): Product {
+function membership(
+  vertical: VerticalKey,
+  group: string,
+  name: string,
+  rate: number,
+  includes?: readonly string[],
+  inPerson?: boolean,
+): Product {
   return {
     id: productId(vertical, "membership", name),
     name,
@@ -98,6 +111,9 @@ function membership(vertical: VerticalKey, group: string, name: string, rate: nu
     amount: rate - 1,
     unit: "per month",
     includes,
+    inPerson,
+    /* A monthly shoot in the plan ("1 Half-Day Shoot / month") — what the AI + Studios combo needs. */
+    withShoot: includes?.some((line) => /shoot \/ month/i.test(line)),
   };
 }
 
@@ -110,7 +126,9 @@ const GROUP: Record<VerticalKey, string> = {
 
 const all: Product[] = [
   ...aiPlans.plans.map((plan) => membership("ai-labs", GROUP["ai-labs"], plan.name, plan.rate, plan.features)),
-  ...studiosPlans.plans.map((plan) => membership("studios", "Content Monthly", plan.name, plan.rate, plan.features)),
+  ...studiosPlans.plans.map((plan) =>
+    membership("studios", "Content Monthly", plan.name, plan.rate, plan.features, plan.inPerson),
+  ),
   membership(
     "brand-design",
     "Genesis Creative Desk",
@@ -140,6 +158,7 @@ const all: Product[] = [
       amount,
       quote: amount === undefined ? pack.price : undefined,
       includes: pack.features,
+      inPerson: true,
     };
   }),
   ...oneTimeProjects
@@ -219,7 +238,34 @@ export const bundleTiers = [
   { minItems: 5, percent: 10 },
 ] as const;
 
-export const GST_RATE = 0.18;
+
+/**
+ * ONE PLAN PER PACKAGE (Genesis, 28 Sep 2026: "1 person can't choose 2 plans
+ * from the same package — Growth and Starter both can't be added"). A
+ * package is a membership's `group`; adding a second plan from it replaces
+ * the first, and the server keeps only the last one it is sent.
+ */
+export function samePackage(a: Product, b: Product) {
+  return a.kind === "membership" && b.kind === "membership" && a.group === b.group && a.id !== b.id;
+}
+
+/**
+ * THE AI + STUDIOS COMBO — "if you combine AI content + Studios plan it will
+ * work magic for your brand, and there will be a 10% discount … you need a
+ * plan from Studios that has a shoot in it, so we capture the best of
+ * things" (Genesis, 28 Sep 2026). Taken off both memberships when the cart
+ * holds an AI plan and a Studios plan WITH a monthly shoot; suggested when
+ * it holds only one, or a Studios plan without a shoot.
+ */
+export const COMBO_PERCENT = 10;
+/** What the suggestion offers: AI's first tier, and Studios' first tier with a shoot. */
+const COMBO_AI = productId("ai-labs", "membership", aiPlans.plans[0].name);
+const COMBO_STUDIOS = productId(
+  "studios",
+  "membership",
+  (studiosPlans.plans.find((plan) => plan.features.some((line) => /shoot \/ month/i.test(line))) ?? studiosPlans.plans[0])
+    .name,
+);
 
 /** The most of one product a cart may hold. */
 export const maxQty = (product: Product) => (product.kind === "membership" ? 1 : (product.maxQty ?? 99));
@@ -241,9 +287,20 @@ export function billingNote(product: Product, billing: Billing = "quarterly") {
 
 export type PricedLine = CartLine & { product: Product; charge: number; quoted: boolean };
 
-export function priceCart(lines: readonly CartLine[]) {
+/** `country` sets the tax — GST in India, none on an export (see taxFor). India when not yet chosen. */
+export function priceCart(lines: readonly CartLine[], options: { country?: string } = {}) {
+  const tax = taxFor(options.country);
+  /* One plan per package: a later plan from the same package wins. */
+  const kept = lines.filter((line, index) => {
+    const product = findProduct(line.id);
+    if (!product || product.kind !== "membership") return true;
+    return !lines.slice(index + 1).some((later) => {
+      const other = findProduct(later.id);
+      return other !== undefined && samePackage(product, other);
+    });
+  });
   const priced: PricedLine[] = [];
-  for (const line of lines) {
+  for (const line of kept) {
     const product = findProduct(line.id);
     if (!product) continue;
     const qty = product.kind === "membership" ? 1 : Math.max(1, Math.min(maxQty(product), Math.floor(line.qty) || 1));
@@ -268,8 +325,32 @@ export function priceCart(lines: readonly CartLine[]) {
   const discount = tier ? Math.round((bundleBase * tier.percent) / 100) : 0;
   const nextTier = bundleTiers.find((entry) => bundleItems < entry.minItems);
 
-  const taxable = subtotal - discount;
-  const gst = Math.round(taxable * GST_RATE);
+  /* AI + Studios together: COMBO_PERCENT off both memberships. */
+  const members = payable.filter((line) => line.product.kind === "membership");
+  const aiPlan = members.find((line) => line.product.vertical === "ai-labs");
+  const studiosPlan = members.find((line) => line.product.vertical === "studios");
+  const studiosWithShoot = studiosPlan?.product.withShoot ? studiosPlan : undefined;
+  const comboDiscount =
+    aiPlan && studiosWithShoot ? Math.round(((aiPlan.charge + studiosWithShoot.charge) * COMBO_PERCENT) / 100) : 0;
+  /*
+    What would complete it: the AI plan for a Studios-with-shoot cart; a
+    Studios plan with a shoot for an AI cart, or an upgrade from a Studios
+    plan without one. A Studios plan without a shoot, alone, is not offered
+    the combo — it would need both an upgrade and a second plan.
+  */
+  const comboSuggest =
+    comboDiscount > 0
+      ? undefined
+      : aiPlan
+        ? findProduct(COMBO_STUDIOS)
+        : studiosWithShoot
+          ? findProduct(COMBO_AI)
+          : undefined;
+  /** The cart already has a Studios plan, just not one with a shoot — so the suggestion is an upgrade. */
+  const comboUpgrade = Boolean(comboSuggest && studiosPlan && !studiosWithShoot);
+
+  const taxable = subtotal - discount - comboDiscount;
+  const gst = Math.round(taxable * tax.rate);
 
   return {
     lines: priced,
@@ -281,7 +362,14 @@ export function priceCart(lines: readonly CartLine[]) {
     bundleItems,
     /** "Add 2 more add-ons or one-time products to save 5%." */
     nextTier: nextTier ? { itemsToGo: nextTier.minItems - bundleItems, percent: nextTier.percent } : undefined,
+    comboDiscount,
+    /** The other half of the AI + Studios combo, when the cart has only one. */
+    comboSuggest,
+    comboUpgrade,
+    /** Lines that need a physical shoot — checkout only for a Mumbai shoot. */
+    inPerson: priced.some((line) => line.product.inPerson),
     gst,
+    taxLabel: tax.label,
     total: taxable + gst,
   };
 }

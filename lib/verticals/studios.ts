@@ -49,6 +49,8 @@ export const studiosTwoWays = {
     {
       index: "01",
       name: MONTHLY,
+      /* A Studios subscription — Mumbai only, for now. */
+      inPerson: true,
       tagline: "Always-on content production.",
       body: [
         "Your ongoing content production team for brands that need consistent output every month.",
@@ -58,11 +60,15 @@ export const studiosTwoWays = {
       from: `From ${price(85000)} per month`,
       cta: { label: "Explore Monthly Plans", href: "#pricing" },
       image: "/work/posters/studios-abhi-ex-coms.jpg",
+      /* Genesis's illustration (28 Sep 2026): one engine, every format — reel, static, carousel, AI video. */
+      art: { src: "/studios/content-monthly-orbit.webp", width: 969, height: 992 },
       featured: true,
     },
     {
       index: "02",
       name: SHOOT,
+      /* A shoot happens in person — Mumbai only, for now (Genesis, 28 Sep 2026). */
+      inPerson: true,
       tagline: "One shoot. A ready-to-publish content library.",
       body: [
         "Book a dedicated production day for your brand, product, founder or campaign.",
@@ -72,6 +78,8 @@ export const studiosTwoWays = {
       from: `From ${price(110000)}`,
       cta: { label: "Book a Content Shoot", href: "#shoot" },
       image: "/work/posters/studios-utsav-aftermovie.jpg",
+      /* Genesis's illustration: the lens — one day, multi-cam, ready to publish. */
+      art: { src: "/studios/content-shoot-lens.webp", width: 1080, height: 977 },
       featured: false,
     },
   ],
@@ -114,6 +122,7 @@ export const studiosPlans: PlanGrid = {
   plans: [
     {
       name: "Starter",
+      inPerson: true,
       tagline: "Keep your content moving.",
       description: "Built for teams with existing footage that need consistent editing, scripting and content support.",
       rate: 85000,
@@ -142,6 +151,7 @@ export const studiosPlans: PlanGrid = {
     },
     {
       name: "Growth",
+      inPerson: true,
       badge: "Recommended",
       featured: true,
       tagline: "Capture once. Keep publishing.",
@@ -175,6 +185,7 @@ export const studiosPlans: PlanGrid = {
     },
     {
       name: "Enterprise",
+      inPerson: true,
       tagline: "A complete monthly content engine.",
       description: "For marketing teams running multiple campaigns, content pillars or business units.",
       rate: 250000,
@@ -441,16 +452,16 @@ export const studiosAddOns: AddOns = {
   items: [
     { name: "Additional Edited Reel", price: price(12000), includes: ["1 edited reel from your footage", "Captions, music and colour", "Delivered ready to post"] },
     { name: "Additional Hero Film", price: price(40000), includes: ["1 longer-form hero film", "Story-led edit with music and sound design", "Colour grade and captions"] },
-    { name: "Extra Camera Setup", price: price(15000), includes: ["One more camera and operator on your shoot day", "A second angle for interviews and product"] },
-    { name: "Drone Filming", price: `${price(20000)} onwards`, includes: ["Licensed drone operator and aerial footage", "Final price depends on location and permissions"] },
-    { name: "Additional Shoot Hour", price: price(10000), includes: ["One more hour with the crew on the day"] },
-    { name: "Same-Day Edit", price: price(20000), includes: ["A quick edit delivered on the day of the shoot"] },
-    { name: "Raw Footage Handover", price: price(15000), includes: ["All raw files from the shoot, by download link"] },
+    { name: "Extra Camera Setup", price: price(15000), includes: ["One more camera and operator on your shoot day", "A second angle for interviews and product"], inPerson: true },
+    { name: "Drone Filming", price: `${price(20000)} onwards`, includes: ["Licensed drone operator and aerial footage", "Final price depends on location and permissions"], inPerson: true },
+    { name: "Additional Shoot Hour", price: price(10000), includes: ["One more hour with the crew on the day"], inPerson: true },
+    { name: "Same-Day Edit", price: price(20000), includes: ["A quick edit delivered on the day of the shoot"], inPerson: true },
+    { name: "Raw Footage Handover", price: price(15000), includes: ["All raw files from the shoot, by download link"], inPerson: true },
     { name: "Additional Language Subtitles", price: `${price(2500)} per video`, includes: ["Subtitles in one more language, for one video"] },
-    { name: "Creator / Talent", price: "At actual + management" },
-    { name: "Studio / Location", price: "At actual + 15% coordination" },
-    { name: "Hair & Makeup", price: "At actual" },
-    { name: "Props / Set Build", price: "Custom", includes: ["Props sourced or a set built for your shoot", "Quoted to your brief"] },
+    { name: "Creator / Talent", price: "At actual + management", inPerson: true },
+    { name: "Studio / Location", price: "At actual + 15% coordination", inPerson: true },
+    { name: "Hair & Makeup", price: "At actual", inPerson: true },
+    { name: "Props / Set Build", price: "Custom", includes: ["Props sourced or a set built for your shoot", "Quoted to your brief"], inPerson: true },
   ],
 };
 

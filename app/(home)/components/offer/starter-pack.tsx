@@ -6,6 +6,7 @@ import { type Product, attachedAddOns, oneTimeAddOns, productId, rupees } from "
 import { aiStarterPack } from "@/lib/verticals/ai-labs";
 import type { VerticalKey } from "@/lib/verticals/types";
 
+import { ShootChip } from "./plan-grid";
 import { ONE_TIME_GRADIENT } from "./tier-colors";
 
 
@@ -105,6 +106,7 @@ export function OneTimeCard({
                       </span>
                       <AddToCartIcon id={product.id} />
                     </div>
+                    {product.inPerson && <ShootChip className="mt-2" />}
                     <IncludedList items={product.includes} className="mt-1.5 pr-2" />
                   </li>
                 ))}

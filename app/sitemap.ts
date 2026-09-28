@@ -28,7 +28,8 @@ import { servicePages } from "@/lib/services";
  * both.
  */
 
-const LEGAL_UPDATED = new Date("2026-09-18");
+const LEGAL_UPDATED = new Date("2026-09-28");
+const TERMS_UPDATED = new Date("2026-09-28");
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const built = new Date();
@@ -46,6 +47,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/careers"), lastModified: built, changeFrequency: "weekly", priority: 0.6 },
     { url: absoluteUrl("/creator"), lastModified: built, changeFrequency: "monthly", priority: 0.6 },
     { url: absoluteUrl("/privacy"), lastModified: LEGAL_UPDATED, changeFrequency: "yearly", priority: 0.2 },
+    { url: absoluteUrl("/terms"), lastModified: TERMS_UPDATED, changeFrequency: "yearly", priority: 0.2 },
+    { url: absoluteUrl("/refund-policy"), lastModified: TERMS_UPDATED, changeFrequency: "yearly", priority: 0.2 },
   ];
 
   const studies: MetadataRoute.Sitemap = caseStudyPages.map((page) => {

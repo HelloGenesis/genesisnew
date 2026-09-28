@@ -128,6 +128,27 @@ export const aiFormats = {
         { id: "ai-lab-2-1-9x16-health-returns-activ-yuva", eyebrow: "Explainer", title: "Diya · Health Returns", study: "abhi-activ-yuva-adi-and-diya" },
       ],
     },
+    /*
+      THE SEVENTH FORMAT (Genesis, 28 Sep 2026): influencers and artists as
+      AI avatars, their content produced on automation. Jesko — the DJ and
+      techno artist on the avatar roster — is its face.
+
+      TODO(assets): Jesko's music videos. His Drive folder ("Jesko") is still
+      empty; once they are uploaded, run
+      `node scripts/ingest-drive-clips.mjs <Jesko folder id>` and put his
+      clips first in `work`. Until then the window opens on the creator-led
+      avatar films already in the catalogue.
+    */
+    {
+      title: "Influencer & Artist Content",
+      body: "Influencers and artists as AI avatars — content that keeps publishing on automation.",
+      image: "/avatars/jesko.jpg",
+      work: [
+        { id: "ai-lab-tanvi-uiiui", eyebrow: "Creator Avatar", title: "Tanvi" },
+        { id: "ai-lab-shivam-sh1", eyebrow: "Creator Avatar", title: "Shivam" },
+        { id: "ai-lab-tanvi-photos", eyebrow: "Creator Avatar", title: "Tanvi · Stills" },
+      ],
+    },
   ],
 } as const;
 

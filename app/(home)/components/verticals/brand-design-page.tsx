@@ -22,7 +22,7 @@ import { ProductCards } from "./design-products";
 import { DesignOneTime } from "../offer/starter-pack";
 import { ClosingBand, StepsBlock, TurnaroundStrip } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
-import { CaseStudiesRow, LogoStrip, WorkSection } from "../offer/page-furniture";
+import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VerticalPage } from "../offer/vertical-page";
@@ -95,9 +95,12 @@ export function BrandDesignPageView() {
       {/* SECTION 08 — BRAND BUILD */}
       <BrandBuild />
 
-      {/* "add case study" */}
-      <CaseStudiesRow slugs={page.proof} heading="Brand & Design case studies" />
-      {/* The homepage's "Everything we've made", Brand & Design and motion graphics only. */}
+      {/*
+        "add case study" — as the homepage's Case Studies section, Brand &
+        Design and motion graphics only. It replaced a separate written-study
+        row above it, which read "Case studies" twice in a row once this
+        section took that name (Genesis, 28 Sep 2026).
+      */}
       <WorkSection
         verticals={["Brand & Design", "Motion Graphics"]}
         showFilters

@@ -30,7 +30,7 @@ import { AddToCartIcon } from "@/components/genesis/cart";
 import { productId } from "@/lib/cart";
 import { LogoStrip } from "./offer/page-furniture";
 import { SectionHead } from "./offer/parts";
-import { PlanGrid } from "./offer/plan-grid";
+import { PlanGrid, ShootChip } from "./offer/plan-grid";
 import { PlanTabs, type PlanTab } from "./offer/plan-tabs";
 import { DesignOneTime, StarterPack, StudiosOneTime } from "./offer/starter-pack";
 import { Breadcrumbs } from "./service-page";
@@ -57,16 +57,25 @@ export function PricingHubView() {
       <Atmosphere tone="brand" origin="top" intensity={0.2}>
         <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pb-[var(--section-pad)] pt-32 sm:pt-40">
           <Breadcrumbs trail={[{ name: "Pricing", path: "/pricing" }]} />
-          {/* The membership card, above the heading on the left — as on the homepage block. */}
-          <MembershipCard size="md" tilt={-8} className="ml-2 mt-10" />
-          <SectionHead
-            as="h1"
-            className="mt-8"
-            label={pricingHub.label}
-            heading={pricingHub.heading}
-            accent={pricingHub.headingAccent}
-            body={pricingHub.body}
-          />
+          {/*
+            THE CARD ON THE RIGHT (Genesis, 28 Sep 2026: "put this card on the
+            right"). The heading keeps the left column to itself; the card
+            takes the right, above the standfirst, so the two columns balance
+            instead of the card pushing the heading half a screen down.
+          */}
+          <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-12">
+            <SectionHead
+              as="h1"
+              align="left"
+              label={pricingHub.label}
+              heading={pricingHub.heading}
+              accent={pricingHub.headingAccent}
+            />
+            <Reveal delay={0.1} className="flex flex-col gap-8">
+              <MembershipCard size="lg" tilt={-6} className="mx-auto lg:mx-0 lg:ml-auto" />
+              <p className="text-pretty text-body leading-relaxed text-ash">{pricingHub.body}</p>
+            </Reveal>
+          </div>
           <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {verticalCards.map((card, index) => (
               <Reveal as="li" key={card.key} delay={0.05 * index} className="flex">
@@ -252,7 +261,7 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="ai-labs" {...aiTab} />
-          <PlanGrid data={aiPlans} vertical="ai-labs" compact showCompare={false} />
+          <PlanGrid data={aiPlans} vertical="ai-labs" compact />
           <StarterPack />
           <SubHeading>Every AI Video Includes</SubHeading>
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
@@ -325,7 +334,7 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="studios" {...studiosTab} />
-          <PlanGrid data={studiosPlans} vertical="studios" compact showCompare={false} />
+          <PlanGrid data={studiosPlans} vertical="studios" compact />
           <StudiosOneTime />
           <SubHeading>{studiosShoot.label}</SubHeading>
           <ul className="grid gap-3 md:grid-cols-3">
@@ -339,6 +348,7 @@ function tabs(): PlanTab[] {
                   <span className="font-display text-lead text-bone">
                     {pack.price} <span className="text-small text-ash">{pack.gst}</span>
                   </span>
+                  <ShootChip />
                   <AddToCartIcon id={productId("studios", "one-time", pack.name)} />
                 </span>
               </li>

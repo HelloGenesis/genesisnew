@@ -108,6 +108,27 @@ export function SiteFooter() {
               )}
             </div>
 
+            {/* The two offices (Genesis, 28 Sep 2026), each a link to the map. */}
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+              {siteConfig.offices.map((office) => (
+                <address key={office.label} className="not-italic">
+                  <p className="micro-label">{office.label}</p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(office.lines.join(", "))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 block text-small leading-relaxed text-ash transition-colors hover:text-bone"
+                  >
+                    {office.lines.map((line) => (
+                      <span key={line} className="block">
+                        {line}
+                      </span>
+                    ))}
+                  </a>
+                </address>
+              ))}
+            </div>
+
             {/* "Social Media Icons (like stars)" — the lockup's star, repeated. */}
             <SocialStars className="mt-6 -ml-3" />
           </Reveal>
@@ -166,17 +187,19 @@ export function SiteFooter() {
             LINKS NOW, NOT PRINTED WORDS. This read "Privacy · Terms" as plain
             text with nothing behind it, which is the one thing a footer must
             not do — a visitor looking for a policy found the word and no page.
-            Privacy only: Genesis removed the terms page, and /terms
-            redirects to /privacy. The policy is their own copy; see
-            lib/legal.ts.
+            The terms and the refund policy returned on 28 Sep 2026, when the
+            site began taking payment; see lib/legal-commerce.
           */}
-          <p className="flex items-center gap-2">
-            <Link
-              href="/privacy"
-              className="transition-colors hover:text-bone"
-            >
-              Privacy Policy
-            </Link>
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {[
+              ["/privacy", "Privacy Policy"],
+              ["/terms", "Terms & Conditions"],
+              ["/refund-policy", "Cancellation & Refunds"],
+            ].map(([href, label]) => (
+              <Link key={href} href={href} className="transition-colors hover:text-bone">
+                {label}
+              </Link>
+            ))}
           </p>
         </div>
       </div>

@@ -15,7 +15,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { type Billing, type CartLine, billingNote, findProduct, maxQty, priceCart, rupees } from "@/lib/cart";
+import { COMBO_PERCENT, type Billing, type CartLine, billingNote, findProduct, maxQty, priceCart, rupees, samePackage } from "@/lib/cart";
+import { shootNote } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
 import { GlassButton } from "./glass-button";
@@ -41,6 +42,10 @@ type CartContext = {
   remove: (id: string) => void;
   clear: () => void;
   has: (id: string) => boolean;
+  /** A plan in this cart from the same package as `id`, if any — one plan per package. */
+  packageSibling: (id: string) => string | undefined;
+  /** What the last add did, when it was more than adding — "Switched to Growth". */
+  notice: string;
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
 };
@@ -57,6 +62,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [ready, setReady] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     try {
@@ -81,7 +87,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const add = useCallback<CartContext["add"]>((id, options = {}) => {
     const product = findProduct(id);
     if (!product) return;
-    setLines((current) => {
+    setNotice("");
+    setLines((before) => {
+      /* ONE PLAN PER PACKAGE — a second plan from the same package replaces the first. */
+      const replaced = before.filter((line) => {
+        const other = findProduct(line.id);
+        return other !== undefined && samePackage(product, other);
+      });
+      if (replaced.length) {
+        const was = findProduct(replaced[0].id)!;
+        setNotice(`Switched ${product.group} from ${was.name} to ${product.name} — one plan per package.`);
+      }
+      const current = before.filter((line) => !replaced.includes(line));
       const existing = current.find((line) => line.id === id);
       if (existing) {
         if (product.kind === "membership" || product.amount === undefined) {
@@ -114,10 +131,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       remove: (id) => setLines((current) => current.filter((line) => line.id !== id)),
       clear: () => setLines([]),
       has: (id) => lines.some((line) => line.id === id),
+      packageSibling: (id) => {
+        const product = findProduct(id);
+        if (!product) return undefined;
+        return lines.find((line) => {
+          const other = findProduct(line.id);
+          return other !== undefined && samePackage(product, other);
+        })?.id;
+      },
+      notice,
       drawerOpen,
       setDrawerOpen,
     }),
-    [lines, ready, add, drawerOpen],
+    [lines, ready, add, drawerOpen, notice],
   );
 
   return (
@@ -181,12 +207,14 @@ export function AddToCart({
   className?: string;
   label?: string;
 }) {
-  const { add, has } = useCart();
+  const { add, has, packageSibling } = useCart();
   const router = useRouter();
   const product = findProduct(id);
   if (!product) return null;
   const inCart = has(id);
   const quoted = product.amount === undefined;
+  /* Another plan from this package is in the cart: this button swaps to it. */
+  const sibling = packageSibling(id);
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)} data-track={`cart:${id}`}>
@@ -211,7 +239,15 @@ export function AddToCart({
         icon={inCart ? <Check className="size-4" aria-hidden /> : <Plus className="size-4" aria-hidden />}
         onClick={() => add(id, { billing })}
       >
-        {inCart && quoted ? "In cart" : quoted ? "Add to cart for a quote" : "Add to cart"}
+        {inCart && quoted
+          ? "In cart"
+          : quoted
+            ? "Add to cart for a quote"
+            : sibling && !inCart
+              ? "Switch to this plan"
+              : inCart
+                ? "In cart"
+                : "Add to cart"}
       </GlassButton>
     </div>
   );
@@ -336,6 +372,9 @@ export function CartLines({ dense = false }: { dense?: boolean }) {
               {line.product.kind === "membership" ? " · Membership" : line.product.kind === "add-on" ? " · Add-on" : " · One-time"}
             </p>
             <p className="mt-1 font-sans text-body leading-snug text-bone">{line.product.name}</p>
+            {line.product.inPerson && (
+              <p className="mt-1 text-[0.6875rem] uppercase tracking-[0.12em] text-brand-ink">Mumbai only, for now</p>
+            )}
             <IncludedList items={line.product.includes} className="mt-1.5" />
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {line.product.kind === "membership" ? (
@@ -371,12 +410,47 @@ export function CartLines({ dense = false }: { dense?: boolean }) {
 }
 
 /** Subtotal, bundle saving, GST and total — and the nudge to the next saving. */
-export function CartSummary() {
-  const { lines } = useCart();
-  const totals = priceCart(lines);
+export function CartSummary({ country }: { country?: string }) {
+  const { lines, notice, add } = useCart();
+  const totals = priceCart(lines, { country });
   const row = "flex items-baseline justify-between gap-4 text-small";
+  const suggest = totals.comboSuggest;
   return (
     <div className="space-y-2">
+      {notice && (
+        <p role="status" className="mb-3 rounded-card border border-[var(--glass-border)] bg-[var(--hover-wash)] px-4 py-3 text-small text-bone">
+          {notice}
+        </p>
+      )}
+      {/* The AI + Studios combo, offered when the cart holds only one of the two. */}
+      {suggest && (
+        <div
+          className="mb-4 rounded-card p-px"
+          style={{ background: "linear-gradient(115deg, #8b5cf6 0%, #f7788f 55%, #ffb35c 100%)" }}
+        >
+          <div className="rounded-card bg-ink px-4 py-3">
+            <p className="text-small text-bone">
+              AI content + a Studios shoot works magic for your brand.{" "}
+              <span className="text-ash">
+                {totals.comboUpgrade
+                  ? `Move to a Studios plan with a monthly shoot and save ${COMBO_PERCENT}% on both plans — we capture the best on the day, and AI turns it into more.`
+                  : suggest.vertical === "studios"
+                    ? `Add a Studios plan with a monthly shoot and save ${COMBO_PERCENT}% on both plans — we capture the best on the day, and AI turns it into more.`
+                    : `Add an AI plan and save ${COMBO_PERCENT}% on both plans — AI turns every shoot into more content.`}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={() => add(suggest.id, { open: false })}
+              className="mt-2 inline-flex items-center gap-1.5 text-small text-brand-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <Plus className="size-3.5" aria-hidden />
+              {totals.comboUpgrade ? "Upgrade to" : "Add"} {suggest.group} — {suggest.name} ({rupees(suggest.amount!)} per
+              month)
+            </button>
+          </div>
+        </div>
+      )}
       {totals.nextTier && totals.bundleItems > 0 && (
         <p className="mb-4 rounded-card border border-brand/30 bg-brand/[0.06] px-4 py-3 text-small text-bone">
           Add {totals.nextTier.itemsToGo} more add-on{totals.nextTier.itemsToGo === 1 ? "" : "s"} or one-time product
@@ -393,14 +467,23 @@ export function CartSummary() {
           <span className="tabular-nums text-brand-ink">−{rupees(totals.discount)}</span>
         </p>
       )}
+      {totals.comboDiscount > 0 && (
+        <p className={row}>
+          <span className="text-brand-ink">AI + Studios combo ({COMBO_PERCENT}%)</span>
+          <span className="tabular-nums text-brand-ink">−{rupees(totals.comboDiscount)}</span>
+        </p>
+      )}
       <p className={row}>
-        <span className="text-ash">GST (18%)</span>
+        <span className="text-ash">{totals.taxLabel}</span>
         <span className="tabular-nums text-bone">{rupees(totals.gst)}</span>
       </p>
       <p className="flex items-baseline justify-between gap-4 border-t border-[var(--glass-border)] pt-3">
         <span className="text-body text-bone">Total</span>
         <span className="font-display text-h3 font-normal leading-none tabular-nums text-bone">{rupees(totals.total)}</span>
       </p>
+      {totals.inPerson && (
+        <p className="pt-1 text-[0.75rem] leading-relaxed text-faint">{shootNote}</p>
+      )}
       {totals.quoted.length > 0 && (
         <p className="pt-1 text-[0.75rem] leading-relaxed text-faint">
           {totals.quoted.length} item{totals.quoted.length === 1 ? " is" : "s are"} priced on request — Genesis

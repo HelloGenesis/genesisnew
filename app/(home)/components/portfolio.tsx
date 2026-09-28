@@ -100,8 +100,14 @@ export function Portfolio() {
             studies keep their own name for their own section. The button
             below still leads to them.
           */}
+          {/*
+            "CASE STUDIES" AFTER ALL — Genesis, 28 Sep 2026: "change explore
+            our work copy to case studies on the homepage as well". The
+            heading still says what the section holds; the label now names it
+            the way the division pages do.
+          */}
           <SectionLabel dot tone="brand">
-            Explore our work
+            Case Studies
           </SectionLabel>
           <h2 className="mt-4 text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2 lg:text-h1">
             Everything{" "}

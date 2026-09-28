@@ -1,26 +1,31 @@
 /**
- * THE PRICING COLOURS — one gradient per kind of thing a visitor can buy, so
- * the tiers read apart at a glance (Genesis, 28 Sep 2026: "differentiate the
- * blocks into 3 different gradients so it's user friendly and easier to
- * understand").
+ * THE PRICING COLOURS — Genesis's own palette, the orb's violet → coral →
+ * amber, in three variations so the tiers read apart at a glance while
+ * plainly belonging together (Genesis, 28 Sep 2026: "the gradients … should
+ * look similar to [the one-time card], which is our colour palette … make
+ * these 3 blocks similar but with different variations of the same
+ * gradient", everywhere subscription pricing appears).
  *
- *   Tier 1 (Starter)     emerald → cyan
- *   Tier 2 (Growth)      gold → orange — the brand's end of the spectrum, for
- *                        the plan most brands pick
- *   Tier 3 (Enterprise)  blue → violet
- *   One-time             violet → coral → amber — the orb's colours
+ *   Tier 1 (Starter)     violet → orchid        the palette's cool end
+ *   Tier 2 (Growth)      coral → amber          its warm end, for the plan
+ *                                               most brands pick
+ *   Tier 3 (Enterprise)  indigo → violet → coral  the deep, full sweep
+ *   One-time             violet → coral → amber  the whole palette
  *
  * Every stop is dark enough to read as text on the light theme's #f9f9f9 as
  * well as on the dark theme's near-black; names are set in these gradients.
  */
 export const TIER_GRADIENTS = [
-  "linear-gradient(115deg, #10b981 0%, #06b6d4 100%)",
-  "linear-gradient(115deg, #e8a100 0%, #f2552c 100%)",
-  "linear-gradient(115deg, #3b82f6 0%, #8b5cf6 100%)",
+  "linear-gradient(115deg, #8b5cf6 0%, #c066d9 100%)",
+  "linear-gradient(115deg, #f2607e 0%, #f5923e 100%)",
+  "linear-gradient(115deg, #5b45e0 0%, #9b5cf0 55%, #e8708f 100%)",
 ] as const;
 
-/** The glow behind each tier's card, in its first colour. */
-export const TIER_GLOWS = ["rgb(16 185 129 / 0.22)", "rgb(232 161 0 / 0.24)", "rgb(59 130 246 / 0.24)"] as const;
+/** The glow behind each tier's card, in its leading colour. */
+export const TIER_GLOWS = ["rgb(139 92 246 / 0.26)", "rgb(242 96 126 / 0.24)", "rgb(91 69 224 / 0.28)"] as const;
+
+/** The three tiers' colours in one sweep — for what belongs to all the plans at once. */
+export const PLANS_GRADIENT = "linear-gradient(115deg, #8b5cf6 0%, #c066d9 30%, #f2607e 65%, #f5923e 100%)";
 
 export const ONE_TIME_GRADIENT = "linear-gradient(115deg, #8b5cf6 0%, #f7788f 55%, #ffb35c 100%)";
 

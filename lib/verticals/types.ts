@@ -70,6 +70,12 @@ export type Plan = {
   rate: number;
   features: string[];
   cta: Cta;
+  /**
+   * Needs a physical shoot, so only where Genesis's crews work — Mumbai, for
+   * now (see SHOOT_CITY in lib/regions). Shown on the card; enforced at
+   * checkout.
+   */
+  inPerson?: boolean;
   /** The featured tier takes the brand fill; the rest stay glass. */
   featured?: boolean;
   /** A line for the whole grid, printed once under the cards. */
@@ -141,7 +147,8 @@ export type AddOns = {
   chips?: { label: string; icon?: IconName }[];
   button: string;
   /** `includes` — what the buyer gets, opened under "What's included" on the tile and in the cart. */
-  items: { name: string; price: string; body?: string; includes?: string[] }[];
+  /** `inPerson` — needs a physical shoot, so Mumbai only for now (see lib/regions). */
+  items: { name: string; price: string; body?: string; includes?: string[]; inPerson?: boolean }[];
 };
 
 export type Closing = {

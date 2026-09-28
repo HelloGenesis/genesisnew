@@ -1,20 +1,23 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, ChevronDown, Minus, Plus, TableProperties } from "lucide-react";
+import { CalendarX, Check, ChevronDown, CirclePause, MapPin, Minus, Plus, ReceiptIndianRupee } from "lucide-react";
 import { useId, useState } from "react";
 
 import { AddToCart } from "@/components/genesis/cart";
 import { GlassButton } from "@/components/genesis/glass-button";
-import { Overlay } from "@/components/genesis/overlay";
 import { Reveal } from "@/components/genesis/reveal";
 import { productId } from "@/lib/cart";
 import { monthlyListFigure, price } from "@/lib/money";
 import { planGlossary, planTerms } from "@/lib/pricing";
+import { shootNote } from "@/lib/regions";
 import type { Plan, PlanGrid as PlanGridData, VerticalKey } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 import { CheckList, SectionHead } from "./parts";
-import { tierGlow, tierGradient } from "./tier-colors";
+import { PLANS_GRADIENT, tierGlow, tierGradient } from "./tier-colors";
+
+/** An icon for each of the three terms, in planTerms order: stop, pause, GST. */
+const TERM_ICONS = [CalendarX, CirclePause, ReceiptIndianRupee];
 
 export type Billing = "monthly" | "quarterly";
 
@@ -34,7 +37,6 @@ export function PlanGrid({
   data,
   id,
   compact = false,
-  showCompare = true,
   vertical,
 }: {
   data: PlanGridData;
@@ -42,8 +44,6 @@ export function PlanGrid({
   vertical?: VerticalKey;
   id?: string;
   compact?: boolean;
-  /** /pricing leaves it out: the cards themselves say what each plan includes. */
-  showCompare?: boolean;
 }) {
   /*
     QUARTERLY BY DEFAULT — Genesis's rule: a visitor first sees the quarterly
@@ -52,7 +52,6 @@ export function PlanGrid({
   */
   const [billing, setBilling] = useState<Billing>("quarterly");
   const [includedOpen, setIncludedOpen] = useState(false);
-  const [compareOpen, setCompareOpen] = useState(false);
   const includedId = useId();
   const headingId = useId();
   /*
@@ -63,7 +62,6 @@ export function PlanGrid({
     looking at.
   */
   const perCard = data.plans.some((plan) => plan.inclusions);
-  const compare = showCompare ? data.compare : undefined;
   const notes = [...new Set(data.plans.map((plan) => plan.note).filter(Boolean))] as string[];
 
   const toggle = data.billing ? (
@@ -94,6 +92,9 @@ export function PlanGrid({
       </ul>
 
       {/* Lines for the whole grid, under it rather than inside one card. */}
+      {data.plans.some((plan) => plan.inPerson) && (
+        <p className="mt-5 text-center text-small text-ash">{shootNote}</p>
+      )}
       {notes.map((note) => (
         <p key={note} className="mt-5 text-center text-body text-ash">
           {note}
@@ -102,179 +103,133 @@ export function PlanGrid({
 
       {data.footnote && <p className="mt-4 text-small text-faint">{data.footnote}</p>}
 
-      {(data.included || compare) && (
-        <div className={cn("mt-6 grid gap-3", compare && "md:grid-cols-[1fr_auto]")}>
-          {data.included && (
-            <div className="glass glass-lit rounded-panel">
-              <button
-                type="button"
-                aria-expanded={includedOpen}
-                aria-controls={perCard ? undefined : includedId}
-                onClick={() => setIncludedOpen((open) => !open)}
-                className="flex w-full items-center gap-4 rounded-panel p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:p-5"
-              >
-                <span className="grid size-10 shrink-0 place-items-center rounded-card border border-white/12 text-brand-ink">
-                  <Plus
-                    className={cn("size-4 transition-transform duration-300", includedOpen && "rotate-45")}
-                    aria-hidden
-                  />
-                </span>
-                <span className="flex-1">
-                  <span className="block text-body text-bone">{data.included.heading}</span>
-                  {(data.included.sub ?? data.included.lead) && (
-                    <span className="mt-0.5 block text-small text-ash">
-                      {data.included.sub ?? data.included.lead}
-                    </span>
-                  )}
-                </span>
-                <span className="hidden items-center gap-1.5 text-small text-ash sm:flex">
-                  {includedOpen ? "Hide details" : "View What\u2019s Included"}
-                  <ChevronDown
-                    className={cn("size-4 transition-transform duration-300", includedOpen && "rotate-180")}
-                    aria-hidden
-                  />
-                </span>
-              </button>
-              <AnimatePresence initial={false}>
-                {includedOpen && !perCard && (
-                  <motion.div
-                    id={includedId}
-                    key="included"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="border-t border-white/10 p-5">
-                      {data.included.sub && data.included.lead && (
-                        <p className="micro-label mb-4">{data.included.lead}</p>
-                      )}
-                      <CheckList
-                        items={data.included.items}
-                        className="grid gap-x-8 gap-y-2.5 space-y-0 sm:grid-cols-2 lg:grid-cols-3"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-          {compare && (
+      {/*
+        THE PLANS' FOOTING, IN THE PLANS' PALETTE (Genesis, 28 Sep 2026: "make
+        this in the same colour palette as it's a part of the above box …
+        remove compare plans"). "View What's Included" is a gradient-edged
+        card like the plans; the three terms are a bento beneath it, and what
+        the plan words mean opens below them. The side-by-side comparison is
+        gone — the cards already say what each plan includes.
+      */}
+      {data.included && (
+        <div className="mt-6 rounded-panel p-px" style={{ background: PLANS_GRADIENT }}>
+          <div className="rounded-panel bg-ink">
             <button
               type="button"
-              data-track="compare-plans"
-              onClick={() => setCompareOpen(true)}
-              className="glass glass-lit flex items-center gap-4 self-start rounded-panel p-4 text-left transition-colors hover:border-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:p-5"
+              aria-expanded={includedOpen}
+              aria-controls={perCard ? undefined : includedId}
+              onClick={() => setIncludedOpen((open) => !open)}
+              className="flex w-full items-center gap-4 rounded-panel p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:p-5"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-card border border-white/12 text-brand-ink">
-                <TableProperties className="size-4" aria-hidden />
+              <span
+                className="grid size-10 shrink-0 place-items-center rounded-card text-white"
+                style={{ background: PLANS_GRADIENT }}
+              >
+                <Plus
+                  className={cn("size-4 transition-transform duration-300", includedOpen && "rotate-45")}
+                  aria-hidden
+                />
               </span>
-              <span>
-                <span className="block text-body text-bone">Compare Plans</span>
-                <span className="mt-0.5 block text-small text-ash">See the detailed side-by-side comparison.</span>
+              <span className="flex-1">
+                <span className="block text-body text-bone">{data.included.heading}</span>
+                {(data.included.sub ?? data.included.lead) && (
+                  <span className="mt-0.5 block text-small text-ash">{data.included.sub ?? data.included.lead}</span>
+                )}
               </span>
-              <ArrowRight className="size-4 shrink-0 text-ash" aria-hidden />
+              <span className="hidden items-center gap-1.5 text-small text-bone sm:flex">
+                {includedOpen ? "Hide details" : "View What\u2019s Included"}
+                <ChevronDown
+                  className={cn("size-4 transition-transform duration-300", includedOpen && "rotate-180")}
+                  aria-hidden
+                />
+              </span>
             </button>
-          )}
+            <AnimatePresence initial={false}>
+              {includedOpen && !perCard && (
+                <motion.div
+                  id={includedId}
+                  key="included"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="border-t border-[var(--glass-border)] p-5">
+                    {data.included.sub && data.included.lead && <p className="micro-label mb-4">{data.included.lead}</p>}
+                    <CheckList
+                      items={data.included.items}
+                      className="grid gap-x-8 gap-y-2.5 space-y-0 sm:grid-cols-2 lg:grid-cols-3"
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       )}
 
-      {/* The terms and the words, together — see planTerms / planGlossary. */}
-      <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <ul className="flex flex-wrap gap-x-5 gap-y-1">
-          {planTerms.map((term) => (
-            <li key={term} className="flex items-center gap-2 text-small text-faint">
-              <span aria-hidden className="size-1 rounded-full bg-brand" />
-              {term}
+      {/* The terms, as a bento — the first cell the widest. See planTerms. */}
+      <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
+        {planTerms.map((term, index) => {
+          const Icon = TERM_ICONS[index % TERM_ICONS.length];
+          return (
+            <li
+              key={term}
+              className={cn(
+                "relative flex items-start gap-4 overflow-hidden rounded-panel border border-[var(--glass-border)] bg-ink p-4 sm:p-5",
+                index === 0 && "sm:col-span-2 lg:col-span-1",
+              )}
+            >
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -right-10 -top-12 size-32 rounded-full blur-2xl"
+                style={{ background: tierGlow(index) }}
+              />
+              <span
+                className="relative grid size-10 shrink-0 place-items-center rounded-card text-white"
+                style={{ background: tierGradient(index) }}
+              >
+                <Icon className="size-4" aria-hidden />
+              </span>
+              <span className="relative text-pretty text-small leading-relaxed text-bone">{term}</span>
             </li>
-          ))}
-        </ul>
-        <details className="group shrink-0 text-small lg:max-w-md">
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-ash transition-colors hover:text-bone [&::-webkit-details-marker]:hidden">
-            What these terms mean
-            <ChevronDown aria-hidden className="size-4 transition-transform duration-300 group-open:rotate-180" />
-          </summary>
-          <dl className="mt-3 space-y-3 rounded-card border border-white/10 p-4">
-            {planGlossary.map((entry) => (
-              <div key={entry.term}>
-                <dt className="text-bone">{entry.term}</dt>
-                <dd className="mt-0.5 text-pretty leading-relaxed text-ash">{entry.meaning}</dd>
-              </div>
-            ))}
-          </dl>
-        </details>
-      </div>
+          );
+        })}
+      </ul>
 
-      {compare && (
-        <Overlay open={compareOpen} label="Compare plans" onClose={() => setCompareOpen(false)}>
-          <div className="overflow-y-auto p-5 sm:p-8" data-lenis-prevent>
-            <p className="micro-label">{data.label}</p>
-            <h3 className="mt-3 text-h3 font-normal tracking-tight text-bone">Compare Plans</h3>
-            <div className="mt-6 overflow-x-auto">
-              <table className="w-full min-w-[36rem] border-collapse text-left text-small">
-                <thead>
-                  <tr>
-                    <th scope="col" className="w-[28%] border-b border-white/12 py-3 pr-4 font-normal text-faint">
-                      <span className="sr-only">Feature</span>
-                    </th>
-                    {data.plans.map((plan) => (
-                      <th
-                        key={plan.name}
-                        scope="col"
-                        className={cn(
-                          "border-b border-white/12 px-3 py-3 font-normal",
-                          plan.featured ? "text-brand-ink" : "text-bone",
-                        )}
-                      >
-                        <span className="font-display text-lead">{plan.name}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { label: "Quarterly (per month)", values: data.plans.map((plan) => price(plan.rate)) },
-                    { label: "Monthly (per month)", values: data.plans.map((plan) => price(monthlyListFigure(plan.rate))) },
-                    ...compare.rows,
-                  ].map((row) => (
-                    <tr key={row.label} className="align-top">
-                      <th scope="row" className="border-b border-white/8 py-3 pr-4 font-normal text-ash">
-                        {row.label}
-                      </th>
-                      {row.values.map((value, index) => (
-                        <td
-                          key={`${row.label}-${index}`}
-                          className={cn(
-                            "border-b border-white/8 px-3 py-3 text-bone",
-                            data.plans[index]?.featured && "bg-brand/[0.04]",
-                          )}
-                        >
-                          {value}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* What the plan words mean — below the terms. See planGlossary. */}
+      <details className="group mt-3 rounded-panel border border-[var(--glass-border)] bg-ink">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-small text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:px-5 [&::-webkit-details-marker]:hidden">
+          What these terms mean
+          <ChevronDown aria-hidden className="size-4 text-ash transition-transform duration-300 group-open:rotate-180" />
+        </summary>
+        <dl className="grid gap-x-8 gap-y-4 border-t border-[var(--glass-border)] p-4 text-small sm:grid-cols-2 sm:px-5">
+          {planGlossary.map((entry) => (
+            <div key={entry.term}>
+              <dt className="text-bone">{entry.term}</dt>
+              <dd className="mt-0.5 text-pretty leading-relaxed text-ash">{entry.meaning}</dd>
             </div>
-            {compare.footnote && <p className="mt-4 text-small text-faint">{compare.footnote}</p>}
-            <div className="mt-6 flex flex-wrap gap-3">
-              {data.plans.map((plan) => (
-                <GlassButton
-                  key={plan.name}
-                  href={plan.cta.href}
-                  variant={plan.featured ? "brand" : "glass"}
-                  arrow
-                >
-                  {plan.cta.label}
-                </GlassButton>
-              ))}
-            </div>
-          </div>
-        </Overlay>
-      )}
+          ))}
+        </dl>
+      </details>
     </div>
+  );
+}
+
+/** "Mumbai only, for now" — on anything that needs a physical shoot. See SHOOT_CITY. */
+export function ShootChip({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.6875rem] uppercase tracking-[0.12em] text-ash",
+        className,
+      )}
+      title={shootNote}
+    >
+      <MapPin className="size-3 text-brand-ink" aria-hidden />
+      Mumbai only, for now
+    </span>
   );
 }
 
@@ -401,6 +356,7 @@ function PlanCard({
           <span className="-ml-1.5 text-lead text-ash">/-</span>
           <span className="text-small text-ash">per month</span>
         </p>
+        {plan.inPerson && <ShootChip className="mt-3" />}
       </div>
 
       <ul className="relative mt-6 space-y-2.5">

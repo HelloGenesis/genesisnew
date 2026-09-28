@@ -11,6 +11,7 @@ import { designProducts } from "@/lib/verticals/brand-design";
 import { cn } from "@/lib/utils";
 import { IconTile } from "../offer/icons";
 import { CheckList } from "../offer/parts";
+import { tierGlow, tierGradient } from "../offer/tier-colors";
 import { BillingToggle, type Billing } from "../offer/plan-grid";
 
 /**
@@ -44,14 +45,27 @@ function DeskCard() {
   const figure = price(billing === "quarterly" ? desk.rate : monthlyListFigure(desk.rate));
 
   return (
-    <article className="glass glass-strong glass-lit relative flex w-full min-w-0 flex-col overflow-hidden rounded-panel border border-brand/60 p-6 shadow-[0_24px_64px_-24px_rgb(255_197_22/0.35)] sm:p-8">
-      <span aria-hidden className="pointer-events-none absolute -right-20 -top-20 size-72 rounded-full bg-brand/15 blur-3xl" />
+    /*
+      THE MEMBERSHIP, IN THE PRICING PALETTE — the same gradient-edged card as
+      the AI and Studios plans, in the warm variation (see tier-colors), so
+      every subscription on the site reads as one family.
+    */
+    <div
+      className="flex w-full min-w-0 rounded-panel p-px shadow-[0_30px_80px_-30px_var(--tier-glow)]"
+      style={{ background: tierGradient(1), ["--tier-glow" as string]: tierGlow(1) }}
+    >
+    <article className="relative flex w-full min-w-0 flex-col overflow-hidden rounded-panel bg-ink p-6 sm:p-8">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-20 -top-20 size-72 rounded-full blur-3xl"
+        style={{ background: tierGlow(1) }}
+      />
 
-      <Head eyebrow={desk.eyebrow} name={desk.name} badge={desk.badge} tagline={desk.tagline} featured />
+      <Head eyebrow={desk.eyebrow} name={desk.name} badge={desk.badge} tagline={desk.tagline} gradient={tierGradient(1)} />
       <p className="relative mt-3 max-w-xl text-pretty text-small leading-relaxed text-ash sm:text-body">{desk.body}</p>
 
       {/* Price and billing, side by side from sm — the decision in one row. */}
-      <div className="relative mt-7 flex flex-col gap-5 rounded-card border border-white/10 bg-white/[0.03] p-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="relative mt-7 flex flex-col gap-5 rounded-card border border-[var(--glass-border)] bg-[var(--hover-wash)] p-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Price figure={figure} suffix="per month + GST" />
         </div>
@@ -63,7 +77,7 @@ function DeskCard() {
           <li
             key={row.label}
             className={cn(
-              "flex items-center gap-3 rounded-card border border-white/8 bg-white/[0.02] p-3",
+              "flex items-center gap-3 rounded-card border border-[var(--glass-border)] bg-[var(--hover-wash)] p-3",
               index === desk.highlights.length - 1 && desk.highlights.length % 2 === 1 && "sm:col-span-2",
             )}
           >
@@ -86,6 +100,7 @@ function DeskCard() {
         />
       </div>
     </article>
+    </div>
   );
 }
 
@@ -96,7 +111,7 @@ function BuildCard() {
       <Head eyebrow={build.eyebrow} name={build.name} badge={build.badge} tagline={build.tagline} />
       <p className="mt-3 text-pretty text-small leading-relaxed text-ash sm:text-body">{build.body}</p>
 
-      <div className="mt-7 rounded-card border border-white/10 bg-white/[0.03] p-5">
+      <div className="mt-7 rounded-card border border-[var(--glass-border)] bg-[var(--hover-wash)] p-5">
         <Price prefix="From" figure={build.from} suffix="+ GST" />
         <p className="mt-2 text-small text-faint">{build.facts.join(" · ")}</p>
       </div>
@@ -120,24 +135,34 @@ function Head({
   name,
   badge,
   tagline,
-  featured = false,
+  gradient,
 }: {
   eyebrow: string;
   name: string;
   badge: string;
   tagline: string;
-  featured?: boolean;
+  /** A subscription's palette gradient, for its name and badge. */
+  gradient?: string;
 }) {
   return (
     <div className="relative">
       <p className="micro-label !text-brand-ink">{eyebrow}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <h3 className="font-display text-h2 font-normal leading-none tracking-tight text-bone">{name}</h3>
+        <h3
+          className={cn(
+            "font-display text-h2 font-normal leading-none tracking-tight",
+            gradient ? "bg-clip-text text-transparent" : "text-bone",
+          )}
+          style={gradient ? { backgroundImage: gradient } : undefined}
+        >
+          {name}
+        </h3>
         <span
           className={cn(
             "rounded-full px-3 py-1 text-micro uppercase tracking-[0.14em]",
-            featured ? "bg-brand text-on-brand" : "border border-white/20 text-ash",
+            gradient ? "text-white" : "border border-[var(--glass-border)] text-ash",
           )}
+          style={gradient ? { background: gradient } : undefined}
         >
           {badge}
         </span>

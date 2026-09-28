@@ -53,9 +53,8 @@ const WIX_REDIRECTS = [
   { source: "/roster", destination: "/influencer-marketing" },
   { source: "/events", destination: "/content-production" },
   { source: "/work", destination: "/case-studies" },
-  // The terms page was removed at Genesis's request; both land on privacy.
-  { source: "/terms-conditions", destination: "/privacy" },
-  { source: "/terms", destination: "/privacy" },
+  // The terms page is back (28 Sep 2026) now the site takes payment; the old spelling lands on it.
+  { source: "/terms-conditions", destination: "/terms" },
   { source: "/privacy-policy", destination: "/privacy" },
   // Blog
   { source: "/blog", destination: "/case-studies" },

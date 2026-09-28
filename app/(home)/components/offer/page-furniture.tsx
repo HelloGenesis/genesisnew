@@ -92,7 +92,7 @@ export function LogoStrip({ heading = true, className }: { heading?: boolean; cl
 export function WorkSection({
   id = "library",
   verticals,
-  label = "Explore our work",
+  label = "Case Studies",
   heading = "Everything",
   accent = "we've made.",
   rail = true,

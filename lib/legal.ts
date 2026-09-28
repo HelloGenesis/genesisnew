@@ -6,8 +6,10 @@
  * added to, and edits belong to Genesis. The "interim" notice the old page
  * carried is gone with it.
  *
- * THE TERMS PAGE IS GONE. Genesis asked for it to be removed; /terms and
- * /terms-conditions redirect here (see next.config).
+ * ONE ADDITION, 28 September 2026: section 16, "Purchases, Payments and
+ * Checkout", for the cart and Razorpay checkout, written with the terms of
+ * sale in lib/legal-commerce (the terms page returned with them). The
+ * sections after it moved down one number; their text is unchanged.
  *
  * A section's `paragraphs` may hold a line break ("\n") where the copy is a
  * block of lines rather than prose — the postal address. `bullets` is the one
@@ -39,7 +41,7 @@ export const LEGAL_EMAIL = "hello@genesismedia.co";
 export const privacy: LegalDocument = {
   slug: "privacy",
   title: "Privacy Policy",
-  updated: "18 September 2026",
+  updated: "28 September 2026",
   standfirst:
     "How Genesis Events & Media Group collects, uses, stores, shares and protects personal information.",
   intro: [
@@ -184,23 +186,32 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: "16. Changes to This Privacy Policy",
+      heading: "16. Purchases, Payments and Checkout",
+      paragraphs: [
+        "When you buy a membership or product through our website, we collect the details needed to process and invoice your order: the contact person's name, designation, email and phone number; your business name, country, billing address, GSTIN or other tax ID, business email and phone; the items ordered and their billing choices; the shoot location, where a product requires a shoot; and your agreement to our Terms & Conditions and Cancellation & Refund Policy, with the date and version accepted.",
+        "Payments are processed by Razorpay Software Private Limited. Your card, UPI, net-banking or wallet details are entered on Razorpay's pages and are handled by Razorpay under its own privacy policy; Genesis receives confirmation of payment and a payment reference, not your full payment details.",
+        "We use this information to process and fulfil your order, issue invoices and GST records, meet our tax and accounting obligations, communicate with you about your order and membership, and prevent fraud. Your cart is stored only in your own browser until you check out.",
+        "We keep order and invoice records for as long as tax and accounting law requires, which in India is generally at least eight years.",
+      ],
+    },
+    {
+      heading: "17. Changes to This Privacy Policy",
       paragraphs: [
         "We may update this Privacy Policy periodically to reflect changes to our services, business practices, technology, or applicable legal and regulatory requirements.",
         "Any revised Privacy Policy will be published on this page with an updated “Last Updated” date.",
       ],
     },
     {
-      heading: "17. Governing Law",
+      heading: "18. Governing Law",
       paragraphs: [
         "This Privacy Policy is governed by the applicable laws of India, including applicable data-protection and information-technology laws and regulations as they come into force and apply to our activities.",
       ],
     },
     {
-      heading: "18. Contact and Privacy Grievances",
+      heading: "19. Contact and Privacy Grievances",
       paragraphs: [
         "For questions, requests, complaints, withdrawal of consent, correction or deletion requests, or other privacy-related concerns, please contact:",
-        "Genesis Events & Media Group\n104, Plot-122/123, Sector-10\nNew Panvel East, Panvel\nMaharashtra – 410206\nIndia",
+        "Genesis Events & Media Group\n004, Sankalp Siddhi\nNew Panvel (E), Navi Mumbai\nMaharashtra – 410206\nIndia",
         `Email: ${LEGAL_EMAIL}`,
         "Please mention “Privacy Request” in the subject line for privacy-related enquiries.",
         "We will endeavour to review and respond to legitimate privacy requests within a reasonable period and in accordance with applicable law.",
