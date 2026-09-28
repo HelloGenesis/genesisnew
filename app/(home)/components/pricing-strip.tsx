@@ -86,7 +86,7 @@ export function PricingStrip() {
         <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-small text-ash">
             Subscriptions from <span className="text-bone">{verticalCards.find((card) => card.key === "brand-design")?.from}</span>
-            {" · "}AI content from <span className="text-bone">{entryPrice}</span>
+            {" · "}One-time projects from <span className="text-bone">{entryPrice}</span>
           </p>
           <div className="flex flex-wrap gap-3">
             <span data-track="home-memberships:pricing">

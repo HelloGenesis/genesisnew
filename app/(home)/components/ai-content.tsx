@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 
 
 import { AutomationSources } from "@/components/genesis/automation-diagram";
@@ -21,10 +21,11 @@ import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { PlanBar } from "./plan-bar";
-import { enquiryHref } from "@/lib/pricing";
-import { aiStarterPack } from "@/lib/verticals/ai-labs";
+import { inr } from "@/lib/money";
+import { productsFor } from "@/lib/products";
 
-const starter = aiStarterPack;
+/* The avatar product — the natural next step under the avatar roster (lib/products). */
+const avatarProduct = productsFor("ai-labs")[0];
 import { SectionShell } from "./section-shell";
 
 
@@ -131,6 +132,7 @@ export function AiContent() {
       heading={aiContent.heading}
       headingAccent={aiContent.headingAccent}
       body={aiContent.body}
+      bodyPhone={aiContent.bodyPhone}
       /*
         TWO LINES ON A DESKTOP — "isko bhi two lines me karo". At the shell's
         default 42rem it ran to three. Measured, it sets in two from 820px;
@@ -198,34 +200,21 @@ export function AiContent() {
         the room the turned ones need as they scale back.
       */}
       <Reveal variant="scene" className="relative left-1/2 mt-10 w-screen -translate-x-1/2">
-        <div
-          style={
-            {
-              /*
-                BIGGER AND TALLER THAN THE FIRST PASS. The cards were 15vw at
-                3:4 and Genesis's read was that the whole thing looked mid
-                next to the reference — half of that was the projection (see
-                WarpRail) and half was simply scale. A 5:8 card at this width
-                is the proportion the reference uses, and the frame is tall
-                enough to hold it with the turned ones tucked behind.
-              */
-              /*
-                THE CARD IS THE BIGGEST IT HAS BEEN, and it can be now that
-                nothing comes forward: the middle card renders at exactly this
-                width and every other one is smaller, so the number is a
-                ceiling rather than a starting point. The cylinder versions
-                had to be sized small because their edge panels were
-                magnified past it.
-              */
-              "--warp-card": "clamp(8.5rem, 15vw, 14rem)",
-              /*
-                And the frame only has to hold the largest card plus a little
-                air, for the same reason.
-              */
-              "--warp-h": "clamp(14rem, 24vw, 22rem)",
-            } as CSSProperties
-          }
-        >
+        {/*
+          BIGGER AND TALLER THAN THE FIRST PASS. The cards were 15vw at 3:4
+          and Genesis's read was that the whole thing looked mid next to the
+          reference — half of that was the projection (see WarpRail) and half
+          was simply scale. A 5:8 card is the proportion the reference uses.
+          The middle card renders at exactly --warp-card and every other one
+          is smaller, so the number is a ceiling rather than a starting point;
+          --warp-h holds the largest card plus a little air.
+
+          LARGER STILL ON A PHONE (Genesis, 28 Sep 2026: "make this card a
+          little larger … just for phone"): 11.5rem where the clamp's floor
+          gave 8.5rem, about 35% bigger, with the frame grown to match. From
+          sm up the viewport-relative sizes are unchanged.
+        */}
+        <div className="[--warp-card:11.5rem] [--warp-h:19.5rem] sm:[--warp-card:clamp(8.5rem,15vw,14rem)] sm:[--warp-h:clamp(14rem,24vw,22rem)]">
           {/*
             EVERY CARD OPENS SOMETHING, which is the fix Genesis reported
             twice — "these videos are still not interactive".
@@ -262,6 +251,17 @@ export function AiContent() {
                 : () => setVideo({ id: card.clipId, label: card.label }),
             }))}
           />
+        </div>
+        {/*
+          A WAY ON, ON A PHONE (Genesis, 28 Sep 2026: "add a CTA button … just
+          for phone"). On a laptop the plan bar at the foot of the section
+          carries the buttons; on a phone that is several screens down, so
+          the work gets its own next step right under it.
+        */}
+        <div className="mt-8 flex justify-center px-6 sm:hidden" data-track="home-ai:phone-cta">
+          <GlassButton href="/ai-content-automation" pageLink variant="brand" arrow>
+            Explore AI Labs
+          </GlassButton>
         </div>
       </Reveal>
 
@@ -319,7 +319,8 @@ export function AiContent() {
             its own width; only the copy widens.
           */}
           <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead lg:max-w-[60rem] lg:text-balance xl:max-w-[70rem]">
-            {aiContent.avatarsIntro.lead}
+            <span className="sm:hidden">{aiContent.avatarsIntro.leadPhone}</span>
+            <span className="hidden sm:inline">{aiContent.avatarsIntro.lead}</span>
           </p>
 
           {/*
@@ -349,18 +350,19 @@ export function AiContent() {
           </p>
         )}
         {/*
-          THE WAY IN, UNDER THE AVATARS — the AI Content Starter, Genesis's
-          entry product: a one-time pack for a brand not ready to subscribe.
-          See aiStarterPack in lib/verticals/ai-labs.
+          THE WAY IN, UNDER THE AVATARS — "Build Your AI Avatar", the first of
+          Genesis's one-time AI products (28 Sep 2026): a brand not ready to
+          subscribe can have its own avatar made. It opens the product on the
+          AI Labs page, where it can be bought.
         */}
         <div className="mx-auto mt-6 flex max-w-fit flex-col items-center gap-3 rounded-panel border border-brand/40 bg-brand/[0.06] px-5 py-3 text-center sm:flex-row sm:gap-5 sm:rounded-full sm:py-2 sm:pl-6 sm:pr-2">
           <p className="text-small text-ash">
-            <span className="text-bone">{starter.name}</span> · 2 AI videos + 2 creatives · one-time{" "}
-            <span className="text-brand-ink">{starter.price}</span>
+            <span className="text-bone">{avatarProduct.name}</span> · one-time{" "}
+            <span className="text-brand-ink">{inr(avatarProduct.price!)}</span>
           </p>
-          <span data-track="home-plan:ai-labs:starter">
-            <GlassButton href={enquiryHref(starter.name)} variant="brand" size="sm" arrow>
-              Try AI content
+          <span data-track="home-plan:ai-labs:avatar">
+            <GlassButton href="/ai-content-automation#ai-labs-one-time" pageLink variant="brand" size="sm" arrow>
+              Buy Now
             </GlassButton>
           </span>
         </div>

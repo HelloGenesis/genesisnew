@@ -91,17 +91,17 @@ export function SiteFooter() {
               anything. `telHref` strips it to the plus and the digits; the
               readable spacing stays on screen.
             */}
-            <div className="mt-6 flex flex-col gap-2">
+            <div className="mt-6 flex flex-col">
               <a
                 href={`mailto:${footerCta.email}`}
-                className="inline-block w-fit text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
+                className="inline-flex min-h-10 w-fit items-center text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
               >
                 {footerCta.email}
               </a>
               {telHref() && (
                 <a
                   href={telHref()}
-                  className="inline-block w-fit text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
+                  className="inline-flex min-h-10 w-fit items-center text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
                 >
                   {siteConfig.phone}
                 </a>
@@ -196,7 +196,7 @@ export function SiteFooter() {
               ["/terms", "Terms & Conditions"],
               ["/refund-policy", "Cancellation & Refunds"],
             ].map(([href, label]) => (
-              <Link key={href} href={href} className="transition-colors hover:text-bone">
+              <Link key={href} href={href} className="inline-flex min-h-10 items-center transition-colors hover:text-bone">
                 {label}
               </Link>
             ))}

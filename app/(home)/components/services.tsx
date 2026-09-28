@@ -190,7 +190,7 @@ export function Services() {
           </p>
           <Link
             href="/pricing"
-            className="mt-2 text-small text-brand-ink underline-offset-4 transition-colors hover:underline sm:mt-3"
+            className="mt-1 inline-flex min-h-10 items-center text-small text-brand-ink underline-offset-4 transition-colors hover:underline sm:mt-2"
           >
             {homeHero.entry}
           </Link>

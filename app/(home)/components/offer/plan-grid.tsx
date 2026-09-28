@@ -267,7 +267,7 @@ export function BillingToggle({
               {option === "quarterly" && (
                 <span
                   className={cn(
-                    "whitespace-nowrap rounded-full px-1.5 py-0.5 text-[0.625rem] uppercase tracking-[0.08em]",
+                    "whitespace-nowrap rounded-full px-1.5 py-0.5 text-[0.6875rem] uppercase tracking-[0.06em]",
                     value === option ? "bg-black/15" : "bg-brand/15 text-brand-ink",
                   )}
                 >

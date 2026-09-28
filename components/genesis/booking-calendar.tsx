@@ -76,7 +76,7 @@ function Picker() {
               aria-label="Previous month"
               disabled={isCurrentMonth}
               onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-              className="grid size-8 place-items-center rounded-full text-ash transition-colors hover:bg-white/5 hover:text-bone disabled:opacity-30"
+              className="grid size-10 place-items-center rounded-full text-ash transition-colors hover:bg-white/5 hover:text-bone disabled:opacity-30"
             >
               <ChevronLeft className="size-4" aria-hidden />
             </button>
@@ -84,7 +84,7 @@ function Picker() {
               type="button"
               aria-label="Next month"
               onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-              className="grid size-8 place-items-center rounded-full text-ash transition-colors hover:bg-white/5 hover:text-bone"
+              className="grid size-10 place-items-center rounded-full text-ash transition-colors hover:bg-white/5 hover:text-bone"
             >
               <ChevronRight className="size-4" aria-hidden />
             </button>

@@ -1,7 +1,7 @@
 /**
  * THE TERMS OF SALE — Terms & Conditions, and the Cancellation & Refund
  * Policy, for everything the site sells: memberships, one-time products,
- * add-ons, shoots and AI work (Genesis, 28 Sep 2026: "write and add a
+ * shoots and AI work (Genesis, 28 Sep 2026: "write and add a
  * privacy policy and terms and conditions … for everything — products,
  * subscriptions — and make sure we take their intent while checking out").
  *
@@ -12,7 +12,7 @@
  *
  * DRAFTED BY THE WEBSITE BUILD, NOT BY A LAWYER. The commercial terms follow
  * what the site already promises (quarterly billing, the monthly stop, the
- * pause, GST, Mumbai-only shoots, the AI Content Starter limit); everything
+ * pause, GST, Mumbai-only shoots, the one-time products); everything
  * else is standard practice for an Indian creative agency. TODO(genesis):
  * have your lawyer review both documents before the Razorpay keys go live.
  * The version date is what the checkout records — change `TERMS_VERSION`
@@ -31,9 +31,9 @@ export const terms: LegalDocument = {
   title: "Terms & Conditions",
   updated: TERMS_VERSION,
   standfirst:
-    "The terms on which Genesis sells memberships, one-time products, add-ons, shoots and AI content through genesismedia.co.",
+    "The terms on which Genesis sells memberships, one-time products, shoots and AI content through genesismedia.co.",
   intro: [
-    `These Terms & Conditions (“Terms”) govern every purchase made through genesismedia.co and every service ${ENTITY} (“Genesis”, “we”, “us”, “our”) provides under it — memberships (subscriptions), one-time products, add-ons, content shoots and AI content — across Genesis AI Labs, Genesis Studios, Genesis Brand & Design, Genesis Influence and our other divisions.`,
+    `These Terms & Conditions (“Terms”) govern every purchase made through genesismedia.co and every service ${ENTITY} (“Genesis”, “we”, “us”, “our”) provides under it — memberships (subscriptions), one-time products, content shoots and AI content — across Genesis AI Labs, Genesis Studios, Genesis Brand & Design, Genesis Influence and our other divisions.`,
     "By ticking the agreement box at checkout, paying a Genesis payment link, or accepting a proposal or quotation that refers to these Terms, you (“Client”, “you”) agree to them on behalf of yourself and the business you name at checkout, and confirm you are authorised to do so.",
     "Where a signed agreement, statement of work or written quotation exists between you and Genesis, it prevails over these Terms to the extent they differ.",
   ],
@@ -41,9 +41,9 @@ export const terms: LegalDocument = {
     {
       heading: "1. What We Sell",
       paragraphs: [
-        "Memberships are recurring plans (for example Starter, Growth and Enterprise) that give you a monthly content capacity, worked through as a queue of requests. One-time products are single purchases with a fixed scope — for example the AI Content Starter, a Content Shoot package, or an add-on such as an additional video, language version or creative pack.",
+        "Memberships are recurring plans (for example Starter, Growth and Enterprise) that give you a monthly content capacity, worked through as a queue of requests. One-time products are single purchases with a fixed scope and price — for example Build Your AI Avatar, a Half-Day Content Shoot, a Logo Refresh or a UGC Starter Pack. Influencer Campaign Management is priced as an agency commission plus creator fees, agreed after a call, and is not bought through the cart.",
         "Items shown “From”, “On request”, “Custom” or “At actual” are not sold at a fixed price. Adding them to the cart is a request for a quotation; the work begins only once you accept the written quotation and pay the amount it states.",
-        "What each plan and product includes is described on its card and under “What’s included”. Anything not listed there is outside its scope and can be added as an add-on or quoted separately.",
+        "What each plan and product includes is described on its card and under “What’s included”. Anything not listed there is outside its scope and can be bought as another product or quoted separately.",
       ],
     },
     {
@@ -68,19 +68,19 @@ export const terms: LegalDocument = {
       ],
     },
     {
-      heading: "4. One-Time Products and Add-Ons",
+      heading: "4. One-Time Products",
       paragraphs: [
-        "One-time products and add-ons are delivered once, to the scope described on the website. They are not subscriptions and do not renew.",
-        "The AI Content Starter may be bought up to two times per brand. After that, the same work continues on a membership.",
-        "Add-ons priced “per video” apply to one video each. Add-ons bought on their own, without a membership, are delivered to the scope described and to the turnaround we confirm after your brief.",
+        "One-time products are delivered once, to the scope listed under “Includes” on the website, and to the turnaround we confirm after your brief. They are not subscriptions and do not renew.",
+        "Revisions are those listed for the product (for example “1 revision per video” or “2 revision rounds”). Products that use your own footage or materials (for example the Reel Editing Pack) depend on you supplying them in usable form.",
+        "UGC packs are produced for your own channels and paid social; they do not include posting by influencers. Creator fees for Influencer Campaign Management are separate and agreed per campaign.",
       ],
     },
     {
       heading: "5. Content Shoots",
       paragraphs: [
-        "Studios memberships, Content Shoot packages and any add-on that requires a physical shoot are currently available for shoots in Mumbai (including Navi Mumbai and Thane) only. The checkout will not accept them for another location.",
+        "Studios memberships and any product that requires a physical shoot by a Genesis crew (the Founder / CEO Video Shoot, Half-Day Content Shoot and Event Content Coverage) are currently available for shoots in Mumbai (including Navi Mumbai and Thane) only. The checkout will not accept them for another location.",
         "Shoot dates are confirmed after pre-production and are subject to crew availability. Rescheduling requested at least 72 hours before the shoot is free once; later changes are treated under our Cancellation & Refund Policy.",
-        "Talent, creators, locations, studios, hair and makeup, props and set builds are charged at actual cost plus any coordination fee stated, and are payable before the shoot. You are responsible for permissions to shoot at premises you provide, and for the conduct and releases of any people you bring to the shoot.",
+        "Talent, creators, paid locations, studios, hair and makeup, props and set builds are not included unless listed under a product’s “Includes”; where you ask for them, they are charged at actual cost plus any coordination fee we quote, and are payable before the shoot. You are responsible for permissions to shoot at premises you provide, and for the conduct and releases of any people you bring to the shoot.",
         "If a shoot cannot proceed because of weather, a government order, a venue withdrawal or another event outside our reasonable control, we will reschedule it at no additional Genesis fee; third-party costs already incurred may still be payable.",
       ],
     },
@@ -104,7 +104,7 @@ export const terms: LegalDocument = {
       heading: "8. Ownership and Use of the Work",
       paragraphs: [
         "When your order or billing period is paid in full, you own the final deliverables we make for you and may use them for any lawful purpose. Until then, you may use them for review only.",
-        "Genesis keeps ownership of its pre-existing materials, templates, tools, workflows, prompts, AI models and know-how, and of raw footage, project files and working files unless you buy a handover of them (for example the Raw Footage Handover add-on). Stock footage, music, fonts and other licensed third-party assets are used under their own licences, which may limit their use.",
+        "Genesis keeps ownership of its pre-existing materials, templates, tools, workflows, prompts, AI models and know-how, and of raw footage, project files and working files unless we agree in writing to hand them over. Stock footage, music, fonts and other licensed third-party assets are used under their own licences, which may limit their use.",
         "Unless you ask us not to in writing, or our agreement says otherwise, we may show the work in our portfolio, case studies and credentials once it has been published.",
       ],
     },
@@ -171,15 +171,15 @@ export const refunds: LegalDocument = {
       ],
     },
     {
-      heading: "3. One-Time Products and Add-Ons",
+      heading: "3. One-Time Products",
       paragraphs: [
-        "One-time products and add-ons can be cancelled for a full refund until we have accepted your brief and begun work. After that, they are not refundable, because the work is made to order for you.",
+        "One-time products can be cancelled for a full refund until we have accepted your brief and begun work. After that, they are not refundable, because the work is made to order for you.",
         "Quoted items follow the cancellation terms in their quotation.",
       ],
     },
     {
       heading: "4. Content Shoots",
-      paragraphs: ["For Content Shoot packages and shoots included in a membership or bought as add-ons:"],
+      paragraphs: ["For shoot products (Founder / CEO Video Shoot, Half-Day Content Shoot, Event Content Coverage) and shoots included in a membership:"],
       bullets: [
         "Cancelled 7 days or more before the shoot date: full refund of the Genesis fee.",
         "Cancelled 3 to 7 days before: 50% of the Genesis fee is refunded.",

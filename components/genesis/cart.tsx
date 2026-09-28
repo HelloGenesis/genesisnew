@@ -165,7 +165,7 @@ export function CartButton({ className }: { className?: string }) {
       aria-label={count ? `Cart, ${count} item${count === 1 ? "" : "s"}` : "Cart, empty"}
       data-track="nav:cart"
       className={cn(
-        "relative grid size-9 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+        "relative grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors lg:size-9 hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
         className,
       )}
     >
@@ -247,13 +247,13 @@ export function AddToCart({
               ? "Switch to this plan"
               : inCart
                 ? "In cart"
-                : "Add to cart"}
+                : "Add to Cart"}
       </GlassButton>
     </div>
   );
 }
 
-/** A small round "+" for dense lists — an add-on row. */
+/** A small "+ Add" for dense lists. */
 export function AddToCartIcon({ id, className }: { id: string; className?: string }) {
   const { add, has } = useCart();
   const product = findProduct(id);
@@ -288,7 +288,7 @@ export function IncludedList({ items, className }: { items?: readonly string[]; 
   if (!items?.length) return null;
   return (
     <details className={cn("group/inc", className)}>
-      <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-[0.75rem] text-ash transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
+      <summary className="-my-1.5 inline-flex min-h-9 cursor-pointer list-none items-center gap-1 text-[0.75rem] text-ash transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
         What&rsquo;s included
         <ChevronDown aria-hidden className="size-3.5 transition-transform duration-300 group-open/inc:rotate-180" />
       </summary>
@@ -314,7 +314,7 @@ export function QtyStepper({ id, qty, unit, max = 99 }: { id: string; qty: numbe
         type="button"
         onClick={() => setQty(id, qty - 1)}
         aria-label="One fewer"
-        className="grid size-7 place-items-center rounded-full text-ash hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className="grid size-9 place-items-center rounded-full text-ash hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
         <Minus className="size-3.5" aria-hidden />
       </button>
@@ -327,7 +327,7 @@ export function QtyStepper({ id, qty, unit, max = 99 }: { id: string; qty: numbe
         onClick={() => setQty(id, qty + 1)}
         disabled={qty >= max}
         aria-label="One more"
-        className="grid size-7 place-items-center rounded-full text-ash hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-30"
+        className="grid size-9 place-items-center rounded-full text-ash hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-30"
       >
         <Plus className="size-3.5" aria-hidden />
       </button>
@@ -347,7 +347,7 @@ export function BillingSwitch({ id, billing }: { id: string; billing: Billing })
           aria-checked={billing === value}
           onClick={() => setBilling(id, value)}
           className={cn(
-            "rounded-full px-3 py-1 capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+            "min-h-9 rounded-full px-4 py-1 capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
             billing === value ? "bg-brand text-on-brand" : "text-ash hover:text-bone",
           )}
         >
@@ -369,7 +369,7 @@ export function CartLines({ dense = false }: { dense?: boolean }) {
           <div className="min-w-0 flex-1">
             <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-faint">
               {line.product.group}
-              {line.product.kind === "membership" ? " · Membership" : line.product.kind === "add-on" ? " · Add-on" : " · One-time"}
+              {line.product.kind === "membership" ? " · Membership" : " · One-time"}
             </p>
             <p className="mt-1 font-sans text-body leading-snug text-bone">{line.product.name}</p>
             {line.product.inPerson && (
@@ -398,7 +398,7 @@ export function CartLines({ dense = false }: { dense?: boolean }) {
               type="button"
               onClick={() => remove(line.id)}
               aria-label={`Remove ${line.product.name}`}
-              className="grid size-8 place-items-center rounded-full text-faint transition-colors hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="grid size-10 place-items-center rounded-full text-faint transition-colors hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               <Trash2 className="size-4" aria-hidden />
             </button>
@@ -453,8 +453,8 @@ export function CartSummary({ country }: { country?: string }) {
       )}
       {totals.nextTier && totals.bundleItems > 0 && (
         <p className="mb-4 rounded-card border border-brand/30 bg-brand/[0.06] px-4 py-3 text-small text-bone">
-          Add {totals.nextTier.itemsToGo} more add-on{totals.nextTier.itemsToGo === 1 ? "" : "s"} or one-time product
-          {totals.nextTier.itemsToGo === 1 ? "" : "s"} to save {totals.nextTier.percent}%.
+          Add {totals.nextTier.itemsToGo} more one-time product{totals.nextTier.itemsToGo === 1 ? "" : "s"} to save{" "}
+          {totals.nextTier.percent}%.
         </p>
       )}
       <p className={row}>
@@ -558,7 +558,7 @@ function CartDrawer() {
                 type="button"
                 onClick={() => setDrawerOpen(false)}
                 aria-label="Close cart"
-                className="grid size-9 place-items-center rounded-full border border-[var(--glass-border)] text-bone hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 <X className="size-4" aria-hidden />
               </button>

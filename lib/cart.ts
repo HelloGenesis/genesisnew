@@ -2,36 +2,37 @@
  * THE CART — every product the site sells, and what a basket of them costs.
  *
  * ONE CATALOGUE, BUILT FROM THE PRICES ALREADY ON THE PAGES. Nothing here
- * restates a figure: memberships come from each plan's `rate`, add-ons from
- * the add-on lists, one-time products from the one-time lists. Change a price
- * in lib/verticals/* and the cart charges the new one.
+ * restates a figure: memberships come from each plan's `rate` (lib/verticals),
+ * one-time products from Genesis's product listing (lib/products). Change a
+ * price there and the cart charges the new one. There are no add-ons any
+ * more — the fifteen one-time products replaced them (28 Sep 2026).
  *
  * THE SERVER PRICES THE ORDER, NOT THE BROWSER. The cart in the browser holds
  * only product ids and quantities; /api/checkout looks each id up here and
  * works the total out again before it asks Razorpay for a payment link, so a
  * visitor editing their cart in dev tools cannot change what they pay.
  *
- * TWO KINDS OF LINE:
- *   priced — a fixed figure ("₹24,999/-", "₹4,999/- per video"). Paid at checkout.
- *   quoted — "From ₹…", "On request", "Custom", "At actual". Rides along
- *            with the order as a request; Genesis quotes it after.
+ * Every product in the cart has a fixed price. The one whose price depends
+ * on the campaign — Influencer Campaign Management — books a call instead
+ * and never reaches the cart. (A line with no `amount` would still be
+ * carried as a quote request, not charged; nothing uses that today.)
  */
 
 import { inr, monthlyListFigure, price } from "./money";
+import { products } from "./products";
 import { taxFor } from "./regions";
-import { oneTimeProjects } from "./pricing";
-import { aiAddOns, aiPlans, aiStarterPack } from "./verticals/ai-labs";
-import { designAddOns, designProducts } from "./verticals/brand-design";
-import { studiosAddOns, studiosPlans, studiosShoot } from "./verticals/studios";
-import type { AddOns, VerticalKey } from "./verticals/types";
+import { aiPlans } from "./verticals/ai-labs";
+import { designProducts } from "./verticals/brand-design";
+import { studiosPlans } from "./verticals/studios";
+import type { VerticalKey } from "./verticals/types";
 
-export type ProductKind = "membership" | "add-on" | "one-time";
+export type ProductKind = "membership" | "one-time";
 export type Billing = "quarterly" | "monthly";
 
 export type Product = {
   id: string;
   name: string;
-  /** What it belongs to — "AI Content Studio", "Content Shoot". */
+  /** What it belongs to — "AI Content Studio", "Genesis Studios". */
   group: string;
   vertical: VerticalKey;
   kind: ProductKind;
@@ -40,9 +41,9 @@ export type Product = {
    * is the QUARTERLY rate per month; see `unitCharge` for what is charged.
    */
   amount?: number;
-  /** "per video", "per month" — when a unit is not the whole product. */
+  /** "per month" — when a unit is not the whole product. */
   unit?: string;
-  /** The price as the page writes it, for a quoted line ("From ₹35,000/-"). */
+  /** The price as the page writes it, for a quoted line. */
   quote?: string;
   /** Memberships only: the plan's list figure, from which both billings follow. */
   rate?: number;
@@ -52,7 +53,7 @@ export type Product = {
   withShoot?: boolean;
   /** Needs a physical shoot — Mumbai only, for now (lib/regions). */
   inPerson?: boolean;
-  /** The most one order may hold — the AI Content Starter is two per brand. */
+  /** The most one order may hold. */
   maxQty?: number;
 };
 
@@ -67,31 +68,6 @@ const slug = (value: string) =>
 
 export const productId = (vertical: VerticalKey, kind: ProductKind, name: string) =>
   `${vertical}.${kind}.${slug(name)}`;
-
-/** "₹24,999/-", "+₹14,999/- per video", "₹20,000/- per month" → a figure; anything else is quoted. */
-function parsePrice(text: string): { amount?: number; unit?: string } {
-  const match = text.trim().match(/^\+?₹([\d,]+)\/-(?:\s+(per\s+\w+))?$/);
-  if (!match) return {};
-  return { amount: Number(match[1].replace(/,/g, "")), unit: match[2] };
-}
-
-function addOns(data: AddOns, vertical: VerticalKey, group: string): Product[] {
-  return data.items.map((item) => {
-    const { amount, unit } = parsePrice(item.price);
-    return {
-      id: productId(vertical, "add-on", item.name),
-      name: item.name,
-      group,
-      vertical,
-      kind: "add-on",
-      amount,
-      unit,
-      quote: amount === undefined ? item.price : undefined,
-      includes: item.includes ?? (item.body ? [item.body.replace(/\.$/, "")] : undefined),
-      inPerson: item.inPerson,
-    };
-  });
-}
 
 function membership(
   vertical: VerticalKey,
@@ -137,87 +113,27 @@ const all: Product[] = [
     designProducts.desk.highlights.map((row) => `${row.label}: ${row.value}`),
   ),
 
-  <Product>{
-    id: productId("ai-labs", "one-time", aiStarterPack.name),
-    name: aiStarterPack.name,
-    group: GROUP["ai-labs"],
-    vertical: "ai-labs",
-    kind: "one-time",
-    amount: 24000,
-    maxQty: 2,
-    includes: aiStarterPack.includes,
-  },
-  ...studiosShoot.packages.map((pack): Product => {
-    const { amount } = parsePrice(pack.price);
-    return {
-      id: productId("studios", "one-time", pack.name),
-      name: pack.name,
-      group: "Content Shoot",
-      vertical: "studios",
-      kind: "one-time",
-      amount,
-      quote: amount === undefined ? pack.price : undefined,
-      includes: pack.features,
-      inPerson: true,
-    };
-  }),
-  ...oneTimeProjects
-    .filter((project) => project.name !== aiStarterPack.name)
-    .map((project): Product => {
-      const { amount } = parsePrice(project.from);
-      return {
-        id: productId(project.vertical, "one-time", project.name),
-        name: project.name,
-        group: GROUP[project.vertical],
-        vertical: project.vertical,
+  /* The fifteen one-time products, less the one that books a call (lib/products). */
+  ...products
+    .filter((product) => product.cta === "buy" && product.price !== undefined)
+    .map(
+      (product): Product => ({
+        id: productId(product.vertical, "one-time", product.name),
+        name: product.name,
+        group: GROUP[product.vertical],
+        vertical: product.vertical,
         kind: "one-time",
-        amount,
-        quote: amount === undefined ? `From ${project.from}` : undefined,
-        includes: [project.body.replace(/\.$/, "")],
-      };
-    }),
-  <Product>{
-    id: productId("brand-design", "one-time", designProducts.build.name),
-    name: designProducts.build.name,
-    group: GROUP["brand-design"],
-    vertical: "brand-design",
-    kind: "one-time",
-    quote: `From ${designProducts.build.from}`,
-    includes: designProducts.build.points,
-  },
-
-  ...addOns(aiAddOns, "ai-labs", GROUP["ai-labs"]),
-  ...addOns(studiosAddOns, "studios", GROUP.studios),
-  ...addOns(designAddOns, "brand-design", GROUP["brand-design"]),
+        amount: product.price,
+        includes: product.includes,
+        inPerson: product.inPerson,
+      }),
+    ),
 ];
 
 /* One entry per id — a product listed in two places (a page and /pricing) is one product. */
 export const catalog = all.filter((product, index) => all.findIndex((other) => other.id === product.id) === index);
 
 const byId = new Map(catalog.map((product) => [product.id, product]));
-
-/**
- * A DIVISION'S ADD-ONS, AS PRODUCTS ANYONE CAN BUY ONCE (Genesis, 28 Sep
- * 2026: "all the add-on products should also be written … as one-time
- * products … making it easy for normal users to buy").
- *
- * Only the ones that stand on their own. Left out: a monthly extra to a
- * membership ("Additional Brand … per month"), a surcharge on other work
- * ("+30%"), and costs passed through at actuals ("At actual") — none of
- * those is a thing a visitor can buy by itself.
- */
-export function oneTimeAddOns(vertical: VerticalKey): Product[] {
-  return catalog.filter((product) => product.vertical === vertical && product.kind === "add-on" && standsAlone(product));
-}
-
-/** The rest of a division's add-ons — the ones that only go with a membership or a shoot. */
-export function attachedAddOns(vertical: VerticalKey): Product[] {
-  return catalog.filter((product) => product.vertical === vertical && product.kind === "add-on" && !standsAlone(product));
-}
-
-function standsAlone(product: Product) {
-  return product.unit !== "per month" && !/^\+\d+%|^At actual/i.test(product.quote ?? "");
-}
 
 export const findProduct = (id: string) => byId.get(id);
 
@@ -227,8 +143,8 @@ export type CartLine = { id: string; qty: number; billing?: Billing };
 
 /**
  * THE BUNDLE DISCOUNT — "we can offer discounts as well if many things are
- * added" (Genesis, 28 Sep 2026). Counted on add-ons and one-time products,
- * the things bought by the piece; memberships already carry their own saving
+ * added" (Genesis, 28 Sep 2026). Counted on one-time products, the things
+ * bought by the piece; memberships already carry their own saving
  * (quarterly billing, 10%), so they neither count towards it nor take it.
  *
  * TODO(genesis): confirm the tiers. Highest one reached applies.
@@ -360,7 +276,7 @@ export function priceCart(lines: readonly CartLine[], options: { country?: strin
     discount,
     discountPercent: tier?.percent ?? 0,
     bundleItems,
-    /** "Add 2 more add-ons or one-time products to save 5%." */
+    /** "Add 2 more one-time products to save 5%." */
     nextTier: nextTier ? { itemsToGo: nextTier.minItems - bundleItems, percent: nextTier.percent } : undefined,
     comboDiscount,
     /** The other half of the AI + Studios combo, when the cart has only one. */

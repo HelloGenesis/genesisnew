@@ -19,7 +19,8 @@ import {
 import { cn } from "@/lib/utils";
 import { BrandingStack } from "../branding-design";
 import { ProductCards } from "./design-products";
-import { DesignOneTime } from "../offer/starter-pack";
+import { OneTimeProducts } from "../offer/starter-pack";
+import { WorkMode } from "../offer/work-mode";
 import { ClosingBand, StepsBlock, TurnaroundStrip } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
@@ -70,8 +71,11 @@ export function BrandDesignPageView() {
           heading={designProducts.heading}
           body={designProducts.body}
         />
-        <ProductCards />
-        <DesignOneTime />
+        {/* The same "one-time or membership" switch as /pricing (Genesis, 28 Sep 2026). */}
+        <WorkMode
+          oneTime={<OneTimeProducts vertical="brand-design" bare />}
+          membership={<ProductCards />}
+        />
       </OfferSection>
       </PlanBand>
 

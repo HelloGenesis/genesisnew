@@ -323,7 +323,7 @@ function WorkPanel() {
                 href="/#contact"
                 quickContact="brand-design:strategic-design"
                 label="Talk to us about brand strategy"
-                className="mt-2 size-7 self-end"
+                className="mt-2 size-10 self-end"
               />
             </div>
           </div>

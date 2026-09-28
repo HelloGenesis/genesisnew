@@ -7,9 +7,8 @@
  * matrix here" — the advice is followed and not printed.
  */
 
-import { inr, price } from "../money";
 import { bookingHref, enquiryHref, joinHref } from "../pricing";
-import type { AddOns, Closing, Faq, IconCard, PlanGrid, Steps, Turnaround } from "./types";
+import type { Closing, Faq, IconCard, PlanGrid, Steps, Turnaround } from "./types";
 
 const PRODUCT = "AI Content Studio";
 
@@ -289,41 +288,6 @@ export const aiPlans: PlanGrid = {
   },
 };
 
-/*
-  THE AI CONTENT STARTER — a one-time pack for a brand not ready to subscribe
-  (Genesis, 28 Sep 2026). It replaces "AI Avatar Setup" as the site's entry
-  product.
-
-  DELIBERATELY THE BASICS. Genesis first proposed 4 videos + 2 creatives;
-  at ₹24,000 that is ~₹6,000 a video, against ~₹15,800 on the Starter plan and
-  ₹24,999 for a single add-on video, so two packs would out-deliver a month of
-  Starter at half the price and nobody would subscribe. Two videos and two
-  creatives, no avatar, no lip-sync, no brand styling: enough to judge the
-  work, clearly less than a membership, and capped at two purchases a brand.
-
-  The price is shown as ₹24,000/- exactly, as Genesis wrote it — an
-  exception to the ₹1-off rule in lib/money.
-*/
-export const aiStarterPack = {
-  label: "One-time · No subscription",
-  name: "AI Content Starter",
-  pitch: "Try AI content before you subscribe.",
-  price: inr(24000),
-  includes: [
-    "2 AI videos (up to 20 sec, 9:16)",
-    "2 AI campaign creatives",
-    "Basic stitching of the videos",
-    "Your product integrated",
-    "Stock footage + background music",
-    "Standard AI voiceover (1 language)",
-    "1 revision round",
-    "Delivered in about 7 working days",
-  ],
-  excludes: ["AI avatar / persona", "Voice clone or lip-sync", "Motion graphics", "Brand fonts & styling"],
-  limit: "Up to 2 purchases per brand — then continue on a membership.",
-  cta: "Start with AI Content Starter",
-};
-
 export const aiEveryVideo: { label: string; heading: string; body: string; items: IconCard[] } = {
   label: "Every video",
   heading: "From idea to ready-to-publish.",
@@ -453,39 +417,6 @@ export const aiTurnaround: Turnaround = {
     { time: "5–7 Days", title: "AI + Motion", items: ["Advanced AI production, heavier animation and complex visual treatments."], icon: "bolt" },
   ],
   notes: ["Timelines depend on complexity, feedback and the scope of each request."],
-};
-
-export const aiAddOns: AddOns = {
-  label: "Add-ons",
-  heading: "Need more?",
-  /*
-    ON A MEMBERSHIP OR ON THE ONE-TIME PACK (Genesis, 28 Sep 2026): the
-    extras are not only for subscribers — a brand trying the AI Content
-    Starter can add a language, a ratio or a creative pack to it too.
-  */
-  body: "Add extras to any membership, or to a one-time AI Content Starter.",
-  chips: [
-    { label: "Additional Videos", icon: "video" },
-    { label: "Additional Avatars", icon: "avatar" },
-    { label: "Additional Languages", icon: "language" },
-    { label: "Advanced Motion", icon: "motion" },
-    { label: "Campaign Visuals", icon: "images" },
-    { label: "Priority Delivery", icon: "bolt" },
-  ],
-  button: "View Add-ons",
-  /* "Do not show all those prices on the default page" — they open on click. */
-  items: [
-    { name: "Additional Standard AI Video", price: price(25000), includes: ["1 Standard AI video, 20–30 sec", "AI avatar, captions & stock footage", "Basic AI voiceover (any voice) + background music", "Basic transitions"] },
-    { name: "Additional AI Avatar / Persona", price: price(25000), includes: ["1 new AI avatar or persona", "Look and voice set up for your brand", "Reusable in every future video"] },
-    { name: "Advanced Motion Upgrade", price: `+${price(15000)} per video`, includes: ["Upgrades one video to Advanced", "Advanced AI production", "Heavier animation", "Complex visual treatments"] },
-    { name: "Additional Language Version", price: `${price(5000)} per video`, includes: ["One video, remade in one more language", "New AI voiceover in that language", "Captions in that language"] },
-    { name: "Additional Aspect-Ratio Master", price: `${price(4000)} per video`, includes: ["One video, re-framed to one more ratio (1:1, 4:5, 16:9)", "Captions and layout re-set for the new frame"] },
-    { name: "AI Product / Campaign Creative Pack — 10 images", price: price(20000), includes: ["10 AI campaign images", "Your product placed in campaign environments", "Sized for social and ads"] },
-    { name: "AI Creative Pack — 30 images", price: price(45000), includes: ["30 AI campaign images", "Your product placed in campaign environments", "Sized for social and ads"] },
-    /* The brief leaves this price blank; it is quoted, not invented. */
-    { name: "Priority 48-Hour Production", price: "On request", includes: ["Your request moved to the front of the queue", "Delivery in about 48 hours, where capacity allows"] },
-    { name: "Bulk Personalised Video Generation", price: "Custom", includes: ["Personalised AI videos at scale — names, cities, offers", "Scoped and quoted to your volume"] },
-  ],
 };
 
 export const aiClosing: Closing = {

@@ -138,8 +138,8 @@ export function CartPageView() {
             <GlassButton href="/pricing" variant="brand" arrow>
               Explore Memberships
             </GlassButton>
-            <GlassButton href="/ai-content-automation" variant="glass" arrow>
-              Try AI Content Starter
+            <GlassButton href="/pricing#one-time" variant="glass" arrow>
+              See one-time products
             </GlassButton>
           </div>
         </div>

@@ -410,6 +410,8 @@ export const aiContent = {
   */
   body:
     "See what we've created using AI, from videos and visuals to branded content. We can build the same for your brand and automate the process from ideas and scripts to ready-to-post content.",
+  /* The same, for a phone (Genesis, 28 Sep 2026: "shorten the copy a bit … just for phone"). */
+  bodyPhone: "Videos, visuals and branded content made with AI — built for your brand, from idea to ready-to-post.",
   /*
    * THE COPY ABOVE THE ROSTER, and all three lines of it are Genesis's own.
    *
@@ -455,6 +457,8 @@ export const aiContent = {
     heading: "Build Your Own",
     headingAccent: "AI Avatar.",
     lead: "We create realistic AI avatars for founders, creators, artists and brands. Use your avatar to create consistent content, showcase your products or services, and reduce the need for repeated shoots. We can automate the entire content workflow too.",
+    /* The same, for a phone. */
+    leadPhone: "Realistic AI avatars for founders, creators and brands — consistent content, without repeated shoots.",
     /*
      * The caption to the roster, printed UNDER the faces. "One Setup.
      * Real-Time. Every Time" used to head it and Genesis has taken it off.

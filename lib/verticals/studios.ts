@@ -7,9 +7,9 @@
  * notes to us and are not printed.
  */
 
-import { price } from "../money";
+import { inr, price } from "../money";
 import { enquiryHref, joinHref } from "../pricing";
-import type { AddOns, Closing, IconCard, PlanGrid, Steps, Turnaround } from "./types";
+import type { Closing, IconCard, PlanGrid, Steps, Turnaround } from "./types";
 
 const MONTHLY = "Content Monthly";
 const SHOOT = "Content Shoot";
@@ -74,9 +74,10 @@ export const studiosTwoWays = {
         "Book a dedicated production day for your brand, product, founder or campaign.",
         "We handle everything from pre-production to final edits.",
       ],
-      points: ["Half-day or full-day shoots", "Multiple camera options", "Edited videos + photographs", "Additional deliverables available"],
-      from: `From ${price(110000)}`,
-      cta: { label: "Book a Content Shoot", href: "#shoot" },
+      /* The shoot products in Genesis's one-time listing (lib/products), 28 Sep 2026. */
+      points: ["Founder / CEO video shoots", "Half-day content shoots", "Event coverage", "Edited videos + photographs"],
+      from: `From ${inr(44999)}`,
+      cta: { label: "See shoot products", href: "#studios-one-time" },
       image: "/work/posters/studios-utsav-aftermovie.jpg",
       /* Genesis's illustration: the lens — one day, multi-cam, ready to publish. */
       art: { src: "/studios/content-shoot-lens.webp", width: 1080, height: 977 },
@@ -335,133 +336,6 @@ export const studiosTurnaround: Turnaround = {
   notes: [
     "Monthly Shoot — First batch typically delivered approximately 4–5 working days after the shoot.",
     "Full monthly production typically takes approximately 7–10 working days, depending on approvals and complexity.",
-  ],
-};
-
-export const studiosShoot = {
-  label: "Content Shoot",
-  heading: "Need the content",
-  headingAccent: "in one go?",
-  lead: "One shoot. Weeks of content.",
-  body: "Instead of commissioning every reel individually, Genesis plans, scripts and captures multiple pieces of content in one structured production.",
-  packages: [
-    {
-      name: "Starter Shoot",
-      tagline: "Focused Content Batch",
-      price: price(110000),
-      gst: "+ GST",
-      features: [
-        "Half-day shoot",
-        "Up to 5 hours",
-        "1 professional camera",
-        "Professional audio",
-        "Basic lighting",
-        "Producer / director",
-        "One location",
-        "Up to 6 scripts / topics",
-        "6 edited short-form videos",
-        "15 edited photographs",
-      ],
-      delivery: ["Approximately 7 working days"],
-      cta: { label: "Book Starter Shoot", href: joinHref("studios", "Starter Shoot", SHOOT) },
-    },
-    {
-      name: "Growth Shoot",
-      badge: "Recommended",
-      featured: true,
-      tagline: "Build a full content library.",
-      price: price(195000),
-      gst: "+ GST",
-      features: [
-        "Full-day shoot",
-        "Up to 9 hours",
-        "2-camera setup",
-        "Professional lighting",
-        "Professional audio",
-        "Teleprompter",
-        "Producer / director",
-        "B-roll",
-        "Strategy session",
-        "Up to 10 scripts",
-        "10 short-form videos",
-        "1 hero video up to 90 sec",
-        "25 edited photographs",
-      ],
-      delivery: [
-        "First 3 videos approximately within 4 working days",
-        "Full delivery approximately within 10 working days",
-      ],
-      cta: { label: "Book Growth Shoot", href: joinHref("studios", "Growth Shoot", SHOOT) },
-    },
-    {
-      name: "Enterprise Shoot",
-      tagline: "Premium campaign production.",
-      price: price(325000),
-      gst: "+ GST",
-      features: [
-        "Premium full-day production",
-        "2–3 professional cameras",
-        "Full lighting setup",
-        "Professional sound",
-        "Director + producer",
-        "Creative supervision",
-        "Teleprompter",
-        "B-roll",
-        "Art direction",
-        "Campaign architecture",
-        "Up to 15 scripts",
-        "Storyboard where required",
-        "15 short-form videos",
-        "1 hero film up to 2 minutes",
-        "3 campaign cutdowns",
-        "40 edited photographs",
-        "1 same-day teaser",
-      ],
-      cta: { label: "Talk to Genesis", href: enquiryHref(`${SHOOT} — Enterprise Shoot`) },
-    },
-  ],
-  inclusionsHeading: "Every Content Shoot Includes",
-  inclusions: [
-    "Creative Planning",
-    "Scripts",
-    "Production",
-    "Professional Audio",
-    "Editing",
-    "Music",
-    "Colour",
-    "Captions",
-    "Brand Graphics",
-    "Final Exports",
-  ],
-} as const;
-
-export const studiosAddOns: AddOns = {
-  label: "Add-ons",
-  heading: "Need more production?",
-  chips: [
-    { label: "Extra Reels", icon: "video" },
-    { label: "Hero Films", icon: "camera" },
-    { label: "Drone Filming", icon: "drone" },
-    { label: "Additional Cameras", icon: "camera" },
-    { label: "Additional Shoot Hours", icon: "clock" },
-    { label: "Same-Day Editing", icon: "edit" },
-    { label: "Talent", icon: "users" },
-    { label: "Locations", icon: "home" },
-  ],
-  button: "View Add-ons",
-  items: [
-    { name: "Additional Edited Reel", price: price(12000), includes: ["1 edited reel from your footage", "Captions, music and colour", "Delivered ready to post"] },
-    { name: "Additional Hero Film", price: price(40000), includes: ["1 longer-form hero film", "Story-led edit with music and sound design", "Colour grade and captions"] },
-    { name: "Extra Camera Setup", price: price(15000), includes: ["One more camera and operator on your shoot day", "A second angle for interviews and product"], inPerson: true },
-    { name: "Drone Filming", price: `${price(20000)} onwards`, includes: ["Licensed drone operator and aerial footage", "Final price depends on location and permissions"], inPerson: true },
-    { name: "Additional Shoot Hour", price: price(10000), includes: ["One more hour with the crew on the day"], inPerson: true },
-    { name: "Same-Day Edit", price: price(20000), includes: ["A quick edit delivered on the day of the shoot"], inPerson: true },
-    { name: "Raw Footage Handover", price: price(15000), includes: ["All raw files from the shoot, by download link"], inPerson: true },
-    { name: "Additional Language Subtitles", price: `${price(2500)} per video`, includes: ["Subtitles in one more language, for one video"] },
-    { name: "Creator / Talent", price: "At actual + management", inPerson: true },
-    { name: "Studio / Location", price: "At actual + 15% coordination", inPerson: true },
-    { name: "Hair & Makeup", price: "At actual", inPerson: true },
-    { name: "Props / Set Build", price: "Custom", includes: ["Props sourced or a set built for your shoot", "Quoted to your brief"], inPerson: true },
   ],
 };
 

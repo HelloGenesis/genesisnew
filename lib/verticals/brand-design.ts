@@ -9,7 +9,7 @@
 
 import { monthlyListFigure, price } from "../money";
 import { enquiryHref, joinHref } from "../pricing";
-import type { AddOns, Closing, IconCard, Steps, Turnaround } from "./types";
+import type { Closing, IconCard, Steps, Turnaround } from "./types";
 
 const DESK = "Genesis Creative Desk";
 const BUILD = "Genesis Brand Build";
@@ -115,15 +115,15 @@ export const designIncluded: {
   ],
   /*
     WHAT ALWAYS-ON DOES NOT COVER, AND WHERE IT LIVES INSTEAD — the brief's
-    "Not included" list, each pointed at the product or add-on that does it,
+    "Not included" list, each pointed at the product that does it,
     so a reader who wanted a logo or a landing page is not turned away.
   */
   elsewhere: {
     heading: "Not in Always-On — but we do it",
     items: [
-      { what: "Logos & full brand identity", where: "Brand Build" },
-      { what: "Landing page design", where: "Add-on" },
-      { what: "Pitch deck design", where: "Add-on" },
+      { what: "Logos & full brand identity", where: "Brand Build · Logo Refresh" },
+      { what: "Pitch deck design", where: "Pitch Deck Makeover" },
+      { what: "Campaign launches", where: "Marketing Launch Kit" },
       { what: "Video production", where: "Genesis Studios" },
       { what: "Advanced animation / 3D", where: "Not included" },
       { what: "Web development", where: "Not included" },
@@ -181,29 +181,6 @@ export const designTurnaround: Turnaround = {
   ],
   notes: [
     "Larger requests are broken into manageable milestones so work keeps moving instead of waiting for one massive delivery.",
-  ],
-};
-
-export const designAddOns: AddOns = {
-  label: "Add-ons",
-  heading: "Need something extra?",
-  body: "Add specialist work when your brief goes beyond your everyday Creative Desk subscription.",
-  chips: [
-    { label: "Additional Brand", icon: "plus" },
-    { label: "Campaign Concept Sprint", icon: "target" },
-    { label: "Pitch Deck Design", icon: "presentation" },
-    { label: "Landing Page Design", icon: "grid" },
-    { label: "Motion Creative Pack", icon: "motion" },
-    { label: "Rush Production", icon: "bolt" },
-  ],
-  button: "View Add-ons",
-  items: [
-    { name: "Additional Brand", price: `${price(20000)} per month`, body: "Add another brand or visual system to your Creative Desk." },
-    { name: "Campaign Concept Sprint", price: `From ${price(35000)}`, body: "Campaign idea, visual direction, key visual and basic campaign system.", includes: ["Campaign idea", "Visual direction", "Key visual", "Basic campaign system"] },
-    { name: "Pitch Deck Design", price: `From ${price(45000)}`, body: "Premium presentation design for sales, credentials or investor decks. Up to approximately 15 slides.", includes: ["Premium presentation design", "For sales, credentials or investor decks", "Up to approximately 15 slides"] },
-    { name: "Landing Page Design", price: `From ${price(75000)}`, body: "Strategic landing-page UI and visual design. Development separate.", includes: ["Strategic landing-page UI and visual design", "Development not included"] },
-    { name: "Motion Creative Pack", price: price(40000), body: "Up to 4 lightweight motion creatives.", includes: ["Up to 4 lightweight motion creatives"] },
-    { name: "Rush Production", price: "+30%", body: "Priority production where capacity allows." },
   ],
 };
 

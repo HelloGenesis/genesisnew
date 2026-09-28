@@ -9,30 +9,25 @@ import { JsonLd } from "@/components/genesis/json-ld";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { services } from "@/lib/home-content";
-import {
-  bookingHref,
-  enquiryHref,
-  oneTimeProjects,
-  pricingHub,
-  verticalCard,
-  verticalCards,
-} from "@/lib/pricing";
+import { bookingHref, enquiryHref, pricingHub, verticalCard, verticalCards } from "@/lib/pricing";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { aiEveryVideo, aiPlans, aiTab, aiTurnaround, aiVideoTiers } from "@/lib/verticals/ai-labs";
 import { designTab, designTurnaround } from "@/lib/verticals/brand-design";
 import { builtFor, campaignPricing } from "@/lib/verticals/influence";
-import { studiosPlans, studiosShoot, studiosTab, studiosTurnaround } from "@/lib/verticals/studios";
+import { studiosPlans, studiosTab, studiosTurnaround } from "@/lib/verticals/studios";
 import type { VerticalKey } from "@/lib/verticals/types";
 import { IconChips, StepsBlock, TierTag, TurnaroundStrip, VideoTiers } from "./offer/blocks";
 import { IconTile } from "./offer/icons";
-import { MediaRail } from "./offer/media-rail";
-import { AddToCartIcon } from "@/components/genesis/cart";
+import { AddToCartIcon, IncludedList } from "@/components/genesis/cart";
 import { productId } from "@/lib/cart";
+import { inr } from "@/lib/money";
+import { products } from "@/lib/products";
 import { LogoStrip } from "./offer/page-furniture";
 import { SectionHead } from "./offer/parts";
-import { PlanGrid, ShootChip } from "./offer/plan-grid";
+import { PlanGrid } from "./offer/plan-grid";
 import { PlanTabs, type PlanTab } from "./offer/plan-tabs";
-import { DesignOneTime, StarterPack, StudiosOneTime } from "./offer/starter-pack";
+import { OneTimeProducts } from "./offer/starter-pack";
+import { WorkMode, WorkModeProvider } from "./offer/work-mode";
 import { Breadcrumbs } from "./service-page";
 import { ProductCards } from "./verticals/design-products";
 import { Figure } from "./verticals/influence-page";
@@ -86,9 +81,16 @@ export function PricingHubView() {
         </div>
       </Atmosphere>
 
-      <section id="plans" aria-labelledby="plans-heading" className="mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-[var(--section-pad)]">
+      <section
+        id="plans"
+        aria-labelledby="plans-heading"
+        className="mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-[var(--section-pad)]"
+      >
         <Reveal className="glass glass-lit relative overflow-hidden rounded-panel p-5 sm:p-8 lg:p-10">
-          <span aria-hidden className="pointer-events-none absolute -right-32 -top-32 size-[28rem] rounded-full bg-brand/10 blur-3xl" />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -right-32 -top-32 size-[28rem] rounded-full bg-brand/10 blur-3xl"
+          />
           <div className="relative">
             <SectionLabel dot tone="brand">
               {pricingHub.plans.label}
@@ -99,33 +101,11 @@ export function PricingHubView() {
             >
               {pricingHub.plans.heading}
             </h2>
-            {/*
-              PICK THE MODEL BEFORE THE PRICE. Genesis charges three ways, and a
-              reader who opens Influence expecting a membership meets a
-              commission instead. The three are set out first, each with who
-              it is for and where it starts.
-            */}
-            <ul className="mt-6 grid gap-3 md:grid-cols-3">
-              {pricingHub.models.map((model) => (
-                <li key={model.label} className="flex">
-                  <a
-                    href={model.tab ? "#plans" : "#one-time"}
-                    data-plan-tab={model.tab ?? undefined}
-                    data-track={`model:${model.label}`}
-                    className="group flex w-full flex-col rounded-panel border border-white/12 bg-white/[0.03] p-5 transition-colors hover:border-brand/50 hover:bg-brand/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <span className="text-lead text-bone">{model.label}</span>
-                      <ArrowRight className="size-4 text-faint transition-colors group-hover:text-brand-ink" aria-hidden />
-                    </span>
-                    <span className="mt-1 text-small text-ash">Best for: {model.bestFor}</span>
-                    <span className="mt-4 text-lead text-brand-ink">{model.price}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
             <div className="mt-8">
-              <PlanTabs tabs={tabs()} initial="ai-labs" />
+              {/* One "one-time or membership" choice for every tab — see WorkMode. */}
+              <WorkModeProvider>
+                <PlanTabs tabs={tabs()} initial="ai-labs" />
+              </WorkModeProvider>
             </div>
           </div>
         </Reveal>
@@ -146,34 +126,69 @@ export function PricingHubView() {
 
       <LogoStrip heading={false} />
 
-      <section aria-labelledby="one-time-heading" id="one-time" className="mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-[var(--section-pad)]">
-        <MediaRail
-          label={pricingHub.oneTime.heading}
-          aspect="1/1"
-          cardClassName="lg:w-[calc((100%-4rem)/5)]"
-          headerSlot={
-            <SectionHead
-              id="one-time-heading"
-              label={pricingHub.oneTime.label}
-              heading={pricingHub.oneTime.heading}
-              body={pricingHub.oneTime.body}
-              align="left"
-            />
-          }
-          items={oneTimeProjects.map((project) => ({
-            title: project.name,
-            body: project.body,
-            image: project.image,
-            foot: (
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <p className="text-small text-ash">
-                  From <span className="text-brand-ink">{project.from}</span>
-                </p>
-                <AddToCartIcon id={productId(project.vertical, "one-time", project.name)} />
-              </div>
-            ),
-          }))}
+      {/*
+        EVERY ONE-TIME PRODUCT, AT A GLANCE — Genesis's fifteen (lib/products),
+        by division. Each division's tab above has the full card; this is the
+        index a "one-time project" reader lands on, with the same Add, and a
+        call for the one priced by campaign.
+      */}
+      <section
+        aria-labelledby="one-time-heading"
+        id="one-time"
+        className="mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-[var(--section-pad)]"
+      >
+        <SectionHead
+          id="one-time-heading"
+          label={pricingHub.oneTime.label}
+          heading={pricingHub.oneTime.heading}
+          body={pricingHub.oneTime.body}
         />
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {verticalCards.map((card) => (
+            <Reveal key={card.key} className="glass glass-lit flex flex-col rounded-panel p-5">
+              <DivisionName name={verticalCard(card.key).short} height={24} className="self-start" />
+              <ul className="mt-4 flex flex-1 flex-col divide-y divide-[var(--glass-border)]">
+                {products
+                  .filter((product) => product.vertical === card.key)
+                  .map((product) => (
+                    <li key={product.name} className="py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="min-w-0">
+                          <span className="block text-small leading-snug text-bone">{product.name}</span>
+                          <span className="mt-0.5 block text-[0.75rem] text-ash">
+                            {product.price ? inr(product.price) : product.priceLabel}
+                          </span>
+                        </span>
+                        {product.cta === "buy" ? (
+                          <AddToCartIcon id={productId(product.vertical, "one-time", product.name)} />
+                        ) : (
+                          <a
+                            href={bookingHref(product.name)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex min-h-9 shrink-0 items-center text-small text-brand-ink hover:underline"
+                          >
+                            Book a call
+                          </a>
+                        )}
+                      </div>
+                      {/* What it includes, opened on demand — Genesis, 28 Sep 2026. */}
+                      <IncludedList items={product.includes} className="mt-1.5" />
+                    </li>
+                  ))}
+              </ul>
+              <Link
+                href={`/pricing?v=${card.key}#plans`}
+                data-plan-tab={card.key}
+                data-work-mode="one-time"
+                className="mt-2 inline-flex min-h-10 items-center gap-1.5 text-small text-ash transition-colors hover:text-bone"
+              >
+                See them in full
+                <ArrowRight className="size-3.5" aria-hidden />
+              </Link>
+            </Reveal>
+          ))}
+        </div>
       </section>
     </main>
   );
@@ -237,7 +252,10 @@ function TabHead({
         {sub && <p className="mt-1 text-lead text-bone">{sub}</p>}
         {body && <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{body}</p>}
       </div>
-      <Link href={card.href} className="inline-flex items-center gap-1.5 text-small text-ash transition-colors hover:text-bone">
+      <Link
+        href={card.href}
+        className="inline-flex min-h-10 items-center gap-1.5 text-small text-ash transition-colors hover:text-bone"
+      >
         See the full {card.name} page
         <ArrowRight className="size-4 text-brand-ink" aria-hidden />
       </Link>
@@ -261,22 +279,31 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="ai-labs" {...aiTab} />
-          <PlanGrid data={aiPlans} vertical="ai-labs" compact />
-          <StarterPack />
-          <SubHeading>Every AI Video Includes</SubHeading>
-          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-            {aiEveryVideo.items.map((item) => (
-              <li key={item.title} className="glass-chip flex flex-col items-center gap-2 rounded-card p-3 text-center">
-                <IconTile name={item.icon} className="size-9" />
-                <span className="text-small text-bone">{item.label?.split("— ")[1] ?? item.title}</span>
-                <span className="text-[0.6875rem] leading-snug tracking-normal text-faint">{item.title}</span>
-                {item.tier && <TierTag className="mt-1 text-center">{item.tier}</TierTag>}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-10">
-            <VideoTiers data={aiVideoTiers} compact />
-          </div>
+          <WorkMode
+            oneTime={<OneTimeProducts vertical="ai-labs" bare />}
+            membership={
+              <>
+                <PlanGrid data={aiPlans} vertical="ai-labs" compact />
+                <SubHeading>Every AI Video Includes</SubHeading>
+                <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+                  {aiEveryVideo.items.map((item) => (
+                    <li
+                      key={item.title}
+                      className="glass-chip flex flex-col items-center gap-2 rounded-card p-3 text-center"
+                    >
+                      <IconTile name={item.icon} className="size-9" />
+                      <span className="text-small text-bone">{item.label?.split("— ")[1] ?? item.title}</span>
+                      <span className="text-[0.6875rem] leading-snug tracking-normal text-faint">{item.title}</span>
+                      {item.tier && <TierTag className="mt-1 text-center">{item.tier}</TierTag>}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-10">
+                  <VideoTiers data={aiVideoTiers} compact />
+                </div>
+              </>
+            }
+          />
           <SubHeading>Typical turnaround</SubHeading>
           <TurnaroundStrip data={aiTurnaround} />
         </>
@@ -309,7 +336,9 @@ function tabs(): PlanTab[] {
               <IconTile name="users" />
               <p>
                 <span className="micro-label !text-brand-ink">{campaignPricing.includesLabel}</span>
-                <span className="mt-2 block text-pretty text-body leading-relaxed text-bone">{campaignPricing.includes}</span>
+                <span className="mt-2 block text-pretty text-body leading-relaxed text-bone">
+                  {campaignPricing.includes}
+                </span>
               </p>
             </div>
           </div>
@@ -324,6 +353,7 @@ function tabs(): PlanTab[] {
               Book a 15-min Call
             </GlassButton>
           </div>
+          <OneTimeProducts vertical="influence" />
         </>
       ),
     },
@@ -334,26 +364,10 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="studios" {...studiosTab} />
-          <PlanGrid data={studiosPlans} vertical="studios" compact />
-          <StudiosOneTime />
-          <SubHeading>{studiosShoot.label}</SubHeading>
-          <ul className="grid gap-3 md:grid-cols-3">
-            {studiosShoot.packages.map((pack) => (
-              <li key={pack.name} className="glass-chip flex items-center justify-between gap-4 rounded-panel p-5">
-                <span>
-                  <span className="block text-body text-bone">{pack.name}</span>
-                  <span className="mt-0.5 block text-small text-ash">{pack.tagline}</span>
-                </span>
-                <span className="flex flex-col items-end gap-2">
-                  <span className="font-display text-lead text-bone">
-                    {pack.price} <span className="text-small text-ash">{pack.gst}</span>
-                  </span>
-                  <ShootChip />
-                  <AddToCartIcon id={productId("studios", "one-time", pack.name)} />
-                </span>
-              </li>
-            ))}
-          </ul>
+          <WorkMode
+            oneTime={<OneTimeProducts vertical="studios" bare />}
+            membership={<PlanGrid data={studiosPlans} vertical="studios" compact />}
+          />
           <SubHeading>Typical turnaround</SubHeading>
           <TurnaroundStrip data={studiosTurnaround} />
         </>
@@ -366,18 +380,15 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="brand-design" {...designTab} />
-          <div className="-mt-4">
-            <ProductCards />
-          </div>
-          <DesignOneTime />
+          <WorkMode
+            oneTime={<OneTimeProducts vertical="brand-design" bare />}
+            membership={<ProductCards />}
+          />
           <SubHeading>Typical turnaround</SubHeading>
           <TurnaroundStrip data={designTurnaround} />
         </>
       ),
     },
   ];
-  return list
-    .map((tab) => ({ ...tab, art: art(tab.key) }))
-    .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+  return list.map((tab) => ({ ...tab, art: art(tab.key) })).sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
 }
-

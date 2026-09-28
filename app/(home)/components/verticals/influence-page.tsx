@@ -17,6 +17,7 @@ import {
   influenceServices,
 } from "@/lib/verticals/influence";
 import { InfluencerMarketing } from "../influencer-marketing";
+import { OneTimeProducts } from "../offer/starter-pack";
 import { IconChips, StepsBlock } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
@@ -51,6 +52,10 @@ export function InfluencePageView() {
 
       <PlanBand>
         <CampaignPricing />
+        {/* Genesis's one-time Influence products — UGC packs and campaign management (lib/products). */}
+        <OfferSection className="pt-0">
+          <OneTimeProducts vertical="influence" />
+        </OfferSection>
       </PlanBand>
 
       <OfferSection className="pt-0">
@@ -204,7 +209,7 @@ function Services() {
                   <a
                     href="#case-studies"
                     aria-label={`${card.title} — case studies`}
-                    className="mt-auto grid size-9 place-items-center rounded-full border border-white/15 text-bone transition-colors group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand"
+                    className="mt-auto grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand"
                   >
                     <ArrowRight className="size-4" aria-hidden />
                   </a>

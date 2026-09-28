@@ -35,9 +35,17 @@ export function ScaledStage({
 
   return (
     <div ref={box} className="relative w-full" style={{ height: height * scale }}>
+      {/*
+        DISPLAY ONLY WHEN IT IS SHRUNK HARD. On a phone the stage draws at
+        about 0.35×, which turns its small round links into 15px targets no
+        finger can hit. Past that point it is a picture of the board, and the
+        same actions sit in the buttons under the section — so it is made
+        inert (not focusable, not clickable) rather than left as a trap.
+      */}
       <div
         className="absolute left-0 top-0 origin-top-left"
         style={{ width, height, transform: `scale(${scale})` }}
+        inert={scale < 0.6}
       >
         {children}
       </div>

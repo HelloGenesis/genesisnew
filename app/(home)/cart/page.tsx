@@ -7,7 +7,7 @@ import { pageMetadata } from "@/lib/seo";
 export const metadata: Metadata = {
   ...pageMetadata({
     title: "Your Cart",
-    description: "Review your Genesis memberships, add-ons and one-time products, then pay securely with Razorpay.",
+    description: "Review your Genesis memberships and one-time products, then pay securely with Razorpay.",
     path: "/cart",
   }),
   robots: { index: false, follow: false },

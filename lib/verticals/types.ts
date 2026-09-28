@@ -140,17 +140,6 @@ export type Turnaround = {
   notes?: string[];
 };
 
-export type AddOns = {
-  label: string;
-  heading: string;
-  body?: string;
-  chips?: { label: string; icon?: IconName }[];
-  button: string;
-  /** `includes` — what the buyer gets, opened under "What's included" on the tile and in the cart. */
-  /** `inPerson` — needs a physical shoot, so Mumbai only for now (see lib/regions). */
-  items: { name: string; price: string; body?: string; includes?: string[]; inPerson?: boolean }[];
-};
-
 export type Closing = {
   label: string;
   heading: string;

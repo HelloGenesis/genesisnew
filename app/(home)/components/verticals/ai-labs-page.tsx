@@ -20,7 +20,8 @@ import { FormatShowcase } from "../offer/format-showcase";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { PlanDetails, OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { PlanGrid } from "../offer/plan-grid";
-import { StarterPack } from "../offer/starter-pack";
+import { OneTimeProducts } from "../offer/starter-pack";
+import { WorkMode } from "../offer/work-mode";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VideoRail } from "../offer/video-rail";
 import { VerticalPage } from "../offer/vertical-page";
@@ -31,7 +32,7 @@ const page = servicePage("ai-content-automation");
  * /ai-content-automation — Genesis AI Labs, the AI Content Studio, in the
  * brief's nine sections plus its FAQs: hero, the formats, the memberships,
  * what every video includes, campaign creatives, how it works, turnaround,
- * add-ons, the work, the closing band.
+ * the one-time products, the work, the closing band.
  */
 export function AiLabsPageView() {
   return (
@@ -93,14 +94,28 @@ export function AiLabsPageView() {
       */}
       <PlanBand>
         <OfferSection>
-          <PlanGrid data={aiPlans} vertical="ai-labs" id="pricing" />
-          <PlanDetails id="included" title="What every video includes" summary={`${aiEveryVideo.heading} ${aiEveryVideo.body}`}>
-            <IconCards items={aiEveryVideo.items} />
-          </PlanDetails>
-          <PlanDetails id="video-types" title={`Video types — ${aiVideoTiers.heading}`} summary={aiVideoTiers.body}>
-            <VideoTiers data={aiVideoTiers} bare />
-          </PlanDetails>
-          <StarterPack />
+          {/*
+            "CHOOSE HOW YOU WANT TO WORK" — the same switch as /pricing
+            (Genesis, 28 Sep 2026): memberships on one side, the division's
+            one-time products on the other. The anchor sits on the wrapper so
+            "#pricing" lands here whichever side is showing.
+          */}
+          <div id="pricing" className="scroll-mt-24">
+            <WorkMode
+              oneTime={<OneTimeProducts vertical="ai-labs" bare />}
+              membership={
+                <>
+                  <PlanGrid data={aiPlans} vertical="ai-labs" />
+                  <PlanDetails id="included" title="What every video includes" summary={`${aiEveryVideo.heading} ${aiEveryVideo.body}`}>
+                    <IconCards items={aiEveryVideo.items} />
+                  </PlanDetails>
+                  <PlanDetails id="video-types" title={`Video types — ${aiVideoTiers.heading}`} summary={aiVideoTiers.body}>
+                    <VideoTiers data={aiVideoTiers} bare />
+                  </PlanDetails>
+                </>
+              }
+            />
+          </div>
         </OfferSection>
       </PlanBand>
 

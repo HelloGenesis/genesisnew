@@ -3,7 +3,7 @@
  *
  * EVERY STRING HERE IS GENESIS'S OWN, from "Website - Vertical pages pricing
  * Design and copy" (the vertical-pages brief), which replaces the earlier
- * pricing brief. Each vertical's plans, add-ons and page copy live in
+ * pricing brief. Each vertical's plans and page copy live in
  * lib/verticals/<vertical>.ts; this file holds what they all lean on — the
  * links, the /pricing page, the one-time projects and the footer calendar.
  *
@@ -21,6 +21,7 @@
  */
 
 import { inr, price } from "./money";
+import { lowestProductPrice } from "./products";
 import { whatsappLink } from "./site-config";
 import type { VerticalKey } from "./verticals/types";
 
@@ -144,31 +145,6 @@ export const pricingHub = {
     label: "Genesis Memberships",
     heading: "Choose your creative team.",
   },
-  /*
-    THE THREE WAYS GENESIS CHARGES, SAID ONCE, before the tabs — so a reader
-    who opens Influence and finds a commission instead of a membership is
-    not surprised by it.
-  */
-  models: [
-    {
-      label: "One-time project",
-      bestFor: "Trying Genesis, or a single brief.",
-      price: `From ${inr(24000)}`,
-      tab: null,
-    },
-    {
-      label: "Membership",
-      bestFor: "Content, AI or design every month.",
-      price: `From ${price(65000)} per month`,
-      tab: "ai-labs",
-    },
-    {
-      label: "Commission",
-      bestFor: "Running an influencer campaign.",
-      price: "Creator fees + 15%",
-      tab: "influence",
-    },
-  ],
   /* From the first pricing brief — "How Genesis Memberships Work". */
   steps: {
     heading: "How Genesis Memberships Work",
@@ -183,59 +159,9 @@ export const pricingHub = {
   oneTime: {
     label: "One-time projects",
     heading: "Need a one-time project instead?",
-    body: "From campaign sprints to brand identity, we offer clearly scoped, one-time projects.",
+    body: "Fifteen clearly scoped products across the four divisions — buy once, no membership needed.",
   },
 } as const;
-
-/**
- * The one-time projects slider on /pricing. The brief marks this block
- * "FINAL PRICING PAGE WILL BE GIVEN — ADD THIS AS OF NOW", so it is the
- * mockup's five cards as drawn, each opening a chat about that project.
- */
-export const oneTimeProjects: {
-  name: string;
-  body: string;
-  from: string;
-  vertical: VerticalKey;
-  image: string;
-}[] = [
-  {
-    /* Replaced "AI Avatar Setup" — see aiStarterPack in lib/verticals/ai-labs. */
-    name: "AI Content Starter",
-    body: "2 AI videos + 2 creatives, one-time. No subscription.",
-    from: inr(24000),
-    vertical: "ai-labs",
-    image: "/work/posters/38.jpg",
-  },
-  {
-    name: "AI Films",
-    body: "AI-powered brand films and explainers.",
-    from: price(150000),
-    vertical: "ai-labs",
-    image: "/work/posters/ai-lab-shivam-sh1.jpg",
-  },
-  {
-    name: "Performance Creative Sprint",
-    body: "Ad creatives for performance marketing.",
-    from: price(35000),
-    vertical: "studios",
-    image: "/work/posters/studios-b1.jpg",
-  },
-  {
-    name: "Brand Launch",
-    body: "Complete brand identity and guidelines.",
-    from: price(95000),
-    vertical: "brand-design",
-    image: "/brand/activ-health/1.png",
-  },
-  {
-    name: "Logo / Identity",
-    body: "Logo and identity design projects.",
-    from: price(50000),
-    vertical: "brand-design",
-    image: "/brand/activ-health/5.png",
-  },
-];
 
 /**
  * The calendar at the head of every footer — "ADD A CALENDAR ON ALL THE
@@ -277,11 +203,11 @@ export const homeHero = {
   start: "Start a Project",
   /*
     THE WAY IN, IN ONE LINE. The orb's price buttons only appear on hover, so
-    on a phone the homepage never said what Genesis costs. 24,000 is the
-    lowest entry Genesis has set (AI Content Starter, a one-time pack);
+    on a phone the homepage never said what Genesis costs. 24,999 is the
+    lowest entry Genesis has set (the cheapest one-time product, lib/products);
     65,000 is the lowest membership (Creative Desk), at the quarterly rate.
   */
-  entry: `Subscriptions from ${price(65000)} per month · AI content from ${inr(24000)}`,
+  entry: `Subscriptions from ${price(65000)} per month · One-time projects from ${inr(lowestProductPrice)}`,
 } as const;
 
 /**
@@ -319,8 +245,8 @@ export const planGlossary = [
   },
 ] as const;
 
-/** The lowest price a buyer can start at — Genesis's entry pricing. */
-export const entryPrice = inr(24000);
+/** The lowest price a buyer can start at — the cheapest one-time product (lib/products). */
+export const entryPrice = inr(lowestProductPrice);
 
 /*
   THE PLAN BAR UNDER EACH DIVISION ON THE HOMEPAGE.
