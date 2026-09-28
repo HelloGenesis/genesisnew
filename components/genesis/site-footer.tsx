@@ -5,6 +5,7 @@ import { Atmosphere } from "@/components/genesis/atmosphere";
 import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { SocialStars } from "@/components/genesis/social-stars";
 import { Reveal } from "@/components/genesis/reveal";
+import { BookingCalendar } from "@/components/genesis/booking-calendar";
 import { footerCta } from "@/lib/home-content";
 import { footerNav, siteConfig, telHref } from "@/lib/site-config";
 
@@ -40,6 +41,17 @@ export function SiteFooter() {
       className="relative overflow-hidden pt-14"
     >
       <div className="mx-auto w-full max-w-6xl px-6">
+        {/*
+          THE 15-MINUTE CALL, ON EVERY PAGE — "ADD A CALENDAR ON ALL THE
+          FOOTERS (KEEP THIS SAME EVERYWHERE)". At the head of the footer, so
+          it is the last thing a reader meets before the boilerplate. See
+          BookingCalendar for what a pick does while the real calendar link
+          is still to come.
+        */}
+        <Reveal>
+          <BookingCalendar />
+        </Reveal>
+
         {/*
           Contact details + navigation, on a single sheet of liquid glass —
           the spec marks the footer "//liquid glass". Heavier blur and a lit
@@ -79,21 +91,42 @@ export function SiteFooter() {
               anything. `telHref` strips it to the plus and the digits; the
               readable spacing stays on screen.
             */}
-            <div className="mt-6 flex flex-col gap-2">
+            <div className="mt-6 flex flex-col">
               <a
                 href={`mailto:${footerCta.email}`}
-                className="inline-block w-fit text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
+                className="inline-flex min-h-10 w-fit items-center text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
               >
                 {footerCta.email}
               </a>
               {telHref() && (
                 <a
                   href={telHref()}
-                  className="inline-block w-fit text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
+                  className="inline-flex min-h-10 w-fit items-center text-small text-bone underline-offset-4 transition-colors hover:text-brand-ink hover:underline"
                 >
                   {siteConfig.phone}
                 </a>
               )}
+            </div>
+
+            {/* The two offices (Genesis, 28 Sep 2026), each a link to the map. */}
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+              {siteConfig.offices.map((office) => (
+                <address key={office.label} className="not-italic">
+                  <p className="micro-label">{office.label}</p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(office.lines.join(", "))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 block text-small leading-relaxed text-ash transition-colors hover:text-bone"
+                  >
+                    {office.lines.map((line) => (
+                      <span key={line} className="block">
+                        {line}
+                      </span>
+                    ))}
+                  </a>
+                </address>
+              ))}
             </div>
 
             {/* "Social Media Icons (like stars)" — the lockup's star, repeated. */}
@@ -154,17 +187,19 @@ export function SiteFooter() {
             LINKS NOW, NOT PRINTED WORDS. This read "Privacy · Terms" as plain
             text with nothing behind it, which is the one thing a footer must
             not do — a visitor looking for a policy found the word and no page.
-            Privacy only: Genesis removed the terms page, and /terms
-            redirects to /privacy. The policy is their own copy; see
-            lib/legal.ts.
+            The terms and the refund policy returned on 28 Sep 2026, when the
+            site began taking payment; see lib/legal-commerce.
           */}
-          <p className="flex items-center gap-2">
-            <Link
-              href="/privacy"
-              className="transition-colors hover:text-bone"
-            >
-              Privacy Policy
-            </Link>
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {[
+              ["/privacy", "Privacy Policy"],
+              ["/terms", "Terms & Conditions"],
+              ["/refund-policy", "Cancellation & Refunds"],
+            ].map(([href, label]) => (
+              <Link key={href} href={href} className="inline-flex min-h-10 items-center transition-colors hover:text-bone">
+                {label}
+              </Link>
+            ))}
           </p>
         </div>
       </div>

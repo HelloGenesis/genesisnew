@@ -1,18 +1,10 @@
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { StudiosPipeline } from "@/components/genesis/studios-pipeline";
 import { services } from "@/lib/home-content";
+import { PlanBar } from "./plan-bar";
 
-/*
-  ONE LINE ON A PHONE, the same treatment Influence, AI Lab and Brand &
-  Design already give their pairs. Wrapped, these two `lg` buttons stacked
-  and cost the section 50 points — the last thing standing between Studios
-  and the one-screen rule on a handset.
-*/
-const MOBILE_CTA =
-  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
 
 /**
  * Genesis Studios — the production vertical.
@@ -62,28 +54,7 @@ export function Studios() {
           <StudiosPipeline />
         </div>
 
-        <Reveal delay={0.14} className="mt-[var(--block-gap)] flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
-          <GlassButton
-            href="/#contact"
-            quickContact="studios:plan-a-shoot"
-            variant="brand"
-           
-            arrow
-            className={MOBILE_CTA}
-          >
-            Start a Project
-          </GlassButton>
-          {/*
-            "Explore Genesis Studios" used to sit between these two and opened
-            /content-creation. Genesis has asked for everything except the two
-            forms to stay on the landing page, and a third button pointing at
-            the same place as this one is not worth keeping — so it is gone
-            rather than re-pointed.
-          */}
-          <GlassButton href="/#library" variant="ghost" arrow className={MOBILE_CTA}>
-            View the whole library
-          </GlassButton>
-        </Reveal>
+        <PlanBar vertical="studios" />
       </div>
     </section>
   );

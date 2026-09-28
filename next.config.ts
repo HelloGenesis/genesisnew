@@ -53,9 +53,8 @@ const WIX_REDIRECTS = [
   { source: "/roster", destination: "/influencer-marketing" },
   { source: "/events", destination: "/content-production" },
   { source: "/work", destination: "/case-studies" },
-  // The terms page was removed at Genesis's request; both land on privacy.
-  { source: "/terms-conditions", destination: "/privacy" },
-  { source: "/terms", destination: "/privacy" },
+  // The terms page is back (28 Sep 2026) now the site takes payment; the old spelling lands on it.
+  { source: "/terms-conditions", destination: "/terms" },
   { source: "/privacy-policy", destination: "/privacy" },
   // Blog
   { source: "/blog", destination: "/case-studies" },
@@ -71,6 +70,19 @@ const WIX_REDIRECTS = [
   { source: "/post/matcha-for-focus-energy-mood-abhi-s-instagram-reel-that-led-700k-to-activ-living", destination: "/case-studies/abhi-all-for-health" },
   { source: "/post/delivering-impeccable-school-functions-nhps", destination: "/content-production" },
   { source: "/post/:post*", destination: "/case-studies" },
+].map((redirect) => ({ ...redirect, permanent: true }));
+
+/*
+  THE FIRST PRICING BRIEF'S PAGES. /pricing/influence and the other three
+  were a membership page per vertical; the vertical-pages brief moved each
+  vertical's pricing onto the vertical's own page, so each old URL goes there,
+  to its pricing block.
+*/
+const PRICING_REDIRECTS = [
+  { source: "/pricing/influence", destination: "/influencer-marketing#pricing" },
+  { source: "/pricing/ai-labs", destination: "/ai-content-automation#pricing" },
+  { source: "/pricing/studios", destination: "/content-production#pricing" },
+  { source: "/pricing/brand-design", destination: "/brand-design#pricing" },
 ].map((redirect) => ({ ...redirect, permanent: true }));
 
 const nextConfig: NextConfig = {
@@ -129,6 +141,7 @@ const nextConfig: NextConfig = {
       { source: `/blog/${slug}`, destination: "/", permanent: false },
       { source: "/style-guide", destination: "/", permanent: false },
       ...WIX_REDIRECTS,
+      ...PRICING_REDIRECTS,
     ];
   },
 

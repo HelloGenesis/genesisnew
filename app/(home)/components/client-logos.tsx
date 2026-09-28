@@ -84,7 +84,7 @@ const TREAT_CLASS: Record<string, string> = {
   asis: "client-mark--asis",
 };
 
-function LogoMark({ logo }: { logo: (typeof clients.logos)[number] }) {
+export function LogoMark({ logo }: { logo: (typeof clients.logos)[number] }) {
   return (
     /*
       A box with nothing painted in it. It still exists — it is what holds

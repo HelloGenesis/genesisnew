@@ -1,6 +1,8 @@
+
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionBoard } from "@/components/genesis/division-board";
-import { services } from "@/lib/home-content";
+import { GlassButton } from "@/components/genesis/glass-button";
+import { homeHero } from "@/lib/pricing";
 
 /**
  * Section 1 — the Brain: what Genesis is, and the four divisions around it.
@@ -58,7 +60,15 @@ export function Services() {
         with somebody else's section under it. Full height and centred, the
         orb and its four names own the screen and the wall starts below it.
       */
-      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[calc(var(--section-pad)*3.4)]"
+      /*
+        NEVER LESS THAN 6.5REM ON TOP (7.5 FROM lg), under a nav that ends at
+        ~78px on a phone and ~87px from lg. --section-pad shrinks with the
+        window's height, so on a short laptop 3.4 of it came to ~73px while
+        the fixed nav ends at ~87px, and Influence and AI Lab sat right under
+        it — and on a 375x667 phone they touched it. The floor keeps a clear
+        gap below the nav at any height.
+      */
+      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[max(calc(var(--section-pad)*3.4),6.5rem)] lg:pt-[max(calc(var(--section-pad)*3.4),7.5rem)]"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme
@@ -159,17 +169,45 @@ export function Services() {
           `text-balance` is left on for those widths, so the two lines it
           makes there are of even length.
         */}
-        <h1 className="mx-auto mt-10 max-w-3xl text-balance text-center text-lead font-normal leading-snug text-bone/85 sm:mt-12 sm:text-h3 lg:max-w-6xl lg:whitespace-nowrap">
-          {services.body}{" "}
+        {/*
+          THE NEW MODEL, UNDER THE ORB — the pricing brief: "the homepage
+          needs to stop leading with a list of agency services. The new hero
+          should immediately explain the new model." The orb and its four
+          names stay the picture; this replaces the positioning line that
+          captioned it ("We help brands grow through…") with Genesis's hero
+          copy and its two buttons. Still the page's one h1.
+        */}
+        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center text-center sm:mt-10">
+          <h1 className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
+            {homeHero.heading}{" "}
+            <span className="font-serif italic text-brand-ink">
+              {homeHero.headingAccent}
+            </span>
+          </h1>
+          <p className="mt-3 text-balance text-small leading-relaxed text-ash sm:mt-4 sm:text-lead">
+            {homeHero.body}
+          </p>
           {/*
-            UPRIGHT, NOT THE SERIF ITALIC every other accent on this site
-            uses. Those are single words inside a HEADING, where the change of
-            face reads as emphasis; this is most of a sentence in body copy,
-            and italicising twelve words of it would read as a quotation. The
-            colour is doing the work on its own.
+            THREE WAYS ON (Genesis, 29 Sep 2026), each saying where it starts:
+            memberships, the standalone one-time services, and the case
+            studies. Stacked on a phone, where three long labels cannot share
+            a line; in a row from sm.
           */}
-          <span className="text-brand-ink">{services.bodyAccent}</span>
-        </h1>
+          <div className="mt-6 flex w-full flex-col items-stretch gap-2 min-[480px]:w-auto min-[480px]:items-center sm:mt-7 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3 lg:w-max lg:flex-nowrap">
+            {homeHero.ctas.map((cta, index) => (
+              <GlassButton
+                key={cta.href}
+                href={cta.href}
+                pageLink
+                variant={index === 0 ? "brand" : "glass"}
+                arrow
+                className="max-sm:h-11 max-sm:px-5 max-sm:text-[0.8125rem]"
+              >
+                {cta.label}
+              </GlassButton>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

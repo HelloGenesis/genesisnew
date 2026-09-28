@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { DivisionLockup } from "./division-lockup";
+import { CartButton } from "./cart";
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
@@ -38,7 +39,13 @@ import { cn } from "@/lib/utils";
  * middle; growing from the left reads as a progress bar filling.
  */
 const NAV_LINK = cn(
-  "relative whitespace-nowrap rounded-full px-2.5 py-2 text-small text-ash",
+  /*
+    A LITTLE TIGHTER BETWEEN lg AND xl, for "Pricing". The sixth item put the
+    bar 15px over at 1024 — "Start a Project" ran out of the pill. 4px off
+    each side of every link, at those widths only, buys it back; from xl the
+    bar has room and is as it was.
+  */
+  "relative whitespace-nowrap rounded-full px-2.5 py-2 text-small text-ash lg:max-xl:px-1.5",
   "transition-colors duration-300 hover:bg-[var(--hover-wash)] hover:text-bone",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
   "after:pointer-events-none after:absolute after:inset-x-2.5 after:bottom-1 after:h-px",
@@ -173,7 +180,7 @@ export function GlassNav() {
         */}
         <Link
           href={homeHref}
-          className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="-my-2 flex min-h-10 shrink-0 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           aria-label={`${"Genesis Media"}, back to the Brain`}
         >
           {/*
@@ -244,6 +251,7 @@ export function GlassNav() {
         */}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeToggle className="hidden lg:inline-flex" />
+          <CartButton />
 
           {/*
             "SLIGHT MOVEMENT/GLOW ON START A PROJECT", which is Genesis's
@@ -268,7 +276,7 @@ export function GlassNav() {
             onClick={() => setMenuOpen((open) => !open)}
             aria-expanded={menuOpen}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="grid size-9 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:hidden"
+            className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:size-9 lg:hidden"
           >
             {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
@@ -325,10 +333,14 @@ export function GlassNav() {
                         <li key={child.label}>
                           <Link
                             href={child.href}
+                            data-page-link
+                            data-work-mode={child.workMode}
                             onClick={() => setMenuOpen(false)}
-                            className="block rounded-card px-3 py-2.5 text-small text-faint transition-colors hover:bg-[var(--hover-wash)] hover:text-bone"
+                            className="block rounded-card px-3 py-2.5 text-small transition-colors hover:bg-[var(--hover-wash)]"
                           >
-                            {child.label}
+                            <span className="bg-[linear-gradient(100deg,#a77be8_0%,#f2607e_55%,#f09a2e_100%)] bg-clip-text font-medium text-transparent">
+                              {child.label}
+                            </span>
                           </Link>
                           {/*
                             THE SERVICES ARE ON THE DESKTOP PANEL AND NOT
@@ -387,6 +399,23 @@ export function GlassNav() {
  */
 function NavMenu({ item }: { item: NavItem }) {
   const [open, setOpen] = useState(false);
+  /* A menu of plain links (Pricing) rather than division columns (Services). */
+  const simple = !item.children?.some((child) => child.short || child.items?.length);
+
+  /*
+    CLOSE ON ANY LINK INSIDE, read in the capture phase: SmoothScroll handles
+    a same-page jump ("/pricing#plans" while on /pricing) there and stops the
+    click before React's own onClick would have closed the menu.
+  */
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest?.("a");
+      if (link && holder.current?.contains(link)) setOpen(false);
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [open]);
   const holder = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
@@ -430,7 +459,40 @@ function NavMenu({ item }: { item: NavItem }) {
       </button>
 
       <AnimatePresence>
-        {open && (
+        {open && simple && (
+          /*
+            A SMALL MENU — Pricing's two links — hangs under its own trigger
+            rather than spanning the bar like the Services panel. Padding, not
+            margin, bridges the gap so the pointer can cross it.
+          */
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute left-1/2 top-full z-10 w-72 -translate-x-1/2 pt-3"
+          >
+            <ul className="rounded-panel border border-[var(--glass-border)] bg-[var(--surface-raised)] p-2 shadow-float">
+              {item.children?.map((child) => (
+                <li key={child.label}>
+                  <Link
+                    href={child.href}
+                    data-page-link
+                    data-work-mode={child.workMode}
+                    onClick={() => setOpen(false)}
+                    className="block rounded-card px-4 py-3 transition-colors hover:bg-[var(--hover-wash)] focus-visible:bg-[var(--hover-wash)] focus-visible:outline-none"
+                  >
+                    <span className="block w-fit bg-[linear-gradient(100deg,#a77be8_0%,#f2607e_55%,#f09a2e_100%)] bg-clip-text text-transparent text-body font-medium">{child.label}</span>
+                    {child.description && (
+                      <span className="mt-0.5 block text-[0.75rem] leading-snug text-ash">{child.description}</span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+        {open && !simple && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
@@ -486,6 +548,7 @@ function NavMenu({ item }: { item: NavItem }) {
                     */}
                     <Link
                       href={child.href}
+                      data-page-link
                       onClick={() => setOpen(false)}
                       className="group/col block"
                     >
@@ -540,6 +603,7 @@ function NavMenu({ item }: { item: NavItem }) {
                           <li key={service}>
                             <Link
                               href={child.href}
+                              data-page-link
                               onClick={() => setOpen(false)}
                               className="block text-small leading-snug text-ash transition-colors duration-200 hover:text-[var(--menu-hover)] focus-visible:text-[var(--menu-hover)] focus-visible:outline-none"
                             >

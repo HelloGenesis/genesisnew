@@ -1014,9 +1014,124 @@ hardware.**
 
 ---
 
+## Vertical pages brief — 2026-09-28
+
+Source: "Website - Vertical pages pricing Design and copy" (49 pages). It
+replaces the first pricing brief. Copy is verbatim; the mockups' light-page
+skin is re-set in the site's own language (dark glass, Mont ExtraLight, brand
+yellow).
+
+**Homepage.** The first pricing brief's additions are removed — the
+Memberships section and the Join / Book / View Work buttons on the four
+vertical sections are back to what `main` had. Section 1 (the Brain, its
+"Membership from" buttons and "Your creative team. On demand.") is kept, as
+asked; its buttons now point at each vertical page's `#pricing`, and
+"Explore Memberships" at /pricing.
+
+**/pricing.** The "vibe" block (One team. One monthly fee. + four vertical
+cards), then "Choose your creative team." — the four verticals' packages
+behind tabs that slide — then one line of logos and the one-time projects
+slider. The old /pricing/<vertical> pages 308 to the vertical pages.
+
+**The four vertical pages** (/influencer-marketing, /ai-content-automation,
+/content-production, /brand-design) are rebuilt to the brief: centred
+breadcrumb + vertical tabs, logos, plans with a Monthly/Quarterly switch
+(quarterly = 3× monthly, no discount, as the brief says), "View What's
+Included" accordion, "Compare Plans" window, add-ons with prices behind a
+button, case studies, work, closing band. Copy lives in `lib/verticals/*`;
+shared pieces in `app/(home)/components/offer/`.
+
+**Every footer** opens with a 15-minute booking calendar (Genesis logo in
+place of the reference's illustration).
+
+**Mont demo font.** Its ExtraLight file draws % * # < > | ~ ° ± † ‰ and the
+arrows as one placeholder glyph. `app/layout.tsx` now gives the face a
+unicode-range that leaves those (and the hairline /) to the fallback font.
+Remove it when the retail files land.
+
+### Still owed by Genesis
+
+| Item | Where it goes |
+| --- | --- |
+| The 15-minute booking calendar link | `bookingUrl` in lib/pricing — until then a picked slot opens WhatsApp |
+| Razorpay link per plan | `joinUrls` in lib/pricing — until then plan buttons open WhatsApp |
+| AI Labs comparison table, Growth + Enterprise columns | The PDF's table is cut off after Starter; lib/verticals/ai-labs.ts compares only what the cards state |
+| "Priority 48-Hour Production" price | Blank in the brief; shows "On request" |
+| Bookable hours for the calendar | Placeholder: weekdays 11:00–17:30 IST |
+| The final /pricing page | The brief says it will follow; the one-time projects are "as of now" |
+
+### Conversion pass — 2026-09-28
+
+- One name per vertical in nav, breadcrumbs and footer (Genesis Influence /
+  Studios / AI Labs / Brand & Design). URLs keep their search words.
+- Nav is the buying path only; I'm a Creator and Career live in the footer.
+- Influence stats share lib/proof's confirmed brands (45+) and views (500M+).
+- Homepage: "Projects from ₹25K · Memberships from ₹65K/month" under the
+  promise, and a one-line pricing strip after the verticals. ₹25K is
+  Genesis's entry price.
+- /pricing: tabs are linkable (`/pricing?v=studios`), the three pricing
+  models are explained above them, and "How Genesis Memberships Work" follows.
+- Vertical pages: visible h1 (hero), a sticky "on this page" bar, and a
+  phone call-to-action bar.
+- Calendar says "Request this slot" and that the slot is confirmed on
+  WhatsApp, until `bookingUrl` is set.
+- Vercel Analytics custom events: `whatsapp_click` on every wa.me link and
+  `cta_click` on anything with `data-track` (plans, billing, tabs, jump bar,
+  booking). Custom events need a Vercel Pro plan to appear.
+
+Then, from the design/UX/copy/pricing review:
+
+- /pricing opens its plans panel with the three pricing models as cards —
+  who each is for and where it starts (project from ₹25K, membership from
+  ₹65K/month, commission of creator fees + 15%).
+- Every plan grid carries the brief's terms (stop before the next billing
+  cycle, pause where available, prices exclusive of GST) and a "What these
+  terms mean" glossary built only from definitions the brief gives.
+- Influence shows a worked commission example (₹5,00,000 → ₹75,000).
+- "Start Starter" reads "Start with Starter".
+- Small titles use the text face; Mont ExtraLight is kept for display sizes.
+- "Every video includes" and the Studios Starter breakdown open on demand,
+  and the plans sit on their own full-width band, so the long pages lead
+  with the decision.
+
+Still owed: Razorpay links, testimonials, case-study results, team strip,
+licensed fonts, a real-device speed check, definitions of "adaptation" and
+"premium vs standard video", and decisions on a quarterly incentive and a
+project-to-membership credit.
+
+### Sales-ready pass — 2026-09-28
+
+- Homepage divisions each end on a **plan bar**: the product (AI Content
+  Studio, Content Monthly, Always-On Creative Desk, Influencer & UGC
+  Campaigns), its promise, where the price starts, "See … plans", a direct
+  start (the Razorpay link once `joinUrls` is filled) and "View … work".
+  AI Lab and Studios headings now use the products' own lines ("Build once.
+  Publish continuously.", "From brief to publish.").
+- AI Avatar Setup (₹24,999/-, the entry price) is offered under the avatars.
+- The homepage memberships block now says the model: one team, one monthly
+  fee; the four steps; each division's starting price; Explore Memberships /
+  Book a 15-min Call.
+- Brand & Design: the ₹64,999/- plan is "Always-On" (Genesis Creative
+  Desk), with the Quarterly/Monthly switch; What's included is a bento; case
+  studies and work show Brand & Design and motion graphics only.
+- Fixed: the jump bar and phone CTA bar sat inside <main>, whose children get
+  content-visibility with a 900px intrinsic size — they now render after it.
+  Brand & Design cards overflowed a 375px screen by 52px. Studios hero
+  buttons wrapped at 1440px.
+- Audit: every route at 375 / 768 / 1024 / 1440 — no horizontal overflow, no
+  overlapping text; 48 internal links and every cross-page anchor resolve.
+  (Audits must force `content-visibility: visible` on main's children, and a
+  hidden browser pane skips rendering entirely, so measure, don't screenshot.)
+
+Open copy questions for Genesis: TripGate vs "TripGatee" (the case study and
+the work tile disagree); motion-graphics studies are headlined "Video
+Production"; "Your creative team" opens both the homepage and Brand & Design.
+
+---
+
 ## Repository
 
-Remote is `https://github.com/gauravv-jainn/genesisnew`, set as `origin`.
+Remote is `https://github.com/HelloGenesis/genesisnew`, set as `origin`. Work goes to the `pricing` branch; `main` is not touched.
 
 Pushing works from this machine; `main` is up to date with `origin/main`.
 
@@ -1031,3 +1146,49 @@ npm run db:migrate # create + apply a migration (dev)
 npm run db:deploy  # apply pending migrations (prod/CI)
 npm run db:studio  # browse data
 ```
+
+## 28 Sep 2026 — Membership card art, format showcase, plan folds, cart & Razorpay checkout
+
+- Membership card: Genesis's own artwork (`public/brand/genesis-membership-card.webp`) replaces the CSS-drawn card.
+- AI Labs "See what you can create": each format card opens its work (case study or film), with "More <format>" inside the window and arrows across all formats. Dyson footage still to come (Product Visuals uses the property visuals meanwhile).
+- "What every video includes" and "Video types" (AI Labs) and the Starter breakdown (Studios) fold under the plans as collapsible rows. Premium AI Video turnaround set to 3–5 business days — to confirm.
+- Cart: `lib/cart.ts` (catalogue from the existing price lists, bundle saving 5% at 3+ / 10% at 5+ add-ons & one-time items, 18% GST), `components/genesis/cart.tsx` (provider, nav bag, slide-out cart, Add to cart / Purchase), `/cart`, `/cart/complete` (signature-verified), `/api/checkout` (Razorpay Payment Link, WhatsApp fallback without keys), `/api/razorpay/webhook`.
+- One-time card per division (`offer/starter-pack.tsx` → `OneTimeCard`): violet-to-coral identity, "Not ready to subscribe?" rule, and the division's add-ons listed inside as one-time products (`oneTimeAddOns` in lib/cart leaves out per-month extras, % surcharges and at-actual costs). AI leads with the AI Content Starter; Studios and Brand & Design have their own cards, on their pages and their /pricing tabs. "Save 10% by going with the quarterly plan." line removed (the switch's badge says it).
+- Separate "Need more?" add-on sections removed on all three division pages and /pricing tabs (offer/add-ons.tsx deleted) — every add-on now lives in its division's one-time card; the few that only attach to a membership or shoot are listed as a note in the card.
+- "What's included" dropdown on every one-time product tile and on every cart line (`IncludedList`; `includes` on add-on data and on each catalogue product). TODO(genesis): review the includes written for the AI and Studios add-ons — the brief gave names and prices only.
+- Cart rules: one plan per package (a second plan replaces the first, "Switch to this plan" on the card; server keeps the last), AI + Studios combo — suggested in the cart, COMBO_PERCENT (1%, to confirm) off both memberships.
+- Tier 1 cities only on anything that shoots (Studios Growth/Enterprise, Content Shoot packages and card, cart lines); cities listed in `TIER1_CITIES` (lib/pricing).
+- Checkout: contact person + business details (company, GSTIN validated, business email/phone, billing address, city, state, PIN, website) — sent to Razorpay notes (13 of 15) and the WhatsApp fallback.
+- Plan grid footing: gradient "View What's Included", terms as a bento, glossary dropdown below; Compare Plans removed.
+- Checkout by country (lib/regions): country drop-down drives state/emirate/province drop-down, dialling code on both phones, postal-code shape, and tax — 18% GST + GSTIN in India, 0% export of services + VAT/tax ID elsewhere (TODO: confirm LUT with accountant). Server validates all of it.
+- Physical shoots are Mumbai only for now (replaces the Tier 1 note): all Studios plans, Content Shoot packages and shoot add-ons carry "Mumbai only, for now"; the cart asks "Where is the shoot?" and only a Mumbai shoot from India can check out (enforced in /api/checkout).
+- AI + Studios combo is 10%, and needs a Studios plan with a monthly shoot (Growth/Enterprise); the cart suggests the add or the upgrade.
+- Offices: Mumbai (91SpringBoard, Vikhroli W, 400079 — the schema address) and Navi Mumbai (004 Sankalp Siddhi, New Panvel E, 410206 — legal contact); both in the footer with map links.
+- /terms and /refund-policy (lib/legal-commerce, TODO lawyer review), privacy §16 on purchases & payments; checkout requires the agreement tick, recorded with version and time in the order. /pricing hero: membership card on the right.
+- One-time catalogue replaced with Genesis's 15 products (lib/products): 4 AI Labs, 4 Studios, 4 Brand & Design, 3 Influence. Buy Now + Add to Cart on fixed prices; Influencer Campaign Management books a call. Removed: all add-ons, AI Content Starter, Content Shoot packages, the one-time projects rail. Memberships untouched. Studios shoot products are Mumbai-only. /pricing one-time section is now an index of all 15; Influence page and tab gained their card.
+- "Choose how you want to work" switch (offer/work-mode.tsx): One-Time Projects | Membership on /pricing (one choice across all tabs; "See them in full" opens one-time) and on the AI Labs, Studios and Brand & Design pages. Influence has no membership, so no switch. The three-model row on /pricing removed.
+- Phone/tablet pass (375/768, every route): no horizontal overflow anywhere; tap targets raised to ≥40px (nav cart/menu, calendar arrows, footer links, breadcrumbs, cart controls, dropdown toggles, influence arrows); avatar labels 8px→10–11px; the scaled design-board stage goes inert below 0.6× so it has no untappable links. Homepage AI section on phones: bigger warp cards, shorter copy, "Explore AI Labs" button. All 66 internal links 200; no console or server errors.
+- 29 Sep: Brain corners restored (Influence TL, AI Lab TR, Brand & Design BL, Studios BR); hero "One team. On demand." + three CTAs (also in the memberships block, whose price cards went); gradient stats bar; plan bars with gradient edge and three buttons (View more / View Case Studies / Book a 15-min Call); AI Lab section gets View Membership + Schedule a call above the rail, and the automation diagram (wider, shorter glowing node, heading/paragraph removed) moved above "Build Your Own AI Avatar"; Studios pipeline redrawn to Genesis's design (gradient stage bar, illustrated cards in public/studios/pipeline); Enterprise plans are contactOnly ("Talk to Genesis", not in the cart); /pricing tabs: switch → billing (centred) → tab heading → plans → every-video cards → video-types fold; Influence tab heading block matches the other three.
+
+### 29 Sep 2026 — memberships block, interactive card, nav gradient, bigger AI Lab diagram
+- Homepage memberships block: label, heading and body on the left; the membership card (lg) on the right. On phones the card sits below the text.
+- MembershipCard is now a client component and reacts to the pointer everywhere it appears (homepage, /pricing hero, footer calendar): it straightens, lifts, turns in 3D toward the cursor and shows a moving sheen. Under reduced motion it only lifts; nothing happens on touch.
+- Nav Pricing dropdown titles (desktop and mobile menu children) use the lilac→pink→amber gradient; the desktop titles are also a size larger.
+- AI Lab diagram widened from 46rem to 60rem.
+
+### 29 Sep 2026 — light mode colour pass, responsive audit
+- Light tokens (globals.css, both the explicit and system blocks): cleaner near-white ground without the yellow haze; white raised/panel/float surfaces; denser glass fill; softer borders; violet-tinted shadows; darker body ink (--ink-muted #3d3c42, --ink-faint #55545b); --brand-ink #7a5c00 → #b45309 (5:1 on white); route/ramp stops deepened.
+- Heading italic accents (h1–h3 .text-brand-ink) carry the violet→magenta→amber gradient on light.
+- Division-name artwork (.division-art) and gradient-clipped titles (.bg-clip-text, .ramp-text) get a deepen/saturate filter on light; `.on-dark` opts out (B&D folder headline).
+- Hero orb light palette pushed (ink 0.7, sat 1.9, alpha x1.6).
+- Audit: no horizontal overflow on any page at 360/375/768/1024 and pane width; public/ is 24 MB with no file over 700 KB.
+- Studios pipeline art replaced with the new glowing set (call, storyboard, camera, grade, publish stack) from ~/Downloads, 800×1000 WebP at 30–58 KB each; the cards are now 4:5.
+
+### 29 Sep 2026 — Razorpay memberships (subscriptions), order notifications
+- A cart with a membership → one Razorpay subscription: a plan made per order (memberships' charge per cycle incl. GST, combo saving applied every cycle; monthly, or every 3 months), running until cancelled (120 / 40 cycles). One-time products ride on the first invoice as an add-on. Paid in Razorpay Checkout over the cart; /cart/complete verifies `payment_id|subscription_id`. Fallback to the hosted subscription link if Checkout can't load.
+- One-time-only carts keep the payment link.
+- All memberships in an order share one billing cycle (cart syncs it; priceCart enforces the last choice). Cart summary: "Due today" + "Then every month/3 months, until you cancel".
+- Webhook: payment_link.paid, subscription.activated/charged/pending/halted/cancelled → lib/orders → "Orders" sheet tab + Resend email (after the response). Failed/halted/cancelled are flagged ⚠️ for the team.
+- CSP allows checkout.razorpay.com, cdn.razorpay.com, api.razorpay.com, lumberjack.razorpay.com.
+- Tested (test keys): plan/subscription amounts match the cart (₹1,23,309/month + ₹47,199 once = ₹1,70,508 today); Checkout opens (Cards + eMandate); signed webhooks write the sheet; a bad signature is refused. Card entry inside Checkout not automatable in the preview pane; to be tried by hand.
+- Open: Resend account + verified domain for email; webhook URL in the Razorpay dashboard (needs the deployed URL); UPI Autopay is not offered at these amounts.

@@ -3,7 +3,7 @@ import { SectionLabel } from "@/components/genesis/section-label";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { WorkGrid } from "@/components/genesis/work-grid";
 import { footerCta } from "@/lib/home-content";
-import { expandToClips, work, type WorkItem } from "@/lib/work";
+import { expandToClips, VERTICALS, work, type Vertical, type WorkItem } from "@/lib/work";
 
 /**
  * The portfolio grid, after the four verticals.
@@ -58,7 +58,11 @@ function forHomepage() {
   }
 
   /* Featured first within each division, catalogue order after. */
-  const queues = [...byVertical.values()].map((items) => [
+  /* Taken in Genesis's order for the divisions — AI Lab first (see VERTICALS). */
+  const queues = [...byVertical.entries()]
+    .sort(([a], [b]) => VERTICALS.indexOf(a as Vertical) - VERTICALS.indexOf(b as Vertical))
+    .map(([, items]) => items)
+    .map((items) => [
     ...items.filter((i) => i.featured),
     ...items.filter((i) => !i.featured),
   ]);
@@ -96,8 +100,14 @@ export function Portfolio() {
             studies keep their own name for their own section. The button
             below still leads to them.
           */}
+          {/*
+            "CASE STUDIES" AFTER ALL — Genesis, 28 Sep 2026: "change explore
+            our work copy to case studies on the homepage as well". The
+            heading still says what the section holds; the label now names it
+            the way the division pages do.
+          */}
           <SectionLabel dot tone="brand">
-            Explore our work
+            Case Studies
           </SectionLabel>
           <h2 className="mt-4 text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2 lg:text-h1">
             Everything{" "}

@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 
+import { ConversionEvents } from "@/components/genesis/conversion-events";
+
 import { INDEXABLE, SITE_URL } from "@/lib/seo";
 import { siteConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
@@ -53,6 +55,24 @@ const mont = localFont({
   variable: "--font-display",
   display: "swap",
   fallback: ["system-ui", "sans-serif"],
+  /*
+    THE DEMO CUT BLANKS OUT PART OF ITS CHARACTER SET. In the ExtraLight file
+    %, *, #, <, >, |, ~, °, ±, †, ‰, the arrows and a few letters are all the
+    same placeholder glyph — so "15%" in a heading printed as "15" and a
+    stray mark. Leaving those code points out of the face's unicode-range
+    hands them to the next font in the stack, which draws them properly.
+    Measured in the browser against a fallback font; the retail file will
+    have the real glyphs, and this range can go when it lands. The slash is
+    left out too: it is real, but drawn so steep and thin that "Logo /
+    Identity" read as "Logo I Identity".
+  */
+  declarations: [
+    {
+      prop: "unicode-range",
+      value:
+        "U+0-22, U+24, U+26-29, U+2B-2E, U+30-3B, U+3D, U+3F-5B, U+5D, U+60-7B, U+7D, U+7F-A0, U+A2-A3, U+A5, U+A7-A9, U+AB, U+AD-AF, U+B2-B9, U+BB-BE, U+C0-C5, U+C7-DD, U+E0-EF, U+F1-FD, U+FF-152, U+154-201F, U+2022-202F, U+2031-218F, U+2194-2195, U+219A-10FFFF",
+    },
+  ],
 });
 
 /*
@@ -161,6 +181,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       >
         {children}
         <Analytics />
+        <ConversionEvents />
       </body>
     </html>
   );

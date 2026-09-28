@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 
 import { pageMetadata } from "@/lib/seo";
 import { servicePage } from "@/lib/services";
-import { BrandingDesign } from "../components/branding-design";
-import { ServicePageView } from "../components/service-page";
+import { BrandDesignPageView } from "../components/verticals/brand-design-page";
 
 /**
- * /brand-design — Genesis.Brand & Design, as a page of its own.
- *
- * The homepage section is the showcase; the copy, schema and links around it
- * are what let this URL rank. See lib/services and ServicePageView.
+ * /brand-design — Genesis Brand & Design, as the vertical-pages brief lays it out. Metadata and
+ * schema still come from lib/services, which is what this URL ranks on.
  */
 const page = servicePage("brand-design");
 
@@ -20,5 +17,5 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function BrandDesignPage() {
-  return <ServicePageView page={page} showcase={<BrandingDesign />} />;
+  return <BrandDesignPageView />;
 }

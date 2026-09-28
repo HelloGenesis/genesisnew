@@ -385,8 +385,15 @@ export const aiContent = {
     the method and the beneficiary in five words — made with AI, made for
     you — and the second half is the half that was missing.
   */
-  heading: "Created with AI.",
-  headingAccent: "Built for Your Brand.",
+  /*
+    THE PRODUCT'S PROMISE, NOT THE CATEGORY'S. "Created with AI. Built for
+    Your Brand." described AI Lab as a capability; the vertical-pages brief
+    sells it as the AI Content Studio, a monthly engine, and Genesis asked for
+    the homepage to say what the site now sells. The heading is the brief's
+    own line for that product; the plan bar at the foot names it and prices it.
+  */
+  heading: "Build once.",
+  headingAccent: "Publish continuously.",
   /*
     WHAT THE DIVISION ACTUALLY BUILDS, in one sentence, because the heading
     above is a claim and a claim over a wall of avatars needs its scope said
@@ -403,6 +410,8 @@ export const aiContent = {
   */
   body:
     "See what we've created using AI, from videos and visuals to branded content. We can build the same for your brand and automate the process from ideas and scripts to ready-to-post content.",
+  /* The same, for a phone (Genesis, 28 Sep 2026: "shorten the copy a bit … just for phone"). */
+  bodyPhone: "Videos, visuals and branded content made with AI — built for your brand, from idea to ready-to-post.",
   /*
    * THE COPY ABOVE THE ROSTER, and all three lines of it are Genesis's own.
    *
@@ -448,6 +457,8 @@ export const aiContent = {
     heading: "Build Your Own",
     headingAccent: "AI Avatar.",
     lead: "We create realistic AI avatars for founders, creators, artists and brands. Use your avatar to create consistent content, showcase your products or services, and reduce the need for repeated shoots. We can automate the entire content workflow too.",
+    /* The same, for a phone. */
+    leadPhone: "Realistic AI avatars for founders, creators and brands — consistent content, without repeated shoots.",
     /*
      * The caption to the roster, printed UNDER the faces. "One Setup.
      * Real-Time. Every Time" used to head it and Genesis has taken it off.
@@ -623,8 +634,9 @@ export const studios = {
     final cut." — so the section takes it and the pipeline board below loses
     its own, becoming what it always was: the picture under the claim.
   */
+  /* "Publish", not "final cut" — the vertical-pages brief's line for Studios, which the plan bar sells. */
   heading: "From brief to",
-  headingAccent: "final cut.",
+  headingAccent: "publish.",
   body:
     "Strategy, scripting, production and post, one connected studio system built for every screen.",
   /*

@@ -427,7 +427,18 @@ export const servicePages: ServicePage[] = [
           "Yes. Motion design, campaign toolkits and social-first design are part of the service, built to be used by your team as well as by our Studios and Influence teams.",
       },
     ],
-    proof: ["tripgate", "income-protect-cover", "eat-move-heal", "abhi-ka-star"],
+    /*
+      BRAND & DESIGN AND MOTION GRAPHICS ONLY (Genesis, 28 Sep 2026): the two
+      identity studies, then the animated pieces. The TripGate travel film was
+      here and is video production, so it went.
+    */
+    proof: [
+      "activ-health-app-logo",
+      "tripgatee-brand-identity",
+      "income-protect-cover",
+      "eat-move-heal",
+      "abhi-ka-star",
+    ],
   },
 ];
 

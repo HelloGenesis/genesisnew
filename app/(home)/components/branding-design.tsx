@@ -6,20 +6,14 @@ import Link from "next/link";
 
 import { FolderPanel } from "@/components/genesis/folder-panel";
 import { SwipeHintRail } from "@/components/genesis/swipe-hint-rail";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { branding, services } from "@/lib/home-content";
 import { ctaWhatsappLink, isContactHref } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
+import { ScaledStage } from "./offer/scaled-stage";
+import { PlanBar } from "./plan-bar";
 import { SectionShell } from "./section-shell";
 
-/*
-  ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller: the same
-  treatment Genesis asked for on Influence ("buttons on same line - reduce
-  size"), for the same pair of buttons here. Larger screens are untouched.
-*/
-const MOBILE_CTA =
-  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
 
 /*
   THE REFERENCE'S TEXT COLOURS, and only its text ("i meant text ke
@@ -135,13 +129,6 @@ function identityRoute(assets: string): { phases: string[]; final?: string } {
  * reference's soft 3D shape ("background logo shd be blurred").
  */
 export function BrandingDesign() {
-  const tripgate = branding.work.find((w) => "palette" in w);
-  const palette = tripgate && "palette" in tripgate ? tripgate.palette : [];
-  const activ = branding.work.find((w) => "assets" in w);
-  const route =
-    activ && "assets" in activ ? identityRoute(activ.assets) : { phases: [] };
-  const sketches = route.phases.slice(0, 4);
-
   return (
     <SectionShell
       id="brand-design"
@@ -193,126 +180,7 @@ export function BrandingDesign() {
       <SwipeHintRail className="no-scrollbar -mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 sm:gap-5 xl:mx-[-2.5rem] xl:grid xl:snap-none xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8 xl:overflow-visible xl:px-0">
         {/* ─── The work ─────────────────────────────────────────────── */}
         <Reveal className="relative z-10 order-3 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-1 xl:w-auto xl:max-w-none">
-          <FolderPanel tab={0.4} dots contentClassName="p-3 sm:p-5">
-            <div className="flex items-center gap-2.5 pr-12">
-              <Image
-                src="/brand/genesis-n.png"
-                alt=""
-                width={306}
-                height={500}
-                className="h-6 w-auto"
-              />
-              <p className="leading-tight">
-                <span className="block text-small font-medium text-scene">Genesis</span>
-                <span className="block text-[0.6875rem] text-scene-dim">Brand &amp; Design</span>
-              </p>
-            </div>
-
-            <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-2 sm:mt-5 sm:pt-3">
-              <span className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
-                Case studies
-              </span>
-              <span className="flex items-center gap-2 text-[0.5rem] uppercase tracking-[0.2em] text-scene-dim/70">
-                <span aria-hidden className="h-px w-6 bg-white/20" />
-                Brands · People · Impact
-              </span>
-            </div>
-
-            <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-2">
-              {route.final && (
-                <Tile
-                  n={1}
-                  label={["Activ Health", "Logo redesign"]}
-                  light
-                  className="row-span-2"
-                >
-                  <Image
-                    src={route.final}
-                    alt="Activ Health, the finished logo"
-                    fill
-                    unoptimized
-                    className="object-contain p-4"
-                  />
-                </Tile>
-              )}
-              {sketches.map((src, i) => (
-                <Tile
-                  key={src}
-                  n={i + 2}
-                  label={[`Sketch ${i + 1}`]}
-                  light
-                  className="aspect-[4/3]"
-                >
-                  <Image
-                    src={src}
-                    alt={`Activ Health logo, sketch ${i + 1} of ${sketches.length}`}
-                    fill
-                    unoptimized
-                    className="object-contain p-2.5"
-                  />
-                </Tile>
-              ))}
-
-              {palette.length > 0 && (
-                <Tile
-                  n={sketches.length + 2}
-                  label={["Tripgate", "Brand guidelines"]}
-                  className="col-span-2"
-                >
-                  <div className="mx-2.5 mt-6 mb-7">
-                    <div className="flex h-7 overflow-hidden rounded-md border border-white/15">
-                      {palette.map((hex) => (
-                        <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
-                      ))}
-                    </div>
-                    <div className="mt-1 flex">
-                      {palette.map((hex) => (
-                        <span
-                          key={hex}
-                          className="flex-1 text-center text-[0.4375rem] uppercase tracking-wide text-scene-dim"
-                        >
-                          {hex}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </Tile>
-              )}
-
-              <div className="relative flex flex-col justify-between rounded-[10px] border border-white/10 bg-white/[0.03] p-2.5">
-                <span className="text-[0.5rem] tracking-[0.2em] text-scene-dim">
-                  {String(sketches.length + 3).padStart(2, "0")}
-                </span>
-                <p className="mt-3 text-[0.8125rem] font-light italic leading-snug text-scene">
-                  Strategic design
-                  <br />
-                  for what&rsquo;s next.
-                </p>
-                <ArrowCircle
-                  href="/#contact"
-                  quickContact="brand-design:strategic-design"
-                  label="Talk to us about brand strategy"
-                  className="mt-2 size-7 self-end"
-                />
-              </div>
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 sm:mt-4">
-              {[
-                ["Strategy", "driven design"],
-                ["Brands that", "make an impact"],
-              ].map(([a, b]) => (
-                <span key={a} className="flex items-center gap-2">
-                  <Bloom />
-                  <span className="text-[0.5rem] uppercase leading-snug tracking-[0.2em] text-scene-dim">
-                    {a}
-                    <br />
-                    {b}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </FolderPanel>
+          <WorkPanel />
 
           <Pointer className="pointer-events-none absolute -right-14 -bottom-[3.75rem] z-20 hidden w-28 xl:block" />
         </Reveal>
@@ -322,142 +190,310 @@ export function BrandingDesign() {
           delay={0.06}
           className="relative isolate order-2 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-2 xl:w-auto xl:max-w-none"
         >
-          {/* The Genesis N behind the glass, showing above and below the
-              folder, where the reference has its shape. */}
-          <div
-            aria-hidden
-            /*
-              SMALLER AND FAINTER ON A PHONE. At 132% the N stood half a card
-              proud of the folder top and bottom; on a narrow screen that
-              stops reading as a mark behind the headline and becomes a
-              yellow slab leaking out from under it. Full size from sm, where
-              there is room for it to be what it is.
-            */
-            className="pointer-events-none absolute top-1/2 left-1/2 -z-10 aspect-[798/1167] h-[106%] -translate-x-[42%] -translate-y-1/2 opacity-65 sm:h-[132%] sm:opacity-100"
-          >
-            {/*
-              THE FLUFFY N, Genesis's soft 3D render of the mark, in place of
-              the flat yellow one. It is already soft-edged, so the blur that
-              the flat mark needed to sit behind the glass is only a touch.
-            */}
-            <Image
-              src="/brand/genesis-n-fluffy.png"
-              alt=""
-              fill
-              sizes="420px"
-              className="object-contain blur-[1.5px]"
-            />
-          </div>
+          <ClaimMark />
 
-          <FolderPanel
-            tab={0.5}
-            dots
-            /*
-              A PHONE DOES NOT NEED 20rem OF MINIMUM. The headline sets its
-              own height in four lines; the floor was there to give the
-              folder presence beside two others, which only happens from xl.
-            */
-            contentClassName="flex flex-col justify-center px-6 pt-8 pb-14 sm:min-h-[min(16rem,26vh)] sm:px-10 sm:pb-16 xl:min-h-[min(26rem,34vh)]"
-          >
-            {/*
-              THE CLAIM, NOT THE CAPABILITY LIST.
-
-              This folder read "Branding Positioning, Design & Collaterals"
-              set across four lines — the division's own tagline, at 46px, on
-              the biggest surface in the section. Two problems with that, and
-              Genesis's final copy fixes both. It repeated the line printed
-              under the lockup at the top of the section (which is why the
-              lockup's tagline had to be hidden to stop the stutter), and it
-              is a list of services where the largest type on a division's
-              block should be the reason to buy them.
-
-              "Build a brand people remember." is theirs. The ramp moves to
-              the half that carries the idea.
-            */}
-            <h3 className="text-[2rem] leading-[1.04] font-normal tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
-              Build a
-              <br />
-              brand
-              <br />
-              {/* `clone` so each line carries the whole ramp, orange at its
-                  start and violet at its end, as both do in the reference. */}
-              <span
-                className="bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
-                style={{ backgroundImage: HEADLINE_RAMP }}
-              >
-                people
-                <br />
-                remember.
-              </span>
-            </h3>
-            <ArrowCircle
-              href="/#contact"
-              quickContact="brand-design:build-a-brand"
-              label="Build a brand with Genesis"
-              className="absolute right-6 bottom-6 size-12 sm:right-8 sm:bottom-8"
-            />
-          </FolderPanel>
+          <ClaimPanel />
         </Reveal>
 
         {/* ─── What we make ─────────────────────────────────────────── */}
         <Reveal delay={0.1} className="order-1 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-3 xl:w-auto xl:max-w-none">
-          <FolderPanel tab={0} dots contentClassName="px-3 pt-9 pb-3 sm:pt-11 sm:px-4 sm:pb-4">
-            <FolderPanel tab={0.34} tabHeight={20} radius={16} contentClassName="px-4 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
-              <p className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
-                What we make
-              </p>
-              <ul className="mt-3">
-                {branding.capabilities.map((capability, index) => (
-                  <li
-                    key={capability}
-                    className="flex items-baseline gap-5 border-b border-white/10 py-1.5 last:border-0 sm:py-2.5"
-                  >
-                    <span className="w-4 shrink-0 text-[0.625rem] tracking-[0.15em]" style={{ color: ORANGE }}>
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="text-body leading-snug text-scene">{capability}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-1 flex justify-end sm:mt-2">
-                <ArrowCircle
-                  href="/#contact"
-                  quickContact="brand-design:what-we-make"
-                  label="Start a brand project"
-                  className="size-11"
-                />
-              </div>
-            </FolderPanel>
-          </FolderPanel>
+          <MakePanel />
         </Reveal>
 
       </SwipeHintRail>
 
-      <Reveal
-        delay={0.15}
-        /*
-          MORE AIR ABOVE THE BUTTONS FROM xl, where the 3D cursor hangs off
-          the work folder's corner: at mt-4 its tip sat on "Build a brand"
-          ("thoda sa distance banado").
-        */
-        className="mt-4 flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3 xl:mt-20"
-      >
-        <GlassButton
-          href="/#contact"
-          quickContact="brand-design:build-a-brand"
-          variant="brand"
-          arrow
-          className={MOBILE_CTA}
-        >
-          Build a brand
-        </GlassButton>
-        <GlassButton href="/#library" variant="glass" arrow className={MOBILE_CTA}>
-          View branding work
-        </GlassButton>
-      </Reveal>
+      <PlanBar vertical="brand-design" className="xl:mt-20" />
     </SectionShell>
   );
 }
+
+/*
+  THE THREE FOLDERS, AS PIECES. The homepage section lays them out as a row
+  (a swipe rail below xl); the Brand & Design page's opening stacks them
+  beside its copy (BrandingStack, below). One set of folders, two
+  arrangements, so the page and the section cannot drift apart.
+*/
+
+/** The work: Activ Health's route from sketch to mark, Tripgate's palette. */
+function WorkPanel() {
+  const tripgate = branding.work.find((w) => "palette" in w);
+  const palette = tripgate && "palette" in tripgate ? tripgate.palette : [];
+  const activ = branding.work.find((w) => "assets" in w);
+  const route =
+    activ && "assets" in activ ? identityRoute(activ.assets) : { phases: [] };
+  const sketches = route.phases.slice(0, 4);
+
+  return (
+    <FolderPanel tab={0.4} dots contentClassName="p-3 sm:p-5">
+          <div className="flex items-center gap-2.5 pr-12">
+            <Image
+              src="/brand/genesis-n.png"
+              alt=""
+              width={306}
+              height={500}
+              className="h-6 w-auto"
+            />
+            <p className="leading-tight">
+              <span className="block text-small font-medium text-scene">Genesis</span>
+              <span className="block text-[0.6875rem] text-scene-dim">Brand &amp; Design</span>
+            </p>
+          </div>
+    
+          <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-2 sm:mt-5 sm:pt-3">
+            <span className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
+              Case studies
+            </span>
+            <span className="flex items-center gap-2 text-[0.5rem] uppercase tracking-[0.2em] text-scene-dim/70">
+              <span aria-hidden className="h-px w-6 bg-white/20" />
+              Brands · People · Impact
+            </span>
+          </div>
+    
+          <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-2">
+            {route.final && (
+              <Tile
+                n={1}
+                label={["Activ Health", "Logo redesign"]}
+                light
+                className="row-span-2"
+              >
+                <Image
+                  src={route.final}
+                  alt="Activ Health, the finished logo"
+                  fill
+                  unoptimized
+                  className="object-contain p-4"
+                />
+              </Tile>
+            )}
+            {sketches.map((src, i) => (
+              <Tile
+                key={src}
+                n={i + 2}
+                label={[`Sketch ${i + 1}`]}
+                light
+                className="aspect-[4/3]"
+              >
+                <Image
+                  src={src}
+                  alt={`Activ Health logo, sketch ${i + 1} of ${sketches.length}`}
+                  fill
+                  unoptimized
+                  className="object-contain p-2.5"
+                />
+              </Tile>
+            ))}
+    
+            {palette.length > 0 && (
+              <Tile
+                n={sketches.length + 2}
+                label={["Tripgate", "Brand guidelines"]}
+                className="col-span-2"
+              >
+                <div className="mx-2.5 mt-6 mb-7">
+                  <div className="flex h-7 overflow-hidden rounded-md border border-white/15">
+                    {palette.map((hex) => (
+                      <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
+                    ))}
+                  </div>
+                  <div className="mt-1 flex">
+                    {palette.map((hex) => (
+                      <span
+                        key={hex}
+                        className="flex-1 text-center text-[0.4375rem] uppercase tracking-wide text-scene-dim"
+                      >
+                        {hex}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </Tile>
+            )}
+    
+            <div className="relative flex flex-col justify-between rounded-[10px] border border-white/10 bg-white/[0.03] p-2.5">
+              <span className="text-[0.5rem] tracking-[0.2em] text-scene-dim">
+                {String(sketches.length + 3).padStart(2, "0")}
+              </span>
+              <p className="mt-3 text-[0.8125rem] font-light italic leading-snug text-scene">
+                Strategic design
+                <br />
+                for what&rsquo;s next.
+              </p>
+              <ArrowCircle
+                href="/#contact"
+                quickContact="brand-design:strategic-design"
+                label="Talk to us about brand strategy"
+                className="mt-2 size-10 self-end"
+              />
+            </div>
+          </div>
+    
+          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 sm:mt-4">
+            {[
+              ["Strategy", "driven design"],
+              ["Brands that", "make an impact"],
+            ].map(([a, b]) => (
+              <span key={a} className="flex items-center gap-2">
+                <Bloom />
+                <span className="text-[0.5rem] uppercase leading-snug tracking-[0.2em] text-scene-dim">
+                  {a}
+                  <br />
+                  {b}
+                </span>
+              </span>
+            ))}
+          </div>
+        </FolderPanel>
+  );
+}
+
+/** The Genesis N behind the claim folder, showing above and below it. */
+function ClaimMark() {
+  return (
+    <>
+      {/* The Genesis N behind the glass, showing above and below the
+          folder, where the reference has its shape. */}
+      <div
+        aria-hidden
+        /*
+          SMALLER AND FAINTER ON A PHONE. At 132% the N stood half a card
+          proud of the folder top and bottom; on a narrow screen that
+          stops reading as a mark behind the headline and becomes a
+          yellow slab leaking out from under it. Full size from sm, where
+          there is room for it to be what it is.
+        */
+        className="pointer-events-none absolute top-1/2 left-1/2 -z-10 aspect-[798/1167] h-[106%] -translate-x-[42%] -translate-y-1/2 opacity-65 sm:h-[132%] sm:opacity-100"
+      >
+        {/*
+          THE FLUFFY N, Genesis's soft 3D render of the mark, in place of
+          the flat yellow one. It is already soft-edged, so the blur that
+          the flat mark needed to sit behind the glass is only a touch.
+        */}
+        <Image
+          src="/brand/genesis-n-fluffy.png"
+          alt=""
+          fill
+          sizes="420px"
+          className="object-contain blur-[1.5px]"
+        />
+      </div>
+    </>
+  );
+}
+
+/** "Build a brand people remember." */
+function ClaimPanel() {
+  return (
+    <FolderPanel
+      tab={0.5}
+      dots
+      /*
+        A PHONE DOES NOT NEED 20rem OF MINIMUM. The headline sets its
+        own height in four lines; the floor was there to give the
+        folder presence beside two others, which only happens from xl.
+      */
+      contentClassName="flex flex-col justify-center px-6 pt-8 pb-14 sm:min-h-[min(16rem,26vh)] sm:px-10 sm:pb-16 xl:min-h-[min(26rem,34vh)]"
+    >
+      {/*
+        THE CLAIM, NOT THE CAPABILITY LIST.
+
+        This folder read "Branding Positioning, Design & Collaterals"
+        set across four lines — the division's own tagline, at 46px, on
+        the biggest surface in the section. Two problems with that, and
+        Genesis's final copy fixes both. It repeated the line printed
+        under the lockup at the top of the section (which is why the
+        lockup's tagline had to be hidden to stop the stutter), and it
+        is a list of services where the largest type on a division's
+        block should be the reason to buy them.
+
+        "Build a brand people remember." is theirs. The ramp moves to
+        the half that carries the idea.
+      */}
+      <h3 className="text-[2rem] leading-[1.04] font-normal tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
+        Build a
+        <br />
+        brand
+        <br />
+        {/* `clone` so each line carries the whole ramp, orange at its
+            start and violet at its end, as both do in the reference. */}
+        <span
+          className="on-dark bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
+          style={{ backgroundImage: HEADLINE_RAMP }}
+        >
+          people
+          <br />
+          remember.
+        </span>
+      </h3>
+      <ArrowCircle
+        href="/#contact"
+        quickContact="brand-design:build-a-brand"
+        label="Build a brand with Genesis"
+        className="absolute right-6 bottom-6 size-12 sm:right-8 sm:bottom-8"
+      />
+    </FolderPanel>
+  );
+}
+
+/** What we make: the six capabilities. */
+function MakePanel() {
+  return (
+    <FolderPanel tab={0} dots contentClassName="px-3 pt-9 pb-3 sm:pt-11 sm:px-4 sm:pb-4">
+      <FolderPanel tab={0.34} tabHeight={20} radius={16} contentClassName="px-4 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
+        <p className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
+          What we make
+        </p>
+        <ul className="mt-3">
+          {branding.capabilities.map((capability, index) => (
+            <li
+              key={capability}
+              className="flex items-baseline gap-5 border-b border-white/10 py-1.5 last:border-0 sm:py-2.5"
+            >
+              <span className="w-4 shrink-0 text-[0.625rem] tracking-[0.15em]" style={{ color: ORANGE }}>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="text-body leading-snug text-scene">{capability}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-1 flex justify-end sm:mt-2">
+          <ArrowCircle
+            href="/#contact"
+            quickContact="brand-design:what-we-make"
+            label="Start a brand project"
+            className="size-11"
+          />
+        </div>
+      </FolderPanel>
+    </FolderPanel>
+  );
+}
+
+/**
+ * THE BRAND & DESIGN PAGE'S OPENING VISUAL — the homepage section's three
+ * folders, stacked for a half-width column rather than set in a row: the
+ * claim in front, the work behind it on the left, "What we make" behind it on
+ * the right. Laid out once at a fixed size and scaled to the column, so it is
+ * the same picture at every width.
+ */
+export function BrandingStack() {
+  return (
+    <ScaledStage width={940} height={820}>
+      <div className="absolute left-0 top-[60px] w-[400px] -rotate-3">
+        <WorkPanel />
+      </div>
+      <div className="absolute right-0 top-0 w-[360px] rotate-3">
+        <MakePanel />
+      </div>
+      {/* Low enough to leave the whole "What we make" list readable above it. */}
+      <div className="absolute left-[240px] top-[420px] isolate z-10 w-[420px]">
+        <ClaimMark />
+        <ClaimPanel />
+      </div>
+    </ScaledStage>
+  );
+}
+
 
 /** One case-study tile: a number at the top, a caption at the bottom. */
 function Tile({

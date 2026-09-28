@@ -3,9 +3,10 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-import { sectionForPage, isContactHref } from "@/lib/site-config";
+import { isContactHref } from "@/lib/site-config";
 
 /**
  * Lenis smooth scrolling, wired directly into GSAP.
@@ -90,6 +91,29 @@ function installAnchorScrolling(lenis: Lenis | null): () => void {
 
     const href = anchor.getAttribute("href");
     if (!href) return;
+    /*
+      A LINK TO A SECTION OF THE PAGE YOU ARE ON — "/pricing#one-time" from
+      the nav while on /pricing. The route does not change, so nothing else
+      would scroll for it; it is an in-page jump like "#one-time".
+    */
+    const here = window.location.pathname;
+    if (here !== "/" && href.startsWith(`${here}#`)) {
+      const sameTarget = resolve(href.slice(here.length));
+      if (sameTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        go(sameTarget, true);
+        window.history.pushState(null, "", href);
+        return;
+      }
+    }
+    /*
+      A LINK THAT MUST OPEN ITS PAGE. The Services menu names a division's
+      services and Genesis wants each to open the division's own page — not to
+      scroll the homepage to that division's section, which is what the
+      division URLs below are turned into when clicked on the landing page.
+    */
+    if (anchor.hasAttribute("data-page-link")) return;
     /* Nor is any link to the enquiry form: every one of those opens
        WhatsApp now. See isContactHref. */
     if (isContactHref(href)) return;
@@ -100,11 +124,13 @@ function installAnchorScrolling(lenis: Lenis | null): () => void {
     if (href.startsWith("#")) hash = href;
     else if (href.startsWith("/#") && onHome) hash = href.slice(1);
     /*
-      A DIVISION PAGE, CLICKED FROM THE HOMEPAGE, scrolls to its section.
-      The link is the real URL so a crawler can find the page; the reader on
-      the landing page gets the scroll they always had. See divisionPages.
+      A DIVISION PAGE ALWAYS OPENS ITS PAGE. Division links clicked on the
+      homepage used to scroll to that division's section instead; Genesis
+      (28 Sep 2026): "for each vertical, wherever clicked, it should go on
+      their dedicated page". So the Brain, the footer and the menu all go to
+      /ai-content-automation, /content-production, /brand-design and
+      /influencer-marketing like any other link.
     */
-    else if (onHome && sectionForPage[href]) hash = `#${sectionForPage[href]}`;
     else return;
 
     const target = resolve(hash);
@@ -169,7 +195,53 @@ export function getLenis(): Lenis | null {
   return instance;
 }
 
+/**
+ * LANDING ON A SECTION AFTER A PAGE CHANGE — /pricing#one-time from the nav.
+ *
+ * Sections below the fold are laid out at an estimated height until they
+ * render (content-visibility), and images and fonts arrive after the first
+ * frame, so a single jump measured a page that then changed shape: the nav's
+ * "One-time Projects" landed on the footer. This re-aligns to the hash a few
+ * times over the first two seconds after every route change — a full load or
+ * a client-side one — and stops the moment the reader scrolls themselves.
+ */
+function useSettleOnHash() {
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!window.location.hash) return;
+    let moved = false;
+    const stop = () => {
+      moved = true;
+    };
+    window.addEventListener("wheel", stop, { passive: true });
+    window.addEventListener("touchstart", stop, { passive: true });
+    window.addEventListener("keydown", stop);
+    const align = () => {
+      if (moved) return;
+      let target: Element | null = null;
+      try {
+        target = document.querySelector(window.location.hash);
+      } catch {
+        return;
+      }
+      if (!target) return;
+      const top = target.getBoundingClientRect().top + window.scrollY - NAV_OFFSET;
+      const lenis = getLenis();
+      if (lenis) lenis.scrollTo(top, { immediate: true, force: true });
+      else window.scrollTo({ top, behavior: "auto" });
+    };
+    const timers = [60, 300, 800, 1500, 2300].map((delay) => window.setTimeout(align, delay));
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("touchstart", stop);
+      window.removeEventListener("keydown", stop);
+    };
+  }, [pathname]);
+}
+
 export function SmoothScroll() {
+  useSettleOnHash();
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 

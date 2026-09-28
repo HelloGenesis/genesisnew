@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 
 import { pageMetadata } from "@/lib/seo";
 import { servicePage } from "@/lib/services";
-import { AiContent } from "../components/ai-content";
-import { ServicePageView } from "../components/service-page";
+import { AiLabsPageView } from "../components/verticals/ai-labs-page";
 
 /**
- * /ai-content-automation — Genesis.AI Lab, as a page of its own.
- *
- * The homepage section is the showcase; the copy, schema and links around it
- * are what let this URL rank. See lib/services and ServicePageView.
+ * /ai-content-automation — Genesis AI Labs, as the vertical-pages brief lays it out. Metadata and
+ * schema still come from lib/services, which is what this URL ranks on.
  */
 const page = servicePage("ai-content-automation");
 
@@ -20,5 +17,5 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function AiContentAutomationPage() {
-  return <ServicePageView page={page} showcase={<AiContent />} />;
+  return <AiLabsPageView />;
 }

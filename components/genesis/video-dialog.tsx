@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { clipRatio } from "@/lib/clip-shape";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
@@ -30,10 +32,13 @@ export function VideoDialog({
   video,
   onClose,
   pager,
+  more,
 }: {
   video: OpenVideo | null;
   onClose: () => void;
   pager?: OverlayPager;
+  /** Anything to show under the film — related work, say. */
+  more?: ReactNode;
 }) {
   const ratio = video ? clipRatio(video.id) : 9 / 16;
   const landscape = ratio > 1;
@@ -68,6 +73,7 @@ export function VideoDialog({
             )}
           />
           <p className="text-small text-ash">{video.label}</p>
+          {more && <div className="w-full self-stretch">{more}</div>}
         </div>
       )}
     </Overlay>

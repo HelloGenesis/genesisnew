@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { type CaseStudy, disciplines, leadClip } from "@/lib/case-studies";
 import { findCopy } from "@/lib/case-study-copy";
 import { campaignFilms, caseStudyPath } from "@/lib/case-study-pages";
@@ -24,8 +26,11 @@ export function CaseStudyDialog({
   onClose,
   pager,
   startClip,
+  more,
 }: {
   study: CaseStudy | null;
+  /** Anything to show under the study — related work, say. */
+  more?: ReactNode;
   onClose: () => void;
   pager?: OverlayPager;
   /** Open on this film of the campaign rather than its lead. */
@@ -77,6 +82,7 @@ export function CaseStudyDialog({
           }
         />
       )}
+      {study && more}
     </Overlay>
   );
 }

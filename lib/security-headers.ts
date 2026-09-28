@@ -34,6 +34,10 @@ function contentSecurityPolicy(): string {
       // everywhere else — including local dev. Allowlisted per Vercel's own
       // CSP guidance so the policy behaves identically in both.
       "https://va.vercel-scripts.com",
+      // Razorpay Checkout, for membership payments (components/genesis/cart-page),
+      // and the risk-detection script it loads itself.
+      "https://checkout.razorpay.com",
+      "https://cdn.razorpay.com",
       // Required by the dev-mode React refresh runtime only.
       ...(isDev ? ["'unsafe-eval'"] : []),
     ],
@@ -48,10 +52,10 @@ function contentSecurityPolicy(): string {
        host — so the two policies now agree instead of one being ten thousand
        times wider than the other.
     */
-    "img-src": ["'self'", "data:", "blob:", "https://i.ytimg.com"],
+    "img-src": ["'self'", "data:", "blob:", "https://i.ytimg.com", "https://cdn.razorpay.com"],
     // YouTube embeds for the journal's video-linked articles. Restricted to
     // the nocookie host, and the frame only mounts on an explicit click.
-    "frame-src": ["'self'", "https://www.youtube-nocookie.com"],
+    "frame-src": ["'self'", "https://www.youtube-nocookie.com", "https://api.razorpay.com", "https://checkout.razorpay.com"],
     "font-src": ["'self'", "data:"],
     "media-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],
@@ -68,6 +72,10 @@ function contentSecurityPolicy(): string {
       // these cover Speed Insights and the non-Vercel/dev fallback.
       "https://vitals.vercel-insights.com",
       "https://va.vercel-scripts.com",
+      // Razorpay Checkout's own calls.
+      "https://api.razorpay.com",
+      "https://lumberjack.razorpay.com",
+      "https://cdn.razorpay.com",
       // Dev server websocket for hot reload.
       ...(isDev ? ["ws:", "http://localhost:*"] : []),
     ],

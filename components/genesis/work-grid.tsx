@@ -39,10 +39,17 @@ export function WorkGrid({
   items,
   showFilters = true,
   rail = false,
+  filters: fixedFilters,
   className,
 }: {
   items: WorkItem[];
   showFilters?: boolean;
+  /**
+   * The chips to offer, when not the divisions — a page showing Brand &
+   * Design and motion graphics offers exactly those two. Each must be a value
+   * `matchesFilter` understands (a division, a format or a tag).
+   */
+  filters?: string[];
   /**
    * Two rows that slide sideways, with arrows, instead of a grid that grows
    * downward. The homepage uses it; the Portfolio page does not.
@@ -80,7 +87,7 @@ export function WorkGrid({
   const RAIL_MIN = 10;
   /* Which TILE is open over the page, by its key — one clip, not one piece. */
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const filters = useMemo(() => workFilters(items), [items]);
+  const filters = useMemo(() => fixedFilters ?? workFilters(items), [fixedFilters, items]);
   const visible = useMemo(
     () => items.filter((item) => matchesFilter(item, filter)),
     [items, filter],

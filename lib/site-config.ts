@@ -58,6 +58,10 @@ export type NavItem = {
    * if a reader clicks the trigger itself, and it is what a crawler follows.
    */
   children?: NavItem[];
+  /** A line under a link in a small dropdown (Pricing's). */
+  description?: string;
+  /** On /pricing, which side of the "how you want to work" switch the link opens. */
+  workMode?: "one-time" | "membership";
   /**
    * The individual services under a menu column. Plain strings, not links:
    * there are no per-service pages, so the column's own heading is the link
@@ -122,18 +126,36 @@ export const siteConfig = {
     NAP — name, address, phone — for the Organization schema. Written once so
     the schema and anything that prints the address later cannot disagree.
 
-    The office, as Genesis gave it. Panvel is in the Mumbai Metropolitan
-    Region, which is why the copy says Mumbai and the schema says Panvel.
-    Keep this identical to the Google Business Profile, character for
-    character.
+    The Mumbai office, as Genesis gave it (28 Sep 2026) — the one the schema
+    names. Keep this identical to the Google Business Profile, character for
+    character. Both offices are listed in `offices`, which the footer prints.
   */
   address: {
-    streetAddress: "104, Plot-122/123, Sector-10, New Panvel East" as string | undefined,
-    postalCode: "410206" as string | undefined,
-    locality: "Panvel",
+    streetAddress:
+      "91SpringBoard, Godrej & Boyce, Bus Depot Gate No 2, Plant 6, Lal Bahadur Shastri Marg, Vikhroli (W)" as
+        | string
+        | undefined,
+    postalCode: "400079" as string | undefined,
+    locality: "Mumbai",
     region: "Maharashtra",
     country: "IN",
   },
+  /** Genesis's two offices, as Genesis gave them (28 Sep 2026). */
+  offices: [
+    {
+      label: "Mumbai",
+      lines: [
+        "91SpringBoard, Godrej & Boyce",
+        "Bus Depot Gate No 2, Plant 6",
+        "Lal Bahadur Shastri Marg, Vikhroli (W)",
+        "Mumbai, Maharashtra 400079, India",
+      ],
+    },
+    {
+      label: "Navi Mumbai",
+      lines: ["004, Sankalp Siddhi", "New Panvel (E), Navi Mumbai", "Maharashtra 410206, India"],
+    },
+  ],
   /** The two accounts the footer links to. Read by SocialStars and the schema. */
   social: {
     instagram: "https://www.instagram.com/genesismedia.co/",
@@ -362,10 +384,19 @@ export const homeHref = "/#services";
   the brand's own names without costing the pages their descriptive ones.
 */
 export const divisionPages = [
-  { label: "Influencer Marketing", division: "Influence", href: "/influencer-marketing", section: "influence" },
-  { label: "Content Production", division: "Studios", href: "/content-production", section: "studios" },
-  { label: "AI Content & Automation", division: "AI Lab", href: "/ai-content-automation", section: "ai-lab" },
-  { label: "Brand & Design", division: "Brand & Design", href: "/brand-design", section: "brand-design" },
+  /*
+    ONE NAME PER VERTICAL. The labels were the service names ("Influencer
+    Marketing", "Content Production", "AI Content & Automation") while the
+    pages, tabs, pricing and brief all say Genesis Influence / Studios / AI
+    Labs / Brand & Design — four things with two names each. The labels now
+    match the pages. The URLs keep their search words on purpose: those are
+    what people type, and the page titles still carry them.
+  */
+  /* Genesis's order for the four, everywhere on the site: AI Lab, Studios, Brand & Design, Influence. */
+  { label: "Genesis AI Labs", division: "AI Labs", href: "/ai-content-automation", section: "ai-lab" },
+  { label: "Genesis Studios", division: "Studios", href: "/content-production", section: "studios" },
+  { label: "Genesis Brand & Design", division: "Brand & Design", href: "/brand-design", section: "brand-design" },
+  { label: "Genesis Influence", division: "Influence", href: "/influencer-marketing", section: "influence" },
 ] as const;
 
 /** The homepage section a division page stands for, keyed by its path. */
@@ -492,14 +523,34 @@ export const navItems: NavItem[] = [
   // The page, not the homepage rail: Genesis asked the bar to open it.
   { label: "Case Studies", href: "/case-studies" },
   /*
-    THE TWO FORMS, ON THE BAR. Both pages existed and neither was reachable
-    from the nav — the only routes to them were a button inside a section you
-    had to scroll to first, which for a creator or an applicant who arrived
-    looking for exactly this is not a route at all. Genesis asked for them up
-    here by name.
+    PRICING, AS A SMALL MENU (Genesis, 29 Sep 2026): the two ways to buy —
+    one-time projects and memberships — each opening its own part of
+    /pricing. The trigger still carries /pricing for crawlers.
   */
-  { label: "I'm a Creator", href: "/creator" },
-  { label: "Career", href: "/careers" },
+  {
+    label: "Pricing",
+    href: "/pricing",
+    children: [
+      {
+        label: "One-time Projects",
+        href: "/pricing#one-time",
+        description: "Fifteen standalone products, bought once.",
+      },
+      {
+        label: "Explore Memberships",
+        href: "/pricing#plans",
+        description: "Monthly plans for AI, Studios and Brand & Design.",
+        workMode: "membership",
+      },
+    ],
+  },
+  /*
+    "I'M A CREATOR" AND "CAREER" MOVED TO THE FOOTER. Both were put on the
+    bar at Genesis's request, but a buyer scanning it met two links that are
+    not for them before reaching Contact. The bar now carries only the
+    buying path — Services, Case Studies, Pricing, Contact — and both forms
+    stay one click away in the footer's General column.
+  */
   contactItem("Contact"),
 ];
 
@@ -571,6 +622,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
       */
       { label: "Work", href: "/#library" },
       { label: "Case Studies", href: "/case-studies" },
+      { label: "Pricing", href: "/pricing" },
       /*
         THE DIVISIONS BY THEIR OWN NAMES — Genesis's footer structure lists
         "Influence / Studios / AI Lab / Brand & Design", not the page titles.

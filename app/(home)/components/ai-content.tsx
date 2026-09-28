@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 
-import { Sparkles } from "lucide-react";
 
 import { AutomationSources } from "@/components/genesis/automation-diagram";
-import { AutomationCtas } from "@/components/genesis/automation-ctas";
 import { AvatarFan } from "@/components/genesis/avatar-fan";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { pagerFor } from "@/components/genesis/overlay";
 import { WarpRail, type WarpItem } from "@/components/genesis/warp-rail";
 import { VideoDialog, type OpenVideo } from "@/components/genesis/video-dialog";
@@ -21,16 +18,16 @@ import {
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
-import { siteConfig, whatsappLink } from "@/lib/site-config";
+import { GlassButton } from "@/components/genesis/glass-button";
+import { DivisionCtas } from "./division-ctas";
+import { PlanBar } from "./plan-bar";
+import { inr } from "@/lib/money";
+import { productsFor } from "@/lib/products";
+
+/* The avatar product — the natural next step under the avatar roster (lib/products). */
+const avatarProduct = productsFor("ai-labs")[0];
 import { SectionShell } from "./section-shell";
 
-/*
-  ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller: the same
-  treatment Genesis asked for on Influence ("buttons on same line - reduce
-  size"), for the same pair of buttons here. Larger screens are untouched.
-*/
-const MOBILE_CTA =
-  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
 
 /**
  * Section — AI-generated content.
@@ -108,14 +105,6 @@ export function AiContent() {
     Every card opens something.
   */
   const [video, setVideo] = useState<OpenVideo | null>(null);
-  /*
-    Undefined when there is no number in site-config, exactly as the floating
-    button handles it. The button falls back to the enquiry form rather than
-    disappearing: "Create Your AI Avatar" is the section's primary action, and
-    a section whose main CTA vanishes because a phone number is unset is worse
-    than one that routes the same intent through the form.
-  */
-  const avatarChat = whatsappLink(siteConfig.avatarWhatsappMessage);
 
   return (
     <>
@@ -143,6 +132,7 @@ export function AiContent() {
       heading={aiContent.heading}
       headingAccent={aiContent.headingAccent}
       body={aiContent.body}
+      bodyPhone={aiContent.bodyPhone}
       /*
         TWO LINES ON A DESKTOP — "isko bhi two lines me karo". At the shell's
         default 42rem it ran to three. Measured, it sets in two from 820px;
@@ -209,35 +199,28 @@ export function AiContent() {
         wide display, and the frame is tall enough to fit the card's 3:4 plus
         the room the turned ones need as they scale back.
       */}
+      {/*
+        THE WAYS ON, BETWEEN THE COPY AND THE WORK (Genesis, 29 Sep 2026):
+        View Page, Explore Pricing and Case Studies — see DivisionCtas.
+      */}
+      <DivisionCtas vertical="ai-labs" align="center" className="mt-6 sm:mt-8" />
+
       <Reveal variant="scene" className="relative left-1/2 mt-10 w-screen -translate-x-1/2">
-        <div
-          style={
-            {
-              /*
-                BIGGER AND TALLER THAN THE FIRST PASS. The cards were 15vw at
-                3:4 and Genesis's read was that the whole thing looked mid
-                next to the reference — half of that was the projection (see
-                WarpRail) and half was simply scale. A 5:8 card at this width
-                is the proportion the reference uses, and the frame is tall
-                enough to hold it with the turned ones tucked behind.
-              */
-              /*
-                THE CARD IS THE BIGGEST IT HAS BEEN, and it can be now that
-                nothing comes forward: the middle card renders at exactly this
-                width and every other one is smaller, so the number is a
-                ceiling rather than a starting point. The cylinder versions
-                had to be sized small because their edge panels were
-                magnified past it.
-              */
-              "--warp-card": "clamp(8.5rem, 15vw, 14rem)",
-              /*
-                And the frame only has to hold the largest card plus a little
-                air, for the same reason.
-              */
-              "--warp-h": "clamp(14rem, 24vw, 22rem)",
-            } as CSSProperties
-          }
-        >
+        {/*
+          BIGGER AND TALLER THAN THE FIRST PASS. The cards were 15vw at 3:4
+          and Genesis's read was that the whole thing looked mid next to the
+          reference — half of that was the projection (see WarpRail) and half
+          was simply scale. A 5:8 card is the proportion the reference uses.
+          The middle card renders at exactly --warp-card and every other one
+          is smaller, so the number is a ceiling rather than a starting point;
+          --warp-h holds the largest card plus a little air.
+
+          LARGER STILL ON A PHONE (Genesis, 28 Sep 2026: "make this card a
+          little larger … just for phone"): 11.5rem where the clamp's floor
+          gave 8.5rem, about 35% bigger, with the frame grown to match. From
+          sm up the viewport-relative sizes are unchanged.
+        */}
+        <div className="[--warp-card:11.5rem] [--warp-h:19.5rem] sm:[--warp-card:clamp(8.5rem,15vw,14rem)] sm:[--warp-h:clamp(14rem,24vw,22rem)]">
           {/*
             EVERY CARD OPENS SOMETHING, which is the fix Genesis reported
             twice — "these videos are still not interactive".
@@ -274,6 +257,30 @@ export function AiContent() {
                 : () => setVideo({ id: card.clipId, label: card.label }),
             }))}
           />
+        </div>
+      </Reveal>
+
+      {/*
+        THE AI LAB DIAGRAM, ABOVE THE AVATARS (Genesis, 29 Sep 2026: "remove
+        this copy and just keep the AI Lab whole element and move it above
+        Build Your Own AI Avatar"). It was its own section, headed "Automate
+        the work behind your business" with a paragraph under it; the heading
+        and paragraph are gone, and the picture, its closing line and its two
+        buttons now sit between the work and the avatars.
+      */}
+      {/*
+        JUST THE ELEMENT (Genesis, 29 Sep 2026: "remove this black background
+        and the buttons — it's just an element to represent the AI Lab"): the
+        diagram and its line, on the section's own ground.
+      */}
+      <Reveal delay={0.06} className="mt-[var(--block-gap)]">
+        <div className="mx-auto w-full max-w-6xl text-center">
+          <figure className="mx-auto max-w-[60rem]">
+            <AutomationSources />
+          </figure>
+          <p className="mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead">
+            {aiContent.automation.kicker}
+          </p>
         </div>
       </Reveal>
 
@@ -331,7 +338,8 @@ export function AiContent() {
             its own width; only the copy widens.
           */}
           <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead lg:max-w-[60rem] lg:text-balance xl:max-w-[70rem]">
-            {aiContent.avatarsIntro.lead}
+            <span className="sm:hidden">{aiContent.avatarsIntro.leadPhone}</span>
+            <span className="hidden sm:inline">{aiContent.avatarsIntro.lead}</span>
           </p>
 
           {/*
@@ -360,6 +368,23 @@ export function AiContent() {
             {aiContent.avatarsIntro.line}
           </p>
         )}
+        {/*
+          THE WAY IN, UNDER THE AVATARS — "Build Your AI Avatar", the first of
+          Genesis's one-time AI products (28 Sep 2026): a brand not ready to
+          subscribe can have its own avatar made. It opens the product on the
+          AI Labs page, where it can be bought.
+        */}
+        <div className="mx-auto mt-6 flex max-w-fit flex-col items-center gap-3 rounded-panel border border-brand/40 bg-brand/[0.06] px-5 py-3 text-center sm:flex-row sm:gap-5 sm:rounded-full sm:py-2 sm:pl-6 sm:pr-2">
+          <p className="text-small text-ash">
+            <span className="text-bone">{avatarProduct.name}</span> · one-time{" "}
+            <span className="text-brand-ink">{inr(avatarProduct.price!)}</span>
+          </p>
+          <span data-track="home-plan:ai-labs:avatar">
+            <GlassButton href="/ai-content-automation#ai-labs-one-time" pageLink variant="brand" size="sm" arrow>
+              Buy Now
+            </GlassButton>
+          </span>
+        </div>
       </Reveal>
 
       {/*
@@ -391,120 +416,9 @@ export function AiContent() {
         outline. The diagram keeps its own generous measure so the labels and
         the node are read rather than squinted at.
       */}
-      {/*
-        THE TWO BUTTONS GENESIS SPECIFIED. "Build with AI" opened the popup
-        form; they asked for the primary action to go straight to WhatsApp
-        with a message already written — see siteConfig.avatarWhatsappMessage —
-        which
-        for an enquiry this specific is a shorter route to a human than a form
-        that has to be triaged.
-
-        The form is the fallback, not a third button: `quickContact` only
-        applies when there is no chat link to give.
-      */}
-      <Reveal delay={0.1} className="mt-[var(--block-gap)] flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
-        <GlassButton
-          href={avatarChat ?? "/#contact"}
-          quickContact={avatarChat ? undefined : "ai-labs:create-an-avatar"}
-          variant="brand"
-          icon={<Sparkles className="size-4" />}
-          arrow
-          className={MOBILE_CTA}
-        >
-          Create Your AI Avatar
-        </GlassButton>
-        {/*
-          Into the library, filtered — the same treatment Influence's second
-          button gets. It went to /our-work unfiltered, which is "view AI
-          content" landing on everything Genesis has ever made.
-        */}
-        {/*
-          A BARE "#library", NOT "/#library", and the difference is the whole
-          feature. The routed form is a client navigation to the same page:
-          the section tree re-renders, the work grid comes back with its
-          filter at its initial "All", and the chip this button just asked
-          for is thrown away before the reader arrives. A bare hash is
-          handled by SmoothScroll on capture — no navigation, so the grid
-          keeps the state it was handed.
-        */}
-        <GlassButton
-          href="#library"
-          selectsFilter="AI Lab"
-          variant="glass"
-          arrow
-          className={MOBILE_CTA}
-        >
-          Explore AI Work
-        </GlassButton>
-      </Reveal>
+      <PlanBar vertical="ai-labs" />
     </SectionShell>
 
-      {/*
-        AUTOMATION IS ITS OWN SECTION NOW, and the reason is measurement
-        rather than taste. With the roster and this in one, AI Lab stood
-        1734 points tall on a phone and 1968 on a laptop — two and a half
-        screens, against a brief of one section to a screen, and Genesis's
-        instruction was exactly that ("ek pura section ek hi page pe dikhe").
-        No content moved and nothing was cut: the two halves were always two
-        arguments, the avatars and the workflow, and they now get a screen
-        each.
-      */}
-      <SectionShell id="ai-automation" tone="brand" origin="center" intensity={0.12}>
-      {/*
-        NO TRANSITION LINE. "AI beyond content." stood here as a hand-off into
-        the automation block, on the reasoning that everything above it is
-        content a brand publishes and this is software running inside a
-        brand's operations. Genesis has taken it off.
-
-        The block does not need it any more either: the heading under it
-        already says "Automate the work behind your business", which names the
-        turn in the same breath as the offer, where the hinge was saying it
-        twice.
-      */}
-      <Reveal delay={0.06}>
-        <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-5 py-[calc(var(--section-pad)*1.6)] shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10">
-          <div className="mx-auto w-full max-w-5xl text-center">
-            <h3 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
-              {aiContent.automation.heading}
-            </h3>
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              {aiContent.automation.body}
-            </p>
-            {/*
-              THE DIAGRAM IS CAPPED NARROWER THAN THE CARD, at 40rem rather
-              than 52. An SVG scales with its width, so every rem of measure
-              costs height too — 12 of them were 100 points of section that
-              nothing was drawn in. See the note on this section's split.
-            */}
-            {/* 46rem, not 40: the board grew wider so its strands could
-                read, and capping it at the old measure would only scale the
-                whole thing down again. */}
-            <figure className="mx-auto mt-6 max-w-[46rem] sm:mt-10">
-              <AutomationSources />
-            </figure>
-
-            {/*
-              THE THREE-BEAT CLOSE, MOVED UNDER THE PICTURE.
-
-              It sat directly below the paragraph, which made the block open
-              with three pieces of prose in a row before anything was shown —
-              and put the section's most quotable line where a reader was
-              still being told what the service is. Genesis asked for it
-              between the diagram and the buttons, which is the right slot for
-              what it actually is: not an introduction but a CONCLUSION. The
-              diagram demonstrates the workflow, this says what the workflow
-              buys, and the buttons ask for the meeting.
-            */}
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead">
-              {aiContent.automation.kicker}
-            </p>
-
-            <AutomationCtas className="mt-6 sm:mt-8" />
-          </div>
-        </div>
-      </Reveal>
-
-      </SectionShell>
 
       {/*
         THE STUDY, OVER THE PAGE. The pager walks the rail's own cards in rail

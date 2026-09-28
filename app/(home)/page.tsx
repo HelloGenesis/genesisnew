@@ -6,9 +6,9 @@ import { AiContent } from "./components/ai-content";
 import { BrandingDesign } from "./components/branding-design";
 import { CaseStudies } from "./components/case-studies";
 import { ClientLogos } from "./components/client-logos";
-import { FooterCta } from "./components/footer-cta";
 import { InfluencerMarketing } from "./components/influencer-marketing";
 import { Portfolio } from "./components/portfolio";
+import { PricingStrip } from "./components/pricing-strip";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
 
@@ -122,12 +122,15 @@ export default function HomePage() {
       */}
       <ClientLogos />
 
-      {/* 05-08 — the four verticals, in the brief's order. AI Lab carries the
-          automation picture inside its own block. */}
-      <InfluencerMarketing />
-      <Studios />
+      {/* 05-08 — the four verticals, in Genesis's order: AI Lab, Studios,
+          Brand & Design, Influence. AI Lab carries the automation picture
+          inside its own block. */}
       <AiContent />
+      <Studios />
       <BrandingDesign />
+      <InfluencerMarketing />
+      {/* How Genesis charges, in one line — see PricingStrip. */}
+      <PricingStrip />
 
       {/*
         09 — THE PORTFOLIO, once every division has had its say.
@@ -139,8 +142,11 @@ export default function HomePage() {
       */}
       <Portfolio />
 
-      {/* 10 — let's build something iconic. */}
-      <FooterCta />
+      {/*
+        NO FORM ON THE HOMEPAGE (Genesis, 28 Sep 2026). The page ends on the
+        footer's booking calendar and membership card, which carries
+        id="contact", so every "contact" link still lands.
+      */}
     </main>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -8,6 +9,7 @@ import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { NeuralOrb, type OrbFocus } from "@/components/genesis/neural-orb";
 import { services } from "@/lib/home-content";
+import { verticalCards } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 
 /**
@@ -224,8 +226,20 @@ export function DivisionBoard() {
           `-translate-x-1/2` are one property, and a second element just to
           hold 6px of drift is a box that exists for nothing. 6px is the
           middle of Genesis's 4-8.
+
+          THE THIRD BOUND IS FOR SHORT LAPTOPS. The hero copy under the orb
+          made this screen taller, and on a ~750px-high window the names ran
+          up under the nav ("bohot chipak ke hai"). 100dvh - 23rem keeps the
+          orb, the names and the hero inside one screen there; from about
+          870px tall 58vh is the smaller bound again and nothing changes.
+
+          115% / 120% OF THE COLUMN, NOT 130%, since the membership buttons
+          arrived under the names: the orb overran its column into the gap
+          and the top-row buttons, which sit level with its widest point,
+          ran into it by up to 15px at 1180 and 1920 wide. Measured at
+          1024-2560 these bounds leave every button 10px+ clear.
         */}
-        <div className="relative mx-auto w-[min(62vw,17rem,36vh)] motion-safe:translate-x-[calc(var(--par-x)*6px)] motion-safe:translate-y-[calc(var(--par-y)*6px)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out lg:left-1/2 lg:mx-0 lg:w-[min(130%,58vh)] lg:-translate-x-1/2 lg:motion-safe:translate-x-[calc(-50%+var(--par-x)*6px)]">
+        <div className="relative mx-auto w-[min(62vw,17rem,36vh)] motion-safe:translate-x-[calc(var(--par-x)*6px)] motion-safe:translate-y-[calc(var(--par-y)*6px)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out lg:left-1/2 lg:mx-0 lg:w-[min(115%,58vh,calc(100dvh-23rem))] xl:w-[min(120%,58vh,calc(100dvh-23rem))] lg:-translate-x-1/2 lg:motion-safe:translate-x-[calc(-50%+var(--par-x)*6px)]">
           <NeuralOrb focus={focus} />
 
           {/*
@@ -260,6 +274,13 @@ export function DivisionBoard() {
         const dimmed = active !== null && !isActive;
         /* Everything except the one being travelled to gets out of the way. */
         const leaving = chosen !== null && chosen !== index;
+        /* The hover lift toward the sphere plus the parallax drift, shared by
+           the name and its membership button so they move as one. */
+        const lift = `translate3d(calc(var(--drift-x, 0px) + ${
+          isActive ? -corner.x * 6 : 0
+        }px), calc(var(--drift-y, 0px) + ${isActive ? -corner.y * 6 : 0}px), 0)`;
+        /* This division's membership — the price button under its name. */
+        const pricing = verticalCards.find((card) => card.short === service.short);
 
         return (
           <motion.div
@@ -276,7 +297,13 @@ export function DivisionBoard() {
               delay: ENTER.names + index * ENTER.stagger,
               ease: EASE,
             }}
-            className={cn("flex flex-col", PLACEMENT[index])}
+            /*
+              `group/vert` spans the name AND the price button under it, so
+              moving the pointer from one to the other keeps both showing —
+              the button is a separate link (a link cannot hold a link) and
+              would otherwise vanish the moment the name lost the hover.
+            */
+            className={cn("group/vert flex flex-col", PLACEMENT[index])}
           >
             <Link
               href={service.href}
@@ -321,11 +348,13 @@ export function DivisionBoard() {
                   per-division direction; as classes that is eight literals
                   that have to stay in step with CORNERS.
                 */
-                transform: `translate3d(calc(var(--drift-x, 0px) + ${
-                  isActive ? -corner.x * 6 : 0
-                }px), calc(var(--drift-y, 0px) + ${isActive ? -corner.y * 6 : 0}px), 0) scale(${
-                  isActive || chosen === index ? 1.035 : 1
-                })`,
+                transform: `${lift} scale(${isActive || chosen === index ? 1.035 : 1})`,
+                /*
+                  SCALED FROM THE ORB-SIDE EDGE, so the growth goes outward
+                  and the inner edge only moves by the lift — which the
+                  membership button below takes too, keeping the two flush.
+                */
+                transformOrigin: corner.x < 0 ? "right center" : "left center",
               }}
             >
               <DivisionLockup
@@ -396,7 +425,9 @@ export function DivisionBoard() {
                   "[@media(hover:none)]:hidden",
                   "transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none",
                   "group-hover:translate-y-0 group-hover:opacity-100",
+                  "group-hover/vert:translate-y-0 group-hover/vert:opacity-100",
                   "group-focus-visible:translate-y-0 group-focus-visible:opacity-100",
+                  "group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
                 )}
                 /*
                   ABOVE THE FOLD, SO NOT LAZY. These four names are the
@@ -407,6 +438,46 @@ export function DivisionBoard() {
                 priority
               />
             </Link>
+
+            {/*
+              "MEMBERSHIP FROM ₹95K/MONTH", under the name — the pricing
+              brief's vertical card, as a button to the pricing on that
+              vertical's own page. Genesis asked for it to behave exactly like the subtext
+              above it, so it carries the same classes: hidden and 4px low at
+              rest on a pointer device, fading up on hover or focus, and not
+              shown at all on a touch screen. Invisible, it also refuses the
+              pointer, so it cannot be clicked before it has been seen.
+
+              FLUSH TO THE ORB SIDE, like the name and the tagline above it —
+              right-aligned on the left, left-aligned on the right, by the
+              column's own items-* ("orb ki side aligned rakho").
+            */}
+            {pricing && (
+              <Link
+                href={`${pricing.href}#pricing`}
+                prefetch={false}
+                onPointerEnter={() => setActive(index)}
+                onPointerLeave={leave}
+                onFocus={() => setActive(index)}
+                onBlur={leave}
+                className={cn(
+                  "mt-1 inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-brand/40 bg-brand/10 px-3.5 text-[0.75rem] text-brand-ink outline-none sm:text-small",
+                  "hover:border-brand/70 hover:bg-brand/20",
+                  "focus-visible:ring-2 focus-visible:ring-brand",
+                  "[@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",
+                  "[@media(hover:none)]:hidden",
+                  "transition-[opacity,transform,translate,background-color,border-color] duration-300 ease-out motion-reduce:transition-none",
+                  "motion-safe:[--drift-x:calc(var(--par-x)*2px)] motion-safe:[--drift-y:calc(var(--par-y)*2px)]",
+                  "group-hover/vert:pointer-events-auto group-hover/vert:translate-y-0 group-hover/vert:opacity-100",
+                  "group-focus-within/vert:pointer-events-auto group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
+                  leaving && "opacity-0",
+                )}
+                style={{ transform: lift }}
+              >
+                {pricing.brain}
+                <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
+              </Link>
+            )}
           </motion.div>
         );
       })}

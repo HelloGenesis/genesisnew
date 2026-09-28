@@ -44,7 +44,7 @@ const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
  * readable without setup; it is never rewritten — if someone renames a column
  * to suit how they work, that is their sheet.
  */
-export type SheetTab = "brand" | "quick" | "influencer" | "career";
+export type SheetTab = "brand" | "quick" | "influencer" | "career" | "orders";
 
 const TABS: Record<SheetTab, { title: string; columns: [header: string, field: string][] }> = {
   brand: {
@@ -87,6 +87,27 @@ const TABS: Record<SheetTab, { title: string; columns: [header: string, field: s
       ["Picture link", "picture"],
       ["Comments", "message"],
       ["Consent to pitch", "consent"],
+    ],
+  },
+  /*
+    PAYMENTS, from the Razorpay webhook (lib/orders): one row per event — an
+    order paid, a membership started or renewed, a renewal failing, a
+    membership halted or cancelled — so the sheet is the team's running log.
+  */
+  orders: {
+    title: "Orders",
+    columns: [
+      ["Event", "event"],
+      ["Reference", "reference"],
+      ["Amount (₹)", "amount"],
+      ["Items", "items"],
+      ["Billing", "billing"],
+      ["Company", "company"],
+      ["Contact", "contact"],
+      ["Tax ID", "taxId"],
+      ["Billing address", "address"],
+      ["Razorpay", "razorpay"],
+      ["Notes", "notes"],
     ],
   },
   career: {

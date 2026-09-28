@@ -1,36 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import { Users } from "lucide-react";
 import Link from "next/link";
 
 import { LogoMarquee } from "@/components/genesis/logo-marquee";
 import { softRadial } from "@/lib/soft-gradient";
 
-import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
-import { pagerFor } from "@/components/genesis/overlay";
-import { ReelPair } from "@/components/genesis/reel-pair";
-import { VideoDialog, type OpenVideo } from "@/components/genesis/video-dialog";
-import type { CaseStudy } from "@/lib/case-studies";
 import {
   caseStudyForClip,
   caseStudyPathForClip,
-  uniqueStudies,
 } from "@/lib/case-study-pages";
-import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
+import { CLIP_LABELS, expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { influencer, services } from "@/lib/home-content";
+import { PlanBar } from "./plan-bar";
+import { VideoRail } from "./offer/video-rail";
 
-/*
-  ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller ("buttons on same
-  line - reduce size"). `max-sm:` leaves every larger screen as it was, and the
-  arrow goes first because it is the one part of a button that says nothing
-  its label does not.
-*/
-const MOBILE_CTA =
-  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
 
 /**
  * Influencer marketing — built to the Genesis mockup on page 7.
@@ -121,24 +107,17 @@ const INFLUENCE_REELS = (() => {
 })();
 
 /** The distinct studies the reels cover, for the window's pager. */
-const INFLUENCE_STUDIES = uniqueStudies(INFLUENCE_REELS.map((reel) => reel.study));
-
-/* The reels with no study, in reel order — the video window's arrows walk these. */
-const INFLUENCE_VIDEOS: OpenVideo[] = INFLUENCE_REELS.filter((reel) => !reel.study).map(
-  (reel) => ({ id: reel.clipId, label: reel.label }),
-);
+/*
+  THE HERO RAIL'S EIGHT — the interleaved order above, so the first screenful
+  is several campaigns rather than one client's cuts.
+*/
+const INFLUENCE_RAIL = INFLUENCE_REELS.slice(0, 8).map((reel) => ({
+  id: reel.clipId,
+  eyebrow: CLIP_LABELS[reel.clipId] ?? "Influencer campaign",
+  title: reel.label,
+}));
 
 export function InfluencerMarketing() {
-  /*
-    WHICH STUDY IS OPEN OVER THE PAGE. The same window the case-study posters,
-    the Studios stage cards and the AI rail open — Genesis's rule is that a
-    study opens where the reader already is.
-  */
-  const [study, setStudy] = useState<CaseStudy | null>(null);
-  /* Which clip the study opens on — the reel that was clicked. */
-  const [studyClip, setStudyClip] = useState<string | undefined>(undefined);
-  /* And which clip, for a reel with no study behind it: the video alone. */
-  const [video, setVideo] = useState<OpenVideo | null>(null);
 
   return (
     <section
@@ -431,18 +410,13 @@ export function InfluencerMarketing() {
               window: "jiska nahi hai uski sirf video play ho". Same rule as
               the AI Lab rail and the portfolio.
             */}
-            <ReelPair
-              reels={INFLUENCE_REELS.map((reel) => ({
-                ...reel,
-                onOpen: reel.study
-                  ? () => {
-                      setStudy(reel.study ?? null);
-                      setStudyClip(reel.clipId);
-                    }
-                  : () => setVideo({ id: reel.clipId, label: reel.label }),
-              }))}
-              className="mx-auto max-w-[26rem] lg:max-w-[30rem]"
-            />
+            {/*
+              THE SAME VIDEO RAIL AS AI LABS AND STUDIOS (Genesis asked for
+              one slider across the three): portrait cards, a label and a
+              title, a slow glide, and each card opening its case study — or
+              the film alone where there is none.
+            */}
+            <VideoRail videos={INFLUENCE_RAIL} label="Genesis Influence work" />
           </Reveal>
         </div>
 
@@ -460,86 +434,9 @@ export function InfluencerMarketing() {
           section they read as what they are.
         */}
 
-        {/*
-          TWO ACTIONS, both specific, and BELOW the figures rather than inside
-          them. "Contact Us" was the only one here, which is the least useful
-          thing a section about influencer campaigns can say — it asks the
-          reader to translate their own intent into a generic enquiry. Sitting
-          them in the stats panel packed four numbers and two buttons into one
-          row; they get their own line.
-        */}
-        {/*
-          THE TWO BUTTONS GENESIS SPECIFIED, in their words and to their
-          destinations.
-
-          "Explore Genesis Influence" is gone. It went to /influencer-campaigns
-          — the division's own page — which is a third thing to click in a
-          section that is meant to offer a choice between starting a campaign
-          and seeing the work. Genesis asked for the second button to be "View
-          Case Studies", landing on the library "filtering exclusively for
-          influencer campaigns", which is what the query string does. The
-          division page is still reachable from the card above.
-        */}
-        <Reveal delay={0.15} className="mt-5 flex flex-nowrap gap-2 sm:flex-wrap sm:gap-3">
-          <GlassButton
-            href="/#contact"
-            quickContact="influence:plan-a-campaign"
-            variant="brand"
-            arrow
-            className={MOBILE_CTA}
-          >
-            Plan an Influencer Campaign
-          </GlassButton>
-          <GlassButton
-            href="#library"
-            selectsFilter="Influence"
-            variant="glass"
-            arrow
-            className={MOBILE_CTA}
-          >
-            View Influence Work
-          </GlassButton>
-        </Reveal>
+        <PlanBar vertical="influence" className="!mt-6" />
       </div>
 
-      {/*
-        THE STUDY, OVER THE PAGE. The pager walks the reels in their own
-        order, so "next" from a piece is the piece beside it in the run rather
-        than whatever is next in the case-study ordering.
-      */}
-      <CaseStudyDialog
-        study={study}
-        startClip={studyClip}
-        onClose={() => setStudy(null)}
-        /*
-          DEDUPED, OR THE ARROWS DO NOTHING. Several reels of one engagement
-          resolve to the same study, so the raw list had twenty entries
-          covering far fewer studies — "next" stepped to the following index,
-          which was usually the same study, and the window replaced its
-          content with identical content. See `uniqueStudies`.
-        */
-        pager={pagerFor(
-          INFLUENCE_STUDIES,
-          INFLUENCE_STUDIES.findIndex((entry) => entry.slug === study?.slug),
-          (entry) => {
-            setStudy(entry);
-            setStudyClip(undefined);
-          },
-          (entry) => entry.client,
-        )}
-      />
-
-      {/* The video alone, for the reels with no study. */}
-      <VideoDialog
-        video={video}
-        onClose={() => setVideo(null)}
-        pager={pagerFor(
-          INFLUENCE_VIDEOS,
-          INFLUENCE_VIDEOS.findIndex((entry) => String(entry.id) === String(video?.id)),
-          (entry) => setVideo(entry),
-          (entry) => entry.label,
-        )}
-      />
     </section>
   );
 }

@@ -535,11 +535,11 @@
     --page-ground: linear-gradient(
         168deg,
         #f9f9f9 0%,
-        #fbfaf6 18%,
-        #fffdf4 36%,
-        #fffcf0 54%,
-        #fbfaf6 72%,
-        #fffdf4 88%,
+        #fcfcfb 18%,
+        #fffefa 36%,
+        #fbfaff 54%,
+        #fcfcfb 72%,
+        #fffefa 88%,
         #fdfcfa 100%
     );
 
@@ -560,11 +560,11 @@
     --page-ground-compact: linear-gradient(
         180deg,
         #f9f9f9 0%,
-        #fffdf4 48%,
+        #fcfbff 48%,
         #fdfcfa 100%
     );
 
-    --glow-ink: 122 96 0;
+    --glow-ink: 180 83 9;
     --glow-halo: 255 196 60;
     --glow-capsule: 255 248 224 / 0.75;
     --glow-edge: 122 96 0 / 0.22;
@@ -573,16 +573,16 @@
     --chapter-ground: #000000;
     --chapter-blend: #faf9f6;
     --surface-ink: #f9f9f9;
-    --surface-raised: #fdfcfa;
-    --surface-panel: #fdfcfa;
-    --surface-float: #fdfcfa;
+    --surface-raised: #ffffff;
+    --surface-panel: #ffffff;
+    --surface-float: #ffffff;
     --ink-strong: #000000;
-    --ink-muted: #4b4b4d;
-    --ink-faint: #6e6d72;
+    --ink-muted: #3d3c42;
+    --ink-faint: #55545b;
 
-    --glass-fill: rgb(255 255 255 / 0.72);
-    --glass-fill-strong: rgb(255 255 255 / 0.9);
-    --glass-border: rgb(17 17 17 / 0.26);
+    --glass-fill: rgb(255 255 255 / 0.86);
+    --glass-fill-strong: rgb(255 255 255 / 0.97);
+    --glass-border: rgb(17 17 17 / 0.14);
     --glass-highlight: rgb(255 255 255 / 0.9);
     --glass-inset: 0 -1px 0 0 rgb(17 17 17 / 0.05) inset;
 
@@ -590,7 +590,7 @@
     --spot-beam: 0.22;
     --spot-veil: 1;
     --cool-accent: #35607f;
-    --brand-ink: #7a5c00;
+    --brand-ink: #b45309;
     /* Colour on paper reads about twice as strongly as on black. */
     --spectrum: 0.5;
     --hover-wash: rgb(17 17 17 / 0.07);
@@ -599,17 +599,17 @@
     --route-1: #6d28d9;
     --route-2: #a81b6f;
     --route-3: #c03a17;
-    --route-4: #8a5a00;
-    --route-5: #6e5600;
-    --ramp-avatars: linear-gradient(100deg, #6d28d9 0%, #a81b6f 42%, #c03a17 74%, #8a5a00 100%);
+    --route-4: #c2410c;
+    --route-5: #b45309;
+    --ramp-avatars: linear-gradient(100deg, #6d28d9 0%, #a81b6f 42%, #c2410c 74%, #b45309 100%);
     --menu-hover: #6d28d9;
-    --ramp-avatars-soft: linear-gradient(100deg, #5f3a9e 0%, #94476b 52%, #7d5320 100%);
+    --ramp-avatars-soft: linear-gradient(100deg, #6d28d9 0%, #be185d 52%, #c2410c 100%);
     --ghost-outline: rgb(17 17 17 / 0.07);
 
     /* Shadows carry less alpha on a light ground or they read as smudges. */
-    --shadow-raised: 0 1px 2px 0 rgb(17 17 17 / 0.09), 0 2px 6px -1px rgb(17 17 17 / 0.10);
-    --shadow-panel: 0 2px 4px -1px rgb(17 17 17 / 0.10), 0 12px 28px -8px rgb(17 17 17 / 0.20);
-    --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.12), 0 28px 56px -16px rgb(17 17 17 / 0.28);
+    --shadow-raised: 0 1px 2px 0 rgb(17 17 17 / 0.06), 0 4px 12px -2px rgb(60 40 120 / 0.10);
+    --shadow-panel: 0 2px 4px -1px rgb(17 17 17 / 0.06), 0 18px 40px -12px rgb(60 40 120 / 0.18);
+    --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.08), 0 28px 56px -16px rgb(60 40 120 / 0.24);
 
     --background: #f4f1ec;
     --foreground: #16141b;
@@ -644,11 +644,11 @@
         --page-ground: linear-gradient(
             168deg,
             #f9f9f9 0%,
-            #fbfaf6 18%,
-            #fffdf4 36%,
-            #fffcf0 54%,
-            #fbfaf6 72%,
-            #fffdf4 88%,
+            #fcfcfb 18%,
+            #fffefa 36%,
+            #fbfaff 54%,
+            #fcfcfb 72%,
+            #fffefa 88%,
             #fdfcfa 100%
         );
 
@@ -669,11 +669,11 @@
         --page-ground-compact: linear-gradient(
             180deg,
             #f9f9f9 0%,
-            #fffdf4 48%,
+            #fcfbff 48%,
             #fdfcfa 100%
         );
 
-        --glow-ink: 122 96 0;
+        --glow-ink: 180 83 9;
         --glow-halo: 255 196 60;
         --glow-capsule: 255 248 224 / 0.75;
         --glow-edge: 122 96 0 / 0.22;
@@ -682,16 +682,16 @@
         --chapter-ground: #000000;
         --chapter-blend: #faf9f6;
         --surface-ink: #f9f9f9;
-        --surface-raised: #fdfcfa;
-        --surface-panel: #fdfcfa;
-        --surface-float: #fdfcfa;
+        --surface-raised: #ffffff;
+        --surface-panel: #ffffff;
+        --surface-float: #ffffff;
         --ink-strong: #000000;
-        --ink-muted: #4b4b4d;
-        --ink-faint: #6e6d72;
+        --ink-muted: #3d3c42;
+        --ink-faint: #55545b;
 
-        --glass-fill: rgb(255 255 255 / 0.72);
-        --glass-fill-strong: rgb(255 255 255 / 0.9);
-        --glass-border: rgb(17 17 17 / 0.26);
+        --glass-fill: rgb(255 255 255 / 0.86);
+        --glass-fill-strong: rgb(255 255 255 / 0.97);
+        --glass-border: rgb(17 17 17 / 0.14);
         --glass-highlight: rgb(255 255 255 / 0.9);
         --glass-inset: 0 -1px 0 0 rgb(17 17 17 / 0.05) inset;
 
@@ -699,7 +699,7 @@
         --spot-beam: 0.22;
         --spot-veil: 1;
         --cool-accent: #35607f;
-        --brand-ink: #7a5c00;
+        --brand-ink: #b45309;
         /* Colour on paper reads about twice as strongly as on black. */
         --spectrum: 0.5;
         --hover-wash: rgb(17 17 17 / 0.07);
@@ -708,16 +708,16 @@
         --route-1: #6d28d9;
         --route-2: #a81b6f;
         --route-3: #c03a17;
-        --route-4: #8a5a00;
-        --route-5: #6e5600;
-        --ramp-avatars: linear-gradient(100deg, #6d28d9 0%, #a81b6f 42%, #c03a17 74%, #8a5a00 100%);
+        --route-4: #c2410c;
+        --route-5: #b45309;
+        --ramp-avatars: linear-gradient(100deg, #6d28d9 0%, #a81b6f 42%, #c2410c 74%, #b45309 100%);
         --menu-hover: #6d28d9;
-        --ramp-avatars-soft: linear-gradient(100deg, #5f3a9e 0%, #94476b 52%, #7d5320 100%);
+        --ramp-avatars-soft: linear-gradient(100deg, #6d28d9 0%, #be185d 52%, #c2410c 100%);
         --ghost-outline: rgb(17 17 17 / 0.07);
 
-        --shadow-raised: 0 1px 2px 0 rgb(17 17 17 / 0.09), 0 2px 6px -1px rgb(17 17 17 / 0.10);
-        --shadow-panel: 0 2px 4px -1px rgb(17 17 17 / 0.10), 0 12px 28px -8px rgb(17 17 17 / 0.20);
-        --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.12), 0 28px 56px -16px rgb(17 17 17 / 0.28);
+        --shadow-raised: 0 1px 2px 0 rgb(17 17 17 / 0.06), 0 4px 12px -2px rgb(60 40 120 / 0.10);
+        --shadow-panel: 0 2px 4px -1px rgb(17 17 17 / 0.06), 0 18px 40px -12px rgb(60 40 120 / 0.18);
+        --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.08), 0 28px 56px -16px rgb(60 40 120 / 0.24);
 
         --background: #f4f1ec;
         --foreground: #16141b;
@@ -1937,5 +1937,46 @@ body:has(main.scene-dark) header {
     .gm-app path,
     .gm-app circle {
         transition: none;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   LIGHT THEME, GIVEN ITS COLOUR BACK (Genesis, 29 Sep 2026: "the panel and
+   the colours look very dull, also the cards").
+
+   1. The italic accent in every heading ("across industries.", "AI Avatar.")
+      was a flat olive on paper. On light it now carries the brand ramp —
+      violet to magenta to amber, the AI Lab mark's own order — at depths that
+      stay above 4.5:1 on white along the whole run.
+   2. The division names are one artwork for both themes, drawn in pastel for
+      black, and the gradient-clipped titles (tab heads, plan names, one-time
+      cards) use the same pastel ramps. On paper both read washed out; one
+      filter deepens and saturates them without a second set of colours.
+   -------------------------------------------------------------------------- */
+:root[data-theme="light"] :is(h1, h2, h3) .text-brand-ink {
+    background-image: linear-gradient(100deg, #6d28d9 0%, #be185d 50%, #c2410c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    /* Room for the italic's overhang, which a text clip would otherwise cut. */
+    padding-inline-end: 0.08em;
+}
+:root[data-theme="light"] :is(.division-art, .bg-clip-text, .ramp-text):not(.on-dark) {
+    filter: saturate(1.9) brightness(0.82) contrast(1.15);
+}
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) :is(h1, h2, h3) .text-brand-ink {
+        background-image: linear-gradient(100deg, #6d28d9 0%, #be185d 50%, #c2410c 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+        padding-inline-end: 0.08em;
+    }
+    :root:not([data-theme="dark"]):not([data-theme="light"]) :is(.division-art, .bg-clip-text, .ramp-text):not(.on-dark) {
+        filter: saturate(1.9) brightness(0.82) contrast(1.15);
     }
 }

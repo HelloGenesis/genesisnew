@@ -23,6 +23,7 @@ export function SectionShell({
   division,
   headingAccent,
   body,
+  bodyPhone,
   children,
   tone = "brand",
   origin = "top-right",
@@ -61,6 +62,8 @@ export function SectionShell({
   /** Rendered in serif italic — the single accent word per headline. */
   headingAccent?: string;
   body?: string;
+  /** A shorter body for phones — below sm it replaces `body`. */
+  bodyPhone?: string;
   children?: ReactNode;
   tone?: "brand" | "neutral";
   origin?: "top" | "top-right" | "top-left" | "center" | "bottom";
@@ -217,7 +220,14 @@ export function SectionShell({
                     bodyTextClassName,
                   )}
                 >
-                  {body}
+                  {bodyPhone ? (
+                    <>
+                      <span className="sm:hidden">{bodyPhone}</span>
+                      <span className="hidden sm:inline">{body}</span>
+                    </>
+                  ) : (
+                    body
+                  )}
                 </p>
               </Reveal>
             )}

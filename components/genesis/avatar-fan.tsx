@@ -438,7 +438,7 @@ export function AvatarFan({
                     "glass-chip absolute left-2 top-2 z-[1] max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 font-medium uppercase text-white/90",
                     fan
                       ? "text-[clamp(0.36rem,0.66vw,0.55rem)] tracking-[0.1em]"
-                      : "text-[0.5rem] tracking-[0.08em]",
+                      : "text-[0.625rem] tracking-[0.04em]",
                   )}
                 >
                   {avatar.kind}
@@ -465,7 +465,7 @@ export function AvatarFan({
                       "block font-medium uppercase leading-tight text-white/70",
                       fan
                         ? "mt-1.5 text-[clamp(0.4rem,0.72vw,0.6rem)] tracking-[0.14em]"
-                        : "mt-1.5 text-[0.55rem] tracking-[0.12em]",
+                        : "mt-1.5 text-[0.6875rem] tracking-[0.06em]",
                     )}
                   >
                     {avatar.role}
