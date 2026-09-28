@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Atmosphere } from "@/components/genesis/atmosphere";
 import { DivisionLockup, DivisionName } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
+import { MembershipCard } from "@/components/genesis/membership-card";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
@@ -17,19 +18,21 @@ import {
   verticalCards,
 } from "@/lib/pricing";
 import { breadcrumbJsonLd } from "@/lib/seo";
-import { aiAddOns, aiEveryVideo, aiPlans, aiTab, aiTurnaround, aiVideoTiers } from "@/lib/verticals/ai-labs";
-import { designAddOns, designTab, designTurnaround } from "@/lib/verticals/brand-design";
+import { aiEveryVideo, aiPlans, aiTab, aiTurnaround, aiVideoTiers } from "@/lib/verticals/ai-labs";
+import { designTab, designTurnaround } from "@/lib/verticals/brand-design";
 import { builtFor, campaignPricing } from "@/lib/verticals/influence";
-import { studiosAddOns, studiosPlans, studiosShoot, studiosTab, studiosTurnaround } from "@/lib/verticals/studios";
+import { studiosPlans, studiosShoot, studiosTab, studiosTurnaround } from "@/lib/verticals/studios";
 import type { VerticalKey } from "@/lib/verticals/types";
-import { AddOnsBlock } from "./offer/add-ons";
 import { IconChips, StepsBlock, TierTag, TurnaroundStrip, VideoTiers } from "./offer/blocks";
 import { IconTile } from "./offer/icons";
 import { MediaRail } from "./offer/media-rail";
+import { AddToCartIcon } from "@/components/genesis/cart";
+import { productId } from "@/lib/cart";
 import { LogoStrip } from "./offer/page-furniture";
 import { SectionHead } from "./offer/parts";
 import { PlanGrid } from "./offer/plan-grid";
 import { PlanTabs, type PlanTab } from "./offer/plan-tabs";
+import { DesignOneTime, StarterPack, StudiosOneTime } from "./offer/starter-pack";
 import { Breadcrumbs } from "./service-page";
 import { ProductCards } from "./verticals/design-products";
 import { Figure } from "./verticals/influence-page";
@@ -54,6 +57,8 @@ export function PricingHubView() {
       <Atmosphere tone="brand" origin="top" intensity={0.2}>
         <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pb-[var(--section-pad)] pt-32 sm:pt-40">
           <Breadcrumbs trail={[{ name: "Pricing", path: "/pricing" }]} />
+          {/* The membership card, above the heading on the left — as on the homepage block. */}
+          <MembershipCard size="md" tilt={-8} className="ml-2 mt-10" />
           <SectionHead
             as="h1"
             className="mt-8"
@@ -151,16 +156,12 @@ export function PricingHubView() {
             body: project.body,
             image: project.image,
             foot: (
-              <a
-                href={enquiryHref(project.name)}
-                {...(enquiryHref(project.name).startsWith("http")
-                  ? { target: "_blank", rel: "noopener noreferrer" }
-                  : {})}
-                className="mt-3 inline-flex items-center gap-1.5 text-small text-ash transition-colors hover:text-bone"
-              >
-                From <span className="text-brand-ink">{project.from}</span>
-                <ArrowRight className="size-3.5 text-brand-ink" aria-hidden />
-              </a>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <p className="text-small text-ash">
+                  From <span className="text-brand-ink">{project.from}</span>
+                </p>
+                <AddToCartIcon id={productId(project.vertical, "one-time", project.name)} />
+              </div>
             ),
           }))}
         />
@@ -251,11 +252,8 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="ai-labs" {...aiTab} />
-          <PlanGrid data={aiPlans} compact showCompare={false} />
-          {/* Add-ons straight after the plans they extend. */}
-          <div className="mt-10">
-            <AddOnsBlock data={aiAddOns} compact />
-          </div>
+          <PlanGrid data={aiPlans} vertical="ai-labs" compact showCompare={false} />
+          <StarterPack />
           <SubHeading>Every AI Video Includes</SubHeading>
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
             {aiEveryVideo.items.map((item) => (
@@ -327,10 +325,8 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="studios" {...studiosTab} />
-          <PlanGrid data={studiosPlans} compact showCompare={false} />
-          <div className="mt-10">
-            <AddOnsBlock data={studiosAddOns} compact />
-          </div>
+          <PlanGrid data={studiosPlans} vertical="studios" compact showCompare={false} />
+          <StudiosOneTime />
           <SubHeading>{studiosShoot.label}</SubHeading>
           <ul className="grid gap-3 md:grid-cols-3">
             {studiosShoot.packages.map((pack) => (
@@ -339,8 +335,11 @@ function tabs(): PlanTab[] {
                   <span className="block text-body text-bone">{pack.name}</span>
                   <span className="mt-0.5 block text-small text-ash">{pack.tagline}</span>
                 </span>
-                <span className="font-display text-lead text-bone">
-                  {pack.price} <span className="text-small text-ash">{pack.gst}</span>
+                <span className="flex flex-col items-end gap-2">
+                  <span className="font-display text-lead text-bone">
+                    {pack.price} <span className="text-small text-ash">{pack.gst}</span>
+                  </span>
+                  <AddToCartIcon id={productId("studios", "one-time", pack.name)} />
                 </span>
               </li>
             ))}
@@ -360,9 +359,7 @@ function tabs(): PlanTab[] {
           <div className="-mt-4">
             <ProductCards />
           </div>
-          <div className="mt-10">
-            <AddOnsBlock data={designAddOns} compact />
-          </div>
+          <DesignOneTime />
           <SubHeading>Typical turnaround</SubHeading>
           <TurnaroundStrip data={designTurnaround} />
         </>

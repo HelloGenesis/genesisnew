@@ -50,6 +50,11 @@ type GlassButtonProps = {
   onClick?: () => void;
   type?: "button" | "submit";
   disabled?: boolean;
+  /**
+   * Always open the page, even from the homepage — where a division URL is
+   * otherwise turned into a scroll to that division's section (SmoothScroll).
+   */
+  pageLink?: boolean;
 };
 
 const SIZES = {
@@ -104,6 +109,7 @@ export function GlassButton({
   type = "button",
   disabled,
   quickContact,
+  pageLink,
 }: GlassButtonProps) {
   /*
     RESTRAINED, AND CAPPED. 0.18 with no ceiling meant a button's travel was a
@@ -213,6 +219,7 @@ export function GlassButton({
           bound to the same node.
         */
         data-work-filter={selectsFilter}
+        data-page-link={pageLink ? "" : undefined}
         onClick={
 onClick
         }

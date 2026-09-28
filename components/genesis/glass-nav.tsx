@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { DivisionLockup } from "./division-lockup";
+import { CartButton } from "./cart";
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
@@ -250,6 +251,7 @@ export function GlassNav() {
         */}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeToggle className="hidden lg:inline-flex" />
+          <CartButton />
 
           {/*
             "SLIGHT MOVEMENT/GLOW ON START A PROJECT", which is Genesis's

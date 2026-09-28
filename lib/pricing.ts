@@ -20,7 +20,7 @@
  * link in and the button goes straight there instead.
  */
 
-import { price } from "./money";
+import { inr, price } from "./money";
 import { whatsappLink } from "./site-config";
 import type { VerticalKey } from "./verticals/types";
 
@@ -153,7 +153,7 @@ export const pricingHub = {
     {
       label: "One-time project",
       bestFor: "Trying Genesis, or a single brief.",
-      price: `From ${price(25000)}`,
+      price: `From ${inr(24000)}`,
       tab: null,
     },
     {
@@ -200,11 +200,12 @@ export const oneTimeProjects: {
   image: string;
 }[] = [
   {
-    name: "AI Avatar Setup",
-    body: "Create a realistic AI avatar for your brand.",
-    from: price(25000),
+    /* Replaced "AI Avatar Setup" — see aiStarterPack in lib/verticals/ai-labs. */
+    name: "AI Content Starter",
+    body: "2 AI videos + 2 creatives, one-time. No subscription.",
+    from: inr(24000),
     vertical: "ai-labs",
-    image: "/avatars/tanvi.jpg",
+    image: "/work/posters/38.jpg",
   },
   {
     name: "AI Films",
@@ -276,11 +277,11 @@ export const homeHero = {
   start: "Start a Project",
   /*
     THE WAY IN, IN ONE LINE. The orb's price buttons only appear on hover, so
-    on a phone the homepage never said what Genesis costs. 25,000 is the
-    lowest entry Genesis has set (AI Avatar Setup, a one-time project);
+    on a phone the homepage never said what Genesis costs. 24,000 is the
+    lowest entry Genesis has set (AI Content Starter, a one-time pack);
     65,000 is the lowest membership (Creative Desk), at the quarterly rate.
   */
-  entry: `Projects from ${price(25000)} · Memberships from ${price(65000)} per month`,
+  entry: `Subscriptions from ${price(65000)} per month · AI content from ${inr(24000)}`,
 } as const;
 
 /**
@@ -319,17 +320,15 @@ export const planGlossary = [
 ] as const;
 
 /** The lowest price a buyer can start at — Genesis's entry pricing. */
-export const entryPrice = price(25000);
+export const entryPrice = inr(24000);
 
 /*
   THE PLAN BAR UNDER EACH DIVISION ON THE HOMEPAGE.
 
-  Genesis: "homepage has less CTA buttons redirecting to memberships or
-  directly payment link buttons" and the division sections "still don't
-  convey what we've built the website into". Each section ends on its product
-  — the name, the brief's own one-line promise, where the price starts — with
-  the way to the plans and a direct start (the Razorpay link, once it is in
-  `joinUrls`). The work stays one click away as a quieter link.
+  Genesis (28 Sep 2026): each division's buttons should take a visitor to its
+  own page — to see what it does, and to see its work and case studies — or
+  to book a 15-minute call, or to send a brief. The price is said the premium
+  way, as where subscriptions start; no offers on the homepage.
 */
 export const homePlans: Record<
   VerticalKey,
@@ -340,41 +339,38 @@ export const homePlans: Record<
     rate?: number;
     /** For Influence, which is priced as a commission, not a membership. */
     priceLine?: string;
-    plans: { label: string; href: string };
-    start: { label: string; href: string };
-    work: { label: string; filter: string };
+    /** The division's own page. */
+    page: string;
+    /** Where its work and case studies are on that page. */
+    work: string;
   }
 > = {
   "ai-labs": {
     product: "AI Content Studio",
     promise: "Build once. Publish continuously.",
     rate: 95000,
-    plans: { label: "See AI plans", href: "/ai-content-automation#pricing" },
-    start: { label: "Start with Starter", href: joinHref("ai-labs", "Starter", "AI Content Studio") },
-    work: { label: "View AI work", filter: "AI Lab" },
+    page: "/ai-content-automation",
+    work: "/ai-content-automation#library",
   },
   studios: {
     product: "Content Monthly",
     promise: "From brief to publish.",
     rate: 85000,
-    plans: { label: "See Studios plans", href: "/content-production#pricing" },
-    start: { label: "Start with Starter", href: joinHref("studios", "Starter", "Content Monthly") },
-    work: { label: "View Studios work", filter: "Studios" },
+    page: "/content-production",
+    work: "/content-production#case-studies",
   },
   "brand-design": {
     product: "Always-On Creative Desk",
     promise: "Ongoing creative support for your brand.",
     rate: 65000,
-    plans: { label: "See Brand & Design plans", href: "/brand-design#pricing" },
-    start: { label: "Start Creative Desk", href: joinHref("brand-design", "Creative Desk", "Genesis Creative Desk") },
-    work: { label: "View branding work", filter: "Brand & Design" },
+    page: "/brand-design",
+    work: "/brand-design#case-studies",
   },
   influence: {
     product: "Influencer & UGC Campaigns",
     promise: "End-to-end creator campaigns — from strategy to reporting.",
     priceLine: "Creator fees + 15% agency commission",
-    plans: { label: "See how it's priced", href: "/influencer-marketing#pricing" },
-    start: { label: "Start a campaign", href: enquiryHref("an influencer campaign") },
-    work: { label: "View Influence work", filter: "Influence" },
+    page: "/influencer-marketing",
+    work: "/influencer-marketing#case-studies",
   },
 };

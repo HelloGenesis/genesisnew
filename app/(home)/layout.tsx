@@ -1,3 +1,4 @@
+import { CartProvider } from "@/components/genesis/cart";
 import { FilmRecovery } from "@/components/genesis/film-recovery";
 import { GlassNav } from "@/components/genesis/glass-nav";
 import { JsonLd } from "@/components/genesis/json-ld";
@@ -19,7 +20,8 @@ export default function HomeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    /* THE CART, for every page in the group — the nav's bag and every "Add to cart" share it. See lib/cart. */
+    <CartProvider>
       {/*
         WHO GENESIS IS, ON EVERY PAGE. Organization and WebSite, once, here —
         every page's own nodes (a Service, a case study's film) point back to
@@ -52,6 +54,6 @@ export default function HomeLayout({
       {/* Film windows retry a film before settling for its preview. */}
       <FilmRecovery />
       <WhatsappButton />
-    </>
+    </CartProvider>
   );
 }

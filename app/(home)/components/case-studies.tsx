@@ -117,7 +117,8 @@ export function CaseStudies() {
         under the heading they are the scale of everything the section is
         about to show.
       */
-      align="left"
+      /* Centred, at Genesis's request, over the figures and the rail. */
+      align="center"
       tone="brand"
       origin="top-right"
       intensity={0.2}

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Play } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 
 import { mediaUrl } from "@/lib/media-url";
@@ -13,6 +13,10 @@ export type RailCard = {
   image: string;
   /** Anything under the body — a price line, a link. */
   foot?: ReactNode;
+  /** Makes the picture a button — it opens the card's work. */
+  onSelect?: () => void;
+  /** What the button says to assistive tech. */
+  selectLabel?: string;
 };
 
 /**
@@ -88,19 +92,49 @@ export function MediaRail({
             )}
           >
             <article className="group">
-              <div
-                className="relative overflow-hidden rounded-card border border-[var(--glass-border)] bg-ink"
-                style={{ aspectRatio: aspect.replace("/", " / ") }}
-              >
-                <Image
-                  src={mediaUrl(item.image)}
-                  alt=""
-                  fill
-                  sizes="(min-width: 1024px) 12rem, (min-width: 768px) 30vw, 60vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
+              {(() => {
+                const picture = (
+                  <>
+                    <Image
+                      src={mediaUrl(item.image)}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1024px) 12rem, (min-width: 768px) 30vw, 60vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
+                    {item.onSelect && (
+                      <span
+                        aria-hidden
+                        className="absolute bottom-3 left-3 grid size-10 place-items-center rounded-full bg-black/40 text-white backdrop-blur-md transition-colors group-hover:bg-brand group-hover:text-ink"
+                      >
+                        <Play className="size-4 translate-x-px" fill="currentColor" />
+                      </span>
+                    )}
+                  </>
+                );
+                const frame =
+                  "relative block w-full overflow-hidden rounded-card border border-[var(--glass-border)] bg-ink";
+                const ratio = { aspectRatio: aspect.replace("/", " / ") };
+                return item.onSelect ? (
+                  <button
+                    type="button"
+                    onClick={item.onSelect}
+                    aria-label={item.selectLabel ?? item.title}
+                    className={cn(
+                      frame,
+                      "cursor-pointer transition-colors hover:border-brand/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+                    )}
+                    style={ratio}
+                  >
+                    {picture}
+                  </button>
+                ) : (
+                  <div className={frame} style={ratio}>
+                    {picture}
+                  </div>
+                );
+              })()}
               <h3 className="font-sans mt-3 text-body leading-snug text-bone">{item.title}</h3>
               {item.body && <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{item.body}</p>}
               {item.foot}

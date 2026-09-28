@@ -140,7 +140,8 @@ export type AddOns = {
   body?: string;
   chips?: { label: string; icon?: IconName }[];
   button: string;
-  items: { name: string; price: string; body?: string }[];
+  /** `includes` — what the buyer gets, opened under "What's included" on the tile and in the cart. */
+  items: { name: string; price: string; body?: string; includes?: string[] }[];
 };
 
 export type Closing = {

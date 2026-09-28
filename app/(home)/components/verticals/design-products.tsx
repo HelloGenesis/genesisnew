@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import { AddToCart } from "@/components/genesis/cart";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { monthlyListFigure, price } from "@/lib/money";
+import { productId } from "@/lib/cart";
 import { designProducts } from "@/lib/verticals/brand-design";
 import { cn } from "@/lib/utils";
 import { IconTile } from "../offer/icons";
@@ -75,9 +77,13 @@ function DeskCard() {
       </ul>
 
       <div className="relative mt-auto pt-8" data-track="plan:Always-On">
-        <GlassButton href={desk.cta.href} variant="brand" size="lg" arrow>
-          {desk.cta.label}
-        </GlassButton>
+        <AddToCart
+          id={productId("brand-design", "membership", desk.name)}
+          billing={billing}
+          purchase
+          variant="brand"
+          className="max-w-md [&>*]:min-w-[9rem]"
+        />
       </div>
     </article>
   );
@@ -98,9 +104,12 @@ function BuildCard() {
       <CheckList items={build.points} className="mt-6" />
 
       <div className="mt-auto pt-8" data-track="plan:Brand Build">
-        <GlassButton href={build.cta.href} variant="glass" size="lg" arrow>
-          {build.cta.label}
-        </GlassButton>
+        <div className="flex flex-wrap gap-2">
+          <GlassButton href={build.cta.href} variant="glass" arrow>
+            {build.cta.label}
+          </GlassButton>
+          <AddToCart id={productId("brand-design", "one-time", build.name)} />
+        </div>
       </div>
     </article>
   );

@@ -24,6 +24,15 @@ export const studiosHero = {
   secondary: "Book a Content Shoot",
   strip: ["Reels & Short-Form", "Product Videos", "Campaign Content", "Branded Films"],
   note: "One studio for every screen.",
+  /* The hero's video rail — Studios shoot work; each card opens its case study. */
+  videos: [
+    { id: "studios-mr-mayank-bathwal-ceo-aditya-birla-health-insurance", eyebrow: "Leadership Film", title: "Mayank Bathwal, CEO" },
+    { id: "studios-umang-2024", eyebrow: "Event Film", title: "UMANG 2024" },
+    { id: "studios-utsav-aftermovie", eyebrow: "Aftermovie", title: "ABHI Utsav" },
+    { id: "studios-mahindra-cut-44", eyebrow: "Brand Film", title: "Mahindra Finance" },
+    { id: "studios-hdfc-x-abhi-sampoorna2-0", eyebrow: "Campaign Content", title: "HDFC × ABHI" },
+    { id: "studios-tripagetet", eyebrow: "Travel Content", title: "TripGate" },
+  ],
   image: "/work/posters/studios-mr-mayank-bathwal-ceo-aditya-birla-health-insurance.jpg",
   thumbs: [
     "/work/posters/studios-umang-2024.jpg",
@@ -430,18 +439,18 @@ export const studiosAddOns: AddOns = {
   ],
   button: "View Add-ons",
   items: [
-    { name: "Additional Edited Reel", price: price(12000) },
-    { name: "Additional Hero Film", price: price(40000) },
-    { name: "Extra Camera Setup", price: price(15000) },
-    { name: "Drone Filming", price: `${price(20000)} onwards` },
-    { name: "Additional Shoot Hour", price: price(10000) },
-    { name: "Same-Day Edit", price: price(20000) },
-    { name: "Raw Footage Handover", price: price(15000) },
-    { name: "Additional Language Subtitles", price: `${price(2500)} per video` },
+    { name: "Additional Edited Reel", price: price(12000), includes: ["1 edited reel from your footage", "Captions, music and colour", "Delivered ready to post"] },
+    { name: "Additional Hero Film", price: price(40000), includes: ["1 longer-form hero film", "Story-led edit with music and sound design", "Colour grade and captions"] },
+    { name: "Extra Camera Setup", price: price(15000), includes: ["One more camera and operator on your shoot day", "A second angle for interviews and product"] },
+    { name: "Drone Filming", price: `${price(20000)} onwards`, includes: ["Licensed drone operator and aerial footage", "Final price depends on location and permissions"] },
+    { name: "Additional Shoot Hour", price: price(10000), includes: ["One more hour with the crew on the day"] },
+    { name: "Same-Day Edit", price: price(20000), includes: ["A quick edit delivered on the day of the shoot"] },
+    { name: "Raw Footage Handover", price: price(15000), includes: ["All raw files from the shoot, by download link"] },
+    { name: "Additional Language Subtitles", price: `${price(2500)} per video`, includes: ["Subtitles in one more language, for one video"] },
     { name: "Creator / Talent", price: "At actual + management" },
     { name: "Studio / Location", price: "At actual + 15% coordination" },
     { name: "Hair & Makeup", price: "At actual" },
-    { name: "Props / Set Build", price: "Custom" },
+    { name: "Props / Set Build", price: "Custom", includes: ["Props sourced or a set built for your shoot", "Quoted to your brief"] },
   ],
 };
 

@@ -40,9 +40,3 @@ export function price(listFigure: number) {
 export function monthlyListFigure(rate: number) {
   return Math.round(rate * (1 + MONTHLY_UPLIFT));
 }
-
-/**
- * The line every subscription carries, in Genesis's words (28 Sep 2026).
- * Monthly is quarterly + 10%, which is what "save 10%" refers to.
- */
-export const quarterlySaving = "Save 10% by going with the quarterly plan.";

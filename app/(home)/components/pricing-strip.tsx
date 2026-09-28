@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { GlassButton } from "@/components/genesis/glass-button";
+import { MembershipCard } from "@/components/genesis/membership-card";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
-import { quarterlySaving } from "@/lib/money";
 import { bookingHref, entryPrice, pricingHub, verticalCards } from "@/lib/pricing";
 
 /**
@@ -28,8 +28,15 @@ export function PricingStrip() {
       <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel p-6 sm:p-10">
         <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-brand/15 blur-3xl" />
 
-        <div className="relative grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-12">
+        {/*
+          THE CARD ON THE LEFT, ABOVE THE HEADING; THE STANDFIRST ON THE RIGHT,
+          at reading width and aligned to the heading's foot (Genesis, 28 Sep
+          2026). The card had been squeezing the paragraph into a column a
+          few words wide.
+        */}
+        <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-16">
           <div>
+            <MembershipCard size="md" tilt={-8} className="mb-8 ml-2" />
             <SectionLabel dot tone="brand">
               {pricingHub.label}
             </SectionLabel>
@@ -41,7 +48,7 @@ export function PricingStrip() {
               <span className="block font-serif italic text-brand-ink">{pricingHub.headingAccent}</span>
             </h2>
           </div>
-          <p className="text-pretty text-body leading-relaxed text-ash">{pricingHub.body}</p>
+          <p className="max-w-md text-pretty text-body leading-relaxed text-ash lg:pb-1">{pricingHub.body}</p>
         </div>
 
         {/* The four steps. */}
@@ -78,8 +85,8 @@ export function PricingStrip() {
 
         <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-small text-ash">
-            Projects from <span className="text-bone">{entryPrice}</span>
-            <span className="text-brand-ink"> · {quarterlySaving}</span>
+            Subscriptions from <span className="text-bone">{verticalCards.find((card) => card.key === "brand-design")?.from}</span>
+            {" · "}AI content from <span className="text-bone">{entryPrice}</span>
           </p>
           <div className="flex flex-wrap gap-3">
             <span data-track="home-memberships:pricing">

@@ -4,14 +4,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, Minus, Plus, TableProperties } from "lucide-react";
 import { useId, useState } from "react";
 
+import { AddToCart } from "@/components/genesis/cart";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Overlay } from "@/components/genesis/overlay";
 import { Reveal } from "@/components/genesis/reveal";
-import { monthlyListFigure, price, quarterlySaving } from "@/lib/money";
+import { productId } from "@/lib/cart";
+import { monthlyListFigure, price } from "@/lib/money";
 import { planGlossary, planTerms } from "@/lib/pricing";
-import type { Plan, PlanGrid as PlanGridData } from "@/lib/verticals/types";
+import type { Plan, PlanGrid as PlanGridData, VerticalKey } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 import { CheckList, SectionHead } from "./parts";
+import { tierGlow, tierGradient } from "./tier-colors";
 
 export type Billing = "monthly" | "quarterly";
 
@@ -32,8 +35,11 @@ export function PlanGrid({
   id,
   compact = false,
   showCompare = true,
+  vertical,
 }: {
   data: PlanGridData;
+  /** Whose plans — the cards' Purchase / Add to cart put that membership in the cart. */
+  vertical?: VerticalKey;
   id?: string;
   compact?: boolean;
   /** /pricing leaves it out: the cards themselves say what each plan includes. */
@@ -82,7 +88,7 @@ export function PlanGrid({
       <ul className={cn("grid gap-4 lg:grid-cols-3", compact ? "mt-6" : "mt-10")}>
         {data.plans.map((plan, index) => (
           <Reveal as="li" key={plan.name} delay={0.05 * index} className="flex">
-            <PlanCard plan={plan} billing={billing} showInclusions={perCard && includedOpen} />
+            <PlanCard plan={plan} tier={index} billing={billing} showInclusions={perCard && includedOpen} vertical={vertical} />
           </Reveal>
         ))}
       </ul>
@@ -317,7 +323,6 @@ export function BillingToggle({
           ))}
         </div>
       </div>
-      <p className="text-small text-brand-ink">{quarterlySaving}</p>
       <p className="text-small text-faint">
         {value === "quarterly" ? "Paid upfront for 3 months." : "Billed month to month."}
       </p>
@@ -329,30 +334,50 @@ function PlanCard({
   plan,
   billing,
   showInclusions,
+  vertical,
+  tier,
 }: {
   plan: Plan;
+  /** Its place in the grid — which of the three tier gradients it wears. */
+  tier: number;
   billing: Billing;
   showInclusions: boolean;
+  vertical?: VerticalKey;
 }) {
+  const gradient = tierGradient(tier);
+  /*
+    DRAWN LIKE THE ONE-TIME CARD, EACH TIER IN ITS OWN GRADIENT (Genesis, 28
+    Sep 2026: "make this according to image 2 … 3 different gradients"): a
+    1px gradient edge, a solid card, a glow, the name and badge in the tier's
+    colours and its points as the tier's dots. Theme tokens throughout, so it
+    holds on the light theme as well as the dark.
+  */
   return (
-    <article
+    <div
       className={cn(
-        "relative flex w-full flex-col overflow-hidden rounded-panel p-6 sm:p-7",
-        plan.featured
-          ? "glass glass-strong glass-lit border border-brand/60 shadow-[0_0_0_1px_rgb(255_197_22/0.15),0_24px_64px_-24px_rgb(255_197_22/0.35)]"
-          : "glass glass-lit",
+        "flex w-full rounded-panel p-px",
+        plan.featured ? "shadow-[0_30px_80px_-30px_var(--tier-glow)]" : "shadow-[0_24px_60px_-36px_var(--tier-glow)]",
       )}
+      style={{ background: gradient, ["--tier-glow" as string]: tierGlow(tier) }}
     >
-      {plan.featured && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -top-24 left-1/2 size-56 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl"
-        />
-      )}
+    <article className="relative flex w-full flex-col overflow-hidden rounded-panel bg-ink p-6 sm:p-7">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full blur-3xl"
+        style={{ background: tierGlow(tier) }}
+      />
       <div className="relative flex items-start justify-between gap-3">
-        <h3 className="font-display text-h3 font-normal leading-none tracking-tight text-bone">{plan.name}</h3>
+        <h3
+          className="bg-clip-text font-display text-h3 font-normal leading-none tracking-tight text-transparent"
+          style={{ backgroundImage: gradient }}
+        >
+          {plan.name}
+        </h3>
         {plan.badge && (
-          <span className="rounded-full bg-brand px-3 py-1 text-micro uppercase tracking-[0.14em] text-on-brand">
+          <span
+            className="rounded-full px-3 py-1 text-micro uppercase tracking-[0.14em] text-white"
+            style={{ background: gradient }}
+          >
             {plan.badge}
           </span>
         )}
@@ -378,7 +403,14 @@ function PlanCard({
         </p>
       </div>
 
-      <CheckList items={plan.features} className="relative mt-6" />
+      <ul className="relative mt-6 space-y-2.5">
+        {plan.features.map((feature) => (
+          <li key={feature} className="flex gap-3 text-body leading-snug text-bone">
+            <span aria-hidden className="mt-[0.5em] size-1.5 shrink-0 rounded-full" style={{ background: gradient }} />
+            {feature}
+          </li>
+        ))}
+      </ul>
 
       <AnimatePresence initial={false}>
         {showInclusions && plan.inclusions && (
@@ -390,7 +422,7 @@ function PlanCard({
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="relative overflow-hidden"
           >
-            <div className="mt-6 border-t border-white/10 pt-5">
+            <div className="mt-6 border-t border-[var(--glass-border)] pt-5">
               <p className="micro-label">What&rsquo;s included</p>
               <ul className="mt-3 space-y-2">
                 {plan.inclusions.map(({ item, included }) => (
@@ -399,12 +431,12 @@ function PlanCard({
                       aria-hidden
                       className={cn(
                         "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full",
-                        included ? "bg-brand/20 text-brand-ink" : "bg-white/5 text-faint",
+                        included ? "bg-brand/20 text-brand-ink" : "bg-[var(--hover-wash)] text-faint",
                       )}
                     >
                       {included ? <Check className="size-2.5" strokeWidth={3} /> : <Minus className="size-2.5" strokeWidth={3} />}
                     </span>
-                    <span className={included ? "text-bone" : "text-faint line-through decoration-white/20"}>
+                    <span className={included ? "text-bone" : "text-faint line-through decoration-[var(--glass-border)]"}>
                       {typeof included === "string" ? `${item}: ${included}` : item}
                       <span className="sr-only">{included ? " — included" : " — not included"}</span>
                     </span>
@@ -417,15 +449,26 @@ function PlanCard({
       </AnimatePresence>
 
       <div className="relative mt-auto pt-8" data-track={`plan:${plan.name}`}>
-        <GlassButton
-          href={plan.cta.href}
-          variant={plan.featured ? "brand" : "glass"}
-          arrow
-          className="w-full"
-        >
-          {plan.cta.label}
-        </GlassButton>
+        {/*
+          PURCHASE OR ADD TO CART (Genesis, 28 Sep 2026) — with the billing the
+          grid's switch shows. Without a vertical (nothing to buy) the plan's
+          own button stays.
+        */}
+        {vertical ? (
+          <AddToCart
+            id={productId(vertical, "membership", plan.name)}
+            billing={billing}
+            purchase
+            variant={plan.featured ? "brand" : "glass"}
+            className="[&>*]:min-w-[8.5rem]"
+          />
+        ) : (
+          <GlassButton href={plan.cta.href} variant={plan.featured ? "brand" : "glass"} arrow className="w-full">
+            {plan.cta.label}
+          </GlassButton>
+        )}
       </div>
     </article>
+    </div>
   );
 }

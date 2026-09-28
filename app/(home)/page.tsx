@@ -6,7 +6,6 @@ import { AiContent } from "./components/ai-content";
 import { BrandingDesign } from "./components/branding-design";
 import { CaseStudies } from "./components/case-studies";
 import { ClientLogos } from "./components/client-logos";
-import { FooterCta } from "./components/footer-cta";
 import { InfluencerMarketing } from "./components/influencer-marketing";
 import { Portfolio } from "./components/portfolio";
 import { PricingStrip } from "./components/pricing-strip";
@@ -143,8 +142,11 @@ export default function HomePage() {
       */}
       <Portfolio />
 
-      {/* 10 — let's build something iconic. */}
-      <FooterCta />
+      {/*
+        NO FORM ON THE HOMEPAGE (Genesis, 28 Sep 2026). The page ends on the
+        footer's booking calendar and membership card, which carries
+        id="contact", so every "contact" link still lands.
+      */}
     </main>
   );
 }

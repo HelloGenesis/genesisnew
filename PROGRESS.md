@@ -1146,3 +1146,13 @@ npm run db:migrate # create + apply a migration (dev)
 npm run db:deploy  # apply pending migrations (prod/CI)
 npm run db:studio  # browse data
 ```
+
+## 28 Sep 2026 — Membership card art, format showcase, plan folds, cart & Razorpay checkout
+
+- Membership card: Genesis's own artwork (`public/brand/genesis-membership-card.webp`) replaces the CSS-drawn card.
+- AI Labs "See what you can create": each format card opens its work (case study or film), with "More <format>" inside the window and arrows across all formats. Dyson footage still to come (Product Visuals uses the property visuals meanwhile).
+- "What every video includes" and "Video types" (AI Labs) and the Starter breakdown (Studios) fold under the plans as collapsible rows. Premium AI Video turnaround set to 3–5 business days — to confirm.
+- Cart: `lib/cart.ts` (catalogue from the existing price lists, bundle saving 5% at 3+ / 10% at 5+ add-ons & one-time items, 18% GST), `components/genesis/cart.tsx` (provider, nav bag, slide-out cart, Add to cart / Purchase), `/cart`, `/cart/complete` (signature-verified), `/api/checkout` (Razorpay Payment Link, WhatsApp fallback without keys), `/api/razorpay/webhook`.
+- One-time card per division (`offer/starter-pack.tsx` → `OneTimeCard`): violet-to-coral identity, "Not ready to subscribe?" rule, and the division's add-ons listed inside as one-time products (`oneTimeAddOns` in lib/cart leaves out per-month extras, % surcharges and at-actual costs). AI leads with the AI Content Starter; Studios and Brand & Design have their own cards, on their pages and their /pricing tabs. "Save 10% by going with the quarterly plan." line removed (the switch's badge says it).
+- Separate "Need more?" add-on sections removed on all three division pages and /pricing tabs (offer/add-ons.tsx deleted) — every add-on now lives in its division's one-time card; the few that only attach to a membership or shoot are listed as a note in the card.
+- "What's included" dropdown on every one-time product tile and on every cart line (`IncludedList`; `includes` on add-on data and on each catalogue product). TODO(genesis): review the includes written for the AI and Studios add-ons — the brief gave names and prices only.

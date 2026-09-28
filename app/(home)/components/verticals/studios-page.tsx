@@ -1,11 +1,12 @@
 import Image from "next/image";
 
 import { GlassButton } from "@/components/genesis/glass-button";
+import { AddToCart } from "@/components/genesis/cart";
 import { Reveal } from "@/components/genesis/reveal";
+import { productId } from "@/lib/cart";
 import { mediaUrl } from "@/lib/media-url";
 import { servicePage } from "@/lib/services";
 import {
-  studiosAddOns,
   studiosClosing,
   studiosEveryVideo,
   studiosHero,
@@ -17,12 +18,13 @@ import {
   studiosTwoWays,
 } from "@/lib/verticals/studios";
 import { cn } from "@/lib/utils";
-import { AddOnsBlock } from "../offer/add-ons";
 import { ClosingBand, IconCards, StepsBlock, TurnaroundBlock } from "../offer/blocks";
 import { CaseStudiesRow, LogoStrip, WorkSection } from "../offer/page-furniture";
-import { CheckList, CollapsibleSection, OfferSection, PlanBand, SectionHead } from "../offer/parts";
+import { CheckList, OfferSection, PlanBand, PlanDetails, SectionHead } from "../offer/parts";
 import { PlanGrid } from "../offer/plan-grid";
+import { StudiosOneTime } from "../offer/starter-pack";
 import { VerticalHero } from "../offer/vertical-hero";
+import { VideoRail } from "../offer/video-rail";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("content-production");
@@ -61,6 +63,15 @@ export function StudiosPageView() {
           ...studiosHero.thumbs.map((src) => ({ src })),
         ]}
         note={studiosHero.note}
+        /* The same video rail as AI Labs, with Studios' shoot work. */
+        visual={
+          <div>
+            <p aria-hidden className="mb-4 -rotate-2 font-serif text-lead italic text-bone/80">
+              {studiosHero.note}
+            </p>
+            <VideoRail videos={studiosHero.videos} label="Genesis Studios work" />
+          </div>
+        }
       />
 
       <LogoStrip />
@@ -120,49 +131,39 @@ export function StudiosPageView() {
         </ul>
       </OfferSection>
 
-      {/* SECTION 03 — CONTENT MONTHLY */}
+      {/*
+        SECTION 03 — CONTENT MONTHLY, with what the plans buy folded under
+        them: what every video includes and the Starter breakdown.
+      */}
       <PlanBand>
         <OfferSection>
-          <PlanGrid data={studiosPlans} id="pricing" />
+          <PlanGrid data={studiosPlans} vertical="studios" id="pricing" />
+          <PlanDetails id="included" title="What every video includes" summary={`${studiosEveryVideo.heading} ${studiosEveryVideo.body.join(" ")}`}>
+            <IconCards items={studiosEveryVideo.items} columns={3} />
+          </PlanDetails>
+          <PlanDetails title={`${studiosStarter.heading} ${studiosStarter.headingAccent}`} summary={studiosStarter.body[0]}>
+            <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
+              <IconCards items={studiosStarter.items} columns={3} className="lg:grid-cols-3" />
+              <Reveal className="glass glass-lit relative overflow-hidden rounded-panel p-6">
+                <Image
+                  src={mediaUrl(studiosStarter.image)}
+                  alt=""
+                  fill
+                  sizes="20rem"
+                  className="object-cover opacity-25"
+                />
+                <div className="relative">
+                  <p className="micro-label">{studiosStarter.includesHeading}</p>
+                  <p className="mt-3 font-display text-lead text-bone">{studiosStarter.includesLead}</p>
+                  <p className="mt-1 text-small text-ash">{studiosStarter.includesSub}</p>
+                  <CheckList items={studiosPlans.included?.items ?? []} className="mt-4 [&_li]:text-small" />
+                </div>
+              </Reveal>
+            </div>
+          </PlanDetails>
+          <StudiosOneTime />
         </OfferSection>
       </PlanBand>
-
-      {/* SECTION 04 — EVERY VIDEO, opened on demand */}
-      <CollapsibleSection
-        id="included"
-        label={studiosEveryVideo.label}
-        heading={studiosEveryVideo.heading}
-        body={studiosEveryVideo.body}
-      >
-        <IconCards items={studiosEveryVideo.items} columns={3} />
-      </CollapsibleSection>
-
-      {/* SECTION 05 — STARTER BREAKDOWN, opened on demand */}
-      <CollapsibleSection
-        label={studiosStarter.label}
-        heading={studiosStarter.heading}
-        accent={studiosStarter.headingAccent}
-        body={studiosStarter.body}
-      >
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
-          <IconCards items={studiosStarter.items} columns={3} className="lg:grid-cols-3" />
-          <Reveal className="glass glass-lit relative overflow-hidden rounded-panel p-6">
-            <Image
-              src={mediaUrl(studiosStarter.image)}
-              alt=""
-              fill
-              sizes="20rem"
-              className="object-cover opacity-25"
-            />
-            <div className="relative">
-              <p className="micro-label">{studiosStarter.includesHeading}</p>
-              <p className="mt-3 font-display text-lead text-bone">{studiosStarter.includesLead}</p>
-              <p className="mt-1 text-small text-ash">{studiosStarter.includesSub}</p>
-              <CheckList items={studiosPlans.included?.items ?? []} className="mt-4 [&_li]:text-small" />
-            </div>
-          </Reveal>
-        </div>
-      </CollapsibleSection>
 
       {/* SECTION 06 — HOW IT WORKS */}
       <StepsBlock data={studiosHowItWorks} id="how-it-works" />
@@ -175,11 +176,6 @@ export function StudiosPageView() {
 
       {/* SECTION 08 + 09 — CONTENT SHOOT and what every shoot includes */}
       <ContentShoot />
-
-      {/* SECTION 10 — ADD-ONS */}
-      <OfferSection>
-        <AddOnsBlock data={studiosAddOns} />
-      </OfferSection>
 
       {/* The work section — the whole library, filterable, as on the homepage. */}
       <WorkSection verticals={["All"]} showFilters />
@@ -238,9 +234,12 @@ function ContentShoot() {
                   </div>
                 )}
                 <div className="mt-auto pt-8">
-                  <GlassButton href={pack.cta.href} variant={featured ? "brand" : "glass"} arrow className="w-full">
-                    {pack.cta.label}
-                  </GlassButton>
+                  <AddToCart
+                    id={productId("studios", "one-time", pack.name)}
+                    purchase
+                    variant={featured ? "brand" : "glass"}
+                    className="[&>*]:min-w-[8.5rem]"
+                  />
                 </div>
               </article>
             </Reveal>

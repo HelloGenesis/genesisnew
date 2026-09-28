@@ -7,7 +7,7 @@
  * matrix here" — the advice is followed and not printed.
  */
 
-import { price } from "../money";
+import { inr, price } from "../money";
 import { bookingHref, enquiryHref, joinHref } from "../pricing";
 import type { AddOns, Closing, Faq, IconCard, PlanGrid, Steps, Turnaround } from "./types";
 
@@ -29,12 +29,17 @@ export const aiHero = {
     chosen. `id` is the clip's name in /work/clips.
   */
   videos: [
-    { id: "ai-lab-shivam-sh1", eyebrow: "AI Video", title: "Founder-led reel" },
+    /*
+      Genesis's order (28 Sep 2026): Tanvi, Adi, Diya, Bharat, then Shivam's
+      TV film. `study` is the written case study a card opens, by page slug,
+      where the clip is not already filed under one; a card with neither
+      opens the film alone.
+    */
     { id: "ai-lab-tanvi-uiiui", eyebrow: "AI Avatar", title: "Tanvi" },
-    { id: 35, eyebrow: "Product Visual", title: "Genesis Estate" },
-    { id: "ai-lab-2-1-9x16-health-returns-activ-yuva", eyebrow: "Campaign Creative", title: "Activ Yuva" },
-    { id: "ai-lab-bharat-bharat", eyebrow: "Founder Content", title: "Advocate Bharat" },
-    { id: "ai-lab-1-2-9x16-main-product-explainer-activ-yuva", eyebrow: "Explainer", title: "Product explainer" },
+    { id: "ai-lab-1-2-9x16-main-product-explainer-activ-yuva", eyebrow: "AI Avatar", title: "Adi", study: "abhi-activ-yuva-adi-and-diya" },
+    { id: "ai-lab-2-1-9x16-health-returns-activ-yuva", eyebrow: "AI Avatar", title: "Diya", study: "abhi-activ-yuva-adi-and-diya" },
+    { id: "ai-lab-bharat-bharat", eyebrow: "Founder Content", title: "Bharat" },
+    { id: "ai-lab-shivam-sh2", eyebrow: "AI Video", title: "Shivam" },
   ],
   /* The collage: Genesis's own AI Lab output. */
   images: [
@@ -50,13 +55,79 @@ export const aiFormats = {
   heading: "See what you",
   headingAccent: "can create.",
   body: "One system. Multiple formats. Ready to publish across your brand.",
+  /*
+    EACH FORMAT OPENS ITS WORK (Genesis, 28 Sep 2026). A card opens the first
+    piece in `work` — its written case study where there is one, the film
+    alone where there is not — and the window's arrows and "More like this"
+    walk the rest of that format before moving on to the next. The lead
+    pieces are Genesis's: House of Hiranandani, Adi for Aditya Birla Health
+    Insurance, Tanvi, then Adi again for the explainers.
+
+    TODO(content): Genesis asked for Dyson under Product Visuals; there is no
+    Dyson footage in the catalogue yet, so the property visuals stand in.
+  */
   items: [
-    { title: "AI Videos", body: "Scroll-stopping AI-powered brand content.", image: "/work/posters/38.jpg" },
-    { title: "AI Avatars", body: "Realistic digital versions of founders, creators and spokespeople.", image: "/avatars/diya.jpg" },
-    { title: "Campaign Creatives", body: "Campaign-ready visuals built around your message.", image: "/work/posters/ai-lab-tanvi-b2813828.jpg" },
-    { title: "Product Visuals", body: "Put your product into environments without another production day.", image: "/work/posters/34.jpg" },
-    { title: "Founder Content", body: "Consistent founder-led content without constant shoots.", image: "/work/posters/ai-lab-bharat-bharat.jpg" },
-    { title: "Explainers", body: "Turn complex ideas into easy-to-understand visual content.", image: "/work/posters/ai-lab-1-2-9x16-main-product-explainer-activ-yuva.jpg" },
+    {
+      title: "AI Videos",
+      body: "Scroll-stopping AI-powered brand content.",
+      image: "/work/posters/32.jpg",
+      work: [
+        { id: 32, eyebrow: "AI Video", title: "House of Hiranandani" },
+        { id: "ai-lab-sinet-english-v004", eyebrow: "AI Video", title: "SiNet Seervi Township" },
+        { id: 38, eyebrow: "AI Video", title: "Sea Facing Alibag" },
+        { id: "ai-lab-shivam-sh1", eyebrow: "AI Video", title: "Shivam" },
+      ],
+    },
+    {
+      title: "AI Avatars",
+      body: "Realistic digital versions of founders, creators and spokespeople.",
+      image: "/avatars/adi.jpg",
+      work: [
+        { id: "ai-lab-1-2-9x16-main-product-explainer-activ-yuva", eyebrow: "Aditya Birla Health Insurance", title: "Adi", study: "abhi-activ-yuva-adi-and-diya" },
+        { id: 29, eyebrow: "Aditya Birla Health Insurance", title: "Adi · OPD Cover" },
+        { id: 31, eyebrow: "Aditya Birla Health Insurance", title: "Adi & Diya · Launch" },
+      ],
+    },
+    {
+      title: "Campaign Creatives",
+      body: "Campaign-ready visuals built around your message.",
+      image: "/work/posters/ai-lab-tanvi-b2813828.jpg",
+      work: [
+        { id: "ai-lab-tanvi-uiiui", eyebrow: "AI Avatar", title: "Tanvi" },
+        { id: "ai-lab-tanvi-b2813828", eyebrow: "Campaign Creative", title: "Tanvi" },
+        { id: "ai-lab-tanvi-photos", eyebrow: "Campaign Creative", title: "Tanvi · Stills" },
+        { id: 30, eyebrow: "Aditya Birla Health Insurance", title: "Diya · Maternity Cover" },
+      ],
+    },
+    {
+      title: "Product Visuals",
+      body: "Put your product into environments without another production day.",
+      image: "/work/posters/34.jpg",
+      work: [
+        { id: 34, eyebrow: "Product Visual", title: "Ghatkopar Godown" },
+        { id: 35, eyebrow: "Product Visual", title: "Chembur Commercial Office" },
+        { id: 36, eyebrow: "Product Visual", title: "Vashi Petrol Pump" },
+        { id: 37, eyebrow: "Product Visual", title: "Prajapati Ornate" },
+      ],
+    },
+    {
+      title: "Founder Content",
+      body: "Consistent founder-led content without constant shoots.",
+      image: "/work/posters/ai-lab-bharat-bharat.jpg",
+      work: [
+        { id: "ai-lab-bharat-bharat", eyebrow: "Founder Content", title: "Advocate Bharat" },
+        { id: "ai-lab-shivam-sh2", eyebrow: "Founder Content", title: "Shivam" },
+      ],
+    },
+    {
+      title: "Explainers",
+      body: "Turn complex ideas into easy-to-understand visual content.",
+      image: "/work/posters/ai-lab-1-2-9x16-main-product-explainer-activ-yuva.jpg",
+      work: [
+        { id: "ai-lab-1-2-9x16-main-product-explainer-activ-yuva", eyebrow: "Explainer", title: "Adi · Activ Yuva", study: "abhi-activ-yuva-adi-and-diya" },
+        { id: "ai-lab-2-1-9x16-health-returns-activ-yuva", eyebrow: "Explainer", title: "Diya · Health Returns", study: "abhi-activ-yuva-adi-and-diya" },
+      ],
+    },
   ],
 } as const;
 
@@ -197,6 +268,41 @@ export const aiPlans: PlanGrid = {
   },
 };
 
+/*
+  THE AI CONTENT STARTER — a one-time pack for a brand not ready to subscribe
+  (Genesis, 28 Sep 2026). It replaces "AI Avatar Setup" as the site's entry
+  product.
+
+  DELIBERATELY THE BASICS. Genesis first proposed 4 videos + 2 creatives;
+  at ₹24,000 that is ~₹6,000 a video, against ~₹15,800 on the Starter plan and
+  ₹24,999 for a single add-on video, so two packs would out-deliver a month of
+  Starter at half the price and nobody would subscribe. Two videos and two
+  creatives, no avatar, no lip-sync, no brand styling: enough to judge the
+  work, clearly less than a membership, and capped at two purchases a brand.
+
+  The price is shown as ₹24,000/- exactly, as Genesis wrote it — an
+  exception to the ₹1-off rule in lib/money.
+*/
+export const aiStarterPack = {
+  label: "One-time · No subscription",
+  name: "AI Content Starter",
+  pitch: "Try AI content before you subscribe.",
+  price: inr(24000),
+  includes: [
+    "2 AI videos (up to 20 sec, 9:16)",
+    "2 AI campaign creatives",
+    "Basic stitching of the videos",
+    "Your product integrated",
+    "Stock footage + background music",
+    "Standard AI voiceover (1 language)",
+    "1 revision round",
+    "Delivered in about 7 working days",
+  ],
+  excludes: ["AI avatar / persona", "Voice clone or lip-sync", "Motion graphics", "Brand fonts & styling"],
+  limit: "Up to 2 purchases per brand — then continue on a membership.",
+  cta: "Start with AI Content Starter",
+};
+
 export const aiEveryVideo: { label: string; heading: string; body: string; items: IconCard[] } = {
   label: "Every video",
   heading: "From idea to ready-to-publish.",
@@ -254,6 +360,8 @@ export const aiVideoTiers = {
         "Captions & supers",
         "Brand fonts, colours & styling",
       ],
+      /* TODO(content): Genesis to confirm — the brief gave Standard and Advanced only. */
+      turnaround: "3–5 business days",
       featured: true,
     },
     {
@@ -329,7 +437,12 @@ export const aiTurnaround: Turnaround = {
 export const aiAddOns: AddOns = {
   label: "Add-ons",
   heading: "Need more?",
-  body: "Scale your membership when a campaign needs something extra.",
+  /*
+    ON A MEMBERSHIP OR ON THE ONE-TIME PACK (Genesis, 28 Sep 2026): the
+    extras are not only for subscribers — a brand trying the AI Content
+    Starter can add a language, a ratio or a creative pack to it too.
+  */
+  body: "Add extras to any membership, or to a one-time AI Content Starter.",
   chips: [
     { label: "Additional Videos", icon: "video" },
     { label: "Additional Avatars", icon: "avatar" },
@@ -341,16 +454,16 @@ export const aiAddOns: AddOns = {
   button: "View Add-ons",
   /* "Do not show all those prices on the default page" — they open on click. */
   items: [
-    { name: "Additional Standard AI Video", price: price(25000) },
-    { name: "Additional AI Avatar / Persona", price: price(25000) },
-    { name: "Advanced Motion Upgrade", price: `+${price(15000)} per video` },
-    { name: "Additional Language Version", price: `${price(5000)} per video` },
-    { name: "Additional Aspect-Ratio Master", price: `${price(4000)} per video` },
-    { name: "AI Product / Campaign Creative Pack — 10 images", price: price(20000) },
-    { name: "AI Creative Pack — 30 images", price: price(45000) },
+    { name: "Additional Standard AI Video", price: price(25000), includes: ["1 Standard AI video, 20–30 sec", "AI avatar, captions & stock footage", "Basic AI voiceover (any voice) + background music", "Basic transitions"] },
+    { name: "Additional AI Avatar / Persona", price: price(25000), includes: ["1 new AI avatar or persona", "Look and voice set up for your brand", "Reusable in every future video"] },
+    { name: "Advanced Motion Upgrade", price: `+${price(15000)} per video`, includes: ["Upgrades one video to Advanced", "Advanced AI production", "Heavier animation", "Complex visual treatments"] },
+    { name: "Additional Language Version", price: `${price(5000)} per video`, includes: ["One video, remade in one more language", "New AI voiceover in that language", "Captions in that language"] },
+    { name: "Additional Aspect-Ratio Master", price: `${price(4000)} per video`, includes: ["One video, re-framed to one more ratio (1:1, 4:5, 16:9)", "Captions and layout re-set for the new frame"] },
+    { name: "AI Product / Campaign Creative Pack — 10 images", price: price(20000), includes: ["10 AI campaign images", "Your product placed in campaign environments", "Sized for social and ads"] },
+    { name: "AI Creative Pack — 30 images", price: price(45000), includes: ["30 AI campaign images", "Your product placed in campaign environments", "Sized for social and ads"] },
     /* The brief leaves this price blank; it is quoted, not invented. */
-    { name: "Priority 48-Hour Production", price: "On request" },
-    { name: "Bulk Personalised Video Generation", price: "Custom" },
+    { name: "Priority 48-Hour Production", price: "On request", includes: ["Your request moved to the front of the queue", "Delivery in about 48 hours, where capacity allows"] },
+    { name: "Bulk Personalised Video Generation", price: "Custom", includes: ["Personalised AI videos at scale — names, cities, offers", "Scoped and quoted to your volume"] },
   ],
 };
 

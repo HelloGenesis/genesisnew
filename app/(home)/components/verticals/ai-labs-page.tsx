@@ -4,7 +4,6 @@ import { Reveal } from "@/components/genesis/reveal";
 import { mediaUrl } from "@/lib/media-url";
 import { servicePage } from "@/lib/services";
 import {
-  aiAddOns,
   aiClosing,
   aiCreatives,
   aiEveryVideo,
@@ -16,12 +15,12 @@ import {
   aiTurnaround,
   aiVideoTiers,
 } from "@/lib/verticals/ai-labs";
-import { AddOnsBlock } from "../offer/add-ons";
 import { ClosingBand, FaqBlock, IconCards, StepsBlock, TurnaroundBlock, VideoTiers } from "../offer/blocks";
-import { MediaRail } from "../offer/media-rail";
+import { FormatShowcase } from "../offer/format-showcase";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
-import { CollapsibleSection, OfferSection, PlanBand, SectionHead } from "../offer/parts";
+import { PlanDetails, OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { PlanGrid } from "../offer/plan-grid";
+import { StarterPack } from "../offer/starter-pack";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VideoRail } from "../offer/video-rail";
 import { VerticalPage } from "../offer/vertical-page";
@@ -72,7 +71,7 @@ export function AiLabsPageView() {
 
       {/* SECTION 2 — SHOW THE OUTPUT */}
       <OfferSection id="formats" labelledBy="formats-heading">
-        <MediaRail
+        <FormatShowcase
           label={aiFormats.label}
           items={aiFormats.items}
           headerSlot={
@@ -88,27 +87,22 @@ export function AiLabsPageView() {
         />
       </OfferSection>
 
-      {/* SECTION 3 — PRICING */}
+      {/*
+        SECTION 3 — PRICING, with what the plans buy folded underneath:
+        what every video includes and what separates the video types.
+      */}
       <PlanBand>
         <OfferSection>
-          <PlanGrid data={aiPlans} id="pricing" />
+          <PlanGrid data={aiPlans} vertical="ai-labs" id="pricing" />
+          <PlanDetails id="included" title="What every video includes" summary={`${aiEveryVideo.heading} ${aiEveryVideo.body}`}>
+            <IconCards items={aiEveryVideo.items} />
+          </PlanDetails>
+          <PlanDetails id="video-types" title={`Video types — ${aiVideoTiers.heading}`} summary={aiVideoTiers.body}>
+            <VideoTiers data={aiVideoTiers} bare />
+          </PlanDetails>
+          <StarterPack />
         </OfferSection>
       </PlanBand>
-
-      {/* SECTION 4 — WHAT EVERY VIDEO INCLUDES, opened on demand */}
-      <CollapsibleSection
-        id="included"
-        label={aiEveryVideo.label}
-        heading={aiEveryVideo.heading}
-        body={aiEveryVideo.body}
-      >
-        <IconCards items={aiEveryVideo.items} />
-      </CollapsibleSection>
-
-      {/* What separates Standard, Premium and Advanced — see aiVideoTiers. */}
-      <OfferSection id="video-types">
-        <VideoTiers data={aiVideoTiers} />
-      </OfferSection>
 
       {/* SECTION 5 — CAMPAIGN CREATIVES */}
       <OfferSection labelledBy="creatives-heading">
@@ -152,11 +146,6 @@ export function AiLabsPageView() {
 
       {/* SECTION 7 — TURNAROUND */}
       <TurnaroundBlock data={aiTurnaround} />
-
-      {/* SECTION 8 — ADD-ONS */}
-      <OfferSection>
-        <AddOnsBlock data={aiAddOns} />
-      </OfferSection>
 
       <WorkSection verticals={["AI Lab"]} />
 

@@ -21,9 +21,10 @@ import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { PlanBar } from "./plan-bar";
-import { enquiryHref, oneTimeProjects } from "@/lib/pricing";
+import { enquiryHref } from "@/lib/pricing";
+import { aiStarterPack } from "@/lib/verticals/ai-labs";
 
-const avatarSetup = oneTimeProjects.find((project) => project.name === "AI Avatar Setup")!;
+const starter = aiStarterPack;
 import { SectionShell } from "./section-shell";
 
 
@@ -348,18 +349,18 @@ export function AiContent() {
           </p>
         )}
         {/*
-          THE WAY IN, UNDER THE AVATARS. AI Avatar Setup is Genesis's entry
-          product — the lowest price on the site — and the roster above is
-          the best argument for it, so the offer sits where the argument ends.
+          THE WAY IN, UNDER THE AVATARS — the AI Content Starter, Genesis's
+          entry product: a one-time pack for a brand not ready to subscribe.
+          See aiStarterPack in lib/verticals/ai-labs.
         */}
-        <div className="mx-auto mt-6 flex max-w-fit flex-col items-center gap-3 rounded-panel border border-brand/40 sm:rounded-full bg-brand/[0.06] px-5 py-3 text-center sm:flex-row sm:gap-5 sm:py-2 sm:pl-6 sm:pr-2">
+        <div className="mx-auto mt-6 flex max-w-fit flex-col items-center gap-3 rounded-panel border border-brand/40 bg-brand/[0.06] px-5 py-3 text-center sm:flex-row sm:gap-5 sm:rounded-full sm:py-2 sm:pl-6 sm:pr-2">
           <p className="text-small text-ash">
-            <span className="text-bone">{avatarSetup.name}</span> · One-time project · from{" "}
-            <span className="text-brand-ink">{avatarSetup.from}</span>
+            <span className="text-bone">{starter.name}</span> · 2 AI videos + 2 creatives · one-time{" "}
+            <span className="text-brand-ink">{starter.price}</span>
           </p>
-          <span data-track="home-plan:ai-labs:avatar-setup">
-            <GlassButton href={enquiryHref(avatarSetup.name)} variant="brand" size="sm" arrow>
-              Get your AI avatar
+          <span data-track="home-plan:ai-labs:starter">
+            <GlassButton href={enquiryHref(starter.name)} variant="brand" size="sm" arrow>
+              Try AI content
             </GlassButton>
           </span>
         </div>

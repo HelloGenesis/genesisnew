@@ -5,6 +5,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 
 import { GenesisMark } from "@/components/genesis/genesis-mark";
 import { GlassButton } from "@/components/genesis/glass-button";
+import { MembershipCard } from "@/components/genesis/membership-card";
 import { bookingCalendar, bookingUrl, slotHref } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,10 @@ const noop = () => () => {};
 export function BookingCalendar() {
   const mounted = useSyncExternalStore(noop, () => true, () => false);
   return (
-    <div className="glass glass-strong glass-lit relative mb-6 grid overflow-hidden rounded-panel lg:grid-cols-[1fr_1.05fr]">
+    <div
+      id="contact"
+      className="glass glass-strong glass-lit relative mb-6 grid scroll-mt-24 overflow-hidden rounded-panel lg:grid-cols-[1fr_1.05fr]"
+    >
       <Pitch />
       <div className="min-h-[26rem] border-t border-white/10 p-5 sm:p-8 lg:border-l lg:border-t-0">
         {mounted && <Picker />}
@@ -183,11 +187,13 @@ function Pitch() {
           </h2>
           <p className="mt-4 max-w-md text-pretty text-body leading-relaxed text-ash">{bookingCalendar.body}</p>
         </div>
-        <div aria-hidden className="pointer-events-none relative hidden h-32 lg:block">
-          <span className="absolute -bottom-24 -left-10 size-72 rounded-full bg-brand/20 blur-3xl" />
-          <div className="absolute bottom-0 left-0 opacity-15">
-            <GenesisMark compact className="h-24 w-auto" />
-          </div>
+        {/*
+          THE MEMBERSHIP CARD, BESIDE THE CALENDAR — after the Designjoy
+          reference Genesis sent: the thing a call leads to, shown as an object.
+        */}
+        <div className="relative flex justify-center pb-2 pt-4 sm:justify-start lg:pl-4">
+          <span aria-hidden className="absolute -bottom-16 left-10 size-72 rounded-full bg-brand/20 blur-3xl" />
+          <MembershipCard size="lg" tilt={-9} className="relative" />
         </div>
       </div>
   );

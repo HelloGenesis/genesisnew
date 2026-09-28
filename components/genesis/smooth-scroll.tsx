@@ -5,7 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { useEffect } from "react";
 
-import { sectionForPage, isContactHref } from "@/lib/site-config";
+import { isContactHref } from "@/lib/site-config";
 
 /**
  * Lenis smooth scrolling, wired directly into GSAP.
@@ -107,11 +107,13 @@ function installAnchorScrolling(lenis: Lenis | null): () => void {
     if (href.startsWith("#")) hash = href;
     else if (href.startsWith("/#") && onHome) hash = href.slice(1);
     /*
-      A DIVISION PAGE, CLICKED FROM THE HOMEPAGE, scrolls to its section.
-      The link is the real URL so a crawler can find the page; the reader on
-      the landing page gets the scroll they always had. See divisionPages.
+      A DIVISION PAGE ALWAYS OPENS ITS PAGE. Division links clicked on the
+      homepage used to scroll to that division's section instead; Genesis
+      (28 Sep 2026): "for each vertical, wherever clicked, it should go on
+      their dedicated page". So the Brain, the footer and the menu all go to
+      /ai-content-automation, /content-production, /brand-design and
+      /influencer-marketing like any other link.
     */
-    else if (onHome && sectionForPage[href]) hash = `#${sectionForPage[href]}`;
     else return;
 
     const target = resolve(hash);

@@ -82,18 +82,21 @@ type VideoTier = {
 export function VideoTiers({
   data,
   compact = false,
+  bare = false,
 }: {
   data: { label: string; heading: string; body: string; tiers: readonly VideoTier[] };
   compact?: boolean;
+  /** No heading at all — the fold it sits in already names it. */
+  bare?: boolean;
 }) {
   return (
     <div>
-      {compact ? (
+      {bare ? null : compact ? (
         <h4 className="mb-4 font-sans text-body text-bone">{data.heading}</h4>
       ) : (
         <SectionHead label={data.label} heading={data.heading} body={data.body} />
       )}
-      <ul className={cn("grid gap-3 md:grid-cols-3", !compact && "mt-10")}>
+      <ul className={cn("grid gap-3 md:grid-cols-3", !compact && !bare && "mt-10")}>
         {data.tiers.map((tier, index) => (
           <Reveal as="li" key={tier.name} delay={0.05 * index} className="flex">
             <article

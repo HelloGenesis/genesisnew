@@ -161,47 +161,39 @@ export function Chip({ children, className }: { children: ReactNode; className?:
 }
 
 /**
- * A SECTION A READER OPENS, for detail that supports the decision rather than
- * making it — "every video includes", the Starter breakdown. The heading stays
- * in view so the page still says it; the body waits behind "Show details".
- * A native <details>, so it opens without script and find-in-page reaches it.
+ * A DETAIL OF THE PLANS, FOLDED UNDER THEM (Genesis, 28 Sep 2026: "club this
+ * together with the pricing window itself and add collapsible sections").
+ * What every video includes and what separates the video types used to be
+ * sections of their own below the plans; they are answers to the plans'
+ * questions, so they sit in the plans' band as rows that open on demand.
  */
-export function CollapsibleSection({
+export function PlanDetails({
   id,
-  label,
-  heading,
-  accent,
-  body,
+  title,
+  summary,
   children,
 }: {
   id?: string;
-  label?: string;
-  heading: string;
-  accent?: string;
-  body?: readonly string[] | string;
+  title: string;
+  summary?: string;
   children: ReactNode;
 }) {
   return (
-    <OfferSection id={id}>
-      <details className="group">
-        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-          <SectionHead
-            label={label}
-            heading={heading}
-            accent={accent}
-            body={body}
-            aside={
-              <span className="mt-5 inline-flex h-10 items-center gap-2 rounded-full border border-brand/50 px-4 text-small text-bone transition-colors group-hover:bg-brand/10">
-                <span className="group-open:hidden">Show details</span>
-                <span className="hidden group-open:inline">Hide details</span>
-                <span aria-hidden className="text-brand-ink transition-transform duration-300 group-open:rotate-45">+</span>
-              </span>
-            }
-          />
-        </summary>
-        <div className="mt-10">{children}</div>
-      </details>
-    </OfferSection>
+    <details id={id} className="group scroll-mt-28 border-t border-white/10 first-of-type:mt-10 last-of-type:border-b">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block font-sans text-lead leading-snug text-bone">{title}</span>
+          {summary && <span className="mt-1 block text-pretty text-small text-ash">{summary}</span>}
+        </span>
+        <span
+          aria-hidden
+          className="grid size-10 shrink-0 place-items-center rounded-full border border-brand/50 text-lead text-brand-ink transition-transform duration-300 group-open:rotate-45 group-hover:bg-brand/10"
+        >
+          +
+        </span>
+      </summary>
+      <div className="pb-8 pt-2">{children}</div>
+    </details>
   );
 }
 

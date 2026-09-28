@@ -199,10 +199,10 @@ export const designAddOns: AddOns = {
   button: "View Add-ons",
   items: [
     { name: "Additional Brand", price: `${price(20000)} per month`, body: "Add another brand or visual system to your Creative Desk." },
-    { name: "Campaign Concept Sprint", price: `From ${price(35000)}`, body: "Campaign idea, visual direction, key visual and basic campaign system." },
-    { name: "Pitch Deck Design", price: `From ${price(45000)}`, body: "Premium presentation design for sales, credentials or investor decks. Up to approximately 15 slides." },
-    { name: "Landing Page Design", price: `From ${price(75000)}`, body: "Strategic landing-page UI and visual design. Development separate." },
-    { name: "Motion Creative Pack", price: price(40000), body: "Up to 4 lightweight motion creatives." },
+    { name: "Campaign Concept Sprint", price: `From ${price(35000)}`, body: "Campaign idea, visual direction, key visual and basic campaign system.", includes: ["Campaign idea", "Visual direction", "Key visual", "Basic campaign system"] },
+    { name: "Pitch Deck Design", price: `From ${price(45000)}`, body: "Premium presentation design for sales, credentials or investor decks. Up to approximately 15 slides.", includes: ["Premium presentation design", "For sales, credentials or investor decks", "Up to approximately 15 slides"] },
+    { name: "Landing Page Design", price: `From ${price(75000)}`, body: "Strategic landing-page UI and visual design. Development separate.", includes: ["Strategic landing-page UI and visual design", "Development not included"] },
+    { name: "Motion Creative Pack", price: price(40000), body: "Up to 4 lightweight motion creatives.", includes: ["Up to 4 lightweight motion creatives"] },
     { name: "Rush Production", price: "+30%", body: "Priority production where capacity allows." },
   ],
 };

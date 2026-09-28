@@ -4,12 +4,10 @@ import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { mediaUrl } from "@/lib/media-url";
-import { quarterlySaving } from "@/lib/money";
 import { servicePage } from "@/lib/services";
 import {
   brandBuild,
   deskHref,
-  designAddOns,
   designClosing,
   designHero,
   designHowItWorks,
@@ -21,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { BrandingStack } from "../branding-design";
 import { ProductCards } from "./design-products";
-import { AddOnsBlock } from "../offer/add-ons";
+import { DesignOneTime } from "../offer/starter-pack";
 import { ClosingBand, StepsBlock, TurnaroundStrip } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { CaseStudiesRow, LogoStrip, WorkSection } from "../offer/page-furniture";
@@ -73,6 +71,7 @@ export function BrandDesignPageView() {
           body={designProducts.body}
         />
         <ProductCards />
+        <DesignOneTime />
       </OfferSection>
       </PlanBand>
 
@@ -92,11 +91,6 @@ export function BrandDesignPageView() {
 
       {/* SECTION 05 + 06 — PLAN OVERVIEW, with the turnaround directly below it */}
       <PlanOverview />
-
-      {/* SECTION 07 — ADD-ONS */}
-      <OfferSection>
-        <AddOnsBlock data={designAddOns} />
-      </OfferSection>
 
       {/* SECTION 08 — BRAND BUILD */}
       <BrandBuild />
@@ -143,7 +137,6 @@ function PlanOverview() {
               <span className="text-small text-ash">{designOverview.priceSuffix}</span>
             </p>
             <p className="mt-2 text-small text-ash">{designOverview.monthlyNote}</p>
-            <p className="mt-1 text-small text-brand-ink">{quarterlySaving}</p>
             <GlassButton href={deskHref} variant="brand" arrow className="mt-6">
               {designOverview.cta}
             </GlassButton>
