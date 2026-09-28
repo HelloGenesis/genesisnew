@@ -15,7 +15,18 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { COMBO_PERCENT, type Billing, type CartLine, billingNote, findProduct, maxQty, priceCart, rupees, samePackage } from "@/lib/cart";
+import {
+  COMBO_PERCENT,
+  type Billing,
+  type CartLine,
+  billingNote,
+  findProduct,
+  maxQty,
+  priceCart,
+  rupees,
+  samePackage,
+  unitCharge,
+} from "@/lib/cart";
 import { shootNote } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
@@ -429,8 +440,100 @@ export function CartLines({ dense = false }: { dense?: boolean }) {
 }
 
 /** Subtotal, bundle saving, GST and total — and the nudge to the next saving. */
+const COMBO_DISMISSED_KEY = "genesis-combo-dismissed";
+
+/**
+ * THE AI + STUDIOS OFFER, in the order summary. Genesis (29 Sep 2026): give it
+ * a way to close, and make it accurate. So it now says exactly what changes —
+ * which plan, what it costs at THIS cart's billing, and what the combo saves
+ * a month — and that a Studios shoot is Mumbai only, before anyone adds it.
+ * Closing it hides it for this visitor (per browser, like the cart itself).
+ */
+function ComboOffer({ lines, country }: { lines: CartLine[]; country?: string }) {
+  const { add } = useCart();
+  /* Read once, on the client: the summary only renders after the cart has loaded from this browser. */
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return typeof window !== "undefined" && window.localStorage.getItem(COMBO_DISMISSED_KEY) === "1";
+    } catch {
+      return false; // Storage blocked: the offer simply shows.
+    }
+  });
+
+  const totals = priceCart(lines, { country });
+  const suggest = totals.comboSuggest;
+  if (!suggest || dismissed) return null;
+
+  const billing = totals.billing ?? "quarterly";
+  const months = billing === "quarterly" ? 3 : 1;
+  /* The plan's price a month at the cart's billing, and the saving once it is in. */
+  const perMonth = Math.round(unitCharge(suggest, billing) / months);
+  const withIt = priceCart([...lines, { id: suggest.id, qty: 1, billing }], { country });
+  const savesPerMonth = Math.round(withIt.comboDiscount / months);
+  const studios = suggest.vertical === "studios";
+  /* "₹1,59,499" — without the price lists' "/-", which reads badly before "/month". */
+  const plain = (value: number) => rupees(value).replace(/\/-$/, "");
+
+  const dismiss = () => {
+    setDismissed(true);
+    try {
+      window.localStorage.setItem(COMBO_DISMISSED_KEY, "1");
+    } catch {
+      /* Hidden for this visit only. */
+    }
+  };
+
+  return (
+    <div
+      className="relative mb-4 rounded-card p-px"
+      style={{ background: "linear-gradient(115deg, #8b5cf6 0%, #f7788f 55%, #ffb35c 100%)" }}
+    >
+      <div className="rounded-card bg-ink px-4 pb-4 pt-3.5">
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Dismiss this offer"
+          className="absolute right-2 top-2 grid size-8 place-items-center rounded-full text-faint transition-colors hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
+        <p className="pr-8 text-micro uppercase tracking-[0.14em] text-brand-ink">
+          AI + Studios · save {COMBO_PERCENT}% on both
+        </p>
+        <p className="mt-2 text-pretty text-small leading-relaxed text-ash">
+          {totals.comboUpgrade
+            ? `Your Studios plan has no monthly shoot. ${suggest.name} includes one, and with both plans the combo takes ${COMBO_PERCENT}% off each.`
+            : studios
+              ? "Add a Studios plan with a monthly shoot: we film your brand on the day, and your AI plan turns the footage into more content."
+              : "Add an AI plan: avatars, AI video and edits made from every shoot you already have."}
+          {studios && " Shoots are in Mumbai only, for now."}
+        </p>
+        <button
+          type="button"
+          onClick={() => add(suggest.id, { open: false, billing })}
+          className="mt-3 inline-flex w-full items-center justify-between gap-3 rounded-full border border-[var(--glass-border)] px-4 py-2.5 text-left text-small text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          <span className="inline-flex min-w-0 items-center gap-2">
+            <Plus className="size-4 shrink-0 text-brand-ink" aria-hidden />
+            <span className="truncate">
+              {totals.comboUpgrade ? "Switch to" : "Add"} {suggest.group} {suggest.name}
+            </span>
+          </span>
+          <span className="shrink-0 tabular-nums text-ash">{plain(perMonth)}/month</span>
+        </button>
+        {savesPerMonth > 0 && (
+          <p className="mt-2 text-[0.75rem] text-faint">
+            You save {plain(savesPerMonth)} a month across both plans, before GST
+            {billing === "quarterly" ? " · billed quarterly" : ""}.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CartSummary({ country }: { country?: string }) {
-  const { lines, notice, add } = useCart();
+  const { lines, notice } = useCart();
   const totals = priceCart(lines, { country });
   const row = "flex items-baseline justify-between gap-4 text-small";
   const suggest = totals.comboSuggest;
@@ -442,34 +545,7 @@ export function CartSummary({ country }: { country?: string }) {
         </p>
       )}
       {/* The AI + Studios combo, offered when the cart holds only one of the two. */}
-      {suggest && (
-        <div
-          className="mb-4 rounded-card p-px"
-          style={{ background: "linear-gradient(115deg, #8b5cf6 0%, #f7788f 55%, #ffb35c 100%)" }}
-        >
-          <div className="rounded-card bg-ink px-4 py-3">
-            <p className="text-small text-bone">
-              AI content + a Studios shoot works magic for your brand.{" "}
-              <span className="text-ash">
-                {totals.comboUpgrade
-                  ? `Move to a Studios plan with a monthly shoot and save ${COMBO_PERCENT}% on both plans — we capture the best on the day, and AI turns it into more.`
-                  : suggest.vertical === "studios"
-                    ? `Add a Studios plan with a monthly shoot and save ${COMBO_PERCENT}% on both plans — we capture the best on the day, and AI turns it into more.`
-                    : `Add an AI plan and save ${COMBO_PERCENT}% on both plans — AI turns every shoot into more content.`}
-              </span>
-            </p>
-            <button
-              type="button"
-              onClick={() => add(suggest.id, { open: false })}
-              className="mt-2 inline-flex items-center gap-1.5 text-small text-brand-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              <Plus className="size-3.5" aria-hidden />
-              {totals.comboUpgrade ? "Upgrade to" : "Add"} {suggest.group} — {suggest.name} ({rupees(suggest.amount!)} per
-              month)
-            </button>
-          </div>
-        </div>
-      )}
+      {suggest && <ComboOffer lines={lines} country={country} />}
       {totals.nextTier && totals.bundleItems > 0 && (
         <p className="mb-4 rounded-card border border-brand/30 bg-brand/[0.06] px-4 py-3 text-small text-bone">
           Add {totals.nextTier.itemsToGo} more one-time product{totals.nextTier.itemsToGo === 1 ? "" : "s"} to save{" "}
