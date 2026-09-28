@@ -331,6 +331,7 @@ export function GlassNav() {
                         <li key={child.label}>
                           <Link
                             href={child.href}
+                            data-page-link
                             onClick={() => setMenuOpen(false)}
                             className="block rounded-card px-3 py-2.5 text-small text-faint transition-colors hover:bg-[var(--hover-wash)] hover:text-bone"
                           >
@@ -492,6 +493,7 @@ function NavMenu({ item }: { item: NavItem }) {
                     */}
                     <Link
                       href={child.href}
+                      data-page-link
                       onClick={() => setOpen(false)}
                       className="group/col block"
                     >
@@ -546,6 +548,7 @@ function NavMenu({ item }: { item: NavItem }) {
                           <li key={service}>
                             <Link
                               href={child.href}
+                              data-page-link
                               onClick={() => setOpen(false)}
                               className="block text-small leading-snug text-ash transition-colors duration-200 hover:text-[var(--menu-hover)] focus-visible:text-[var(--menu-hover)] focus-visible:outline-none"
                             >

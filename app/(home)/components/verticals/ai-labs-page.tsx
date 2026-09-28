@@ -23,6 +23,7 @@ import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { CollapsibleSection, OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { PlanGrid } from "../offer/plan-grid";
 import { VerticalHero } from "../offer/vertical-hero";
+import { VideoRail } from "../offer/video-rail";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("ai-content-automation");
@@ -56,7 +57,15 @@ export function AiLabsPageView() {
         secondary={{ label: aiHero.secondary, href: "#library" }}
         strip={aiHero.trust}
         images={aiHero.images}
-        note={aiHero.note}
+        /* A rail of Genesis's own AI clips in place of the photo collage. */
+        visual={
+          <div>
+            <p aria-hidden className="mb-4 -rotate-2 font-serif text-lead italic text-bone/80">
+              {aiHero.note}
+            </p>
+            <VideoRail videos={aiHero.videos} />
+          </div>
+        }
       />
 
       <LogoStrip />

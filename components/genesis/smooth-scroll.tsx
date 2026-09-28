@@ -90,6 +90,13 @@ function installAnchorScrolling(lenis: Lenis | null): () => void {
 
     const href = anchor.getAttribute("href");
     if (!href) return;
+    /*
+      A LINK THAT MUST OPEN ITS PAGE. The Services menu names a division's
+      services and Genesis wants each to open the division's own page — not to
+      scroll the homepage to that division's section, which is what the
+      division URLs below are turned into when clicked on the landing page.
+    */
+    if (anchor.hasAttribute("data-page-link")) return;
     /* Nor is any link to the enquiry form: every one of those opens
        WhatsApp now. See isContactHref. */
     if (isContactHref(href)) return;

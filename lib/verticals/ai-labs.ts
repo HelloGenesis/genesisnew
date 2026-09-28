@@ -23,6 +23,19 @@ export const aiHero = {
   secondary: "See AI Work",
   trust: ["AI Avatars", "AI Videos", "Campaign Creatives", "Founder Content"],
   note: "Same you. More content.",
+  /*
+    THE VIDEO RAIL on the right of the hero — Genesis's own AI Lab clips, each
+    labelled by what it is. The first plays on arrival; the rest play when
+    chosen. `id` is the clip's name in /work/clips.
+  */
+  videos: [
+    { id: "ai-lab-shivam-sh1", eyebrow: "AI Video", title: "Founder-led reel" },
+    { id: "ai-lab-tanvi-uiiui", eyebrow: "AI Avatar", title: "Tanvi" },
+    { id: 35, eyebrow: "Product Visual", title: "Genesis Estate" },
+    { id: "ai-lab-2-1-9x16-health-returns-activ-yuva", eyebrow: "Campaign Creative", title: "Activ Yuva" },
+    { id: "ai-lab-bharat-bharat", eyebrow: "Founder Content", title: "Advocate Bharat" },
+    { id: "ai-lab-1-2-9x16-main-product-explainer-activ-yuva", eyebrow: "Explainer", title: "Product explainer" },
+  ],
   /* The collage: Genesis's own AI Lab output. */
   images: [
     { src: "/work/posters/ai-lab-shivam-sh1.jpg", label: "AI Video" },
