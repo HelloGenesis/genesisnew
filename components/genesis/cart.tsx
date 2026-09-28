@@ -32,6 +32,16 @@ import { getLenis } from "./smooth-scroll";
 */
 const STORAGE_KEY = "genesis-cart-v1";
 
+/**
+ * EVERY MEMBERSHIP IN AN ORDER BILLS ON ONE CYCLE. They are charged together
+ * on a single Razorpay subscription, which has one period — so switching one
+ * plan to monthly switches them all, and the server prices them the same way
+ * (priceCart's orderBilling).
+ */
+function syncBilling(lines: CartLine[], billing: Billing): CartLine[] {
+  return lines.map((line) => (findProduct(line.id)?.kind === "membership" ? { ...line, billing } : line));
+}
+
 type CartContext = {
   lines: CartLine[];
   count: number;
@@ -100,13 +110,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       const current = before.filter((line) => !replaced.includes(line));
       const existing = current.find((line) => line.id === id);
+      if (product.kind === "membership") {
+        /* A membership brings its billing to the whole order — see syncBilling. */
+        const billing =
+          options.billing ?? existing?.billing ?? current.find((line) => line.billing)?.billing ?? "quarterly";
+        const next = existing ? current : [...current, { id, qty: 1, billing }];
+        return syncBilling(next, billing);
+      }
       if (existing) {
-        if (product.kind === "membership" || product.amount === undefined) {
-          return current.map((line) => (line.id === id ? { ...line, billing: options.billing ?? line.billing } : line));
-        }
+        if (product.amount === undefined) return current;
         return current.map((line) => (line.id === id ? { ...line, qty: Math.min(maxQty(product), line.qty + (options.qty ?? 1)) } : line));
       }
-      return [...current, { id, qty: options.qty ?? 1, billing: product.kind === "membership" ? (options.billing ?? "quarterly") : undefined }];
+      return [...current, { id, qty: options.qty ?? 1 }];
     });
     if (options.open !== false) setDrawerOpen(true);
   }, []);
@@ -127,7 +142,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 return { ...line, qty: Math.min(product ? maxQty(product) : 99, qty) };
               }),
         ),
-      setBilling: (id, billing) => setLines((current) => current.map((line) => (line.id === id ? { ...line, billing } : line))),
+      setBilling: (_id, billing) => setLines((current) => syncBilling(current, billing)),
       remove: (id) => setLines((current) => current.filter((line) => line.id !== id)),
       clear: () => setLines([]),
       has: (id) => lines.some((line) => line.id === id),
@@ -362,6 +377,7 @@ export function BillingSwitch({ id, billing }: { id: string; billing: Billing })
 export function CartLines({ dense = false }: { dense?: boolean }) {
   const { lines, remove } = useCart();
   const totals = priceCart(lines);
+  const memberships = totals.lines.filter((line) => line.product.kind === "membership").length;
   return (
     <ul className="divide-y divide-[var(--glass-border)]">
       {totals.lines.map((line) => (
@@ -389,7 +405,10 @@ export function CartLines({ dense = false }: { dense?: boolean }) {
               )}
             </div>
             {line.product.kind === "membership" && (
-              <p className="mt-2 text-[0.75rem] text-faint">{billingNote(line.product, line.billing)}</p>
+              <p className="mt-2 text-[0.75rem] text-faint">
+                {billingNote(line.product, line.billing)}
+                {memberships > 1 && " · all memberships in an order share one billing cycle"}
+              </p>
             )}
           </div>
           <div className="flex shrink-0 flex-col items-end justify-between gap-2">
@@ -478,9 +497,18 @@ export function CartSummary({ country }: { country?: string }) {
         <span className="tabular-nums text-bone">{rupees(totals.gst)}</span>
       </p>
       <p className="flex items-baseline justify-between gap-4 border-t border-[var(--glass-border)] pt-3">
-        <span className="text-body text-bone">Total</span>
+        <span className="text-body text-bone">{totals.billing ? "Due today" : "Total"}</span>
         <span className="font-display text-h3 font-normal leading-none tabular-nums text-bone">{rupees(totals.total)}</span>
       </p>
+      {/* A membership renews until cancelled — say what, and how often, before anyone pays. */}
+      {totals.billing && (
+        <p className={cn(row, "pt-1")}>
+          <span className="text-ash">
+            Then {totals.billing === "quarterly" ? "every 3 months" : "every month"}, until you cancel
+          </span>
+          <span className="tabular-nums text-bone">{rupees(totals.recurring.total)}</span>
+        </p>
+      )}
       {totals.inPerson && (
         <p className="pt-1 text-[0.75rem] leading-relaxed text-faint">{shootNote}</p>
       )}

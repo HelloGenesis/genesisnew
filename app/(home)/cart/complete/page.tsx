@@ -1,11 +1,10 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-
 import type { Metadata } from "next";
 
 import { ClearCart } from "@/components/genesis/clear-cart";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { bookingHref } from "@/lib/pricing";
+import { signatureMatches } from "@/lib/razorpay";
 
 export const metadata: Metadata = {
   title: "Order status",
@@ -15,11 +14,13 @@ export const metadata: Metadata = {
 type Search = Promise<Record<string, string | string[] | undefined>>;
 
 /**
- * WHERE RAZORPAY SENDS THE BUYER BACK after a payment link.
+ * WHERE RAZORPAY SENDS THE BUYER BACK — after a payment link, or after
+ * Checkout on a membership's subscription.
  *
  * The query string says paid or not, and anyone can type a query string, so
- * it is believed only when its signature checks out: Razorpay signs
- * `link_id|reference_id|status|payment_id` with the key secret. A verified
+ * it is believed only when its signature checks out, made with the key
+ * secret over `link_id|reference_id|status|payment_id` for a link and
+ * `payment_id|subscription_id` for a subscription. A verified
  * payment empties the cart; anything else says so and keeps it.
  * (The webhook, not this page, is the record of a sale.)
  */
@@ -27,18 +28,24 @@ export default async function CartCompletePage({ searchParams }: { searchParams:
   const params = await searchParams;
   const get = (key: string) => (typeof params[key] === "string" ? (params[key] as string) : "");
   const paymentId = get("razorpay_payment_id");
-  const linkId = get("razorpay_payment_link_id");
-  const reference = get("razorpay_payment_link_reference_id");
-  const status = get("razorpay_payment_link_status");
   const signature = get("razorpay_signature");
+  /* A payment link signs `link_id|reference_id|status|payment_id`… */
+  const linkId = get("razorpay_payment_link_id");
+  const status = get("razorpay_payment_link_status");
+  /* …a subscription paid in Checkout signs `payment_id|subscription_id`. */
+  const subscriptionId = get("razorpay_subscription_id");
+  const membership = Boolean(subscriptionId);
+  const reference = membership ? get("reference") : get("razorpay_payment_link_reference_id");
 
   const secret = process.env.RAZORPAY_KEY_SECRET;
-  let verified = false;
-  if (secret && signature) {
-    const expected = createHmac("sha256", secret).update(`${linkId}|${reference}|${status}|${paymentId}`).digest("hex");
-    verified = expected.length === signature.length && timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-  }
-  const paid = verified && status === "paid";
+  const paid = Boolean(
+    secret &&
+      signature &&
+      (membership
+        ? signatureMatches(`${paymentId}|${subscriptionId}`, signature, secret)
+        : status === "paid" && signatureMatches(`${linkId}|${reference}|${status}|${paymentId}`, signature, secret)),
+  );
+  const orderName = reference ? `Order ${reference}` : "Your order";
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 pb-[var(--section-pad)] pt-32 text-center sm:pt-40">
@@ -57,7 +64,9 @@ export default async function CartCompletePage({ searchParams }: { searchParams:
       </h1>
       <p className="mx-auto mt-5 max-w-lg text-pretty text-body leading-relaxed text-ash">
         {paid
-          ? `Order ${reference} is confirmed. Your receipt is on its way by email, and the team will reach out within one working day to book your onboarding call.`
+          ? membership
+            ? `${orderName} is confirmed and your membership is active. It renews automatically until you cancel; Razorpay emails a receipt for every payment. The team will reach out within one working day to book your onboarding call.`
+            : `${orderName} is confirmed. Your receipt is on its way by email, and the team will reach out within one working day to book your onboarding call.`
           : "The payment didn't go through, or was cancelled. Nothing has been charged — you can try again whenever you're ready."}
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">

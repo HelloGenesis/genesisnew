@@ -1183,3 +1183,12 @@ npm run db:studio  # browse data
 - Hero orb light palette pushed (ink 0.7, sat 1.9, alpha x1.6).
 - Audit: no horizontal overflow on any page at 360/375/768/1024 and pane width; public/ is 24 MB with no file over 700 KB.
 - Studios pipeline art replaced with the new glowing set (call, storyboard, camera, grade, publish stack) from ~/Downloads, 800×1000 WebP at 30–58 KB each; the cards are now 4:5.
+
+### 29 Sep 2026 — Razorpay memberships (subscriptions), order notifications
+- A cart with a membership → one Razorpay subscription: a plan made per order (memberships' charge per cycle incl. GST, combo saving applied every cycle; monthly, or every 3 months), running until cancelled (120 / 40 cycles). One-time products ride on the first invoice as an add-on. Paid in Razorpay Checkout over the cart; /cart/complete verifies `payment_id|subscription_id`. Fallback to the hosted subscription link if Checkout can't load.
+- One-time-only carts keep the payment link.
+- All memberships in an order share one billing cycle (cart syncs it; priceCart enforces the last choice). Cart summary: "Due today" + "Then every month/3 months, until you cancel".
+- Webhook: payment_link.paid, subscription.activated/charged/pending/halted/cancelled → lib/orders → "Orders" sheet tab + Resend email (after the response). Failed/halted/cancelled are flagged ⚠️ for the team.
+- CSP allows checkout.razorpay.com, cdn.razorpay.com, api.razorpay.com, lumberjack.razorpay.com.
+- Tested (test keys): plan/subscription amounts match the cart (₹1,23,309/month + ₹47,199 once = ₹1,70,508 today); Checkout opens (Cards + eMandate); signed webhooks write the sheet; a bad signature is refused. Card entry inside Checkout not automatable in the preview pane; to be tried by hand.
+- Open: Resend account + verified domain for email; webhook URL in the Razorpay dashboard (needs the deployed URL); UPI Autopay is not offered at these amounts.

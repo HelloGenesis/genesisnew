@@ -7,6 +7,7 @@ import { priceCart } from "@/lib/cart";
 import { TERMS_VERSION } from "@/lib/legal-commerce";
 import { COUNTRIES, SHOOT_CITY, findCountry, validPostal } from "@/lib/regions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
+import { RazorpayError, notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 import { whatsappLink } from "@/lib/site-config";
 
 /**
@@ -16,9 +17,12 @@ import { whatsappLink } from "@/lib/site-config";
  * HERE from lib/cart, so what Razorpay charges is what the site's own price
  * lists say, whatever the browser claims.
  *
- * WITH RAZORPAY KEYS (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET) it creates a
- * Payment Link for the total — GST and the bundle saving included — with the
- * buyer's details prefilled, and Razorpay sends them back to /cart/complete.
+ * WITH RAZORPAY KEYS (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET):
+ *   - a cart with a MEMBERSHIP becomes a Razorpay SUBSCRIPTION that runs until
+ *     cancelled, its one-time products added to the first invoice; the
+ *     browser opens Razorpay Checkout on it;
+ *   - a cart of ONE-TIME products only becomes a Payment Link for the total.
+ * Both carry GST and every saving, and come back to /cart/complete.
  *
  * WITHOUT THEM, or for a cart that is all "priced on request", it returns a
  * WhatsApp link carrying the order, so checkout still ends somewhere useful
@@ -140,11 +144,8 @@ export async function POST(request: Request) {
   const items = describe(order.payable);
   const quotes = describe(order.quoted);
 
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
   /* No keys, or nothing to pay for yet: send the order on WhatsApp. */
-  if (!keyId || !keySecret || order.total <= 0) {
+  if (!razorpayKeys() || order.total <= 0) {
     const message = [
       "Hi Genesis! I'd like to place this order:",
       items && `Items: ${items}`,
@@ -172,53 +173,123 @@ export async function POST(request: Request) {
   const reference = `GM-${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`.toUpperCase();
   const origin = new URL(request.url).origin;
   const clip = (value: string) => value.slice(0, 250);
+  const contactPhone = `${customer.phoneDial}${customer.phone.replace(/[\s-]/g, "")}`;
+  const contact = `${customer.name}${customer.designation ? ` (${customer.designation})` : ""} · ${customer.email} · ${phone}`;
 
-  const response = await fetch("https://api.razorpay.com/v1/payment_links", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`,
-    },
-    body: JSON.stringify({
+  try {
+    /*
+      A MEMBERSHIP IN THE CART → A RAZORPAY SUBSCRIPTION (Genesis, 29 Sep
+      2026: memberships run until cancelled). One plan is made for this order
+      — the memberships' charge per cycle, tax included, every month or every
+      three — and the one-time products ride on the first invoice as an
+      add-on, so the buyer authorises once and pays everything together. The
+      browser opens Razorpay Checkout on the subscription and comes back to
+      /cart/complete with a signature.
+    */
+    if (order.recurring.total > 0 && order.billing) {
+      const quarterly = order.billing === "quarterly";
+      const memberships = order.payable.filter((line) => line.product.kind === "membership");
+      const planName = `Genesis — ${memberships.map((line) => `${line.product.group} ${line.product.name}`).join(" + ")}`;
+      const cycle = quarterly ? "every 3 months" : "every month";
+
+      const plan = await razorpay<{ id: string }>("plans", {
+        period: "monthly",
+        interval: quarterly ? 3 : 1,
+        item: {
+          name: planName.slice(0, 120),
+          amount: order.recurring.total * 100, // paise
+          currency: "INR",
+          description: clip(`${order.billing} membership, ${order.taxLabel} included`),
+        },
+        notes: { reference },
+      });
+
+      const subscription = await razorpay<{ id: string; short_url?: string }>("subscriptions", {
+        plan_id: plan.id,
+        /* "Until cancelled": the longest run Razorpay needs a number for — ten years. */
+        total_count: quarterly ? 40 : 120,
+        quantity: 1,
+        customer_notify: 1,
+        ...(order.oneTime.total > 0
+          ? {
+              addons: [
+                {
+                  item: {
+                    name: "One-time products (first invoice)",
+                    amount: order.oneTime.total * 100,
+                    currency: "INR",
+                  },
+                },
+              ],
+            }
+          : {}),
+        notes: notes({
+          reference,
+          items,
+          billing: `${order.billing}: ${inr(order.recurring.total)} ${cycle} (${order.taxLabel} ${inr(order.recurring.tax)})`,
+          one_time: order.oneTime.total > 0 && `${inr(order.oneTime.total)} on the first invoice (${order.taxLabel} ${inr(order.oneTime.tax)})`,
+          savings: `bundle ${inr(order.discount)} · combo ${inr(order.comboDiscount)} (combo every cycle)`,
+          quote_requests: quotes,
+          company: customer.company,
+          tax_id: customer.taxId && `${taxIdLabel} ${customer.taxId}`,
+          contact,
+          business: [customer.businessEmail, businessPhone].filter(Boolean).join(" · "),
+          billing_address: `${customer.address}, ${place}`,
+          consent,
+          buyer_notes: [customer.website && `Website: ${customer.website}`, customer.notes].filter(Boolean).join(" · "),
+        }),
+      });
+
+      return NextResponse.json({
+        mode: "razorpay-subscription",
+        key: razorpayKeys()!.id,
+        subscriptionId: subscription.id,
+        /* Razorpay's own page for the same subscription — used if Checkout cannot load. */
+        url: subscription.short_url,
+        reference,
+        description: `${memberships.map((line) => line.product.name).join(" + ")} · ${order.billing}`,
+        prefill: { name: customer.name, email: customer.email, contact: contactPhone },
+      });
+    }
+
+    /* ONE-TIME PRODUCTS ONLY → A PAYMENT LINK for the total, as before. */
+    const link = await razorpay<{ short_url?: string }>("payment_links", {
       amount: order.total * 100, // paise
       currency: "INR",
       accept_partial: false,
       reference_id: reference,
       description: clip(`Genesis Media — ${items}`),
-      customer: { name: customer.name, email: customer.email, contact: `${customer.phoneDial}${customer.phone.replace(/[\s-]/g, "")}` },
+      customer: { name: customer.name, email: customer.email, contact: contactPhone },
       notify: { sms: true, email: true },
       reminder_enable: true,
       /* Razorpay allows 15 notes of up to 256 characters — enough to fulfil the order from the dashboard. */
-      notes: {
-        items: clip(items),
-        quote_requests: clip(quotes || "—"),
+      notes: notes({
+        items,
+        quote_requests: quotes,
         subtotal: inr(order.subtotal),
         bundle_saving: inr(order.discount),
         combo_saving: inr(order.comboDiscount),
         tax: `${order.taxLabel}: ${inr(order.gst)}`,
-        company: clip(customer.company),
-        tax_id: customer.taxId ? `${taxIdLabel} ${customer.taxId}` : "—",
-        contact: clip(`${customer.name}${customer.designation ? ` (${customer.designation})` : ""}`),
-        business_email: clip(customer.businessEmail || "—"),
-        business_phone: clip(businessPhone || "—"),
-        billing_address: clip(customer.address),
-        place: clip(place),
-        consent: clip(consent),
-        buyer_notes: clip([customer.website && `Website: ${customer.website}`, customer.notes].filter(Boolean).join(" · ") || "—"),
-      },
+        company: customer.company,
+        tax_id: customer.taxId && `${taxIdLabel} ${customer.taxId}`,
+        contact,
+        business_email: customer.businessEmail,
+        business_phone: businessPhone,
+        billing_address: customer.address,
+        place,
+        consent,
+        buyer_notes: [customer.website && `Website: ${customer.website}`, customer.notes].filter(Boolean).join(" · "),
+      }),
       callback_url: `${origin}/cart/complete`,
       callback_method: "get",
-    }),
-  });
-
-  if (!response.ok) {
-    console.error("[checkout] Razorpay payment link failed", response.status, await response.text().catch(() => ""));
+    });
+    if (!link.short_url) throw new Error("No payment link returned");
+    return NextResponse.json({ mode: "razorpay", url: link.short_url, reference });
+  } catch (error) {
+    console.error(
+      "[checkout] Razorpay failed",
+      error instanceof RazorpayError ? `${error.status} ${error.body}` : error,
+    );
     return NextResponse.json({ error: "Payment could not be started. Please try again, or message us on WhatsApp." }, { status: 502 });
   }
-
-  const link = (await response.json()) as { short_url?: string };
-  if (!link.short_url) {
-    return NextResponse.json({ error: "Payment could not be started." }, { status: 502 });
-  }
-  return NextResponse.json({ mode: "razorpay", url: link.short_url, reference });
 }

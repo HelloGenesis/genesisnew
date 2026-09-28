@@ -46,6 +46,64 @@ const FIELD =
  * that needs a physical shoot asks where the shoot is, and only a Mumbai
  * shoot can check out; anywhere else is offered a conversation instead.
  */
+type CheckoutResult = {
+  mode?: "razorpay" | "razorpay-subscription" | "whatsapp";
+  url?: string;
+  error?: string;
+  key?: string;
+  subscriptionId?: string;
+  reference?: string;
+  description?: string;
+  prefill?: { name: string; email: string; contact: string };
+};
+
+type RazorpayCheckout = new (options: Record<string, unknown>) => { open: () => void };
+
+/** Razorpay's Checkout script, loaded once, on demand — only a buyer paying for a membership needs it. */
+function loadRazorpay(): Promise<RazorpayCheckout | undefined> {
+  const existing = (window as unknown as { Razorpay?: RazorpayCheckout }).Razorpay;
+  if (existing) return Promise.resolve(existing);
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve((window as unknown as { Razorpay?: RazorpayCheckout }).Razorpay);
+    script.onerror = () => resolve(undefined);
+    document.body.appendChild(script);
+  });
+}
+
+/**
+ * A MEMBERSHIP IS PAID IN RAZORPAY CHECKOUT, over the page: the buyer
+ * authorises the subscription (card or UPI Autopay), pays the first cycle
+ * and any one-time products, and comes back to /cart/complete with
+ * Razorpay's signature. If the script cannot load — a blocker, a flaky
+ * network — Razorpay's own page for the same subscription is the fallback.
+ */
+async function openSubscriptionCheckout(result: CheckoutResult, onDismiss: () => void) {
+  const Razorpay = await loadRazorpay();
+  if (!Razorpay) {
+    if (result.url) window.location.assign(result.url);
+    else throw new Error("Payment could not be started.");
+    return;
+  }
+  new Razorpay({
+    key: result.key,
+    subscription_id: result.subscriptionId,
+    name: "Genesis Media",
+    description: result.description,
+    prefill: result.prefill,
+    notes: { reference: result.reference },
+    theme: { color: "#ffc516" },
+    handler: (response: { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string }) => {
+      const query = new URLSearchParams({ ...response, reference: result.reference ?? "" });
+      /* A full load, not a client push: the page verifies the signature on the server. */
+      window.location.assign(new URL(`/cart/complete?${query.toString()}`, window.location.origin).href);
+    },
+    modal: { ondismiss: onDismiss },
+  }).open();
+}
+
 export function CartPageView() {
   const { lines, ready } = useCart();
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
@@ -112,8 +170,13 @@ export function CartPageView() {
           },
         }),
       });
-      const result = (await response.json()) as { url?: string; error?: string };
-      if (!response.ok || !result.url) throw new Error(result.error ?? "Payment could not be started.");
+      const result = (await response.json()) as CheckoutResult;
+      if (!response.ok) throw new Error(result.error ?? "Payment could not be started.");
+      if (result.mode === "razorpay-subscription" && result.subscriptionId && result.key) {
+        await openSubscriptionCheckout(result, () => setStatus("idle"));
+        return;
+      }
+      if (!result.url) throw new Error(result.error ?? "Payment could not be started.");
       window.location.assign(result.url);
     } catch (caught) {
       setStatus("error");

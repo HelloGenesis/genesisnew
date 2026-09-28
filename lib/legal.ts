@@ -41,13 +41,13 @@ export const LEGAL_EMAIL = "hello@genesismedia.co";
 export const privacy: LegalDocument = {
   slug: "privacy",
   title: "Privacy Policy",
-  updated: "28 September 2026",
+  updated: "29 September 2026",
   standfirst:
-    "How Genesis Events & Media Group collects, uses, stores, shares and protects personal information.",
+    "How Genesis Events and Media Group (Genesis Media) collects, uses, stores, shares and protects personal information.",
   intro: [
-    "Genesis Events & Media Group (“Genesis”, “Genesis Media”, “we”, “us”, or “our”) respects your privacy and is committed to handling personal information responsibly and transparently.",
+    "Genesis Events and Media Group, operating as Genesis Media (“Genesis”, “Genesis Media”, “we”, “us”, or “our”) respects your privacy and is committed to handling personal information responsibly and transparently.",
     "This Privacy Policy explains how we collect, use, store, share, and protect personal information when you visit our website, contact us, submit an enquiry, register as a creator or talent, participate in campaigns or events, engage our services, or otherwise interact with Genesis.",
-    "This policy applies to Genesis Events & Media Group and its brands, divisions, services, and business verticals, which may include Genesis Media, Genesis Influence, Genesis Studios, Genesis AI Labs, Genesis Brand & Design, Genesis EMG, and other services operated by us from time to time.",
+    "This policy applies to Genesis Events and Media Group and its brands, divisions, services, and business verticals, which may include Genesis Media, Genesis Influence, Genesis Studios, Genesis AI Labs, Genesis Brand & Design, Genesis EMG, and other services operated by us from time to time.",
     "By using our website or voluntarily providing information to us, you acknowledge the practices described in this Privacy Policy.",
   ],
   sections: [
@@ -211,7 +211,7 @@ export const privacy: LegalDocument = {
       heading: "19. Contact and Privacy Grievances",
       paragraphs: [
         "For questions, requests, complaints, withdrawal of consent, correction or deletion requests, or other privacy-related concerns, please contact:",
-        "Genesis Events & Media Group\n004, Sankalp Siddhi\nNew Panvel (E), Navi Mumbai\nMaharashtra – 410206\nIndia",
+        "Genesis Events and Media Group (Genesis Media)\n004, Sankalp Siddhi\nNew Panvel (E), Navi Mumbai\nMaharashtra – 410206\nIndia",
         `Email: ${LEGAL_EMAIL}`,
         "Please mention “Privacy Request” in the subject line for privacy-related enquiries.",
         "We will endeavour to review and respond to legitimate privacy requests within a reasonable period and in accordance with applicable law.",

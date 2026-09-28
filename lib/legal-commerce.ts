@@ -21,9 +21,11 @@
 
 import { LEGAL_EMAIL, type LegalDocument } from "./legal";
 
-export const TERMS_VERSION = "28 September 2026";
+export const TERMS_VERSION = "29 September 2026";
 
-const ENTITY = "Genesis Events & Media Group";
+/* The legal entity and the name it trades under — both named on every policy (Genesis, 29 Sep 2026). */
+const ENTITY = "Genesis Events and Media Group";
+const BRAND = "Genesis Media";
 const REGISTERED = "004, Sankalp Siddhi\nNew Panvel (E), Navi Mumbai\nMaharashtra – 410206\nIndia";
 
 export const terms: LegalDocument = {
@@ -31,9 +33,9 @@ export const terms: LegalDocument = {
   title: "Terms & Conditions",
   updated: TERMS_VERSION,
   standfirst:
-    "The terms on which Genesis sells memberships, one-time products, shoots and AI content through genesismedia.co.",
+    "The terms on which Genesis Events and Media Group (Genesis Media) sells memberships, one-time products, shoots and AI content through genesismedia.co.",
   intro: [
-    `These Terms & Conditions (“Terms”) govern every purchase made through genesismedia.co and every service ${ENTITY} (“Genesis”, “we”, “us”, “our”) provides under it — memberships (subscriptions), one-time products, content shoots and AI content — across Genesis AI Labs, Genesis Studios, Genesis Brand & Design, Genesis Influence and our other divisions.`,
+    `These Terms & Conditions (“Terms”) govern every purchase made through genesismedia.co and every service ${ENTITY}, operating as ${BRAND} (“Genesis”, “Genesis Media”, “we”, “us”, “our”), provides under it — memberships (subscriptions), one-time products, content shoots and AI content — across Genesis AI Labs, Genesis Studios, Genesis Brand & Design, Genesis Influence and our other divisions.`,
     "By ticking the agreement box at checkout, paying a Genesis payment link, or accepting a proposal or quotation that refers to these Terms, you (“Client”, “you”) agree to them on behalf of yourself and the business you name at checkout, and confirm you are authorised to do so.",
     "Where a signed agreement, statement of work or written quotation exists between you and Genesis, it prevails over these Terms to the extent they differ.",
   ],
@@ -141,7 +143,7 @@ export const terms: LegalDocument = {
     },
     {
       heading: "14. Contact",
-      paragraphs: [`${ENTITY}\n${REGISTERED}`, `Email: ${LEGAL_EMAIL}`],
+      paragraphs: [`${ENTITY} (${BRAND})\n${REGISTERED}`, `Email: ${LEGAL_EMAIL}`],
     },
   ],
 };
@@ -150,9 +152,9 @@ export const refunds: LegalDocument = {
   slug: "refund-policy",
   title: "Cancellation & Refund Policy",
   updated: TERMS_VERSION,
-  standfirst: "When Genesis memberships, products and shoots can be cancelled, and what is refunded.",
+  standfirst: "When Genesis Media memberships, products and shoots can be cancelled, and what is refunded.",
   intro: [
-    `This policy explains how cancellations and refunds work for purchases from ${ENTITY} (“Genesis”) through genesismedia.co. It forms part of our Terms & Conditions.`,
+    `This policy explains how cancellations and refunds work for purchases from ${ENTITY}, operating as ${BRAND} (“Genesis”, “Genesis Media”), through genesismedia.co. It forms part of our Terms & Conditions.`,
     "To cancel or request a refund, email " + LEGAL_EMAIL + " from the email address used at checkout, with your order reference. We confirm every request in writing.",
   ],
   sections: [
@@ -209,7 +211,7 @@ export const refunds: LegalDocument = {
     },
     {
       heading: "8. Contact",
-      paragraphs: [`${ENTITY}\n${REGISTERED}`, `Email: ${LEGAL_EMAIL}`],
+      paragraphs: [`${ENTITY} (${BRAND})\n${REGISTERED}`, `Email: ${LEGAL_EMAIL}`],
     },
   ],
 };

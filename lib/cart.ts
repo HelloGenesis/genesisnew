@@ -218,6 +218,14 @@ export function priceCart(lines: readonly CartLine[], options: { country?: strin
       return other !== undefined && samePackage(product, other);
     });
   });
+  /*
+    ONE BILLING CYCLE PER ORDER. A Razorpay subscription has exactly one
+    period, and every membership in an order is charged on one subscription,
+    so they share a cycle: the last membership's choice, which is the one the
+    buyer touched most recently (the cart keeps them in step as well).
+  */
+  const orderBilling: Billing =
+    [...kept].reverse().find((line) => findProduct(line.id)?.kind === "membership")?.billing ?? "quarterly";
   const priced: PricedLine[] = [];
   for (const line of kept) {
     const product = findProduct(line.id);
@@ -227,10 +235,10 @@ export function priceCart(lines: readonly CartLine[], options: { country?: strin
     priced.push({
       id: line.id,
       qty: quoted ? 1 : qty,
-      billing: product.kind === "membership" ? (line.billing ?? "quarterly") : undefined,
+      billing: product.kind === "membership" ? orderBilling : undefined,
       product,
       quoted,
-      charge: quoted ? 0 : unitCharge(product, line.billing) * qty,
+      charge: quoted ? 0 : unitCharge(product, product.kind === "membership" ? orderBilling : undefined) * qty,
     });
   }
 
@@ -268,8 +276,18 @@ export function priceCart(lines: readonly CartLine[], options: { country?: strin
   /** The cart already has a Studios plan, just not one with a shoot — so the suggestion is an upgrade. */
   const comboUpgrade = Boolean(comboSuggest && studiosPlan && !studiosWithShoot);
 
-  const taxable = subtotal - discount - comboDiscount;
-  const gst = Math.round(taxable * tax.rate);
+  /*
+    THE TWO PARTS OF AN ORDER, each taxed on its own so they add up exactly:
+    the MEMBERSHIPS, charged every cycle on a Razorpay subscription, and the
+    ONE-TIME products, charged once (on the subscription's first invoice when
+    there is one, or on a payment link when there is not).
+  */
+  const recurringTaxable = members.reduce((sum, line) => sum + line.charge, 0) - comboDiscount;
+  const recurringTax = Math.round(recurringTaxable * tax.rate);
+  const oneTimeTaxable = bundleBase - discount;
+  const oneTimeTax = Math.round(oneTimeTaxable * tax.rate);
+  const taxable = recurringTaxable + oneTimeTaxable;
+  const gst = recurringTax + oneTimeTax;
 
   return {
     lines: priced,
@@ -290,6 +308,12 @@ export function priceCart(lines: readonly CartLine[], options: { country?: strin
     gst,
     taxLabel: tax.label,
     total: taxable + gst,
+    /** The memberships' shared cycle; see orderBilling. */
+    billing: members.length > 0 ? orderBilling : undefined,
+    /** Charged every cycle, tax included. 0 when the order has no membership. */
+    recurring: { taxable: recurringTaxable, tax: recurringTax, total: recurringTaxable + recurringTax },
+    /** Charged once, tax included. */
+    oneTime: { taxable: oneTimeTaxable, tax: oneTimeTax, total: oneTimeTaxable + oneTimeTax },
   };
 }
 
