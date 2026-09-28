@@ -20,6 +20,7 @@
  * link in and the button goes straight there instead.
  */
 
+import { price } from "./money";
 import { whatsappLink } from "./site-config";
 import type { VerticalKey } from "./verticals/types";
 
@@ -61,35 +62,20 @@ export function slotHref(slot: string) {
   return chat(`Hi Genesis! I'd like to book a 15-minute call on ${slot}.`);
 }
 
-/*
-  THE QUARTERLY LINE. The brief: "when Quarterly is selected … the cards
-  change to show, for example: ₹95K/mo, ₹2.85L billed quarterly, rather than
-  making the user calculate it." No discount is applied — none is defined —
-  so a quarter is three months, written the way the brief writes money.
-*/
-export function formatInr(rupees: number) {
-  if (rupees >= 100000) {
-    const lakh = rupees / 100000;
-    return `₹${Number(lakh.toFixed(2)).toString()}L`;
-  }
-  return `₹${Math.round(rupees / 1000)}K`;
-}
-
-export function quarterlyLine(monthly: number) {
-  return `${formatInr(monthly * 3)} billed quarterly`;
-}
-
 /**
  * The four verticals as one row of cards — the /pricing page's opening, which
  * the brief calls the "vibe" of the page, and the price line under each name
  * on the Brain.
  *
  * THE FIGURES ARE THE NEW BRIEF'S. The earlier cards read ₹69k / ₹79k / ₹89k /
- * ₹59k; the plans this brief defines start at ₹95K (AI Labs), ₹85K (Studios)
- * and ₹65K (Brand & Design), and Influence is now priced as a commission
- * rather than a membership. A "from" figure lower than the cheapest plan on
- * the same page would be a price nobody can buy, so these follow the plans.
+ * ₹59k; the plans this brief defines start at 95,000 (AI Labs), 85,000
+ * (Studios) and 65,000 (Brand & Design), and Influence is now priced as a
+ * commission rather than a membership. A "from" figure lower than the
+ * cheapest plan on the same page would be a price nobody can buy, so these
+ * follow the plans — at the quarterly rate, the lowest a buyer can pay, and
+ * written the house way (see lib/money).
  */
+/** In Genesis's order for the four: AI Lab, Studios, Brand & Design, Influence. */
 export const verticalCards: {
   key: VerticalKey;
   /** The key DivisionLockup files the division's name artwork under. */
@@ -103,24 +89,14 @@ export const verticalCards: {
   brain: string;
 }[] = [
   {
-    key: "influence",
-    short: "Influence",
-    name: "Genesis Influence",
-    href: "/influencer-marketing",
-    blurb: "Creator sourcing, negotiation and campaign management.",
-    fromLabel: "Agency commission",
-    from: "15% + creator fees",
-    brain: "Creator fees + 15% commission",
-  },
-  {
     key: "ai-labs",
     short: "AI Lab",
     name: "Genesis AI Labs",
     href: "/ai-content-automation",
     blurb: "AI avatars, AI video, product visuals and automated content.",
     fromLabel: "Membership from",
-    from: "₹95K/month",
-    brain: "Membership from ₹95K/month",
+    from: `${price(95000)} per month`,
+    brain: `Membership from ${price(95000)}`,
   },
   {
     key: "studios",
@@ -129,8 +105,8 @@ export const verticalCards: {
     href: "/content-production",
     blurb: "Shoots, reels, editing and content production.",
     fromLabel: "Membership from",
-    from: "₹85K/month",
-    brain: "Membership from ₹85K/month",
+    from: `${price(85000)} per month`,
+    brain: `Membership from ${price(85000)}`,
   },
   {
     key: "brand-design",
@@ -139,8 +115,18 @@ export const verticalCards: {
     href: "/brand-design",
     blurb: "Design, campaigns, decks, collateral and brand systems.",
     fromLabel: "Membership from",
-    from: "₹65K/month",
-    brain: "Membership from ₹65K/month",
+    from: `${price(65000)} per month`,
+    brain: `Membership from ${price(65000)}`,
+  },
+  {
+    key: "influence",
+    short: "Influence",
+    name: "Genesis Influence",
+    href: "/influencer-marketing",
+    blurb: "Creator sourcing, negotiation and campaign management.",
+    fromLabel: "Agency commission",
+    from: "15% + creator fees",
+    brain: "Creator fees + 15% commission",
   },
 ];
 
@@ -167,13 +153,13 @@ export const pricingHub = {
     {
       label: "One-time project",
       bestFor: "Trying Genesis, or a single brief.",
-      price: "From ₹25K",
+      price: `From ${price(25000)}`,
       tab: null,
     },
     {
       label: "Membership",
       bestFor: "Content, AI or design every month.",
-      price: "From ₹65K/month",
+      price: `From ${price(65000)} per month`,
       tab: "ai-labs",
     },
     {
@@ -214,39 +200,39 @@ export const oneTimeProjects: {
   image: string;
 }[] = [
   {
-    name: "Performance Creative Sprint",
-    body: "Ad creatives for performance marketing.",
-    from: "₹35K",
-    vertical: "studios",
-    image: "/work/posters/studios-b1.jpg",
-  },
-  {
     name: "AI Avatar Setup",
     body: "Create a realistic AI avatar for your brand.",
-    from: "₹25K",
+    from: price(25000),
     vertical: "ai-labs",
     image: "/avatars/tanvi.jpg",
   },
   {
+    name: "AI Films",
+    body: "AI-powered brand films and explainers.",
+    from: price(150000),
+    vertical: "ai-labs",
+    image: "/work/posters/ai-lab-shivam-sh1.jpg",
+  },
+  {
+    name: "Performance Creative Sprint",
+    body: "Ad creatives for performance marketing.",
+    from: price(35000),
+    vertical: "studios",
+    image: "/work/posters/studios-b1.jpg",
+  },
+  {
     name: "Brand Launch",
     body: "Complete brand identity and guidelines.",
-    from: "₹95K",
+    from: price(95000),
     vertical: "brand-design",
     image: "/brand/activ-health/1.png",
   },
   {
     name: "Logo / Identity",
     body: "Logo and identity design projects.",
-    from: "₹50K",
+    from: price(50000),
     vertical: "brand-design",
     image: "/brand/activ-health/5.png",
-  },
-  {
-    name: "AI Films",
-    body: "AI-powered brand films and explainers.",
-    from: "₹1.5L",
-    vertical: "ai-labs",
-    image: "/work/posters/ai-lab-shivam-sh1.jpg",
   },
 ];
 
@@ -290,11 +276,11 @@ export const homeHero = {
   start: "Start a Project",
   /*
     THE WAY IN, IN ONE LINE. The orb's price buttons only appear on hover, so
-    on a phone the homepage never said what Genesis costs. ₹25K is the
-    lowest entry Genesis has set (AI Avatar Setup, a one-time project); ₹65K
-    is the lowest membership (Creative Desk).
+    on a phone the homepage never said what Genesis costs. 25,000 is the
+    lowest entry Genesis has set (AI Avatar Setup, a one-time project);
+    65,000 is the lowest membership (Creative Desk), at the quarterly rate.
   */
-  entry: "Projects from ₹25K · Memberships from ₹65K/month",
+  entry: `Projects from ${price(25000)} · Memberships from ${price(65000)} per month`,
 } as const;
 
 /**
@@ -333,4 +319,62 @@ export const planGlossary = [
 ] as const;
 
 /** The lowest price a buyer can start at — Genesis's entry pricing. */
-export const entryPrice = "₹25K";
+export const entryPrice = price(25000);
+
+/*
+  THE PLAN BAR UNDER EACH DIVISION ON THE HOMEPAGE.
+
+  Genesis: "homepage has less CTA buttons redirecting to memberships or
+  directly payment link buttons" and the division sections "still don't
+  convey what we've built the website into". Each section ends on its product
+  — the name, the brief's own one-line promise, where the price starts — with
+  the way to the plans and a direct start (the Razorpay link, once it is in
+  `joinUrls`). The work stays one click away as a quieter link.
+*/
+export const homePlans: Record<
+  VerticalKey,
+  {
+    product: string;
+    promise: string;
+    /** The quarterly list figure per month, for memberships. */
+    rate?: number;
+    /** For Influence, which is priced as a commission, not a membership. */
+    priceLine?: string;
+    plans: { label: string; href: string };
+    start: { label: string; href: string };
+    work: { label: string; filter: string };
+  }
+> = {
+  "ai-labs": {
+    product: "AI Content Studio",
+    promise: "Build once. Publish continuously.",
+    rate: 95000,
+    plans: { label: "See AI plans", href: "/ai-content-automation#pricing" },
+    start: { label: "Start with Starter", href: joinHref("ai-labs", "Starter", "AI Content Studio") },
+    work: { label: "View AI work", filter: "AI Lab" },
+  },
+  studios: {
+    product: "Content Monthly",
+    promise: "From brief to publish.",
+    rate: 85000,
+    plans: { label: "See Studios plans", href: "/content-production#pricing" },
+    start: { label: "Start with Starter", href: joinHref("studios", "Starter", "Content Monthly") },
+    work: { label: "View Studios work", filter: "Studios" },
+  },
+  "brand-design": {
+    product: "Always-On Creative Desk",
+    promise: "Ongoing creative support for your brand.",
+    rate: 65000,
+    plans: { label: "See Brand & Design plans", href: "/brand-design#pricing" },
+    start: { label: "Start Creative Desk", href: joinHref("brand-design", "Creative Desk", "Genesis Creative Desk") },
+    work: { label: "View branding work", filter: "Brand & Design" },
+  },
+  influence: {
+    product: "Influencer & UGC Campaigns",
+    promise: "End-to-end creator campaigns — from strategy to reporting.",
+    priceLine: "Creator fees + 15% agency commission",
+    plans: { label: "See how it's priced", href: "/influencer-marketing#pricing" },
+    start: { label: "Start a campaign", href: enquiryHref("an influencer campaign") },
+    work: { label: "View Influence work", filter: "Influence" },
+  },
+};

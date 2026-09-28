@@ -7,6 +7,7 @@
  * matrix here" — the advice is followed and not printed.
  */
 
+import { price } from "../money";
 import { bookingHref, enquiryHref, joinHref } from "../pricing";
 import type { AddOns, Closing, Faq, IconCard, PlanGrid, Steps, Turnaround } from "./types";
 
@@ -57,48 +58,89 @@ export const aiPlans: PlanGrid = {
     {
       name: "Starter",
       description: "For brands getting started with always-on AI content.",
-      price: "₹95K",
-      monthly: 95000,
-      period: "/ month",
-      features: ["6 AI Videos", "1 AI Avatar", "8 Campaign Creatives", "1 Language", "1 Active Request"],
+      rate: 95000,
+      features: ["6 Standard AI Videos", "1 AI Avatar", "8 Campaign Creatives", "1 Language", "1 Active Request"],
       cta: { label: "Start with Starter", href: joinHref("ai-labs", "Starter", PRODUCT) },
-      note: "Cancel or upgrade your membership as your content needs change.",
+      inclusions: [
+        { item: "Creative direction", included: true },
+        { item: "Ideation & scripting", included: true },
+        { item: "AI production", included: true },
+        { item: "Voice", included: "Basic AI voiceover (any voice)" },
+        { item: "Voice clone & lip-sync", included: false },
+        { item: "Music & sound", included: "Background music" },
+        { item: "Transitions", included: "Basic transitions" },
+        { item: "Captions", included: true },
+        { item: "Supers", included: false },
+        { item: "Motion graphics", included: false },
+        { item: "Brand integration", included: false },
+        { item: "Brand fonts & colours", included: false },
+        { item: "Revision workflow", included: true },
+        { item: "Ready-to-publish exports", included: true },
+        { item: "Content queue management", included: true },
+      ],
+      note: "Cancel, pause, or upgrade your membership as your content needs change.",
     },
     {
       name: "Growth",
       badge: "Most Popular",
       featured: true,
       description: "For brands that need consistent, high-volume content across formats.",
-      price: "₹1.85L",
-      monthly: 185000,
-      period: "/ month",
+      rate: 185000,
       features: [
-        "8 Premium Videos",
+        "8 Premium AI Videos",
         "1 AI Avatar",
         "15 Campaign Creatives",
         "Up to 2 Advanced Videos",
+        "Voice clone & lip-sync",
         "2 Languages",
         "8 Adaptations",
         "1 Active Request",
       ],
       cta: { label: "Choose Growth", href: joinHref("ai-labs", "Growth", PRODUCT) },
+      inclusions: [
+        { item: "Creative direction", included: true },
+        { item: "Ideation & scripting", included: true },
+        { item: "AI production", included: true },
+        { item: "Voice", included: "Voice clone & lip-sync" },
+        { item: "Music & sound design", included: true },
+        { item: "Motion graphics & transitions", included: true },
+        { item: "Captions & supers", included: true },
+        { item: "Brand integration", included: true },
+        { item: "Brand fonts & colours", included: true },
+        { item: "Revision workflow", included: true },
+        { item: "Ready-to-publish exports", included: true },
+        { item: "Content queue management", included: true },
+      ],
     },
     {
       name: "Enterprise",
       description: "For larger brands running multiple campaigns, personas and content streams.",
-      price: "₹3.5L",
-      monthly: 350000,
-      period: "/ month",
+      rate: 350000,
       features: [
         "16 Premium Videos",
         "Up to 3 Personas",
         "30 Campaign Creatives",
         "Up to 4 Advanced Videos",
+        "Multi-language voice clone",
         "3 Languages",
         "20 Adaptations",
         "2 Active Requests",
       ],
       cta: { label: "Talk to Genesis", href: enquiryHref(`${PRODUCT} — Enterprise`) },
+      inclusions: [
+        { item: "Creative direction", included: true },
+        { item: "Ideation & scripting", included: true },
+        { item: "AI production", included: true },
+        { item: "Voice", included: "Multi-language voice clone & lip-sync" },
+        { item: "Music & sound design", included: true },
+        { item: "Motion graphics & transitions", included: true },
+        { item: "Captions & supers", included: true },
+        { item: "Brand integration", included: true },
+        { item: "Brand fonts & colours", included: true },
+        { item: "Revision workflow", included: true },
+        { item: "Ready-to-publish exports", included: true },
+        { item: "Content queue management", included: true },
+      ],
     },
   ],
   included: {
@@ -130,12 +172,12 @@ export const aiPlans: PlanGrid = {
   compare: {
     lead: "Monthly investment",
     rows: [
-      { label: "Monthly Investment", values: ["₹95K/month", "₹1.85L/month", "₹3.5L/month"] },
-      { label: "AI Videos", values: ["6 Standard AI Videos", "8 Premium Videos", "16 Premium Videos"] },
+      { label: "AI Videos", values: ["6 Standard AI Videos", "8 Premium AI Videos", "16 Premium Videos"] },
       { label: "AI Avatar / Persona", values: ["1 included", "1 AI Avatar", "Up to 3 Personas"] },
       { label: "AI Campaign Creatives", values: ["8 / month", "15 / month", "30 / month"] },
       { label: "Advanced AI / Motion", values: ["—", "Up to 2 Advanced Videos", "Up to 4 Advanced Videos"] },
       { label: "Content Adaptations", values: ["Basic brand adaptations", "8 Adaptations", "20 Adaptations"] },
+      { label: "Voice", values: ["Basic AI voiceover", "Voice clone & lip-sync", "Multi-language voice clone"] },
       { label: "Languages", values: ["1 Language", "2 Languages", "3 Languages"] },
       { label: "Active Requests", values: ["1 at a time", "1 at a time", "2 at a time"] },
     ],
@@ -148,15 +190,73 @@ export const aiEveryVideo: { label: string; heading: string; body: string; items
   body: "You give us the brief. We handle the creative workflow.",
   items: [
     { icon: "idea", label: "01 — Idea", title: "Ideation & Script", body: "Concept development and scripting around your objective." },
-    { icon: "brand", label: "02 — Brand", title: "Product Integration", body: "Your product, service or message built naturally into the content." },
-    { icon: "voice", label: "03 — Voice", title: "Voice & Lip-Sync", body: "AI voice, voice cloning or realistic lip-sync where required." },
-    { icon: "sound", label: "04 — Sound", title: "Music & Sound", body: "Background music and sound design that support the content." },
-    { icon: "motion", label: "05 — Motion", title: "Motion & Graphics", body: "Transitions, animation and supporting graphic elements." },
-    { icon: "text", label: "06 — Text", title: "Captions & Supers", body: "On-screen copy designed for easy consumption." },
-    { icon: "palette", label: "07 — Brand system", title: "Your Brand, Every Time", body: "Fonts, colours and visual styling aligned to your identity." },
+    { icon: "brand", label: "02 — Brand", title: "Product Integration", body: "Your product, service or message built naturally into the content.", tier: "Premium & Advanced" },
+    { icon: "voice", label: "03 — Voice", title: "Voice & Lip-Sync", body: "AI voice, voice cloning or realistic lip-sync where required.", tier: "Standard: basic AI voiceover" },
+    { icon: "sound", label: "04 — Sound", title: "Music & Sound", body: "Background music and sound design that support the content.", tier: "Standard: background music" },
+    { icon: "motion", label: "05 — Motion", title: "Motion & Graphics", body: "Transitions, animation and supporting graphic elements.", tier: "Standard: basic transitions" },
+    { icon: "text", label: "06 — Text", title: "Captions & Supers", body: "On-screen copy designed for easy consumption.", tier: "Standard: captions only" },
+    { icon: "palette", label: "07 — Brand system", title: "Your Brand, Every Time", body: "Fonts, colours and visual styling aligned to your identity.", tier: "Premium & Advanced" },
     { icon: "delivery", label: "08 — Delivery", title: "Ready to Publish", body: "Final files prepared for your required platform and format." },
   ],
 };
+
+/*
+  THE THREE KINDS OF AI VIDEO THE PLANS COUNT. The plan cards say "6 Standard
+  AI Videos", "8 Premium AI Videos" and "Up to 2 Advanced Videos" without
+  saying what separates them. Lengths and Standard's scope are Genesis's own
+  (confirmed 28 Sep 2026); Premium's scope is the brief's "every video
+  includes" list; Advanced's is the brief's "AI + Motion" line. Turnarounds
+  are the brief's where it gives one.
+*/
+export const aiVideoTiers = {
+  label: "Video types",
+  heading: "Standard, Premium or Advanced?",
+  body: "What each kind of video in your plan includes.",
+  tiers: [
+    {
+      name: "Standard AI Video",
+      length: "20–30 sec",
+      plans: "Starter",
+      includes: [
+        "AI avatar",
+        "Captions",
+        "Stock footage",
+        "Basic AI voiceover (any voice)",
+        "Background music",
+        "Basic transitions",
+      ],
+      excludes: ["Motion graphics", "Supers", "Brand fonts & colours"],
+      turnaround: "2–4 business days",
+    },
+    {
+      name: "Premium AI Video",
+      length: "Up to 45 sec",
+      plans: "Growth · Enterprise",
+      lead: "Everything in Standard, plus:",
+      includes: [
+        "Product / brand integration",
+        "Voice cloning or realistic lip-sync",
+        "Music & sound design",
+        "Motion graphics & animation",
+        "Captions & supers",
+        "Brand fonts, colours & styling",
+      ],
+      featured: true,
+    },
+    {
+      name: "Advanced Video",
+      length: "Up to 45 sec",
+      plans: "Growth (up to 2) · Enterprise (up to 4)",
+      lead: "Everything in Premium, plus:",
+      includes: [
+        "Advanced AI production",
+        "Heavier animation",
+        "Complex visual treatments",
+      ],
+      turnaround: "5–7 business days",
+    },
+  ],
+} as const;
 
 export const aiCreatives = {
   label: "AI Campaign Creatives",
@@ -228,13 +328,13 @@ export const aiAddOns: AddOns = {
   button: "View Add-ons",
   /* "Do not show all those prices on the default page" — they open on click. */
   items: [
-    { name: "Additional Standard AI Video", price: "₹25,000" },
-    { name: "Additional AI Avatar / Persona", price: "₹25,000" },
-    { name: "Advanced Motion Upgrade", price: "+₹15,000/video" },
-    { name: "Additional Language Version", price: "₹5,000/video" },
-    { name: "Additional Aspect-Ratio Master", price: "₹4,000/video" },
-    { name: "AI Product / Campaign Creative Pack — 10 images", price: "₹20,000" },
-    { name: "AI Creative Pack — 30 images", price: "₹45,000" },
+    { name: "Additional Standard AI Video", price: price(25000) },
+    { name: "Additional AI Avatar / Persona", price: price(25000) },
+    { name: "Advanced Motion Upgrade", price: `+${price(15000)} per video` },
+    { name: "Additional Language Version", price: `${price(5000)} per video` },
+    { name: "Additional Aspect-Ratio Master", price: `${price(4000)} per video` },
+    { name: "AI Product / Campaign Creative Pack — 10 images", price: price(20000) },
+    { name: "AI Creative Pack — 30 images", price: price(45000) },
     /* The brief leaves this price blank; it is quoted, not invented. */
     { name: "Priority 48-Hour Production", price: "On request" },
     { name: "Bulk Personalised Video Generation", price: "Custom" },

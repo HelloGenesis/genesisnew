@@ -7,6 +7,7 @@
  * notes to us and are not printed.
  */
 
+import { price } from "../money";
 import { enquiryHref, joinHref } from "../pricing";
 import type { AddOns, Closing, IconCard, PlanGrid, Steps, Turnaround } from "./types";
 
@@ -45,7 +46,7 @@ export const studiosTwoWays = {
         "Plan your content, add requests to your queue, and let Genesis handle production from brief to final export.",
       ],
       points: ["Fixed monthly output", "Optional monthly shoot", "Active request system", "No quotation for every reel"],
-      from: "From ₹85K/month",
+      from: `From ${price(85000)} per month`,
       cta: { label: "Explore Monthly Plans", href: "#pricing" },
       image: "/work/posters/studios-abhi-ex-coms.jpg",
       featured: true,
@@ -59,13 +60,35 @@ export const studiosTwoWays = {
         "We handle everything from pre-production to final edits.",
       ],
       points: ["Half-day or full-day shoots", "Multiple camera options", "Edited videos + photographs", "Additional deliverables available"],
-      from: "From ₹1.10L",
+      from: `From ${price(110000)}`,
       cta: { label: "Book a Content Shoot", href: "#shoot" },
       image: "/work/posters/studios-utsav-aftermovie.jpg",
       featured: false,
     },
   ],
 } as const;
+
+/*
+  WHAT'S INCLUDED, PER PLAN — shown inside each card when a reader opens
+  "View What's Included", as on AI Labs. The shared lines are the brief's own
+  "Starter includes … each can include" list, which every higher plan also
+  gets; the lines that differ are each plan's own card, restated as included,
+  not included, or included in a limited form.
+*/
+const EVERY_VIDEO: { item: string; included: boolean | string }[] = [
+  { item: "Ideation", included: true },
+  { item: "Scriptwriting", included: true },
+  { item: "Brand / product integration", included: true },
+  { item: "Background music", included: true },
+  { item: "Standard sound treatment", included: true },
+  { item: "Basic transitions", included: true },
+  { item: "Basic motion graphics", included: true },
+  { item: "Captions & supers", included: true },
+  { item: "Brand fonts, colours and styling", included: true },
+  { item: "Stock / B-roll where appropriate", included: true },
+  { item: "Basic colour correction", included: true },
+  { item: "1080p export", included: true },
+];
 
 export const studiosPlans: PlanGrid = {
   label: "Content Monthly",
@@ -84,9 +107,7 @@ export const studiosPlans: PlanGrid = {
       name: "Starter",
       tagline: "Keep your content moving.",
       description: "Built for teams with existing footage that need consistent editing, scripting and content support.",
-      price: "₹85K",
-      monthly: 85000,
-      period: "/month",
+      rate: 85000,
       features: [
         "6 Standard Videos",
         "Up to 30–45 sec",
@@ -99,6 +120,16 @@ export const studiosPlans: PlanGrid = {
         "Standard project support",
       ],
       cta: { label: "Start with Starter", href: joinHref("studios", "Starter", MONTHLY) },
+      inclusions: [
+        { item: "Footage", included: "Editing of supplied footage" },
+        { item: "Monthly shoot", included: false },
+        { item: "Edited photographs", included: false },
+        { item: "Motion-heavy videos", included: "Up to 1" },
+        { item: "Delivery formats", included: "Primary 9:16" },
+        { item: "Dedicated coordinator", included: false },
+        { item: "Priority production", included: false },
+        ...EVERY_VIDEO,
+      ],
     },
     {
       name: "Growth",
@@ -106,9 +137,7 @@ export const studiosPlans: PlanGrid = {
       featured: true,
       tagline: "Capture once. Keep publishing.",
       description: "For brands that want Genesis to handle both monthly capture and ongoing production.",
-      price: "₹1.45L",
-      monthly: 145000,
-      period: "/month",
+      rate: 145000,
       features: [
         "8 Premium Videos",
         "Up to 60 sec",
@@ -124,14 +153,22 @@ export const studiosPlans: PlanGrid = {
         "Dedicated coordinator",
       ],
       cta: { label: "Choose Growth", href: joinHref("studios", "Growth", MONTHLY) },
+      inclusions: [
+        { item: "Footage", included: "Genesis-shot or supplied" },
+        { item: "Monthly shoot", included: "Half-day, up to 5 hours, 1 camera" },
+        { item: "Edited photographs", included: "15" },
+        { item: "Motion-heavy videos", included: "Up to 2" },
+        { item: "Delivery formats", included: "9:16 + selected 16:9" },
+        { item: "Dedicated coordinator", included: true },
+        { item: "Priority production", included: false },
+        ...EVERY_VIDEO,
+      ],
     },
     {
       name: "Enterprise",
       tagline: "A complete monthly content engine.",
       description: "For marketing teams running multiple campaigns, content pillars or business units.",
-      price: "₹2.50L",
-      monthly: 250000,
-      period: "/month",
+      rate: 250000,
       features: [
         "12 Premium Videos",
         "Up to 60 sec*",
@@ -148,6 +185,16 @@ export const studiosPlans: PlanGrid = {
         "Dedicated creative + account owner",
       ],
       cta: { label: "Talk to Genesis", href: enquiryHref(`${MONTHLY} — Enterprise`) },
+      inclusions: [
+        { item: "Footage", included: "Genesis-shot or supplied" },
+        { item: "Monthly shoot", included: "Full-day, up to 9 hours, up to 2 cameras" },
+        { item: "Edited photographs", included: "25" },
+        { item: "Motion-heavy videos", included: "Up to 3" },
+        { item: "Delivery formats", included: "9:16 + 1:1 + 16:9" },
+        { item: "Dedicated creative + account owner", included: true },
+        { item: "Priority production", included: true },
+        ...EVERY_VIDEO,
+      ],
     },
   ],
   footnote: "*Longer films or large campaign pieces may require separate production scope.",
@@ -158,7 +205,8 @@ export const studiosPlans: PlanGrid = {
   */
   included: {
     heading: "View What's Included",
-    lead: "See exactly what's included across planning, production, editing and delivery.",
+    sub: "See exactly what's included across planning, production, editing and delivery.",
+    lead: "Starter includes",
     items: [
       "Ideation",
       "Scriptwriting",
@@ -179,7 +227,6 @@ export const studiosPlans: PlanGrid = {
   compare: {
     lead: "See the detailed side-by-side comparison.",
     rows: [
-      { label: "Monthly investment", values: ["₹85K/month", "₹1.45L/month", "₹2.50L/month"] },
       { label: "Videos", values: ["6 Standard Videos", "8 Premium Videos", "12 Premium Videos"] },
       { label: "Length", values: ["Up to 30–45 sec", "Up to 60 sec", "Up to 60 sec*"] },
       { label: "Shoot", values: ["No included shoot", "1 Half-Day Shoot / month · up to 5 hours", "1 Full-Day Shoot / month · up to 9 hours"] },
@@ -281,7 +328,7 @@ export const studiosShoot = {
     {
       name: "Starter Shoot",
       tagline: "Focused Content Batch",
-      price: "₹1.10L",
+      price: price(110000),
       gst: "+ GST",
       features: [
         "Half-day shoot",
@@ -303,7 +350,7 @@ export const studiosShoot = {
       badge: "Recommended",
       featured: true,
       tagline: "Build a full content library.",
-      price: "₹1.95L",
+      price: price(195000),
       gst: "+ GST",
       features: [
         "Full-day shoot",
@@ -329,7 +376,7 @@ export const studiosShoot = {
     {
       name: "Enterprise Shoot",
       tagline: "Premium campaign production.",
-      price: "₹3.25L",
+      price: price(325000),
       gst: "+ GST",
       features: [
         "Premium full-day production",
@@ -383,14 +430,14 @@ export const studiosAddOns: AddOns = {
   ],
   button: "View Add-ons",
   items: [
-    { name: "Additional Edited Reel", price: "₹12,000" },
-    { name: "Additional Hero Film", price: "₹40,000" },
-    { name: "Extra Camera Setup", price: "₹15,000" },
-    { name: "Drone Filming", price: "₹20,000 onwards" },
-    { name: "Additional Shoot Hour", price: "₹10,000" },
-    { name: "Same-Day Edit", price: "₹20,000" },
-    { name: "Raw Footage Handover", price: "₹15,000" },
-    { name: "Additional Language Subtitles", price: "₹2,500/video" },
+    { name: "Additional Edited Reel", price: price(12000) },
+    { name: "Additional Hero Film", price: price(40000) },
+    { name: "Extra Camera Setup", price: price(15000) },
+    { name: "Drone Filming", price: `${price(20000)} onwards` },
+    { name: "Additional Shoot Hour", price: price(10000) },
+    { name: "Same-Day Edit", price: price(20000) },
+    { name: "Raw Footage Handover", price: price(15000) },
+    { name: "Additional Language Subtitles", price: `${price(2500)} per video` },
     { name: "Creator / Talent", price: "At actual + management" },
     { name: "Studio / Location", price: "At actual + 15% coordination" },
     { name: "Hair & Makeup", price: "At actual" },

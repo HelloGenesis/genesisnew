@@ -3,7 +3,7 @@ import { SectionLabel } from "@/components/genesis/section-label";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { WorkGrid } from "@/components/genesis/work-grid";
 import { footerCta } from "@/lib/home-content";
-import { expandToClips, work, type WorkItem } from "@/lib/work";
+import { expandToClips, VERTICALS, work, type Vertical, type WorkItem } from "@/lib/work";
 
 /**
  * The portfolio grid, after the four verticals.
@@ -58,7 +58,11 @@ function forHomepage() {
   }
 
   /* Featured first within each division, catalogue order after. */
-  const queues = [...byVertical.values()].map((items) => [
+  /* Taken in Genesis's order for the divisions — AI Lab first (see VERTICALS). */
+  const queues = [...byVertical.entries()]
+    .sort(([a], [b]) => VERTICALS.indexOf(a as Vertical) - VERTICALS.indexOf(b as Vertical))
+    .map(([, items]) => items)
+    .map((items) => [
     ...items.filter((i) => i.featured),
     ...items.filter((i) => !i.featured),
   ]);

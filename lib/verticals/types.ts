@@ -62,17 +62,24 @@ export type Plan = {
   /** The one-line promise under the name (Studios writes one; AI Labs does not). */
   tagline?: string;
   description: string;
-  /** Exactly as the brief prints it, e.g. "₹95K". */
-  price: string;
-  /** The same figure in rupees, so the quarterly line can be worked out. */
-  monthly: number;
-  period: string;
+  /**
+   * The plan's list figure per month on QUARTERLY billing, in rupees — the
+   * brief's price (95000 for "₹95K"). Everything shown is worked out from it
+   * in lib/money: ₹1 off, monthly billing +10%, the quarter paid upfront.
+   */
+  rate: number;
   features: string[];
   cta: Cta;
   /** The featured tier takes the brand fill; the rest stay glass. */
   featured?: boolean;
-  /** The small line under a card's button. */
+  /** A line for the whole grid, printed once under the cards. */
   note?: string;
+  /**
+   * What this plan includes and what it does not, shown inside the card when
+   * a reader opens "View What's Included". `true` is included, `false` is
+   * not, and a string is included in that limited form ("Basic AI voiceover").
+   */
+  inclusions?: { item: string; included: boolean | string }[];
 };
 
 /**
@@ -100,7 +107,14 @@ export type PlanGrid = {
   compare?: Comparison & { lead?: string };
 };
 
-export type IconCard = { icon: IconName; label?: string; title: string; body?: string };
+export type IconCard = {
+  icon: IconName;
+  label?: string;
+  title: string;
+  body?: string;
+  /** Which video tiers get this, when not every tier does ("Premium & Advanced"). */
+  tier?: string;
+};
 
 export type Steps = {
   label: string;

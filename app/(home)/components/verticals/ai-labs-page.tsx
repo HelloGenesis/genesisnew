@@ -14,9 +14,10 @@ import {
   aiHowItWorks,
   aiPlans,
   aiTurnaround,
+  aiVideoTiers,
 } from "@/lib/verticals/ai-labs";
 import { AddOnsBlock } from "../offer/add-ons";
-import { ClosingBand, FaqBlock, IconCards, StepsBlock, TurnaroundBlock } from "../offer/blocks";
+import { ClosingBand, FaqBlock, IconCards, StepsBlock, TurnaroundBlock, VideoTiers } from "../offer/blocks";
 import { MediaRail } from "../offer/media-rail";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { CollapsibleSection, OfferSection, PlanBand, SectionHead } from "../offer/parts";
@@ -40,6 +41,7 @@ export function AiLabsPageView() {
         { id: "formats", label: "Formats" },
         { id: "pricing", label: "Plans" },
         { id: "included", label: "Every video" },
+        { id: "video-types", label: "Video types" },
         { id: "how-it-works", label: "How it works" },
         { id: "library", label: "Work" },
         { id: "faq", label: "FAQs" },
@@ -93,6 +95,11 @@ export function AiLabsPageView() {
       >
         <IconCards items={aiEveryVideo.items} />
       </CollapsibleSection>
+
+      {/* What separates Standard, Premium and Advanced — see aiVideoTiers. */}
+      <OfferSection id="video-types">
+        <VideoTiers data={aiVideoTiers} />
+      </OfferSection>
 
       {/* SECTION 5 — CAMPAIGN CREATIVES */}
       <OfferSection labelledBy="creatives-heading">

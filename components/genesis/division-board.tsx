@@ -65,12 +65,20 @@ import { cn } from "@/lib/utils";
  * lights up. One source, so a fifth division or a reordering cannot leave the
  * sphere answering the wrong corner.
  */
+/*
+  GENESIS'S ORDER, READ LEFT TO RIGHT, TOP TO BOTTOM: AI Lab, Studios, Brand &
+  Design, Influence (28 Sep 2026). The list order is unchanged — other code
+  reads divisions by position — so the corners move instead.
+*/
 const CORNERS: OrbFocus[] = [
-  { x: -1, y: -1 }, // Influence — top-left
+  { x: 1, y: 1 }, //   Influence — bottom-right
   { x: -1, y: 1 }, //  Brand & Design — bottom-left
-  { x: 1, y: 1 }, //   Studios — bottom-right
-  { x: 1, y: -1 }, //  AI Lab — top-right
+  { x: 1, y: -1 }, //  Studios — top-right
+  { x: -1, y: -1 }, // AI Lab — top-left
 ];
+
+/** The order the names arrive in: reading order, so AI Lab first, Influence last. */
+const ARRIVAL = [3, 2, 1, 0];
 
 /**
  * Where each division sits, in order. Written as whole class strings because
@@ -91,10 +99,10 @@ const CORNERS: OrbFocus[] = [
  * above and below it.
  */
 const PLACEMENT = [
-  "col-start-1 row-start-1 items-center text-center lg:col-start-1 lg:row-start-1 lg:items-end lg:text-right",
-  "col-start-1 row-start-3 items-center text-center lg:col-start-1 lg:row-start-2 lg:items-end lg:text-right",
   "col-start-2 row-start-3 items-center text-center lg:col-start-3 lg:row-start-2 lg:items-start lg:text-left",
+  "col-start-1 row-start-3 items-center text-center lg:col-start-1 lg:row-start-2 lg:items-end lg:text-right",
   "col-start-2 row-start-1 items-center text-center lg:col-start-3 lg:row-start-1 lg:items-start lg:text-left",
+  "col-start-1 row-start-1 items-center text-center lg:col-start-1 lg:row-start-1 lg:items-end lg:text-right",
 ];
 
 /** The entrance, in Genesis's order and inside their 1.5s budget. */
@@ -268,7 +276,9 @@ export function DivisionBoard() {
         </div>
       </motion.div>
 
-      {services.items.map((service, index) => {
+      {/* In reading order, so Tab and a screen reader meet them as the eye does. */}
+      {[3, 2, 1, 0].map((index) => {
+        const service = services.items[index];
         const corner = CORNERS[index];
         const isActive = active === index;
         const dimmed = active !== null && !isActive;
@@ -294,7 +304,7 @@ export function DivisionBoard() {
             animate={{ opacity: 1, x: 0, y: 0 }}
             transition={{
               duration: ENTER.duration,
-              delay: ENTER.names + index * ENTER.stagger,
+              delay: ENTER.names + ARRIVAL[index] * ENTER.stagger,
               ease: EASE,
             }}
             /*

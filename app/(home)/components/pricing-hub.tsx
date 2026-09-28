@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 import { Atmosphere } from "@/components/genesis/atmosphere";
-import { DivisionLockup } from "@/components/genesis/division-lockup";
+import { DivisionLockup, DivisionName } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { Reveal } from "@/components/genesis/reveal";
@@ -17,13 +17,13 @@ import {
   verticalCards,
 } from "@/lib/pricing";
 import { breadcrumbJsonLd } from "@/lib/seo";
-import { aiAddOns, aiEveryVideo, aiPlans, aiTab, aiTurnaround } from "@/lib/verticals/ai-labs";
+import { aiAddOns, aiEveryVideo, aiPlans, aiTab, aiTurnaround, aiVideoTiers } from "@/lib/verticals/ai-labs";
 import { designAddOns, designTab, designTurnaround } from "@/lib/verticals/brand-design";
 import { builtFor, campaignPricing } from "@/lib/verticals/influence";
 import { studiosAddOns, studiosPlans, studiosShoot, studiosTab, studiosTurnaround } from "@/lib/verticals/studios";
 import type { VerticalKey } from "@/lib/verticals/types";
 import { AddOnsBlock } from "./offer/add-ons";
-import { IconChips, StepsBlock, TurnaroundStrip } from "./offer/blocks";
+import { IconChips, StepsBlock, TierTag, TurnaroundStrip, VideoTiers } from "./offer/blocks";
 import { IconTile } from "./offer/icons";
 import { MediaRail } from "./offer/media-rail";
 import { LogoStrip } from "./offer/page-furniture";
@@ -31,7 +31,7 @@ import { SectionHead } from "./offer/parts";
 import { PlanGrid } from "./offer/plan-grid";
 import { PlanTabs, type PlanTab } from "./offer/plan-tabs";
 import { Breadcrumbs } from "./service-page";
-import { ProductCards } from "./verticals/brand-design-page";
+import { ProductCards } from "./verticals/design-products";
 import { Figure } from "./verticals/influence-page";
 
 /**
@@ -210,11 +210,20 @@ function TabHead({
   body?: string;
 }) {
   const card = verticalCard(vertical);
+  /* The division's own gradient — the one on its name artwork in the tab above. */
+  const ramp = services.items.find((item) => item.short === card.short)?.ramp;
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="max-w-2xl">
         <p className="micro-label !text-brand-ink">{label}</p>
-        <h3 className="mt-3 font-display text-h3 font-normal leading-tight tracking-tight text-bone">{heading}</h3>
+        <h3 className="mt-3 font-display text-h3 font-normal leading-tight tracking-tight text-bone sm:text-h2">
+          <span
+            className="bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
+            style={ramp ? { backgroundImage: ramp } : undefined}
+          >
+            {heading}
+          </span>
+        </h3>
         {sub && <p className="mt-1 text-lead text-bone">{sub}</p>}
         {body && <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{body}</p>}
       </div>
@@ -231,7 +240,10 @@ function SubHeading({ children }: { children: React.ReactNode }) {
 }
 
 function tabs(): PlanTab[] {
-  return [
+  /* In Genesis's order for the four — the same as verticalCards. */
+  const order = verticalCards.map((card) => card.key);
+  const art = (key: VerticalKey) => <DivisionName name={verticalCard(key).short} height={26} />;
+  const list: PlanTab[] = [
     {
       key: "ai-labs",
       label: "AI Labs",
@@ -239,7 +251,11 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="ai-labs" {...aiTab} />
-          <PlanGrid data={aiPlans} compact />
+          <PlanGrid data={aiPlans} compact showCompare={false} />
+          {/* Add-ons straight after the plans they extend. */}
+          <div className="mt-10">
+            <AddOnsBlock data={aiAddOns} compact />
+          </div>
           <SubHeading>Every AI Video Includes</SubHeading>
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
             {aiEveryVideo.items.map((item) => (
@@ -247,14 +263,15 @@ function tabs(): PlanTab[] {
                 <IconTile name={item.icon} className="size-9" />
                 <span className="text-small text-bone">{item.label?.split("— ")[1] ?? item.title}</span>
                 <span className="text-[0.6875rem] leading-snug tracking-normal text-faint">{item.title}</span>
+                {item.tier && <TierTag className="mt-1 text-center">{item.tier}</TierTag>}
               </li>
             ))}
           </ul>
+          <div className="mt-10">
+            <VideoTiers data={aiVideoTiers} compact />
+          </div>
           <SubHeading>Typical turnaround</SubHeading>
           <TurnaroundStrip data={aiTurnaround} />
-          <div className="mt-10">
-            <AddOnsBlock data={aiAddOns} compact />
-          </div>
         </>
       ),
     },
@@ -310,7 +327,10 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <TabHead vertical="studios" {...studiosTab} />
-          <PlanGrid data={studiosPlans} compact />
+          <PlanGrid data={studiosPlans} compact showCompare={false} />
+          <div className="mt-10">
+            <AddOnsBlock data={studiosAddOns} compact />
+          </div>
           <SubHeading>{studiosShoot.label}</SubHeading>
           <ul className="grid gap-3 md:grid-cols-3">
             {studiosShoot.packages.map((pack) => (
@@ -327,9 +347,6 @@ function tabs(): PlanTab[] {
           </ul>
           <SubHeading>Typical turnaround</SubHeading>
           <TurnaroundStrip data={studiosTurnaround} />
-          <div className="mt-10">
-            <AddOnsBlock data={studiosAddOns} compact />
-          </div>
         </>
       ),
     },
@@ -343,14 +360,17 @@ function tabs(): PlanTab[] {
           <div className="-mt-4">
             <ProductCards />
           </div>
-          <SubHeading>Typical turnaround</SubHeading>
-          <TurnaroundStrip data={designTurnaround} />
           <div className="mt-10">
             <AddOnsBlock data={designAddOns} compact />
           </div>
+          <SubHeading>Typical turnaround</SubHeading>
+          <TurnaroundStrip data={designTurnaround} />
         </>
       ),
     },
   ];
+  return list
+    .map((tab) => ({ ...tab, art: art(tab.key) }))
+    .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
 }
 

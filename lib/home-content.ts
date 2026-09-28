@@ -385,8 +385,15 @@ export const aiContent = {
     the method and the beneficiary in five words — made with AI, made for
     you — and the second half is the half that was missing.
   */
-  heading: "Created with AI.",
-  headingAccent: "Built for Your Brand.",
+  /*
+    THE PRODUCT'S PROMISE, NOT THE CATEGORY'S. "Created with AI. Built for
+    Your Brand." described AI Lab as a capability; the vertical-pages brief
+    sells it as the AI Content Studio, a monthly engine, and Genesis asked for
+    the homepage to say what the site now sells. The heading is the brief's
+    own line for that product; the plan bar at the foot names it and prices it.
+  */
+  heading: "Build once.",
+  headingAccent: "Publish continuously.",
   /*
     WHAT THE DIVISION ACTUALLY BUILDS, in one sentence, because the heading
     above is a claim and a claim over a wall of avatars needs its scope said
@@ -623,8 +630,9 @@ export const studios = {
     final cut." — so the section takes it and the pipeline board below loses
     its own, becoming what it always was: the picture under the claim.
   */
+  /* "Publish", not "final cut" — the vertical-pages brief's line for Studios, which the plan bar sells. */
   heading: "From brief to",
-  headingAccent: "final cut.",
+  headingAccent: "publish.",
   body:
     "Strategy, scripting, production and post, one connected studio system built for every screen.",
   /*

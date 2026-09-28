@@ -26,7 +26,7 @@ export const campaignPricing = {
     A WORKED EXAMPLE, because a percentage alone is hard to picture. Pure
     arithmetic on the brief's own rate — not a quote, and labelled as one.
   */
-  example: "Example: ₹5,00,000 in creator fees → ₹75,000 Genesis commission.",
+  example: "Example: ₹5,00,000/- in creator fees → ₹75,000/- Genesis commission.",
   includesLabel: "Includes",
   includes:
     "Strategy, sourcing influencers. Verification, negotiation, briefing, posting & reporting.",

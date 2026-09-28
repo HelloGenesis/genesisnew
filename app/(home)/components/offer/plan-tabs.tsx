@@ -7,7 +7,14 @@ import type { IconName, VerticalKey } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 import { OfferIcon } from "./icons";
 
-export type PlanTab = { key: VerticalKey; label: string; icon: IconName; content: ReactNode };
+export type PlanTab = {
+  key: VerticalKey;
+  label: string;
+  icon: IconName;
+  /** The division's own name artwork — shown in place of the icon and label when given. */
+  art?: ReactNode;
+  content: ReactNode;
+};
 
 /**
  * "ADD OTHER 3 VERTICALS COSTING PACKAGES SLIDER HERE AND ADD BUTTONS ABOVE TO
@@ -107,13 +114,25 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
               aria-controls={`${baseId}-panel`}
               tabIndex={selected ? 0 : -1}
               onClick={() => select(tab.key)}
+              aria-label={tab.art ? tab.label : undefined}
               className={cn(
-                "flex h-12 items-center justify-center gap-2 rounded-card px-4 text-small transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand md:justify-start",
-                selected ? "bg-brand text-on-brand" : "glass-chip text-ash hover:text-bone",
+                "flex items-center justify-center gap-2 rounded-card px-4 text-small transition-[background-color,border-color,box-shadow] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand md:justify-start",
+                tab.art ? "h-16 border" : "h-12",
+                tab.art
+                  ? selected
+                    ? "border-brand/70 bg-brand/[0.08] shadow-[0_0_0_1px_rgb(255_197_22/0.25),0_12px_32px_-16px_rgb(255_197_22/0.5)]"
+                    : "glass-chip border-transparent opacity-70 hover:opacity-100"
+                  : selected
+                    ? "bg-brand text-on-brand"
+                    : "glass-chip text-ash hover:text-bone",
               )}
             >
-              <OfferIcon name={tab.icon} className="size-4" />
-              {tab.label}
+              {tab.art ?? (
+                <>
+                  <OfferIcon name={tab.icon} className="size-4" />
+                  {tab.label}
+                </>
+              )}
             </button>
           );
         })}

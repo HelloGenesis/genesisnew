@@ -4,6 +4,7 @@ import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { mediaUrl } from "@/lib/media-url";
+import { quarterlySaving } from "@/lib/money";
 import { servicePage } from "@/lib/services";
 import {
   brandBuild,
@@ -18,11 +19,13 @@ import {
   designTurnaround,
 } from "@/lib/verticals/brand-design";
 import { cn } from "@/lib/utils";
+import { BrandingStack } from "../branding-design";
+import { ProductCards } from "./design-products";
 import { AddOnsBlock } from "../offer/add-ons";
 import { ClosingBand, StepsBlock, TurnaroundStrip } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { CaseStudiesRow, LogoStrip, WorkSection } from "../offer/page-furniture";
-import { CheckList, OfferSection, PlanBand, SectionHead } from "../offer/parts";
+import { OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VerticalPage } from "../offer/vertical-page";
 
@@ -54,6 +57,8 @@ export function BrandDesignPageView() {
         secondary={{ label: designHero.secondary, href: "#brand-build" }}
         strip={designHero.strip}
         images={designHero.images.map((src) => ({ src }))}
+        /* The homepage section's three folders, in place of the logo collage. */
+        visual={<BrandingStack />}
       />
 
       <LogoStrip />
@@ -71,7 +76,7 @@ export function BrandDesignPageView() {
       </OfferSection>
       </PlanBand>
 
-      {/* SECTION 03 — WHAT'S INCLUDED */}
+      {/* SECTION 03 — WHAT'S INCLUDED, as a bento of what Always-On covers */}
       <OfferSection id="included" labelledBy="included-heading">
         <SectionHead
           id="included-heading"
@@ -79,27 +84,7 @@ export function BrandDesignPageView() {
           heading={designIncluded.heading}
           body={designIncluded.body}
         />
-        <ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {designIncluded.groups.map((group, index) => (
-            <Reveal as="li" key={group.title} delay={0.04 * index} className="flex">
-              <div className="glass glass-lit w-full rounded-panel p-5">
-                <div className="flex items-center gap-3">
-                  <IconTile name={group.icon} />
-                  <h3 className="font-sans text-body leading-snug text-bone">{group.title}</h3>
-                </div>
-                {group.lead && <p className="mt-4 text-small text-ash">{group.lead}</p>}
-                <ul className="mt-4 space-y-1.5">
-                  {group.items.map((item) => (
-                    <li key={item} className="flex gap-2 text-small text-ash">
-                      <span aria-hidden className="text-brand-ink">›</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-          ))}
-        </ul>
+        <IncludedBento />
       </OfferSection>
 
       {/* SECTION 04 — HOW IT WORKS */}
@@ -118,50 +103,16 @@ export function BrandDesignPageView() {
 
       {/* "add case study" */}
       <CaseStudiesRow slugs={page.proof} heading="Brand & Design case studies" />
-      <WorkSection verticals={["Brand & Design", "Creatives"]} />
+      {/* The homepage's "Everything we've made", Brand & Design and motion graphics only. */}
+      <WorkSection
+        verticals={["Brand & Design", "Motion Graphics"]}
+        showFilters
+        filters={["All", "Brand & Design", "Motion Graphics"]}
+      />
 
       {/* SECTION 09 — FINAL CTA */}
       <ClosingBand data={designClosing} images={brandBuild.images} />
     </VerticalPage>
-  );
-}
-
-export function ProductCards() {
-  return (
-    <ul className="mt-10 grid gap-4 lg:grid-cols-2">
-      {designProducts.items.map((item, index) => (
-        <Reveal as="li" key={item.label} delay={0.06 * index} className="flex">
-          <article
-            className={cn(
-              "relative flex w-full flex-col overflow-hidden rounded-panel p-6 sm:p-8",
-              item.featured
-                ? "glass glass-strong glass-lit border border-brand/60 shadow-[0_24px_64px_-24px_rgb(255_197_22/0.35)]"
-                : "glass glass-lit",
-            )}
-          >
-            {item.featured && (
-              <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-brand/15 blur-3xl" />
-            )}
-            <p className="micro-label relative !text-brand-ink">{item.label}</p>
-            <h3 className="relative mt-4 text-balance font-display text-h3 font-normal leading-tight tracking-tight text-bone">
-              {item.heading}
-            </h3>
-            <p className="relative mt-3 text-pretty text-body leading-relaxed text-ash">{item.body}</p>
-            <p className="relative mt-6 flex flex-wrap items-baseline gap-2">
-              {item.pricePrefix && <span className="text-small text-ash">{item.pricePrefix}</span>}
-              <span className="font-display text-h2 font-normal leading-none tracking-tight text-bone">{item.price}</span>
-              <span className="text-small text-ash">{item.priceSuffix}</span>
-            </p>
-            <CheckList items={item.points} className="relative mt-6" />
-            <div className="relative mt-auto pt-8">
-              <GlassButton href={item.cta.href} variant={item.featured ? "brand" : "glass"} arrow>
-                {item.cta.label}
-              </GlassButton>
-            </div>
-          </article>
-        </Reveal>
-      ))}
-    </ul>
   );
 }
 
@@ -191,6 +142,8 @@ function PlanOverview() {
               </span>
               <span className="text-small text-ash">{designOverview.priceSuffix}</span>
             </p>
+            <p className="mt-2 text-small text-ash">{designOverview.monthlyNote}</p>
+            <p className="mt-1 text-small text-brand-ink">{quarterlySaving}</p>
             <GlassButton href={deskHref} variant="brand" arrow className="mt-6">
               {designOverview.cta}
             </GlassButton>
@@ -291,5 +244,105 @@ function BrandBuild() {
         </div>
       </Reveal>
     </OfferSection>
+  );
+}
+
+/*
+  THE BENTO. Every deliverable Always-On covers, grouped the brief's way, as
+  chips in cells of different sizes — Social & Digital, the most-asked-for,
+  takes the big cell. The last row is what the plan does NOT cover and where
+  each of those lives instead, so the grid answers "can you do X?" either way.
+*/
+const BENTO_SPAN: Record<string, string> = {
+  "Social & Digital": "lg:col-span-2 lg:row-span-2",
+  "Performance Creative": "lg:col-span-2",
+  "Campaign Design": "lg:col-span-2",
+};
+
+function IncludedBento() {
+  return (
+    <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {designIncluded.groups.map((group, index) => {
+        const big = group.title === "Social & Digital";
+        return (
+          <Reveal
+            key={group.title}
+            delay={0.03 * index}
+            className={cn(
+              "glass glass-lit flex flex-col rounded-panel p-5",
+              BENTO_SPAN[group.title],
+              big && "justify-between p-6 sm:p-7",
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <IconTile name={group.icon} />
+              <h3 className={cn("font-sans leading-snug text-bone", big ? "text-h3" : "text-body")}>{group.title}</h3>
+            </div>
+            {group.lead && <p className="mt-3 text-small text-ash">{group.lead}</p>}
+            {big && <SocialFrames />}
+            <ul className={cn("flex flex-wrap gap-2", big ? "mt-8" : "mt-4")}>
+              {group.items.map((item) => (
+                <li
+                  key={item}
+                  className={cn(
+                    "rounded-full border border-dashed border-white/20 text-ash",
+                    big ? "px-4 py-2 text-body text-bone" : "px-3 py-1.5 text-small",
+                  )}
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        );
+      })}
+      <Reveal className="rounded-panel border border-dashed border-white/15 p-5 sm:col-span-2 lg:col-span-4">
+        <p className="micro-label">{designIncluded.elsewhere.heading}</p>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {designIncluded.elsewhere.items.map((entry) => (
+            <li
+              key={entry.what}
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-3.5 py-1.5 text-small"
+            >
+              <span className="text-bone">{entry.what}</span>
+              <span aria-hidden className="text-faint">→</span>
+              <span className={entry.where === "Not included" ? "text-faint" : "text-brand-ink"}>{entry.where}</span>
+            </li>
+          ))}
+        </ul>
+      </Reveal>
+    </div>
+  );
+}
+
+/*
+  THE SOCIAL FORMATS, DRAWN. The big cell had nothing between its title and
+  its chips; these are the shapes that work actually ships in — square, feed
+  portrait, story and landscape — as outlined frames, which says "social"
+  faster than another line of type.
+*/
+const FRAMES = [
+  { ratio: "1 / 1", label: "1:1", width: "22%" },
+  { ratio: "4 / 5", label: "4:5", width: "22%" },
+  { ratio: "9 / 16", label: "9:16", width: "18%" },
+  { ratio: "16 / 9", label: "16:9", width: "34%" },
+];
+
+function SocialFrames() {
+  return (
+    <div aria-hidden className="mt-8 flex items-end gap-3">
+      {FRAMES.map((frame, index) => (
+        <div
+          key={frame.label}
+          className={cn(
+            "relative grid place-items-center rounded-card border",
+            index === 2 ? "border-brand/60 bg-brand/[0.08]" : "border-white/15 bg-white/[0.03]",
+          )}
+          style={{ aspectRatio: frame.ratio, width: frame.width }}
+        >
+          <span className={cn("text-small", index === 2 ? "text-brand-ink" : "text-faint")}>{frame.label}</span>
+        </div>
+      ))}
+    </div>
   );
 }

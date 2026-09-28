@@ -7,6 +7,7 @@
  * Creative Desk card carrying its delivery line, which the mockup dropped.
  */
 
+import { monthlyListFigure, price } from "../money";
 import { enquiryHref, joinHref } from "../pricing";
 import type { AddOns, Closing, IconCard, Steps, Turnaround } from "./types";
 
@@ -36,47 +37,56 @@ export const designHero = {
   images: ["/brand/activ-health/5.png", "/brand/activ-health/2.png", "/brand/activ-health/1.png"],
 } as const;
 
+/*
+  THE TWO PRODUCTS, AS PLANS.
+
+  THE MEMBERSHIP IS NAMED "ALWAYS-ON" (Genesis asked for a meaningful name for
+  the ₹65K package, 28 Sep 2026). It says the one thing that separates it from
+  a project: the design team keeps running for you, month after month. The
+  product is still the Genesis Creative Desk; Always-On is its plan, the way
+  AI Labs and Studios have Starter / Growth / Enterprise.
+
+  Every line under each plan is the brief's own; only the layout changed.
+*/
 export const designProducts = {
   label: "Our products",
   heading: "Two ways to work with us.",
   body: "Ongoing creative support or a complete brand identity — choose what your business needs right now.",
-  items: [
-    {
-      label: "01 — Genesis Creative Desk",
-      heading: "Ongoing creative support for your brand.",
-      body: "A monthly subscription for the design work your marketing team needs — from everyday social creatives and ads to campaigns, presentations and collateral.",
-      pricePrefix: "",
-      price: "₹65,000",
-      priceSuffix: "/ month + GST",
-      points: [
-        "Unlimited requests in your queue",
-        "1 active request at a time",
-        "1 primary brand",
-        "Typically 48–72 hrs for standard requests",
-        "No quotation for every creative",
-      ],
-      cta: { label: "Start Creative Desk", href: deskHref },
-      featured: true,
-    },
-    {
-      label: "02 — Genesis Brand Build",
-      heading: "Complete brand identity and guidelines.",
-      body: "A structured one-time engagement for businesses launching, repositioning or upgrading their brand.",
-      pricePrefix: "From",
-      price: "₹1,50,000",
-      priceSuffix: "+ GST",
-      points: [
-        "Brand strategy & positioning",
-        "Visual identity & logo system",
-        "Colour & typography",
-        "Brand voice & messaging direction",
-        "Brand guidelines",
-        "Selected launch applications",
-      ],
-      cta: { label: "Build My Brand", href: "#brand-build" },
-      featured: false,
-    },
-  ],
+  desk: {
+    eyebrow: "01 — Genesis Creative Desk",
+    name: "Always-On",
+    badge: "Membership",
+    tagline: "Ongoing creative support for your brand.",
+    body: "A monthly subscription for the design work your marketing team needs — from everyday social creatives and ads to campaigns, presentations and collateral.",
+    /* The list figure per month on quarterly billing — see lib/money. */
+    rate: 65000,
+    highlights: [
+      { icon: "queue", label: "Requests", value: "Unlimited in your queue" },
+      { icon: "layers", label: "Active", value: "1 request at a time" },
+      { icon: "palette", label: "Brand", value: "1 primary brand" },
+      { icon: "clock", label: "Delivery", value: "Typically 48–72 hrs for standard requests" },
+      { icon: "check", label: "Quotes", value: "No quotation for every creative" },
+    ] satisfies { icon: IconCard["icon"]; label: string; value: string }[],
+    cta: { label: "Start Creative Desk", href: deskHref },
+  },
+  build: {
+    eyebrow: "02 — Genesis Brand Build",
+    name: "Brand Build",
+    badge: "One-time project",
+    tagline: "Complete brand identity and guidelines.",
+    body: "A structured one-time engagement for businesses launching, repositioning or upgrading their brand.",
+    from: price(150000),
+    points: [
+      "Brand strategy & positioning",
+      "Visual identity & logo system",
+      "Colour & typography",
+      "Brand voice & messaging direction",
+      "Brand guidelines",
+      "Selected launch applications",
+    ],
+    facts: ["Typical timeline: 3–4 weeks", "2 consolidated identity revision rounds"],
+    cta: { label: "Build My Brand", href: "#brand-build" },
+  },
 } as const;
 
 export const designIncluded: {
@@ -84,6 +94,7 @@ export const designIncluded: {
   heading: string;
   body: string;
   groups: { icon: IconCard["icon"]; title: string; lead?: string; items: string[] }[];
+  elsewhere: { heading: string; items: { what: string; where: string }[] };
 } = {
   label: "What's included",
   heading: "Everything your marketing team needs.",
@@ -91,8 +102,8 @@ export const designIncluded: {
   groups: [
     { icon: "grid", title: "Social & Digital", items: ["Static social creatives", "Instagram & LinkedIn posts", "Stories", "Carousels", "Banners", "Digital assets"] },
     { icon: "megaphone", title: "Performance Creative", items: ["Static ad creatives", "Performance ads", "Ad variations", "Campaign adaptations"] },
-    { icon: "mail", title: "Marketing Design", items: ["Emailers", "One-pagers", "Sales collateral", "Brochures", "Flyers", "Event creatives"] },
     { icon: "presentation", title: "Presentations", items: ["Sales decks", "Company presentations", "Credentials decks", "Internal decks", "Presentation redesign"] },
+    { icon: "mail", title: "Marketing Design", items: ["Emailers", "One-pagers", "Sales collateral", "Brochures", "Flyers", "Event creatives"] },
     { icon: "target", title: "Campaign Design", items: ["Campaign adaptations", "Promotional assets", "Launch creatives", "Existing campaign extensions"] },
     {
       icon: "palette",
@@ -102,6 +113,22 @@ export const designIncluded: {
     },
     { icon: "motion", title: "Basic Motion", items: ["Simple animated posts", "Basic text animation", "Lightweight motion creatives"] },
   ],
+  /*
+    WHAT ALWAYS-ON DOES NOT COVER, AND WHERE IT LIVES INSTEAD — the brief's
+    "Not included" list, each pointed at the product or add-on that does it,
+    so a reader who wanted a logo or a landing page is not turned away.
+  */
+  elsewhere: {
+    heading: "Not in Always-On — but we do it",
+    items: [
+      { what: "Logos & full brand identity", where: "Brand Build" },
+      { what: "Landing page design", where: "Add-on" },
+      { what: "Pitch deck design", where: "Add-on" },
+      { what: "Video production", where: "Genesis Studios" },
+      { what: "Advanced animation / 3D", where: "Not included" },
+      { what: "Web development", where: "Not included" },
+    ],
+  },
 };
 
 export const designHowItWorks: Steps = {
@@ -122,8 +149,9 @@ export const designOverview = {
   label: "Plan overview",
   heading: "Genesis Creative Desk.",
   body: ["One subscription.", "Everything you need."],
-  price: "₹65,000",
-  priceSuffix: "/ month + GST",
+  price: price(65000),
+  priceSuffix: "per month + GST, billed quarterly",
+  monthlyNote: `Monthly billing: ${price(monthlyListFigure(65000))} per month + GST`,
   rows: [
     { label: "Requests", value: "Unlimited in queue" },
     { label: "Active Requests", value: "1 at a time" },
@@ -170,11 +198,11 @@ export const designAddOns: AddOns = {
   ],
   button: "View Add-ons",
   items: [
-    { name: "Additional Brand", price: "₹20K / month", body: "Add another brand or visual system to your Creative Desk." },
-    { name: "Campaign Concept Sprint", price: "From ₹35K", body: "Campaign idea, visual direction, key visual and basic campaign system." },
-    { name: "Pitch Deck Design", price: "From ₹45K", body: "Premium presentation design for sales, credentials or investor decks. Up to approximately 15 slides." },
-    { name: "Landing Page Design", price: "From ₹75K", body: "Strategic landing-page UI and visual design. Development separate." },
-    { name: "Motion Creative Pack", price: "₹40K", body: "Up to 4 lightweight motion creatives." },
+    { name: "Additional Brand", price: `${price(20000)} per month`, body: "Add another brand or visual system to your Creative Desk." },
+    { name: "Campaign Concept Sprint", price: `From ${price(35000)}`, body: "Campaign idea, visual direction, key visual and basic campaign system." },
+    { name: "Pitch Deck Design", price: `From ${price(45000)}`, body: "Premium presentation design for sales, credentials or investor decks. Up to approximately 15 slides." },
+    { name: "Landing Page Design", price: `From ${price(75000)}`, body: "Strategic landing-page UI and visual design. Development separate." },
+    { name: "Motion Creative Pack", price: price(40000), body: "Up to 4 lightweight motion creatives." },
     { name: "Rush Production", price: "+30%", body: "Priority production where capacity allows." },
   ],
 };
@@ -203,7 +231,7 @@ export const brandBuild = {
       items: ["Business cards", "Letterheads", "Social templates", "Email signatures", "Presentation covers", "Digital banners"],
     },
   ],
-  price: "From ₹1,50,000 + GST",
+  price: `From ${price(150000)} + GST`,
   facts: ["Typical timeline: 3–4 weeks", "2 consolidated identity revision rounds"],
   cta: { label: "Build My Brand", href: buildHref },
   /* Activ Health's logo redesign, sketch to final — Genesis's own identity work. */
@@ -217,7 +245,7 @@ export const designClosing: Closing = {
   body: [
     "Add the brief. We take it from there.",
     "One creative subscription for the everyday work that keeps your brand moving.",
-    "₹65K / month + GST · One active request at a time.",
+    `${price(65000)} per month + GST · One active request at a time.`,
   ],
   primary: { label: "Start Creative Desk", href: deskHref },
   secondary: { label: "Build My Brand", href: "#brand-build" },

@@ -631,3 +631,34 @@ function Tagline({ text }: { text: string }) {
     </>
   );
 }
+
+/**
+ * A division's name artwork on its own, as an inline image — for places a
+ * heading cannot go, such as inside a tab button. Decorative: the caller
+ * carries the accessible name (an aria-label), so the picture has an empty alt.
+ */
+export function DivisionName({
+  name,
+  height = 28,
+  className,
+}: {
+  /** The part after the dot — "Influence", "AI Lab". */
+  name: string;
+  height?: number;
+  className?: string;
+}) {
+  const lockup = NAME[name];
+  if (!lockup) return null;
+  const width = Math.round((lockup.width / lockup.height) * height);
+  return (
+    <Image
+      src={`/brand/divisions/name/${lockup.slug}.png`}
+      alt=""
+      width={width}
+      height={height}
+      sizes={`${width * 2}px`}
+      className={cn("h-auto max-w-full object-contain", className)}
+      style={{ height, width: "auto" }}
+    />
+  );
+}

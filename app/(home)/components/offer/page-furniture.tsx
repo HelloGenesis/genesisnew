@@ -97,6 +97,7 @@ export function WorkSection({
   accent = "we've made.",
   rail = true,
   showFilters = false,
+  filters,
   cta = true,
 }: {
   id?: string;
@@ -106,6 +107,8 @@ export function WorkSection({
   accent?: string;
   rail?: boolean;
   showFilters?: boolean;
+  /** Fixed chips for the rail — see WorkGrid. */
+  filters?: string[];
   cta?: boolean;
 }) {
   const items = expandToClips(work.filter((item) => verticals.some((v) => matchesFilter(item, v))));
@@ -131,7 +134,7 @@ export function WorkSection({
           )}
         </Reveal>
         <Reveal variant="scene" className={cn("fit-window", heading ? "mt-[var(--block-gap)]" : "mt-6")}>
-          <WorkGrid items={items} rail={rail} showFilters={showFilters} />
+          <WorkGrid items={items} rail={rail} showFilters={showFilters} filters={filters} />
         </Reveal>
         {cta && (
           <Reveal delay={0.1} className="mt-8">

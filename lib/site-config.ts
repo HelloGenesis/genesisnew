@@ -370,10 +370,11 @@ export const divisionPages = [
     match the pages. The URLs keep their search words on purpose: those are
     what people type, and the page titles still carry them.
   */
-  { label: "Genesis Influence", division: "Influence", href: "/influencer-marketing", section: "influence" },
-  { label: "Genesis Studios", division: "Studios", href: "/content-production", section: "studios" },
+  /* Genesis's order for the four, everywhere on the site: AI Lab, Studios, Brand & Design, Influence. */
   { label: "Genesis AI Labs", division: "AI Labs", href: "/ai-content-automation", section: "ai-lab" },
+  { label: "Genesis Studios", division: "Studios", href: "/content-production", section: "studios" },
   { label: "Genesis Brand & Design", division: "Brand & Design", href: "/brand-design", section: "brand-design" },
+  { label: "Genesis Influence", division: "Influence", href: "/influencer-marketing", section: "influence" },
 ] as const;
 
 /** The homepage section a division page stands for, keyed by its path. */

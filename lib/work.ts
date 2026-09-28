@@ -153,10 +153,11 @@ export type WorkTag = (typeof WORK_TAGS)[number];
  *     different name.
  */
 export const VERTICALS = [
-  "Influence",
-  "Studios",
+  /* Genesis's order for the four, everywhere on the site (28 Sep 2026). */
   "AI Lab",
+  "Studios",
   "Brand & Design",
+  "Influence",
   "Events",
   "Creatives",
 ] as const;

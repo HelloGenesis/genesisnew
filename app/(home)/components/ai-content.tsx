@@ -2,13 +2,11 @@
 
 import { useState, type CSSProperties } from "react";
 
-import { Sparkles } from "lucide-react";
 
 import { AutomationSources } from "@/components/genesis/automation-diagram";
 import { AutomationCtas } from "@/components/genesis/automation-ctas";
 import { AvatarFan } from "@/components/genesis/avatar-fan";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { pagerFor } from "@/components/genesis/overlay";
 import { WarpRail, type WarpItem } from "@/components/genesis/warp-rail";
 import { VideoDialog, type OpenVideo } from "@/components/genesis/video-dialog";
@@ -21,16 +19,13 @@ import {
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
-import { siteConfig, whatsappLink } from "@/lib/site-config";
+import { GlassButton } from "@/components/genesis/glass-button";
+import { PlanBar } from "./plan-bar";
+import { enquiryHref, oneTimeProjects } from "@/lib/pricing";
+
+const avatarSetup = oneTimeProjects.find((project) => project.name === "AI Avatar Setup")!;
 import { SectionShell } from "./section-shell";
 
-/*
-  ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller: the same
-  treatment Genesis asked for on Influence ("buttons on same line - reduce
-  size"), for the same pair of buttons here. Larger screens are untouched.
-*/
-const MOBILE_CTA =
-  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
 
 /**
  * Section — AI-generated content.
@@ -108,14 +103,6 @@ export function AiContent() {
     Every card opens something.
   */
   const [video, setVideo] = useState<OpenVideo | null>(null);
-  /*
-    Undefined when there is no number in site-config, exactly as the floating
-    button handles it. The button falls back to the enquiry form rather than
-    disappearing: "Create Your AI Avatar" is the section's primary action, and
-    a section whose main CTA vanishes because a phone number is unset is worse
-    than one that routes the same intent through the form.
-  */
-  const avatarChat = whatsappLink(siteConfig.avatarWhatsappMessage);
 
   return (
     <>
@@ -360,6 +347,22 @@ export function AiContent() {
             {aiContent.avatarsIntro.line}
           </p>
         )}
+        {/*
+          THE WAY IN, UNDER THE AVATARS. AI Avatar Setup is Genesis's entry
+          product — the lowest price on the site — and the roster above is
+          the best argument for it, so the offer sits where the argument ends.
+        */}
+        <div className="mx-auto mt-6 flex max-w-fit flex-col items-center gap-3 rounded-panel border border-brand/40 sm:rounded-full bg-brand/[0.06] px-5 py-3 text-center sm:flex-row sm:gap-5 sm:py-2 sm:pl-6 sm:pr-2">
+          <p className="text-small text-ash">
+            <span className="text-bone">{avatarSetup.name}</span> · One-time project · from{" "}
+            <span className="text-brand-ink">{avatarSetup.from}</span>
+          </p>
+          <span data-track="home-plan:ai-labs:avatar-setup">
+            <GlassButton href={enquiryHref(avatarSetup.name)} variant="brand" size="sm" arrow>
+              Get your AI avatar
+            </GlassButton>
+          </span>
+        </div>
       </Reveal>
 
       {/*
@@ -391,52 +394,7 @@ export function AiContent() {
         outline. The diagram keeps its own generous measure so the labels and
         the node are read rather than squinted at.
       */}
-      {/*
-        THE TWO BUTTONS GENESIS SPECIFIED. "Build with AI" opened the popup
-        form; they asked for the primary action to go straight to WhatsApp
-        with a message already written — see siteConfig.avatarWhatsappMessage —
-        which
-        for an enquiry this specific is a shorter route to a human than a form
-        that has to be triaged.
-
-        The form is the fallback, not a third button: `quickContact` only
-        applies when there is no chat link to give.
-      */}
-      <Reveal delay={0.1} className="mt-[var(--block-gap)] flex flex-nowrap justify-center gap-2 sm:flex-wrap sm:gap-3">
-        <GlassButton
-          href={avatarChat ?? "/#contact"}
-          quickContact={avatarChat ? undefined : "ai-labs:create-an-avatar"}
-          variant="brand"
-          icon={<Sparkles className="size-4" />}
-          arrow
-          className={MOBILE_CTA}
-        >
-          Create Your AI Avatar
-        </GlassButton>
-        {/*
-          Into the library, filtered — the same treatment Influence's second
-          button gets. It went to /our-work unfiltered, which is "view AI
-          content" landing on everything Genesis has ever made.
-        */}
-        {/*
-          A BARE "#library", NOT "/#library", and the difference is the whole
-          feature. The routed form is a client navigation to the same page:
-          the section tree re-renders, the work grid comes back with its
-          filter at its initial "All", and the chip this button just asked
-          for is thrown away before the reader arrives. A bare hash is
-          handled by SmoothScroll on capture — no navigation, so the grid
-          keeps the state it was handed.
-        */}
-        <GlassButton
-          href="#library"
-          selectsFilter="AI Lab"
-          variant="glass"
-          arrow
-          className={MOBILE_CTA}
-        >
-          Explore AI Work
-        </GlassButton>
-      </Reveal>
+      <PlanBar vertical="ai-labs" />
     </SectionShell>
 
       {/*

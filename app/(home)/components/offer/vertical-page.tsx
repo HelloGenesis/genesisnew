@@ -42,30 +42,38 @@ export function VerticalPage({
 }) {
   const card = verticalCard(current);
   return (
-    <main>
-      <JsonLd
-        data={[
-          serviceJsonLd({
-            name: page.schema.name,
-            serviceType: page.schema.serviceType,
-            description: page.seo.description,
-            path: card.href,
-            offers: serviceOffers(page),
-          }),
-          breadcrumbJsonLd([{ name: card.name, path: card.href }]),
-        ]}
-      />
-      {hiddenTitle && (
-        <h1 className="sr-only">
-          {card.name} — {page.heading.lead} {page.heading.accent}
-        </h1>
-      )}
-      <Atmosphere tone="brand" origin="top" intensity={0.18}>
-        <VerticalNav current={current} />
-      </Atmosphere>
-      {children}
+    <>
+      <main>
+        <JsonLd
+          data={[
+            serviceJsonLd({
+              name: page.schema.name,
+              serviceType: page.schema.serviceType,
+              description: page.seo.description,
+              path: card.href,
+              offers: serviceOffers(page),
+            }),
+            breadcrumbJsonLd([{ name: card.name, path: card.href }]),
+          ]}
+        />
+        {hiddenTitle && (
+          <h1 className="sr-only">
+            {card.name} — {page.heading.lead} {page.heading.accent}
+          </h1>
+        )}
+        <Atmosphere tone="brand" origin="top" intensity={0.18}>
+          <VerticalNav current={current} />
+        </Atmosphere>
+        {children}
+      </main>
+      {/*
+      OUTSIDE <main>, AND IT MATTERS. Every direct child of main gets
+      content-visibility: auto with a 900px intrinsic size (globals.css), so
+      these two fixed bars, inside it, were given a 900px box while skipped —
+      an invisible sheet over the page that could swallow taps on a phone.
+    */}
       <JumpBar links={jump} />
       <MobileCta primary={primary} bookHref={bookingHref(card.name)} />
-    </main>
+    </>
   );
 }

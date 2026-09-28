@@ -19,18 +19,10 @@ import {
 } from "@/lib/case-study-pages";
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { influencer, services } from "@/lib/home-content";
+import { PlanBar } from "./plan-bar";
 
-/*
-  ON A PHONE THE TWO CALLS TO ACTION SHARE ONE LINE, smaller ("buttons on same
-  line - reduce size"). `max-sm:` leaves every larger screen as it was, and the
-  arrow goes first because it is the one part of a button that says nothing
-  its label does not.
-*/
-const MOBILE_CTA =
-  "max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.78125rem] max-sm:[&>svg:last-child]:hidden";
 
 /**
  * Influencer marketing — built to the Genesis mockup on page 7.
@@ -460,46 +452,7 @@ export function InfluencerMarketing() {
           section they read as what they are.
         */}
 
-        {/*
-          TWO ACTIONS, both specific, and BELOW the figures rather than inside
-          them. "Contact Us" was the only one here, which is the least useful
-          thing a section about influencer campaigns can say — it asks the
-          reader to translate their own intent into a generic enquiry. Sitting
-          them in the stats panel packed four numbers and two buttons into one
-          row; they get their own line.
-        */}
-        {/*
-          THE TWO BUTTONS GENESIS SPECIFIED, in their words and to their
-          destinations.
-
-          "Explore Genesis Influence" is gone. It went to /influencer-campaigns
-          — the division's own page — which is a third thing to click in a
-          section that is meant to offer a choice between starting a campaign
-          and seeing the work. Genesis asked for the second button to be "View
-          Case Studies", landing on the library "filtering exclusively for
-          influencer campaigns", which is what the query string does. The
-          division page is still reachable from the card above.
-        */}
-        <Reveal delay={0.15} className="mt-5 flex flex-nowrap gap-2 sm:flex-wrap sm:gap-3">
-          <GlassButton
-            href="/#contact"
-            quickContact="influence:plan-a-campaign"
-            variant="brand"
-            arrow
-            className={MOBILE_CTA}
-          >
-            Plan an Influencer Campaign
-          </GlassButton>
-          <GlassButton
-            href="#library"
-            selectsFilter="Influence"
-            variant="glass"
-            arrow
-            className={MOBILE_CTA}
-          >
-            View Influence Work
-          </GlassButton>
-        </Reveal>
+        <PlanBar vertical="influence" className="!mt-6" />
       </div>
 
       {/*

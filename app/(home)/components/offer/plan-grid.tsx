@@ -1,18 +1,19 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ChevronDown, Plus, TableProperties } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Minus, Plus, TableProperties } from "lucide-react";
 import { useId, useState } from "react";
 
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Overlay } from "@/components/genesis/overlay";
 import { Reveal } from "@/components/genesis/reveal";
-import { planGlossary, planTerms, quarterlyLine } from "@/lib/pricing";
+import { monthlyListFigure, price, quarterlySaving } from "@/lib/money";
+import { planGlossary, planTerms } from "@/lib/pricing";
 import type { Plan, PlanGrid as PlanGridData } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 import { CheckList, SectionHead } from "./parts";
 
-type Billing = "monthly" | "quarterly";
+export type Billing = "monthly" | "quarterly";
 
 /**
  * A vertical's monthly plans: the billing switch, three cards, and the two
@@ -30,16 +31,34 @@ export function PlanGrid({
   data,
   id,
   compact = false,
+  showCompare = true,
 }: {
   data: PlanGridData;
   id?: string;
   compact?: boolean;
+  /** /pricing leaves it out: the cards themselves say what each plan includes. */
+  showCompare?: boolean;
 }) {
-  const [billing, setBilling] = useState<Billing>("monthly");
+  /*
+    QUARTERLY BY DEFAULT — Genesis's rule: a visitor first sees the quarterly
+    rate (paid upfront for three months), and switching to monthly shows the
+    10% higher figure. See lib/money.
+  */
+  const [billing, setBilling] = useState<Billing>("quarterly");
   const [includedOpen, setIncludedOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const includedId = useId();
   const headingId = useId();
+  /*
+    WHAT'S INCLUDED, INSIDE EACH CARD. When the plans carry their own
+    inclusions, "View What's Included" opens a list in every card — what that
+    plan includes and what it does not — instead of one shared list beneath
+    them, so a reader compares by reading across the cards they are already
+    looking at.
+  */
+  const perCard = data.plans.some((plan) => plan.inclusions);
+  const compare = showCompare ? data.compare : undefined;
+  const notes = [...new Set(data.plans.map((plan) => plan.note).filter(Boolean))] as string[];
 
   const toggle = data.billing ? (
     <BillingToggle value={billing} onChange={setBilling} note={data.billingNote} />
@@ -63,21 +82,28 @@ export function PlanGrid({
       <ul className={cn("grid gap-4 lg:grid-cols-3", compact ? "mt-6" : "mt-10")}>
         {data.plans.map((plan, index) => (
           <Reveal as="li" key={plan.name} delay={0.05 * index} className="flex">
-            <PlanCard plan={plan} billing={billing} />
+            <PlanCard plan={plan} billing={billing} showInclusions={perCard && includedOpen} />
           </Reveal>
         ))}
       </ul>
 
+      {/* Lines for the whole grid, under it rather than inside one card. */}
+      {notes.map((note) => (
+        <p key={note} className="mt-5 text-center text-body text-ash">
+          {note}
+        </p>
+      ))}
+
       {data.footnote && <p className="mt-4 text-small text-faint">{data.footnote}</p>}
 
-      {(data.included || data.compare) && (
-        <div className="mt-6 grid gap-3 md:grid-cols-[1fr_auto]">
+      {(data.included || compare) && (
+        <div className={cn("mt-6 grid gap-3", compare && "md:grid-cols-[1fr_auto]")}>
           {data.included && (
             <div className="glass glass-lit rounded-panel">
               <button
                 type="button"
                 aria-expanded={includedOpen}
-                aria-controls={includedId}
+                aria-controls={perCard ? undefined : includedId}
                 onClick={() => setIncludedOpen((open) => !open)}
                 className="flex w-full items-center gap-4 rounded-panel p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:p-5"
               >
@@ -96,7 +122,7 @@ export function PlanGrid({
                   )}
                 </span>
                 <span className="hidden items-center gap-1.5 text-small text-ash sm:flex">
-                  View What&rsquo;s Included
+                  {includedOpen ? "Hide details" : "View What\u2019s Included"}
                   <ChevronDown
                     className={cn("size-4 transition-transform duration-300", includedOpen && "rotate-180")}
                     aria-hidden
@@ -104,7 +130,7 @@ export function PlanGrid({
                 </span>
               </button>
               <AnimatePresence initial={false}>
-                {includedOpen && (
+                {includedOpen && !perCard && (
                   <motion.div
                     id={includedId}
                     key="included"
@@ -128,7 +154,7 @@ export function PlanGrid({
               </AnimatePresence>
             </div>
           )}
-          {data.compare && (
+          {compare && (
             <button
               type="button"
               data-track="compare-plans"
@@ -174,7 +200,7 @@ export function PlanGrid({
         </details>
       </div>
 
-      {data.compare && (
+      {compare && (
         <Overlay open={compareOpen} label="Compare plans" onClose={() => setCompareOpen(false)}>
           <div className="overflow-y-auto p-5 sm:p-8" data-lenis-prevent>
             <p className="micro-label">{data.label}</p>
@@ -201,7 +227,11 @@ export function PlanGrid({
                   </tr>
                 </thead>
                 <tbody>
-                  {data.compare.rows.map((row) => (
+                  {[
+                    { label: "Quarterly (per month)", values: data.plans.map((plan) => price(plan.rate)) },
+                    { label: "Monthly (per month)", values: data.plans.map((plan) => price(monthlyListFigure(plan.rate))) },
+                    ...compare.rows,
+                  ].map((row) => (
                     <tr key={row.label} className="align-top">
                       <th scope="row" className="border-b border-white/8 py-3 pr-4 font-normal text-ash">
                         {row.label}
@@ -222,7 +252,7 @@ export function PlanGrid({
                 </tbody>
               </table>
             </div>
-            {data.compare.footnote && <p className="mt-4 text-small text-faint">{data.compare.footnote}</p>}
+            {compare.footnote && <p className="mt-4 text-small text-faint">{compare.footnote}</p>}
             <div className="mt-6 flex flex-wrap gap-3">
               {data.plans.map((plan) => (
                 <GlassButton
@@ -245,18 +275,21 @@ export function PlanGrid({
 export function BillingToggle({
   value,
   onChange,
-  note,
+  align = "end",
 }: {
   value: Billing;
   onChange: (value: Billing) => void;
+  /** Kept for the copy files; the toggle now writes its own line. */
   note?: string;
+  /** "start" inside a card; "end" beside a section heading. */
+  align?: "start" | "end";
 }) {
   return (
-    <div className="flex flex-col items-start gap-2 lg:items-end">
-      <div className="flex items-center gap-3">
+    <div className={cn("flex flex-col items-start gap-2", align === "end" && "lg:items-end")}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="text-small text-faint">Billing</span>
         <div role="radiogroup" aria-label="Billing" className="glass-chip flex rounded-full p-1">
-          {(["monthly", "quarterly"] as const).map((option) => (
+          {(["quarterly", "monthly"] as const).map((option) => (
             <button
               key={option}
               type="button"
@@ -265,25 +298,42 @@ export function BillingToggle({
               aria-checked={value === option}
               onClick={() => onChange(option)}
               className={cn(
-                "h-9 rounded-full px-4 text-small capitalize transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+                "flex h-9 items-center gap-2 rounded-full px-4 text-small capitalize transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
                 value === option ? "bg-brand text-on-brand" : "text-ash hover:text-bone",
               )}
             >
               {option}
+              {option === "quarterly" && (
+                <span
+                  className={cn(
+                    "whitespace-nowrap rounded-full px-1.5 py-0.5 text-[0.625rem] uppercase tracking-[0.08em]",
+                    value === option ? "bg-black/15" : "bg-brand/15 text-brand-ink",
+                  )}
+                >
+                  Save 10%
+                </span>
+              )}
             </button>
           ))}
         </div>
       </div>
-      {note && (
-        <p className={cn("text-small text-faint transition-opacity", value === "quarterly" ? "opacity-100" : "opacity-60")}>
-          {value === "quarterly" ? "Billed every 3 months" : note}
-        </p>
-      )}
+      <p className="text-small text-brand-ink">{quarterlySaving}</p>
+      <p className="text-small text-faint">
+        {value === "quarterly" ? "Paid upfront for 3 months." : "Billed month to month."}
+      </p>
     </div>
   );
 }
 
-function PlanCard({ plan, billing }: { plan: Plan; billing: Billing }) {
+function PlanCard({
+  plan,
+  billing,
+  showInclusions,
+}: {
+  plan: Plan;
+  billing: Billing;
+  showInclusions: boolean;
+}) {
   return (
     <article
       className={cn(
@@ -308,33 +358,63 @@ function PlanCard({ plan, billing }: { plan: Plan; billing: Billing }) {
         )}
       </div>
       {/* A fixed height from lg, so the three prices sit on one line whatever the copy above them runs to. */}
-      <div className={cn("relative", plan.tagline ? "lg:min-h-[8.75rem]" : "lg:min-h-[4.25rem]")}>
+      <div className={cn("relative", plan.tagline ? "lg:min-h-[8.75rem]" : "lg:min-h-[5rem]")}>
         {plan.tagline && <p className="mt-3 text-body text-bone">{plan.tagline}</p>}
         <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{plan.description}</p>
       </div>
 
-      <div className="relative mt-6 min-h-[4.5rem]">
-        {billing === "monthly" ? (
-          <p className="flex items-baseline gap-2">
-            <span className="font-display text-h2 font-normal leading-none tracking-tight text-bone">
-              {plan.price}
-            </span>
-            <span className="text-small text-ash">{plan.period}</span>
-          </p>
-        ) : (
-          <>
-            <p className="flex items-baseline gap-1">
-              <span className="font-display text-h2 font-normal leading-none tracking-tight text-bone">
-                {plan.price}
-              </span>
-              <span className="text-small text-ash">/mo</span>
-            </p>
-            <p className="mt-2 text-small text-brand-ink">{quarterlyLine(plan.monthly)}</p>
-          </>
-        )}
+      <div className="relative mt-6">
+        <p className="flex flex-wrap items-baseline gap-x-2">
+          {/*
+            THE "/-" SET SMALL. Mont's slash goes to the fallback face (see
+            app/layout), which at display size drew a heavy stroke beside a
+            hairline figure. At the unit's size it reads as the suffix it is.
+          */}
+          <span className="font-display text-h2 font-normal leading-none tracking-tight text-bone">
+            {price(billing === "quarterly" ? plan.rate : monthlyListFigure(plan.rate)).replace(/\/-$/, "")}
+          </span>
+          <span className="-ml-1.5 text-lead text-ash">/-</span>
+          <span className="text-small text-ash">per month</span>
+        </p>
       </div>
 
       <CheckList items={plan.features} className="relative mt-6" />
+
+      <AnimatePresence initial={false}>
+        {showInclusions && plan.inclusions && (
+          <motion.div
+            key="inclusions"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="relative overflow-hidden"
+          >
+            <div className="mt-6 border-t border-white/10 pt-5">
+              <p className="micro-label">What&rsquo;s included</p>
+              <ul className="mt-3 space-y-2">
+                {plan.inclusions.map(({ item, included }) => (
+                  <li key={item} className="flex items-start gap-3 text-small leading-snug">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full",
+                        included ? "bg-brand/20 text-brand-ink" : "bg-white/5 text-faint",
+                      )}
+                    >
+                      {included ? <Check className="size-2.5" strokeWidth={3} /> : <Minus className="size-2.5" strokeWidth={3} />}
+                    </span>
+                    <span className={included ? "text-bone" : "text-faint line-through decoration-white/20"}>
+                      {typeof included === "string" ? `${item}: ${included}` : item}
+                      <span className="sr-only">{included ? " — included" : " — not included"}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="relative mt-auto pt-8" data-track={`plan:${plan.name}`}>
         <GlassButton
@@ -345,7 +425,6 @@ function PlanCard({ plan, billing }: { plan: Plan; billing: Billing }) {
         >
           {plan.cta.label}
         </GlassButton>
-        {plan.note && <p className="mt-3 text-center text-small text-faint">{plan.note}</p>}
       </div>
     </article>
   );

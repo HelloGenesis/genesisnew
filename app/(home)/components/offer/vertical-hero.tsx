@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 
 import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
@@ -28,6 +29,7 @@ export function VerticalHero({
   strip,
   images,
   note,
+  visual,
 }: {
   label: string;
   /** The heading's plain lines, before the lit one. */
@@ -41,6 +43,8 @@ export function VerticalHero({
   images: readonly { src: string; label?: string }[];
   /** The handwritten aside beside the collage — "Same you. More content." */
   note?: string;
+  /** A composition of the page's own to stand in for the photo collage. */
+  visual?: ReactNode;
 }) {
   return (
     <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 pb-[var(--section-pad)] pt-10 lg:grid-cols-[1fr_1fr] lg:pt-14">
@@ -59,10 +63,10 @@ export function VerticalHero({
         <p className="mt-6 max-w-xl text-pretty text-lead leading-snug text-bone">{lead}</p>
         {body && <p className="mt-3 max-w-xl text-pretty text-body leading-relaxed text-ash">{body}</p>}
         <div className="mt-8 flex flex-wrap gap-3">
-          <GlassButton href={primary.href} variant="brand" size="lg" arrow magnetic>
+          <GlassButton href={primary.href} variant="brand" size="md" arrow magnetic>
             {primary.label}
           </GlassButton>
-          <GlassButton href={secondary.href} variant="glass" size="lg" arrow>
+          <GlassButton href={secondary.href} variant="glass" size="md" arrow>
             {secondary.label}
           </GlassButton>
         </div>
@@ -83,17 +87,23 @@ export function VerticalHero({
         </ul>
       </Reveal>
 
-      <Reveal variant="scene" className="relative mx-auto aspect-[5/4] w-full max-w-xl">
-        <Collage images={images} />
-        {note && (
-          <p
-            aria-hidden
-            className="absolute -top-2 left-2 z-[3] -rotate-6 font-serif text-lead italic text-bone/80 sm:left-6"
-          >
-            {note}
-          </p>
-        )}
-      </Reveal>
+      {visual ? (
+        <Reveal variant="scene" className="relative mx-auto w-full max-w-xl">
+          {visual}
+        </Reveal>
+      ) : (
+        <Reveal variant="scene" className="relative mx-auto aspect-[5/4] w-full max-w-xl">
+          <Collage images={images} />
+          {note && (
+            <p
+              aria-hidden
+              className="absolute -top-2 left-2 z-[3] -rotate-6 font-serif text-lead italic text-bone/80 sm:left-6"
+            >
+              {note}
+            </p>
+          )}
+        </Reveal>
+      )}
     </section>
   );
 }

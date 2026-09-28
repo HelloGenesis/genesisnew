@@ -1099,6 +1099,34 @@ licensed fonts, a real-device speed check, definitions of "adaptation" and
 "premium vs standard video", and decisions on a quarterly incentive and a
 project-to-membership credit.
 
+### Sales-ready pass — 2026-09-28
+
+- Homepage divisions each end on a **plan bar**: the product (AI Content
+  Studio, Content Monthly, Always-On Creative Desk, Influencer & UGC
+  Campaigns), its promise, where the price starts, "See … plans", a direct
+  start (the Razorpay link once `joinUrls` is filled) and "View … work".
+  AI Lab and Studios headings now use the products' own lines ("Build once.
+  Publish continuously.", "From brief to publish.").
+- AI Avatar Setup (₹24,999/-, the entry price) is offered under the avatars.
+- The homepage memberships block now says the model: one team, one monthly
+  fee; the four steps; each division's starting price; Explore Memberships /
+  Book a 15-min Call.
+- Brand & Design: the ₹64,999/- plan is "Always-On" (Genesis Creative
+  Desk), with the Quarterly/Monthly switch; What's included is a bento; case
+  studies and work show Brand & Design and motion graphics only.
+- Fixed: the jump bar and phone CTA bar sat inside <main>, whose children get
+  content-visibility with a 900px intrinsic size — they now render after it.
+  Brand & Design cards overflowed a 375px screen by 52px. Studios hero
+  buttons wrapped at 1440px.
+- Audit: every route at 375 / 768 / 1024 / 1440 — no horizontal overflow, no
+  overlapping text; 48 internal links and every cross-page anchor resolve.
+  (Audits must force `content-visibility: visible` on main's children, and a
+  hidden browser pane skips rendering entirely, so measure, don't screenshot.)
+
+Open copy questions for Genesis: TripGate vs "TripGatee" (the case study and
+the work tile disagree); motion-graphics studies are headlined "Video
+Production"; "Your creative team" opens both the homepage and Brand & Design.
+
 ---
 
 ## Repository

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 
 import { GlassButton } from "@/components/genesis/glass-button";
@@ -7,7 +8,7 @@ import { mediaUrl } from "@/lib/media-url";
 import type { Closing, Faq, IconCard, Steps, Turnaround } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 import { IconTile, OfferIcon } from "./icons";
-import { OfferSection, SectionHead } from "./parts";
+import { CheckList, OfferSection, SectionHead } from "./parts";
 
 /**
  * The repeating blocks of the four vertical pages. Each takes a slice of a
@@ -40,11 +41,95 @@ export function IconCards({
               {item.label && <p className="micro-label !tracking-[0.18em]">{item.label}</p>}
               <h3 className={cn("font-sans text-body leading-snug text-bone", item.label && "mt-2")}>{item.title}</h3>
               {item.body && <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{item.body}</p>}
+              {item.tier && <TierTag className="mt-3">{item.tier}</TierTag>}
             </div>
           </div>
         </Reveal>
       ))}
     </ul>
+  );
+}
+
+/** Which tiers get an item, as a small outlined label. */
+export function TierTag({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full border border-brand/40 px-2.5 py-0.5 text-[0.6875rem] leading-snug text-brand-ink",
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+type VideoTier = {
+  name: string;
+  length: string;
+  plans: string;
+  lead?: string;
+  includes: readonly string[];
+  excludes?: readonly string[];
+  turnaround?: string;
+  featured?: boolean;
+};
+
+/**
+ * Standard, Premium or Advanced — what separates the three kinds of video the
+ * AI plans count. Three columns, each building on the last.
+ */
+export function VideoTiers({
+  data,
+  compact = false,
+}: {
+  data: { label: string; heading: string; body: string; tiers: readonly VideoTier[] };
+  compact?: boolean;
+}) {
+  return (
+    <div>
+      {compact ? (
+        <h4 className="mb-4 font-sans text-body text-bone">{data.heading}</h4>
+      ) : (
+        <SectionHead label={data.label} heading={data.heading} body={data.body} />
+      )}
+      <ul className={cn("grid gap-3 md:grid-cols-3", !compact && "mt-10")}>
+        {data.tiers.map((tier, index) => (
+          <Reveal as="li" key={tier.name} delay={0.05 * index} className="flex">
+            <article
+              className={cn(
+                "flex w-full flex-col rounded-panel p-5 sm:p-6",
+                tier.featured ? "glass glass-strong glass-lit border border-brand/50" : "glass glass-lit",
+              )}
+            >
+              <h3 className="font-sans text-lead leading-snug text-bone">{tier.name}</h3>
+              <p className="mt-2 flex flex-wrap items-baseline gap-x-2">
+                <span className="font-display text-h3 font-normal leading-none tracking-tight text-brand-ink">
+                  {tier.length}
+                </span>
+              </p>
+              <p className="mt-2 text-small text-faint">In: {tier.plans}</p>
+              {tier.lead && <p className="mt-5 text-small text-bone">{tier.lead}</p>}
+              <CheckList items={tier.includes} className={tier.lead ? "mt-3" : "mt-5"} />
+              {tier.excludes && (
+                <p className="mt-4 text-pretty text-small leading-relaxed text-faint">
+                  Not included: {tier.excludes.join(", ")}
+                </p>
+              )}
+              {tier.turnaround && (
+                <>
+                  {/* Pins the turnaround to the card's foot, never closer than 20px to the list. */}
+                  <span aria-hidden className="min-h-5 flex-1" />
+                  <p className="border-t border-white/10 pt-4 text-small text-ash">
+                    Typical turnaround: <span className="text-bone">{tier.turnaround}</span>
+                  </p>
+                </>
+              )}
+            </article>
+          </Reveal>
+        ))}
+      </ul>
+    </div>
   );
 }
 
