@@ -537,7 +537,7 @@ export function DivisionLockup({
           preload={priority}
           fetchPriority={priority ? "high" : undefined}
           sizes={fluid ? FLUID_SIZES : `(min-width: 640px) ${maxWidth}px, 100vw`}
-          className="h-auto w-full"
+          className="division-art h-auto w-full"
           /*
             The name set is one file for both themes — see the note on NAME —
             so it must NOT be faded by --logo-invert, or it would vanish
@@ -657,7 +657,7 @@ export function DivisionName({
       width={width}
       height={height}
       sizes={`${width * 2}px`}
-      className={cn("h-auto max-w-full object-contain", className)}
+      className={cn("division-art h-auto max-w-full object-contain", className)}
       style={{ height, width: "auto" }}
     />
   );

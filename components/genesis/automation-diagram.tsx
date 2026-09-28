@@ -219,7 +219,13 @@ function WideDiagram({ className }: { className?: string }) {
     part that disappeared. The canvas is 940 now and the node is no wider, so
     each strand has about 170 units of horizontal run before it arrives.
   */
-  const hub = { x: (width - 268) / 2, y: height / 2, w: 268, h: 92 };
+  /*
+    WIDER AND SHORTER (Genesis, 29 Sep 2026: "too big, boxy — it has to be
+    wider and shorter in height; there is unnecessary negative space in the
+    box"). A 5:1 pill with the lettering filling it, where the old 268×92 box
+    was nearly a third empty.
+  */
+  const hub = { x: (width - 360) / 2, y: height / 2, w: 360, h: 70 };
   /* Where the strands start, and therefore how much room a logo has. */
   const leftX = 166;
   const rightX = width - leftX;
@@ -239,7 +245,7 @@ function WideDiagram({ className }: { className?: string }) {
     nothing else, so the box and the mark are now the same thing and 150 units
     of box is more lettering than 196 units of the old one was.
   */
-  const markW = 150;
+  const markW = 142;
   const markH = Math.round((markW / AI_LAB_MARK.width) * AI_LAB_MARK.height);
 
   return (
@@ -279,13 +285,24 @@ function WideDiagram({ className }: { className?: string }) {
           <stop offset="100%" stopColor="#ffa25c" />
         </linearGradient>
         <radialGradient id="gm-ai-glow">
-          <stop offset="0%" stopColor="#ff9a86" stopOpacity="0.2" />
+          <stop offset="0%" stopColor="#ff9a86" stopOpacity="0.34" />
+          <stop offset="55%" stopColor="#ff8fb8" stopOpacity="0.12" />
           <stop offset="100%" stopColor="#ff9a86" stopOpacity="0" />
         </radialGradient>
+        {/* The node's edge: the AI Lab ramp, pink at the ends and orange through the middle. */}
+        <linearGradient id="gm-ai-edge" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ff7eb3" />
+          <stop offset="50%" stopColor="#ffa25c" />
+          <stop offset="100%" stopColor="#ff7eb3" />
+        </linearGradient>
+        {/* The glow round it — the same edge, blurred. */}
+        <filter id="gm-ai-halo" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="9" />
+        </filter>
       </defs>
 
       {/* A bloom behind the node. Small and faint. */}
-      <circle cx={hub.x + hub.w / 2} cy={hub.y} r="128" fill="url(#gm-ai-glow)" />
+      <ellipse cx={hub.x + hub.w / 2} cy={hub.y} rx="240" ry="120" fill="url(#gm-ai-glow)" />
 
       {sides.map((side) =>
         side.apps.map((app, index) => {
@@ -342,16 +359,28 @@ function WideDiagram({ className }: { className?: string }) {
         same weight the connectors carry, so the node reads as the object they
         arrive at rather than as a shadow behind the lockup.
       */}
+      {/* THE GRADIENT GLOW (Genesis, 29 Sep 2026): the edge, blurred, behind the edge. */}
       <rect
         x={hub.x}
         y={hub.y - hub.h / 2}
         width={hub.w}
         height={hub.h}
-        rx="18"
-        fill="var(--surface-raised, #18181a)"
-        stroke="url(#gm-ai-dash)"
-        strokeWidth="1.75"
-        strokeOpacity="0.95"
+        rx={hub.h / 2.6}
+        fill="none"
+        stroke="url(#gm-ai-edge)"
+        strokeWidth="6"
+        opacity="0.7"
+        filter="url(#gm-ai-halo)"
+      />
+      <rect
+        x={hub.x}
+        y={hub.y - hub.h / 2}
+        width={hub.w}
+        height={hub.h}
+        rx={hub.h / 2.6}
+        fill="var(--surface-ink, #0d0d0e)"
+        stroke="url(#gm-ai-edge)"
+        strokeWidth="2"
       />
       {/*
         The lockup, centred in the node. "AUTOMATED" used to sit under it and
@@ -405,11 +434,12 @@ function TallDiagram({ className }: { className?: string }) {
   const slot = 36;
 
   const topRows = [0, 1, 2].map((i) => 24 + i * rowGap);
-  const hub = { w: 150, h: 58, x: (width - 150) / 2, y: 24 + perSide * rowGap + 14 };
+  /* Wider and shorter, as on a laptop — see WideDiagram. */
+  const hub = { w: 196, h: 50, x: (width - 196) / 2, y: 24 + perSide * rowGap + 18 };
   const bottomRows = [0, 1, 2].map((i) => hub.y + hub.h + 30 + i * rowGap);
   const height = bottomRows[bottomRows.length - 1] + 30;
 
-  const markW = 120;
+  const markW = 104;
   const markH = Math.round((markW / AI_LAB_MARK.width) * AI_LAB_MARK.height);
 
   /* Where a strand leaves its logo. */
@@ -442,6 +472,14 @@ function TallDiagram({ className }: { className?: string }) {
           <stop offset="0%" stopColor="#ff8fb8" />
           <stop offset="100%" stopColor="#ffa25c" />
         </linearGradient>
+        <linearGradient id="gm-ai-edge-tall" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ff7eb3" />
+          <stop offset="50%" stopColor="#ffa25c" />
+          <stop offset="100%" stopColor="#ff7eb3" />
+        </linearGradient>
+        <filter id="gm-ai-halo-tall" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="7" />
+        </filter>
         <linearGradient
           id="gm-ai-line-down"
           gradientUnits="userSpaceOnUse"
@@ -512,11 +550,22 @@ function TallDiagram({ className }: { className?: string }) {
         y={hub.y}
         width={hub.w}
         height={hub.h}
-        rx="16"
-        fill="var(--surface-raised, #18181a)"
-        stroke="url(#gm-ai-dash-tall)"
-        strokeWidth="1.75"
-        strokeOpacity="0.95"
+        rx={hub.h / 2.6}
+        fill="none"
+        stroke="url(#gm-ai-edge-tall)"
+        strokeWidth="5"
+        opacity="0.7"
+        filter="url(#gm-ai-halo-tall)"
+      />
+      <rect
+        x={hub.x}
+        y={hub.y}
+        width={hub.w}
+        height={hub.h}
+        rx={hub.h / 2.6}
+        fill="var(--surface-ink, #0d0d0e)"
+        stroke="url(#gm-ai-edge-tall)"
+        strokeWidth="2"
       />
       <image
         href={AI_LAB_MARK.src}

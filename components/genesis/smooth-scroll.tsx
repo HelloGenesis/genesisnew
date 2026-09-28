@@ -3,6 +3,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { isContactHref } from "@/lib/site-config";
@@ -91,6 +92,22 @@ function installAnchorScrolling(lenis: Lenis | null): () => void {
     const href = anchor.getAttribute("href");
     if (!href) return;
     /*
+      A LINK TO A SECTION OF THE PAGE YOU ARE ON — "/pricing#one-time" from
+      the nav while on /pricing. The route does not change, so nothing else
+      would scroll for it; it is an in-page jump like "#one-time".
+    */
+    const here = window.location.pathname;
+    if (here !== "/" && href.startsWith(`${here}#`)) {
+      const sameTarget = resolve(href.slice(here.length));
+      if (sameTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        go(sameTarget, true);
+        window.history.pushState(null, "", href);
+        return;
+      }
+    }
+    /*
       A LINK THAT MUST OPEN ITS PAGE. The Services menu names a division's
       services and Genesis wants each to open the division's own page — not to
       scroll the homepage to that division's section, which is what the
@@ -178,7 +195,53 @@ export function getLenis(): Lenis | null {
   return instance;
 }
 
+/**
+ * LANDING ON A SECTION AFTER A PAGE CHANGE — /pricing#one-time from the nav.
+ *
+ * Sections below the fold are laid out at an estimated height until they
+ * render (content-visibility), and images and fonts arrive after the first
+ * frame, so a single jump measured a page that then changed shape: the nav's
+ * "One-time Projects" landed on the footer. This re-aligns to the hash a few
+ * times over the first two seconds after every route change — a full load or
+ * a client-side one — and stops the moment the reader scrolls themselves.
+ */
+function useSettleOnHash() {
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!window.location.hash) return;
+    let moved = false;
+    const stop = () => {
+      moved = true;
+    };
+    window.addEventListener("wheel", stop, { passive: true });
+    window.addEventListener("touchstart", stop, { passive: true });
+    window.addEventListener("keydown", stop);
+    const align = () => {
+      if (moved) return;
+      let target: Element | null = null;
+      try {
+        target = document.querySelector(window.location.hash);
+      } catch {
+        return;
+      }
+      if (!target) return;
+      const top = target.getBoundingClientRect().top + window.scrollY - NAV_OFFSET;
+      const lenis = getLenis();
+      if (lenis) lenis.scrollTo(top, { immediate: true, force: true });
+      else window.scrollTo({ top, behavior: "auto" });
+    };
+    const timers = [60, 300, 800, 1500, 2300].map((delay) => window.setTimeout(align, delay));
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("touchstart", stop);
+      window.removeEventListener("keydown", stop);
+    };
+  }, [pathname]);
+}
+
 export function SmoothScroll() {
+  useSettleOnHash();
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 

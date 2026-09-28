@@ -76,6 +76,12 @@ export type Plan = {
    * checkout.
    */
   inPerson?: boolean;
+  /**
+   * Sold through a conversation, never at checkout — every Enterprise plan
+   * (Genesis, 29 Sep 2026). The card shows "Talk to Genesis" in place of
+   * Purchase / Add to Cart, and the cart will not take it.
+   */
+  contactOnly?: boolean;
   /** The featured tier takes the brand fill; the rest stay glass. */
   featured?: boolean;
   /** A line for the whole grid, printed once under the cards. */

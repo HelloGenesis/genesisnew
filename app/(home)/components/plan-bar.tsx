@@ -1,7 +1,7 @@
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
+import { DivisionCtas } from "./division-ctas";
 import { price } from "@/lib/money";
-import { bookingHref, homePlans } from "@/lib/pricing";
+import { homePlans } from "@/lib/pricing";
 import type { VerticalKey } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 
@@ -10,10 +10,10 @@ import { cn } from "@/lib/utils";
  *
  * The four sections were built as a portfolio before Genesis became a set of
  * memberships. This bar is where each one names what a visitor can buy — the
- * product, its promise, where subscriptions start — and gives four ways on,
- * in Genesis's words and order (28 Sep 2026): see what the division does,
- * see its work and case studies (both on the division's own page), book a
- * 15-minute call, or send a brief.
+ * product, its promise, where subscriptions start — and the division's
+ * three ways on (Genesis, 29 Sep 2026): View Page, Explore Pricing (a menu of
+ * its pricing models) and Case Studies (the homepage's own, filtered to the
+ * division). See DivisionCtas.
  *
  * NO OFFERS HERE. "Save 10%" lives only in the billing switch on the plans
  * themselves; on the homepage the price is said the premium way.
@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils";
  */
 export function PlanBar({ vertical, className }: { vertical: VerticalKey; className?: string }) {
   const plan = homePlans[vertical];
-  const small = "max-sm:h-10 max-sm:px-4 max-sm:text-small";
   return (
     <Reveal delay={0.12} className={cn("mt-[var(--block-gap)] w-full", className)}>
       {/*
@@ -29,7 +28,22 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
         column one word wide ("Subscriptions / from / ₹94,999/- / per /
         month"). The product and its price read first; the ways on sit under.
       */}
-      <div className="glass glass-strong glass-lit flex flex-col gap-5 rounded-panel p-5 text-left sm:p-6">
+      {/*
+        THE GRADIENT EDGE (Genesis, 29 Sep 2026): the palette's amber → coral →
+        violet as a 1px frame with a soft glow at each end, the bar itself dark
+        inside it — the same family as the plan cards and the stats bar.
+      */}
+      <div
+        className="rounded-panel p-px shadow-[-24px_18px_60px_-30px_rgb(245_146_62/0.55),24px_18px_60px_-30px_rgb(180_92_224/0.55)]"
+        style={{ background: "linear-gradient(100deg, #f5923e 0%, #f2607e 40%, #6b4fd8 75%, #c05ce0 100%)" }}
+      >
+      <div
+        className="relative flex flex-col gap-5 rounded-panel bg-ink p-5 text-left sm:p-6"
+        style={{
+          backgroundImage:
+            "radial-gradient(120% 140% at 0% 100%, rgb(245 146 62 / 0.22), transparent 45%), radial-gradient(120% 140% at 100% 0%, rgb(180 92 224 / 0.22), transparent 45%)",
+        }}
+      >
         <div className="flex flex-col gap-x-8 gap-y-2 lg:flex-row lg:items-baseline lg:justify-between">
           <div className="min-w-0">
             <p className="micro-label !text-brand-ink">{plan.product}</p>
@@ -45,28 +59,8 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
             )}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <span data-track={`home-plan:${vertical}:more`}>
-            <GlassButton href={plan.page} pageLink variant="brand" arrow className={small}>
-              View more
-            </GlassButton>
-          </span>
-          <span data-track={`home-plan:${vertical}:work`}>
-            <GlassButton href={plan.work} pageLink variant="glass" arrow className={small}>
-              View work &amp; case studies
-            </GlassButton>
-          </span>
-          <span data-track={`home-plan:${vertical}:book`}>
-            <GlassButton href={bookingHref(plan.product)} variant="glass" arrow className={small}>
-              Book a 15-min call
-            </GlassButton>
-          </span>
-          <span data-track={`home-plan:${vertical}:brief`}>
-            <GlassButton href="/#contact" quickContact={`${vertical}:brief`} variant="ghost" arrow className={small}>
-              Send us a brief
-            </GlassButton>
-          </span>
-        </div>
+        <DivisionCtas vertical={vertical} size="sm" opens="up" />
+      </div>
       </div>
     </Reveal>
   );

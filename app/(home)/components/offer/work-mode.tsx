@@ -50,15 +50,16 @@ export function WorkMode({ oneTime, membership }: { oneTime: ReactNode; membersh
   const labelId = useId();
 
   return (
-    <div className="mt-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-10">
+      {/* IN THE MIDDLE (Genesis, 28 Sep 2026): the heading, the switch and its line, centred. */}
+      <div className="flex flex-col items-center gap-4 text-center">
         <p id={labelId} className="font-sans text-lead text-bone">
           Choose how you want to work
         </p>
         <div
           role="radiogroup"
           aria-labelledby={labelId}
-          className="grid grid-cols-2 gap-1 rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] p-1 sm:inline-grid"
+          className="grid w-full max-w-sm grid-cols-2 gap-1 rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] p-1 sm:w-auto sm:max-w-none"
         >
           {OPTIONS.map((option) => {
             const selected = mode === option.value;
@@ -82,7 +83,7 @@ export function WorkMode({ oneTime, membership }: { oneTime: ReactNode; membersh
           })}
         </div>
       </div>
-      <p className="mt-2 text-small text-ash sm:text-right">{OPTIONS.find((option) => option.value === mode)?.hint}</p>
+      <p className="mt-2 text-center text-small text-ash">{OPTIONS.find((option) => option.value === mode)?.hint}</p>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div

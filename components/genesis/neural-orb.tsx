@@ -649,7 +649,9 @@ export function NeuralOrb({
       brute force to be visible — it needs room to accumulate without going
       black.
     */
-    const spritesOnLight = buildPalette(0.66, 1.45);
+    /* Pushed again (29 Sep 2026, "the colours look very dull" in light mode):
+       more saturation and density so the sphere carries the palette on paper. */
+    const spritesOnLight = buildPalette(0.7, 1.9);
 
     const coreSprite = makeCore();
 
@@ -1009,7 +1011,7 @@ export function NeuralOrb({
         ctx.globalAlpha = Math.min(
           1,
           (0.075 + front * 0.19 + rim * rim * 0.06 + lift * 0.3) *
-            (onLight ? 1.15 : 1),
+            (onLight ? 1.6 : 1),
         );
         const size = (0.9 + front * 0.45 + lift * 0.45) * dot;
 

@@ -1,660 +1,152 @@
 "use client";
 
-import { useRef, useState } from "react";
+import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 
 import { Reveal } from "@/components/genesis/reveal";
 import { studios } from "@/lib/home-content";
-import { mediaUrl } from "@/lib/media-url";
-
-import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
-import { pagerFor } from "@/components/genesis/overlay";
-import type { CaseStudy } from "@/lib/case-studies";
-import { caseStudyForClip, caseStudyPathForClip } from "@/lib/case-study-pages";
-import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
-import { useInViewPlayback } from "@/components/genesis/use-in-view-playback";
-import { cn } from "@/lib/utils";
-import { reelClip } from "@/lib/work";
 
 /**
- * FROM BRIEF TO FINAL CUT — the five stages of a Studios job, laid out as the
- * editing timeline Genesis supplied as the reference.
+ * FROM BRIEF TO FINAL CUT — the five stages of a Studios job, drawn to
+ * Genesis's design (29 Sep 2026): an edit timeline across the top (00:00 to
+ * 00:25, the origin dot and its rule dropping down the left), one gradient
+ * bar holding the five stages, and an illustrated card per stage, each edged
+ * in its stage's colour, with a circled arrow between them.
  *
- * IT IS BUILT TO MATCH THAT REFERENCE PART FOR PART, because an earlier pass
- * kept the idea and dropped the furniture, and Genesis's answer was that they
- * wanted the reference itself. So everything in it is here: the scrubber
- * across the top with its origin dot and the rule dropping down the left
- * edge, the tick marks between stops, a bordered media card per stage, a
- * circled arrow in every gap, a dotted number-and-name label under each card,
- * the line of copy, and an outline icon beneath that.
+ * THE PALETTE RUNS ALONG THE ROW — amber at Brief to violet at Deliver, the
+ * same sweep as the stats bar and the plan cards — so the row reads as a
+ * progress bar filling.
  *
- * THE ONE THING THAT IS NOT COPIED IS THE PALETTE, and that is Genesis's own
- * earlier instruction rather than a liberty taken here. The reference gives
- * each stage a hue of its own — orange, violet, blue, green — which is four
- * colours outside the six the brand fixed. The progression is carried in
- * VALUE instead: every stage's dot, border, label and icon share one accent
- * and step up in strength from Brief to Deliver, so the eye still reads
- * left-to-right travel and the last card still looks like an arrival. See
- * STRENGTH.
+ * THE ILLUSTRATIONS ARE GENESIS'S OWN (public/studios/pipeline), replaced
+ * 29 Sep 2026 with their glowing set: the call, the storyboard, the camera,
+ * the grade, the publish stack — 800×1000 WebP, so the cards are 4:5. They replace the five Studios clips the cards
+ * used to play; the clips are still in the case studies and the portfolio.
  *
- * THE RULER IS LABELLED IN STAGES, NOT SECONDS. The reference is scrubbing a
- * twenty-second edit, so its marks read 0s, 5s, 10s. This is a timeline of
- * the WORK rather than of one film, and "10s" printed over "Shoot" would be
- * saying the shoot takes ten seconds. The stops are numbered instead, which
- * keeps the scrubber reading as a measure while the number over each card
- * matches the label beneath it.
- *
- * THE CARDS CARRY GENESIS'S OWN FOOTAGE. The reference fills each card with a
- * picture of that stage; these play five clips from the catalogue. It is also
- * where the reel wall's job went when that wall was removed from this section
- * — five clips instead of thirty-two, which is the same argument at a
- * fraction of the weight.
+ * ON A PHONE the bar and the ruler step aside and each stage becomes a card
+ * with its own label, in a row that swipes.
  */
 
-/**
- * How strongly each stage is lit, as a share of the accent.
- *
- * Linear from a quiet grey-gold to full #ffc516, so the row reads as a
- * progress bar filling. "Deliver" should look like the end of something.
- */
-const STRENGTH = [0.3, 0.475, 0.65, 0.825, 1];
+/** Each stage's colour, Brief to Deliver. */
+const TONES = ["#f4b04a", "#ef8a4a", "#ec6d6a", "#dc6aa5", "#9b6ae0"] as const;
 
-/**
- * Which clip sits in each card — STUDIOS WORK, which it was not.
- *
- * The five here were 3, 11, 19, 26 and 32: four Influence pieces and one AI
- * Labs one. Genesis's note was exactly that ("this is all Genesis.influence
- * and AI"), and it is the worst kind of wrong for this section — a timeline
- * of how Studios makes a film, illustrated with another division's work.
- *
- * These five are all Studios work, and they are ORDERED BY SHAPE to match
- * the row below: the two landscape films first, the square one in the
- * middle, the two portrait reels last. That is what lets each card grow
- * without anything being cropped into a shape it was not shot in.
- *
- * Two of the first picks were dropped on sight rather than on principle:
- * their opening frame is a white title card, so the first and last stage
- * were plain slabs where every other card was a photograph.
- */
-/*
-  ALL FIVE HAVE A WRITTEN STUDY BEHIND THEM NOW, which is the change.
+/** The bar's sweep — the same five colours as one gradient. */
+const BAR = `linear-gradient(90deg, ${TONES[0]} 0%, ${TONES[1]} 25%, ${TONES[2]} 48%, ${TONES[3]} 72%, ${TONES[4]} 100%)`;
 
-  Genesis: "video 1 and video 5 are not linked in genesis studios with their
-  case studies." They were not, and could not be: UMANG 2024 belongs to the
-  event films, whose card has no write-up, and the Activ Travel explainer has
-  no study at all. No amount of linking code fixes a clip with nothing to link
-  to, so the CLIPS themselves changed — these five are the Studios clips that
-  DO have a published study, and every card in the row now opens one.
+/** The ruler's marks, as the design writes them. */
+const TIMES = ["00:00", "00:05", "00:10", "00:15", "00:20", "00:25"];
 
-  WHAT WENT AND WHAT CAME. Out: umang-2024 (no study), 1x1 (unnamed selected
-  production, no study), activ-travel-leisure (no study). In: the three ABHI
-  and Genesis pieces that are written up — 100% health, menopause day and
-  Income Protect. Mahindra and Abhi Ka Star stay.
-
-  THE ONE LANDSCAPE FILM LEADS. Only one Studios clip with a study behind it
-  is 16:9 — Mahindra's cut — and it takes the first stage, where the frame is
-  widest relative to its height and the crop is therefore gentlest. The four
-  portrait reels follow into frames shaped like them. See SHAPE.
-*/
-const CLIPS = [
-  "studios-mahindra-cut-44",
-  "studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance",
-  "studios-final-menopause-abhi-02",
-  "studios-abhi-ka-star",
-  "studios-7-draft6-income-protect",
-];
-
-/**
- * The shape of each stage's card, and how much of the row it takes.
- *
- * IT GROWS, BUT NOT FROM NOTHING — and that distinction is the fix for
- * "ye aise ghutan me kyu hai".
- *
- * WHAT WAS WRONG. Genesis asked twice for the cards to grow across the row
- * ("harr ek me size badte jaaye"), and the first pass delivered it by moving
- * BOTH the width and the aspect: 0.78 of a share up to 1.25, with the shape
- * turning from 16:9 through square to 4:5. Compounding the two made the range
- * enormous — measured at 1152, the five stood 94, 145, 214, 288 and 321
- * points. Four times taller at the end than at the start.
- *
- * The cards bottom-align, so that range did not read as growth. It read as a
- * starved first card under 227 points of empty section, then a second one
- * barely better, and only the last three looking like anything. The thing
- * Genesis pointed at is real: the row had a hole in it where its opening
- * should be.
- *
- * SO THE GROWTH COMES FROM THE WIDTH ALONE. One aspect for all five, and the
- * spans carry the progression — which keeps every card upright and correctly
- * shaped for the 9:16 footage in it, where the old version turned the frames
- * landscape at one end and portrait at the other.
- *
- * 0.78 TO 1.22, AND THE FIRST COMPRESSION WENT TOO FAR. Fixing the hole took
- * the range down to 0.88–1.10, which at 1152 is 228 points up to 286 — a
- * rise of a quarter across five cards, and Genesis's read was that the boxes
- * had stopped varying at all. They were nearly right: a 25% spread over that
- * distance reads as five cards that are the same size and slightly wrong.
- *
- * At 0.78–1.22 the run is 200 up to 314, half as tall again at the end, and
- * the first card is still a card rather than the 94-point stamp the original
- * four-times range left it as. The void above it is about 114 points, which
- * is the row bottom-aligning and reads as depth rather than as a gap.
- *
- * THE RANGE IS BOUNDED BY A CAP THAT IS NOT IN THIS FILE. StageClip holds
- * every card to a vh ceiling so the section fits a screen, and this has hit
- * it twice: at 32vh three cards came out identical, and widening the spans
- * without raising it would flatten the top of the run again. It is 42vh now,
- * which clears a 314-point card on an 800-point window. Widen these further
- * and raise that with them, or check the tallest card against it first.
- *
- * AND THE SHAPE NOW MATCHES THE FOOTAGE. Four of the five clips are 9:16
- * social cuts (see CLIPS), so a portrait frame is the one that crops them
- * least; the old progression put two of them in landscape frames and showed
- * about two fifths of their height. The one landscape film leads the row,
- * where the crop is gentlest because that card is the widest relative to its
- * height.
- */
-const CARD_ASPECT = "aspect-[5/6]";
-
-const SHAPE = [
-  { span: "0.78fr", aspect: CARD_ASPECT },
-  { span: "0.89fr", aspect: CARD_ASPECT },
-  { span: "1fr", aspect: CARD_ASPECT },
-  { span: "1.11fr", aspect: CARD_ASPECT },
-  { span: "1.22fr", aspect: CARD_ASPECT },
-];
-
-const accent = (alpha: number) => `rgb(255 197 22 / ${alpha})`;
-
-/**
- * One outline glyph per stage, in the reference's position under the copy.
- * Drawn rather than pulled from an icon set: five shapes at one stroke weight
- * is less code than a dependency, and they inherit the stage's own strength
- * through `currentColor`.
- */
-const ICONS: Record<string, React.ReactNode> = {
-  Brief: (
-    <>
-      <path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-      <path d="M15 3v5h5M9 13h7M9 17h5" />
-    </>
-  ),
-  Script: (
-    <>
-      <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
-      <path d="M14 6.5 17.5 10" />
-    </>
-  ),
-  Shoot: (
-    <>
-      <rect x="2" y="7" width="13" height="11" rx="2" />
-      <path d="m15 12 6-3.5v9L15 14z" />
-    </>
-  ),
-  Edit: (
-    <>
-      <rect x="2" y="5" width="20" height="14" rx="2" />
-      <path d="M7 5v14M17 5v14M2 12h20" />
-    </>
-  ),
-  Deliver: (
-    <>
-      <path d="M22 2 11 13" />
-      <path d="M22 2 15 22l-4-9-9-4 20-7Z" />
-    </>
-  ),
-};
+const ART = [1, 2, 3, 4, 5].map((n) => `/studios/pipeline/${n}.webp`);
 
 export function StudiosPipeline() {
   const { heading, headingAccent, lead, stages } = studios.pipeline;
-  /*
-    WHICH STUDY IS OPEN OVER THE PAGE, and there is no route involved.
-
-    Genesis: "kisi video ko click kiya toh uska case study udhar hi khulna
-    chahiye, page redirect nahi." These cards linked to /case-studies/<slug>,
-    which took a reader off the landing page and lost their scroll position
-    in the middle of the story the page is telling — and this site's rule is
-    already that nothing but the two forms changes page.
-
-    THE STUDIES ARE RESOLVED ONCE, HERE, not per card in the render. Each is
-    a search over the catalogue (clip -> work -> study), and doing it inside
-    the map would run it on every re-render of every card.
-  */
-  const studies = CLIPS.map((id) => caseStudyForClip(id));
-  const [open, setOpen] = useState<CaseStudy | null>(null);
-
-  /*
-    ARROWS FOR THE PHONE RAIL ("manually scroll rakho - and arrow button as
-    well"). The rail already swipes; these step it exactly one stage at a
-    time, measured from the first card so they stay right at every width.
-  */
-  const rail = useRef<HTMLOListElement>(null);
-  const step = (direction: 1 | -1) => {
-    const el = rail.current;
-    const card = el?.firstElementChild as HTMLElement | null;
-    if (!el || !card) return;
-    el.scrollBy({ left: direction * (card.offsetWidth + 16), behavior: "smooth" });
-  };
 
   return (
     <div>
-      {/*
-        WIDE ENOUGH FOR ONE LINE — "one single line".
-
-        The measure was max-w-2xl, 672px, and this sentence is about 95
-        characters: at the standfirst's own size it needs roughly 900, so it
-        broke into a full line and a short orphaned tail under a centred
-        heading. A measure that narrow is right for a paragraph and wrong for
-        a single sentence meant to be read in one pass.
-
-        NO `whitespace-nowrap`, deliberately. Forcing one line would make it
-        overflow a laptop rather than wrap, and this section already has to
-        fit a screen on a phone. Given room it takes one line; given less it
-        wraps, which is the same behaviour at every width rather than a rule
-        that holds until it suddenly breaks.
-      */}
       <Reveal className="mx-auto max-w-5xl text-center">
         <h3 className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
           {heading}{" "}
-          <span className="font-serif font-normal italic text-brand-ink">
-            {headingAccent}
-          </span>
+          <span className="font-serif font-normal italic text-brand-ink">{headingAccent}</span>
         </h3>
-        <p className="mx-auto mt-3 max-w-none text-pretty text-body leading-relaxed text-ash sm:text-lead">
-          {lead}
-        </p>
+        <p className="mx-auto mt-3 max-w-none text-pretty text-body leading-relaxed text-ash sm:text-lead">{lead}</p>
       </Reveal>
 
       <Reveal variant="scene" delay={0.08} className="relative mt-[var(--block-gap)]">
-        {/*
-          THE ORIGIN, at the far left: the filled dot the reference hangs its
-          timeline from, and the hairline that drops from it down the side of
-          the whole block. It sits outside the scroller so it stays put on a
-          phone while the stages travel past it.
-        */}
-        <span
-          aria-hidden
-          /*
-            AT THE RULER'S HEIGHT, NOT THE TOP OF THE BLOCK. It sat at
-            top-0, which is where the first stop's "01" label is, and the dot
-            was painted straight over the zero. The rule runs 31px down; the
-            dot is 10px, so 26px centres it on the line, which is also where
-            the reference hangs it.
-          */
-          className="pointer-events-none absolute -left-1 top-[26px] hidden md:block"
-        >
-          <span
-            className="block size-2.5 rounded-full"
-            style={{
-              background: accent(1),
-              boxShadow: `0 0 0 5px ${accent(0.13)}`,
-            }}
-          />
-          <span
-            className="absolute left-1/2 top-2.5 w-px -translate-x-1/2"
-            style={{
-              height: "var(--pipeline-drop, 22rem)",
-              background: `linear-gradient(180deg, ${accent(0.5)}, transparent)`,
-            }}
-          />
-        </span>
+        {/* THE RULER — laptop and up. The origin dot, its rule down the left, the marks along the top. */}
+        <div aria-hidden className="relative hidden md:block">
+          <div className="flex justify-between text-[0.75rem] tabular-nums text-ash">
+            {TIMES.map((time) => (
+              <span key={time}>{time}</span>
+            ))}
+          </div>
+          <div className="relative mt-2 h-px" style={{ background: BAR }}>
+            {TIMES.slice(1).map((time, index) => (
+              <span
+                key={time}
+                className="absolute -top-1.5 h-3 w-px bg-white/50"
+                style={{ left: `${((index + 1) / (TIMES.length - 1)) * 100}%` }}
+              />
+            ))}
+            <span
+              className="absolute -left-1.5 -top-1.5 size-3 rounded-full"
+              style={{ background: TONES[0], boxShadow: `0 0 0 5px ${TONES[0]}33, 0 0 18px ${TONES[0]}` }}
+            />
+            <span
+              className="absolute left-0 top-0 w-px"
+              style={{ height: "calc(100% + 30rem)", background: `linear-gradient(180deg, ${TONES[0]}, transparent)` }}
+            />
+          </div>
+        </div>
 
-        {/*
-          THE TRACK'S COLUMNS ARE UNEVEN, which is the whole point — see
-          SHAPE. Written as a style rather than a Tailwind class because the
-          five weights are data, and a class string would have to be kept in
-          sync with the array by hand.
-        */}
+        {/* THE STAGE BAR — laptop and up: one gradient, five stages. */}
         <ol
-          ref={rail}
-          /*
-            FIVE ROWS THE COLUMNS SHARE, via subgrid. The cards are
-            deliberately different heights, and with each column laying itself
-            out alone that pushed all five labels, all five lines of copy and
-            all five icons to different heights — a staircase of text that
-            Genesis called out. The row heights are declared once here and
-            every stage borrows them, so the cards sit on a common baseline
-            and everything under them lines up.
-          */
-          /*
-            A GUTTER BEFORE THE FIRST CARD. The rail is pulled full-bleed so
-            a card can run to the edge as you swipe, and its own padding is
-            what stands the first one off the screen edge — at the page's own
-            24 it read as flush. 32, and `scroll-pl` so a swipe back to the
-            start lands on the same gutter rather than snapping it away.
-          */
-          className="no-scrollbar -mx-6 flex snap-x scroll-smooth snap-mandatory gap-4 overflow-x-auto scroll-pl-8 pb-2 pl-8 pr-6 md:mx-0 md:grid md:gap-x-5 md:gap-y-0 md:overflow-visible md:p-0 md:[grid-template-columns:var(--pipeline-track)] md:[grid-template-rows:auto_1fr_auto_auto_auto]"
-          style={{ "--pipeline-track": SHAPE.map((s) => s.span).join(" ") } as React.CSSProperties}
+          aria-label="From brief to final cut"
+          className="relative mt-6 hidden grid-cols-5 overflow-hidden rounded-card md:grid"
+          style={{ background: BAR, boxShadow: `0 18px 50px -24px ${TONES[2]}` }}
+        >
+          {stages.map((stage, index) => (
+            <li
+              key={stage.n}
+              className={`px-3 py-3 text-center text-[#1d130c] ${index > 0 ? "border-l border-black/10" : ""}`}
+            >
+              <p className="text-small font-semibold uppercase tracking-[0.04em] lg:text-body">
+                {stage.n}&nbsp;&nbsp;{stage.name}
+              </p>
+              <p className="mt-0.5 text-[0.75rem] leading-snug text-[#1d130c]/75 lg:text-small">{stage.body}</p>
+            </li>
+          ))}
+        </ol>
+
+        {/* THE CARDS — a swiping row on a phone, five across from md. */}
+        <ol
+          aria-label="The five stages"
+          data-lenis-prevent
+          className="no-scrollbar -mx-6 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:p-0"
         >
           {stages.map((stage, index) => {
-            const s = STRENGTH[index];
+            const tone = TONES[index];
             return (
-              <li
-                key={stage.n}
-                /*
-                  NARROWER ON A PHONE, 54vw from 72. The cards grow to a 3:4
-                  card at the end of the run, so their WIDTH sets the whole
-                  section's height on a single-column screen: at 72vw the last
-                  card stood 360 points tall and Studios ran 1088 against an
-                  812-point screen.
-                */
-                /*
-                  THE SAME FIVE ROWS ON A PHONE, laid out per card rather than
-                  shared across the row — a flex item cannot take a subgrid
-                  from a flex parent. The effect is what matters and it is the
-                  same: the card hangs from the bottom of its cell, so five
-                  cards of five heights still put their captions on one line
-                  and the space a short card leaves sits ABOVE it, under the
-                  scrubber, instead of as a hole beneath its caption.
-                */
-                className="grid w-[40vw] shrink-0 snap-start grid-rows-[auto_1fr_auto_auto_auto] sm:w-[34vw] md:row-span-5 md:w-auto md:grid-rows-subgrid"
-              >
-                {/*
-                  THE SCRUBBER SEGMENT for this stage: the numbered stop, the
-                  rule running right from it, and three ticks between this
-                  stop and the next. Drawn per stage rather than as one bar
-                  behind the row, so it inherits the grid's own geometry and
-                  stays aligned at every breakpoint and inside the phone
-                  scroller, with nothing measured in JS.
-                */}
-                <div aria-hidden className="relative h-9">
-                  <span
-                    className="absolute left-0 top-0 text-micro font-medium tabular-nums tracking-[0.14em]"
-                    style={{ color: accent(Math.max(s, 0.55)) }}
-                  >
-                    {stage.n}
-                  </span>
-                  <span
-                    className="absolute inset-x-0 bottom-1 h-px"
-                    style={{ background: accent(s * 0.5) }}
-                  />
-                  <span
-                    className="absolute bottom-[1px] left-0 size-1.5 rounded-full"
-                    style={{ background: accent(s) }}
-                  />
-                  {[1, 2, 3].map((tick) => (
-                    <span
-                      key={tick}
-                      className="absolute bottom-[3px] h-[5px] w-px"
-                      style={{ left: `${tick * 25}%`, background: accent(s * 0.32) }}
-                    />
-                  ))}
+              <li key={stage.n} className="relative w-[70%] shrink-0 snap-start min-[480px]:w-[45%] md:w-auto">
+                {/* On a phone, the stage's label rides on its card. */}
+                <div
+                  className="mb-2 rounded-card px-3 py-2 text-center text-[#1d130c] md:hidden"
+                  style={{ background: tone }}
+                >
+                  <p className="text-small font-semibold uppercase tracking-[0.04em]">
+                    {stage.n}&nbsp;&nbsp;{stage.name}
+                  </p>
+                  <p className="text-[0.75rem] leading-snug text-[#1d130c]/75">{stage.body}</p>
                 </div>
-
-                {/*
-                  THE CARD, and the circled arrow that points at the next one.
-                  The arrow is a child of the card it points AWAY from and
-                  sits in the gap to its right, so it cannot drift out of
-                  alignment with a card whose height changed.
-                */}
-                <div className="relative mt-3 flex items-end md:mt-0">
-                  {/*
-                    THE CARD OPENS ITS STUDY, where one is written. Genesis:
-                    "genesis studios me bhi clicking the videos shd open its
-                    case study." The lookup runs clip -> work -> study and
-                    returns nothing for a clip with no published write-up, so
-                    a stage whose footage has no story behind it renders as
-                    the plain frame it always was rather than as a link to
-                    somewhere invented. Two of the five have studies today;
-                    the rest become links the moment one is written, with no
-                    change here.
-
-                    `CardFrame` is what keeps that from being an if-statement
-                    around forty lines of styling — same border, same glow,
-                    same box, different element.
-                  */}
-                  <CardFrame
-                    href={caseStudyPathForClip(CLIPS[index])}
-                    onOpen={
-                      studies[index]
-                        ? () => setOpen(studies[index] ?? null)
-                        : undefined
-                    }
-                    className="w-full overflow-hidden rounded-2xl border bg-ink"
-                    style={{
-                      borderColor: accent(s * 0.55),
-                      boxShadow: `0 0 24px -12px ${accent(s * 0.7)}`,
-                    }}
-                  >
-                    <StageClip
-                      id={CLIPS[index]}
-                      label={stage.name}
-                      aspect={SHAPE[index].aspect}
-                    />
-                  </CardFrame>
-
-                  {index < stages.length - 1 && (
-                    <span
-                      aria-hidden
-                      /*
-                        ON THE BASELINE THE CARDS SHARE, not at a fixed
-                        distance from the top. The cards bottom-align and are
-                        deliberately different heights, so a top offset put
-                        the arrows above the shorter ones — floating in the
-                        gap, against the section's own background, which is
-                        why Genesis could not see them. Measured up from the
-                        bottom they land inside every card in the row.
-
-                        They also carry a filled disc now: a hairline ring on
-                        a dark ground at this size was the other half of the
-                        invisibility.
-                      */
-                      className="absolute -right-[1.9rem] bottom-10 hidden size-7 items-center justify-center rounded-full border bg-[var(--surface-raised)] shadow-[0_2px_10px_-2px_rgb(0_0_0/0.6)] md:flex"
-                      style={{
-                        borderColor: accent(Math.max(s * 0.8, 0.5)),
-                        color: accent(Math.max(s, 0.75)),
-                      }}
-                    >
-                      <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M13 6l6 6-6 6" />
-                      </svg>
-                    </span>
-                  )}
+                <div
+                  className="relative overflow-hidden rounded-[1.25rem] border bg-ink"
+                  style={{
+                    borderColor: `${tone}b3`,
+                    boxShadow: `0 0 0 1px ${tone}26, 0 20px 50px -24px ${tone}`,
+                    aspectRatio: "4 / 5",
+                  }}
+                >
+                  <Image
+                    src={ART[index]}
+                    alt=""
+                    fill
+                    sizes="(min-width: 768px) 20vw, 70vw"
+                    className="object-cover"
+                  />
                 </div>
-
-                {/* The dotted number-and-name label, as the reference sets it. */}
-                <div className="mt-3 flex items-center gap-2">
+                {/* The circled arrow into the next stage — in the gap, on a laptop. */}
+                {index < stages.length - 1 && (
                   <span
                     aria-hidden
-                    className="size-1.5 shrink-0 rounded-full"
-                    style={{ background: accent(s) }}
-                  />
-                  <span
-                    className="text-micro font-medium tabular-nums tracking-[0.14em]"
-                    style={{ color: accent(Math.max(s, 0.6)) }}
+                    className="absolute -right-5 top-1/2 z-[1] hidden size-10 -translate-y-1/2 place-items-center rounded-full border bg-ink text-bone md:grid"
+                    style={{ borderColor: TONES[index + 1], boxShadow: `0 0 16px -2px ${TONES[index + 1]}` }}
                   >
-                    {stage.n}
+                    <ArrowRight className="size-4" aria-hidden />
                   </span>
-                  <span className="text-micro font-medium uppercase tracking-[0.14em] text-bone">
-                    {stage.name}
-                  </span>
-                </div>
-
-                {/*
-                  TWO LINES' WORTH, WHETHER IT USES THEM OR NOT. On a phone
-                  each card lays out on its own, so a one-line stage ("Goal,
-                  audience, format") pulled its caption a line higher than
-                  its neighbours and the row of labels went ragged again. The
-                  desktop grid shares its rows and needs no floor.
-                */}
-                <p className="mt-2 min-h-[3.2em] text-pretty text-small leading-relaxed text-ash md:min-h-0">
-                  {stage.body}
-                </p>
-
-                <svg
-                  aria-hidden
-                  viewBox="0 0 24 24"
-                  className="mt-3 size-6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ color: accent(Math.max(s, 0.5)) }}
-                >
-                  {ICONS[stage.name]}
-                </svg>
+                )}
               </li>
             );
           })}
         </ol>
-
-        <div className="mt-5 flex justify-center gap-3 md:hidden">
-          {([-1, 1] as const).map((direction) => (
-            <button
-              key={direction}
-              type="button"
-              onClick={() => step(direction)}
-              aria-label={direction < 0 ? "Previous stage" : "Next stage"}
-              className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d={direction < 0 ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} />
-              </svg>
-            </button>
-          ))}
-        </div>
       </Reveal>
-
-      {/*
-        THE STUDY, OVER THE PAGE. Same window the case-study posters open, so
-        a reader who clicks a stage card and a reader who clicks a poster get
-        the same thing — and both keep their place on the landing page.
-
-        THE PAGER WALKS THE ROW, not the whole catalogue. Its list is the five
-        stages' own studies, in stage order, so "next" from the Shoot card is
-        Post rather than whatever happens to be next in the case-study
-        ordering. `filter(Boolean)` is there because a stage with no study is
-        not a stop on that walk; today all five have one, and the row should
-        not start skipping silently if that changes.
-      */}
-      <CaseStudyDialog
-        study={open}
-        onClose={() => setOpen(null)}
-        pager={pagerFor(
-          studies.filter((study): study is CaseStudy => Boolean(study)),
-          studies.findIndex((study) => study?.slug === open?.slug),
-          (study) => setOpen(study),
-          (study) => study.client,
-        )}
-      />
     </div>
-  );
-}
-
-function StageClip({
-  id,
-  label,
-  aspect,
-}: {
-  id: string;
-  label: string;
-  aspect: string;
-}) {
-  /*
-    Plays while on screen and pauses off it — the same hook the work tiles and
-    the case-study posters use. Five of these is a cost worth paying where the
-    reel wall's thirty-two was not.
-  */
-  const ref = useInViewPlayback<HTMLVideoElement>(
-    mediaUrl(`/work/posters/${id}.jpg`),
-  );
-
-  return (
-    <video
-      ref={ref}
-      src={mediaUrl(reelClip(id))}
-      muted
-      loop
-      playsInline
-      // Loaded on arrival by useInViewPlayback; the poster covers until then.
-      preload="none"
-      aria-label={`${label} — Genesis Studios work`}
-      {...VIDEO_GUARD_CLIENT}
-      /*
-        The aspect gives the card its shape; the vh cap keeps the tallest of
-        them inside a short laptop screen, cropping a little off a portrait
-        reel rather than pushing the section past one screen.
-      */
-      /*
-        42vh, HAVING BEEN 32 AND THEN 36. The cap exists so the tallest card
-        fits a short laptop, and it keeps turning into the thing that decides
-        the layout instead: at 32 three cards came out identical, and at 36 it
-        would clip the widened progression SHAPE now carries. Each rise was
-        the ceiling getting out of the way of a range Genesis asked to be more
-        visible. 42vh clears a 314-point card on an 800-point window, which is
-        the tallest this row produces at the page's own measure.
-      */
-      className={cn("w-full object-cover", aspect, "md:max-h-[42vh]")}
-    />
-  );
-}
-
-/**
- * A stage card's frame: a link to its case study, or a plain box.
- *
- * ONE SET OF STYLES, TWO ELEMENTS. The border colour, the glow and the
- * rounding are per-stage values computed from that stage's position in the
- * run, so branching at the call site would mean writing them twice and
- * keeping them in step by hand. This branches on the element and nothing
- * else.
- *
- * THE HOVER ONLY EXISTS ON THE LINK, which is the point: a card that lifts
- * when you point at it has promised a click, and three of the five stages
- * have no study to open. A reader should be able to tell which is which
- * without clicking to find out.
- */
-function CardFrame({
-  href,
-  onOpen,
-  className,
-  style,
-  children,
-}: {
-  href?: string;
-  /** Opens the study over the page. Absent, the card is not a target at all. */
-  onOpen?: () => void;
-  className?: string;
-  style?: React.CSSProperties;
-  children: React.ReactNode;
-}) {
-  if (!href || !onOpen) {
-    return (
-      <div className={className} style={style}>
-        {children}
-      </div>
-    );
-  }
-  /*
-    A REAL ANCHOR WITH A REAL HREF, WHOSE PLAIN CLICK IS INTERCEPTED.
-
-    The study opens over the page — that is the instruction — but it must not
-    cost the things an <a> gives for free. The href is the study's own URL, so
-    a crawler follows it, the status bar shows where it goes, and cmd-click,
-    middle-click and "open in new tab" all still work: those carry a modifier
-    or a different button, and the guard below lets every one of them through
-    to the browser.
-
-    A plain left click is the only one taken. `preventDefault` stops the
-    navigation; nothing needs stopping beyond that, because next/link is not
-    in this path — this is a bare anchor, deliberately, and not a <Link>.
-  */
-  return (
-    <a
-      href={href}
-      onClick={(event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        if (event.button !== 0) return;
-        event.preventDefault();
-        onOpen();
-      }}
-      className={cn(
-        className,
-        "group/stage block outline-none transition-transform duration-300 ease-out",
-        "motion-safe:hover:-translate-y-1",
-        "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-      )}
-      style={style}
-    >
-      {children}
-    </a>
   );
 }

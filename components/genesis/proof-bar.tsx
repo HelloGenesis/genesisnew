@@ -69,18 +69,18 @@ export function ProofBar({ className }: { className?: string }) {
           the point of promoting it. It stacks two-up on a phone and goes
           four-up from md.
         */}
-        <div className="glass glass-lit rounded-panel px-5 py-5 sm:px-6">
+        {/*
+          THE GRADIENT BAR (Genesis, 29 Sep 2026): the palette's amber → coral
+          → violet as the ground, white figures on it, frosted icon tiles and
+          hairline dividers — a pill on a laptop, a rounded panel on a phone.
+        */}
+        <div
+          className="rounded-panel px-5 py-5 text-white shadow-[0_24px_60px_-28px_rgb(217_102_79/0.6)] sm:px-7 md:rounded-[2rem]"
+          style={{ background: "linear-gradient(100deg, #d9a441 0%, #d8744f 30%, #cf5f63 50%, #a85aa3 75%, #7b5cd8 100%)" }}
+        >
           <div className="grid grid-cols-2 gap-y-5 md:grid-cols-4">
             {stats.map((stat, index) => {
               const Icon = STAT_ICONS[index] ?? Globe;
-              /*
-                THE FIRST ONE CARRIES THE ACCENT. Four identical cells read as
-                a table; one lit in the brand makes the row a composition and
-                gives the eye somewhere to land first. It is the first cell
-                rather than a chosen one because there is no "best" figure
-                here — the point is the set.
-              */
-              const highlight = index === 0;
 
               return (
                 <div
@@ -107,30 +107,11 @@ export function ProofBar({ className }: { className?: string }) {
                       different side depending on its column, which is four
                       conditionals to draw three hairlines nobody asked for.
                     */
-                    index > 0 ? "md:border-l md:border-white/10 md:pl-6" : "",
+                    index > 0 ? "md:border-l md:border-white/25 md:pl-6" : "",
                   )}
                 >
                   <span
-                    className={cn(
-                      "grid size-10 shrink-0 place-items-center rounded-card border",
-                      "transition-colors duration-300 ease-out",
-                      highlight
-                        ? "border-brand/35 bg-brand/10 text-brand-ink"
-                        : [
-                            "border-white/12 bg-white/5 text-bone",
-                            /*
-                              The resting cells take the accent on approach.
-                              Scoped with `group/stat` rather than a bare
-                              `group` because this bar sits inside sections
-                              that have groups of their own — an unnamed one
-                              would fire on whichever ancestor happened to be
-                              nearest.
-                            */
-                            "group-hover/stat:border-brand/35",
-                            "group-hover/stat:bg-brand/10",
-                            "group-hover/stat:text-brand-ink",
-                          ],
-                    )}
+                    className="grid size-11 shrink-0 place-items-center rounded-card border border-white/30 bg-white/15 text-white transition-colors duration-300 ease-out group-hover/stat:bg-white/25"
                   >
                     <Icon className="size-5" aria-hidden />
                   </span>
@@ -150,10 +131,10 @@ export function ProofBar({ className }: { className?: string }) {
                     announced in that order.
                   */}
                   <span className="min-w-0">
-                    <span className="block text-h3 font-medium leading-none tracking-tight text-bone">
+                    <span className="block text-h3 font-medium leading-none tracking-tight text-white">
                       {stat.value}
                     </span>
-                    <span className="mt-2 block text-small leading-tight text-ash transition-colors duration-300 ease-out group-hover/stat:text-bone">
+                    <span className="mt-2 block text-small leading-tight text-white/85">
                       {stat.label}
                     </span>
                   </span>

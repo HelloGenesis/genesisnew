@@ -4,7 +4,6 @@ import { useState } from "react";
 
 
 import { AutomationSources } from "@/components/genesis/automation-diagram";
-import { AutomationCtas } from "@/components/genesis/automation-ctas";
 import { AvatarFan } from "@/components/genesis/avatar-fan";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
 import { pagerFor } from "@/components/genesis/overlay";
@@ -20,6 +19,7 @@ import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
 import { GlassButton } from "@/components/genesis/glass-button";
+import { DivisionCtas } from "./division-ctas";
 import { PlanBar } from "./plan-bar";
 import { inr } from "@/lib/money";
 import { productsFor } from "@/lib/products";
@@ -199,6 +199,12 @@ export function AiContent() {
         wide display, and the frame is tall enough to fit the card's 3:4 plus
         the room the turned ones need as they scale back.
       */}
+      {/*
+        THE WAYS ON, BETWEEN THE COPY AND THE WORK (Genesis, 29 Sep 2026):
+        View Page, Explore Pricing and Case Studies — see DivisionCtas.
+      */}
+      <DivisionCtas vertical="ai-labs" align="center" className="mt-6 sm:mt-8" />
+
       <Reveal variant="scene" className="relative left-1/2 mt-10 w-screen -translate-x-1/2">
         {/*
           BIGGER AND TALLER THAN THE FIRST PASS. The cards were 15vw at 3:4
@@ -252,16 +258,29 @@ export function AiContent() {
             }))}
           />
         </div>
-        {/*
-          A WAY ON, ON A PHONE (Genesis, 28 Sep 2026: "add a CTA button … just
-          for phone"). On a laptop the plan bar at the foot of the section
-          carries the buttons; on a phone that is several screens down, so
-          the work gets its own next step right under it.
-        */}
-        <div className="mt-8 flex justify-center px-6 sm:hidden" data-track="home-ai:phone-cta">
-          <GlassButton href="/ai-content-automation" pageLink variant="brand" arrow>
-            Explore AI Labs
-          </GlassButton>
+      </Reveal>
+
+      {/*
+        THE AI LAB DIAGRAM, ABOVE THE AVATARS (Genesis, 29 Sep 2026: "remove
+        this copy and just keep the AI Lab whole element and move it above
+        Build Your Own AI Avatar"). It was its own section, headed "Automate
+        the work behind your business" with a paragraph under it; the heading
+        and paragraph are gone, and the picture, its closing line and its two
+        buttons now sit between the work and the avatars.
+      */}
+      {/*
+        JUST THE ELEMENT (Genesis, 29 Sep 2026: "remove this black background
+        and the buttons — it's just an element to represent the AI Lab"): the
+        diagram and its line, on the section's own ground.
+      */}
+      <Reveal delay={0.06} className="mt-[var(--block-gap)]">
+        <div className="mx-auto w-full max-w-6xl text-center">
+          <figure className="mx-auto max-w-[60rem]">
+            <AutomationSources />
+          </figure>
+          <p className="mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead">
+            {aiContent.automation.kicker}
+          </p>
         </div>
       </Reveal>
 
@@ -400,72 +419,6 @@ export function AiContent() {
       <PlanBar vertical="ai-labs" />
     </SectionShell>
 
-      {/*
-        AUTOMATION IS ITS OWN SECTION NOW, and the reason is measurement
-        rather than taste. With the roster and this in one, AI Lab stood
-        1734 points tall on a phone and 1968 on a laptop — two and a half
-        screens, against a brief of one section to a screen, and Genesis's
-        instruction was exactly that ("ek pura section ek hi page pe dikhe").
-        No content moved and nothing was cut: the two halves were always two
-        arguments, the avatars and the workflow, and they now get a screen
-        each.
-      */}
-      <SectionShell id="ai-automation" tone="brand" origin="center" intensity={0.12}>
-      {/*
-        NO TRANSITION LINE. "AI beyond content." stood here as a hand-off into
-        the automation block, on the reasoning that everything above it is
-        content a brand publishes and this is software running inside a
-        brand's operations. Genesis has taken it off.
-
-        The block does not need it any more either: the heading under it
-        already says "Automate the work behind your business", which names the
-        turn in the same breath as the offer, where the hinge was saying it
-        twice.
-      */}
-      <Reveal delay={0.06}>
-        <div className="overflow-hidden rounded-[2rem] border border-[var(--glass-border)] bg-[var(--surface-raised)] px-5 py-[calc(var(--section-pad)*1.6)] shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] sm:px-10">
-          <div className="mx-auto w-full max-w-5xl text-center">
-            <h3 className="text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
-              {aiContent.automation.heading}
-            </h3>
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              {aiContent.automation.body}
-            </p>
-            {/*
-              THE DIAGRAM IS CAPPED NARROWER THAN THE CARD, at 40rem rather
-              than 52. An SVG scales with its width, so every rem of measure
-              costs height too — 12 of them were 100 points of section that
-              nothing was drawn in. See the note on this section's split.
-            */}
-            {/* 46rem, not 40: the board grew wider so its strands could
-                read, and capping it at the old measure would only scale the
-                whole thing down again. */}
-            <figure className="mx-auto mt-6 max-w-[46rem] sm:mt-10">
-              <AutomationSources />
-            </figure>
-
-            {/*
-              THE THREE-BEAT CLOSE, MOVED UNDER THE PICTURE.
-
-              It sat directly below the paragraph, which made the block open
-              with three pieces of prose in a row before anything was shown —
-              and put the section's most quotable line where a reader was
-              still being told what the service is. Genesis asked for it
-              between the diagram and the buttons, which is the right slot for
-              what it actually is: not an introduction but a CONCLUSION. The
-              diagram demonstrates the workflow, this says what the workflow
-              buys, and the buttons ask for the meeting.
-            */}
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead">
-              {aiContent.automation.kicker}
-            </p>
-
-            <AutomationCtas className="mt-6 sm:mt-8" />
-          </div>
-        </div>
-      </Reveal>
-
-      </SectionShell>
 
       {/*
         THE STUDY, OVER THE PAGE. The pager walks the rail's own cards in rail

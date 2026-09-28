@@ -231,6 +231,7 @@ export const aiPlans: PlanGrid = {
         "2 Active Requests",
       ],
       cta: { label: "Talk to Genesis", href: enquiryHref(`${PRODUCT} — Enterprise`) },
+      contactOnly: true,
       inclusions: [
         { item: "Creative direction", included: true },
         { item: "Ideation & scripting", included: true },
@@ -314,7 +315,7 @@ export const aiEveryVideo: { label: string; heading: string; body: string; items
 */
 export const aiVideoTiers = {
   label: "Video types",
-  heading: "Standard, Premium or Advanced?",
+  heading: "What’s the difference between Standard, Premium or Advanced?",
   body: "What each kind of video in your plan includes.",
   tiers: [
     {

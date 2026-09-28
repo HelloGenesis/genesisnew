@@ -109,7 +109,7 @@ export function AiLabsPageView() {
                   <PlanDetails id="included" title="What every video includes" summary={`${aiEveryVideo.heading} ${aiEveryVideo.body}`}>
                     <IconCards items={aiEveryVideo.items} />
                   </PlanDetails>
-                  <PlanDetails id="video-types" title={`Video types — ${aiVideoTiers.heading}`} summary={aiVideoTiers.body}>
+                  <PlanDetails id="video-types" title={aiVideoTiers.heading} summary={aiVideoTiers.body}>
                     <VideoTiers data={aiVideoTiers} bare />
                   </PlanDetails>
                 </>

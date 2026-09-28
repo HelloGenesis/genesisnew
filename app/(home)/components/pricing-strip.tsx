@@ -1,11 +1,8 @@
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-
 import { GlassButton } from "@/components/genesis/glass-button";
 import { MembershipCard } from "@/components/genesis/membership-card";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
-import { bookingHref, entryPrice, pricingHub, verticalCards } from "@/lib/pricing";
+import { homeHero, pricingHub } from "@/lib/pricing";
 
 /**
  * HOW GENESIS WORKS, ON THE HOMEPAGE — after the four divisions, before the
@@ -29,14 +26,12 @@ export function PricingStrip() {
         <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-brand/15 blur-3xl" />
 
         {/*
-          THE CARD ON THE LEFT, ABOVE THE HEADING; THE STANDFIRST ON THE RIGHT,
-          at reading width and aligned to the heading's foot (Genesis, 28 Sep
-          2026). The card had been squeezing the paragraph into a column a
-          few words wide.
+          THE WORDS ON THE LEFT, THE CARD ON THE RIGHT (Genesis, 29 Sep 2026:
+          "move all text on left, move card on right"). Label, heading and
+          standfirst read as one column; the card sits beside them, centred.
         */}
-        <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-16">
+        <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-16">
           <div>
-            <MembershipCard size="md" tilt={-8} className="mb-8 ml-2" />
             <SectionLabel dot tone="brand">
               {pricingHub.label}
             </SectionLabel>
@@ -47,8 +42,11 @@ export function PricingStrip() {
               {pricingHub.heading}{" "}
               <span className="block font-serif italic text-brand-ink">{pricingHub.headingAccent}</span>
             </h2>
+            <p className="mt-6 max-w-md text-pretty text-body leading-relaxed text-ash">{pricingHub.body}</p>
           </div>
-          <p className="max-w-md text-pretty text-body leading-relaxed text-ash lg:pb-1">{pricingHub.body}</p>
+          <div className="flex justify-center lg:justify-end">
+            <MembershipCard size="lg" tilt={-8} />
+          </div>
         </div>
 
         {/* The four steps. */}
@@ -64,42 +62,25 @@ export function PricingStrip() {
           ))}
         </ol>
 
-        {/* Where each division starts — each opens /pricing on its own tab. */}
-        <ul className="relative mt-6 grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 lg:grid-cols-4">
-          {verticalCards.map((card) => (
-            <li key={card.key}>
-              <Link
-                href={`/pricing?v=${card.key}#plans`}
-                data-track={`home-memberships:${card.key}`}
-                className="group flex h-full items-start justify-between gap-2 rounded-card border border-white/10 px-4 py-3 transition-colors hover:border-brand/50 hover:bg-brand/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        {/*
+          THE WAYS ON, NO PRICE CARDS (Genesis, 29 Sep 2026: "remove the pricing
+          part from here, just keep" the three hero buttons). The same three as
+          the hero, from homeHero, so the two can never disagree.
+        */}
+        <div className="relative mt-8 flex flex-col items-stretch gap-2 min-[480px]:items-start sm:flex-row sm:flex-wrap sm:gap-3">
+          {homeHero.ctas.map((cta, index) => (
+            <span key={cta.href} data-track={`home-memberships:cta-${index}`}>
+              <GlassButton
+                href={cta.href}
+                pageLink
+                variant={index === 0 ? "brand" : "glass"}
+                arrow
+                className="max-sm:h-11 max-sm:w-full max-sm:px-5 max-sm:text-[0.8125rem]"
               >
-                <span>
-                  <span className="block text-small text-bone">{card.key === "ai-labs" ? "AI Labs" : card.short}</span>
-                  <span className="mt-1 block text-small text-ash">{card.from}</span>
-                </span>
-                <ArrowUpRight className="size-4 shrink-0 text-faint transition-colors group-hover:text-brand-ink" aria-hidden />
-              </Link>
-            </li>
+                {cta.label}
+              </GlassButton>
+            </span>
           ))}
-        </ul>
-
-        <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-small text-ash">
-            Subscriptions from <span className="text-bone">{verticalCards.find((card) => card.key === "brand-design")?.from}</span>
-            {" · "}One-time projects from <span className="text-bone">{entryPrice}</span>
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <span data-track="home-memberships:pricing">
-              <GlassButton href="/pricing" variant="brand" arrow>
-                Explore Memberships
-              </GlassButton>
-            </span>
-            <span data-track="home-memberships:book">
-              <GlassButton href={bookingHref("Genesis memberships")} variant="glass" arrow>
-                Book a 15-min Call
-              </GlassButton>
-            </span>
-          </div>
         </div>
       </Reveal>
     </section>

@@ -125,3 +125,11 @@ export const influenceClosing = {
   primary: "Start an Influencer Project",
   secondary: "Book a 15-min Call",
 } as const;
+
+/** The /pricing tab's own opening — label, name, promise, line — as the other three divisions have. */
+export const influenceTab = {
+  label: "Genesis Influence",
+  heading: `${campaignPricing.heading} ${campaignPricing.headingAccent}`,
+  sub: "Creators, managed end to end.",
+  body: campaignPricing.body,
+};

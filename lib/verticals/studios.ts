@@ -206,6 +206,7 @@ export const studiosPlans: PlanGrid = {
         "Dedicated creative + account owner",
       ],
       cta: { label: "Talk to Genesis", href: enquiryHref(`${MONTHLY} — Enterprise`) },
+      contactOnly: true,
       inclusions: [
         { item: "Footage", included: "Genesis-shot or supplied" },
         { item: "Monthly shoot", included: "Full-day, up to 9 hours, up to 2 cameras" },

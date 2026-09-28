@@ -101,10 +101,13 @@ const GROUP: Record<VerticalKey, string> = {
 };
 
 const all: Product[] = [
-  ...aiPlans.plans.map((plan) => membership("ai-labs", GROUP["ai-labs"], plan.name, plan.rate, plan.features)),
-  ...studiosPlans.plans.map((plan) =>
-    membership("studios", "Content Monthly", plan.name, plan.rate, plan.features, plan.inPerson),
-  ),
+  /* Enterprise plans are sold by conversation, never at checkout — `contactOnly`. */
+  ...aiPlans.plans
+    .filter((plan) => !plan.contactOnly)
+    .map((plan) => membership("ai-labs", GROUP["ai-labs"], plan.name, plan.rate, plan.features)),
+  ...studiosPlans.plans
+    .filter((plan) => !plan.contactOnly)
+    .map((plan) => membership("studios", "Content Monthly", plan.name, plan.rate, plan.features, plan.inPerson)),
   membership(
     "brand-design",
     "Genesis Creative Desk",

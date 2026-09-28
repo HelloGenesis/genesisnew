@@ -417,7 +417,7 @@ function ClaimPanel() {
         {/* `clone` so each line carries the whole ramp, orange at its
             start and violet at its end, as both do in the reference. */}
         <span
-          className="bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
+          className="on-dark bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
           style={{ backgroundImage: HEADLINE_RAMP }}
         >
           people

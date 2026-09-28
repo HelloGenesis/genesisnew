@@ -1,4 +1,3 @@
-import Link from "next/link";
 
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionBoard } from "@/components/genesis/division-board";
@@ -188,30 +187,25 @@ export function Services() {
           <p className="mt-3 text-balance text-small leading-relaxed text-ash sm:mt-4 sm:text-lead">
             {homeHero.body}
           </p>
-          <Link
-            href="/pricing"
-            className="mt-1 inline-flex min-h-10 items-center text-small text-brand-ink underline-offset-4 transition-colors hover:underline sm:mt-2"
-          >
-            {homeHero.entry}
-          </Link>
-          <div className="mt-5 flex flex-nowrap justify-center gap-2 sm:mt-6 sm:gap-3">
-            <GlassButton
-              href="/pricing"
-              variant="brand"
-              arrow
-              className="max-sm:h-10 max-sm:px-4 max-sm:text-[0.8125rem]"
-            >
-              {homeHero.explore}
-            </GlassButton>
-            <GlassButton
-              href="/#contact"
-              quickContact="cta"
-              variant="glass"
-              arrow
-              className="max-sm:h-10 max-sm:px-4 max-sm:text-[0.8125rem]"
-            >
-              {homeHero.start}
-            </GlassButton>
+          {/*
+            THREE WAYS ON (Genesis, 29 Sep 2026), each saying where it starts:
+            memberships, the standalone one-time services, and the case
+            studies. Stacked on a phone, where three long labels cannot share
+            a line; in a row from sm.
+          */}
+          <div className="mt-6 flex w-full flex-col items-stretch gap-2 min-[480px]:w-auto min-[480px]:items-center sm:mt-7 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3 lg:w-max lg:flex-nowrap">
+            {homeHero.ctas.map((cta, index) => (
+              <GlassButton
+                key={cta.href}
+                href={cta.href}
+                pageLink
+                variant={index === 0 ? "brand" : "glass"}
+                arrow
+                className="max-sm:h-11 max-sm:px-5 max-sm:text-[0.8125rem]"
+              >
+                {cta.label}
+              </GlassButton>
+            ))}
           </div>
         </div>
       </div>

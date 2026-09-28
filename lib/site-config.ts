@@ -58,6 +58,10 @@ export type NavItem = {
    * if a reader clicks the trigger itself, and it is what a crawler follows.
    */
   children?: NavItem[];
+  /** A line under a link in a small dropdown (Pricing's). */
+  description?: string;
+  /** On /pricing, which side of the "how you want to work" switch the link opens. */
+  workMode?: "one-time" | "membership";
   /**
    * The individual services under a menu column. Plain strings, not links:
    * there are no per-service pages, so the column's own heading is the link
@@ -518,8 +522,28 @@ export const navItems: NavItem[] = [
   },
   // The page, not the homepage rail: Genesis asked the bar to open it.
   { label: "Case Studies", href: "/case-studies" },
-  // The memberships — the pricing brief puts Pricing on the bar.
-  { label: "Pricing", href: "/pricing" },
+  /*
+    PRICING, AS A SMALL MENU (Genesis, 29 Sep 2026): the two ways to buy —
+    one-time projects and memberships — each opening its own part of
+    /pricing. The trigger still carries /pricing for crawlers.
+  */
+  {
+    label: "Pricing",
+    href: "/pricing",
+    children: [
+      {
+        label: "One-time Projects",
+        href: "/pricing#one-time",
+        description: "Fifteen standalone products, bought once.",
+      },
+      {
+        label: "Explore Memberships",
+        href: "/pricing#plans",
+        description: "Monthly plans for AI, Studios and Brand & Design.",
+        workMode: "membership",
+      },
+    ],
+  },
   /*
     "I'M A CREATOR" AND "CAREER" MOVED TO THE FOOTER. Both were put on the
     bar at Genesis's request, but a buyer scanning it met two links that are

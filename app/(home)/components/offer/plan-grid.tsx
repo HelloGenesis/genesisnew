@@ -37,6 +37,8 @@ export function PlanGrid({
   data,
   id,
   compact = false,
+  centered = false,
+  intro,
   vertical,
 }: {
   data: PlanGridData;
@@ -44,6 +46,10 @@ export function PlanGrid({
   vertical?: VerticalKey;
   id?: string;
   compact?: boolean;
+  /** The billing switch centred — under the /pricing "how you want to work" switch. */
+  centered?: boolean;
+  /** Anything between the billing switch and the cards — a tab's heading on /pricing. */
+  intro?: React.ReactNode;
 }) {
   /*
     QUARTERLY BY DEFAULT — Genesis's rule: a visitor first sees the quarterly
@@ -65,13 +71,16 @@ export function PlanGrid({
   const notes = [...new Set(data.plans.map((plan) => plan.note).filter(Boolean))] as string[];
 
   const toggle = data.billing ? (
-    <BillingToggle value={billing} onChange={setBilling} note={data.billingNote} />
+    <BillingToggle value={billing} onChange={setBilling} note={data.billingNote} align={centered ? "center" : "end"} />
   ) : null;
 
   return (
     <div id={id} className="scroll-mt-24">
       {compact ? (
-        toggle && <div className="flex justify-end">{toggle}</div>
+        <>
+          {toggle && <div className={cn("flex", centered ? "justify-center" : "justify-end")}>{toggle}</div>}
+          {intro && <div className="mt-8">{intro}</div>}
+        </>
       ) : (
         <SectionHead
           id={headingId}
@@ -242,12 +251,18 @@ export function BillingToggle({
   onChange: (value: Billing) => void;
   /** Kept for the copy files; the toggle now writes its own line. */
   note?: string;
-  /** "start" inside a card; "end" beside a section heading. */
-  align?: "start" | "end";
+  /** "start" inside a card; "end" beside a section heading; "center" under the /pricing switch. */
+  align?: "start" | "end" | "center";
 }) {
   return (
-    <div className={cn("flex flex-col items-start gap-2", align === "end" && "lg:items-end")}>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <div
+      className={cn(
+        "flex flex-col items-start gap-2",
+        align === "end" && "lg:items-end",
+        align === "center" && "items-center text-center",
+      )}
+    >
+      <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2", align === "center" && "justify-center")}>
         <span className="text-small text-faint">Billing</span>
         <div role="radiogroup" aria-label="Billing" className="glass-chip flex rounded-full p-1">
           {(["quarterly", "monthly"] as const).map((option) => (
@@ -410,7 +425,7 @@ function PlanCard({
           grid's switch shows. Without a vertical (nothing to buy) the plan's
           own button stays.
         */}
-        {vertical ? (
+        {vertical && !plan.contactOnly ? (
           <AddToCart
             id={productId(vertical, "membership", plan.name)}
             billing={billing}

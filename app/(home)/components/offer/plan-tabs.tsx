@@ -1,6 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import type { IconName, VerticalKey } from "@/lib/verticals/types";
@@ -13,6 +15,12 @@ export type PlanTab = {
   icon: IconName;
   /** The division's own name artwork — shown in place of the icon and label when given. */
   art?: ReactNode;
+  /**
+   * THE TAB AS A CARD (Genesis, 28 Sep 2026): the division's name, one line
+   * about it, and a link to its page. The whole card picks the tab; the link
+   * sits above it and goes to the page.
+   */
+  card?: { blurb: string; href: string; linkLabel: string; ramp?: string };
   content: ReactNode;
 };
 
@@ -98,10 +106,66 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
         role="tablist"
         aria-label="Genesis verticals"
         onKeyDown={onKeyDown}
-        className="grid grid-cols-2 gap-2 md:grid-cols-4"
+        data-lenis-prevent
+        className={cn(
+          tabs.some((tab) => tab.card)
+            ? /* A swipeable row on a small phone — four stacked cards were a screen of tabs before any price. */
+              "-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] min-[480px]:grid min-[480px]:grid-cols-2 min-[480px]:overflow-visible lg:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+            : "grid grid-cols-2 gap-2 md:grid-cols-4",
+        )}
       >
         {tabs.map((tab) => {
           const selected = tab.key === active;
+          if (tab.card) {
+            /*
+              A CARD, NOT A BUTTON WITH A CARD INSIDE. A link cannot live
+              inside a button, so the tab button is stretched over the whole
+              card (it is what a click on the card hits) and the "Learn more"
+              link is lifted above it — two targets, neither inside the other.
+            */
+            return (
+              <div
+                key={tab.key}
+                className={cn(
+                  "relative flex w-[78%] shrink-0 snap-start flex-col overflow-hidden rounded-panel border p-5 transition-[background-color,border-color,box-shadow,transform] duration-300 min-[480px]:w-auto sm:p-6",
+                  selected
+                    ? "border-brand/70 bg-brand/[0.08] shadow-[0_0_0_1px_rgb(255_197_22/0.25),0_16px_40px_-18px_rgb(255_197_22/0.5)]"
+                    : "glass glass-lit border-transparent hover:-translate-y-0.5",
+                )}
+              >
+                {tab.card.ramp && (
+                  <span aria-hidden className="absolute inset-x-0 top-0 h-px opacity-80" style={{ backgroundImage: tab.card.ramp }} />
+                )}
+                <button
+                  type="button"
+                  role="tab"
+                  data-key={tab.key}
+                  data-track={`pricing-tab:${tab.key}`}
+                  id={`${baseId}-tab-${tab.key}`}
+                  aria-selected={selected}
+                  aria-controls={`${baseId}-panel`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => select(tab.key)}
+                  aria-label={tab.label}
+                  className="absolute inset-0 rounded-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
+                />
+                <div className="pointer-events-none relative mb-5">
+                  {tab.art}
+                  <p className="mt-4 text-pretty text-small leading-relaxed text-ash">{tab.card.blurb}</p>
+                </div>
+                <div className="mt-auto border-t border-[var(--glass-border)] pt-3">
+                  <Link
+                    href={tab.card.href}
+                    data-track={`pricing-tab-link:${tab.key}`}
+                    className="relative z-[1] inline-flex min-h-10 items-center gap-1.5 text-small text-bone transition-colors hover:text-brand-ink"
+                  >
+                    {tab.card.linkLabel}
+                    <ArrowRight className="size-4 shrink-0 text-brand-ink" aria-hidden />
+                  </Link>
+                </div>
+              </div>
+            );
+          }
           return (
             <button
               key={tab.key}

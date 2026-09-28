@@ -158,7 +158,7 @@ export const pricingHub = {
   },
   oneTime: {
     label: "One-time projects",
-    heading: "Need a one-time project instead?",
+    heading: "All One-time Projects",
     body: "Fifteen clearly scoped products across the four divisions — buy once, no membership needed.",
   },
 } as const;
@@ -196,18 +196,16 @@ export const bookingCalendar = {
  * opens /pricing, where the memberships live.
  */
 export const homeHero = {
-  heading: "Your creative team.",
+  /* Genesis's hero copy, 29 Sep 2026. */
+  heading: "One team.",
   headingAccent: "On demand.",
-  body: "Influence, AI, Content Production and Design — available through flexible Genesis memberships or one-time projects.",
-  explore: "Explore Memberships",
-  start: "Start a Project",
-  /*
-    THE WAY IN, IN ONE LINE. The orb's price buttons only appear on hover, so
-    on a phone the homepage never said what Genesis costs. 24,999 is the
-    lowest entry Genesis has set (the cheapest one-time product, lib/products);
-    65,000 is the lowest membership (Creative Desk), at the quarterly rate.
-  */
-  entry: `Subscriptions from ${price(65000)} per month · One-time projects from ${inr(lowestProductPrice)}`,
+  body: "Plug Genesis into your brand whenever you need influencers, ideas, content production, design, or anything AI.",
+  /* The three ways on, each with where it starts — the prices from the plans and products themselves. */
+  ctas: [
+    { label: `Explore Memberships — from ${price(65000).replace(/\/-$/, "")}/month`, href: "/pricing#plans" },
+    { label: `Explore One-time Projects — from ${inr(lowestProductPrice).replace(/\/-$/, "")}`, href: "/pricing#one-time" },
+    { label: "View Case Studies", href: "/case-studies" },
+  ],
 } as const;
 
 /**

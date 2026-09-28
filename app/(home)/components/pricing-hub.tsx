@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { Atmosphere } from "@/components/genesis/atmosphere";
-import { DivisionLockup, DivisionName } from "@/components/genesis/division-lockup";
+import { DivisionName } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { MembershipCard } from "@/components/genesis/membership-card";
 import { JsonLd } from "@/components/genesis/json-ld";
@@ -13,7 +13,7 @@ import { bookingHref, enquiryHref, pricingHub, verticalCard, verticalCards } fro
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { aiEveryVideo, aiPlans, aiTab, aiTurnaround, aiVideoTiers } from "@/lib/verticals/ai-labs";
 import { designTab, designTurnaround } from "@/lib/verticals/brand-design";
-import { builtFor, campaignPricing } from "@/lib/verticals/influence";
+import { builtFor, campaignPricing, influenceTab } from "@/lib/verticals/influence";
 import { studiosPlans, studiosTab, studiosTurnaround } from "@/lib/verticals/studios";
 import type { VerticalKey } from "@/lib/verticals/types";
 import { IconChips, StepsBlock, TierTag, TurnaroundStrip, VideoTiers } from "./offer/blocks";
@@ -23,10 +23,11 @@ import { productId } from "@/lib/cart";
 import { inr } from "@/lib/money";
 import { products } from "@/lib/products";
 import { LogoStrip } from "./offer/page-furniture";
-import { SectionHead } from "./offer/parts";
+import { PlanDetails, SectionHead } from "./offer/parts";
 import { PlanGrid } from "./offer/plan-grid";
 import { PlanTabs, type PlanTab } from "./offer/plan-tabs";
 import { OneTimeProducts } from "./offer/starter-pack";
+import { ONE_TIME_GRADIENT, TIER_GLOWS, TIER_GRADIENTS } from "./offer/tier-colors";
 import { WorkMode, WorkModeProvider } from "./offer/work-mode";
 import { Breadcrumbs } from "./service-page";
 import { ProductCards } from "./verticals/design-products";
@@ -53,31 +54,31 @@ export function PricingHubView() {
         <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pb-[var(--section-pad)] pt-32 sm:pt-40">
           <Breadcrumbs trail={[{ name: "Pricing", path: "/pricing" }]} />
           {/*
-            THE CARD ON THE RIGHT (Genesis, 28 Sep 2026: "put this card on the
-            right"). The heading keeps the left column to itself; the card
-            takes the right, above the standfirst, so the two columns balance
-            instead of the card pushing the heading half a screen down.
+            THE WORDS ON THE LEFT, THE CARD ON THE RIGHT (Genesis, 29 Sep 2026:
+            the heading "a little above", the paragraph "below that", the card
+            larger). Label, heading and standfirst read as one block down the
+            left; the card, now the page's picture, takes the right and sits
+            centred against them rather than hanging below.
           */}
-          <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-12">
-            <SectionHead
-              as="h1"
-              align="left"
-              label={pricingHub.label}
-              heading={pricingHub.heading}
-              accent={pricingHub.headingAccent}
-            />
-            <Reveal delay={0.1} className="flex flex-col gap-8">
-              <MembershipCard size="lg" tilt={-6} className="mx-auto lg:mx-0 lg:ml-auto" />
-              <p className="text-pretty text-body leading-relaxed text-ash">{pricingHub.body}</p>
+          <div className="mt-8 grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+            <div>
+              <SectionHead
+                as="h1"
+                align="left"
+                label={pricingHub.label}
+                heading={pricingHub.heading}
+                accent={pricingHub.headingAccent}
+              />
+              <Reveal delay={0.08}>
+                <p className="mt-6 max-w-xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+                  {pricingHub.body}
+                </p>
+              </Reveal>
+            </div>
+            <Reveal delay={0.12} className="flex justify-center lg:justify-end">
+              <MembershipCard size="xl" tilt={-6} />
             </Reveal>
           </div>
-          <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {verticalCards.map((card, index) => (
-              <Reveal as="li" key={card.key} delay={0.05 * index} className="flex">
-                <VerticalCard vertical={card.key} />
-              </Reveal>
-            ))}
-          </ul>
         </div>
       </Atmosphere>
 
@@ -144,48 +145,68 @@ export function PricingHubView() {
           body={pricingHub.oneTime.body}
         />
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {verticalCards.map((card) => (
-            <Reveal key={card.key} className="glass glass-lit flex flex-col rounded-panel p-5">
-              <DivisionName name={verticalCard(card.key).short} height={24} className="self-start" />
-              <ul className="mt-4 flex flex-1 flex-col divide-y divide-[var(--glass-border)]">
-                {products
-                  .filter((product) => product.vertical === card.key)
-                  .map((product) => (
-                    <li key={product.name} className="py-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="min-w-0">
-                          <span className="block text-small leading-snug text-bone">{product.name}</span>
-                          <span className="mt-0.5 block text-[0.75rem] text-ash">
-                            {product.price ? inr(product.price) : product.priceLabel}
-                          </span>
-                        </span>
-                        {product.cta === "buy" ? (
-                          <AddToCartIcon id={productId(product.vertical, "one-time", product.name)} />
-                        ) : (
-                          <a
-                            href={bookingHref(product.name)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex min-h-9 shrink-0 items-center text-small text-brand-ink hover:underline"
-                          >
-                            Book a call
-                          </a>
-                        )}
-                      </div>
-                      {/* What it includes, opened on demand — Genesis, 28 Sep 2026. */}
-                      <IncludedList items={product.includes} className="mt-1.5" />
-                    </li>
-                  ))}
-              </ul>
-              <Link
-                href={`/pricing?v=${card.key}#plans`}
-                data-plan-tab={card.key}
-                data-work-mode="one-time"
-                className="mt-2 inline-flex min-h-10 items-center gap-1.5 text-small text-ash transition-colors hover:text-bone"
+          {verticalCards.map((card, index) => (
+            /*
+              GRADIENT CARDS (Genesis, 29 Sep 2026) — each division in its own
+              variation of the palette, the same family as the plan cards: a
+              1px gradient edge, a dark card, a glow in the card's colour.
+            */
+            <Reveal key={card.key} className="flex">
+              <div
+                className="flex w-full rounded-panel p-px"
+                style={{
+                  background: INDEX_GRADIENTS[index % INDEX_GRADIENTS.length],
+                  boxShadow: `0 24px 60px -34px ${INDEX_GLOWS[index % INDEX_GLOWS.length]}`,
+                }}
               >
-                See them in full
-                <ArrowRight className="size-3.5" aria-hidden />
-              </Link>
+                <div className="relative flex w-full flex-col overflow-hidden rounded-panel bg-ink p-5">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full blur-3xl"
+                    style={{ background: INDEX_GLOWS[index % INDEX_GLOWS.length] }}
+                  />
+                  <DivisionName name={verticalCard(card.key).short} height={24} className="self-start" />
+                  <ul className="mt-4 flex flex-1 flex-col divide-y divide-[var(--glass-border)]">
+                    {products
+                      .filter((product) => product.vertical === card.key)
+                      .map((product) => (
+                        <li key={product.name} className="py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="min-w-0">
+                              <span className="block text-small leading-snug text-bone">{product.name}</span>
+                              <span className="mt-0.5 block text-[0.75rem] text-ash">
+                                {product.price ? inr(product.price) : product.priceLabel}
+                              </span>
+                            </span>
+                            {product.cta === "buy" ? (
+                              <AddToCartIcon id={productId(product.vertical, "one-time", product.name)} />
+                            ) : (
+                              <a
+                                href={bookingHref(product.name)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex min-h-9 shrink-0 items-center text-small text-brand-ink hover:underline"
+                              >
+                                Book a call
+                              </a>
+                            )}
+                          </div>
+                          {/* What it includes, opened on demand — Genesis, 28 Sep 2026. */}
+                          <IncludedList items={product.includes} className="mt-1.5" />
+                        </li>
+                      ))}
+                  </ul>
+                  <Link
+                    href={`/pricing?v=${card.key}#plans`}
+                    data-plan-tab={card.key}
+                    data-work-mode="one-time"
+                    className="mt-2 inline-flex min-h-10 items-center gap-1.5 text-small text-ash transition-colors hover:text-bone"
+                  >
+                    See them in full
+                    <ArrowRight className="size-3.5" aria-hidden />
+                  </Link>
+                </div>
+              </div>
             </Reveal>
           ))}
         </div>
@@ -194,31 +215,9 @@ export function PricingHubView() {
   );
 }
 
-/** One of the four "vibe" cards: the division's name artwork, its line, its price. */
-function VerticalCard({ vertical }: { vertical: VerticalKey }) {
-  const card = verticalCard(vertical);
-  const ramp = services.items.find((item) => item.short === card.short)?.ramp ?? "";
-  return (
-    <a
-      href="#plans"
-      data-plan-tab={card.key}
-      className="glass glass-lit group relative flex w-full flex-col overflow-hidden rounded-panel p-6 transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-    >
-      <span aria-hidden className="absolute inset-x-0 top-0 h-px opacity-80" style={{ backgroundImage: ramp }} />
-      <DivisionLockup name={card.short} tagline="" ramp={ramp} as="h3" nameOnly height={34} taglineClassName="hidden" />
-      <p className="mb-6 mt-5 text-pretty text-small leading-relaxed text-ash">{card.blurb}</p>
-      <div className="mt-auto flex items-end justify-between gap-3 border-t border-white/10 pt-5">
-        <p>
-          <span className="block text-micro uppercase tracking-[0.2em] text-faint">{card.fromLabel}</span>
-          <span className="mt-2 block text-lead leading-none tracking-tight text-bone">{card.from}</span>
-        </p>
-        <span className="grid size-10 shrink-0 place-items-center rounded-full border border-white/15 text-bone transition-colors group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand">
-          <ArrowUpRight className="size-4" aria-hidden />
-        </span>
-      </div>
-    </a>
-  );
-}
+/** The one-time index's four cards — the plan tiers' colours plus the one-time sweep. */
+const INDEX_GRADIENTS = [...TIER_GRADIENTS, ONE_TIME_GRADIENT];
+const INDEX_GLOWS = [...TIER_GLOWS, "rgb(247 120 143 / 0.26)"];
 
 /** A tab's own opening: the vertical, the product, one line, and the way to its page. */
 function TabHead({
@@ -252,13 +251,6 @@ function TabHead({
         {sub && <p className="mt-1 text-lead text-bone">{sub}</p>}
         {body && <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{body}</p>}
       </div>
-      <Link
-        href={card.href}
-        className="inline-flex min-h-10 items-center gap-1.5 text-small text-ash transition-colors hover:text-bone"
-      >
-        See the full {card.name} page
-        <ArrowRight className="size-4 text-brand-ink" aria-hidden />
-      </Link>
     </div>
   );
 }
@@ -270,7 +262,7 @@ function SubHeading({ children }: { children: React.ReactNode }) {
 function tabs(): PlanTab[] {
   /* In Genesis's order for the four — the same as verticalCards. */
   const order = verticalCards.map((card) => card.key);
-  const art = (key: VerticalKey) => <DivisionName name={verticalCard(key).short} height={26} />;
+  const art = (key: VerticalKey) => <DivisionName name={verticalCard(key).short} height={30} />;
   const list: PlanTab[] = [
     {
       key: "ai-labs",
@@ -278,14 +270,31 @@ function tabs(): PlanTab[] {
       icon: "sparkles",
       content: (
         <>
-          <TabHead vertical="ai-labs" {...aiTab} />
+          {/*
+            THE SWITCH FIRST, THEN THE WORDS (Genesis, 29 Sep 2026: "put the
+            toggle bar above the written content"): how you want to work, the
+            billing under it, then the tab's own heading, then the plans — and
+            what every AI video includes BELOW them.
+          */}
           <WorkMode
-            oneTime={<OneTimeProducts vertical="ai-labs" bare />}
+            oneTime={
+              <>
+                <TabHead vertical="ai-labs" {...aiTab} />
+                <div className="mt-8">
+                  <OneTimeProducts vertical="ai-labs" bare />
+                </div>
+              </>
+            }
             membership={
               <>
-                <PlanGrid data={aiPlans} vertical="ai-labs" compact />
-                <SubHeading>Every AI Video Includes</SubHeading>
-                <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+                <PlanGrid
+                  data={aiPlans}
+                  vertical="ai-labs"
+                  compact
+                  centered
+                  intro={<TabHead vertical="ai-labs" {...aiTab} />}
+                />
+                <ul className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
                   {aiEveryVideo.items.map((item) => (
                     <li
                       key={item.title}
@@ -298,9 +307,9 @@ function tabs(): PlanTab[] {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-10">
-                  <VideoTiers data={aiVideoTiers} compact />
-                </div>
+                <PlanDetails id="video-types" title={aiVideoTiers.heading} summary={aiVideoTiers.body}>
+                  <VideoTiers data={aiVideoTiers} bare />
+                </PlanDetails>
               </>
             }
           />
@@ -315,12 +324,9 @@ function tabs(): PlanTab[] {
       icon: "users",
       content: (
         <>
-          <TabHead
-            vertical="influence"
-            label="Genesis Influence"
-            heading={`${campaignPricing.heading} ${campaignPricing.headingAccent}`}
-            body={campaignPricing.body}
-          />
+          <div className="mt-10">
+            <TabHead vertical="influence" {...influenceTab} />
+          </div>
           <div className="mt-6 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="flex items-center gap-6 rounded-panel border border-brand/40 bg-brand/[0.06] p-6">
               <p className="font-display text-[4rem] font-normal leading-none tracking-tight text-brand-ink">
@@ -363,10 +369,24 @@ function tabs(): PlanTab[] {
       icon: "camera",
       content: (
         <>
-          <TabHead vertical="studios" {...studiosTab} />
           <WorkMode
-            oneTime={<OneTimeProducts vertical="studios" bare />}
-            membership={<PlanGrid data={studiosPlans} vertical="studios" compact />}
+            oneTime={
+              <>
+                <TabHead vertical="studios" {...studiosTab} />
+                <div className="mt-8">
+                  <OneTimeProducts vertical="studios" bare />
+                </div>
+              </>
+            }
+            membership={
+              <PlanGrid
+                data={studiosPlans}
+                vertical="studios"
+                compact
+                centered
+                intro={<TabHead vertical="studios" {...studiosTab} />}
+              />
+            }
           />
           <SubHeading>Typical turnaround</SubHeading>
           <TurnaroundStrip data={studiosTurnaround} />
@@ -379,10 +399,21 @@ function tabs(): PlanTab[] {
       icon: "palette",
       content: (
         <>
-          <TabHead vertical="brand-design" {...designTab} />
           <WorkMode
-            oneTime={<OneTimeProducts vertical="brand-design" bare />}
-            membership={<ProductCards />}
+            oneTime={
+              <>
+                <TabHead vertical="brand-design" {...designTab} />
+                <div className="mt-8">
+                  <OneTimeProducts vertical="brand-design" bare />
+                </div>
+              </>
+            }
+            membership={
+              <>
+                <TabHead vertical="brand-design" {...designTab} />
+                <ProductCards />
+              </>
+            }
           />
           <SubHeading>Typical turnaround</SubHeading>
           <TurnaroundStrip data={designTurnaround} />
@@ -390,5 +421,24 @@ function tabs(): PlanTab[] {
       ),
     },
   ];
-  return list.map((tab) => ({ ...tab, art: art(tab.key) })).sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+  /*
+    THE TABS ARE THE DIVISION CARDS (Genesis, 28 Sep 2026) — the four cards
+    that used to open the page now pick the tab: name, one line, and "Learn
+    more about Genesis …" to the division's own page, in place of a price.
+  */
+  return list
+    .map((tab) => {
+      const card = verticalCard(tab.key);
+      return {
+        ...tab,
+        art: art(tab.key),
+        card: {
+          blurb: card.blurb,
+          href: card.href,
+          linkLabel: `Learn more about ${card.name}`,
+          ramp: services.items.find((item) => item.short === card.short)?.ramp,
+        },
+      };
+    })
+    .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
 }
