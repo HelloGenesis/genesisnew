@@ -18,14 +18,10 @@ import {
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { DivisionCtas } from "./division-ctas";
 import { PlanBar } from "./plan-bar";
-import { inr } from "@/lib/money";
-import { productsFor } from "@/lib/products";
 
 /* The avatar product — the natural next step under the avatar roster (lib/products). */
-const avatarProduct = productsFor("ai-labs")[0];
 import { SectionShell } from "./section-shell";
 
 
@@ -91,7 +87,34 @@ const AI_VIDEOS: OpenVideo[] = AI_WORK.filter((card) => !card.study).map((card) 
   label: card.label,
 }));
 
-export function AiContent() {
+/**
+ * THE AI LAB DIAGRAM — the tools on either side wired into the AI Lab mark,
+ * and its closing line. In the homepage section above the avatars; on the AI
+ * Labs page, under the client logos (Genesis, 2 Oct 2026: "move this section
+ * below logos on AI Labs page").
+ */
+export function AiLabDiagram({ className }: { className?: string }) {
+  return (
+    <Reveal delay={0.06} className={className}>
+      <div className="mx-auto w-full max-w-6xl text-center">
+        <figure className="mx-auto max-w-[60rem]">
+          <AutomationSources />
+        </figure>
+        <p className="mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead">
+          {aiContent.automation.kicker}
+        </p>
+      </div>
+    </Reveal>
+  );
+}
+
+/**
+ * `onPage`: the section on its own division's page, under the page's hero
+ * (Genesis, 2 Oct 2026). Without its header — the page's hero already names
+ * the division — and without its plan bar: the page's own pricing section,
+ * further down, is the one place to buy.
+ */
+export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
   /*
     WHICH STUDY IS OPEN OVER THE PAGE. Same window the Studios stage cards and
     the case-study posters use — Genesis's rule is that a study opens where
@@ -110,7 +133,7 @@ export function AiContent() {
     <>
     <SectionShell
       id="ai-lab"
-      division={{
+      division={onPage ? undefined : {
         name: "AI Lab",
         tagline: services.items[3].caption,
         ramp: services.items[3].ramp,
@@ -129,9 +152,9 @@ export function AiContent() {
         was written for: introducing the AVATARS, rather than standing in as
         the section's only heading.
       */
-      heading={aiContent.heading}
+      heading={onPage ? undefined : aiContent.heading}
       headingAccent={aiContent.headingAccent}
-      body={aiContent.body}
+      body={onPage ? undefined : aiContent.body}
       bodyPhone={aiContent.bodyPhone}
       /*
         TWO LINES ON A DESKTOP — "isko bhi two lines me karo". At the shell's
@@ -203,7 +226,8 @@ export function AiContent() {
         THE WAYS ON, BETWEEN THE COPY AND THE WORK (Genesis, 29 Sep 2026):
         View Page, Explore Pricing and Case Studies — see DivisionCtas.
       */}
-      <DivisionCtas vertical="ai-labs" align="center" className="mt-6 sm:mt-8" />
+      {/* Not on the AI Labs page itself, which has its own buttons (Genesis, 2 Oct 2026). */}
+      {!onPage && <DivisionCtas vertical="ai-labs" align="center" className="mt-6 sm:mt-8" />}
 
       <Reveal variant="scene" className="relative left-1/2 mt-10 w-screen -translate-x-1/2">
         {/*
@@ -273,16 +297,8 @@ export function AiContent() {
         and the buttons — it's just an element to represent the AI Lab"): the
         diagram and its line, on the section's own ground.
       */}
-      <Reveal delay={0.06} className="mt-[var(--block-gap)]">
-        <div className="mx-auto w-full max-w-6xl text-center">
-          <figure className="mx-auto max-w-[60rem]">
-            <AutomationSources />
-          </figure>
-          <p className="mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead">
-            {aiContent.automation.kicker}
-          </p>
-        </div>
-      </Reveal>
+      {/* On the AI Labs page it sits under the client logos instead — see AiLabDiagram. */}
+      {!onPage && <AiLabDiagram className="mt-[var(--block-gap)]" />}
 
       <Reveal
         variant="scene"
@@ -369,22 +385,10 @@ export function AiContent() {
           </p>
         )}
         {/*
-          THE WAY IN, UNDER THE AVATARS — "Build Your AI Avatar", the first of
-          Genesis's one-time AI products (28 Sep 2026): a brand not ready to
-          subscribe can have its own avatar made. It opens the product on the
-          AI Labs page, where it can be bought.
+          The "Build Your AI Avatar · one-time · Buy Now" strip came off here
+          (Genesis, 2 Oct 2026): the avatar is the first card in the AI Lab
+          bar below, with its price and its way on.
         */}
-        <div className="mx-auto mt-6 flex max-w-fit flex-col items-center gap-3 rounded-panel border border-brand/40 bg-brand/[0.06] px-5 py-3 text-center sm:flex-row sm:gap-5 sm:rounded-full sm:py-2 sm:pl-6 sm:pr-2">
-          <p className="text-small text-ash">
-            <span className="text-bone">{avatarProduct.name}</span> · one-time{" "}
-            <span className="text-brand-ink">{inr(avatarProduct.price!)}</span>
-          </p>
-          <span data-track="home-plan:ai-labs:avatar">
-            <GlassButton href="/ai-content-automation#ai-labs-one-time" pageLink variant="brand" size="sm" arrow>
-              Buy Now
-            </GlassButton>
-          </span>
-        </div>
       </Reveal>
 
       {/*
@@ -416,7 +420,7 @@ export function AiContent() {
         outline. The diagram keeps its own generous measure so the labels and
         the node are read rather than squinted at.
       */}
-      <PlanBar vertical="ai-labs" />
+      {!onPage && <PlanBar vertical="ai-labs" />}
     </SectionShell>
 
 

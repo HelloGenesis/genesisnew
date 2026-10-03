@@ -6,6 +6,7 @@ import { useRef, type ReactNode } from "react";
 
 import { mediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
+import { RailProgress } from "@/components/genesis/rail-progress";
 
 export type RailCard = {
   title: string;
@@ -61,7 +62,7 @@ export function MediaRail({
         <div className="flex shrink-0 gap-2">
           <button
             type="button"
-            aria-label={`Previous — ${label}`}
+            aria-label={`Previous: ${label}`}
             onClick={() => step(-1)}
             className="grid size-10 place-items-center rounded-full border border-white/15 text-bone transition-colors hover:border-white/35 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
@@ -69,7 +70,7 @@ export function MediaRail({
           </button>
           <button
             type="button"
-            aria-label={`Next — ${label}`}
+            aria-label={`Next: ${label}`}
             onClick={() => step(1)}
             className="grid size-10 place-items-center rounded-full border border-white/15 text-bone transition-colors hover:border-white/35 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
@@ -142,6 +143,7 @@ export function MediaRail({
           </li>
         ))}
       </ul>
+      <RailProgress rail={track} className="mt-3" />
     </div>
   );
 }

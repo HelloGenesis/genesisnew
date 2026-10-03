@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, MapPin, ShoppingBag } from "lucide-react";
+import { MapPin, ShoppingBag } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 
 import { priceCart } from "@/lib/cart";
@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { CartLines, CartSummary, useCart } from "./cart";
+import { PaymentOptions } from "./payment-options";
 import { GlassButton } from "./glass-button";
 import { SectionLabel } from "./section-label";
 
@@ -199,10 +200,10 @@ export function CartPageView() {
           <p className="text-body text-ash">Your cart is empty.</p>
           <div className="flex flex-wrap justify-center gap-3">
             <GlassButton href="/pricing" variant="brand" arrow>
-              Explore Memberships
+              Explore Subscriptions
             </GlassButton>
             <GlassButton href="/pricing#one-time" variant="glass" arrow>
-              See one-time products
+              See pay-per-project work
             </GlassButton>
           </div>
         </div>
@@ -396,16 +397,16 @@ export function CartPageView() {
               {status === "sending" ? "Starting payment…" : onlyQuotes ? "Send request" : "Proceed to payment"}
             </GlassButton>
             {shootBlocked && (
-              <p className="mt-3 text-small text-ash">Studios plans and shoots are Mumbai only for now — see above.</p>
+              <p className="mt-3 text-small text-ash">Studios plans and shoots are Mumbai only for now. See above.</p>
             )}
             {status === "error" && (
               <p role="alert" className="mt-3 text-small text-brand-ink">
                 {error}
               </p>
             )}
-            <p className="mt-4 flex items-start gap-2 text-[0.75rem] leading-relaxed text-faint">
-              <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              Secure payment by Razorpay — UPI, cards, net banking and wallets.{" "}
+            {/* How you can pay — the same promise as /pricing, in brief (Genesis, 2 Oct 2026). */}
+            <PaymentOptions compact className="mt-4" />
+            <p className="mt-2 text-[0.75rem] leading-relaxed text-faint">
               {country.code === "IN" ? "A GST invoice follows by email." : "An export invoice follows by email."}
             </p>
           </aside>
@@ -446,7 +447,7 @@ function PhoneField({
     <Labelled label={label} id={id} required={required}>
       <div className="flex gap-2">
         <select
-          aria-label={`${label} — country code`}
+          aria-label={`${label}, country code`}
           value={dial}
           onChange={(event) => onDial(event.target.value)}
           className={cn(FIELD, "w-[6.5rem] shrink-0 px-3")}

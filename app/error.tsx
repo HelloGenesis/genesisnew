@@ -41,7 +41,7 @@ export default function ErrorBoundary({
         </h1>
 
         <p className="mt-6 max-w-md text-small leading-relaxed text-ash">
-          The error has been reported. Trying again often works — it may have
+          The error has been reported. Trying again often works. It may have
           been a momentary fault.
         </p>
 

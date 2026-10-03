@@ -16,8 +16,6 @@ export const aiHero = {
   label: "Genesis AI Labs",
   heading: "Build once.",
   headingAccent: "Publish continuously.",
-  lead: "Turn your founder, spokesperson or brand character into an AI-powered content engine.",
-  body: "Create videos, visuals, campaigns and founder-led content without scheduling a new shoot every time.",
   primary: "Start AI Content Studio",
   secondary: "See AI Work",
   trust: ["AI Avatars", "AI Videos", "Campaign Creatives", "Founder Content"],
@@ -140,7 +138,7 @@ export const aiFormats = {
     */
     {
       title: "Influencer & Artist Content",
-      body: "Influencers and artists as AI avatars — content that keeps publishing on automation.",
+      body: "Influencers and artists as AI avatars: content that keeps publishing on automation.",
       image: "/avatars/jesko.jpg",
       work: [
         { id: "ai-lab-tanvi-uiiui", eyebrow: "Creator Avatar", title: "Tanvi" },
@@ -152,7 +150,7 @@ export const aiFormats = {
 } as const;
 
 export const aiPlans: PlanGrid = {
-  label: "Memberships",
+  label: "Subscriptions",
   heading: "Your AI content team.",
   headingAccent: "Without building one in-house.",
   body: ["Choose the content capacity your brand needs. Upgrade whenever you need more."],
@@ -169,6 +167,12 @@ export const aiPlans: PlanGrid = {
         { item: "Creative direction", included: true },
         { item: "Ideation & scripting", included: true },
         { item: "AI production", included: true },
+        /* Genesis's sheet, 3 Oct 2026: what a Standard AI Video is made of. */
+        {
+          item: "Standard AI Video format",
+          included: "AI-generated video + licensed stock footage / B-roll + AI-generated or supplied still-image sequences",
+        },
+        { item: "1–3 AI-generated motion clips per Standard AI Video (max. 3), approx. 5–7 sec each", included: true },
         { item: "Voice", included: "Basic AI voiceover (any voice)" },
         { item: "Voice clone & lip-sync", included: false },
         { item: "Music & sound", included: "Background music" },
@@ -182,7 +186,7 @@ export const aiPlans: PlanGrid = {
         { item: "Ready-to-publish exports", included: true },
         { item: "Content queue management", included: true },
       ],
-      note: "Cancel, pause, or upgrade your membership as your content needs change.",
+      note: "Cancel, pause, or upgrade your subscription as your content needs change.",
     },
     {
       name: "Growth",
@@ -230,7 +234,7 @@ export const aiPlans: PlanGrid = {
         "20 Adaptations",
         "2 Active Requests",
       ],
-      cta: { label: "Talk to Genesis", href: enquiryHref(`${PRODUCT} — Enterprise`) },
+      cta: { label: "Talk to Genesis", href: enquiryHref(`${PRODUCT}: Enterprise`) },
       contactOnly: true,
       inclusions: [
         { item: "Creative direction", included: true },
@@ -251,7 +255,7 @@ export const aiPlans: PlanGrid = {
   included: {
     heading: "Want to see everything included?",
     sub: "Expand to see what's included in every plan.",
-    lead: "Every membership includes",
+    lead: "Every subscription includes",
     items: [
       "Creative direction",
       "Ideation & scripting",
@@ -280,7 +284,7 @@ export const aiPlans: PlanGrid = {
       { label: "AI Videos", values: ["6 Standard AI Videos", "8 Premium AI Videos", "16 Premium Videos"] },
       { label: "AI Avatar / Persona", values: ["1 included", "1 AI Avatar", "Up to 3 Personas"] },
       { label: "AI Campaign Creatives", values: ["8 / month", "15 / month", "30 / month"] },
-      { label: "Advanced AI / Motion", values: ["—", "Up to 2 Advanced Videos", "Up to 4 Advanced Videos"] },
+      { label: "Advanced AI / Motion", values: ["Not included", "Up to 2 Advanced Videos", "Up to 4 Advanced Videos"] },
       { label: "Content Adaptations", values: ["Basic brand adaptations", "8 Adaptations", "20 Adaptations"] },
       { label: "Voice", values: ["Basic AI voiceover", "Voice clone & lip-sync", "Multi-language voice clone"] },
       { label: "Languages", values: ["1 Language", "2 Languages", "3 Languages"] },
@@ -294,14 +298,14 @@ export const aiEveryVideo: { label: string; heading: string; body: string; items
   heading: "From idea to ready-to-publish.",
   body: "You give us the brief. We handle the creative workflow.",
   items: [
-    { icon: "idea", label: "01 — Idea", title: "Ideation & Script", body: "Concept development and scripting around your objective." },
-    { icon: "brand", label: "02 — Brand", title: "Product Integration", body: "Your product, service or message built naturally into the content.", tier: "Premium & Advanced" },
-    { icon: "voice", label: "03 — Voice", title: "Voice & Lip-Sync", body: "AI voice, voice cloning or realistic lip-sync where required.", tier: "Standard: basic AI voiceover" },
-    { icon: "sound", label: "04 — Sound", title: "Music & Sound", body: "Background music and sound design that support the content.", tier: "Standard: background music" },
-    { icon: "motion", label: "05 — Motion", title: "Motion & Graphics", body: "Transitions, animation and supporting graphic elements.", tier: "Standard: basic transitions" },
-    { icon: "text", label: "06 — Text", title: "Captions & Supers", body: "On-screen copy designed for easy consumption.", tier: "Standard: captions only" },
-    { icon: "palette", label: "07 — Brand system", title: "Your Brand, Every Time", body: "Fonts, colours and visual styling aligned to your identity.", tier: "Premium & Advanced" },
-    { icon: "delivery", label: "08 — Delivery", title: "Ready to Publish", body: "Final files prepared for your required platform and format." },
+    { icon: "idea", label: "01 · Idea", title: "Ideation & Script", body: "Concept development and scripting around your objective." },
+    { icon: "brand", label: "02 · Brand", title: "Product Integration", body: "Your product, service or message built naturally into the content.", tier: "Premium & Advanced" },
+    { icon: "voice", label: "03 · Voice", title: "Voice & Lip-Sync", body: "AI voice, voice cloning or realistic lip-sync where required.", tier: "Standard: basic AI voiceover" },
+    { icon: "sound", label: "04 · Sound", title: "Music & Sound", body: "Background music and sound design that support the content.", tier: "Standard: background music" },
+    { icon: "motion", label: "05 · Motion", title: "Motion & Graphics", body: "Transitions, animation and supporting graphic elements.", tier: "Standard: basic transitions" },
+    { icon: "text", label: "06 · Text", title: "Captions & Supers", body: "On-screen copy designed for easy consumption.", tier: "Standard: captions only" },
+    { icon: "palette", label: "07 · Brand system", title: "Your Brand, Every Time", body: "Fonts, colours and visual styling aligned to your identity.", tier: "Premium & Advanced" },
+    { icon: "delivery", label: "08 · Delivery", title: "Ready to Publish", body: "Final files prepared for your required platform and format." },
   ],
 };
 
@@ -315,20 +319,24 @@ export const aiEveryVideo: { label: string; heading: string; body: string; items
 */
 export const aiVideoTiers = {
   label: "Video types",
-  heading: "What’s the difference between Standard, Premium or Advanced?",
+  heading: "What’s the difference between Standard, Premium or Advanced AI videos?",
   body: "What each kind of video in your plan includes.",
   tiers: [
     {
       name: "Standard AI Video",
       length: "20–30 sec",
       plans: "Starter",
+      /* Genesis's sheet, 3 Oct 2026, for all three tiers. */
       includes: [
-        "AI avatar",
+        "AI avatar / AI-generated visuals",
+        "AI-generated or supplied still-image sequences",
+        "Licensed stock footage / B-roll",
+        "1–3 AI-generated motion clips per video (max. 3), approx. 5–7 sec each",
         "Captions",
-        "Stock footage",
         "Basic AI voiceover (any voice)",
         "Background music",
         "Basic transitions",
+        "1080p final export",
       ],
       excludes: ["Motion graphics", "Supers", "Brand fonts & colours"],
       turnaround: "2–4 business days",
@@ -340,11 +348,13 @@ export const aiVideoTiers = {
       lead: "Everything in Standard, plus:",
       includes: [
         "Product / brand integration",
+        "AI-generated visuals + stock / B-roll where appropriate",
         "Voice cloning or realistic lip-sync",
         "Music & sound design",
         "Motion graphics & animation",
         "Captions & supers",
         "Brand fonts, colours & styling",
+        "1080p final export",
       ],
       /* TODO(content): Genesis to confirm — the brief gave Standard and Advanced only. */
       turnaround: "3–5 business days",
@@ -357,8 +367,10 @@ export const aiVideoTiers = {
       lead: "Everything in Premium, plus:",
       includes: [
         "Advanced AI production",
+        "AI-generated scenes / video",
         "Heavier animation",
         "Complex visual treatments",
+        "1080p final export",
       ],
       turnaround: "5–7 business days",
     },
@@ -393,7 +405,7 @@ export const aiHowItWorks: Steps = {
   heading: "Content on demand.",
   headingAccent: "Without the production chaos.",
   body: [
-    "Add requests whenever you need them. We work through your active queue according to your membership capacity.",
+    "Add requests whenever you need them. We work through your active queue according to your subscription capacity.",
   ],
   steps: [
     { title: "Add to Queue", body: "Send your idea, reference, campaign or requirement.", icon: "queue" },
@@ -401,12 +413,19 @@ export const aiHowItWorks: Steps = {
     { title: "Review", body: "Review the output and request changes where required.", icon: "review" },
     { title: "Next Request", body: "Once approved, we move directly to the next item in your queue.", icon: "repeat" },
   ],
-  capacity: {
-    heading: "Capacity",
-    rows: ["Starter · 1 Active Request", "Growth · 1 Active Request", "Enterprise · 2 Active Requests"],
-  },
-  note: "Your queue can keep growing. Your active request limit determines how many pieces we work on simultaneously.",
+  /* The capacity bar and its note came off (Genesis, 3 Oct 2026: "remove this from here … all across"). */
 };
+
+/*
+  WHAT A STANDARD OR ADVANCED VIDEO IS, under the turnaround card that names
+  it (Genesis, 3 Oct 2026: "this should include advanced video and standard
+  video context, and a dropdown explaining what it is"). From aiVideoTiers,
+  so the two never disagree.
+*/
+function tierDetail(word: "Standard" | "Advanced") {
+  const tier = aiVideoTiers.tiers.find((t) => t.name.startsWith(word))!;
+  return { label: `What’s in ${word === "Advanced" ? "an Advanced" : "a Standard"} video`, lead: "lead" in tier ? tier.lead : undefined, items: [...tier.includes] };
+}
 
 export const aiTurnaround: Turnaround = {
   label: "Turnaround",
@@ -414,8 +433,27 @@ export const aiTurnaround: Turnaround = {
   body: "Most requests move through production within a few working days.",
   tiers: [
     { time: "1–2 Days", title: "Images & Simple Creatives", items: ["Static campaign assets, product visuals and simpler outputs."], icon: "images" },
-    { time: "2–4 Days", title: "Standard Videos", items: ["AI avatar videos, founder content and standard branded videos."], icon: "video" },
-    { time: "5–7 Days", title: "AI + Motion", items: ["Advanced AI production, heavier animation and complex visual treatments."], icon: "bolt" },
+    /*
+      Genesis's sheet, 3 Oct 2026, shortened to read at a glance ("make this
+      readable and shorten it a bit without losing the context"): what each
+      is made of, and — set apart — when the clock starts.
+    */
+    {
+      time: "2–4 Days",
+      title: "Standard Videos",
+      items: ["AI avatar, founder and branded videos built from 1–3 AI motion clips (5–7 sec each), stock B-roll and image sequences."],
+      detail: tierDetail("Standard"),
+      note: "Starts once your inputs and script/image approvals are in. Late feedback or regenerations can extend it.",
+      icon: "video",
+    },
+    {
+      time: "5–7 Days",
+      title: "AI + Motion",
+      items: ["Advanced AI videos: advanced AI production, heavier animation and complex visuals."],
+      detail: tierDetail("Advanced"),
+      note: "Starts once inputs and approvals are in. Regenerations or longer AI processing can extend it.",
+      icon: "bolt",
+    },
   ],
   notes: ["Timelines depend on complexity, feedback and the scope of each request."],
 };
@@ -434,7 +472,7 @@ export const aiClosing: Closing = {
 };
 
 export const aiFaqs: { heading: string; items: Faq[] } = {
-  heading: "Genesis AI Labs — FAQs",
+  heading: "Genesis AI Labs: FAQs",
   items: [
     {
       q: "What does Genesis AI Labs do?",

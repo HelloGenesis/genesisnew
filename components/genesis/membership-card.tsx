@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 
 const SIZES = { sm: 168, md: 280, lg: 400, xl: 520 } as const;
 
+const CARD_SRC = "/brand/genesis-membership-card.webp";
+
 /** How far the card turns toward the pointer, in degrees, at its edges. */
 const TURN = 12;
 
@@ -77,7 +79,7 @@ export function MembershipCard({
         style={{ transform, transitionDuration: lifted && !reduce ? "180ms" : undefined }}
       >
         <Image
-          src="/brand/genesis-membership-card.webp"
+          src={CARD_SRC}
           alt=""
           width={1408}
           height={830}
@@ -90,13 +92,25 @@ export function MembershipCard({
               : "drop-shadow-[0_30px_40px_rgb(0_0_0/0.6)]",
           )}
         />
-        {/* The highlight — a soft sheen that follows the pointer across the card's face. */}
+        {/*
+          The highlight — a soft sheen that follows the pointer across the
+          card's face. MASKED BY THE CARD ARTWORK ITSELF, so it takes the
+          card's exact shape: it was an inset rounded rectangle, and its edge
+          showed as a second outline inside the card on hover.
+        */}
         {!reduce && (
           <span
-            className="pointer-events-none absolute inset-[3%] rounded-[6%/10%] mix-blend-screen transition-opacity duration-300"
+            aria-hidden
+            className="pointer-events-none absolute inset-0 mix-blend-screen transition-opacity duration-300"
             style={{
               opacity: lifted ? 1 : 0,
-              background: `radial-gradient(circle at ${(pose.x + 0.5) * 100}% ${(pose.y + 0.5) * 100}%, rgb(255 255 255 / 0.22), transparent 45%)`,
+              background: `radial-gradient(circle at ${(pose.x + 0.5) * 100}% ${(pose.y + 0.5) * 100}%, rgb(255 255 255 / 0.16), transparent 50%)`,
+              WebkitMaskImage: `url(${CARD_SRC})`,
+              maskImage: `url(${CARD_SRC})`,
+              WebkitMaskSize: "100% 100%",
+              maskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
             }}
           />
         )}

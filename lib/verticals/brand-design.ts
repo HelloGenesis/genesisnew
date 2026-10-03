@@ -22,8 +22,6 @@ export const designHero = {
   heading: "Your creative team.",
   headingLine2: "Without the",
   headingAccent: "hiring queue.",
-  lead: "Get ongoing design support for the everyday creative requirements your marketing team needs to keep moving.",
-  body: "Add requests whenever you need them. We work through your active queue, send work for review, complete revisions and move straight to the next.",
   primary: "Start Creative Desk",
   secondary: "Explore Brand Build",
   strip: [
@@ -51,13 +49,13 @@ export const designHero = {
 export const designProducts = {
   label: "Our products",
   heading: "Two ways to work with us.",
-  body: "Ongoing creative support or a complete brand identity — choose what your business needs right now.",
+  body: "Ongoing creative support or a complete brand identity, choose what your business needs right now.",
   desk: {
-    eyebrow: "01 — Genesis Creative Desk",
+    eyebrow: "01 · Genesis Creative Desk",
     name: "Always-On",
-    badge: "Membership",
+    badge: "Subscription",
     tagline: "Ongoing creative support for your brand.",
-    body: "A monthly subscription for the design work your marketing team needs — from everyday social creatives and ads to campaigns, presentations and collateral.",
+    body: "A monthly subscription for the design work your marketing team needs, from everyday social creatives and ads to campaigns, presentations and collateral.",
     /* The list figure per month on quarterly billing — see lib/money. */
     rate: 65000,
     highlights: [
@@ -70,9 +68,9 @@ export const designProducts = {
     cta: { label: "Start Creative Desk", href: deskHref },
   },
   build: {
-    eyebrow: "02 — Genesis Brand Build",
+    eyebrow: "02 · Genesis Brand Build",
     name: "Brand Build",
-    badge: "One-time project",
+    badge: "Pay-per-project",
     tagline: "Complete brand identity and guidelines.",
     body: "A structured one-time engagement for businesses launching, repositioning or upgrading their brand.",
     from: price(150000),
@@ -119,7 +117,7 @@ export const designIncluded: {
     so a reader who wanted a logo or a landing page is not turned away.
   */
   elsewhere: {
-    heading: "Not in Always-On — but we do it",
+    heading: "Not in Always-On, but we do it",
     items: [
       { what: "Logos & full brand identity", where: "Brand Build · Logo Refresh" },
       { what: "Pitch deck design", where: "Pitch Deck Makeover" },
@@ -233,5 +231,5 @@ export const designTab = {
   label: "Genesis Brand & Design",
   heading: "Creative Desk & Brand Build",
   sub: "Two ways to work with us.",
-  body: "Ongoing creative support or a complete brand identity — choose what your business needs right now.",
+  body: "Ongoing creative support or a complete brand identity, choose what your business needs right now.",
 };

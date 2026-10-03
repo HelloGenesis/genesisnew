@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { getLenis } from "./smooth-scroll";
+import { ThemeToggle } from "./theme-toggle";
 
 /**
  * A panel over the landing page, with the page blurred and held still behind.
@@ -202,7 +203,7 @@ export function Overlay({
     <div
       data-lenis-prevent
       onMouseDown={dismissFromBackdrop}
-      className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain bg-black/55 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain bg-black/45 backdrop-blur-2xl"
     >
       <div
         onMouseDown={dismissFromBackdrop}
@@ -224,7 +225,8 @@ export function Overlay({
           onClickCapture={onClickCapture}
           className={cn(
             "relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden",
-            "rounded-xl border border-[var(--glass-border)] bg-[var(--surface-raised)] shadow-2xl outline-none",
+            /* Glass, as the rest of the site (Genesis, 3 Oct 2026); see .glass-window. */
+            "glass-window glass-lit rounded-xl border border-[var(--glass-border)] outline-none",
             "sm:max-h-[calc(100dvh-4rem)] sm:rounded-[0.875rem]",
             className,
           )}
@@ -240,7 +242,7 @@ export function Overlay({
             yellow, yellow and yellow is not one — and they are chrome around
             the content rather than part of the page's palette.
           */}
-          <div className="relative flex h-10 shrink-0 items-center gap-2 border-b border-[var(--glass-border)] bg-[var(--surface-panel)] px-4">
+          <div className="relative flex h-12 shrink-0 items-center gap-2 border-b border-[var(--glass-border)] bg-[color-mix(in_srgb,var(--surface-panel)_55%,transparent)] px-4">
             <button
               type="button"
               onClick={() => close.current()}
@@ -269,16 +271,21 @@ export function Overlay({
             <span className="pointer-events-none absolute inset-x-24 truncate text-center text-micro font-medium !tracking-normal text-ash">
               {label}
             </span>
+
+            {/*
+              THE COUNT AND THE THEME SWITCH, on the right of the bar (Genesis,
+              3 Oct 2026: "add a dark/white toggle all across"). A pop-up
+              covers the nav, so it carries its own way to change the theme.
+            */}
+            <div className="ml-auto flex items-center gap-3">
+              {pager?.position && <span className="text-micro tabular-nums text-ash">{pager.position}</span>}
+              <ThemeToggle className="origin-right scale-[0.8]" />
+            </div>
           </div>
 
           {/* The content, scrolling inside the window rather than moving it. */}
           <div className="overflow-y-auto overscroll-contain p-6 sm:p-9">{children}</div>
 
-          {pager?.position && (
-            <span className="pointer-events-none absolute right-4 top-2.5 text-micro tabular-nums text-ash">
-              {pager.position}
-            </span>
-          )}
         </div>
 
         {/*

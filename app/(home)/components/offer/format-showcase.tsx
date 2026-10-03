@@ -110,7 +110,7 @@ export function FormatShowcase({
           title: format.title,
           body: format.body,
           image: format.image,
-          selectLabel: `${format.title} — see the work`,
+          selectLabel: `${format.title}: see the work`,
           onSelect: () => setOpen(entries.findIndex((entry) => entry.format === format.title)),
         }))}
       />

@@ -441,7 +441,15 @@ export const sectionForPage: Record<string, string> = Object.fromEntries(
  * comfortably at lg — "Work" and "Case Studies" together are narrower than
  * the single "Work | Case Studies" they replace.
  */
-export const navItems: NavItem[] = [
+/*
+  PRICING AND CONTACT ARE OFF THE BAR FOR NOW (Genesis, 2 Oct 2026: "hide
+  these for a while"). Both stay in the list below so bringing them back is
+  deleting their name from this set. /pricing and the contact section are
+  untouched, and "Start a Project" still goes to the form.
+*/
+const HIDDEN_NAV = new Set(["Pricing", "Contact"]);
+
+export const navItems: NavItem[] = ([
   /*
     SERVICES, AND IT IS THE ONE MENU ON THE BAR.
 
@@ -461,66 +469,24 @@ export const navItems: NavItem[] = [
     The href is the Brain. A reader who clicks the trigger instead of picking
     from the menu gets the picture the menu is a text version of.
   */
-  {
-    label: "Services",
-    href: homeHref,
-    /*
-      FOUR COLUMNS, ONE PER VERTICAL, each listing that vertical's own
-      services — "4 sections (our verticals) and uske niche jitne bhi mere
-      subtext hai woh mere services hai, sabko alag alag karke likhna".
-
-      THE SERVICES ARE BUILT FROM TWO LISTS, MERGED. Each division already
-      carries a `caption` (the middot line under its name on the Brain) and a
-      `services` array (read off page 3 of the credentials deck). The caption
-      is the headline set — the three or four things the division is
-      announced by — and the deck list is the fuller one. Taking the caption
-      first and appending anything the deck adds gives a menu that opens with
-      the words a reader has already seen on the page and then goes deeper,
-      which is the order a menu should reveal things in.
-
-      DEDUPED CASE-INSENSITIVELY, because the two lists overlap and spell
-      differently: the caption says "Influencer Marketing" and the deck says
-      the same with different capitals in places. Two entries a letter apart
-      in one column reads as a mistake.
-
-      EVERY SERVICE POINTS AT ITS DIVISION'S PAGE. There are no per-service
-      pages and inventing anchors for them would be inventing content; what a
-      reader gets is the division that does it, which is the honest
-      destination and the one that exists.
-    */
-    children: divisionPages.map(({ label, href, section }) => {
-      const division = services.items.find(
-        (item) => sectionForDivision[item.title] === section,
-      );
-      /*
-        THE DIVISION'S OWN MENU LIST, VERBATIM.
-
-        This used to merge the caption with the credentials deck's services
-        and dedupe the result, which produced columns of different lengths in
-        two different registers — "UGC" directly above "UGC & Regional
-        Campaigns" under Influence, "Strategy" above "Strategy, Scripting &
-        Production" under Studios. Genesis sent the panel they want, five
-        lines per column, and it is written where the rest of the division's
-        copy lives (lib/home-content). Nothing is derived any more, so
-        nothing can drift out of the shape they drew.
-      */
-      const items = [...(division?.menu ?? [])];
-      return {
-        label,
-        href,
-        items,
-        /*
-          THE DIVISION'S OWN MARK, at Genesis's request — the name-only
-          artwork rather than the route's name set in type. `short` is the
-          key DivisionLockup files it under; `ramp` is only ever used by that
-          component's text fallback, for a division whose artwork is missing.
-        */
-        short: division?.short,
-        ramp: division?.ramp,
-      };
-    }),
-  },
-  // The page, not the homepage rail: Genesis asked the bar to open it.
+  /*
+    EACH DIVISION ON THE BAR, WITH ITS OWN MENU (Genesis, 2 Oct 2026: "get
+    this out in the menu and give each a separate dropdown"). The four used
+    to share one "Services" panel; now AI Lab, Studios, Brand & Design and
+    Influence each open their own: the division's mark, its five services
+    (each linking to its page, the only page that describes them), and a link
+    to the page itself.
+  */
+  ...divisionPages.map(({ label, href, section }): NavItem => {
+    const division = services.items.find((item) => sectionForDivision[item.title] === section);
+    return {
+      label: division?.short ?? label,
+      href,
+      items: [...(division?.menu ?? [])],
+      short: division?.short,
+      ramp: division?.ramp,
+    };
+  }),
   { label: "Case Studies", href: "/case-studies" },
   /*
     PRICING, AS A SMALL MENU (Genesis, 29 Sep 2026): the two ways to buy —
@@ -532,12 +498,12 @@ export const navItems: NavItem[] = [
     href: "/pricing",
     children: [
       {
-        label: "One-time Projects",
+        label: "Pay-per-project",
         href: "/pricing#one-time",
-        description: "Fifteen standalone products, bought once.",
+        description: "Sixteen standalone products, bought once.",
       },
       {
-        label: "Explore Memberships",
+        label: "Explore Subscriptions",
         href: "/pricing#plans",
         description: "Monthly plans for AI, Studios and Brand & Design.",
         workMode: "membership",
@@ -552,7 +518,7 @@ export const navItems: NavItem[] = [
     stay one click away in the footer's General column.
   */
   contactItem("Contact"),
-];
+] satisfies NavItem[]).filter((item) => !HIDDEN_NAV.has(item.label));
 
 /** The one navigation item that is meant to look like an action. */
 export const primaryCta = { label: "Start a Project", href: "/#contact" } as const;

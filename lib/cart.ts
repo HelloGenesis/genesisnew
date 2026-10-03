@@ -19,6 +19,7 @@
  */
 
 import { inr, monthlyListFigure, price } from "./money";
+import { cleanChoice, priceExtras, type ExtraLine, type ExtrasChoice } from "./extras";
 import { products } from "./products";
 import { taxFor } from "./regions";
 import { aiPlans } from "./verticals/ai-labs";
@@ -142,7 +143,8 @@ export const findProduct = (id: string) => byId.get(id);
 
 /* ------------------------------------------------------------------- totals */
 
-export type CartLine = { id: string; qty: number; billing?: Billing };
+/** `extras`: a pay-per-project line's longer videos, adaptations and add-ons — see lib/extras. */
+export type CartLine = { id: string; qty: number; billing?: Billing; extras?: ExtrasChoice };
 
 /**
  * THE BUNDLE DISCOUNT — "we can offer discounts as well if many things are
@@ -204,7 +206,15 @@ export function billingNote(product: Product, billing: Billing = "quarterly") {
     : `Billed monthly`;
 }
 
-export type PricedLine = CartLine & { product: Product; charge: number; quoted: boolean };
+export type PricedLine = CartLine & {
+  product: Product;
+  /** The product itself, qty included. */
+  charge: number;
+  quoted: boolean;
+  /** Its extras, priced line by line, and their sum. */
+  extraLines: ExtraLine[];
+  extrasCharge: number;
+};
 
 /** `country` sets the tax — GST in India, none on an export (see taxFor). India when not yet chosen. */
 export function priceCart(lines: readonly CartLine[], options: { country?: string } = {}) {
@@ -232,18 +242,25 @@ export function priceCart(lines: readonly CartLine[], options: { country?: strin
     if (!product) continue;
     const qty = product.kind === "membership" ? 1 : Math.max(1, Math.min(maxQty(product), Math.floor(line.qty) || 1));
     const quoted = product.amount === undefined;
+    /* Extras, clamped to what the product allows whatever the browser sent. */
+    const extras = product.kind === "one-time" && !quoted ? cleanChoice(product.name, line.extras, qty) : undefined;
+    const extraLines = priceExtras(product.name, extras);
     priced.push({
       id: line.id,
       qty: quoted ? 1 : qty,
       billing: product.kind === "membership" ? orderBilling : undefined,
+      extras,
       product,
       quoted,
       charge: quoted ? 0 : unitCharge(product, product.kind === "membership" ? orderBilling : undefined) * qty,
+      extraLines,
+      extrasCharge: extraLines.reduce((sum, extra) => sum + extra.amount, 0),
     });
   }
 
   const payable = priced.filter((line) => !line.quoted);
-  const subtotal = payable.reduce((sum, line) => sum + line.charge, 0);
+  const extrasSum = payable.reduce((sum, line) => sum + line.extrasCharge, 0);
+  const subtotal = payable.reduce((sum, line) => sum + line.charge, 0) + extrasSum;
 
   const bundle = payable.filter((line) => line.product.kind !== "membership");
   const bundleItems = bundle.reduce((sum, line) => sum + line.qty, 0);
@@ -284,7 +301,8 @@ export function priceCart(lines: readonly CartLine[], options: { country?: strin
   */
   const recurringTaxable = members.reduce((sum, line) => sum + line.charge, 0) - comboDiscount;
   const recurringTax = Math.round(recurringTaxable * tax.rate);
-  const oneTimeTaxable = bundleBase - discount;
+  /* Extras are charged once, taxed, and take no bundle discount (lib/extras). */
+  const oneTimeTaxable = bundleBase - discount + extrasSum;
   const oneTimeTax = Math.round(oneTimeTaxable * tax.rate);
   const taxable = recurringTaxable + oneTimeTaxable;
   const gst = recurringTax + oneTimeTax;
@@ -294,6 +312,8 @@ export function priceCart(lines: readonly CartLine[], options: { country?: strin
     payable,
     quoted: priced.filter((line) => line.quoted),
     subtotal,
+    /** Of the subtotal, what the extras come to. */
+    extrasSum,
     discount,
     discountPercent: tier?.percent ?? 0,
     bundleItems,

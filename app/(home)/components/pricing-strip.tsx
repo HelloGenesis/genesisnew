@@ -1,8 +1,11 @@
-import { GlassButton } from "@/components/genesis/glass-button";
 import { MembershipCard } from "@/components/genesis/membership-card";
+import { PaymentOptions } from "@/components/genesis/payment-options";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
-import { homeHero, pricingHub } from "@/lib/pricing";
+import { pricingHub } from "@/lib/pricing";
+
+import { BuySteps } from "./offer/buy-steps";
+import { OfferSlider } from "./offer-slider";
 
 /**
  * HOW GENESIS WORKS, ON THE HOMEPAGE — after the four divisions, before the
@@ -49,39 +52,23 @@ export function PricingStrip() {
           </div>
         </div>
 
-        {/* The four steps. */}
-        <ol className="relative mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {pricingHub.steps.items.map((step, index) => (
-            <li key={step.title} className="rounded-card border border-white/10 bg-white/[0.03] p-4">
-              <span className="font-display text-h3 font-normal leading-none text-brand-ink">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <p className="mt-3 font-sans text-body text-bone">{step.title}</p>
-              <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{step.body}</p>
-            </li>
-          ))}
-        </ol>
+        {/*
+          WHAT THERE IS TO BUY, ABOVE HOW IT WORKS (Genesis, 30 Sep 2026): a
+          Memberships | One-time Products switch and a row of small cards.
+        */}
+        <div className="relative mt-10">
+          <OfferSlider />
+        </div>
 
         {/*
-          THE WAYS ON, NO PRICE CARDS (Genesis, 29 Sep 2026: "remove the pricing
-          part from here, just keep" the three hero buttons). The same three as
-          the hero, from homeHero, so the two can never disagree.
+          THE FOUR STEPS, AS ICONS AND NAMES (Genesis, 30 Sep 2026: "remove the
+          one-liner text and numbers, add icons related to these"). The order
+          still reads left to right; the icon says what each step is.
         */}
-        <div className="relative mt-8 flex flex-col items-stretch gap-2 min-[480px]:items-start sm:flex-row sm:flex-wrap sm:gap-3">
-          {homeHero.ctas.map((cta, index) => (
-            <span key={cta.href} data-track={`home-memberships:cta-${index}`}>
-              <GlassButton
-                href={cta.href}
-                pageLink
-                variant={index === 0 ? "brand" : "glass"}
-                arrow
-                className="max-sm:h-11 max-sm:w-full max-sm:px-5 max-sm:text-[0.8125rem]"
-              >
-                {cta.label}
-              </GlassButton>
-            </span>
-          ))}
-        </div>
+        <BuySteps className="relative mt-8" />
+
+        {/* How you can pay — the flexibility few agencies offer (Genesis, 2 Oct 2026). */}
+        <PaymentOptions className="relative mt-6" />
       </Reveal>
     </section>
   );

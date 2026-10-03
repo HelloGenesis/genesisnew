@@ -68,7 +68,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "industry": "Health insurance and wellness",
     "service": "Influencer marketing, creator strategy and social content",
     "campaign": "ABHI Jump For Health 2023",
-    "highlight": "60,324 jumps, 806,736 views, 54,877 likes, 2,099 comments and 2,687 shares — supporting six prosthetic-leg donations.",
+    "highlight": "60,324 jumps, 806,736 views, 54,877 likes, 2,099 comments and 2,687 shares, supporting six prosthetic-leg donations.",
     "flagged": false,
     "brief": [
       "Genesis turned a simple jumping challenge into a community action linked to prosthetic-leg donations. Creator-led videos explained the mechanic, demonstrated the action and invited audiences to participate.",
@@ -87,7 +87,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "ABHI Jump For Health 2023 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Jump For Health 2023 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-jump-for-health-2023",
     "keyword": "healthcare influencer marketing",
     "clip": 1
@@ -119,7 +119,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "ABHI Jump For Health 2024 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Jump For Health 2024 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-jump-for-health-2024",
     "keyword": "healthcare influencer marketing",
     "clip": 8
@@ -131,7 +131,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "brand": "Aditya Birla Health Insurance",
     "industry": "Health insurance and wellness",
     "service": "Influencer marketing, creator strategy and social content",
-    "campaign": "Activ One — BTS with Vikrant Massey",
+    "campaign": "Activ One: BTS with Vikrant Massey",
     "highlight": null,
     "flagged": false,
     "brief": [
@@ -151,7 +151,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "Activ One — BTS with Vikrant Massey demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Activ One: BTS with Vikrant Massey demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "activ-one-bts-with-vikrant-massey",
     "keyword": "healthcare influencer marketing",
     "clip": 2
@@ -183,7 +183,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "ABHI Let's Face It demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Let's Face It demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-lets-face-it",
     "keyword": "healthcare influencer marketing",
     "clip": 3
@@ -215,7 +215,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "ABHI YogaBAE demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI YogaBAE demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-yogabae",
     "keyword": "healthcare influencer marketing",
     "clip": 5
@@ -246,7 +246,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "ABHI All For Health demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI All For Health demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-all-for-health",
     "keyword": "healthcare influencer marketing",
     "clip": 10
@@ -278,7 +278,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "ABSLI Pun Se Policy Tak demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABSLI Pun Se Policy Tak demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "absli-pun-se-policy-tak",
     "keyword": "BFSI influencer marketing campaign",
     "clip": 7
@@ -308,7 +308,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "Mahindra Finance Shubh Utsav demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Mahindra Finance Shubh Utsav demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "mahindra-finance-shubh-utsav",
     "keyword": "UGC agency India",
     "clip": 16
@@ -340,7 +340,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "The WorldGrad demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "The WorldGrad demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "the-worldgrad",
     "keyword": "education influencer marketing campaign",
     "clip": 21
@@ -371,7 +371,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "Performance data was not included in the approved campaign material, so this case focuses on the confirmed strategy, production system and delivered output. For marketing teams, this shows how Genesis can connect creator selection, creative direction and campaign operations inside one accountable influencer-marketing workflow."
     ],
-    "takeaway": "Mother's Day Creator Film demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Mother's Day Creator Film demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "mothers-day-creator-film",
     "keyword": "influencer marketing campaign",
     "clip": 4
@@ -379,11 +379,11 @@ export const caseStudyCopy: CaseStudyCopy[] = [
   {
     "n": 15,
     "division": "AI Lab",
-    "headline": "Inside Genesis Media's AI Content Production for ABHI Activ Yuva — Adi & Diya",
+    "headline": "Inside Genesis Media's AI Content Production for ABHI Activ Yuva: Adi & Diya",
     "brand": "Aditya Birla Health Insurance",
     "industry": "Health insurance and wellness",
     "service": "AI content production, avatar development and motion design",
-    "campaign": "ABHI Activ Yuva — Adi & Diya",
+    "campaign": "ABHI Activ Yuva: Adi & Diya",
     "highlight": null,
     "flagged": true,
     "brief": [
@@ -402,7 +402,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brands exploring generative production, this shows how Genesis can create a controlled AI content system that remains usable across real campaign requirements."
     ],
-    "takeaway": "ABHI Activ Yuva — Adi & Diya demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Activ Yuva: Adi & Diya demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-activ-yuva-adi-and-diya",
     "keyword": "AI avatar content",
     "clip": 29
@@ -434,7 +434,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brands exploring generative production, this shows how Genesis can create a controlled AI content system that remains usable across real campaign requirements."
     ],
-    "takeaway": "SINet Seervi Township demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "SINet Seervi Township demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "sinet-seervi-township",
     "keyword": "AI real estate marketing",
     "clip": "ai-lab-sinet-english-v004"
@@ -442,11 +442,11 @@ export const caseStudyCopy: CaseStudyCopy[] = [
   {
     "n": 17,
     "division": "AI Lab",
-    "headline": "Inside Genesis Media's AI Content Production for House of Hiranandani — Maitri Park",
+    "headline": "Inside Genesis Media's AI Content Production for House of Hiranandani: Maitri Park",
     "brand": "House of Hiranandani",
     "industry": "Real estate",
     "service": "AI video production and real-estate visualisation",
-    "campaign": "House of Hiranandani — Maitri Park",
+    "campaign": "House of Hiranandani: Maitri Park",
     "highlight": null,
     "flagged": false,
     "brief": [
@@ -465,7 +465,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brands exploring generative production, this shows how Genesis can create a controlled AI content system that remains usable across real campaign requirements."
     ],
-    "takeaway": "House of Hiranandani — Maitri Park demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "House of Hiranandani: Maitri Park demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "house-of-hiranandani-maitri-park",
     "keyword": "AI real estate marketing",
     "clip": 32
@@ -495,7 +495,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "Performance data was not included in the approved campaign material, so this case focuses on the confirmed strategy, production system and delivered output. For brands exploring generative production, this shows how Genesis can create a controlled AI content system that remains usable across real campaign requirements."
     ],
-    "takeaway": "Advocate Bharat demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Advocate Bharat demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "advocate-bharat",
     "keyword": "AI avatar content",
     "clip": "ai-lab-bharat-bharat"
@@ -526,7 +526,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "Performance data was not included in the approved campaign material, so this case focuses on the confirmed strategy, production system and delivered output. For brands exploring generative production, this shows how Genesis can create a controlled AI content system that remains usable across real campaign requirements."
     ],
-    "takeaway": "Custom AI Avatar Prototypes demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Custom AI Avatar Prototypes demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "custom-ai-avatar-prototypes",
     "keyword": "AI avatar content",
     "clip": "ai-lab-tanvi-uiiui"
@@ -558,7 +558,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Sales Pro demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Sales Pro demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-sales-pro",
     "keyword": "BFSI video production",
     "clip": "studios-wo-vo-sales-pro"
@@ -590,7 +590,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "TripGate demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "TripGate demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "tripgate",
     "keyword": "video production agency Mumbai",
     "clip": "studios-tripagetet"
@@ -622,7 +622,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Service Requests demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Service Requests demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-service-requests",
     "keyword": "video production agency Mumbai",
     "clip": "studios-ddddd"
@@ -653,7 +653,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Women's Day demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Women's Day demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-womens-day",
     "keyword": "video production agency Mumbai",
     "clip": "studios-women-s-day-abhi"
@@ -685,7 +685,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Claims Education demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Claims Education demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-claims-education",
     "keyword": "BFSI video production",
     "clip": "studios-6-common-mistakes"
@@ -717,7 +717,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Leadership Communications demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Leadership Communications demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-leadership-communications",
     "keyword": "BFSI video production",
     "clip": "studios-mr-mayank-bathwal-ceo-aditya-birla-health-insurance"
@@ -749,7 +749,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "Fraud-Proof Your Insurance demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Fraud-Proof Your Insurance demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "fraud-proof-your-insurance",
     "keyword": "BFSI video production",
     "clip": "studios-dfv"
@@ -781,7 +781,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Ka Star demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Ka Star demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-ka-star",
     "keyword": "video production agency Mumbai",
     "clip": "studios-abhi-ka-star"
@@ -813,7 +813,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI World Menopause Day demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI World Menopause Day demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-world-menopause-day",
     "keyword": "video production agency Mumbai",
     "clip": "studios-final-menopause-abhi-02"
@@ -845,7 +845,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Activ Travel demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Activ Travel demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-activ-travel",
     "keyword": "video production agency Mumbai",
     "clip": "studios-activ-travel-leisure-plan-finalhd-1"
@@ -877,7 +877,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "Mpower Minds x ABHI demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Mpower Minds x ABHI demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "mpower-minds-x-abhi",
     "keyword": "video production agency Mumbai",
     "clip": "studios-1x1"
@@ -909,7 +909,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Diabetes Awareness demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Diabetes Awareness demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-diabetes-awareness",
     "keyword": "video production agency Mumbai",
     "clip": "studios-b1"
@@ -941,7 +941,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "DHA Face Scan demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "DHA Face Scan demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "dha-face-scan",
     "keyword": "video production agency Mumbai",
     "clip": "studios-dha-1"
@@ -973,7 +973,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "Income Protect Cover demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Income Protect Cover demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "income-protect-cover",
     "keyword": "BFSI video production",
     "clip": "studios-7-draft6-income-protect"
@@ -1005,7 +1005,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "Eat Move Heal demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Eat Move Heal demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "eat-move-heal",
     "keyword": "video production agency Mumbai",
     "clip": "studios-1-draft-9-eat-move-heal"
@@ -1037,7 +1037,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "Mahindra Finance Founders' Day 2025 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Mahindra Finance Founders' Day 2025 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "mahindra-finance-founders-day-2025",
     "keyword": "event content production",
     "clip": "studios-mahindra-cut-44"
@@ -1069,7 +1069,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "ABHI Utsav Milestone demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "ABHI Utsav Milestone demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "abhi-utsav-milestone",
     "keyword": "event content production",
     "clip": "studios-utsav-aftermovie"
@@ -1101,7 +1101,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "HDFC Bank x ABHI demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "HDFC Bank x ABHI demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "hdfc-bank-x-abhi",
     "keyword": "BFSI video production",
     "clip": "studios-hdfc-x-abhi-sampoorna2-0"
@@ -1132,7 +1132,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "Unveiling Activ One demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Unveiling Activ One demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "unveiling-activ-one",
     "keyword": "event content production",
     "clip": "studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance"
@@ -1164,7 +1164,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "UMANG 2024 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "UMANG 2024 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "umang-2024",
     "keyword": "event content production",
     "clip": "studios-umang-2024"
@@ -1172,11 +1172,11 @@ export const caseStudyCopy: CaseStudyCopy[] = [
   {
     "n": 40,
     "division": "Studios",
-    "headline": "Inside Genesis Media's Video Production for Manthan — Power of Ten",
+    "headline": "Inside Genesis Media's Video Production for Manthan: Power of Ten",
     "brand": "Aditya Birla Health Insurance",
     "industry": "Health insurance and wellness",
     "service": "Event content production and social-first editing",
-    "campaign": "Manthan — Power of Ten",
+    "campaign": "Manthan: Power of Ten",
     "highlight": "Two high-resolution LED films.",
     "flagged": false,
     "brief": [
@@ -1196,7 +1196,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "results": [
       "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
     ],
-    "takeaway": "Manthan — Power of Ten demonstrates how Genesis Media can translate a clear marketing objective into a practical content system—combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "takeaway": "Manthan: Power of Ten demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "slug": "manthan-power-of-ten",
     "keyword": "event content production",
     "clip": "studios-abhi-ex-coms"
@@ -1253,7 +1253,7 @@ export const caseStudyCopy: CaseStudyCopy[] = [
     "highlight": null,
     "flagged": false,
     "brief": [
-      "Luxury travel is experienced through details long before a journey begins. For TripGatee, the opportunity was to make every first impression — from a social post to a letterhead — feel as considered as the trips it curates."
+      "Luxury travel is experienced through details long before a journey begins. For TripGatee, the opportunity was to make every first impression, from a social post to a letterhead, feel as considered as the trips it curates."
     ],
     "approach": [
       "Genesis built the identity around TripGatee's promise, \u201cEscape the Ordinary, Embrace the Extraordinary.\u201d The positioning presents the brand as a curator of personalised, premium journeys, with a voice designed to feel elegant, aspirational and trustworthy."

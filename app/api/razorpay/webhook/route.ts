@@ -56,11 +56,11 @@ function describe(event: Payload): OrderEvent | undefined {
     const n = link.notes ?? {};
     const buyer = link.customer;
     return {
-      event: "One-time order paid",
+      event: "Pay-per-project order paid",
       reference: link.reference_id,
       amount: (link.amount_paid ?? 0) / 100,
       items: clean(n.items),
-      billing: "One-time",
+      billing: "Pay-per-project",
       company: clean(n.company),
       contact: clean(n.contact) ?? [buyer?.name, buyer?.email, buyer?.contact].filter(Boolean).join(" · "),
       taxId: clean(n.tax_id),
@@ -84,7 +84,7 @@ function describe(event: Payload): OrderEvent | undefined {
     taxId: clean(n.tax_id),
     address: clean(n.billing_address),
     razorpay: [payment?.id, sub.id].filter(Boolean).join(" · "),
-    notes: [clean(n.one_time) && `One-time: ${n.one_time}`, clean(n.quote_requests) && `Quote: ${n.quote_requests}`, clean(n.buyer_notes)]
+    notes: [clean(n.one_time) && `Pay-per-project: ${n.one_time}`, clean(n.quote_requests) && `Quote: ${n.quote_requests}`, clean(n.buyer_notes)]
       .filter(Boolean)
       .join(" · "),
   };
@@ -92,27 +92,27 @@ function describe(event: Payload): OrderEvent | undefined {
 
   switch (event.event) {
     case "subscription.activated":
-      return { ...base, event: "Membership activated" };
+      return { ...base, event: "Subscription activated" };
     case "subscription.charged":
       return (sub.paid_count ?? 1) <= 1
-        ? { ...base, event: "New membership paid — start onboarding", amount }
-        : { ...base, event: `Membership renewed (payment ${sub.paid_count})`, amount };
+        ? { ...base, event: "New subscription paid: start onboarding", amount }
+        : { ...base, event: `Subscription renewed (payment ${sub.paid_count})`, amount };
     case "subscription.pending":
       return {
         ...base,
         alert: true,
-        event: "Renewal payment failed — Razorpay is retrying",
+        event: "Renewal payment failed: Razorpay is retrying",
         notes: "Razorpay retries the charge automatically. Check with the client before starting new work.",
       };
     case "subscription.halted":
       return {
         ...base,
         alert: true,
-        event: "Membership halted — pause the work queue",
+        event: "Subscription halted: pause the work queue",
         notes: "Every retry failed. Pause the queue and contact the client to update their payment method.",
       };
     case "subscription.cancelled":
-      return { ...base, alert: true, event: "Membership cancelled — close out the queue" };
+      return { ...base, alert: true, event: "Subscription cancelled: close out the queue" };
     default:
       return undefined;
   }

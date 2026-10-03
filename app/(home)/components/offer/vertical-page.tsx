@@ -4,14 +4,13 @@ import { Atmosphere } from "@/components/genesis/atmosphere";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { breadcrumbJsonLd, serviceJsonLd } from "@/lib/seo";
 import { serviceOffers, type ServicePage } from "@/lib/services";
-import { bookingHref, verticalCard } from "@/lib/pricing";
+import { verticalCard } from "@/lib/pricing";
 import type { VerticalKey } from "@/lib/verticals/types";
 import { JumpBar, MobileCta, type JumpLink } from "./page-aids";
-import { VerticalNav } from "./page-furniture";
+import { WorkModeProvider } from "./work-mode";
 
 /**
- * The frame every vertical page shares: schema, the centred breadcrumb and
- * vertical tabs, and a visible-to-search h1 in the words people search for.
+ * The frame every vertical page shares: schema, room for the fixed bar, and a visible-to-search h1 in the words people search for.
  *
  * THE H1 IS VISIBLE WHERE THE PAGE HAS A HERO — AI Labs, Studios and Brand &
  * Design set their hero heading as the h1. Influence opens on the homepage's
@@ -27,7 +26,6 @@ export function VerticalPage({
   page,
   current,
   jump,
-  primary,
   hiddenTitle = false,
   children,
 }: {
@@ -35,14 +33,17 @@ export function VerticalPage({
   current: VerticalKey;
   /** The page's sections, for the jump bar. */
   jump: JumpLink[];
-  /** The phone bar's main button — the page's first ask. */
-  primary: { label: string; href: string };
   hiddenTitle?: boolean;
   children: ReactNode;
 }) {
   const card = verticalCard(current);
+  /*
+    ONE PAY-PER-PROJECT / SUBSCRIPTIONS CHOICE FOR THE WHOLE PAGE, starting on
+    Pay-per-project (Genesis, 2 Oct 2026), so the subscription details
+    further down the page (SubscriptionOnly) and the jump bar follow it.
+  */
   return (
-    <>
+    <WorkModeProvider initial="one-time">
       <main>
         <JsonLd
           data={[
@@ -58,11 +59,16 @@ export function VerticalPage({
         />
         {hiddenTitle && (
           <h1 className="sr-only">
-            {card.name} — {page.heading.lead} {page.heading.accent}
+            {card.name} {page.heading.lead} {page.heading.accent}
           </h1>
         )}
+        {/*
+          ROOM FOR THE FIXED BAR, AND THE PAGE'S TOP GLOW. The breadcrumb and
+          the four division tabs used to sit here; Genesis took them out (2 Oct
+          2026, "remove this") — the bar's own division menus do that job.
+        */}
         <Atmosphere tone="brand" origin="top" intensity={0.18}>
-          <VerticalNav current={current} />
+          <div aria-hidden className="pt-20 sm:pt-24" />
         </Atmosphere>
         {children}
       </main>
@@ -72,8 +78,9 @@ export function VerticalPage({
       these two fixed bars, inside it, were given a 900px box while skipped —
       an invisible sheet over the page that could swallow taps on a phone.
     */}
-      <JumpBar links={jump} />
-      <MobileCta primary={primary} bookHref={bookingHref(card.name)} />
-    </>
+      {/* "Book a call" slides down to the footer's calendar, where the time is picked (Genesis, 2 Oct 2026). */}
+      <JumpBar links={jump} bookHref="#book-a-call" />
+      <MobileCta primary={{ label: "View Pricing", href: "#pricing" }} bookHref="#book-a-call" />
+    </WorkModeProvider>
   );
 }

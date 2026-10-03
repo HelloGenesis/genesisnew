@@ -128,11 +128,17 @@ function identityRoute(assets: string): { phases: string[]; final?: string } {
  * Behind the middle folder is the Genesis N, blurred, standing in for the
  * reference's soft 3D shape ("background logo shd be blurred").
  */
-export function BrandingDesign() {
+/**
+ * `onPage`: the section on its own division's page, under the page's hero
+ * (Genesis, 2 Oct 2026). Without its header — the page's hero already names
+ * the division — and without its plan bar: the page's own pricing section,
+ * further down, is the one place to buy.
+ */
+export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
   return (
     <SectionShell
       id="brand-design"
-      division={{
+      division={onPage ? undefined : {
         name: "Brand & Design",
         tagline: services.items[1].caption,
         ramp: services.items[1].ramp,
@@ -143,7 +149,7 @@ export function BrandingDesign() {
         the division's claim instead, so there is nothing left to stutter
         against and the caption does the job it does in every other division.
       */
-      body={branding.body}
+      body={onPage ? undefined : branding.body}
       align="center"
       tone="brand"
       origin="top-left"
@@ -202,7 +208,7 @@ export function BrandingDesign() {
 
       </SwipeHintRail>
 
-      <PlanBar vertical="brand-design" className="xl:mt-20" />
+      {!onPage && <PlanBar vertical="brand-design" className="xl:mt-20" />}
     </SectionShell>
   );
 }

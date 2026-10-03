@@ -140,6 +140,20 @@ export function CaseStudies() {
       */}
       <ProofBar />
 
+      {/*
+        TWO WAYS ON, UNDER THE FIGURES AND ABOVE THE POSTERS (Genesis, 2 Oct
+        2026). Book a 15-min Call slides down to the footer's calendar; View
+        Case Studies slides to the posters.
+      */}
+      <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <GlassButton href="#book-a-call" variant="brand" arrow magnetic>
+          Book a 15-min Call
+        </GlassButton>
+        <GlassButton href="#case-study-posters" variant="glass" arrow>
+          View Case Studies
+        </GlassButton>
+      </Reveal>
+
       <Reveal variant="scene" className="mt-[var(--block-gap)]">
         {/*
           The stage. img-025 sits its rail inside a broad brand bloom rather
@@ -181,7 +195,7 @@ export function CaseStudies() {
             it belongs. The wrapper is clipped by Atmosphere's own
             overflow-hidden, so 100vw cannot widen the page.
           */}
-          <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden">
+          <div id="case-study-posters" className="relative left-1/2 w-screen -translate-x-1/2 scroll-mt-28 overflow-hidden">
             <PosterRail
               posters={posters}
               onSelect={setOpenSlug}
@@ -203,31 +217,6 @@ export function CaseStudies() {
         The section is a trailer; the page is the thing. Without this the rail
         was a dead end — four posters and no way to read any of them.
       */}
-      {/*
-        TWO WAYS ON, WHICH IS THE PAIR THIS SECTION WAS MISSING. "See the
-        work" is for a reader still deciding; a reader the posters have
-        already convinced wants to talk to somebody, and the only route to
-        the form from here was to keep scrolling past five more sections.
-
-        `quickContact` opens the enquiry popup rather than travelling to the
-        foot of the page — the same treatment every other contextual CTA on
-        this site gets, and the reason the href is still /#contact: without
-        JavaScript it scrolls there instead.
-      */}
-      <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center gap-3">
-        <GlassButton href="/#library" variant="glass" arrow>
-          See the work
-        </GlassButton>
-        <GlassButton
-          href="/#contact"
-          quickContact="case-studies:contact-us"
-          variant="brand"
-          arrow
-          magnetic
-        >
-          Contact Us
-        </GlassButton>
-      </Reveal>
 
       <CaseStudyDialog
         study={caseStudyList.find((s) => s.slug === openSlug) ?? null}

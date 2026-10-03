@@ -316,6 +316,16 @@ export const services = {
   ],
 } as const;
 
+/**
+ * A division's five services, as its nav menu lists them — by its page's
+ * address. The division pages show the same list under their hero (Genesis,
+ * 2 Oct 2026: "add this here … for all verticals"), so the menu and the page
+ * never say two different things.
+ */
+export function divisionMenu(href: string): readonly string[] {
+  return services.items.find((item) => item.href === href)?.menu ?? [];
+}
+
 // --- Portfolio (Section 3) --------------------------------------------------
 
 // Real clients, named in the spec. TODO(assets): real thumbnails/reels needed.
@@ -342,10 +352,10 @@ export const caseStudies = {
   // Clients are real (from the spec). TODO(data): every RESULT figure below is
   // still a placeholder — replace with reported numbers before launch.
   items: [
-    { id: "cs-mahindra", client: "Mahindra", title: "TODO — case study headline", result: "TODO — result", discipline: "Content" },
-    { id: "cs-abc", client: "Aditya Birla Capital", title: "TODO — case study headline", result: "TODO — result", discipline: "Campaign" },
-    { id: "cs-absli", client: "Aditya Birla Sun Life Insurance", title: "TODO — case study headline", result: "TODO — result", discipline: "Brand" },
-    { id: "cs-ab", client: "Aditya Birla", title: "TODO — case study headline", result: "TODO — result", discipline: "Content" },
+    { id: "cs-mahindra", client: "Mahindra", title: "TODO: case study headline", result: "TODO: result", discipline: "Content" },
+    { id: "cs-abc", client: "Aditya Birla Capital", title: "TODO: case study headline", result: "TODO: result", discipline: "Campaign" },
+    { id: "cs-absli", client: "Aditya Birla Sun Life Insurance", title: "TODO: case study headline", result: "TODO: result", discipline: "Brand" },
+    { id: "cs-ab", client: "Aditya Birla", title: "TODO: case study headline", result: "TODO: result", discipline: "Content" },
   ],
 } as const;
 
@@ -411,7 +421,7 @@ export const aiContent = {
   body:
     "See what we've created using AI, from videos and visuals to branded content. We can build the same for your brand and automate the process from ideas and scripts to ready-to-post content.",
   /* The same, for a phone (Genesis, 28 Sep 2026: "shorten the copy a bit … just for phone"). */
-  bodyPhone: "Videos, visuals and branded content made with AI — built for your brand, from idea to ready-to-post.",
+  bodyPhone: "Videos, visuals and branded content made with AI, built for your brand, from idea to ready-to-post.",
   /*
    * THE COPY ABOVE THE ROSTER, and all three lines of it are Genesis's own.
    *
@@ -458,7 +468,7 @@ export const aiContent = {
     headingAccent: "AI Avatar.",
     lead: "We create realistic AI avatars for founders, creators, artists and brands. Use your avatar to create consistent content, showcase your products or services, and reduce the need for repeated shoots. We can automate the entire content workflow too.",
     /* The same, for a phone. */
-    leadPhone: "Realistic AI avatars for founders, creators and brands — consistent content, without repeated shoots.",
+    leadPhone: "Realistic AI avatars for founders, creators and brands: consistent content, without repeated shoots.",
     /*
      * The caption to the roster, printed UNDER the faces. "One Setup.
      * Real-Time. Every Time" used to head it and Genesis has taken it off.
@@ -1360,9 +1370,9 @@ export const journal = {
   headingAccent: "loud",
   body: "Notes on creators, content and the technology reshaping both.",
   posts: [
-    { slug: "ai-content-workflows", title: "TODO — AI blog #1 (spec: write 2 new blogs on AI)", category: "AI", readingTime: "TODO" },
-    { slug: "ai-avatars-in-campaigns", title: "TODO — AI blog #2 (spec: write 2 new blogs on AI)", category: "AI", readingTime: "TODO" },
-    { slug: "creative-process", title: "TODO — creative process / BTS", category: "Inside Genesis", readingTime: "TODO" },
+    { slug: "ai-content-workflows", title: "TODO: AI blog #1 (spec: write 2 new blogs on AI)", category: "AI", readingTime: "TODO" },
+    { slug: "ai-avatars-in-campaigns", title: "TODO: AI blog #2 (spec: write 2 new blogs on AI)", category: "AI", readingTime: "TODO" },
+    { slug: "creative-process", title: "TODO: creative process / BTS", category: "Inside Genesis", readingTime: "TODO" },
   ],
 } as const;
 

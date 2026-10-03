@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { RailProgress } from "@/components/genesis/rail-progress";
 
 /**
  * A horizontal rail that WOBBLES once when it first comes into view, so a
@@ -105,8 +106,12 @@ export function SwipeHintRail({
   }, []);
 
   return (
-    <div ref={ref} className={className}>
-      {children}
-    </div>
+    <>
+      <div ref={ref} className={className}>
+        {children}
+      </div>
+      {/* Hidden by itself where the rail turns into a grid (xl on the B&D section). */}
+      <RailProgress rail={ref} className="mt-3" />
+    </>
   );
 }

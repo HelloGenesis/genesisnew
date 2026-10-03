@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useRef } from "react";
 import { ArrowRight } from "lucide-react";
 
 import { Reveal } from "@/components/genesis/reveal";
 import { studios } from "@/lib/home-content";
+import { RailProgress } from "@/components/genesis/rail-progress";
 
 /**
  * FROM BRIEF TO FINAL CUT — the five stages of a Studios job, drawn to
@@ -38,6 +40,7 @@ const TIMES = ["00:00", "00:05", "00:10", "00:15", "00:20", "00:25"];
 const ART = [1, 2, 3, 4, 5].map((n) => `/studios/pipeline/${n}.webp`);
 
 export function StudiosPipeline() {
+  const cardsRail = useRef<HTMLOListElement>(null);
   const { heading, headingAccent, lead, stages } = studios.pipeline;
 
   return (
@@ -98,6 +101,7 @@ export function StudiosPipeline() {
 
         {/* THE CARDS — a swiping row on a phone, five across from md. */}
         <ol
+          ref={cardsRail}
           aria-label="The five stages"
           data-lenis-prevent
           className="no-scrollbar -mx-6 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:p-0"
@@ -146,6 +150,7 @@ export function StudiosPipeline() {
             );
           })}
         </ol>
+        <RailProgress rail={cardsRail} className="mt-3 md:hidden" />
       </Reveal>
     </div>
   );

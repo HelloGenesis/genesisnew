@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import type { IconName, VerticalKey } from "@/lib/verticals/types";
@@ -110,7 +110,7 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
         className={cn(
           tabs.some((tab) => tab.card)
             ? /* A swipeable row on a small phone — four stacked cards were a screen of tabs before any price. */
-              "-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] min-[480px]:grid min-[480px]:grid-cols-2 min-[480px]:overflow-visible lg:grid-cols-4 [&::-webkit-scrollbar]:hidden"
+              "-mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-2 [scrollbar-width:none] min-[480px]:grid min-[480px]:grid-cols-2 min-[480px]:overflow-visible lg:grid-cols-4 [&::-webkit-scrollbar]:hidden"
             : "grid grid-cols-2 gap-2 md:grid-cols-4",
         )}
       >
@@ -127,7 +127,7 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
               <div
                 key={tab.key}
                 className={cn(
-                  "relative flex w-[78%] shrink-0 snap-start flex-col overflow-hidden rounded-panel border p-5 transition-[background-color,border-color,box-shadow,transform] duration-300 min-[480px]:w-auto sm:p-6",
+                  "relative flex w-[70%] shrink-0 snap-start flex-col overflow-hidden rounded-card border px-4 py-3.5 transition-[background-color,border-color,box-shadow,transform] duration-300 min-[480px]:w-auto",
                   selected
                     ? "border-brand/70 bg-brand/[0.08] shadow-[0_0_0_1px_rgb(255_197_22/0.25),0_16px_40px_-18px_rgb(255_197_22/0.5)]"
                     : "glass glass-lit border-transparent hover:-translate-y-0.5",
@@ -147,22 +147,36 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
                   tabIndex={selected ? 0 : -1}
                   onClick={() => select(tab.key)}
                   aria-label={tab.label}
-                  className="absolute inset-0 rounded-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
+                  className="absolute inset-0 rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
                 />
-                <div className="pointer-events-none relative mb-5">
+                {/*
+                  COMPACT (Genesis, 29 Sep 2026: "make the boxes smaller … it's
+                  getting difficult to figure out the pricing"): the name, two
+                  lines at most, and a small link — a choice, not a feature.
+                */}
+                <div className="pointer-events-none relative flex items-start justify-between gap-2">
                   {tab.art}
-                  <p className="mt-4 text-pretty text-small leading-relaxed text-ash">{tab.card.blurb}</p>
-                </div>
-                <div className="mt-auto border-t border-[var(--glass-border)] pt-3">
-                  <Link
-                    href={tab.card.href}
-                    data-track={`pricing-tab-link:${tab.key}`}
-                    className="relative z-[1] inline-flex min-h-10 items-center gap-1.5 text-small text-bone transition-colors hover:text-brand-ink"
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border transition-colors",
+                      selected ? "border-brand bg-brand text-on-brand" : "border-[var(--glass-border)]",
+                    )}
                   >
-                    {tab.card.linkLabel}
-                    <ArrowRight className="size-4 shrink-0 text-brand-ink" aria-hidden />
-                  </Link>
+                    {selected && <Check className="size-3" strokeWidth={3} />}
+                  </span>
                 </div>
+                <p className="pointer-events-none relative mt-2 line-clamp-2 text-pretty text-[0.8125rem] leading-snug text-ash">
+                  {tab.card.blurb}
+                </p>
+                <Link
+                  href={tab.card.href}
+                  data-track={`pricing-tab-link:${tab.key}`}
+                  className="relative z-[1] mt-auto inline-flex min-h-8 w-fit items-center gap-1 pt-1 text-[0.75rem] text-ash transition-colors hover:text-brand-ink"
+                >
+                  {tab.card.linkLabel}
+                  <ArrowRight className="size-3.5 shrink-0 text-brand-ink" aria-hidden />
+                </Link>
               </div>
             );
           }
@@ -202,7 +216,7 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
         })}
       </div>
 
-      <div className="relative mt-8 overflow-hidden">
+      <div className="relative mt-2 overflow-hidden">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={current.key}

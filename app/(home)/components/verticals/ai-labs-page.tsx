@@ -21,9 +21,14 @@ import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { PlanDetails, OfferSection, PlanBand, SectionHead } from "../offer/parts";
 import { PlanGrid } from "../offer/plan-grid";
 import { OneTimeProducts } from "../offer/starter-pack";
-import { WorkMode } from "../offer/work-mode";
+import { SubscriptionOnly, WorkMode } from "../offer/work-mode";
+import { divisionMenu } from "@/lib/home-content";
+import { AiContent, AiLabDiagram } from "../ai-content";
+import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VideoRail } from "../offer/video-rail";
+import { BuySteps } from "../offer/buy-steps";
+import { PricingHead } from "../offer/pricing-head";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("ai-content-automation");
@@ -37,25 +42,19 @@ const page = servicePage("ai-content-automation");
 export function AiLabsPageView() {
   return (
     <VerticalPage page={page} current="ai-labs"
-      primary={{ label: "See plans", href: "#pricing" }}
       jump={[
         { id: "formats", label: "Formats" },
         { id: "pricing", label: "Plans" },
-        { id: "included", label: "Every video" },
-        { id: "video-types", label: "Video types" },
+        { id: "included", label: "Every video", mode: "membership" },
+        { id: "video-types", label: "Video types", mode: "membership" },
         { id: "how-it-works", label: "How it works" },
         { id: "library", label: "Work" },
         { id: "faq", label: "FAQs" },
       ]}>
       <VerticalHero
         label={aiHero.label}
-        lines={[aiHero.heading]}
-        accent={aiHero.headingAccent}
-        lead={aiHero.lead}
-        body={aiHero.body}
-        primary={{ label: aiHero.primary, href: "#pricing" }}
-        secondary={{ label: aiHero.secondary, href: "#library" }}
-        strip={aiHero.trust}
+        heading={<PlugHeadline division="AI Lab" services={divisionMenu("/ai-content-automation")} className="mt-5" />}
+        strip={divisionMenu("/ai-content-automation")}
         images={aiHero.images}
         /* A rail of Genesis's own AI clips in place of the photo collage. */
         visual={
@@ -68,7 +67,18 @@ export function AiLabsPageView() {
         }
       />
 
+      {/*
+        THE DIVISION'S HOMEPAGE SECTION, under the hero, without its header
+        or plan bar (Genesis, 2 Oct 2026) — see `onPage`.
+      */}
+      <AiContent onPage />
+
       <LogoStrip />
+
+      {/* The AI Lab diagram, under the logos (Genesis, 2 Oct 2026). */}
+      <OfferSection className="pt-0">
+        <AiLabDiagram />
+      </OfferSection>
 
       {/* SECTION 2 — SHOW THE OUTPUT */}
       <OfferSection id="formats" labelledBy="formats-heading">
@@ -100,7 +110,9 @@ export function AiLabsPageView() {
             one-time products on the other. The anchor sits on the wrapper so
             "#pricing" lands here whichever side is showing.
           */}
+          {/* "View Pricing" lands on the head, so it is inside the anchor. */}
           <div id="pricing" className="scroll-mt-24">
+            <PricingHead />
             <WorkMode
               oneTime={<OneTimeProducts vertical="ai-labs" bare />}
               membership={
@@ -109,12 +121,14 @@ export function AiLabsPageView() {
                   <PlanDetails id="included" title="What every video includes" summary={`${aiEveryVideo.heading} ${aiEveryVideo.body}`}>
                     <IconCards items={aiEveryVideo.items} />
                   </PlanDetails>
-                  <PlanDetails id="video-types" title={aiVideoTiers.heading} summary={aiVideoTiers.body}>
+                  <PlanDetails id="video-types" title={aiVideoTiers.heading}>
                     <VideoTiers data={aiVideoTiers} bare />
                   </PlanDetails>
                 </>
               }
             />
+            {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
+            <BuySteps className="mt-10" />
           </div>
         </OfferSection>
       </PlanBand>
@@ -145,6 +159,8 @@ export function AiLabsPageView() {
             </Reveal>
           ))}
         </ul>
+        {/* What each plan carries a month: a subscription detail, so only on that side. */}
+        <SubscriptionOnly>
         <Reveal className="glass-chip mt-8 inline-flex flex-wrap items-center gap-x-5 gap-y-2 rounded-full px-5 py-2.5">
           <span className="text-small text-faint">{aiCreatives.monthlyLabel}</span>
           {aiCreatives.monthly.map((row) => (
@@ -154,6 +170,7 @@ export function AiLabsPageView() {
             </span>
           ))}
         </Reveal>
+        </SubscriptionOnly>
       </OfferSection>
 
       {/* SECTION 6 — HOW IT WORKS */}

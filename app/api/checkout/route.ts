@@ -46,6 +46,15 @@ const bodySchema = z.object({
         id: z.string().max(120),
         qty: z.number().int().min(1).max(99),
         billing: z.enum(["quarterly", "monthly"]).optional(),
+        /* Longer videos, adaptations and add-ons — clamped again by priceCart (lib/extras). */
+        extras: z
+          .object({
+            extendSteps: z.number().int().min(0).max(10).optional(),
+            extendVideos: z.number().int().min(0).max(200).optional(),
+            adaptations: z.number().int().min(0).max(50).optional(),
+            addOns: z.record(z.string().max(80), z.number().int().min(0).max(50)).optional(),
+          })
+          .optional(),
       }),
     )
     .min(1)
@@ -136,6 +145,8 @@ export async function POST(request: Request) {
           line.product.group,
           line.product.name,
           line.billing ? `(${line.billing})` : line.qty > 1 ? `x${line.qty}` : "",
+          /* The extras, so the team sees what to make: "[+30 sec on 2 videos, 1 adaptation]". */
+          line.extraLines.length ? `[${line.extraLines.map((extra) => extra.label).join(", ")}]` : "",
         ]
           .filter(Boolean)
           .join(" "),
@@ -189,7 +200,7 @@ export async function POST(request: Request) {
     if (order.recurring.total > 0 && order.billing) {
       const quarterly = order.billing === "quarterly";
       const memberships = order.payable.filter((line) => line.product.kind === "membership");
-      const planName = `Genesis — ${memberships.map((line) => `${line.product.group} ${line.product.name}`).join(" + ")}`;
+      const planName = `Genesis: ${memberships.map((line) => `${line.product.group} ${line.product.name}`).join(" + ")}`;
       const cycle = quarterly ? "every 3 months" : "every month";
 
       const plan = await razorpay<{ id: string }>("plans", {
@@ -199,7 +210,7 @@ export async function POST(request: Request) {
           name: planName.slice(0, 120),
           amount: order.recurring.total * 100, // paise
           currency: "INR",
-          description: clip(`${order.billing} membership, ${order.taxLabel} included`),
+          description: clip(`${order.billing} subscription, ${order.taxLabel} included`),
         },
         notes: { reference },
       });
@@ -215,7 +226,7 @@ export async function POST(request: Request) {
               addons: [
                 {
                   item: {
-                    name: "One-time products (first invoice)",
+                    name: "Pay-per-project work (first invoice)",
                     amount: order.oneTime.total * 100,
                     currency: "INR",
                   },
@@ -258,7 +269,7 @@ export async function POST(request: Request) {
       currency: "INR",
       accept_partial: false,
       reference_id: reference,
-      description: clip(`Genesis Media — ${items}`),
+      description: clip(`Genesis Media: ${items}`),
       customer: { name: customer.name, email: customer.email, contact: contactPhone },
       notify: { sms: true, email: true },
       reminder_enable: true,

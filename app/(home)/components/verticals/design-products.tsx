@@ -3,14 +3,12 @@
 import { useState } from "react";
 
 import { AddToCart } from "@/components/genesis/cart";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { monthlyListFigure, price } from "@/lib/money";
 import { productId } from "@/lib/cart";
 import { designProducts } from "@/lib/verticals/brand-design";
 import { cn } from "@/lib/utils";
 import { IconTile } from "../offer/icons";
-import { CheckList } from "../offer/parts";
 import { tierGlow, tierGradient } from "../offer/tier-colors";
 import { BillingToggle, type Billing } from "../offer/plan-grid";
 
@@ -28,12 +26,14 @@ import { BillingToggle, type Billing } from "../offer/plan-grid";
  */
 export function ProductCards() {
   return (
-    <ul className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+    /*
+      THE DESK ALONE (Genesis, 2 Oct 2026). Brand Build was the second card
+      here, but every place this renders is a subscription view; it is a
+      one-time engagement and is now a pay-per-project product (lib/products).
+    */
+    <ul className="mt-10 grid max-w-3xl grid-cols-1 gap-4">
       <Reveal as="li" className="flex min-w-0">
         <DeskCard />
-      </Reveal>
-      <Reveal as="li" delay={0.06} className="flex min-w-0">
-        <BuildCard />
       </Reveal>
     </ul>
   );
@@ -101,32 +101,6 @@ function DeskCard() {
       </div>
     </article>
     </div>
-  );
-}
-
-function BuildCard() {
-  const build = designProducts.build;
-  return (
-    <article className="glass glass-lit relative flex w-full min-w-0 flex-col overflow-hidden rounded-panel p-6 sm:p-8">
-      <Head eyebrow={build.eyebrow} name={build.name} badge={build.badge} tagline={build.tagline} />
-      <p className="mt-3 text-pretty text-small leading-relaxed text-ash sm:text-body">{build.body}</p>
-
-      <div className="mt-7 rounded-card border border-[var(--glass-border)] bg-[var(--hover-wash)] p-5">
-        <Price prefix="From" figure={build.from} suffix="+ GST" />
-        <p className="mt-2 text-small text-faint">{build.facts.join(" · ")}</p>
-      </div>
-
-      <CheckList items={build.points} className="mt-6" />
-
-      <div className="mt-auto pt-8" data-track="plan:Brand Build">
-        <div className="flex flex-wrap gap-2">
-          <GlassButton href={build.cta.href} variant="glass" arrow>
-            {build.cta.label}
-          </GlassButton>
-          <AddToCart id={productId("brand-design", "one-time", build.name)} />
-        </div>
-      </div>
-    </article>
   );
 }
 

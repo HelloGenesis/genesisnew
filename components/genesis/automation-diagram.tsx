@@ -148,9 +148,11 @@ function logoBox(app: (typeof APPLICATIONS)[number], height: number) {
  * either ground, which is why the board uses one file for both themes.
  */
 const AI_LAB_MARK = {
-  src: "/brand/divisions/name/ai-lab.png",
-  width: 250,
-  height: 98,
+  /* With the yellow N since 2 Oct 2026 — the mark set, cut to the same
+     baseline as the name set, so BODY_MIDPOINT below still holds. */
+  src: "/brand/divisions/mark/ai-lab.png",
+  width: 492,
+  height: 167,
 };
 
 /**

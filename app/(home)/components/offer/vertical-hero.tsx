@@ -1,13 +1,13 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { mediaUrl } from "@/lib/media-url";
-import type { Cta, IconName } from "@/lib/verticals/types";
+import type { IconName } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 import { OfferIcon } from "./icons";
+import { VerticalCtas } from "./vertical-ctas";
 
 /**
  * The opening of the AI Labs, Studios and Brand & Design pages: the promise on
@@ -22,10 +22,9 @@ export function VerticalHero({
   label,
   lines,
   accent,
+  heading,
   lead,
   body,
-  primary,
-  secondary,
   strip,
   images,
   note,
@@ -33,12 +32,12 @@ export function VerticalHero({
 }: {
   label: string;
   /** The heading's plain lines, before the lit one. */
-  lines: readonly string[];
-  accent: string;
-  lead: string;
+  lines?: readonly string[];
+  accent?: string;
+  /** A headline of the page's own, in place of `lines` and `accent`. */
+  heading?: ReactNode;
+  lead?: string;
   body?: string;
-  primary: Cta;
-  secondary: Cta;
   strip: readonly (string | { label: string; icon?: IconName })[];
   images: readonly { src: string; label?: string }[];
   /** The handwritten aside beside the collage — "Same you. More content." */
@@ -52,39 +51,20 @@ export function VerticalHero({
         <SectionLabel dot tone="brand">
           {label}
         </SectionLabel>
-        <h1 className="mt-5 text-balance text-h1 font-normal leading-[0.98] tracking-tight text-bone xl:text-[4rem]">
-          {lines.map((line) => (
-            <span key={line} className="block">
-              {line}
-            </span>
-          ))}
-          <span className="block font-serif italic text-brand-ink">{accent}</span>
-        </h1>
-        <p className="mt-6 max-w-xl text-pretty text-lead leading-snug text-bone">{lead}</p>
+        {heading ?? (
+          <h1 className="mt-5 text-balance text-h1 font-normal leading-[0.98] tracking-tight text-bone xl:text-[4rem]">
+            {lines?.map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
+            <span className="block font-serif italic text-brand-ink">{accent}</span>
+          </h1>
+        )}
+        {lead && <p className="mt-6 max-w-xl text-pretty text-lead leading-snug text-bone">{lead}</p>}
         {body && <p className="mt-3 max-w-xl text-pretty text-body leading-relaxed text-ash">{body}</p>}
-        <div className="mt-8 flex flex-wrap gap-3">
-          <GlassButton href={primary.href} variant="brand" size="md" arrow magnetic>
-            {primary.label}
-          </GlassButton>
-          <GlassButton href={secondary.href} variant="glass" size="md" arrow>
-            {secondary.label}
-          </GlassButton>
-        </div>
-        <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2">
-          {strip.map((item) => {
-            const entry = typeof item === "string" ? { label: item } : item;
-            return (
-              <li key={entry.label} className="flex items-center gap-2 text-small text-ash">
-                {entry.icon ? (
-                  <OfferIcon name={entry.icon} className="size-4 text-brand-ink" />
-                ) : (
-                  <span aria-hidden className="size-1.5 rounded-full bg-brand" />
-                )}
-                {entry.label}
-              </li>
-            );
-          })}
-        </ul>
+        <VerticalCtas size="md" className="mt-8" />
+        <ServiceStrip items={strip} className="mt-8" />
       </Reveal>
 
       {visual ? (
@@ -158,5 +138,35 @@ function Collage({ images }: { images: readonly { src: string; label?: string }[
         );
       })}
     </div>
+  );
+}
+
+/**
+ * The division's services in one line of dots, under the hero's buttons —
+ * and, on /influencer-marketing, under the homepage section it opens with.
+ */
+export function ServiceStrip({
+  items,
+  className,
+}: {
+  items: readonly (string | { label: string; icon?: IconName })[];
+  className?: string;
+}) {
+  return (
+    <ul className={cn("flex flex-wrap gap-x-5 gap-y-2", className)}>
+      {items.map((item) => {
+        const entry = typeof item === "string" ? { label: item } : item;
+        return (
+          <li key={entry.label} className="flex items-center gap-2 text-small text-ash">
+            {entry.icon ? (
+              <OfferIcon name={entry.icon} className="size-4 text-brand-ink" />
+            ) : (
+              <span aria-hidden className="size-1.5 rounded-full bg-brand" />
+            )}
+            {entry.label}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

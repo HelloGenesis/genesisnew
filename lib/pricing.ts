@@ -51,7 +51,7 @@ export function bookingHref(subject = "Genesis Media") {
 
 /** A plan's own button: its Razorpay link, or a chat naming the plan. */
 export function joinHref(vertical: VerticalKey, plan: string, product: string) {
-  return joinUrls[`${vertical}:${plan}`] || chat(`Hi Genesis! I'd like to start ${product} — ${plan}.`);
+  return joinUrls[`${vertical}:${plan}`] || chat(`Hi Genesis! I'd like to start ${product}: ${plan}.`);
 }
 
 export function enquiryHref(subject: string) {
@@ -95,9 +95,9 @@ export const verticalCards: {
     name: "Genesis AI Labs",
     href: "/ai-content-automation",
     blurb: "AI avatars, AI video, product visuals and automated content.",
-    fromLabel: "Membership from",
+    fromLabel: "Subscription from",
     from: `${price(95000)} per month`,
-    brain: `Membership from ${price(95000)}`,
+    brain: `Subscription from ${price(95000)}`,
   },
   {
     key: "studios",
@@ -105,9 +105,9 @@ export const verticalCards: {
     name: "Genesis Studios",
     href: "/content-production",
     blurb: "Shoots, reels, editing and content production.",
-    fromLabel: "Membership from",
+    fromLabel: "Subscription from",
     from: `${price(85000)} per month`,
-    brain: `Membership from ${price(85000)}`,
+    brain: `Subscription from ${price(85000)}`,
   },
   {
     key: "brand-design",
@@ -115,9 +115,9 @@ export const verticalCards: {
     name: "Genesis Brand & Design",
     href: "/brand-design",
     blurb: "Design, campaigns, decks, collateral and brand systems.",
-    fromLabel: "Membership from",
+    fromLabel: "Subscription from",
     from: `${price(65000)} per month`,
-    brain: `Membership from ${price(65000)}`,
+    brain: `Subscription from ${price(65000)}`,
   },
   {
     key: "influence",
@@ -137,29 +137,35 @@ export function verticalCard(key: VerticalKey) {
 
 /** The /pricing page, in the brief's words. */
 export const pricingHub = {
-  label: "Memberships",
+  label: "Subscriptions",
   heading: "One team. One monthly fee.",
   headingAccent: "A constantly moving creative queue.",
-  body: "Add requests whenever you need them. We work through your active queue based on your membership, send work for review, complete revisions and move to the next request.",
+  body: "Add requests whenever you need them. We work through your active queue based on your subscription, send work for review, complete revisions and move to the next request.",
   plans: {
-    label: "Genesis Memberships",
+    label: "Genesis Subscriptions",
     heading: "Choose your creative team.",
   },
   /* From the first pricing brief — "How Genesis Memberships Work". */
   steps: {
-    heading: "How Genesis Memberships Work",
+    heading: "How Genesis Subscriptions Work",
     items: [
       { title: "Subscribe", body: "Choose the creative capability you need." },
       { title: "Add requests", body: "Submit as many requests to your queue as you like." },
-      { title: "We create", body: "We work through them based on your membership's capacity." },
+      { title: "We create", body: "We work through them based on your subscription's capacity." },
       { title: "Review & repeat", body: "Approve, revise, and move on to the next request." },
     ],
     note: "Onboarding typically starts after successful payment and receipt of the required brand assets and brief.",
+    /*
+      THE HOMEPAGE'S WORDING OF THE SAME FOUR (Genesis, 2 Oct 2026). The
+      homepage sells both ways to buy, so the first step names both, and the
+      rest say what happens in plain words. /pricing keeps the titles above.
+    */
+    home: ["Subscribe or purchase", "Add your briefs", "We create and deliver", "Review and publish content"],
   },
   oneTime: {
-    label: "One-time projects",
-    heading: "All One-time Projects",
-    body: "Fifteen clearly scoped products across the four divisions — buy once, no membership needed.",
+    label: "Pay-per-project",
+    heading: "All Pay-per-project Work",
+    body: "Sixteen clearly scoped products across the four divisions. Buy once, no subscription needed.",
   },
 } as const;
 
@@ -196,16 +202,29 @@ export const bookingCalendar = {
  * opens /pricing, where the memberships live.
  */
 export const homeHero = {
-  /* Genesis's hero copy, 29 Sep 2026. */
-  heading: "One team.",
-  headingAccent: "On demand.",
-  body: "Plug Genesis into your brand whenever you need influencers, ideas, content production, design, or anything AI.",
-  /* The three ways on, each with where it starts — the prices from the plans and products themselves. */
-  ctas: [
-    { label: `Explore Memberships — from ${price(65000).replace(/\/-$/, "")}/month`, href: "/pricing#plans" },
-    { label: `Explore One-time Projects — from ${inr(lowestProductPrice).replace(/\/-$/, "")}`, href: "/pricing#one-time" },
-    { label: "View Case Studies", href: "/case-studies" },
+  /*
+    THE SAME SENTENCE, AS A SLIDER (Genesis, 2 Oct 2026): "Plug Genesis into
+    your brand whenever you need" — then one service at a time, sliding up in
+    the gradient — then the promise. Plain words a first-time visitor knows,
+    each a thing they could ask for; the order runs through the four
+    divisions (Influence, Brand & Design, Studios, AI Lab — Genesis asked
+    for Brand & Design before Studios here). The h1 is the sentence itself;
+    "One team. On demand." was taken off it the same day.
+  */
+  lead: "Plug Genesis into your brand whenever you need",
+  services: [
+    "influencer campaigns",
+    "creators & UGC",
+    "design",
+    "branding",
+    "campaign creatives",
+    "content production",
+    "founder videos",
+    "AI content",
+    "AI avatars",
+    "automations",
   ],
+  close: "All from one team, at your fingertips.",
 } as const;
 
 /**
@@ -214,9 +233,9 @@ export const homeHero = {
  * first pricing brief's FAQ and its GST note.
  */
 export const planTerms = [
-  "Monthly memberships can be stopped before the next billing cycle.",
-  "Where available, memberships can be paused.",
-  "All membership prices are exclusive of GST.",
+  "Monthly subscriptions can be stopped before the next billing cycle.",
+  "Where available, subscriptions can be paused.",
+  "All subscription prices are exclusive of GST.",
 ] as const;
 
 /**
@@ -292,7 +311,7 @@ export const homePlans: Record<
   },
   influence: {
     product: "Influencer & UGC Campaigns",
-    promise: "End-to-end creator campaigns — from strategy to reporting.",
+    promise: "End-to-end creator campaigns, from strategy to reporting.",
     priceLine: "Creator fees + 15% agency commission",
     page: "/influencer-marketing",
     work: "/influencer-marketing#case-studies",

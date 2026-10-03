@@ -10,6 +10,7 @@ import { mediaUrl } from "@/lib/media-url";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { cn } from "@/lib/utils";
 import { watchReader } from "@/lib/slider";
+import { RailProgress } from "@/components/genesis/rail-progress";
 
 /**
  * The Influence reels: a two-card slider, with arrows to walk the rest.
@@ -278,6 +279,7 @@ export function ReelPair({
           </div>
         ))}
       </div>
+      <RailProgress rail={rail} className="mt-3" />
 
       {/*
         THE ARROWS THE CONSTELLATION HAD, in the same place and at the same

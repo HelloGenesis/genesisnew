@@ -31,7 +31,13 @@ import { PlanBar } from "./plan-bar";
  *   still one click away in the portfolio grid, which is where browsing
  *   belongs.
  */
-export function Studios() {
+/**
+ * `onPage`: the section on its own division's page, under the page's hero
+ * (Genesis, 2 Oct 2026). Without its header — the page's hero already names
+ * the division — and without its plan bar: the page's own pricing section,
+ * further down, is the one place to buy.
+ */
+export function Studios({ onPage = false }: { onPage?: boolean } = {}) {
   return (
     <section
       id="studios"
@@ -40,6 +46,7 @@ export function Studios() {
       <Spectrum className="seamless" />
 
       <div className="relative z-[2] mx-auto w-full max-w-6xl px-6">
+        {!onPage && (
         <div className="flex flex-col items-center text-center">
           <Reveal>
             <DivisionLockup
@@ -49,12 +56,13 @@ export function Studios() {
             />
           </Reveal>
         </div>
+        )}
 
-        <div className="fit-window mt-[var(--block-gap)]">
+        <div className={onPage ? "fit-window" : "fit-window mt-[var(--block-gap)]"}>
           <StudiosPipeline />
         </div>
 
-        <PlanBar vertical="studios" />
+        {!onPage && <PlanBar vertical="studios" />}
       </div>
     </section>
   );

@@ -18,8 +18,6 @@ export const studiosHero = {
   label: "Genesis Studios",
   heading: "From brief",
   headingAccent: "to publish.",
-  lead: "Strategy, scripting, production and post — one connected content studio built for every screen.",
-  body: "Create founder content, reels, product videos, campaign assets, motion content and branded films without rebuilding a production team for every brief.",
   primary: "Explore Content Monthly",
   secondary: "Book a Content Shoot",
   strip: ["Reels & Short-Form", "Product Videos", "Campaign Content", "Branded Films"],
@@ -205,7 +203,7 @@ export const studiosPlans: PlanGrid = {
         "Priority production",
         "Dedicated creative + account owner",
       ],
-      cta: { label: "Talk to Genesis", href: enquiryHref(`${MONTHLY} — Enterprise`) },
+      cta: { label: "Talk to Genesis", href: enquiryHref(`${MONTHLY}: Enterprise`) },
       contactOnly: true,
       inclusions: [
         { item: "Footage", included: "Genesis-shot or supplied" },
@@ -252,8 +250,8 @@ export const studiosPlans: PlanGrid = {
       { label: "Videos", values: ["6 Standard Videos", "8 Premium Videos", "12 Premium Videos"] },
       { label: "Length", values: ["Up to 30–45 sec", "Up to 60 sec", "Up to 60 sec*"] },
       { label: "Shoot", values: ["No included shoot", "1 Half-Day Shoot / month · up to 5 hours", "1 Full-Day Shoot / month · up to 9 hours"] },
-      { label: "Cameras", values: ["—", "1 camera setup", "Up to 2 cameras"] },
-      { label: "Edited photographs", values: ["—", "15", "25"] },
+      { label: "Cameras", values: ["Not included", "1 camera setup", "Up to 2 cameras"] },
+      { label: "Edited photographs", values: ["Not included", "15", "25"] },
       { label: "Motion-heavy videos", values: ["Up to 1", "Up to 2", "Up to 3"] },
       { label: "Adaptations", values: ["Up to 2", "Up to 6", "Up to 12"] },
       { label: "Formats", values: ["9:16", "9:16 + selected 16:9", "9:16 + 1:1 + 16:9"] },
@@ -287,7 +285,7 @@ export const studiosStarter = {
   heading: "What does Starter",
   headingAccent: "actually mean?",
   body: [
-    "Built for brands already creating content internally — through past shoots, founder recordings or their own team — but needing a reliable production partner to keep it moving.",
+    "Built for brands already creating content internally (through past shoots, founder recordings or their own team) but needing a reliable production partner to keep it moving.",
     "Perfect if you mainly need editing, motion, scripting and consistent short-form output.",
   ],
   items: [
@@ -319,11 +317,7 @@ export const studiosHowItWorks: Steps = {
     { title: "Review", body: "Review the output and request changes where needed.", icon: "review" },
     { title: "Publish & Repeat", body: "Once completed, we move to the next priority in your queue.", icon: "repeat" },
   ],
-  capacity: {
-    heading: "Active request capacity",
-    rows: ["Starter — 1 Active Request", "Growth — 1 Active Request", "Enterprise — Up to 2 Active Requests"],
-  },
-  note: "Your queue can contain more ideas than your active capacity. Your monthly production allocation determines how much is completed within each billing cycle.",
+  /* The capacity bar and its note came off (Genesis, 3 Oct 2026: "remove this from here … all across"). */
 };
 
 export const studiosTurnaround: Turnaround = {
@@ -331,11 +325,36 @@ export const studiosTurnaround: Turnaround = {
   heading: "From brief to content. Fast.",
   tiers: [
     { time: "1–2 Business Days", title: "Simple Edits & Adaptations", icon: "edit" },
-    { time: "2–4 Business Days", title: "Standard Short-Form Content", icon: "video" },
-    { time: "5–7 Business Days", title: "Premium / Motion-Heavy Content", icon: "bolt" },
+    /*
+      WHAT A STANDARD OR PREMIUM VIDEO IS, with a dropdown (Genesis, 3 Oct
+      2026). Standard is what every Studios video includes (EVERY_VIDEO);
+      Premium is the Growth and Enterprise plans' video — longer, and with
+      the motion-heavy edits those plans carry.
+    */
+    {
+      time: "2–4 Business Days",
+      title: "Standard Short-Form Content",
+      items: ["Standard videos: 30–45 sec short-form edits, from your footage or a Genesis shoot."],
+      detail: {
+        label: "What’s in a Standard video",
+        items: EVERY_VIDEO.map(({ item }) => item),
+      },
+      icon: "video",
+    },
+    {
+      time: "5–7 Business Days",
+      title: "Premium / Motion-Heavy Content",
+      items: ["Premium videos: up to 60 sec, with motion-heavy edits and animation."],
+      detail: {
+        label: "What’s in a Premium video",
+        lead: "Everything in a Standard video, plus:",
+        items: ["Up to 60 sec", "Motion-heavy edits & animation", "Genesis-shot or supplied footage", "9:16 + selected 16:9 delivery"],
+      },
+      icon: "bolt",
+    },
   ],
   notes: [
-    "Monthly Shoot — First batch typically delivered approximately 4–5 working days after the shoot.",
+    "Monthly Shoot: First batch typically delivered approximately 4–5 working days after the shoot.",
     "Full monthly production typically takes approximately 7–10 working days, depending on approvals and complexity.",
   ],
 };

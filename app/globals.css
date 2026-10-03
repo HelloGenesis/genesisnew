@@ -122,7 +122,15 @@
     --text-small--line-height: 1.5;
     --text-micro: 0.6875rem;
     --text-micro--line-height: 1;
-    --text-micro--letter-spacing: 0.28em;
+    /*
+       0.02em, not 0.28em (Genesis, 2 Oct 2026: "decrease the font spacing
+       horizontally"). The wide tracking is an all-caps eyebrow's; on the
+       mixed-case chips and captions that use this size ("AI Content",
+       "Property Films") it read as spaced-out letters. Every uppercase use
+       sets its own tracking (.micro-label keeps 0.28em), so only those lines
+       tighten.
+    */
+    --text-micro--letter-spacing: 0.02em;
 
     /* --- Text colour ------------------------------------------------------- */
     --color-bone: var(--ink-strong);
@@ -1396,6 +1404,97 @@ body:has(main.scene-dark) header {
             var(--shadow-float);
     }
 
+    /*
+      THE NAV BAR'S BLUR, ON A LAYER BEHIND IT (Genesis, 2 Oct 2026: "make
+      this glassmorphic", of the division menus). An element with a
+      backdrop-filter is a backdrop root: anything inside it that blurs can
+      only blur what the bar itself painted, never the page — so a frosted
+      menu hanging from the bar came out flat. The blur moves to a pseudo
+      element under the bar's content; the bar itself no longer filters, and
+      the menus inside it blur the page.
+    */
+    .nav-bar {
+        isolation: isolate;
+        backdrop-filter: none !important;
+    }
+    .nav-bar::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+        pointer-events: none;
+    }
+    .nav-bar.glass-strong::after {
+        backdrop-filter: blur(var(--glass-blur-heavy)) saturate(160%);
+    }
+
+    /* The menus that drop from the bar: frosted, tinted with the raised
+       surface so the links stay readable over a busy hero. */
+    .menu-glass {
+        position: relative;
+        background-color: color-mix(in srgb, var(--surface-raised) 58%, transparent);
+        backdrop-filter: blur(28px) saturate(170%);
+        border: 1px solid var(--glass-border);
+        box-shadow:
+            0 1px 0 0 rgb(255 255 255 / 0.1) inset,
+            var(--shadow-float);
+    }
+
+    /*
+      A GLASS CARD WITH THE BRAND'S GRADIENT EDGE (Genesis, 3 Oct 2026:
+      "design the pop-up window according to the main design, add
+      glassmorphism"). The fill is the theme's glass token, so it is a frosted
+      dark card on the dark theme and a frosted white one on the light; the
+      1px edge is the violet–coral–amber sweep the offer cards wear, drawn by
+      a masked pseudo-element so the corners stay round.
+    */
+    .glass-card {
+        position: relative;
+        background-color: var(--glass-fill);
+        box-shadow:
+            0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+            var(--shadow-panel);
+    }
+    .glass-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(125deg, rgb(139 92 246 / 0.55), rgb(242 96 126 / 0.4) 50%, rgb(245 146 62 / 0.5));
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+    }
+
+    /* A 1.5px outline in the site's full gradient — the outlined "Made for" pills. */
+    .gradient-outline {
+        position: relative;
+    }
+    .gradient-outline::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1.5px;
+        background: linear-gradient(115deg, #8b5cf6 0%, #c066d9 30%, #f2607e 65%, #f5923e 100%);
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+    }
+
+    /* The pop-up window itself: frosted over the blurred page behind it. */
+    .glass-window {
+        background-color: color-mix(in srgb, var(--surface-raised) 74%, transparent);
+        box-shadow:
+            0 1px 0 0 rgb(255 255 255 / 0.1) inset,
+            var(--shadow-float);
+    }
+
     /* Small inline surfaces — chips, pills, badges. Shallow shadow, and no
        border, because a hairline at this size is what makes a chip look
        pasted on rather than sitting on the page. */
@@ -1978,5 +2077,32 @@ body:has(main.scene-dark) header {
     }
     :root:not([data-theme="dark"]):not([data-theme="light"]) :is(.division-art, .bg-clip-text, .ramp-text):not(.on-dark) {
         filter: saturate(1.9) brightness(0.82) contrast(1.15);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   THE OFFER CARDS' RUNNING EDGE (homepage slider, app/(home)/components/
+   offer-slider). A conic gradient turns around the card while it is hovered
+   or, on a phone, while it is the card in view. The angle is a registered
+   property so the gradient itself can animate; under Reduce Motion it holds
+   still and the edge simply lights.
+   -------------------------------------------------------------------------- */
+@property --offer-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+}
+@keyframes offer-spin {
+    to {
+        --offer-angle: 360deg;
+    }
+}
+.offer-edge {
+    background: conic-gradient(from var(--offer-angle), #8b5cf6, #f7788f, #ffc516, #f2607e, #8b5cf6);
+    animation: offer-spin 3.2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .offer-edge {
+        animation: none;
     }
 }

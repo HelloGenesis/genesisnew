@@ -1,9 +1,12 @@
+import Image from "next/image";
+
 import { Reveal } from "@/components/genesis/reveal";
-import { DivisionCtas } from "./division-ctas";
-import { price } from "@/lib/money";
-import { homePlans } from "@/lib/pricing";
+import { homePlans, verticalCard } from "@/lib/pricing";
 import type { VerticalKey } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
+
+import { DivisionCtas } from "./division-ctas";
+import { DivisionOffers } from "./offer-slider";
 
 /**
  * THE PRODUCT, AT THE FOOT OF EACH DIVISION ON THE HOMEPAGE.
@@ -19,6 +22,14 @@ import { cn } from "@/lib/utils";
  * themselves; on the homepage the price is said the premium way.
  *
  */
+/* The division mark files and their sizes (public/brand/divisions/mark), as DivisionLockup's MARK set. */
+const MARK: Record<VerticalKey, { slug: string; width: number; height: number }> = {
+  influence: { slug: "influence", width: 688, height: 165 },
+  studios: { slug: "studios", width: 571, height: 168 },
+  "ai-labs": { slug: "ai-lab", width: 492, height: 167 },
+  "brand-design": { slug: "brand-design", width: 803, height: 120 },
+};
+
 export function PlanBar({ vertical, className }: { vertical: VerticalKey; className?: string }) {
   const plan = homePlans[vertical];
   return (
@@ -46,20 +57,30 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
       >
         <div className="flex flex-col gap-x-8 gap-y-2 lg:flex-row lg:items-baseline lg:justify-between">
           <div className="min-w-0">
+            {/*
+              THE LOGO AND THE DIVISION, FIRST (Genesis, 2 Oct 2026): the
+              yellow N beside the division's name in its gradient — the mark
+              set, as the division's own heading uses — so the bar says whose
+              offers these are before it names the product.
+            */}
+            <Image
+              src={`/brand/divisions/mark/${MARK[vertical].slug}.png`}
+              alt={`Genesis ${verticalCard(vertical).short}`}
+              width={MARK[vertical].width}
+              height={MARK[vertical].height}
+              sizes="240px"
+              className="mb-4 h-7 w-auto sm:h-8"
+            />
             <p className="micro-label !text-brand-ink">{plan.product}</p>
             <p className="mt-2 font-sans text-lead leading-snug text-bone">{plan.promise}</p>
           </div>
-          <p className="shrink-0 text-small text-ash">
-            {plan.rate ? (
-              <>
-                Subscriptions from <span className="text-bone">{price(plan.rate)}</span> per month
-              </>
-            ) : (
-              <span className="text-bone">{plan.priceLine}</span>
-            )}
-          </p>
+          {/* No "Subscriptions from …" line (Genesis, 2 Oct 2026): the cards below carry every price. */}
         </div>
         <DivisionCtas vertical={vertical} size="sm" opens="up" />
+        {/* What this division sells, card by card: a Subscriptions | Pay-per-project switch over its plans and products. */}
+        <div className="border-t border-[var(--glass-border)] pt-4">
+          <DivisionOffers vertical={vertical} />
+        </div>
       </div>
       </div>
     </Reveal>

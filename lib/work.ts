@@ -701,7 +701,7 @@ const catalogue: WorkItem[] = [
   {
     slug: "activ-health-logo",
     client: "Aditya Birla Health Insurance",
-    title: "Activ Health App — Logo Redesign",
+    title: "Activ Health App: Logo Redesign",
     vertical: "Brand & Design",
     format: "Brand Identity",
     tags: ["BFSI"],
@@ -754,8 +754,8 @@ export const CLIP_LABELS: Record<ReelId, string> = {
   "studios-dha-1": "DHA",
   "studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance":
     "100% Health & 100% Health Insurance",
-  "studios-activ-travel-leisure-plan-finalhd-1": "Activ Travel — Leisure Plan",
-  "studios-activ-travel-senior-plan-02": "Activ Travel — Senior Plan",
+  "studios-activ-travel-leisure-plan-finalhd-1": "Activ Travel: Leisure Plan",
+  "studios-activ-travel-senior-plan-02": "Activ Travel: Senior Plan",
   "studios-mr-mayank-bathwal-ceo-aditya-birla-health-insurance":
     "Mayank Bathwal, CEO",
   "studios-abhi-ex-coms": "Executive Communications",
@@ -768,16 +768,16 @@ export const CLIP_LABELS: Record<ReelId, string> = {
   "studios-7-draft6-income-protect": "Income Protect",
   "studios-friends-final-1": "Friends",
   "ai-lab-1-2-9x16-main-product-explainer-activ-yuva":
-    "Activ Yuva — Product Explainer · Adi",
+    "Activ Yuva: Product Explainer · Adi",
   "ai-lab-2-1-9x16-health-returns-activ-yuva":
-    "Activ Yuva — Health Returns · Diya",
-  29: "Activ Yuva — OPD Cover · Adi",
-  30: "Activ Yuva — Worldwide Maternity Cover · Diya",
-  31: "Activ Yuva — Launch · Adi & Diya",
+    "Activ Yuva: Health Returns · Diya",
+  29: "Activ Yuva: OPD Cover · Adi",
+  30: "Activ Yuva: Worldwide Maternity Cover · Diya",
+  31: "Activ Yuva: Launch · Adi & Diya",
   "ai-lab-sinet-english-v004": "SiNet (English)",
   "ai-lab-tanvi-uiiui": "Tanvi",
   "ai-lab-tanvi-b2813828": "Tanvi",
-  "ai-lab-tanvi-photos": "Tanvi — Photo Series",
+  "ai-lab-tanvi-photos": "Tanvi: Photo Series",
   "ai-lab-bharat-bharat": "Bharat",
   "ai-lab-shivam-sh1": "Shivam",
   "ai-lab-shivam-sh2": "Shivam",

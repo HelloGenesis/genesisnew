@@ -1,31 +1,33 @@
 import Image from "next/image";
 
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { mediaUrl } from "@/lib/media-url";
 import { servicePage } from "@/lib/services";
 import {
   brandBuild,
-  deskHref,
   designClosing,
   designHero,
   designHowItWorks,
   designIncluded,
   designOverview,
-  designProducts,
   designTurnaround,
 } from "@/lib/verticals/brand-design";
 import { cn } from "@/lib/utils";
-import { BrandingStack } from "../branding-design";
+import { BrandingDesign, BrandingStack } from "../branding-design";
 import { ProductCards } from "./design-products";
 import { OneTimeProducts } from "../offer/starter-pack";
-import { WorkMode } from "../offer/work-mode";
+import { SubscriptionOnly, WorkMode } from "../offer/work-mode";
 import { ClosingBand, StepsBlock, TurnaroundStrip } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { OfferSection, PlanBand, SectionHead } from "../offer/parts";
+import { divisionMenu } from "@/lib/home-content";
+import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
+import { VerticalCtas } from "../offer/vertical-ctas";
+import { BuySteps } from "../offer/buy-steps";
+import { PricingHead } from "../offer/pricing-head";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("brand-design");
@@ -37,49 +39,50 @@ const page = servicePage("brand-design");
 export function BrandDesignPageView() {
   return (
     <VerticalPage page={page} current="brand-design"
-      primary={{ label: "See plans", href: "#pricing" }}
       jump={[
         { id: "pricing", label: "Plans" },
-        { id: "included", label: "What's included" },
+        { id: "included", label: "What's included", mode: "membership" },
         { id: "how-it-works", label: "How it works" },
-        { id: "overview", label: "Plan overview" },
-        { id: "brand-build", label: "Brand Build" },
+        { id: "overview", label: "Plan overview", mode: "membership" },
         { id: "case-studies", label: "Case studies" },
       ]}>
       <VerticalHero
         label={designHero.label}
-        lines={[designHero.heading, designHero.headingLine2]}
-        accent={designHero.headingAccent}
-        lead={designHero.lead}
-        body={designHero.body}
-        primary={{ label: designHero.primary, href: deskHref }}
-        secondary={{ label: designHero.secondary, href: "#brand-build" }}
-        strip={designHero.strip}
+        heading={<PlugHeadline division="Brand & Design" services={divisionMenu("/brand-design")} className="mt-5" />}
+        strip={divisionMenu("/brand-design")}
         images={designHero.images.map((src) => ({ src }))}
         /* The homepage section's three folders, in place of the logo collage. */
         visual={<BrandingStack />}
       />
+
+      {/*
+        THE DIVISION'S HOMEPAGE SECTION, under the hero, without its header
+        or plan bar (Genesis, 2 Oct 2026) — see `onPage`.
+      */}
+      <BrandingDesign onPage />
 
       <LogoStrip />
 
       {/* SECTION 02 — TWO WAYS TO WORK WITH US */}
       <PlanBand>
       <OfferSection id="pricing" labelledBy="products-heading">
-        <SectionHead
-          id="products-heading"
-          label={designProducts.label}
-          heading={designProducts.heading}
-          body={designProducts.body}
-        />
+        <PricingHead id="products-heading" />
         {/* The same "one-time or membership" switch as /pricing (Genesis, 28 Sep 2026). */}
         <WorkMode
           oneTime={<OneTimeProducts vertical="brand-design" bare />}
           membership={<ProductCards />}
         />
+        {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
+        <BuySteps className="mt-10" />
       </OfferSection>
       </PlanBand>
 
-      {/* SECTION 03 — WHAT'S INCLUDED, as a bento of what Always-On covers */}
+      {/*
+        SECTION 03 — WHAT'S INCLUDED, as a bento of what Always-On covers.
+        It and the plan overview below are the subscription's details, so
+        they show only on the Subscriptions side (Genesis, 2 Oct 2026).
+      */}
+      <SubscriptionOnly>
       <OfferSection id="included" labelledBy="included-heading">
         <SectionHead
           id="included-heading"
@@ -89,15 +92,23 @@ export function BrandDesignPageView() {
         />
         <IncludedBento />
       </OfferSection>
+      </SubscriptionOnly>
 
       {/* SECTION 04 — HOW IT WORKS */}
       <StepsBlock data={designHowItWorks} id="how-it-works" />
 
       {/* SECTION 05 + 06 — PLAN OVERVIEW, with the turnaround directly below it */}
-      <PlanOverview />
+      <SubscriptionOnly>
+        <PlanOverview />
+      </SubscriptionOnly>
 
-      {/* SECTION 08 — BRAND BUILD */}
-      <BrandBuild />
+      {/*
+        SECTION 08 — BRAND BUILD, OFF FOR NOW (Genesis, 2 Oct 2026: "remove
+        this as of now"). Turn SHOW_BRAND_BUILD back on to restore it, and
+        its "Brand Build" link in the jump bar above. Brand Build is still
+        sold as a pay-per-project product.
+      */}
+      {SHOW_BRAND_BUILD && <BrandBuild />}
 
       {/*
         "add case study" — as the homepage's Case Studies section, Brand &
@@ -116,6 +127,8 @@ export function BrandDesignPageView() {
     </VerticalPage>
   );
 }
+
+const SHOW_BRAND_BUILD = false;
 
 function PlanOverview() {
   return (
@@ -144,9 +157,7 @@ function PlanOverview() {
               <span className="text-small text-ash">{designOverview.priceSuffix}</span>
             </p>
             <p className="mt-2 text-small text-ash">{designOverview.monthlyNote}</p>
-            <GlassButton href={deskHref} variant="brand" arrow className="mt-6">
-              {designOverview.cta}
-            </GlassButton>
+            <VerticalCtas size="md" className="mt-6" />
           </div>
         </Reveal>
 
@@ -238,9 +249,7 @@ function BrandBuild() {
             <p className="font-display text-h3 font-normal tracking-tight text-bone">{brandBuild.price}</p>
             <p className="mt-2 text-small text-ash">{brandBuild.facts.join(" · ")}</p>
           </div>
-          <GlassButton href={brandBuild.cta.href} variant="brand" size="lg" arrow magnetic>
-            {brandBuild.cta.label}
-          </GlassButton>
+          <VerticalCtas />
         </div>
       </Reveal>
     </OfferSection>

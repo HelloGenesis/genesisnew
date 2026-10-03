@@ -12,6 +12,7 @@ import { VideoDialog } from "./video-dialog";
 import { WorkDialog } from "./work-dialog";
 import { WorkTile } from "./work-tile";
 import { watchReader } from "@/lib/slider";
+import { RailProgress } from "@/components/genesis/rail-progress";
 
 /**
  * The work grid — filters plus tiles, used by both the homepage Work section
@@ -383,6 +384,8 @@ export function WorkGrid({
               ),
             )}
           </div>
+          {/* One bar for both strips: they move together, the second mirrored. */}
+          <RailProgress rail={rowA} className="mt-3" />
 
           <RailArrow direction="left" onClick={() => page(-1)} />
           <RailArrow direction="right" onClick={() => page(1)} />

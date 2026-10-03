@@ -41,6 +41,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { GlassIcon, glassIconFor } from "@/components/genesis/glass-icon";
 import type { IconName } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 
@@ -97,16 +98,26 @@ export function OfferIcon({ name, className }: { name: IconName; className?: str
  * The icon in its tile — a small brand-tinted square, the treatment every
  * card in the brief's mockups opens with.
  */
+/**
+ * A DIVISION OR PROCESS ICON, IN THE GENESIS GLASS SET (Genesis, 2 Oct 2026):
+ * the solid gradient shape behind a frosted one — see GlassIcon. Every
+ * `icon` name in the copy has a glass drawing; OfferIcon (the line icons)
+ * stays for small inline uses, where glass would not read.
+ */
 export function IconTile({ name, className }: { name: IconName; className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "grid size-10 shrink-0 place-items-center rounded-card border border-brand/30 bg-brand/10 text-brand-ink",
-        className,
-      )}
-    >
-      <OfferIcon name={name} className="size-[1.125rem]" />
-    </span>
-  );
+  const glass = glassIconFor(name);
+  if (!glass) {
+    return (
+      <span
+        aria-hidden
+        className={cn(
+          "grid size-10 shrink-0 place-items-center rounded-card border border-brand/30 bg-brand/10 text-brand-ink",
+          className,
+        )}
+      >
+        <OfferIcon name={name} className="size-[1.125rem]" />
+      </span>
+    );
+  }
+  return <GlassIcon name={glass} className={cn("size-11 shrink-0", className?.replace(/\bbg-\S+/g, ""))} />;
 }

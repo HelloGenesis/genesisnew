@@ -1,6 +1,5 @@
 import Image from "next/image";
 
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { mediaUrl } from "@/lib/media-url";
 import { servicePage } from "@/lib/services";
@@ -12,17 +11,20 @@ import {
   studiosPlans,
   studiosStarter,
   studiosTurnaround,
-  studiosTwoWays,
 } from "@/lib/verticals/studios";
-import { cn } from "@/lib/utils";
 import { ClosingBand, IconCards, StepsBlock, TurnaroundBlock } from "../offer/blocks";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
-import { CheckList, OfferSection, PlanBand, PlanDetails, SectionHead } from "../offer/parts";
-import { PlanGrid, ShootChip } from "../offer/plan-grid";
+import { CheckList, OfferSection, PlanBand, PlanDetails } from "../offer/parts";
+import { PlanGrid } from "../offer/plan-grid";
 import { OneTimeProducts } from "../offer/starter-pack";
 import { WorkMode } from "../offer/work-mode";
+import { divisionMenu } from "@/lib/home-content";
+import { Studios } from "../studios";
+import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VideoRail } from "../offer/video-rail";
+import { BuySteps } from "../offer/buy-steps";
+import { PricingHead } from "../offer/pricing-head";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("content-production");
@@ -38,10 +40,9 @@ const SHOOT_WORK = ["Studios", "Events"];
 export function StudiosPageView() {
   return (
     <VerticalPage page={page} current="studios"
-      primary={{ label: "See plans", href: "#pricing" }}
       jump={[
         { id: "pricing", label: "Monthly plans" },
-        { id: "included", label: "Every video" },
+        { id: "included", label: "Every video", mode: "membership" },
         { id: "how-it-works", label: "How it works" },
         { id: "case-studies", label: "Case studies" },
         { id: "shoot", label: "Content shoot" },
@@ -49,13 +50,8 @@ export function StudiosPageView() {
       ]}>
       <VerticalHero
         label={studiosHero.label}
-        lines={[studiosHero.heading]}
-        accent={studiosHero.headingAccent}
-        lead={studiosHero.lead}
-        body={studiosHero.body}
-        primary={{ label: studiosHero.primary, href: "#pricing" }}
-        secondary={{ label: studiosHero.secondary, href: "#shoot" }}
-        strip={studiosHero.strip}
+        heading={<PlugHeadline division="Studios" services={divisionMenu("/content-production")} className="mt-5" />}
+        strip={divisionMenu("/content-production")}
         images={[
           { src: studiosHero.image },
           ...studiosHero.thumbs.map((src) => ({ src })),
@@ -72,6 +68,12 @@ export function StudiosPageView() {
         }
       />
 
+      {/*
+        THE DIVISION'S HOMEPAGE SECTION, under the hero, without its header
+        or plan bar (Genesis, 2 Oct 2026) — see `onPage`.
+      */}
+      <Studios onPage />
+
       <LogoStrip />
 
       {/* "A small work content slider gallery here, which will only have shoot work." */}
@@ -82,76 +84,6 @@ export function StudiosPageView() {
         heading=""
         cta={false}
       />
-
-      {/* SECTION 02 — TWO WAYS TO CREATE */}
-      <OfferSection labelledBy="two-ways-heading">
-        <SectionHead
-          id="two-ways-heading"
-          label={studiosTwoWays.label}
-          heading={studiosTwoWays.heading}
-          body={studiosTwoWays.body}
-        />
-        <ul className="mt-10 grid gap-4 lg:grid-cols-2">
-          {studiosTwoWays.items.map((item, index) => (
-            <Reveal as="li" key={item.name} delay={0.06 * index} className="flex">
-              <article
-                className={cn(
-                  "relative grid w-full overflow-hidden rounded-panel sm:grid-cols-[1.2fr_0.8fr]",
-                  item.featured ? "glass glass-strong glass-lit border border-brand/50" : "glass glass-lit",
-                )}
-              >
-                <div className="relative z-[1] flex flex-col p-6 sm:p-8">
-                  <p className="font-display text-lead text-brand-ink">{item.index}</p>
-                  <h3 className="mt-3 font-display text-h3 font-normal leading-tight tracking-tight text-bone">
-                    {item.name}
-                  </h3>
-                  <p className="mt-1 text-body text-bone">{item.tagline}</p>
-                  {item.body.map((line) => (
-                    <p key={line} className="mt-3 text-pretty text-small leading-relaxed text-ash">
-                      {line}
-                    </p>
-                  ))}
-                  <CheckList items={item.points} className="mt-5" />
-                  <p className="mt-6 font-display text-lead text-bone">{item.from}</p>
-                  {"inPerson" in item && item.inPerson && <ShootChip className="mt-2 self-start" />}
-                  <div className="mt-6">
-                    <GlassButton href={item.cta.href} variant={item.featured ? "brand" : "glass"} arrow>
-                      {item.cta.label}
-                    </GlassButton>
-                  </div>
-                </div>
-                {/*
-                  GENESIS'S ILLUSTRATIONS, in place of the photographs (28 Sep
-                  2026) — drawn in the site's own palette, so they sit on the
-                  card's ground over a soft violet-to-amber glow rather than
-                  in a cropped photo frame. First on a phone, where the
-                  photo column used to disappear altogether.
-                */}
-                <div
-                  aria-hidden
-                  className="relative order-first flex min-h-[15rem] items-center justify-center overflow-hidden p-6 sm:order-none sm:min-h-full"
-                >
-                  <span
-                    className="pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
-                    style={{
-                      background:
-                        "radial-gradient(circle, rgb(255 179 92 / 0.45) 0%, rgb(247 120 143 / 0.28) 40%, rgb(139 92 246 / 0.22) 65%, transparent 75%)",
-                    }}
-                  />
-                  <Image
-                    src={item.art.src}
-                    alt=""
-                    width={item.art.width}
-                    height={item.art.height}
-                    sizes="(min-width: 1024px) 18rem, (min-width: 640px) 40vw, 70vw"
-                    className="relative h-auto max-h-[22rem] w-full max-w-[18rem] object-contain drop-shadow-[0_24px_40px_rgb(0_0_0/0.45)]"
-                  />
-                </div>
-              </article>
-            </Reveal>
-          ))}
-        </ul>
-      </OfferSection>
 
       {/*
         SECTION 03 — CONTENT MONTHLY, with what the plans buy folded under
@@ -165,7 +97,9 @@ export function StudiosPageView() {
             one-time products on the other. The anchor sits on the wrapper so
             "#pricing" lands here whichever side is showing.
           */}
+          {/* "View Pricing" lands on the head, so it is inside the anchor. */}
           <div id="pricing" className="scroll-mt-24">
+            <PricingHead />
             <WorkMode
               oneTime={<OneTimeProducts vertical="studios" bare />}
               membership={
@@ -197,6 +131,8 @@ export function StudiosPageView() {
                 </>
               }
             />
+            {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
+            <BuySteps className="mt-10" />
           </div>
         </OfferSection>
       </PlanBand>

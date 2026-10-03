@@ -65,9 +65,9 @@ export default async function CartCompletePage({ searchParams }: { searchParams:
       <p className="mx-auto mt-5 max-w-lg text-pretty text-body leading-relaxed text-ash">
         {paid
           ? membership
-            ? `${orderName} is confirmed and your membership is active. It renews automatically until you cancel; Razorpay emails a receipt for every payment. The team will reach out within one working day to book your onboarding call.`
+            ? `${orderName} is confirmed and your subscription is active. It renews automatically until you cancel; Razorpay emails a receipt for every payment. The team will reach out within one working day to book your onboarding call.`
             : `${orderName} is confirmed. Your receipt is on its way by email, and the team will reach out within one working day to book your onboarding call.`
-          : "The payment didn't go through, or was cancelled. Nothing has been charged — you can try again whenever you're ready."}
+          : "The payment didn't go through, or was cancelled. Nothing has been charged. You can try again whenever you're ready."}
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         {paid ? (

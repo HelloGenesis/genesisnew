@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Reveal } from "@/components/genesis/reveal";
@@ -171,28 +171,35 @@ export function PlanDetails({
   id,
   title,
   summary,
+  className,
   children,
 }: {
   id?: string;
   title: string;
   summary?: string;
+  /** The gap above, where the bar follows something other than another bar. */
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <details id={id} className="group scroll-mt-28 border-t border-white/10 first-of-type:mt-10 last-of-type:border-b">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
-        <span className="min-w-0">
-          <span className="block font-sans text-lead leading-snug text-bone">{title}</span>
-          {summary && <span className="mt-1 block text-pretty text-small text-ash">{summary}</span>}
-        </span>
-        <span
-          aria-hidden
-          className="grid size-10 shrink-0 place-items-center rounded-full border border-brand/50 text-lead text-brand-ink transition-transform duration-300 group-open:rotate-45 group-hover:bg-brand/10"
-        >
-          +
-        </span>
+    /*
+      ONE DROPDOWN DESIGN (Genesis, 30 Sep 2026: "make the drop down design
+      like … What these terms mean"): a dark bar with the title and a chevron,
+      and what it opens laid out underneath on the page, not boxed.
+
+      ONE GAP BETWEEN THE BARS (Genesis, 2 Oct 2026: "align this properly").
+      Under a plan grid the bars follow its own "What these terms mean", so
+      they all sit 12px apart; it used to open a 40px gap above the first.
+    */
+    <details id={id} className={cn("group mt-3 scroll-mt-28", className)}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-panel border border-[var(--glass-border)] bg-ink p-4 text-small text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:px-5 [&::-webkit-details-marker]:hidden">
+        {title}
+        <ChevronDown aria-hidden className="size-4 shrink-0 text-ash transition-transform duration-300 group-open:rotate-180" />
       </summary>
-      <div className="pb-8 pt-2">{children}</div>
+      <div className="px-1 pb-6 pt-5 sm:px-5">
+        {summary && <p className="mb-5 text-pretty text-small leading-relaxed text-ash">{summary}</p>}
+        {children}
+      </div>
     </details>
   );
 }

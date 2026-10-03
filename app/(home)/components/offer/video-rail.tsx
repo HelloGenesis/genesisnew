@@ -124,7 +124,7 @@ export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly
                 type="button"
                 onClick={() => openCard(index)}
                 onFocus={() => setActive(index)}
-                aria-label={`${video.eyebrow}: ${video.title} — ${video.caseStudy ? "open the case study" : "play the film"}`}
+                aria-label={`${video.eyebrow}: ${video.title}: ${video.caseStudy ? "open the case study" : "play the film"}`}
                 data-track={`ai-hero-card:${video.title}`}
                 className={cn(
                   "group relative block aspect-[9/14] w-full overflow-hidden rounded-panel border bg-ink text-left transition-[border-color,box-shadow,opacity] duration-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
@@ -191,7 +191,20 @@ export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly
         >
           <ArrowRight className="size-4" aria-hidden />
         </button>
-        <span aria-hidden className="mx-2 h-px flex-1 bg-gradient-to-r from-white/25 to-transparent" />
+        {/*
+          THE ONE PROGRESS LINE, between the arrows and the number (Genesis,
+          2 Oct 2026: "keep the gradient line between arrows and 05, remove
+          the other"): it fills in the site's gradient as the clips go by.
+        */}
+        <span aria-hidden className="relative mx-2 h-0.5 flex-1 overflow-hidden rounded-full bg-white/15">
+          <span
+            className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-500 ease-out"
+            style={{
+              width: `${((active + 1) / videos.length) * 100}%`,
+              background: "linear-gradient(115deg, #8b5cf6 0%, #c066d9 30%, #f2607e 65%, #f5923e 100%)",
+            }}
+          />
+        </span>
         <p className="font-display text-h2 font-normal leading-none text-bone" aria-live="polite">
           {String(active + 1).padStart(2, "0")}
           <span className="sr-only"> of {videos.length}</span>

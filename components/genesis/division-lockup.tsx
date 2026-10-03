@@ -114,12 +114,17 @@ const BOARD: Record<string, { slug: string; width: number; height: number }> = {
   74%, in all four. Re-run that script if the artwork is ever re-exported —
   do not hand-edit these numbers.
 */
-const NAME: Record<string, { slug: string; width: number; height: number }> = {
-  Influence: { slug: "influence", width: 362, height: 98 },
-  Studios: { slug: "studios", width: 296, height: 103 },
-  "AI Lab": { slug: "ai-lab", width: 250, height: 98 },
-  "Brand & Design": { slug: "brand-design", width: 616, height: 100 },
-};
+/*
+  NOW THE MARK SET (Genesis, 2 Oct 2026: "update such logos everywhere for
+  all verticals ... where a particular vertical is mentioned in this gradient
+  text"). Everywhere the name stood alone in its gradient — the nav menus,
+  the divisions board, the offer cards and pop-ups, the pricing tabs — it now
+  carries the yellow N in front, as the section headers do. The two sets are
+  cut to the same 66% body and 74% baseline, so the letters stay the size
+  they were at every call site; only the N is added. The name-only files stay
+  in public/brand/divisions/name if this is ever reversed.
+*/
+const NAME = MARK;
 
 /**
  * How tall a lockup stands at full size, in px.
@@ -397,7 +402,7 @@ export function DivisionLockup({
   */
   const src = (variant: "light" | "dark") =>
     nameOnly
-      ? `/brand/divisions/name/${lockup.slug}.png`
+      ? `/brand/divisions/mark/${lockup.slug}.png`
       : board
         ? `/brand/divisions/board/${lockup.slug}-${variant}.png`
         : `/brand/divisions/mark/${lockup.slug}.png`;
@@ -652,7 +657,7 @@ export function DivisionName({
   const width = Math.round((lockup.width / lockup.height) * height);
   return (
     <Image
-      src={`/brand/divisions/name/${lockup.slug}.png`}
+      src={`/brand/divisions/mark/${lockup.slug}.png`}
       alt=""
       width={width}
       height={height}
@@ -661,4 +666,10 @@ export function DivisionName({
       style={{ height, width: "auto" }}
     />
   );
+}
+
+/** The N-and-name artwork's file and size, for a caller that sets it in a line of type. */
+export function divisionMark(name: string): { src: string; width: number; height: number } | null {
+  const art = MARK[name];
+  return art ? { src: `/brand/divisions/mark/${art.slug}.png`, width: art.width, height: art.height } : null;
 }

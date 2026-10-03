@@ -5,18 +5,19 @@ import { Atmosphere } from "@/components/genesis/atmosphere";
 import { DivisionName } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { MembershipCard } from "@/components/genesis/membership-card";
+import { PaymentOptions } from "@/components/genesis/payment-options";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { services } from "@/lib/home-content";
 import { bookingHref, enquiryHref, pricingHub, verticalCard, verticalCards } from "@/lib/pricing";
 import { breadcrumbJsonLd } from "@/lib/seo";
-import { aiEveryVideo, aiPlans, aiTab, aiTurnaround, aiVideoTiers } from "@/lib/verticals/ai-labs";
+import { aiPlans, aiTab, aiTurnaround, aiVideoTiers } from "@/lib/verticals/ai-labs";
 import { designTab, designTurnaround } from "@/lib/verticals/brand-design";
 import { builtFor, campaignPricing, influenceTab } from "@/lib/verticals/influence";
 import { studiosPlans, studiosTab, studiosTurnaround } from "@/lib/verticals/studios";
 import type { VerticalKey } from "@/lib/verticals/types";
-import { IconChips, StepsBlock, TierTag, TurnaroundStrip, VideoTiers } from "./offer/blocks";
+import { IconChips, StepsBlock, TurnaroundStrip, VideoTiers } from "./offer/blocks";
 import { IconTile } from "./offer/icons";
 import { AddToCartIcon, IncludedList } from "@/components/genesis/cart";
 import { productId } from "@/lib/cart";
@@ -24,7 +25,7 @@ import { inr } from "@/lib/money";
 import { products } from "@/lib/products";
 import { LogoStrip } from "./offer/page-furniture";
 import { PlanDetails, SectionHead } from "./offer/parts";
-import { PlanGrid } from "./offer/plan-grid";
+import { BillingProvider, PlanGrid, SharedBillingNote, SharedBillingToggle } from "./offer/plan-grid";
 import { PlanTabs, type PlanTab } from "./offer/plan-tabs";
 import { OneTimeProducts } from "./offer/starter-pack";
 import { ONE_TIME_GRADIENT, TIER_GLOWS, TIER_GRADIENTS } from "./offer/tier-colors";
@@ -102,11 +103,15 @@ export function PricingHubView() {
             >
               {pricingHub.plans.heading}
             </h2>
-            <div className="mt-8">
-              {/* One "one-time or membership" choice for every tab — see WorkMode. */}
+            <div className="mt-6">
+              {/* One "one-time or membership" choice, and one billing, for every tab — see WorkMode and BillingProvider. */}
               <WorkModeProvider>
-                <PlanTabs tabs={tabs()} initial="ai-labs" />
+                <BillingProvider>
+                  <PlanTabs tabs={tabs()} initial="ai-labs" />
+                </BillingProvider>
               </WorkModeProvider>
+              {/* How you can pay — cards, EMI, UPI, autopay (Genesis, 2 Oct 2026). */}
+              <PaymentOptions className="mt-10" />
             </div>
           </div>
         </Reveal>
@@ -115,7 +120,7 @@ export function PricingHubView() {
       <StepsBlock
         id="how-memberships-work"
         data={{
-          label: "Memberships",
+          label: "Subscriptions",
           heading: pricingHub.steps.heading,
           steps: pricingHub.steps.items.map((step, index) => ({
             ...step,
@@ -237,20 +242,23 @@ function TabHead({
   /* The division's own gradient — the one on its name artwork in the tab above. */
   const ramp = services.items.find((item) => item.short === card.short)?.ramp;
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div className="max-w-2xl">
-        <p className="micro-label !text-brand-ink">{label}</p>
-        <h3 className="mt-3 font-display text-h3 font-normal leading-tight tracking-tight text-bone sm:text-h2">
-          <span
-            className="bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
-            style={ramp ? { backgroundImage: ramp } : undefined}
-          >
-            {heading}
-          </span>
-        </h3>
-        {sub && <p className="mt-1 text-lead text-bone">{sub}</p>}
-        {body && <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{body}</p>}
-      </div>
+    /*
+      COMPACT (Genesis, 29 Sep 2026): the plans are what a reader came for, so
+      the tab's heading is one tight block — name and promise on one line,
+      the description under it — and the prices follow straight after.
+    */
+    <div className="max-w-3xl">
+      <p className="micro-label !text-brand-ink">{label}</p>
+      <h3 className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-display text-[1.625rem] font-normal leading-tight tracking-tight text-bone sm:text-h3">
+        <span
+          className="bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]"
+          style={ramp ? { backgroundImage: ramp } : undefined}
+        >
+          {heading}
+        </span>
+        {sub && <span className="font-sans text-body text-bone">{sub}</span>}
+      </h3>
+      {body && <p className="mt-1.5 text-pretty text-small leading-relaxed text-ash">{body}</p>}
     </div>
   );
 }
@@ -262,7 +270,7 @@ function SubHeading({ children }: { children: React.ReactNode }) {
 function tabs(): PlanTab[] {
   /* In Genesis's order for the four — the same as verticalCards. */
   const order = verticalCards.map((card) => card.key);
-  const art = (key: VerticalKey) => <DivisionName name={verticalCard(key).short} height={30} />;
+  const art = (key: VerticalKey) => <DivisionName name={verticalCard(key).short} height={22} />;
   const list: PlanTab[] = [
     {
       key: "ai-labs",
@@ -277,6 +285,8 @@ function tabs(): PlanTab[] {
             what every AI video includes BELOW them.
           */}
           <WorkMode
+            controls={<SharedBillingToggle />}
+            note={<SharedBillingNote />}
             oneTime={
               <>
                 <TabHead vertical="ai-labs" {...aiTab} />
@@ -294,20 +304,7 @@ function tabs(): PlanTab[] {
                   centered
                   intro={<TabHead vertical="ai-labs" {...aiTab} />}
                 />
-                <ul className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-                  {aiEveryVideo.items.map((item) => (
-                    <li
-                      key={item.title}
-                      className="glass-chip flex flex-col items-center gap-2 rounded-card p-3 text-center"
-                    >
-                      <IconTile name={item.icon} className="size-9" />
-                      <span className="text-small text-bone">{item.label?.split("— ")[1] ?? item.title}</span>
-                      <span className="text-[0.6875rem] leading-snug tracking-normal text-faint">{item.title}</span>
-                      {item.tier && <TierTag className="mt-1 text-center">{item.tier}</TierTag>}
-                    </li>
-                  ))}
-                </ul>
-                <PlanDetails id="video-types" title={aiVideoTiers.heading} summary={aiVideoTiers.body}>
+                <PlanDetails id="video-types" title={aiVideoTiers.heading}>
                   <VideoTiers data={aiVideoTiers} bare />
                 </PlanDetails>
               </>
@@ -370,6 +367,8 @@ function tabs(): PlanTab[] {
       content: (
         <>
           <WorkMode
+            controls={<SharedBillingToggle />}
+            note={<SharedBillingNote />}
             oneTime={
               <>
                 <TabHead vertical="studios" {...studiosTab} />

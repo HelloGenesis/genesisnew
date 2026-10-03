@@ -122,13 +122,13 @@ export default function HomePage() {
       */}
       <ClientLogos />
 
-      {/* 05-08 — the four verticals, in Genesis's order: AI Lab, Studios,
-          Brand & Design, Influence. AI Lab carries the automation picture
-          inside its own block. */}
+      {/* 05-08 — the four verticals, in Genesis's order (2 Oct 2026):
+          Influence, AI Lab, Studios, Brand & Design. AI Lab carries the
+          automation picture inside its own block. */}
+      <InfluencerMarketing />
       <AiContent />
       <Studios />
       <BrandingDesign />
-      <InfluencerMarketing />
       {/* How Genesis charges, in one line — see PricingStrip. */}
       <PricingStrip />
 

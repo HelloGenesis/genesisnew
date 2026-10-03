@@ -117,7 +117,13 @@ const INFLUENCE_RAIL = INFLUENCE_REELS.slice(0, 8).map((reel) => ({
   title: reel.label,
 }));
 
-export function InfluencerMarketing() {
+/**
+ * `onPage`: the section on its own division's page, under the page's hero
+ * (Genesis, 2 Oct 2026). Without its header — the page's hero already names
+ * the division — and without its plan bar: the page's own pricing section,
+ * further down, is the one place to buy.
+ */
+export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {}) {
 
   return (
     <section
@@ -158,13 +164,15 @@ export function InfluencerMarketing() {
           leaves the two columns to do what they are for: the reading on one
           side, the constellation on the other.
         */}
-        <Reveal className="flex flex-col items-center text-center">
-          <DivisionLockup
-            name="Influence"
-            tagline={services.items[0].caption}
-            ramp={services.items[0].ramp}
-          />
-        </Reveal>
+        {!onPage && (
+          <Reveal className="flex flex-col items-center text-center">
+            <DivisionLockup
+              name="Influence"
+              tagline={services.items[0].caption}
+              ramp={services.items[0].ramp}
+            />
+          </Reveal>
+        )}
 
         {/*
           THE CATEGORIES SIT UNDER THE MARK, CENTRED, AND ACROSS THE WHOLE
@@ -434,7 +442,7 @@ export function InfluencerMarketing() {
           section they read as what they are.
         */}
 
-        <PlanBar vertical="influence" className="!mt-6" />
+        {!onPage && <PlanBar vertical="influence" className="!mt-6" />}
       </div>
 
     </section>

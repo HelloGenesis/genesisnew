@@ -13,6 +13,7 @@ import Link from "next/link";
 import { cn, isPlainClick } from "@/lib/utils";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { watchReader } from "@/lib/slider";
+import { RailProgress } from "@/components/genesis/rail-progress";
 
 /**
  * Movie-poster card — the "Genesis Netflix" unit (img-025, img-026, img-013).
@@ -568,6 +569,13 @@ export function PosterCard({
           </div>
         ))}
       </div>
+      {/*
+        IN THE PAGE'S COLUMN, NOT EDGE TO EDGE (Genesis, 2 Oct 2026: "make
+        this as other — why is this end to end"). The cards bleed to the
+        screen's edges; the bar under them keeps to the same 6xl column as
+        every other section's.
+      */}
+      <RailProgress rail={railRef} className="mx-auto mt-1 w-full max-w-6xl px-6" />
       <RailArrow
         direction="left"
         label="Previous case study"

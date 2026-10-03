@@ -1,14 +1,14 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, Check, ChevronDown } from "lucide-react";
 
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { mediaUrl } from "@/lib/media-url";
 import type { Closing, Faq, IconCard, Steps, Turnaround } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 import { IconTile, OfferIcon } from "./icons";
 import { CheckList, OfferSection, SectionHead } from "./parts";
+import { VerticalCtas } from "./vertical-ctas";
 
 /**
  * The repeating blocks of the four vertical pages. Each takes a slice of a
@@ -215,9 +215,18 @@ export function TurnaroundBlock({ data, id }: { data: Turnaround; id?: string })
   );
 }
 
-export function TurnaroundStrip({ data, className }: { data: Turnaround; className?: string }) {
+export function TurnaroundStrip({
+  data,
+  className,
+  stacked = false,
+}: {
+  data: Turnaround;
+  className?: string;
+  /** One card above another — a narrow column, such as beside a product's price. */
+  stacked?: boolean;
+}) {
   return (
-    <ul className={cn("grid gap-3 md:grid-cols-3", className)}>
+    <ul className={cn("grid gap-3", !stacked && "md:grid-cols-3", className)}>
       {data.tiers.map((tier, index) => (
         <Reveal as="li" key={tier.time} delay={0.05 * index} className="flex">
           <div
@@ -232,6 +241,28 @@ export function TurnaroundStrip({ data, className }: { data: Turnaround; classNa
               <p className="mt-1 text-small text-brand-ink">{tier.title}</p>
               {tier.items && (
                 <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{tier.items.join(" · ")}</p>
+              )}
+              {tier.detail && (
+                <details className="group/tier mt-2">
+                  <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-full text-small text-bone/80 transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
+                    {tier.detail.label}
+                    <ChevronDown aria-hidden className="size-3.5 transition-transform duration-300 group-open/tier:rotate-180" />
+                  </summary>
+                  {tier.detail.lead && <span className="mt-2 block text-small text-faint">{tier.detail.lead}</span>}
+                  <ul className="mt-2.5 space-y-1.5">
+                    {tier.detail.items.map((item) => (
+                      <li key={item} className="flex gap-2.5 text-small leading-snug text-bone/90">
+                        <Check aria-hidden className="mt-0.5 size-3.5 shrink-0 text-brand-ink" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+              {tier.note && (
+                <p className="mt-2 border-t border-[var(--glass-border)] pt-2 text-pretty text-[0.75rem] leading-relaxed text-faint">
+                  {tier.note}
+                </p>
               )}
             </div>
           </div>
@@ -273,16 +304,7 @@ export function ClosingBand({
                 {line}
               </p>
             ))}
-            <div className="mt-8 flex flex-wrap gap-3">
-              <GlassButton href={data.primary.href} variant="brand" size="lg" arrow magnetic>
-                {data.primary.label}
-              </GlassButton>
-              {data.secondary && (
-                <GlassButton href={data.secondary.href} variant="glass" size="lg" arrow>
-                  {data.secondary.label}
-                </GlassButton>
-              )}
-            </div>
+            <VerticalCtas className="mt-8" />
             {data.footnote && (
               <p className="mt-8 text-small text-faint">{data.footnote.join(" ")}</p>
             )}

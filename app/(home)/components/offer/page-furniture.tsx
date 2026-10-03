@@ -1,4 +1,3 @@
-import Link from "next/link";
 
 import { LogoMarquee } from "@/components/genesis/logo-marquee";
 import { Reveal } from "@/components/genesis/reveal";
@@ -6,55 +5,16 @@ import { SectionLabel } from "@/components/genesis/section-label";
 import { WorkGrid } from "@/components/genesis/work-grid";
 import { findCaseStudyPage, type CaseStudyPage } from "@/lib/case-study-pages";
 import { clients } from "@/lib/home-content";
-import { verticalCards } from "@/lib/pricing";
-import type { VerticalKey } from "@/lib/verticals/types";
 import { expandToClips, matchesFilter, work } from "@/lib/work";
 import { cn } from "@/lib/utils";
 import { LogoMark } from "../client-logos";
-import { Breadcrumbs, StudyCard } from "../service-page";
+import { StudyCard } from "../service-page";
 import { GlassButton } from "@/components/genesis/glass-button";
 
 /**
- * What sits around every vertical page's own content: the way between the
- * four, the client row, and the work.
+ * What sits around every vertical page's own content: the client row and the
+ * work.
  */
-
-/**
- * Breadcrumb and the four verticals as tabs, centred — "MAKE THIS CENTERED
- * ALIGNED". Each tab is the vertical's page, so moving between them is a
- * link, not a state: the address bar, back button and a shared URL all agree.
- */
-export function VerticalNav({ current }: { current: VerticalKey }) {
-  const card = verticalCards.find((item) => item.key === current)!;
-  return (
-    <div className="relative z-[2] mx-auto flex w-full max-w-6xl flex-col items-center px-6 pt-28 text-center sm:pt-32">
-      <Breadcrumbs trail={[{ name: card.name, path: card.href }]} />
-      <nav aria-label="Genesis verticals" className="mt-5 w-full">
-        <ul className="flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 [scrollbar-width:none] sm:justify-center">
-          {verticalCards.map((item) => {
-            const active = item.key === current;
-            return (
-              <li key={item.key} className="shrink-0">
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "inline-flex h-10 items-center rounded-full px-5 text-small transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-                    active
-                      ? "bg-brand text-on-brand"
-                      : "glass-chip text-ash hover:text-bone",
-                  )}
-                >
-                  {item.key === "ai-labs" ? "AI Labs" : item.short}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </div>
-  );
-}
 
 /**
  * The client marks in ONE line — "ADD LOGOS (just one line)" — under the

@@ -17,7 +17,7 @@ export const campaignPricing = {
   label: "Campaign management",
   heading: "Influencer &",
   headingAccent: "UGC Campaigns",
-  body: "End-to-end creator campaigns that drive real results — from strategy to reporting.",
+  body: "End-to-end creator campaigns that drive real results, from strategy to reporting.",
   figure: "15%",
   figureLabel: "Agency Commission",
   figureSub: "+ creator fees",
@@ -121,7 +121,7 @@ export const influenceClosing = {
   label: "Let's create together",
   heading: "From brief to creator shortlisting,",
   headingAccent: "without the chaos.",
-  body: "Strategy, creators, content and campaign management — all in one place.",
+  body: "Strategy, creators, content and campaign management, all in one place.",
   primary: "Start an Influencer Project",
   secondary: "Book a 15-min Call",
 } as const;

@@ -2,10 +2,11 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 
 import { cn } from "@/lib/utils";
 import { AvatarDialog } from "./avatar-dialog";
+import { RailProgress } from "./rail-progress";
 
 /**
  * The AI avatar roster, dealt as a hand of cards.
@@ -193,6 +194,8 @@ export function AvatarFan({
   const fan = useFanRoom();
   /* Which avatar is open over the page. They were routes; see AvatarDialog. */
   const [openId, setOpenId] = useState<string | null>(null);
+  /* The swiping row on a phone, for its progress bar. */
+  const swipe = useRef<HTMLDivElement>(null);
 
   return (
     /*
@@ -209,6 +212,7 @@ export function AvatarFan({
     */
     <>
     <div
+      ref={swipe}
       className={cn(
         /*
           2.08, NOT 2.2. Measured with the fan actually SPREAD — the first
@@ -479,6 +483,8 @@ export function AvatarFan({
         );
       })}
     </div>
+    {/* Only where the row scrolls: hidden by itself while the fan is spread. */}
+    {!fan && <RailProgress rail={swipe} className="mx-6 mt-3" />}
     <AvatarDialog id={openId} onClose={() => setOpenId(null)} onNavigate={setOpenId} />
     </>
   );

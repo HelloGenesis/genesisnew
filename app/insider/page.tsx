@@ -145,7 +145,7 @@ export default async function InsiderPage() {
 
         {/* Out of scope: shown as locked so the shape is legible. */}
         <section>
-          <SectionLabel>Workspace — not built yet</SectionLabel>
+          <SectionLabel>Workspace: not built yet</SectionLabel>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {WORKSPACE_MODULES.map((module) => (
               <div
@@ -162,8 +162,8 @@ export default async function InsiderPage() {
             ))}
           </div>
           <p className="mt-6 max-w-2xl text-small leading-relaxed text-faint">
-            The Genesis Workspace — client and project management, the content
-            production pipeline, invoicing and automations — is a separate
+            The Genesis Workspace (client and project management, the content
+            production pipeline, invoicing and automations) is a separate
             build. The infrastructure here (auth, database, storage, audit
             trail) is arranged so those can be added without re-architecting.
           </p>

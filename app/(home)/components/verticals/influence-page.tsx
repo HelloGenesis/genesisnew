@@ -5,23 +5,29 @@ import { GlassButton } from "@/components/genesis/glass-button";
 import { PlatformMark } from "@/components/genesis/platform-icons";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
+import { divisionMenu } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
-import { bookingHref, enquiryHref } from "@/lib/pricing";
+import { enquiryHref } from "@/lib/pricing";
 import { servicePage } from "@/lib/services";
 import {
   builtFor,
   campaignPricing,
   influenceClosing,
-  influenceCtas,
   influenceProcess,
   influenceServices,
 } from "@/lib/verticals/influence";
 import { InfluencerMarketing } from "../influencer-marketing";
 import { OneTimeProducts } from "../offer/starter-pack";
+import { WorkMode } from "../offer/work-mode";
 import { IconChips, StepsBlock } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { OfferSection, PlanBand } from "../offer/parts";
+import { PlugHeadline } from "../offer/plug-headline";
+import { ServiceStrip } from "../offer/vertical-hero";
+import { VerticalCtas } from "../offer/vertical-ctas";
+import { BuySteps } from "../offer/buy-steps";
+import { PricingHead } from "../offer/pricing-head";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("influencer-marketing");
@@ -36,8 +42,6 @@ const planHref = enquiryHref("an influencer campaign");
 export function InfluencePageView() {
   return (
     <VerticalPage page={page} current="influence"
-      hiddenTitle
-      primary={{ label: "Start a campaign", href: "#pricing" }}
       jump={[
         { id: "pricing", label: "Pricing" },
         { id: "services", label: "Services" },
@@ -46,15 +50,42 @@ export function InfluencePageView() {
         { id: "library", label: "Work" },
       ]}>
       {/* The division's homepage section, unchanged — the brief's own screenshot. */}
-      <InfluencerMarketing />
+      {/*
+        THE PAGE'S HEADLINE, the same sentence as the other three (Genesis,
+        2 Oct 2026): "Plug Genesis.Influence into your brand. Whenever you
+        need …", with the division's services under it. Then the homepage's
+        Influence section, as before.
+      */}
+      {/*
+        LEFT-ALIGNED, ALL OF IT, ON ONE EDGE (Genesis, 2 Oct 2026: "keep it
+        left aligned only"): the headline, the line under it and the services
+        start where the section below starts.
+      */}
+      <Reveal className="mx-auto w-full max-w-7xl px-6 pt-10 lg:pt-14">
+        <PlugHeadline division="Influence" services={divisionMenu("/influencer-marketing")} className="max-w-5xl" />
+        <ServiceStrip items={divisionMenu("/influencer-marketing")} className="mt-8" />
+      </Reveal>
+      <InfluencerMarketing onPage />
 
       <LogoStrip heading={false} />
 
+      {/*
+        THE SAME SWITCH AS THE OTHER DIVISIONS (Genesis, 2 Oct 2026): the UGC
+        packs and campaign management to buy once on one side, the managed
+        campaign (15% commission) on the other.
+      */}
       <PlanBand>
-        <CampaignPricing />
-        {/* Genesis's one-time Influence products — UGC packs and campaign management (lib/products). */}
-        <OfferSection className="pt-0">
-          <OneTimeProducts vertical="influence" />
+        <OfferSection>
+          {/* "View Pricing" lands on the head, so it is inside the anchor. */}
+          <div id="pricing" className="scroll-mt-24">
+            <PricingHead />
+            <WorkMode
+              oneTime={<OneTimeProducts vertical="influence" bare />}
+              membership={<CampaignPricing />}
+            />
+            {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
+            <BuySteps className="mt-10" />
+          </div>
         </OfferSection>
       </PlanBand>
 
@@ -70,13 +101,8 @@ export function InfluencePageView() {
       <Services />
 
       <StepsBlock data={influenceProcess} id="process" />
-      <Reveal className="mx-auto -mt-6 flex w-full max-w-6xl flex-wrap gap-3 px-6 pb-[var(--section-pad)]">
-        <GlassButton href={bookingHref("Genesis Influence")} variant="brand" size="lg" arrow>
-          {influenceCtas.schedule}
-        </GlassButton>
-        <GlassButton href={enquiryHref("Genesis Influence")} variant="glass" size="lg" arrow>
-          {influenceCtas.touch}
-        </GlassButton>
+      <Reveal className="mx-auto -mt-6 w-full max-w-6xl px-6 pb-[var(--section-pad)]">
+        <VerticalCtas />
       </Reveal>
 
       <WorkSection verticals={["Influence"]} />
@@ -89,7 +115,7 @@ export function InfluencePageView() {
 /** "Influencer & UGC Campaigns — Creator fees + 15% Agency Commission." */
 function CampaignPricing() {
   return (
-    <OfferSection id="pricing" labelledBy="campaign-pricing-heading">
+    <section aria-labelledby="campaign-pricing-heading">
       <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel">
         <div className="relative grid lg:grid-cols-[1fr_0.9fr]">
           <div className="relative z-[1] p-6 sm:p-10 lg:p-12">
@@ -144,7 +170,7 @@ function CampaignPricing() {
           </p>
         </div>
       </Reveal>
-    </OfferSection>
+    </section>
   );
 }
 
@@ -169,14 +195,7 @@ function Services() {
               {line}
             </p>
           ))}
-          <div className="mt-8 flex flex-wrap gap-3">
-            <GlassButton href={planHref} variant="brand" arrow>
-              {influenceServices.primary}
-            </GlassButton>
-            <GlassButton href="#case-studies" variant="glass">
-              {influenceServices.secondary}
-            </GlassButton>
-          </div>
+          <VerticalCtas size="md" className="mt-8" />
           <dl className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
             {influenceServices.stats.map((stat) => (
               <div key={stat.label} className="border-l border-white/12 pl-4">
@@ -208,7 +227,7 @@ function Services() {
                   <p className="mb-5 mt-2 text-pretty text-small leading-relaxed text-ash">{card.body}</p>
                   <a
                     href="#case-studies"
-                    aria-label={`${card.title} — case studies`}
+                    aria-label={`${card.title}: case studies`}
                     className="mt-auto grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand"
                   >
                     <ArrowRight className="size-4" aria-hidden />
@@ -248,14 +267,7 @@ function Closing() {
           </h2>
           <p className="mt-4 text-pretty text-body leading-relaxed text-ash">{influenceClosing.body}</p>
         </div>
-        <div className="relative flex flex-wrap gap-3 lg:flex-col lg:items-stretch">
-          <GlassButton href={planHref} variant="brand" size="lg" arrow magnetic>
-            {influenceClosing.primary}
-          </GlassButton>
-          <GlassButton href={bookingHref("Genesis Influence")} variant="glass" size="lg" arrow>
-            {influenceClosing.secondary}
-          </GlassButton>
-        </div>
+        <VerticalCtas stacked className="relative" />
       </Reveal>
     </OfferSection>
   );

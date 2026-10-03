@@ -1,7 +1,7 @@
 
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionBoard } from "@/components/genesis/division-board";
-import { GlassButton } from "@/components/genesis/glass-button";
+import { WordCycler } from "@/components/genesis/word-cycler";
 import { homeHero } from "@/lib/pricing";
 
 /**
@@ -178,35 +178,29 @@ export function Services() {
           copy and its two buttons. Still the page's one h1.
         */}
         <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center text-center sm:mt-10">
-          <h1 className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-            {homeHero.heading}{" "}
-            <span className="font-serif italic text-brand-ink">
-              {homeHero.headingAccent}
-            </span>
-          </h1>
-          <p className="mt-3 text-balance text-small leading-relaxed text-ash sm:mt-4 sm:text-lead">
-            {homeHero.body}
-          </p>
           {/*
-            THREE WAYS ON (Genesis, 29 Sep 2026), each saying where it starts:
-            memberships, the standalone one-time services, and the case
-            studies. Stacked on a phone, where three long labels cannot share
-            a line; in a row from sm.
+            THE SENTENCE IS THE HEADLINE (Genesis, 2 Oct 2026: "remove One
+            team. On demand. … make 'Plug Genesis into your brand whenever you
+            need' the hero"). It is the page's one h1, set at the size the old
+            heading had, with the services sliding up in the gradient as its
+            second line — see WordCycler. That line is as tall as any word in
+            it, so the orb and everything above never moves.
           */}
-          <div className="mt-6 flex w-full flex-col items-stretch gap-2 min-[480px]:w-auto min-[480px]:items-center sm:mt-7 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3 lg:w-max lg:flex-nowrap">
-            {homeHero.ctas.map((cta, index) => (
-              <GlassButton
-                key={cta.href}
-                href={cta.href}
-                pageLink
-                variant={index === 0 ? "brand" : "glass"}
-                arrow
-                className="max-sm:h-11 max-sm:px-5 max-sm:text-[0.8125rem]"
-              >
-                {cta.label}
-              </GlassButton>
-            ))}
-          </div>
+          <h1 className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
+            {homeHero.lead}{" "}
+            <WordCycler
+              words={homeHero.services}
+              suffix={<span className="text-brand-ink">.</span>}
+              className="mt-1 grid"
+            />
+          </h1>
+          <p className="mt-3 text-small leading-relaxed text-ash sm:text-lead">{homeHero.close}</p>
+          {/*
+            NO BUTTONS UNDER THE HERO (Genesis, 2 Oct 2026: "remove these
+            buttons from the home page"). The three "Explore Subscriptions /
+            Pay-per-project / Case Studies" buttons are gone; the divisions
+            around the orb and each section's offers are the way on.
+          */}
         </div>
       </div>
     </section>
