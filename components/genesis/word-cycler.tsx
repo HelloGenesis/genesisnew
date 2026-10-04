@@ -48,7 +48,13 @@ export function WordCycler({
   const previous = (index - 1 + words.length) % words.length;
 
   return (
-    <span className={cn("relative inline-grid overflow-hidden py-[0.12em] align-bottom", className)}>
+    /*
+      CLIPPED, NOT overflow-hidden. A box with hidden overflow takes its
+      baseline from its bottom edge, which lifted the word off the line of the
+      sentence around it ("align it properly"). A clip-path hides the words
+      waiting above and below just the same and leaves the baseline alone.
+    */
+    <span className={cn("relative inline-grid py-[0.12em] [clip-path:inset(0_-0.6em)]", className)}>
       <span className="sr-only">{words.join(", ")}</span>
       {words.map((word, i) => {
         const state = i === index ? "in" : i === previous ? "out" : "wait";

@@ -483,7 +483,7 @@ function OfferCard({ tile, tier, lit, onOpen }: { tile: Tile; tier: number; lit:
             <DivisionName name={card.short} height={18} className="self-start" />
           )}
           <span
-            className="shrink-0 whitespace-nowrap rounded-full border border-[var(--glass-border)] px-2 py-0.5 text-[0.5625rem] uppercase tracking-[0.1em] text-ash"
+            className="shrink-0 whitespace-nowrap rounded-full border border-[var(--glass-border)] px-2 py-0.5 text-[0.6875rem] uppercase tracking-[0.1em] text-ash"
           >
             {tile.custom ? "Custom" : tile.kind === "membership" ? "Subscription" : "Pay-per-project"}
           </span>

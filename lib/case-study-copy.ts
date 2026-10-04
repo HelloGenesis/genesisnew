@@ -1,3 +1,4 @@
+import { websiteStudies, type Outcome } from "./case-study-2026";
 import type { ReelId, Vertical } from "./work";
 
 /**
@@ -57,9 +58,21 @@ export type CaseStudyCopy = {
    * still reads the whole folder for its sketch strip.
    */
   art?: string;
+  /* ---- Genesis's website write-ups, 3 Oct 2026 (lib/case-study-2026) ---- */
+  /** The card's one line. */
+  card?: string;
+  subtitle?: string;
+  outcomeLabel?: "Outcome" | "Impact";
+  /** The results as figures: "17M+" / "views". */
+  outcome?: Outcome[];
+  featured?: string;
+  /** Every film of the study, in Genesis's order; the first leads. */
+  films?: ReelId[];
+  /** Written by Genesis for the site, so the "generated using AI" note does not apply. */
+  written?: boolean;
 };
 
-export const caseStudyCopy: CaseStudyCopy[] = [
+const masterCopy: CaseStudyCopy[] = [
   {
     "n": 1,
     "division": "Influence",
@@ -1311,6 +1324,40 @@ export const videoOnlyStudies: { n: number; brand: string; clip: ReelId }[] = [
     "clip": 26
   }
 ];
+
+/*
+  THE MASTER, WITH GENESIS'S WEBSITE WRITE-UPS LAID OVER IT. Ten studies were
+  rewritten for the site (lib/case-study-2026); each replaces its entry here
+  in place — same number, same page address — with its own copy, figures and
+  films. The fields the old structure had no use for here (approach,
+  execution, takeaway) are emptied so the page shows only what Genesis wrote.
+*/
+export const caseStudyCopy: CaseStudyCopy[] = masterCopy.map((entry) => {
+  const site = websiteStudies[entry.n];
+  if (!site) return entry;
+  return {
+    ...entry,
+    division: site.division,
+    headline: site.headline,
+    campaign: site.campaign,
+    highlight: null,
+    flagged: false,
+    brief: site.story,
+    approach: [],
+    execution: [],
+    executionNote: "",
+    results: site.outcome.map((o) => `${o.value} ${o.label}`),
+    takeaway: "",
+    clip: site.films[0],
+    card: site.card,
+    subtitle: site.subtitle,
+    outcomeLabel: site.outcomeLabel,
+    outcome: site.outcome,
+    featured: site.featured,
+    films: site.films,
+    written: true,
+  };
+});
 
 export function findCopy(n: number): CaseStudyCopy | undefined {
   return caseStudyCopy.find((entry) => entry.n === n);

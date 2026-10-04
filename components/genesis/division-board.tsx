@@ -38,8 +38,8 @@ import { cn } from "@/lib/utils";
  *     answers "I am currently interacting with AI Lab" — a highlight with no
  *     contrast against its neighbours is just a highlight.
  *   THE ORB TURNS AND LIGHTS toward that division's own corner. Influence
- *     top-left, AI Lab top-right, Studios bottom-right, Brand & Design
- *     bottom-left, which is the arrangement on screen.
+ *     top-left, AI Lab top-right, Studios bottom-left, Brand & Design
+ *     bottom-right, which is the arrangement on screen.
  *
  * THE FIRST LOAD IS A SEQUENCE, NOT A REVEAL. Genesis: navbar, then the orb,
  * then the wordmark, then the four verticals, the whole thing inside about a
@@ -67,8 +67,9 @@ import { cn } from "@/lib/utils";
  */
 const CORNERS: OrbFocus[] = [
   { x: -1, y: -1 }, // Influence — top-left
-  { x: -1, y: 1 }, //  Brand & Design — bottom-left
-  { x: 1, y: 1 }, //   Studios — bottom-right
+  /* Brand & Design and Studios swapped sides (Genesis, 3 Oct 2026). */
+  { x: 1, y: 1 }, //   Brand & Design — bottom-right
+  { x: -1, y: 1 }, //  Studios — bottom-left
   { x: 1, y: -1 }, //  AI Lab — top-right
 ];
 
@@ -92,8 +93,8 @@ const CORNERS: OrbFocus[] = [
  */
 const PLACEMENT = [
   "col-start-1 row-start-1 items-center text-center lg:col-start-1 lg:row-start-1 lg:items-end lg:text-right",
-  "col-start-1 row-start-3 items-center text-center lg:col-start-1 lg:row-start-2 lg:items-end lg:text-right",
   "col-start-2 row-start-3 items-center text-center lg:col-start-3 lg:row-start-2 lg:items-start lg:text-left",
+  "col-start-1 row-start-3 items-center text-center lg:col-start-1 lg:row-start-2 lg:items-end lg:text-right",
   "col-start-2 row-start-1 items-center text-center lg:col-start-3 lg:row-start-1 lg:items-start lg:text-left",
 ];
 
@@ -326,7 +327,7 @@ export function DivisionBoard() {
                 own state from here.
               */
               className={cn(
-                "group flex w-full flex-col rounded-sm outline-none",
+                "group flex min-h-11 w-full flex-col justify-center rounded-sm outline-none lg:min-h-0",
                 "transition-[transform,opacity,filter] duration-300 ease-out",
                 "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-transparent",
                 /* The names take the smallest share of the parallax: 2px,

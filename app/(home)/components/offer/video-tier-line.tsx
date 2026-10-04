@@ -58,7 +58,7 @@ export function VideoTierLine({ text, detail, className }: { text: string; detai
     <span className={cn("block min-w-0", className)}>
       {text}
       <details className="group/tier mt-1" onClick={(event) => event.stopPropagation()}>
-        <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-full text-small text-ash transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
+        <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 rounded-full text-small text-ash transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
           What&rsquo;s in each video
           <ChevronDown aria-hidden className="size-3.5 transition-transform duration-300 group-open/tier:rotate-180" />
         </summary>

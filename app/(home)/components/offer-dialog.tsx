@@ -7,7 +7,7 @@ import { useRef, useState } from "react";
 import { DivisionName } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { GlassIcon, type GlassIconName } from "@/components/genesis/glass-icon";
-import { NoTransferPromise, PaymentOptions } from "@/components/genesis/payment-options";
+import { PaymentOptions } from "@/components/genesis/payment-options";
 import { WORD_GRADIENT } from "@/components/genesis/word-cycler";
 import { Overlay, type OverlayPager } from "@/components/genesis/overlay";
 import { RailProgress } from "@/components/genesis/rail-progress";
@@ -140,7 +140,7 @@ function OfferDetail({ tile }: { tile: Tile }) {
   ];
 
   return (
-    <div className="px-5 pb-0 pt-0 sm:px-8">
+    <div className="px-2 pb-0 pt-0 sm:px-8">
       <PopupNav sections={navSections} />
       {/*
         THE HEADER: whose it is, what it is — and, beside it, a gallery of the
@@ -186,8 +186,7 @@ function OfferDetail({ tile }: { tile: Tile }) {
       ) : (
         <ProjectBody tile={tile} division={division} extras={extras} onExtrasChange={setExtras} />
       )}
-      {/* The promise, under the offer and its price rather than in the header (Genesis, 3 Oct 2026: "move this below"). */}
-      <NoTransferPromise className="mt-8" />
+      {/* The promise is the payment section's own headline, below — not repeated here as a banner. */}
 
       {/*
         WHAT /PRICING SAYS AROUND THE PLANS, HERE TOO (Genesis, 2 Oct 2026:
@@ -217,7 +216,7 @@ function OfferDetail({ tile }: { tile: Tile }) {
         <section data-section="work" className="mt-10" aria-labelledby={`${tile.key}-studies`}>
           <div className="flex items-baseline justify-between gap-3">
             <h3 id={`${tile.key}-studies`} className="font-sans text-lead text-bone">
-              {division} work for real brands
+              Previous work &amp; case studies
             </h3>
             <Link href="/#library" data-page-link className="text-small text-ash hover:text-brand-ink">
               All case studies
@@ -440,7 +439,14 @@ function ProjectBody({
   const base = productFor(tile)?.price;
   return (
     <>
-    <div data-section="included" className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+    {/* `min-w-0` on both boxes: a wide row inside (the avatar strip) scrolls rather than stretching the box past the window. */}
+    {/*
+      `items-start`: each box is as tall as what it holds. Stretched to match,
+      the price box opened a screen of blank space above its extras (Genesis,
+      3 Oct 2026: "I don't want the blank page here"). On a laptop the price
+      box stays in view while the longer box beside it scrolls.
+    */}
+    <div data-section="included" className="mt-8 grid items-start gap-6 lg:grid-cols-[1.1fr_0.9fr] [&>*]:min-w-0">
       <div className="glass-card rounded-panel p-5 sm:p-6">
         <p className="micro-label">What&rsquo;s included</p>
         {/*
@@ -464,11 +470,9 @@ function ProjectBody({
         </ul>
         {/* The note as a graphic: its workflow as steps, its other lines with icons (see NoteExplainer). */}
         {product?.note && <NoteExplainer note={product.note} part="notes" />}
-        {/* Build Your AI Avatar Clone only: the avatars Genesis has already built. */}
-        {product?.name === "Build Your AI Avatar Clone" && <AvatarShowcase />}
       </div>
 
-      <div data-section="customise" className="flex flex-col gap-4 glass-card rounded-panel p-5 sm:p-6">
+      <div data-section="customise" className="flex flex-col gap-4 glass-card rounded-panel p-5 sm:p-6 lg:sticky lg:top-16">
         <p className="micro-label">Price</p>
         <p className="flex flex-wrap items-baseline gap-x-2" aria-live="polite">
           <span className="font-display text-h2 font-normal leading-none tracking-tight text-bone">
@@ -519,6 +523,8 @@ function ProjectBody({
       should be out of the box"): the approval workflow as one row of steps,
       then the typical turnaround as its own row of three.
     */}
+    {/* Build Your AI Avatar Clone only: the avatars Genesis has built, full width (out of the box). */}
+    {product?.name === "Build Your AI Avatar Clone" && <AvatarShowcase />}
     {product?.note && <NoteExplainer note={product.note} part="flow" />}
     {TURNAROUND[tile.vertical] && (
       <section className="mt-10">
@@ -712,7 +718,7 @@ function AudiencePills({ tags, need }: { tags: readonly string[]; need?: string 
 function AvatarShowcase() {
   const rail = useRef<HTMLUListElement>(null);
   return (
-    <section className="mt-8 border-t border-[var(--glass-border)] pt-6" aria-labelledby="avatar-showcase">
+    <section className="mt-10" aria-labelledby="avatar-showcase">
       <p id="avatar-showcase" className="micro-label">
         Avatars we&rsquo;ve built
       </p>
@@ -730,7 +736,7 @@ function AvatarShowcase() {
             {/* eslint-disable-next-line @next/next/no-img-element -- a portrait at card size, through the image optimiser */}
             <img src={posterSrc(shot.src, 384)} alt={`${shot.name}, ${shot.line}: a Genesis AI avatar`} loading="lazy" className="absolute inset-0 size-full object-cover" />
             <span aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/85 to-transparent" />
-            <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[0.625rem] uppercase tracking-[0.1em] text-white/85">
+            <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[0.6875rem] uppercase tracking-[0.1em] text-white/85">
               {shot.kind}
             </span>
             <span className="absolute inset-x-0 bottom-0 p-3">
@@ -755,7 +761,7 @@ function AvatarShowcase() {
           Any setting, any look, any product. If you can picture it, we can create it, and change it whenever
           your content needs something new.
         </p>
-        <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
+        <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
           {AVATAR_CAN.map(([icon, title, line]) => (
             <li key={title} className="flex items-start gap-3 rounded-card bg-[var(--hover-wash)] p-3">
               <GlassIcon name={icon} className="size-8 shrink-0" />

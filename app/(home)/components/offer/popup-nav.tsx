@@ -54,12 +54,12 @@ export function PopupNav({ sections }: { sections: { key: string; label: string 
       data-popup-nav
       aria-label="In this window"
       /*
-        FLUSH WITH THE WINDOW'S EDGES. The window pads its content (p-6 / p-9)
-        and the pop-up pads again (px-5 / px-8); the tabs pull back through
+        FLUSH WITH THE WINDOW'S EDGES. The window pads its content (p-4 / p-9)
+        and the pop-up pads again (px-2 / px-8); the tabs pull back through
         both, and stick at minus the top padding, so nothing scrolls past
         above or beside them.
       */
-      className="sticky -top-6 z-20 -mx-11 -mt-6 mb-6 border-b border-[var(--glass-border)] bg-[color-mix(in_srgb,var(--surface-raised)_92%,transparent)] px-11 py-2.5 backdrop-blur-xl sm:-top-9 sm:-mx-[4.25rem] sm:-mt-9 sm:px-[4.25rem]"
+      className="sticky -top-4 z-20 -mx-6 -mt-4 mb-6 border-b border-[var(--glass-border)] bg-[color-mix(in_srgb,var(--surface-raised)_92%,transparent)] px-6 py-2.5 backdrop-blur-xl sm:-top-9 sm:-mx-[4.25rem] sm:-mt-9 sm:px-[4.25rem]"
     >
       <ul className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {sections.map(({ key, label }) => (
@@ -93,7 +93,7 @@ export function BuyBar({ name, price, action, onAction }: { name: string; price:
     <div
       ref={bar}
       /* Flush with the window's foot and sides — see PopupNav. */
-      className="sticky -bottom-6 z-20 -mx-11 -mb-6 mt-10 border-t border-[var(--glass-border)] bg-[color-mix(in_srgb,var(--surface-raised)_92%,transparent)] px-11 py-3 backdrop-blur-xl sm:-bottom-9 sm:-mx-[4.25rem] sm:-mb-9 sm:px-[4.25rem]"
+      className="sticky -bottom-4 z-20 -mx-6 -mb-4 mt-10 border-t border-[var(--glass-border)] bg-[color-mix(in_srgb,var(--surface-raised)_92%,transparent)] px-6 py-3 backdrop-blur-xl sm:-bottom-9 sm:-mx-[4.25rem] sm:-mb-9 sm:px-[4.25rem]"
     >
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">

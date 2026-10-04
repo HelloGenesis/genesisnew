@@ -244,7 +244,7 @@ export function TurnaroundStrip({
               )}
               {tier.detail && (
                 <details className="group/tier mt-2">
-                  <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-full text-small text-bone/80 transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
+                  <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 rounded-full text-small text-bone/80 transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
                     {tier.detail.label}
                     <ChevronDown aria-hidden className="size-3.5 transition-transform duration-300 group-open/tier:rotate-180" />
                   </summary>

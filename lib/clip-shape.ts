@@ -21,6 +21,10 @@ const RATIOS: Record<string, number> = {
   "studios-mr-mayank-bathwal-ceo-aditya-birla-health-insurance": 16 / 9,
   "studios-umang-2024": 16 / 9,
   "studios-wo-vo-sales-pro": 16 / 9,
+  /* Genesis's case study library, 3 Oct 2026 (lib/case-study-2026). */
+  "8-activ-yuva-male-vo-launch-film-24": 16 / 9,
+  "27-tanvi-ailab-5": 4 / 5,
+  "29-tanvi-ailab-7": 4 / 5,
 };
 
 /** Width over height for a clip; 9:16 unless listed above. */

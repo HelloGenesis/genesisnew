@@ -208,7 +208,7 @@ export function CartButton({ className }: { className?: string }) {
       {ready && count > 0 && (
         <span
           aria-hidden
-          className="absolute -right-1 -top-1 grid min-w-[1.125rem] place-items-center rounded-full bg-brand px-1 text-[0.625rem] font-semibold leading-[1.125rem] text-on-brand"
+          className="absolute -right-1 -top-1 grid min-w-[1.125rem] place-items-center rounded-full bg-brand px-1 text-[0.6875rem] font-semibold leading-[1.125rem] text-on-brand"
         >
           {count > 9 ? "9+" : count}
         </span>

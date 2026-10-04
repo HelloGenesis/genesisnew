@@ -11,6 +11,19 @@ import { Portfolio } from "./components/portfolio";
 import { PricingStrip } from "./components/pricing-strip";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
+import { JumpBar, type JumpLink } from "./components/offer/page-aids";
+
+/* The homepage's sections, in the order they come. */
+const HOME_SECTIONS: JumpLink[] = [
+  { id: "case-studies", label: "Case studies" },
+  { id: "clients", label: "Clients" },
+  { id: "influence", label: "Influence" },
+  { id: "ai-lab", label: "AI Lab" },
+  { id: "studios", label: "Studios" },
+  { id: "brand-design", label: "Brand & Design" },
+  { id: "memberships", label: "Pricing" },
+  { id: "library", label: "Work" },
+];
 
 /*
   THE TITLE WAS THE TAGLINE — 91 characters, so every result showed "Genesis
@@ -92,6 +105,7 @@ export const metadata: Metadata = pageMetadata({
  */
 export default function HomePage() {
   return (
+    <>
     <main>
       {/* 01 — the Brain. Four verticals, one system, and the way in. */}
       <Services />
@@ -148,5 +162,12 @@ export default function HomePage() {
         id="contact", so every "contact" link still lands.
       */}
     </main>
+    {/*
+      THE SECTION BAR ON THE RIGHT, as on the division pages (Genesis, 3 Oct
+      2026: "add a slider on the homepage as well, on the right"). Outside
+      <main>, whose children are skipped while off screen — see VerticalPage.
+    */}
+    <JumpBar links={HOME_SECTIONS} bookHref="#book-a-call" />
+    </>
   );
 }

@@ -24,6 +24,35 @@ export function CaseStudyBody({
 }) {
   const approach = compact ? copy.approach.slice(0, 1) : copy.approach;
 
+  /*
+    GENESIS'S WEBSITE WRITE-UPS (lib/case-study-2026) read as Genesis wrote
+    them: the card line, the subtitle, the story, then the outcome as figures.
+  */
+  if (copy.written) {
+    return (
+      <div className={cn("flex flex-col gap-6", className)}>
+        {copy.subtitle && <p className="micro-label !text-brand-ink">{copy.subtitle}</p>}
+        {copy.card && <p className="text-pretty text-lead leading-snug text-bone">{copy.card}</p>}
+        {copy.outcome && copy.outcome.length > 0 && (
+          <section className="rounded-2xl border border-[var(--glass-border)] bg-[var(--hover-wash)] p-4 sm:p-5">
+            <h3 className="micro-label">{copy.outcomeLabel ?? "Outcome"}</h3>
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3">
+              {copy.outcome.map((item) => (
+                <div key={`${item.value}-${item.label}`}>
+                  <dt className="sr-only">{item.label}</dt>
+                  <dd className="font-display text-h3 leading-none tracking-tight text-brand-ink">{item.value}</dd>
+                  <dd className="mt-1 text-small leading-snug text-ash">{item.label}</dd>
+                </div>
+              ))}
+            </dl>
+            {copy.featured && <p className="mt-4 border-t border-[var(--glass-border)] pt-3 text-small text-bone">{copy.featured}</p>}
+          </section>
+        )}
+        <Block label="The story" paragraphs={compact ? copy.brief.slice(0, 1) : copy.brief} />
+      </div>
+    );
+  }
+
   return (
     <div className={cn("flex flex-col gap-6", className)}>
       {copy.highlight && (

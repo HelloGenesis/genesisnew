@@ -160,14 +160,14 @@ export function SiteFooter() {
                         target="_blank"
                         rel="noopener noreferrer"
                         data-contact-cta={item.contact ? "" : undefined}
-                        className="text-small text-ash transition-colors hover:text-bone"
+                        className="inline-flex min-h-8 items-center text-small text-ash transition-colors hover:text-bone"
                       >
                         {item.label}
                       </a>
                     ) : (
                       <Link
                         href={item.href}
-                        className="text-small text-ash transition-colors hover:text-bone"
+                        className="inline-flex min-h-8 items-center text-small text-ash transition-colors hover:text-bone"
                       >
                         {item.label}
                       </Link>

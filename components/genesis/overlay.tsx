@@ -268,7 +268,7 @@ export function Overlay({
               `pointer-events-none` so it cannot swallow a click meant for
               the buttons underneath its own box.
             */}
-            <span className="pointer-events-none absolute inset-x-24 truncate text-center text-micro font-medium !tracking-normal text-ash">
+            <span className="pointer-events-none absolute inset-x-56 hidden truncate text-center text-micro font-medium !tracking-normal text-ash md:block">
               {label}
             </span>
 
@@ -277,14 +277,26 @@ export function Overlay({
               3 Oct 2026: "add a dark/white toggle all across"). A pop-up
               covers the nav, so it carries its own way to change the theme.
             */}
-            <div className="ml-auto flex items-center gap-3">
-              {pager?.position && <span className="text-micro tabular-nums text-ash">{pager.position}</span>}
+            {/*
+              THE ARROWS LIVE IN THE BAR, beside the count (Genesis, 3 Oct
+              2026: "this looks faulty"). They floated at the screen's edges,
+              and wherever the window ran close to full width — a phone, a
+              tablet — they sat over its text.
+            */}
+            <div className="ml-auto flex items-center gap-2 sm:gap-3">
+              {pager && (
+                <span className="flex items-center gap-1">
+                  <PagerButton side="left" label={pager.previousLabel} onClick={pager.onPrevious} />
+                  {pager.position && <span className="min-w-[2.75rem] text-center text-micro tabular-nums text-ash">{pager.position}</span>}
+                  <PagerButton side="right" label={pager.nextLabel} onClick={pager.onNext} />
+                </span>
+              )}
               <ThemeToggle className="origin-right scale-[0.8]" />
             </div>
           </div>
 
           {/* The content, scrolling inside the window rather than moving it. */}
-          <div className="overflow-y-auto overscroll-contain p-6 sm:p-9">{children}</div>
+          <div className="overflow-y-auto overscroll-contain p-4 sm:p-9">{children}</div>
 
         </div>
 
@@ -294,12 +306,6 @@ export function Overlay({
           they stay put while the window scrolls. On a phone the window runs
           nearly edge to edge and they sit over its sides.
         */}
-        {pager && (
-          <>
-            <PagerButton side="left" label={pager.previousLabel} onClick={pager.onPrevious} />
-            <PagerButton side="right" label={pager.nextLabel} onClick={pager.onNext} />
-          </>
-        )}
       </div>
     </div>,
     document.body,
@@ -323,13 +329,11 @@ function PagerButton({
       onMouseDown={(event) => event.stopPropagation()}
       aria-label={label}
       className={cn(
-        "fixed top-1/2 z-[101] grid size-11 -translate-y-1/2 place-items-center rounded-full",
-        "border border-white/20 bg-black/55 text-white backdrop-blur-md transition-colors hover:bg-black/80",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-        side === "left" ? "left-2 sm:left-5" : "right-2 sm:right-5",
+        "grid size-8 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors",
+        "hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
       )}
     >
-      <Icon className="size-5" aria-hidden />
+      <Icon className="size-4" aria-hidden />
     </button>
   );
 }

@@ -177,7 +177,7 @@ export function Services() {
           captioned it ("We help brands grow through…") with Genesis's hero
           copy and its two buttons. Still the page's one h1.
         */}
-        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center text-center sm:mt-10">
+        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center text-center sm:mt-10 lg:max-w-6xl">
           {/*
             THE SENTENCE IS THE HEADLINE (Genesis, 2 Oct 2026: "remove One
             team. On demand. … make 'Plug Genesis into your brand whenever you
@@ -186,13 +186,14 @@ export function Services() {
             second line — see WordCycler. That line is as tall as any word in
             it, so the orb and everything above never moves.
           */}
-          <h1 className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
+          {/*
+            ONE LINE FROM lg (Genesis, 3 Oct 2026: "write this in one line"):
+            the sentence and the sliding service together, at a size that fits
+            the longest service on a laptop. A phone still wraps it.
+          */}
+          <h1 className="text-balance text-h3 font-normal leading-[1.15] tracking-tight text-bone sm:text-h2 lg:whitespace-nowrap lg:text-[2rem] 2xl:text-[2.25rem]">
             {homeHero.lead}{" "}
-            <WordCycler
-              words={homeHero.services}
-              suffix={<span className="text-brand-ink">.</span>}
-              className="mt-1 grid"
-            />
+            <WordCycler words={homeHero.services} align="start" suffix={<span className="text-brand-ink">.</span>} />
           </h1>
           <p className="mt-3 text-small leading-relaxed text-ash sm:text-lead">{homeHero.close}</p>
           {/*

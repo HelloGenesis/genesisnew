@@ -223,7 +223,7 @@ function ProductCard({
               <button
                 type="button"
                 onClick={onOpen}
-                className="bg-clip-text text-left text-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="min-h-8 bg-clip-text text-left text-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 style={{ backgroundImage: gradient }}
               >
                 {product.name}
@@ -270,7 +270,7 @@ function ProductCard({
               type="button"
               onClick={onOpen}
               aria-haspopup="dialog"
-              className="group/inc inline-flex items-center gap-2.5 rounded-full text-small text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="group/inc inline-flex min-h-8 items-center gap-2.5 rounded-full text-small text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               <span
                 className="grid size-6 shrink-0 place-items-center rounded-full text-white transition-transform duration-300 group-hover/inc:scale-110"

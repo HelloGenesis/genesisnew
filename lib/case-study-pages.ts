@@ -397,6 +397,8 @@ const CLAIMED_CLIPS = new Set(caseStudyCopy.map((entry) => String(entry.clip)));
 
 export function campaignClips(study: CaseStudy): ReelId[] {
   const copy = study.copy === undefined ? undefined : findCopy(study.copy);
+  /* A study Genesis wrote for the site lists its films itself, in order. */
+  if (copy?.films?.length) return [...copy.films];
   const lead = copy?.clip ?? study.heroClip;
 
   const all = (study.work ?? []).flatMap((slug) => findWork(slug)?.reel ?? []);
