@@ -327,7 +327,7 @@ export function DivisionBoard() {
                 onFocus={() => setActive(index)}
                 onBlur={leave}
                 onClick={() => setDeparting(index)}
-                className="flex w-[6.5rem] items-center justify-center rounded-full px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-brand sm:w-[8rem] lg:w-[9.5rem] lg:px-3.5 lg:py-1.5 xl:w-[10.5rem]"
+                className="flex min-h-9 w-[6.5rem] items-center justify-center rounded-full px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-brand sm:w-[8rem] lg:w-[9.5rem] lg:px-3.5 lg:py-1.5 xl:w-[10.5rem]"
               >
                 <DivisionLockup
                   name={service.short}
@@ -349,7 +349,7 @@ export function DivisionBoard() {
                   setOpen(isOpen ? null : index);
                   setActive(isOpen ? null : index);
                 }}
-                className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--hover-wash)] text-bone outline-none focus-visible:ring-2 focus-visible:ring-brand [@media(hover:hover)]:hidden"
+                className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--hover-wash)] text-bone outline-none focus-visible:ring-2 focus-visible:ring-brand [@media(hover:hover)]:hidden"
               >
                 <ChevronDown className={cn("size-4 transition-transform duration-300", spot.up !== isOpen && "rotate-180")} aria-hidden />
               </button>

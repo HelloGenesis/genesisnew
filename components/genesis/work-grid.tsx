@@ -347,18 +347,23 @@ export function WorkGrid({
             from `sm` up each tile takes its previous width.
           */}
           <div className="flex flex-col gap-3 sm:gap-4">
+            {/*
+              ONE ROW ON A PHONE (Genesis, 4 Oct 2026: "for phone keep it 1
+              only"): the top strip carries every piece there, the second
+              strip's share shown only on a phone; from sm the two strips.
+            */}
             {[
-              visible.filter((_, index) => index % 2 === 0),
-              visible.filter((_, index) => index % 2 === 1),
+              visible.map((item, index) => ({ item, phoneOnly: index % 2 === 1 })),
+              visible.filter((_, index) => index % 2 === 1).map((item) => ({ item, phoneOnly: false })),
             ].map((row, rowIndex) =>
               row.length === 0 ? null : (
                 <div
                   key={rowIndex}
                   ref={rowIndex === 0 ? rowA : rowB}
                   dir={rowIndex === 1 ? "rtl" : "ltr"}
-                  className="no-scrollbar -mx-6 flex gap-3 overflow-x-auto px-6 pb-1 sm:gap-4"
+                  className={`no-scrollbar -mx-6 flex gap-3 overflow-x-auto px-6 pb-1 sm:gap-4 ${rowIndex === 1 ? "max-sm:hidden" : ""}`}
                 >
-                  {row.map((item) => (
+                  {row.map(({ item, phoneOnly }) => (
                     <div
                       key={item.key ?? item.slug}
                       dir="ltr"
@@ -375,7 +380,7 @@ export function WorkGrid({
                         hoga toh chalega" — a little scroll past one screen
                         is an acceptable price for posters you can read.
                       */
-                      className="aspect-[9/13] w-[64vw] shrink-0 sm:w-[clamp(9rem,min(36vw,22vh),16rem)]"
+                      className={`aspect-[9/13] w-[64vw] shrink-0 sm:w-[clamp(9rem,min(36vw,22vh),16rem)] ${phoneOnly ? "sm:hidden" : ""}`}
                     >
                       <WorkTile item={item} variant="fill" onOpen={() => setOpenKey(tileKey(item))} />
                     </div>

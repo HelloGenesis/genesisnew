@@ -1,5 +1,7 @@
 "use client";
 
+import { GlassIcon } from "@/components/genesis/glass-icon";
+import { PlanCaseStudies } from "@/components/genesis/plan-case-studies";
 import { findCopy } from "@/lib/case-study-copy";
 import { BENTO_WIDE as BENTO } from "@/lib/bento";
 import { DivisionServices } from "@/components/genesis/division-services";
@@ -23,26 +25,15 @@ import {
 } from "@/lib/case-study-pages";
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
-import { aiContent, services } from "@/lib/home-content";
-import { DivisionLockup } from "@/components/genesis/division-lockup";
+import { aiContent } from "@/lib/home-content";
 import { DivisionCtas } from "./division-ctas";
 import { PlanBar } from "./plan-bar";
 
 /* The avatar product — the natural next step under the avatar roster (lib/products). */
 import { SectionShell } from "./section-shell";
 import { AiLabBurst } from "@/components/genesis/ai-lab-burst";
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 
-/* The Activ Yuva launch (case study 15): the AI Lab panel's proof figure. */
-const PROOF = (() => {
-  const copy = findCopy(15);
-  if (!copy?.outcome?.length) return null;
-  return { campaign: copy.campaign, href: `/case-studies/${copy.slug}`, stats: copy.outcome.slice(0, 3) };
-})();
 
-/* AI Lab's ramp, for its mark over the homepage panel. */
-const aiRamp = services.items[3].ramp;
 
 
 /**
@@ -275,10 +266,8 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
             Lab makes around it, the services under it, the proof, the process
             and the way on.
           */}
-          <Reveal className="flex justify-center">
-            <DivisionLockup name="AI Lab" tagline="" ramp={aiRamp} />
-          </Reveal>
-          <Reveal className="mt-6 text-center">
+          {/* No separate mark: the diagram's pill is the AI Lab logo, and the panel has to fit one screen (Genesis, 4 Oct 2026). */}
+          <Reveal className="text-center">
             <h2 className="text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
               {aiContent.heading}{" "}
               <span className="font-serif font-normal italic text-brand-ink">{aiContent.headingAccent}</span>
@@ -289,29 +278,9 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           </Reveal>
 
           {/* THE MAIN ELEMENT. */}
-          <AiLabDiagram className="mx-auto mt-8 w-full max-w-[60rem] max-sm:[&_svg]:mx-auto max-sm:[&_svg]:max-h-[34svh] max-sm:[&_svg]:w-auto lg:mt-12" kicker={false} interactive />
+          <AiLabDiagram className="mx-auto mt-6 w-full max-w-[min(60rem,calc((100svh-21rem)*2.2))] max-sm:[&_svg]:mx-auto max-sm:[&_svg]:max-h-[34svh] max-sm:[&_svg]:w-auto lg:mt-12" kicker={false} interactive />
 
 
-          {/* One proof figure: the Activ Yuva launch, opening its case study. */}
-          {PROOF && (
-            <Link
-              href={PROOF.href}
-              prefetch={false}
-              aria-label={`${PROOF.campaign}: open the case study`}
-              className="group mx-auto mt-6 flex w-fit flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] px-5 py-2.5 text-[0.8125rem] text-ash shadow-[var(--shadow-raised)] transition-colors hover:border-brand/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              {PROOF.stats.map((stat, index) => (
-                <span key={stat.label} className="flex items-baseline gap-1.5">
-                  {index > 0 && <span aria-hidden className="mr-2.5 text-white/25">·</span>}
-                  <span className="font-display text-lead leading-none text-brand-ink">{stat.value}</span>
-                  <span>{stat.label}</span>
-                </span>
-              ))}
-              <ArrowUpRight className="size-3.5 text-bone transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
-            </Link>
-          )}
-
-          <DivisionCtas vertical="ai-labs" align="center" size="sm" primaryOnly className="mt-8 justify-center" />
         </div>
       )}
       {/*
@@ -320,11 +289,31 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         the dark glass chips that come out of the Lab above.
       */}
       {!onPage && (
-        <div className={cn("mt-6", BENTO)}>
-          <p className="micro-label text-center !text-brand-ink">What the Lab does</p>
-          <DivisionServices division="AI Lab" chips className="mt-4" />
-          <p className="micro-label mt-8 text-center !text-brand-ink max-lg:hidden">How it runs</p>
-          <ProcessIcons steps={DIVISION_PROCESS["AI Lab"]} label={aiContent.body} chips className="mt-4" />
+        <div className={cn("mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-center lg:gap-12", BENTO)}>
+          {/*
+            ONE PANEL, TWO SIDES (Genesis, 4 Oct 2026: "think and merge this
+            section together"): what the Lab does, how it runs, the proof and
+            the way on, on the left; its case studies on the right.
+          */}
+          {/*
+            THE LEFT SIDE AS TWO CARDS OF ITS OWN (Genesis, 4 Oct 2026: "add the
+            tags within the box and one more card on the right, complete the
+            bento"): the services in one, the way on in the other.
+          */}
+          <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+            <div className="rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-5 text-center sm:text-left">
+              <p className="micro-label !text-brand-ink">What the Lab does</p>
+              <DivisionServices division="AI Lab" chips className="mt-4 sm:[&_ul]:flex sm:[&_ul]:justify-start" />
+            </div>
+            <div className="flex flex-col justify-between gap-5 rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-5 text-center sm:text-left">
+              <GlassIcon name="rocket" className="mx-auto size-11 sm:mx-0" />
+              <p className="text-balance text-lead leading-snug text-bone">
+                Your content engine, <span className="font-serif italic text-brand-ink">built once.</span>
+              </p>
+              <DivisionCtas vertical="ai-labs" align="center" size="sm" primaryOnly className="justify-center sm:justify-start" />
+            </div>
+          </div>
+          <PlanCaseStudies vertical="AI Lab" className="min-w-0" />
         </div>
       )}
 

@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useReducedMotion } from "framer-motion";
 
 import { GlassButton } from "@/components/genesis/glass-button";
 import { caseStudyList, leadClip, type CaseStudy } from "@/lib/case-studies";
@@ -21,6 +22,8 @@ import { findCopy } from "@/lib/case-study-copy";
  * turn the page, the dots say which page is up.
  */
 const PER_PAGE = 4;
+/* A new page every few seconds (Genesis, 4 Oct 2026), held while the reader is on it. */
+const AUTO_MS = 4000;
 
 type Card = { slug: string; client: string; campaign?: string; image?: string; href?: string; stats?: { value: string; label: string }[] };
 
@@ -37,17 +40,34 @@ function cardFor(study: CaseStudy): Card {
   };
 }
 
-export function PlanCaseStudies({ vertical, className }: { vertical: string; className?: string }) {
+export function PlanCaseStudies({
+  vertical,
+  className,
+  perPage = PER_PAGE,
+}: {
+  vertical: string;
+  className?: string;
+  /** Cards a page: 4 in a 2×2 (the plan boxes), 3 in a row (the AI Lab strip). */
+  perPage?: number;
+}) {
   const cards = useMemo(
     () => caseStudyList.filter((study) => study.vertical === vertical).map(cardFor).filter((card) => card.image),
     [vertical],
   );
-  const pages = Math.max(1, Math.ceil(cards.length / PER_PAGE));
+  const pages = Math.max(1, Math.ceil(cards.length / perPage));
   const [page, setPage] = useState(0);
-  const shown = cards.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+  /* A last page short of cards wraps round to the first, so every page is full. */
+  const shown = Array.from({ length: Math.min(perPage, cards.length) }, (_, i) => cards[(page * perPage + i) % cards.length]);
+  const [hold, setHold] = useState(false);
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    if (pages < 2 || hold || reduce) return;
+    const timer = window.setInterval(() => setPage((at) => (at + 1) % pages), AUTO_MS);
+    return () => window.clearInterval(timer);
+  }, [pages, hold, reduce]);
 
   return (
-    <div className={cn("flex h-full flex-col", className)}>
+    <div className={cn("flex h-full flex-col", className)} onPointerEnter={() => setHold(true)} onPointerLeave={() => setHold(false)} onFocus={() => setHold(true)} onBlur={() => setHold(false)}>
       <div className="flex items-center justify-between gap-3">
         <p className="micro-label !text-brand-ink">Case studies</p>
         {/* The arrows always show (Genesis, 4 Oct 2026); with one page they rest disabled. */}
@@ -75,7 +95,7 @@ export function PlanCaseStudies({ vertical, className }: { vertical: string; cla
         )}
       </div>
 
-      <ul key={page} className="mt-3 grid animate-[fade-in_400ms_ease-out] grid-cols-2 gap-3">
+      <ul key={page} className={cn("mt-3 grid animate-[fade-in_400ms_ease-out] gap-3", perPage === 3 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2")}>
         {shown.map((card) => {
           const inner = (
             <>

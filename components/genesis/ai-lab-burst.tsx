@@ -61,7 +61,7 @@ export function AiLabBurst({ className }: { className?: string }) {
       aria-hidden
       onPointerEnter={() => setSpread(true)}
       onPointerLeave={() => setSpread(false)}
-      className={cn("pointer-events-auto absolute inset-0 hidden md:block", className)}
+      className={cn("pointer-events-auto absolute inset-0 hidden lg:block", className)}
     >
       {pieces.map((piece, index) => {
         const spot = SPOTS[index];
@@ -112,7 +112,7 @@ function AvatarCard() {
       <span className="relative block aspect-[4/5] overflow-hidden rounded-lg">
         <Image src="/avatars/diya.jpg" alt="" fill sizes="104px" className="object-cover" />
       </span>
-      <span className="block px-0.5 pb-0.5 pt-1 text-center text-[0.5625rem] uppercase tracking-[0.1em] text-[#ffb3cd]">AI avatar</span>
+      <span className="block px-0.5 pb-0.5 pt-1 text-center text-[0.625rem] uppercase tracking-[0.1em] text-[#ffb3cd]">AI avatar</span>
     </span>
   );
 }
@@ -128,7 +128,7 @@ function ReelCard() {
           </span>
         </span>
       </span>
-      <span className="block pt-1 text-center text-[0.5625rem] uppercase tracking-[0.1em] text-[#ffc28f]">Reel · 9:16</span>
+      <span className="block pt-1 text-center text-[0.625rem] uppercase tracking-[0.1em] text-[#ffc28f]">Reel · 9:16</span>
     </span>
   );
 }

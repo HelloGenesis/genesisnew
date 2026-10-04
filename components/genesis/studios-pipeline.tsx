@@ -60,15 +60,18 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
     and its picture leans in, the arrow out of it glows, and its line is
     spelled out under the row.
   */
-  const [active, setActive] = useState(0);
+  /* Only the Studios page's hero card is interactive; the homepage section stays still (Genesis, 4 Oct 2026: "remove this hover effect from here"). */
+  const live = bare;
+  const [lit, setActive] = useState(0);
+  const active = live ? lit : -1;
   const [hold, setHold] = useState(false);
   const reduce = useReducedMotion();
   useEffect(() => {
-    if (hold || reduce) return;
+    if (!live || hold || reduce) return;
     const timer = window.setInterval(() => setActive((at) => (at + 1) % stages.length), STEP_MS);
     return () => window.clearInterval(timer);
-  }, [hold, reduce, stages.length]);
-  const point = (index: number) => ({
+  }, [live, hold, reduce, stages.length]);
+  const point = (index: number) => !live ? {} : ({
     onPointerEnter: () => {
       setActive(index);
       setHold(true);
@@ -136,9 +139,9 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
             <li
               key={stage.n}
               {...point(index)}
-              tabIndex={0}
+              tabIndex={live ? 0 : undefined}
               aria-current={active === index ? "step" : undefined}
-              className={`relative cursor-pointer outline-none transition-[background-color,opacity] duration-300 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${bare ? "px-1.5 py-2" : "px-3 py-3"} text-center text-[#1d130c] ${index > 0 ? "border-l border-black/10" : ""} ${active === index ? "bg-white/25" : "opacity-75 hover:opacity-100"}`}
+              className={`relative outline-none ${live ? "cursor-pointer" : ""} transition-[background-color,opacity] duration-300 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white ${bare ? "px-1.5 py-2" : "px-3 py-3"} text-center text-[#1d130c] ${index > 0 ? "border-l border-black/10" : ""} ${active === index ? "bg-white/25" : live ? "opacity-75 hover:opacity-100" : ""}`}
             >
               {/* The playhead through the lit stage. */}
               {active === index && !reduce && (
@@ -170,7 +173,7 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
               <li
                 key={stage.n}
                 {...point(index)}
-                className="relative w-[70%] shrink-0 cursor-pointer snap-start min-[480px]:w-[45%] md:w-auto"
+                className={`relative w-[70%] shrink-0 snap-start ${live ? "cursor-pointer" : ""} min-[480px]:w-[45%] md:w-auto`}
               >
                 {/* On a phone, the stage's label rides on its card. */}
                 <div
@@ -184,7 +187,7 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
                 </div>
                 <div
                   className={`relative overflow-hidden rounded-[1.25rem] border bg-ink transition-[transform,opacity,box-shadow,filter] duration-500 ease-out ${
-                    active === index ? "-translate-y-1 scale-[1.04]" : "opacity-70 saturate-[0.7]"
+                    active === index ? "-translate-y-1 scale-[1.04]" : live ? "opacity-70 saturate-[0.7]" : ""
                   }`}
                   style={{
                     borderColor: active === index ? tone : `${tone}b3`,
@@ -232,6 +235,7 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
         </ol>
         <RailProgress rail={cardsRail} className="mt-3 md:hidden" />
         {/* The lit stage, spelled out. */}
+        {live && (
         <p aria-live="polite" className="mt-3 hidden min-h-[1.5em] text-center text-small text-ash md:block">
           <span className="font-semibold text-bone">
             {stages[active].n}&nbsp;&nbsp;{stages[active].name}
@@ -239,6 +243,7 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
           {" · "}
           {stages[active].body}
         </p>
+        )}
         <style>{"@keyframes pipeline-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}"}</style>
       </Reveal>
     </div>

@@ -59,7 +59,7 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
         style={{ background: "linear-gradient(100deg, #f5923e 0%, #f2607e 40%, #6b4fd8 75%, #c05ce0 100%)" }}
       >
       <div
-        className="relative flex flex-col gap-5 rounded-panel bg-ink p-5 text-left sm:p-6 lg:min-h-[48.5rem]"
+        className="relative flex flex-col gap-5 rounded-panel bg-ink p-5 text-left sm:p-6 lg:min-h-[49.5rem]"
         style={{
           backgroundImage:
             "radial-gradient(120% 140% at 0% 100%, rgb(245 146 62 / 0.22), transparent 45%), radial-gradient(120% 140% at 100% 0%, rgb(180 92 224 / 0.22), transparent 45%)",
@@ -100,13 +100,14 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
           left, two to a row, and the division's case studies on the right,
           four portrait cards a page with a way on to the rest.
         */}
-        <div className="grid gap-8 border-t border-[var(--glass-border)] pt-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-8">
-          <div className="flex min-w-0 flex-col">
+        {/* Two panels of their own inside the box (Genesis, 4 Oct 2026: "make these two different bentos"). */}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-5">
+          <div className="flex min-w-0 flex-col rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-4 sm:p-5">
             <DivisionOffers vertical={vertical} grid />
             {/* How it works, in the space under the cards (Genesis, 4 Oct 2026: "add a small explainer like this in each section"). */}
             <BuySteps className="mt-auto pt-6 lg:grid-cols-4 [&_li]:p-3 [&_li]:text-small" />
           </div>
-          <PlanCaseStudies vertical={VERTICAL_NAME[vertical]} className="lg:border-l lg:border-[var(--glass-border)] lg:pl-8 lg:pt-1" />
+          <PlanCaseStudies vertical={VERTICAL_NAME[vertical]} className="rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-4 sm:p-5" />
         </div>
       </div>
       </div>

@@ -179,7 +179,7 @@ export function JumpBar({ links, bookHref }: { links: JumpLink[]; bookHref?: str
           if (Date.now() - closedAt.current > 500) setOpen(true);
         }}
         tabIndex={shown ? 0 : -1}
-        className="flex h-40 w-7 justify-end py-1 pr-1 md:hidden group-data-[open]/jump:hidden"
+        className="flex h-40 w-7 justify-end py-1 pr-2.5 md:hidden group-data-[open]/jump:hidden"
       >
         <span aria-hidden className="relative h-full w-1 overflow-hidden rounded-full bg-white/25 shadow-[0_0_0_1px_rgb(0_0_0/0.25)]">
           <span
