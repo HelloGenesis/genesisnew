@@ -105,7 +105,7 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
           <div className="flex min-w-0 flex-col rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-4 sm:p-5">
             <DivisionOffers vertical={vertical} grid />
             {/* How it works, in the space under the cards (Genesis, 4 Oct 2026: "add a small explainer like this in each section"). */}
-            <BuySteps className="mt-auto pt-6 lg:grid-cols-4 [&_li]:p-3 [&_li]:text-small" />
+            <BuySteps row className="mt-auto pt-6 [&_li]:p-3 [&_li]:text-small" />
           </div>
           <PlanCaseStudies vertical={VERTICAL_NAME[vertical]} className="rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-4 sm:p-5" />
         </div>

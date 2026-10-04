@@ -449,10 +449,15 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           */}
           {/* The avatar copy as a process on a desktop (Genesis, 4 Oct 2026). */}
           <ProcessIcons steps={DIVISION_PROCESS["AI Avatars"]} label={aiContent.avatarsIntro.lead} className="mt-8" />
-          <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead lg:hidden">
-            <span className="sm:hidden">{aiContent.avatarsIntro.leadPhone}</span>
-            <span className="hidden sm:inline">{aiContent.avatarsIntro.lead}</span>
-          </p>
+          {/* On a phone too, the process as a row of chips, as on the website (Genesis, 4 Oct 2026). */}
+          <ol aria-label={aiContent.avatarsIntro.lead} className="no-scrollbar -mx-6 mt-5 flex gap-2 overflow-x-auto px-6 lg:hidden">
+            {DIVISION_PROCESS["AI Avatars"].map((step) => (
+              <li key={step.label} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-white/15 bg-[rgb(20_18_22/0.72)] py-1.5 pl-1.5 pr-3.5 text-small text-bone">
+                <GlassIcon name={step.icon} className="size-6" />
+                {step.label}
+              </li>
+            ))}
+          </ol>
 
           {/*
             "One Setup. Real-Time. Every Time" stood here and is gone at
@@ -477,9 +482,12 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         */}
         {aiContent.avatarsIntro.line && (
           <>
-            <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead lg:hidden">
-              {aiContent.avatarsIntro.line}
-            </p>
+            {/* One sentence a line, as the two arcs set it on the website. */}
+            <div className="mx-auto mt-4 max-w-2xl space-y-1 px-6 text-center text-small leading-snug text-ash sm:text-body lg:hidden">
+              {aiContent.avatarsIntro.line.split(/(?<=\.)\s+/).map((sentence) => (
+                <p key={sentence} className="text-balance">{sentence}</p>
+              ))}
+            </div>
             {/*
               ON A DESKTOP THE LINE BENDS WITH THE CARDS (Genesis, 4 Oct 2026:
               "make the text circular near the image cards, in the same
