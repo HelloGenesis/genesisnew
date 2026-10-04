@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import type { CSSProperties } from "react";
 
-import { divisionMark } from "@/components/genesis/division-lockup";
 import { WordCycler } from "@/components/genesis/word-cycler";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,25 @@ import { cn } from "@/lib/utils";
  * reader or a search engine. The services take turns after "Whenever you
  * need", sliding up one at a time in the gradient — see WordCycler.
  */
+/*
+  "PLUG GENESIS.<DIVISION>" ON ONE PHONE LINE: the line's width in ems,
+  measured from each wordmark's artwork ("Brand & Design" is the longest), so
+  the phone size fits each page's own line to the screen.
+*/
+const PHONE_LINE_EM: Record<string, number> = {
+  "AI Lab": 9.1,
+  Studios: 9.1,
+  "Brand & Design": 11.1,
+  Influence: 9.8,
+};
+
+const WORDMARKS: Record<string, string> = {
+  "AI Lab": "ai-lab",
+  Studios: "studios",
+  "Brand & Design": "brand-design",
+  Influence: "influence",
+};
+
 export function PlugHeadline({
   division,
   services,
@@ -29,46 +48,69 @@ export function PlugHeadline({
   align?: "start" | "center";
   className?: string;
 }) {
-  const mark = divisionMark(division);
+  const wordmark = WORDMARKS[division];
 
   return (
     <h1
       className={cn(
-        "text-balance text-h1 font-normal leading-[1.02] tracking-tight text-bone xl:text-[3.75rem]",
+        /* On a phone, two lines: "Plug Genesis.AI Lab" / "into your brand." — sized so the first fits the screen. */
+        "text-balance text-h1 font-normal leading-[1.14] tracking-tight text-bone max-sm:text-[min(2.25rem,calc((100vw-3rem)/var(--plug-line,9.2)))] lg:text-[3.25rem] xl:text-[3.5rem]",
         align === "center" && "text-center",
         className,
       )}
+      style={{ "--plug-line": PHONE_LINE_EM[division] ?? 9.2 } as CSSProperties}
     >
       <span className="sr-only">
         Plug Genesis.{division} into your brand. Whenever you need {services.join(", ")}.
       </span>
       <span aria-hidden className="block">
+        <span className="max-sm:whitespace-nowrap">
         Plug{" "}
-        {mark ? (
-          /* 66% of the artwork's box is the lettering, so 1.06em of box stands its capitals at the line's own; the baseline is 74% down. */
-          <Image
-            src={mark.src}
-            alt=""
-            width={mark.width}
-            height={mark.height}
-            sizes="(min-width: 1024px) 420px, 70vw"
-            preload
-            className="division-art inline-block"
-            style={{ height: "1.06em", width: "auto", verticalAlign: "-0.275em" }}
-          />
+        {wordmark ? (
+          /*
+            THE GENESIS.<DIVISION> LOCKUP (Genesis, 4 Oct 2026: "add the
+            Genesis.Studios logo here … for other verticals as well, just in
+            this section"). A theme pair, crossfaded by --logo-invert like the
+            master wordmark: white GENESIS on the dark theme, ink on the light.
+            The lettering fills about 88% of the file's height, so 0.8em of
+            box stands its capitals level with the line's.
+          */
+          <span className="relative inline-block align-[-0.06em]" style={{ height: "0.8em" }}>
+            <Image
+              src={`/brand/divisions/wordmark/${wordmark}-light.png`}
+              alt=""
+              width={1374}
+              height={171}
+              sizes="(min-width: 1024px) 520px, 80vw"
+              preload
+              className="h-full w-auto"
+              style={{ opacity: "calc(1 - var(--logo-invert, 0))" }}
+            />
+            <Image
+              src={`/brand/divisions/wordmark/${wordmark}-dark.png`}
+              alt=""
+              width={1374}
+              height={171}
+              sizes="(min-width: 1024px) 520px, 80vw"
+              className="absolute inset-0 h-full w-auto"
+              style={{ opacity: "var(--logo-invert, 0)" }}
+            />
+          </span>
         ) : (
           `Genesis.${division}`
-        )}{" "}
-        into your brand.
+        )}
+        </span>{" "}
+        <span className="max-sm:block">into your brand.</span>
       </span>
-      <span aria-hidden className="mt-3 block text-[0.62em] leading-tight">
-        <span className="font-serif italic text-brand-ink">Whenever you need</span>
+      <span aria-hidden className="mt-6 block text-[0.62em] leading-snug max-sm:mt-3">
+        {/* Thin over bold (Genesis, 4 Oct 2026): the lead-in in Mont ExtraLight; the service in Codec Pro, a touch heavier, the weight of the "AI Lab" wordmark ("not that bold"). */}
+        <span className="font-display font-extralight italic text-brand-ink">Whenever you need</span>
         <WordCycler
           words={services.map(midSentence)}
           align={align}
           suffix={<span className="text-brand-ink">.</span>}
           /* A grid of its own line — "block" here replaced the stacking grid, and the words fell out of line. */
-          className="grid"
+          className="grid font-sans font-semibold"
         />
       </span>
     </h1>

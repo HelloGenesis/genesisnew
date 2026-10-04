@@ -114,12 +114,18 @@ export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly
         ref={track}
         data-lenis-prevent
         aria-label={label}
-        className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {entries.map((video, index) => {
           const selected = index === active;
           return (
-            <li key={String(video.id)} className="w-[46%] shrink-0 sm:w-[38%]">
+            /*
+              THREE WHOLE CARDS AT A TIME from sm (Genesis, 4 Oct 2026: "3 cards
+              sliding together, the cards are cutting out"): each is a third of
+              the row less its share of the two gaps, so nothing is clipped at
+              the column's edge; the arrows step the row one card along.
+            */
+            <li key={String(video.id)} className="w-[78%] shrink-0 snap-start sm:w-[calc((100%-1.5rem)/3)]">
               <button
                 type="button"
                 onClick={() => openCard(index)}

@@ -49,12 +49,15 @@ export function WordCycler({
 
   return (
     /*
-      CLIPPED, NOT overflow-hidden. A box with hidden overflow takes its
-      baseline from its bottom edge, which lifted the word off the line of the
-      sentence around it ("align it properly"). A clip-path hides the words
-      waiting above and below just the same and leaves the baseline alone.
+      CLIPPED VERTICALLY WITH overflow: clip, NOT hidden and NOT a clip-path.
+      Hidden overflow takes the box's baseline from its bottom edge, which
+      lifted the word off the sentence's line ("align it properly"); a
+      clip-path kept the baseline but can stop gradient (background-clip:
+      text) words from painting in Chrome — the line showed blank. `clip`
+      neither moves the baseline nor makes a new layer, and only the vertical
+      axis is cut so the italic overhang still shows.
     */
-    <span className={cn("relative inline-grid py-[0.12em] [clip-path:inset(0_-0.6em)]", className)}>
+    <span className={cn("relative inline-grid overflow-x-visible overflow-y-clip py-[0.12em]", className)}>
       <span className="sr-only">{words.join(", ")}</span>
       {words.map((word, i) => {
         const state = i === index ? "in" : i === previous ? "out" : "wait";

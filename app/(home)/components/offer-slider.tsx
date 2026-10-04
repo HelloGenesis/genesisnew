@@ -218,10 +218,15 @@ export function useProductOffers(vertical: VerticalKey) {
   return { openProduct: (name: string) => openOffer(`${vertical}.${name}`), dialog };
 }
 
-/* The scrolling row and its cards, shared by the homepage slider and each division's bar. */
+/*
+  The scrolling row and its cards, shared by the homepage slider and each
+  division's bar. ON A PHONE ONE CARD FILLS THE ROW (Genesis, 4 Oct 2026:
+  "cards a little bigger … fit on the phone screen"): the row reaches out to
+  its box's edges and each card takes 92% of it, the next one peeking in.
+*/
 const RAIL =
-  "-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-3 pt-2 [scrollbar-width:none] max-sm:scroll-px-[7%] max-sm:px-[7%] [&::-webkit-scrollbar]:hidden";
-const ITEM = "flex w-[16.5rem] shrink-0 snap-start [perspective:900px] max-sm:w-[86%] max-sm:snap-center";
+  "-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-3 pt-2 [scrollbar-width:none] max-sm:-mx-5 max-sm:scroll-px-5 max-sm:px-5 [&::-webkit-scrollbar]:hidden";
+const ITEM = "flex w-[16.5rem] shrink-0 snap-start [perspective:900px] max-sm:w-[92%] max-sm:snap-center";
 
 /* The homepage's division order (Genesis, 2 Oct 2026), so the slider reads like the page. */
 const DIVISION_ORDER: VerticalKey[] = ["influence", "ai-labs", "studios", "brand-design"];

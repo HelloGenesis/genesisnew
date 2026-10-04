@@ -93,7 +93,7 @@ export function JumpBar({ links, bookHref }: { links: JumpLink[]; bookHref?: str
     <nav
       aria-label="On this page"
       className={cn(
-        "group/jump fixed right-3 top-1/2 z-30 hidden -translate-y-1/2 transition-[opacity,transform] duration-300 md:block 2xl:right-5",
+        "group/jump fixed right-1.5 top-1/2 z-30 -translate-y-1/2 transition-[opacity,transform] duration-300 max-md:origin-right max-md:scale-90 md:right-3 2xl:right-5",
         shown ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-3 opacity-0",
       )}
     >

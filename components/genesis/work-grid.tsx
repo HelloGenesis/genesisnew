@@ -375,7 +375,7 @@ export function WorkGrid({
                         hoga toh chalega" — a little scroll past one screen
                         is an acceptable price for posters you can read.
                       */
-                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(9rem,min(36vw,22vh),16rem)]"
+                      className="aspect-[9/13] w-[64vw] shrink-0 sm:w-[clamp(9rem,min(36vw,22vh),16rem)]"
                     >
                       <WorkTile item={item} variant="fill" onOpen={() => setOpenKey(tileKey(item))} />
                     </div>

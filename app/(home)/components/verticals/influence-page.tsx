@@ -61,11 +61,15 @@ export function InfluencePageView() {
         left aligned only"): the headline, the line under it and the services
         start where the section below starts.
       */}
-      <Reveal className="mx-auto w-full max-w-7xl px-6 pt-10 lg:pt-14">
-        <PlugHeadline division="Influence" services={divisionMenu("/influencer-marketing")} className="max-w-5xl" />
-        <ServiceStrip items={divisionMenu("/influencer-marketing")} className="mt-8" />
-      </Reveal>
-      <InfluencerMarketing onPage />
+      <InfluencerMarketing
+        onPage
+        opening={
+          <Reveal className="pb-4 pt-0 lg:pt-4">
+            <PlugHeadline division="Influence" services={divisionMenu("/influencer-marketing")} className="max-w-5xl" />
+            <ServiceStrip items={divisionMenu("/influencer-marketing")} className="mt-10" />
+          </Reveal>
+        }
+      />
 
       <LogoStrip heading={false} />
 

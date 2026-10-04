@@ -573,7 +573,7 @@ export function DivisionLockup({
         condition, decided by which artwork is in use, so it cannot be got
         wrong at a call site.
       */}
-      {!taglineInArt && (
+      {!taglineInArt && tagline && (
         <span
           className={cn(
             /*

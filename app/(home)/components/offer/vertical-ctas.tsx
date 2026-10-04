@@ -25,7 +25,9 @@ export function VerticalCtas({
         View Pricing
       </GlassButton>
       <GlassButton href="#book-a-call" variant="glass" size={size} arrow>
-        Book a 15-min Call
+        {/* "Book a call" where two buttons share a phone's width. */}
+        <span className="sm:hidden">Book a call</span>
+        <span className="max-sm:hidden">Book a 15-min Call</span>
       </GlassButton>
     </div>
   );

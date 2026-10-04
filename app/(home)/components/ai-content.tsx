@@ -1,5 +1,8 @@
 "use client";
 
+import { DivisionServices } from "@/components/genesis/division-services";
+import { cn } from "@/lib/utils";
+
 import { useState } from "react";
 
 
@@ -93,14 +96,18 @@ const AI_VIDEOS: OpenVideo[] = AI_WORK.filter((card) => !card.study).map((card) 
  * Labs page, under the client logos (Genesis, 2 Oct 2026: "move this section
  * below logos on AI Labs page").
  */
-export function AiLabDiagram({ className }: { className?: string }) {
+/**
+ * `fit`: in the AI Lab hero, where on a phone the diagram takes whatever
+ * height the screen has left, so the opening is one screen on any phone.
+ */
+export function AiLabDiagram({ className, fit = false }: { className?: string; fit?: boolean }) {
   return (
-    <Reveal delay={0.06} className={className}>
-      <div className="mx-auto w-full max-w-6xl text-center">
-        <figure className="mx-auto max-w-[60rem]">
-          <AutomationSources />
+    <Reveal delay={0.06} className={cn(fit && "max-lg:flex max-lg:h-full max-lg:min-h-0 max-lg:flex-col", className)}>
+      <div className={cn("mx-auto w-full max-w-6xl text-center", fit && "max-lg:flex max-lg:h-full max-lg:min-h-0 max-lg:flex-col")}>
+        <figure className={cn("mx-auto max-w-[60rem]", fit && "max-lg:flex max-lg:min-h-0 max-lg:w-full max-lg:flex-1 max-lg:justify-center")}>
+          <AutomationSources className={fit ? "max-lg:mx-auto max-lg:h-full max-lg:max-h-full max-lg:w-auto max-lg:max-w-full" : undefined} />
         </figure>
-        <p className="mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead">
+        <p className={cn("mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead", fit && "max-lg:mt-2 max-sm:whitespace-nowrap max-sm:text-[0.75rem] sm:max-lg:text-small")}>
           {aiContent.automation.kicker}
         </p>
       </div>
@@ -135,7 +142,7 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
       id="ai-lab"
       division={onPage ? undefined : {
         name: "AI Lab",
-        tagline: services.items[3].caption,
+        tagline: "",
         ramp: services.items[3].ramp,
       }}
       /*
@@ -244,7 +251,8 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           gave 8.5rem, about 35% bigger, with the frame grown to match. From
           sm up the viewport-relative sizes are unchanged.
         */}
-        <div className="[--warp-card:11.5rem] [--warp-h:19.5rem] sm:[--warp-card:clamp(8.5rem,15vw,14rem)] sm:[--warp-h:clamp(14rem,24vw,22rem)]">
+        {/* BIGGER CARDS (Genesis, 4 Oct 2026: "increase this card size"), about a quarter up. */}
+        <div className="[--warp-card:14rem] [--warp-h:23.5rem] sm:[--warp-card:clamp(10.5rem,19vw,17.5rem)] sm:[--warp-h:clamp(17.5rem,31.5vw,29.5rem)]">
           {/*
             EVERY CARD OPENS SOMETHING, which is the fix Genesis reported
             twice — "these videos are still not interactive".
@@ -283,6 +291,9 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           />
         </div>
       </Reveal>
+
+      {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
+      {!onPage && <DivisionServices division="AI Lab" />}
 
       {/*
         THE AI LAB DIAGRAM, ABOVE THE AVATARS (Genesis, 29 Sep 2026: "remove

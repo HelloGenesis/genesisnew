@@ -1,10 +1,14 @@
 "use client";
 
-import { Users } from "lucide-react";
+import { DivisionServices } from "@/components/genesis/division-services";
 import Link from "next/link";
+import type { ReactNode } from "react";
+
+import { GlassIcon } from "@/components/genesis/glass-icon";
 
 import { LogoMarquee } from "@/components/genesis/logo-marquee";
 import { softRadial } from "@/lib/soft-gradient";
+import { cn } from "@/lib/utils";
 
 import {
   caseStudyForClip,
@@ -123,7 +127,7 @@ const INFLUENCE_RAIL = INFLUENCE_REELS.slice(0, 8).map((reel) => ({
  * the division — and without its plan bar: the page's own pricing section,
  * further down, is the one place to buy.
  */
-export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {}) {
+export function InfluencerMarketing({ onPage = false, opening }: { onPage?: boolean; opening?: ReactNode } = {}) {
 
   return (
     <section
@@ -157,6 +161,12 @@ export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {
 
       <div className="relative z-[2] mx-auto w-full max-w-7xl px-6">
         {/*
+          ONE SECTION ON ITS OWN PAGE (Genesis, 4 Oct 2026: "merge this
+          section into one"): the page's Plug headline and services open it,
+          on the same background as the niches and the reels below.
+        */}
+        {opening}
+        {/*
           THE MARK ABOVE THE GRID, CENTRED — the arrangement every division
           uses now. It used to sit in the left column, stacked over the
           niches and the copy, which made the section's title one item in a
@@ -168,7 +178,7 @@ export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {
           <Reveal className="flex flex-col items-center text-center">
             <DivisionLockup
               name="Influence"
-              tagline={services.items[0].caption}
+              tagline=""
               ramp={services.items[0].ramp}
             />
           </Reveal>
@@ -251,7 +261,7 @@ export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {
             the section's overflow:hidden at 417px against a 375px viewport.
             With min-w-0 the column can shrink and the line wraps instead.
           */}
-          <div className="contents lg:block lg:min-w-0">
+          <div className="contents lg:flex lg:min-w-0 lg:flex-col">
             {/*
               THE DIVISION'S OWN LOCKUP, replacing a bespoke headline set at
               up to 80px across three lines. Two things were wrong with it:
@@ -297,6 +307,8 @@ export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {
               read as a second block that had slid to the edge. From md the
               copy has its own column beside the reels and sets left again.
             */}
+            {/* On its own page the 1,00,000+ card is the hero (Genesis, 4 Oct 2026), not this line. */}
+            {!onPage && (
             <Reveal delay={0.08} className="order-2 min-w-0 text-center md:order-3 md:text-left lg:order-none">
               <h3 className="mx-auto max-w-xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2 md:mx-0">
                 {influencer.heading}{" "}
@@ -305,6 +317,7 @@ export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {
                 </span>
               </h3>
             </Reveal>
+            )}
 
             <Reveal delay={0.1} className="order-3 text-center md:order-4 md:text-left lg:order-none">
               <p className="mx-auto max-w-lg text-pretty text-body leading-relaxed text-ash md:mx-0 lg:mt-5">
@@ -345,17 +358,16 @@ export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {
               </p>
             </Reveal>
 
-            <Reveal delay={0.16} className="hidden lg:order-none lg:block">
+            <Reveal delay={0.16} className={cn("hidden lg:block", onPage ? "lg:-order-1" : "lg:order-none")}>
               <div
-                className="glass glass-lit flex items-center gap-5 rounded-panel p-5 lg:mt-6"
+                className={cn("glass glass-lit flex items-center gap-5 rounded-panel", onPage ? "p-6" : "p-5 lg:mt-6")}
                 style={{
                   background:
                     "linear-gradient(102deg, rgb(255 197 22 / 0.17) 0%, rgb(255 197 22 / 0.05) 42%, rgb(255 255 255 / 0.03) 100%)",
                 }}
               >
-                <div className="grid size-14 shrink-0 place-items-center rounded-card border border-brand/35 bg-brand/10 text-brand-ink">
-                  <Users className="size-6" aria-hidden />
-                </div>
+                {/* The site's glass icon set, as the services above (Genesis, 4 Oct 2026). */}
+                <GlassIcon name="users" className={cn("shrink-0", onPage ? "size-16" : "size-14")} />
 
                 <div className="min-w-0 flex-1">
                   {/*
@@ -370,10 +382,10 @@ export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {
                     what keeps the two treatments one design.
                   */}
                   <p className="leading-none tracking-tight text-bone">
-                    <span className="text-h3 font-medium">
+                    <span className={cn("font-medium", onPage ? "text-[3rem]" : "text-h3")}>
                       {influencer.databaseStat.value}
                     </span>{" "}
-                    <span className="text-lead text-brand-ink">
+                    <span className={cn("text-brand-ink", onPage ? "mt-2 block text-h3" : "text-lead")}>
                       {influencer.databaseStat.label}
                     </span>
                   </p>
@@ -442,6 +454,8 @@ export function InfluencerMarketing({ onPage = false }: { onPage?: boolean } = {
           section they read as what they are.
         */}
 
+        {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
+        {!onPage && <DivisionServices division="Influence" className="mt-8" />}
         {!onPage && <PlanBar vertical="influence" className="!mt-6" />}
       </div>
 

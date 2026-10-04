@@ -1,3 +1,4 @@
+import { DivisionServices } from "@/components/genesis/division-services";
 import { Reveal } from "@/components/genesis/reveal";
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
@@ -51,7 +52,7 @@ export function Studios({ onPage = false }: { onPage?: boolean } = {}) {
           <Reveal>
             <DivisionLockup
               name="Studios"
-              tagline={services.items[2].caption}
+              tagline=""
               ramp={services.items[2].ramp}
             />
           </Reveal>
@@ -62,6 +63,8 @@ export function Studios({ onPage = false }: { onPage?: boolean } = {}) {
           <StudiosPipeline />
         </div>
 
+        {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
+        {!onPage && <DivisionServices division="Studios" />}
         {!onPage && <PlanBar vertical="studios" />}
       </div>
     </section>

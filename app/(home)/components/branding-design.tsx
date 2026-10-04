@@ -1,3 +1,4 @@
+import { DivisionServices } from "@/components/genesis/division-services";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -140,7 +141,7 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
       id="brand-design"
       division={onPage ? undefined : {
         name: "Brand & Design",
-        tagline: services.items[1].caption,
+        tagline: "",
         ramp: services.items[1].ramp,
       }}
       /*
@@ -208,6 +209,8 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
 
       </SwipeHintRail>
 
+      {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
+      {!onPage && <DivisionServices division="Brand & Design" />}
       {!onPage && <PlanBar vertical="brand-design" className="xl:mt-20" />}
     </SectionShell>
   );

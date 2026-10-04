@@ -1,6 +1,5 @@
 import { GlassIcon } from "@/components/genesis/glass-icon";
 import { Reveal } from "@/components/genesis/reveal";
-import { SectionLabel } from "@/components/genesis/section-label";
 
 /**
  * THE HEAD OF EVERY DIVISION PAGE'S PRICING (Genesis, 2 Oct 2026): the label,
@@ -14,10 +13,8 @@ export function PricingHead({ id = "pricing-heading" }: { id?: string }) {
   return (
     <>
       <Reveal className="mx-auto flex max-w-2xl flex-col items-center text-center">
-        <SectionLabel dot tone="brand">
-          Our products
-        </SectionLabel>
-        <h2 id={id} className="mt-4 text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
+        {/* No "Our products" label (Genesis, 4 Oct 2026: "remove this"). */}
+        <h2 id={id} className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
           Two ways to work with us.
         </h2>
         <p className="mt-3 text-pretty text-body leading-relaxed text-ash sm:text-lead">

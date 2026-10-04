@@ -33,23 +33,38 @@ export function DivisionCtas({
   opens?: "down" | "up";
   className?: string;
 }) {
-  const small = size === "sm" ? "max-sm:h-10 max-sm:px-4 max-sm:text-small" : undefined;
+  /*
+    ONE ROW ON A PHONE (Genesis, 4 Oct 2026: "put these buttons on one line on
+    phone"): three equal buttons with short labels; the arrows step aside so
+    the words fit. Tablet and up keep the full labels.
+  */
+  const small = cn(
+    size === "sm" && "max-sm:h-10 max-sm:text-small",
+    "max-sm:h-11 max-sm:w-full max-sm:justify-center max-sm:px-2 max-sm:text-[0.8125rem] max-sm:[&_svg]:hidden",
+  );
   const card = verticalCard(vertical);
   const division = card.name.replace(/^Genesis\s+/, "");
 
   return (
     <div
-      className={cn("flex flex-wrap items-center gap-2 sm:gap-3", align === "center" && "justify-center", className)}
+      className={cn(
+        "grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3",
+        align === "center" && "sm:justify-center",
+        className,
+      )}
       data-track={`division-ctas:${vertical}`}
     >
       <GlassButton href={homePlans[vertical].page} pageLink variant="brand" arrow className={small}>
-        View {division}
+        <span className="sm:hidden">Explore</span>
+        <span className="hidden sm:inline">View {division}</span>
       </GlassButton>
       <GlassButton href={bookingHref(division)} variant="glass" arrow className={small}>
-        Book a 15-min Call
+        <span className="sm:hidden">Book a call</span>
+        <span className="hidden sm:inline">Book a 15-min Call</span>
       </GlassButton>
       <GlassButton href="/#library" selectsFilter={WORK_FILTER[vertical]} variant="glass" arrow className={small}>
-        Case Studies
+        <span className="sm:hidden">Case studies</span>
+        <span className="hidden sm:inline">Case Studies</span>
       </GlassButton>
     </div>
   );

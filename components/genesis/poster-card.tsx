@@ -115,9 +115,13 @@ export function PosterCard({
     poster.clip ? poster.image : undefined,
   );
   const ratio = poster.ratio ?? 9 / 16;
+  /*
+    On a phone a reel is at least 70% of the screen (Genesis, 4 Oct 2026:
+    "cards a little bigger"); 20vw alone left it at 12rem, under half.
+  */
   const reelWidth = priority
-    ? "min(clamp(15rem,26vw,21rem),calc(60vh*9/16))"
-    : "min(clamp(12rem,20vw,18rem),calc(54vh*9/16))";
+    ? "min(clamp(min(74vw,21rem),26vw,21rem),calc(60vh*9/16))"
+    : "min(clamp(min(70vw,18rem),20vw,18rem),calc(60vh*9/16))";
 
   const card = (
     <motion.article
@@ -151,7 +155,8 @@ export function PosterCard({
       style={{
         width:
           ratio > 1
-            ? `calc(${reelWidth} * 16 / 9 * ${ratio.toFixed(4)})`
+            ? /* never wider than the screen: a landscape film came out 570px on a 430px phone */
+              `min(calc(${reelWidth} * 16 / 9 * ${ratio.toFixed(4)}), calc(100vw - 3rem))`
             : reelWidth,
       }}
     >

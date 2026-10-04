@@ -2,10 +2,10 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 
 import { Reveal } from "@/components/genesis/reveal";
-import { SectionLabel } from "@/components/genesis/section-label";
 import { mediaUrl } from "@/lib/media-url";
 import type { IconName } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
+import { GlassIcon, type GlassIconName } from "@/components/genesis/glass-icon";
 import { OfferIcon } from "./icons";
 import { VerticalCtas } from "./vertical-ctas";
 
@@ -29,6 +29,7 @@ export function VerticalHero({
   images,
   note,
   visual,
+  fitPhone = false,
 }: {
   label: string;
   /** The heading's plain lines, before the lit one. */
@@ -44,13 +45,38 @@ export function VerticalHero({
   note?: string;
   /** A composition of the page's own to stand in for the photo collage. */
   visual?: ReactNode;
+  /**
+   * The whole opening on one phone screen (Genesis, 4 Oct 2026: "put these in
+   * one page on phone … visible to the user across phone devices"): below lg
+   * the section is the screen's height, a column, and the picture takes what
+   * the headline, services and buttons leave. Only for a picture that can
+   * shrink — the AI Lab diagram.
+   */
+  fitPhone?: boolean;
 }) {
   return (
-    <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 pb-[var(--section-pad)] pt-10 lg:grid-cols-[1fr_1fr] lg:pt-14">
-      <Reveal>
-        <SectionLabel dot tone="brand">
-          {label}
-        </SectionLabel>
+    /*
+      ONE SCREEN ON A DESKTOP (Genesis, 4 Oct 2026: "make this page fit on
+      desktop"): from lg the opening is exactly the window, less the bar's
+      room above it, with both columns centred in it.
+    */
+    <section
+      className={cn(
+        "mx-auto grid w-full max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-0 px-6 pb-[var(--section-pad)] pt-10 lg:grid lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:py-8 xl:max-w-7xl",
+        fitPhone && "max-lg:flex max-lg:items-stretch max-lg:h-[calc(100svh-6.25rem)] max-lg:min-h-[33rem] max-lg:flex-col max-lg:pb-5 max-lg:pt-4",
+      )}
+    >
+      {/*
+        ON A PHONE THE PICTURE COMES BETWEEN THE HEADLINE AND THE SERVICES
+        (Genesis, 4 Oct 2026: "add this between AI visuals & films and
+        whenever you need"). Below lg this column dissolves (`contents`) so
+        its pieces and the picture are siblings in the grid and `order` can
+        interleave them; from lg it is a real column again.
+      */}
+      <Reveal className="contents lg:block">
+        {/* No eyebrow label (Genesis, 4 Oct 2026: "remove this") — the headline names the division. */}
+        <span className="sr-only">{label}</span>
+        <div className="order-1">
         {heading ?? (
           <h1 className="mt-5 text-balance text-h1 font-normal leading-[0.98] tracking-tight text-bone xl:text-[4rem]">
             {lines?.map((line) => (
@@ -63,16 +89,27 @@ export function VerticalHero({
         )}
         {lead && <p className="mt-6 max-w-xl text-pretty text-lead leading-snug text-bone">{lead}</p>}
         {body && <p className="mt-3 max-w-xl text-pretty text-body leading-relaxed text-ash">{body}</p>}
-        <VerticalCtas size="md" className="mt-8" />
-        <ServiceStrip items={strip} className="mt-8" />
+        </div>
+        {/*
+          THE SERVICES, THEN THE BUTTONS (Genesis, 4 Oct 2026: "the buttons
+          should be below the icons, increase the spacing there too").
+        */}
+        <ServiceStrip items={strip} className={cn("order-3 mt-10", fitPhone && "max-lg:mt-4 max-sm:grid max-sm:grid-cols-[repeat(2,auto)] max-sm:justify-between max-sm:gap-x-2 max-sm:gap-y-1.5 max-sm:[&>li]:gap-1.5 max-sm:[&>li]:whitespace-nowrap max-sm:[&>li]:text-[0.75rem] max-sm:[&_svg]:size-6")} />
+        <VerticalCtas size="md" className={cn("order-4 mt-10", fitPhone && "max-lg:mt-5 max-sm:grid max-sm:grid-cols-2 max-sm:gap-2 max-sm:[&>*]:h-11 max-sm:[&>*]:w-full max-sm:[&_a]:w-full max-sm:[&>*]:justify-center max-sm:[&_a]:justify-center max-sm:[&>*]:px-3 max-sm:[&>*]:text-[0.8125rem] max-sm:[&_svg]:hidden")} />
       </Reveal>
 
       {visual ? (
-        <Reveal variant="scene" className="relative mx-auto w-full max-w-xl">
+        <Reveal
+          variant="scene"
+          className={cn(
+            "relative order-2 mx-auto mt-10 w-full max-w-xl lg:order-none lg:mt-0",
+            fitPhone && "max-lg:mt-3 max-lg:min-h-0 max-lg:flex-1",
+          )}
+        >
           {visual}
         </Reveal>
       ) : (
-        <Reveal variant="scene" className="relative mx-auto aspect-[5/4] w-full max-w-xl">
+        <Reveal variant="scene" className="relative order-2 mx-auto mt-10 aspect-[5/4] w-full max-w-xl lg:order-none lg:mt-0">
           <Collage images={images} />
           {note && (
             <p
@@ -145,6 +182,33 @@ function Collage({ images }: { images: readonly { src: string; label?: string }[
  * The division's services in one line of dots, under the hero's buttons —
  * and, on /influencer-marketing, under the homepage section it opens with.
  */
+/*
+  AN ICON FOR EACH DIVISION SERVICE (Genesis, 4 Oct 2026: "you can add icons
+  here"), from the site's glass set — the four menus' twenty services.
+*/
+const SERVICE_ICONS: Record<string, GlassIconName> = {
+  "AI visuals & films": "video",
+  "Digital avatars": "avatar",
+  "Voice & localisation": "voice",
+  "AI automation": "bolt",
+  "Interactive experiences": "grid",
+  "Content strategy": "target",
+  Scriptwriting: "script",
+  "Video production": "camera",
+  "Motion graphics": "motion",
+  "Founder content": "briefcase",
+  "Brand strategy": "idea",
+  "Visual identity": "brand",
+  "Campaign design": "palette",
+  "Pitch decks": "presentation",
+  "Brand guidelines": "layers",
+  "Influencer campaigns": "megaphone",
+  "Celebrity partnerships": "star",
+  "UGC campaigns": "phone",
+  "Creator activations": "rocket",
+  "Regional campaigns": "language",
+};
+
 export function ServiceStrip({
   items,
   className,
@@ -153,13 +217,15 @@ export function ServiceStrip({
   className?: string;
 }) {
   return (
-    <ul className={cn("flex flex-wrap gap-x-5 gap-y-2", className)}>
+    <ul className={cn("flex flex-wrap gap-x-6 gap-y-3", className)}>
       {items.map((item) => {
         const entry = typeof item === "string" ? { label: item } : item;
         return (
-          <li key={entry.label} className="flex items-center gap-2 text-small text-ash">
+          <li key={entry.label} className="flex items-center gap-2.5 text-small text-bone/90">
             {entry.icon ? (
               <OfferIcon name={entry.icon} className="size-4 text-brand-ink" />
+            ) : SERVICE_ICONS[entry.label] ? (
+              <GlassIcon name={SERVICE_ICONS[entry.label]} className="size-7 shrink-0" />
             ) : (
               <span aria-hidden className="size-1.5 rounded-full bg-brand" />
             )}
