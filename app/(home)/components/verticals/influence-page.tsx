@@ -16,7 +16,8 @@ import {
   influenceProcess,
   influenceServices,
 } from "@/lib/verticals/influence";
-import { InfluencerMarketing } from "../influencer-marketing";
+import { InfluenceNetworkCard, InfluenceVideoRail } from "../influencer-marketing";
+import { WorkHead, WorkWarp } from "@/components/genesis/work-warp";
 import { OneTimeProducts } from "../offer/starter-pack";
 import { WorkMode } from "../offer/work-mode";
 import { IconChips, StepsBlock } from "../offer/blocks";
@@ -24,7 +25,7 @@ import { IconTile } from "../offer/icons";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { OfferSection, PlanBand } from "../offer/parts";
 import { PlugHeadline } from "../offer/plug-headline";
-import { ServiceStrip } from "../offer/vertical-hero";
+import { VerticalHero } from "../offer/vertical-hero";
 import { VerticalCtas } from "../offer/vertical-ctas";
 import { BuySteps } from "../offer/buy-steps";
 import { PricingHead } from "../offer/pricing-head";
@@ -49,27 +50,26 @@ export function InfluencePageView() {
         { id: "case-studies", label: "Case studies" },
         { id: "library", label: "Work" },
       ]}>
-      {/* The division's homepage section, unchanged — the brief's own screenshot. */}
       {/*
-        THE PAGE'S HEADLINE, the same sentence as the other three (Genesis,
-        2 Oct 2026): "Plug Genesis.Influence into your brand. Whenever you
-        need …", with the division's services under it. Then the homepage's
-        Influence section, as before.
+        THE SAME OPENING AS THE OTHER THREE DIVISIONS (Genesis, 4 Oct 2026:
+        "align the Influence vertical page like the others"): the headline,
+        the services, the 1,00,000+ card and the buttons on the left, the
+        work rail on the right. Then section 2, the curved rail of its work.
       */}
-      {/*
-        LEFT-ALIGNED, ALL OF IT, ON ONE EDGE (Genesis, 2 Oct 2026: "keep it
-        left aligned only"): the headline, the line under it and the services
-        start where the section below starts.
-      */}
-      <InfluencerMarketing
-        onPage
-        opening={
-          <Reveal className="pb-4 pt-0 lg:pt-4">
-            <PlugHeadline division="Influence" services={divisionMenu("/influencer-marketing")} className="max-w-5xl" />
-            <ServiceStrip items={divisionMenu("/influencer-marketing")} className="mt-10" />
-          </Reveal>
-        }
+      <VerticalHero
+        label="Genesis Influence"
+        heading={<PlugHeadline division="Influence" services={divisionMenu("/influencer-marketing")} className="mt-5" />}
+        strip={divisionMenu("/influencer-marketing")}
+        images={[]}
+        extra={<InfluenceNetworkCard />}
+        visual={<InfluenceVideoRail />}
       />
+
+      {/* SECTION 2: the division's work, in the curved rail every page shares. */}
+      <section className="pb-[var(--section-pad)]">
+        <WorkHead />
+        <WorkWarp divisions={["Influence"]} />
+      </section>
 
       <LogoStrip heading={false} />
 

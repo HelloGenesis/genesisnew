@@ -329,7 +329,6 @@ function Study({ card }: { card: CaseStudyCard }) {
         film-only card has no href and no study, and gets no strip.
       */
       clips={campaignFilmsForSlug(card.href?.split("/").pop())}
-      pageHref={card.href}
     />
   );
 }

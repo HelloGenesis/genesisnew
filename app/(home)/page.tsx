@@ -21,8 +21,8 @@ const HOME_SECTIONS: JumpLink[] = [
   { id: "ai-lab", label: "AI Lab" },
   { id: "studios", label: "Studios" },
   { id: "brand-design", label: "Brand & Design" },
-  { id: "memberships", label: "Pricing" },
   { id: "library", label: "Work" },
+  { id: "memberships", label: "Pricing" },
 ];
 
 /*
@@ -143,9 +143,7 @@ export default function HomePage() {
       <AiContent />
       <Studios />
       <BrandingDesign />
-      {/* How Genesis charges, in one line — see PricingStrip. */}
-      <PricingStrip />
-
+      {/* The portfolio above the pricing (Genesis, 4 Oct 2026: "case studies will go above membership"). */}
       {/*
         09 — THE PORTFOLIO, once every division has had its say.
 
@@ -155,6 +153,10 @@ export default function HomePage() {
         which only lands after a visitor knows what the four divisions are.
       */}
       <Portfolio />
+
+      {/* How Genesis charges, in one line — see PricingStrip. */}
+      <PricingStrip />
+
 
       {/*
         NO FORM ON THE HOMEPAGE (Genesis, 28 Sep 2026). The page ends on the

@@ -1,6 +1,9 @@
 "use client";
 
+import { findCopy } from "@/lib/case-study-copy";
+import { BENTO_WIDE as BENTO } from "@/lib/bento";
 import { DivisionServices } from "@/components/genesis/division-services";
+import { DIVISION_PROCESS, ProcessIcons } from "@/components/genesis/process-icons";
 import { cn } from "@/lib/utils";
 
 import { useState } from "react";
@@ -21,11 +24,25 @@ import {
 import { expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { Reveal } from "@/components/genesis/reveal";
 import { aiContent, services } from "@/lib/home-content";
+import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { DivisionCtas } from "./division-ctas";
 import { PlanBar } from "./plan-bar";
 
 /* The avatar product — the natural next step under the avatar roster (lib/products). */
 import { SectionShell } from "./section-shell";
+import { AiLabBurst } from "@/components/genesis/ai-lab-burst";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+
+/* The Activ Yuva launch (case study 15): the AI Lab panel's proof figure. */
+const PROOF = (() => {
+  const copy = findCopy(15);
+  if (!copy?.outcome?.length) return null;
+  return { campaign: copy.campaign, href: `/case-studies/${copy.slug}`, stats: copy.outcome.slice(0, 3) };
+})();
+
+/* AI Lab's ramp, for its mark over the homepage panel. */
+const aiRamp = services.items[3].ramp;
 
 
 /**
@@ -100,16 +117,32 @@ const AI_VIDEOS: OpenVideo[] = AI_WORK.filter((card) => !card.study).map((card) 
  * `fit`: in the AI Lab hero, where on a phone the diagram takes whatever
  * height the screen has left, so the opening is one screen on any phone.
  */
-export function AiLabDiagram({ className, fit = false }: { className?: string; fit?: boolean }) {
+export function AiLabDiagram({
+  className,
+  fit = false,
+  kicker = true,
+  interactive = false,
+}: {
+  className?: string;
+  fit?: boolean;
+  /** "Less manual work. Smarter workflows. Faster growth." under it — off on the homepage panel. */
+  kicker?: boolean;
+  /** Each tool lights its strand and names itself on hover; the rest step back. */
+  interactive?: boolean;
+}) {
   return (
     <Reveal delay={0.06} className={cn(fit && "max-lg:flex max-lg:h-full max-lg:min-h-0 max-lg:flex-col", className)}>
       <div className={cn("mx-auto w-full max-w-6xl text-center", fit && "max-lg:flex max-lg:h-full max-lg:min-h-0 max-lg:flex-col")}>
-        <figure className={cn("mx-auto max-w-[60rem]", fit && "max-lg:flex max-lg:min-h-0 max-lg:w-full max-lg:flex-1 max-lg:justify-center")}>
-          <AutomationSources className={fit ? "max-lg:mx-auto max-lg:h-full max-lg:max-h-full max-lg:w-auto max-lg:max-w-full" : undefined} />
+        <figure className={cn("relative mx-auto max-w-[60rem]", fit && "max-lg:flex max-lg:min-h-0 max-lg:w-full max-lg:flex-1 max-lg:justify-center")}>
+          <AutomationSources interactive={interactive} className={fit ? "max-lg:mx-auto max-lg:h-full max-lg:max-h-full max-lg:w-auto max-lg:max-w-full" : undefined} />
+          {/* What comes out of the Lab, around its pill (homepage panel). */}
+          {interactive && <AiLabBurst />}
         </figure>
-        <p className={cn("mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead", fit && "max-lg:mt-2 max-sm:whitespace-nowrap max-sm:text-[0.75rem] sm:max-lg:text-small")}>
-          {aiContent.automation.kicker}
-        </p>
+        {kicker && (
+          <p className={cn("mx-auto mt-6 max-w-2xl text-pretty text-body font-medium leading-relaxed text-bone sm:mt-8 sm:text-lead", fit && "max-lg:mt-2 max-sm:whitespace-nowrap max-sm:text-[0.75rem] sm:max-lg:text-small")}>
+            {aiContent.automation.kicker}
+          </p>
+        )}
       </div>
     </Reveal>
   );
@@ -140,11 +173,6 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
     <>
     <SectionShell
       id="ai-lab"
-      division={onPage ? undefined : {
-        name: "AI Lab",
-        tagline: "",
-        ramp: services.items[3].ramp,
-      }}
       /*
         THE UMBRELLA CLAIM, OVER THE WHOLE DIVISION.
 
@@ -159,10 +187,6 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         was written for: introducing the AVATARS, rather than standing in as
         the section's only heading.
       */
-      heading={onPage ? undefined : aiContent.heading}
-      headingAccent={aiContent.headingAccent}
-      body={onPage ? undefined : aiContent.body}
-      bodyPhone={aiContent.bodyPhone}
       /*
         TWO LINES ON A DESKTOP — "isko bhi two lines me karo". At the shell's
         default 42rem it ran to three. Measured, it sets in two from 820px;
@@ -234,9 +258,79 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         View Page, Explore Pricing and Case Studies — see DivisionCtas.
       */}
       {/* Not on the AI Labs page itself, which has its own buttons (Genesis, 2 Oct 2026). */}
-      {!onPage && <DivisionCtas vertical="ai-labs" align="center" className="mt-6 sm:mt-8" />}
+      {/*
+        ONE BLOCK, TEXT LEFT AND THE AI LAB DIAGRAM RIGHT (Genesis, 4 Oct
+        2026: "merge these together — text on the left, AI element on the
+        right, in one section"). The diagram's pill names the division, so
+        there is no separate lockup; the claim, the process, the services and
+        the buttons sit beside it. Stacked on a phone, the words first.
+      */}
+      {!onPage && (
+        <div className={BENTO}>
+          {/*
+            ONE COLUMN, THE LAB IN THE MIDDLE (Genesis, 4 Oct 2026: "merge this
+            into this … the main element goes into the circle, the process
+            below; keep everything visible, no overlaps, enough spacing"): the
+            mark, the claim, then the diagram large and centred with what the
+            Lab makes around it, the services under it, the proof, the process
+            and the way on.
+          */}
+          <Reveal className="flex justify-center">
+            <DivisionLockup name="AI Lab" tagline="" ramp={aiRamp} />
+          </Reveal>
+          <Reveal className="mt-6 text-center">
+            <h2 className="text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
+              {aiContent.heading}{" "}
+              <span className="font-serif font-normal italic text-brand-ink">{aiContent.headingAccent}</span>
+            </h2>
+          </Reveal>
+          <Reveal delay={0.06} className="lg:hidden">
+            <p className="mx-auto mt-4 max-w-xl text-center text-pretty text-body leading-relaxed text-ash">{aiContent.bodyPhone}</p>
+          </Reveal>
 
-      <Reveal variant="scene" className="relative left-1/2 mt-10 w-screen -translate-x-1/2">
+          {/* THE MAIN ELEMENT. */}
+          <AiLabDiagram className="mx-auto mt-8 w-full max-w-[60rem] max-sm:[&_svg]:mx-auto max-sm:[&_svg]:max-h-[34svh] max-sm:[&_svg]:w-auto lg:mt-12" kicker={false} interactive />
+
+
+          {/* One proof figure: the Activ Yuva launch, opening its case study. */}
+          {PROOF && (
+            <Link
+              href={PROOF.href}
+              prefetch={false}
+              aria-label={`${PROOF.campaign}: open the case study`}
+              className="group mx-auto mt-6 flex w-fit flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] px-5 py-2.5 text-[0.8125rem] text-ash shadow-[var(--shadow-raised)] transition-colors hover:border-brand/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              {PROOF.stats.map((stat, index) => (
+                <span key={stat.label} className="flex items-baseline gap-1.5">
+                  {index > 0 && <span aria-hidden className="mr-2.5 text-white/25">·</span>}
+                  <span className="font-display text-lead leading-none text-brand-ink">{stat.value}</span>
+                  <span>{stat.label}</span>
+                </span>
+              ))}
+              <ArrowUpRight className="size-3.5 text-bone transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+            </Link>
+          )}
+
+          <DivisionCtas vertical="ai-labs" align="center" size="sm" primaryOnly className="mt-8 justify-center" />
+        </div>
+      )}
+      {/*
+        THE SERVICES AND THE PROCESS, A PANEL OF THEIR OWN (Genesis, 4 Oct
+        2026: "make these a different bento, make these like these"), set as
+        the dark glass chips that come out of the Lab above.
+      */}
+      {!onPage && (
+        <div className={cn("mt-6", BENTO)}>
+          <p className="micro-label text-center !text-brand-ink">What the Lab does</p>
+          <DivisionServices division="AI Lab" chips className="mt-4" />
+          <p className="micro-label mt-8 text-center !text-brand-ink max-lg:hidden">How it runs</p>
+          <ProcessIcons steps={DIVISION_PROCESS["AI Lab"]} label={aiContent.body} chips className="mt-4" />
+        </div>
+      )}
+
+      {/* The curved rail of AI work lives on the AI Lab page only, not the homepage (Genesis, 4 Oct 2026). */}
+      {onPage && (
+      <Reveal variant="scene" className="relative left-1/2 mt-10 w-screen -translate-x-1/2 lg:mt-16">
         {/*
           BIGGER AND TALLER THAN THE FIRST PASS. The cards were 15vw at 3:4
           and Genesis's read was that the whole thing looked mid next to the
@@ -251,8 +345,8 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           gave 8.5rem, about 35% bigger, with the frame grown to match. From
           sm up the viewport-relative sizes are unchanged.
         */}
-        {/* BIGGER CARDS (Genesis, 4 Oct 2026: "increase this card size"), about a quarter up. */}
-        <div className="[--warp-card:14rem] [--warp-h:23.5rem] sm:[--warp-card:clamp(10.5rem,19vw,17.5rem)] sm:[--warp-h:clamp(17.5rem,31.5vw,29.5rem)]">
+        {/* BIGGER CARDS from sm (Genesis, 4 Oct 2026), bigger again ("make these cards bigger"). */}
+        <div className="[--warp-card:11.5rem] [--warp-h:19.5rem] sm:[--warp-card:clamp(11rem,22vw,20rem)] sm:[--warp-h:calc(var(--warp-card)*1.6+1.75rem)]">
           {/*
             EVERY CARD OPENS SOMETHING, which is the fix Genesis reported
             twice — "these videos are still not interactive".
@@ -281,6 +375,7 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           <WarpRail
             items={AI_WORK.map((card) => ({
               ...card,
+              stats: card.study?.copy !== undefined ? findCopy(card.study.copy)?.outcome ?? undefined : undefined,
               onOpen: card.study
                 ? () => {
                     setStudy(card.study ?? null);
@@ -291,9 +386,9 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           />
         </div>
       </Reveal>
+      )}
 
-      {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
-      {!onPage && <DivisionServices division="AI Lab" />}
+
 
       {/*
         THE AI LAB DIAGRAM, ABOVE THE AVATARS (Genesis, 29 Sep 2026: "remove
@@ -308,8 +403,7 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         and the buttons — it's just an element to represent the AI Lab"): the
         diagram and its line, on the section's own ground.
       */}
-      {/* On the AI Labs page it sits under the client logos instead — see AiLabDiagram. */}
-      {!onPage && <AiLabDiagram className="mt-[var(--block-gap)]" />}
+
 
       <Reveal
         variant="scene"
@@ -364,7 +458,9 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
             rather than two full ones and a stub. The heading above stays at
             its own width; only the copy widens.
           */}
-          <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead lg:max-w-[60rem] lg:text-balance xl:max-w-[70rem]">
+          {/* The avatar copy as a process on a desktop (Genesis, 4 Oct 2026). */}
+          <ProcessIcons steps={DIVISION_PROCESS["AI Avatars"]} label={aiContent.avatarsIntro.lead} className="mt-8" />
+          <p className="mx-auto mt-3 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead lg:hidden">
             <span className="sm:hidden">{aiContent.avatarsIntro.leadPhone}</span>
             <span className="hidden sm:inline">{aiContent.avatarsIntro.lead}</span>
           </p>
@@ -391,9 +487,41 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           rather than a component change the day another line arrives.
         */}
         {aiContent.avatarsIntro.line && (
-          <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead">
-            {aiContent.avatarsIntro.line}
-          </p>
+          <>
+            <p className="mx-auto mt-4 max-w-2xl px-6 text-center text-body leading-relaxed text-ash sm:text-lead lg:hidden">
+              {aiContent.avatarsIntro.line}
+            </p>
+            {/*
+              ON A DESKTOP THE LINE BENDS WITH THE CARDS (Genesis, 4 Oct 2026:
+              "make the text circular near the image cards, in the same
+              direction"): set on an arc that rises to the middle, as the fan
+              does, just under it.
+            */}
+            {/*
+              TWO LINES, TWO ARCS, TUCKED UNDER THE CARDS (Genesis, 4 Oct
+              2026: "write this here in two sentences"): one sentence to a
+              curve, the shorter one inside.
+            */}
+            <svg
+              viewBox="0 0 1400 200"
+              className="mx-auto -mt-16 hidden w-full max-w-6xl text-ash lg:block"
+              role="img"
+              aria-label={aiContent.avatarsIntro.line}
+            >
+              <path id="avatar-line-arc-1" d="M 240 120 Q 700 -20 1160 120" fill="none" />
+              <path id="avatar-line-arc-2" d="M 110 188 Q 700 42 1290 188" fill="none" />
+              {aiContent.avatarsIntro.line
+                .split(/(?<=\.)\s+/)
+                .slice(0, 2)
+                .map((sentence, index) => (
+                  <text key={index} fill="currentColor" fontSize="20" className="font-sans">
+                    <textPath href={`#avatar-line-arc-${index + 1}`} startOffset="50%" textAnchor="middle">
+                      {sentence}
+                    </textPath>
+                  </text>
+                ))}
+            </svg>
+          </>
         )}
         {/*
           The "Build Your AI Avatar · one-time · Buy Now" strip came off here
@@ -431,7 +559,7 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         outline. The diagram keeps its own generous measure so the labels and
         the node are read rather than squinted at.
       */}
-      {!onPage && <PlanBar vertical="ai-labs" />}
+      {!onPage && <PlanBar vertical="ai-labs" className="lg:!-mx-16 lg:!w-auto" />}
     </SectionShell>
 
 

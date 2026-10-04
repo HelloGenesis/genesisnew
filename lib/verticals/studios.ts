@@ -109,7 +109,8 @@ const EVERY_VIDEO: { item: string; included: boolean | string }[] = [
 export const studiosPlans: PlanGrid = {
   label: "Content Monthly",
   heading: "Plans for every stage.",
-  body: ["Choose the production capacity your brand needs.", "Upgrade as your content needs grow."],
+  /* No standfirst under the heading (Genesis, 4 Oct 2026: "taking too much space"). */
+  body: [],
   /*
     THE TOGGLE, WITHOUT A DISCOUNT: "keep the UI toggle but not show a
     discount yet unless you formally decide one, because the current

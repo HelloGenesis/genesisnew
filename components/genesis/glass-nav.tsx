@@ -15,7 +15,7 @@ import { CartButton } from "./cart";
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
-import { homeHref, navItems, primaryCta, type NavItem } from "@/lib/site-config";
+import { homeHref, navItems, type NavItem } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 /**
@@ -143,7 +143,7 @@ export function GlassNav() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 sm:pt-6"
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3 sm:px-4 sm:pt-6"
     >
       {/*
         DRIVEN BY THE TOKENS, not by hardcoded values. This component used to
@@ -165,7 +165,8 @@ export function GlassNav() {
           // --glass-border, and the `border-white/10` that used to sit here
           // overrode it with a white line on a near-white pill — measured
           // 1.00:1 against the pill's own surface in the light theme.
-          "px-4 py-3 sm:px-6",
+          /* Slimmer on a phone (Genesis, 4 Oct 2026: "decrease the size of this bar on phone, sleek and tidy"). */
+          "py-1.5 pl-4 pr-1.5 sm:px-6 sm:py-3",
           "transition-[background-color,backdrop-filter] duration-500 ease-out",
           condensed && "glass-strong",
           // Takes the dark scene's tokens — inks, glass fill, border and the
@@ -255,7 +256,7 @@ export function GlassNav() {
           every pixel this cluster needs. The toggle and the CTA are fixed
           furniture — they are what the bar shrinks AROUND, not what shrinks.
         */}
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           <ThemeToggle className="hidden xl:inline-flex" />
           <CartButton />
 
@@ -268,13 +269,14 @@ export function GlassNav() {
             rather than a ring drawn on it.
           */}
           <GlassButton
-            href={primaryCta.href}
+            /* "Book a 15-min Call" in the bar (Genesis, 4 Oct 2026), down to the footer's calendar. */
+            href="/#book-a-call"
             variant="brand"
             size="sm"
             className="hidden transition-[transform,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-px motion-safe:hover:shadow-[0_6px_20px_-6px_rgb(255_197_22/0.55)] sm:inline-flex"
             arrow
           >
-            {primaryCta.label}
+            Book a 15-min Call
           </GlassButton>
 
           <button
@@ -282,7 +284,7 @@ export function GlassNav() {
             onClick={() => setMenuOpen((open) => !open)}
             aria-expanded={menuOpen}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand xl:size-9 xl:hidden"
+            className="grid size-9 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:size-10 xl:size-9 xl:hidden"
           >
             {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
@@ -297,7 +299,7 @@ export function GlassNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="glass glass-strong pointer-events-auto absolute inset-x-4 top-20 rounded-panel p-4 xl:hidden"
+            className="glass glass-strong pointer-events-auto absolute inset-x-3 top-[4.25rem] rounded-panel p-4 sm:inset-x-4 sm:top-20 xl:hidden"
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="micro-label">Menu</span>
@@ -376,13 +378,13 @@ export function GlassNav() {
 
 
             <GlassButton
-              href={primaryCta.href}
+              href="/#book-a-call"
               variant="brand"
               size="md"
               arrow
               className="mt-3 w-full"
             >
-              {primaryCta.label}
+              Book a 15-min Call
             </GlassButton>
           </motion.div>
         )}

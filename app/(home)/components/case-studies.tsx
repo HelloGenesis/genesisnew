@@ -1,19 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
-import { PosterRail, type Poster } from "@/components/genesis/poster-card";
 import { CaseStudyDialog } from "@/components/genesis/case-study-dialog";
+import { WorkWarp } from "@/components/genesis/work-warp";
 import { pagerFor } from "@/components/genesis/overlay";
 import { ProofBar } from "@/components/genesis/proof-bar";
-import { softRadial } from "@/lib/soft-gradient";
 import { Reveal } from "@/components/genesis/reveal";
 import { GlassButton } from "@/components/genesis/glass-button";
-import { caseStudiesPage, caseStudyList, disciplines, leadClip } from "@/lib/case-studies";
-import { caseStudyPath } from "@/lib/case-study-pages";
-import { findWork, reelClip, reelPoster } from "@/lib/work";
-import { clipRatio } from "@/lib/clip-shape";
-import { mediaUrl } from "@/lib/media-url";
+import { caseStudiesPage, caseStudyList } from "@/lib/case-studies";
 import { SectionShell } from "./section-shell";
 
 /**
@@ -33,6 +28,23 @@ import { SectionShell } from "./section-shell";
  * written yet, so the poster leads with the CLIENT — the part that is true —
  * and the story takes over the moment it is written. Nothing is invented.
  */
+/*
+  A PHONE OPENS ON VIKRANT AND RASHMI (Genesis, 4 Oct 2026: "first add
+  Vikrant and Rashmi's on phone, then the launch film"): the two portrait
+  films lead, the landscape launch film third, the rest as they were.
+*/
+const PHONE_FIRST = [
+  "aditya-birla-capital-vikrant-massey",
+  "aditya-birla-capital-content-campaign",
+  "aditya-birla-capital-brand-performance",
+];
+const PHONE_QUERY = "(max-width: 639px)";
+const subscribePhone = (onChange: () => void) => {
+  const query = window.matchMedia(PHONE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+
 export function CaseStudies() {
   /*
     WHICH STUDY IS OPEN, by slug. Genesis asked for the posters to be
@@ -42,58 +54,7 @@ export function CaseStudies() {
     state that cannot drift from the source list.
   */
   const [openSlug, setOpenSlug] = useState<string | null>(null);
-  /*
-    Reads the case-study catalogue rather than its own copy of the list. The
-    homepage rail and /case-studies were describing the same four clients from
-    two places, which is how a site ends up with a study that exists in one
-    and not the other.
-  */
-  const posters: Poster[] = caseStudyList.map((study) => {
-
-    /*
-      THE CAMPAIGN'S OWN FOOTAGE, which these cards were missing entirely.
-      Each study already names the catalogue pieces it covers in `work` — the
-      /case-studies index has used that to find a hero all along, and this rail
-      did not, so four posters sat here with a play control painted on them and
-      nothing behind it.
-
-      Two of the four have footage today. Aditya Birla Sun Life and HDFC are
-      real relationships with no clip in either Drive folder, so they keep the
-      typographic card rather than borrowing another client's video — Sun Life
-      is a different company from Aditya Birla Capital, and using one's reel
-      under the other's name would be a claim about both.
-    */
-    const lead = study.work?.[0] ? findWork(study.work[0]) : undefined;
-
-    /*
-      `heroClip` wins over the catalogue piece's own lead. Two studies can
-      cover one client — Aditya Birla Capital has eighteen films behind
-      several of these cards — and without it they would all open on the same
-      video. `leadClip` makes that choice for the dialog as well.
-    */
-    const id = leadClip(study);
-    const clip = id === undefined ? lead?.clip : mediaUrl(reelClip(id));
-    const image =
-      id === undefined ? (lead?.poster ?? lead?.art) : mediaUrl(reelPoster(id));
-
-    return {
-      id: study.slug,
-      ratio: id === undefined ? undefined : clipRatio(id),
-      category: disciplines(study)[0],
-      extraCategories: disciplines(study).slice(1),
-      image,
-      clip,
-      /* The study's page: the poster links there and still opens the window
-         on a plain click. See PosterCard. */
-      href: caseStudyPath(study.copy),
-      /*
-        THE COMPANY NAME AND NOTHING ELSE on the card ("itna saara content
-        nahi chahiye"): the labels above, the reel, the client below. The
-        headline and write-up are one click away, in the dialog.
-      */
-      title: study.client,
-    };
-  });
+  const phone = useSyncExternalStore(subscribePhone, () => window.matchMedia(PHONE_QUERY).matches, () => false);
 
   return (
     <SectionShell
@@ -101,6 +62,12 @@ export function CaseStudies() {
       /* No eyebrow label: Genesis took "Case studies" off — the heading says it. */
       heading={caseStudiesPage.heading}
       headingAccent={caseStudiesPage.headingAccent}
+      /*
+        ON A PHONE (Genesis, 4 Oct 2026): the figures above the heading, the
+        heading on one line, bigger posters, and the two buttons under them.
+      */
+      before={<ProofBar className="mb-6 sm:hidden" />}
+      headingClassName="max-sm:whitespace-nowrap max-sm:text-[min(1.75rem,6.6vw)] sm:text-h2 lg:text-h2"
       /*
         NO STANDFIRST. THE FIGURES ARE THE STANDFIRST.
 
@@ -138,85 +105,38 @@ export function CaseStudies() {
         division's (see lib/proof), so at the foot of Influence half of them
         claimed something narrower than they mean.
       */}
-      <ProofBar />
+      <ProofBar className="max-sm:hidden" />
+
+      {/* No buttons under the figures on a desktop (Genesis, 4 Oct 2026); a phone has them under the posters. */}
 
       {/*
-        TWO WAYS ON, UNDER THE FIGURES AND ABOVE THE POSTERS (Genesis, 2 Oct
-        2026). Book a 15-min Call slides down to the footer's calendar; View
-        Case Studies slides to the posters.
+        THE WHOLE SECTION ON ONE PHONE SCREEN (Genesis, 4 Oct 2026): the
+        heading, the figures, the buttons and a poster, so the posters stand
+        at about a third of the screen's height there.
       */}
-      <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <GlassButton href="#book-a-call" variant="brand" arrow magnetic>
-          Book a 15-min Call
-        </GlassButton>
-        <GlassButton href="#case-study-posters" variant="glass" arrow>
-          View Case Studies
-        </GlassButton>
-      </Reveal>
-
-      <Reveal variant="scene" className="mt-[var(--block-gap)]">
-        {/*
-          The stage. img-025 sits its rail inside a broad brand bloom rather
-          than on flat black — that glow is what makes the posters read as lit
-          objects on a stage instead of tiles on a page.
-        */}
-        <div className="relative">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-x-10 -inset-y-8"
-            style={{
-              /*
-                The bloom the posters sit in. It was three linear stops, and
-                the change of rate at 42% drew a second ring inside the one
-                its last stop drew at 76%. See lib/soft-gradient.
-              */
-              background: softRadial("closest-side", "255 197 22", 0.3),
-            }}
-          />
-          {/*
-            FULL-BLEED, WHICH IS THE ACTUAL FIX FOR THE CUT.
-
-            The rail used to end where the 72rem container ends. On a 1440
-            screen that put its right edge at 1296px with 144px of empty page
-            beyond it — so the last poster was not running off the screen, it
-            was being guillotined in the middle of the page with daylight to
-            its right. No amount of fading rescues that: a card dissolving at
-            the edge of the window reads as "there is more this way", and the
-            same card dissolving 144px short of the window reads as a
-            rendering fault, which is exactly what Genesis kept pointing at.
-
-            The rail now spans the viewport and pads itself back to the
-            container's gutter, so the first poster still lines up under the
-            heading while the last one runs off the actual edge of the screen.
-            It also means the rail is 1440 wide instead of 1152 against 1296 of
-            posters — above about 1300px nothing overflows at all any more, so
-            there is no cut to fade and useEdgeFade correctly draws none.
-            Below that it scrolls, and the fade lands on the window edge where
-            it belongs. The wrapper is clipped by Atmosphere's own
-            overflow-hidden, so 100vw cannot widen the page.
-          */}
-          <div id="case-study-posters" className="relative left-1/2 w-screen -translate-x-1/2 scroll-mt-28 overflow-hidden">
-            <PosterRail
-              posters={posters}
-              onSelect={setOpenSlug}
-              /*
-                The container is 72rem wide with its own 1.5rem gutter inside
-                it, so its text starts at (100vw - 72rem) / 2 + 1.5rem. The
-                padding has to be that same figure or the first poster sits a
-                gutter's width to the left of the heading it belongs under —
-                measured, 144px against the heading's 168px. Below 72rem the
-                whole expression falls under 1.5rem and the max holds the
-                phone gutter.
-              */
-              className="px-[max(1.5rem,calc((100vw-72rem)/2+1.5rem))]"
-            />
-          </div>
-        </div>
-      </Reveal>
+      {/*
+        THE CASE STUDIES IN THE CURVED RAIL EVERY PAGE'S SECTION 2 SHARES
+        (Genesis, 4 Oct 2026: "all pages … section 2 will have their relevant
+        work and case studies, in this exact same format"). Each card opens
+        its study on its film. A phone leads with Vikrant and Rashmi.
+      */}
+      <div id="case-study-posters" className="mt-[var(--block-gap)] scroll-mt-28 max-sm:mt-6">
+        <WorkWarp order={phone ? PHONE_FIRST : undefined} />
+      </div>
       {/*
         The section is a trailer; the page is the thing. Without this the rail
         was a dead end — four posters and no way to read any of them.
       */}
+
+      {/* The two buttons, under the posters on a phone. */}
+      <Reveal delay={0.1} className="mt-6 grid grid-cols-2 gap-2 sm:hidden [&_a]:h-11 [&_a]:w-full [&_a]:justify-center [&_a]:px-3 [&_a]:text-[0.8125rem]">
+        <GlassButton href="#book-a-call" variant="brand" arrow>
+          Book a call
+        </GlassButton>
+        <GlassButton href="#case-study-posters" variant="glass" arrow>
+          Case studies
+        </GlassButton>
+      </Reveal>
 
       <CaseStudyDialog
         study={caseStudyList.find((s) => s.slug === openSlug) ?? null}

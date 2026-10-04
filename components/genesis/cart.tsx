@@ -200,7 +200,7 @@ export function CartButton({ className }: { className?: string }) {
       aria-label={count ? `Cart, ${count} item${count === 1 ? "" : "s"}` : "Cart, empty"}
       data-track="nav:cart"
       className={cn(
-        "relative grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors lg:size-9 hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+        "relative grid size-9 place-items-center rounded-full border sm:size-10 border-[var(--glass-border)] text-bone transition-colors lg:size-9 hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
         className,
       )}
     >

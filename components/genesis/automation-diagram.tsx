@@ -190,7 +190,7 @@ const BODY_MIDPOINT = 0.41;
  * SVG does not render, so if the two shared ids the visible drawing would
  * reference the hidden one's gradients and paint its lines with nothing.
  */
-export function AutomationSources({ className }: { className?: string }) {
+export function AutomationSources({ className, interactive = false }: { className?: string; interactive?: boolean }) {
   return (
     <>
       {/*
@@ -200,13 +200,13 @@ export function AutomationSources({ className }: { className?: string }) {
         of Genesis's report. The board has no such problem: it reflows as two
         columns of cells at any width.
       */}
-      <WideDiagram className={cn("hidden md:block", className)} />
+      <WideDiagram interactive={interactive} className={cn("hidden md:block", className)} />
       <TallDiagram className={cn("md:hidden", className)} />
     </>
   );
 }
 
-function WideDiagram({ className }: { className?: string }) {
+function WideDiagram({ className, interactive = false }: { className?: string; interactive?: boolean }) {
   const width = 940;
   /*
     THE CANVAS GREW WITH THE LIST. Seven labels a side at the old 300 units
@@ -255,7 +255,7 @@ function WideDiagram({ className }: { className?: string }) {
       viewBox={`0 0 ${width} ${height}`}
       role="presentation"
       aria-hidden
-      className={cn("h-auto w-full", className)}
+      className={cn("h-auto w-full", interactive && "gm-board", className)}
     >
       <defs>
         <MarkInk id="gm-app-mark" />
@@ -346,6 +346,19 @@ function WideDiagram({ className }: { className?: string }) {
               >
                 <title>{app.name}</title>
               </image>
+              {/* Its name, shown on hover where the board is interactive. */}
+              {interactive && (
+                <text
+                  className="gm-label"
+                  x={side.dir === 1 ? side.x - 16 - box.w / 2 : side.x + 16 + box.w / 2}
+                  y={y - box.h / 2 - 9}
+                  textAnchor="middle"
+                  fontSize="13"
+                  fill="#f6f1e7"
+                >
+                  {app.name}
+                </text>
+              )}
             </g>
           );
         }),
@@ -373,6 +386,7 @@ function WideDiagram({ className }: { className?: string }) {
         strokeWidth="6"
         opacity="0.7"
         filter="url(#gm-ai-halo)"
+        className={interactive ? "gm-halo" : undefined}
       />
       <rect
         x={hub.x}

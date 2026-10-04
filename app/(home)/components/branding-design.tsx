@@ -1,4 +1,6 @@
 import { DivisionServices } from "@/components/genesis/division-services";
+import { BENTO_WIDE as BENTO } from "@/lib/bento";
+import { DIVISION_PROCESS, ProcessIcons } from "@/components/genesis/process-icons";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -151,6 +153,7 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
         against and the caption does the job it does in every other division.
       */
       body={onPage ? undefined : branding.body}
+      bodyDesktop={<ProcessIcons steps={DIVISION_PROCESS["Brand & Design"]} label={branding.body} />}
       align="center"
       tone="brand"
       origin="top-left"
@@ -184,7 +187,9 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
         row keeps its own order — work, headline, list — which is set by the
         xl:order classes on each card.
       */}
-      <SwipeHintRail className="no-scrollbar -mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 sm:gap-5 xl:mx-[-2.5rem] xl:grid xl:snap-none xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8 xl:overflow-visible xl:px-0">
+      {/* The three folders in one glass panel on the homepage (Genesis, 4 Oct 2026). */}
+      <div className={onPage ? undefined : BENTO}>
+      <SwipeHintRail className="no-scrollbar -mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 sm:gap-5 xl:mx-0 xl:grid xl:snap-none xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8 xl:overflow-visible xl:px-0">
         {/* ─── The work ─────────────────────────────────────────────── */}
         <Reveal className="relative z-10 order-3 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-1 xl:w-auto xl:max-w-none">
           <WorkPanel />
@@ -208,10 +213,11 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
         </Reveal>
 
       </SwipeHintRail>
+      </div>
 
       {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
       {!onPage && <DivisionServices division="Brand & Design" />}
-      {!onPage && <PlanBar vertical="brand-design" className="xl:mt-20" />}
+      {!onPage && <PlanBar vertical="brand-design" className="lg:!-mx-16 lg:!w-auto xl:mt-20" />}
     </SectionShell>
   );
 }
@@ -418,7 +424,7 @@ function ClaimPanel() {
         "Build a brand people remember." is theirs. The ramp moves to
         the half that carries the idea.
       */}
-      <h3 className="text-[2rem] leading-[1.04] font-normal tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
+      <h3 className="text-[2rem] leading-[1.04] font-normal tracking-tight text-scene md:text-h2">
         Build a
         <br />
         brand

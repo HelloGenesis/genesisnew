@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { BuySteps } from "./offer/buy-steps";
+import { PlanCaseStudies } from "@/components/genesis/plan-case-studies";
 import { Reveal } from "@/components/genesis/reveal";
 import { homePlans, verticalCard } from "@/lib/pricing";
 import type { VerticalKey } from "@/lib/verticals/types";
@@ -30,6 +32,14 @@ const MARK: Record<VerticalKey, { slug: string; width: number; height: number }>
   "brand-design": { slug: "brand-design", width: 803, height: 120 },
 };
 
+/* The catalogue's name for each division, for its case studies. */
+const VERTICAL_NAME: Record<VerticalKey, string> = {
+  influence: "Influence",
+  "ai-labs": "AI Lab",
+  studios: "Studios",
+  "brand-design": "Brand & Design",
+};
+
 export function PlanBar({ vertical, className }: { vertical: VerticalKey; className?: string }) {
   const plan = homePlans[vertical];
   return (
@@ -49,13 +59,13 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
         style={{ background: "linear-gradient(100deg, #f5923e 0%, #f2607e 40%, #6b4fd8 75%, #c05ce0 100%)" }}
       >
       <div
-        className="relative flex flex-col gap-5 rounded-panel bg-ink p-5 text-left sm:p-6"
+        className="relative flex flex-col gap-5 rounded-panel bg-ink p-5 text-left sm:p-6 lg:min-h-[48.5rem]"
         style={{
           backgroundImage:
             "radial-gradient(120% 140% at 0% 100%, rgb(245 146 62 / 0.22), transparent 45%), radial-gradient(120% 140% at 100% 0%, rgb(180 92 224 / 0.22), transparent 45%)",
         }}
       >
-        <div className="flex flex-col gap-x-8 gap-y-2 lg:flex-row lg:items-baseline lg:justify-between">
+        <div className="flex flex-col gap-x-8 gap-y-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             {/*
               THE LOGO AND THE DIVISION, FIRST (Genesis, 2 Oct 2026): the
@@ -63,6 +73,7 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
               set, as the division's own heading uses — so the bar says whose
               offers these are before it names the product.
             */}
+            {/* The N mark and the division, as the other three boxes carry it (Genesis, 4 Oct 2026: "add the other logo"). */}
             <Image
               src={`/brand/divisions/mark/${MARK[vertical].slug}.png`}
               alt={`Genesis ${verticalCard(vertical).short}`}
@@ -72,17 +83,34 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
               className="mb-4 h-7 w-auto sm:h-8"
             />
             <p className="micro-label !text-brand-ink">{plan.product}</p>
-            <p className="mt-2 font-sans text-lead leading-snug text-bone">{plan.promise}</p>
+            {/* No promise line here (Genesis, 4 Oct 2026: "remove this"). */}
           </div>
           {/* No "Subscriptions from …" line (Genesis, 2 Oct 2026): the cards below carry every price. */}
+          {/*
+            ONE BUTTON, INSIDE THE BOX (Genesis, 4 Oct 2026: "remove this and
+            move the other button inside the box"): "View …" up here; the call
+            and case-studies buttons that sat under the box are gone — the
+            case studies have their own column now.
+          */}
+          <DivisionCtas vertical={vertical} size="sm" primaryOnly className="shrink-0 lg:self-center" />
         </div>
-        <DivisionCtas vertical={vertical} size="sm" opens="up" />
         {/* What this division sells, card by card: a Subscriptions | Pay-per-project switch over its plans and products. */}
-        <div className="border-t border-[var(--glass-border)] pt-4">
-          <DivisionOffers vertical={vertical} />
+        {/*
+          TWO COLUMNS INSIDE THE BOX (Genesis, 4 Oct 2026): the offers on the
+          left, two to a row, and the division's case studies on the right,
+          four portrait cards a page with a way on to the rest.
+        */}
+        <div className="grid gap-8 border-t border-[var(--glass-border)] pt-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-8">
+          <div className="flex min-w-0 flex-col">
+            <DivisionOffers vertical={vertical} grid />
+            {/* How it works, in the space under the cards (Genesis, 4 Oct 2026: "add a small explainer like this in each section"). */}
+            <BuySteps className="mt-auto pt-6 lg:grid-cols-4 [&_li]:p-3 [&_li]:text-small" />
+          </div>
+          <PlanCaseStudies vertical={VERTICAL_NAME[vertical]} className="lg:border-l lg:border-[var(--glass-border)] lg:pl-8 lg:pt-1" />
         </div>
       </div>
       </div>
+
     </Reveal>
   );
 }

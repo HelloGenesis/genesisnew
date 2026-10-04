@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { WorkHead, WorkWarp } from "@/components/genesis/work-warp";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { mediaUrl } from "@/lib/media-url";
@@ -54,6 +55,12 @@ export function BrandDesignPageView() {
         /* The homepage section's three folders, in place of the logo collage. */
         visual={<BrandingStack />}
       />
+
+      {/* SECTION 2: the division's work, in the curved rail every page shares (Genesis, 4 Oct 2026). */}
+      <section className="pb-[var(--section-pad)]">
+        <WorkHead />
+        <WorkWarp divisions={["Brand & Design"]} />
+      </section>
 
       {/*
         THE DIVISION'S HOMEPAGE SECTION, under the hero, without its header

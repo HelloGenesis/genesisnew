@@ -30,6 +30,7 @@ export function VerticalHero({
   note,
   visual,
   fitPhone = false,
+  extra,
 }: {
   label: string;
   /** The heading's plain lines, before the lit one. */
@@ -44,7 +45,8 @@ export function VerticalHero({
   /** The handwritten aside beside the collage — "Same you. More content." */
   note?: string;
   /** A composition of the page's own to stand in for the photo collage. */
-  visual?: ReactNode;
+  /** The right-hand picture; `false` for none — the words alone, one column. */
+  visual?: ReactNode | false;
   /**
    * The whole opening on one phone screen (Genesis, 4 Oct 2026: "put these in
    * one page on phone … visible to the user across phone devices"): below lg
@@ -53,6 +55,8 @@ export function VerticalHero({
    * shrink — the AI Lab diagram.
    */
   fitPhone?: boolean;
+  /** Something under the services, above the buttons: the Influence page's 1,00,000+ card. */
+  extra?: ReactNode;
 }) {
   return (
     /*
@@ -63,6 +67,7 @@ export function VerticalHero({
     <section
       className={cn(
         "mx-auto grid w-full max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-0 px-6 pb-[var(--section-pad)] pt-10 lg:grid lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:py-8 xl:max-w-7xl",
+        visual === false && "lg:min-h-0 lg:grid-cols-1 lg:pb-[var(--section-pad)] lg:pt-16",
         fitPhone && "max-lg:flex max-lg:items-stretch max-lg:h-[calc(100svh-6.25rem)] max-lg:min-h-[33rem] max-lg:flex-col max-lg:pb-5 max-lg:pt-4",
       )}
     >
@@ -95,14 +100,15 @@ export function VerticalHero({
           should be below the icons, increase the spacing there too").
         */}
         <ServiceStrip items={strip} className={cn("order-3 mt-10", fitPhone && "max-lg:mt-4 max-sm:grid max-sm:grid-cols-[repeat(2,auto)] max-sm:justify-between max-sm:gap-x-2 max-sm:gap-y-1.5 max-sm:[&>li]:gap-1.5 max-sm:[&>li]:whitespace-nowrap max-sm:[&>li]:text-[0.75rem] max-sm:[&_svg]:size-6")} />
+        {extra && <div className="order-3 mt-8 max-w-xl">{extra}</div>}
         <VerticalCtas size="md" className={cn("order-4 mt-10", fitPhone && "max-lg:mt-5 max-sm:grid max-sm:grid-cols-2 max-sm:gap-2 max-sm:[&>*]:h-11 max-sm:[&>*]:w-full max-sm:[&_a]:w-full max-sm:[&>*]:justify-center max-sm:[&_a]:justify-center max-sm:[&>*]:px-3 max-sm:[&>*]:text-[0.8125rem] max-sm:[&_svg]:hidden")} />
       </Reveal>
 
-      {visual ? (
+      {visual === false ? null : visual ? (
         <Reveal
           variant="scene"
           className={cn(
-            "relative order-2 mx-auto mt-10 w-full max-w-xl lg:order-none lg:mt-0",
+            "relative order-2 mx-auto mt-10 w-full max-w-xl lg:order-none lg:mt-0 lg:max-w-none",
             fitPhone && "max-lg:mt-3 max-lg:min-h-0 max-lg:flex-1",
           )}
         >

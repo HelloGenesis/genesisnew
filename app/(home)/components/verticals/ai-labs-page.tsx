@@ -1,4 +1,5 @@
 import { servicePage } from "@/lib/services";
+import { WorkHead } from "@/components/genesis/work-warp";
 import {
   aiEveryVideo,
   aiFaqs,
@@ -11,7 +12,7 @@ import {
 import { FaqBlock, IconCards, StepsBlock, TurnaroundBlock, VideoTiers } from "../offer/blocks";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { PlanDetails, OfferSection, PlanBand } from "../offer/parts";
-import { PlanGrid } from "../offer/plan-grid";
+import { BillingProvider, PlanGrid, SharedBillingNote, SharedBillingToggle } from "../offer/plan-grid";
 import { OneTimeProducts } from "../offer/starter-pack";
 import { WorkMode } from "../offer/work-mode";
 import { divisionMenu } from "@/lib/home-content";
@@ -60,6 +61,8 @@ export function AiLabsPageView() {
         THE DIVISION'S HOMEPAGE SECTION, under the hero, without its header
         or plan bar (Genesis, 2 Oct 2026) — see `onPage`.
       */}
+      {/* Section 2's head, as on every division page (Genesis, 4 Oct 2026). */}
+      <WorkHead />
       <AiContent onPage />
 
       {/* The formats, the creatives and the closing band are gone (Genesis, 4 Oct 2026: "remove these"). */}
@@ -80,7 +83,11 @@ export function AiLabsPageView() {
           {/* "View Pricing" lands on the head, so it is inside the anchor. */}
           <div id="pricing" className="scroll-mt-24">
             <PricingHead />
+            {/* The billing switch beside the work-mode switch, centred (Genesis, 4 Oct 2026). */}
+            <BillingProvider>
             <WorkMode
+              controls={<SharedBillingToggle />}
+              note={<SharedBillingNote />}
               oneTime={<OneTimeProducts vertical="ai-labs" bare />}
               membership={
                 <>
@@ -94,6 +101,7 @@ export function AiLabsPageView() {
                 </>
               }
             />
+            </BillingProvider>
             {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
             <BuySteps className="mt-10" />
           </div>

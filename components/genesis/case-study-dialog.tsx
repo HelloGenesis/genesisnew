@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { type CaseStudy, disciplines, leadClip } from "@/lib/case-studies";
 import { findCopy } from "@/lib/case-study-copy";
-import { campaignFilms, caseStudyPath } from "@/lib/case-study-pages";
+import { campaignFilms } from "@/lib/case-study-pages";
 import { clipRatio } from "@/lib/clip-shape";
 import { filmUrl } from "@/lib/films";
 import { mediaUrl } from "@/lib/media-url";
@@ -69,7 +69,6 @@ export function CaseStudyDialog({
           */
           clips={campaignFilms(study)}
           startClip={startClip}
-          pageHref={caseStudyPath(study.copy)}
           fallback={
             /*
               THE HONEST EMPTY STATE: a study with no write-up says so rather

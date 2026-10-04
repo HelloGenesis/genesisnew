@@ -405,7 +405,7 @@ export function isPublished(study: CaseStudy): boolean {
 export const caseStudiesPage = {
   label: "Case studies",
   heading: "Work that",
-  headingAccent: "moved a number.",
+  headingAccent: "moved a needle.",
   body:
     "Not a gallery. The problem, what we decided to do about it, and what changed. Every study here ends in a number the client agreed to.",
   /*

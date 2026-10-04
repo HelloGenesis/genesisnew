@@ -39,7 +39,19 @@ const HOLD_MS = 5500;
  * nahi hai uski sirf video play ho"), the film alone where there is not.
  * The window's arrows walk the same five cards in the rail's own order.
  */
-export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly RailVideo[]; label?: string }) {
+export function VideoRail({
+  videos,
+  label = "AI Labs work",
+  compact = false,
+  wide = false,
+}: {
+  videos: readonly RailVideo[];
+  label?: string;
+  /** Two cards across on a phone, for a section that has to fit one screen there. */
+  compact?: boolean;
+  /** Five across from lg, for a rail that has a section to itself. */
+  wide?: boolean;
+}) {
   const [active, setActive] = useState(0);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [hovering, setHovering] = useState(false);
@@ -125,7 +137,7 @@ export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly
               the row less its share of the two gaps, so nothing is clipped at
               the column's edge; the arrows step the row one card along.
             */
-            <li key={String(video.id)} className="w-[78%] shrink-0 snap-start sm:w-[calc((100%-1.5rem)/3)]">
+            <li key={String(video.id)} className={cn("shrink-0 snap-start sm:w-[calc((100%-1.5rem)/3)]", compact ? "w-[calc((100%-0.75rem)/2)]" : "w-[78%]", wide && "lg:w-[calc((100%-3rem)/5)]")}>
               <button
                 type="button"
                 onClick={() => openCard(index)}
@@ -135,7 +147,8 @@ export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly
                 className={cn(
                   "group relative block aspect-[9/14] w-full overflow-hidden rounded-panel border bg-ink text-left transition-[border-color,box-shadow,opacity] duration-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
                   selected
-                    ? "border-brand/60 shadow-[0_24px_64px_-24px_rgb(255_197_22/0.45)]"
+                    /* No glow: the scrolling row clips a shadow into a hard-edged block under the card (Genesis, 4 Oct 2026). */
+                    ? "border-brand/60"
                     : "border-white/15 opacity-80 hover:opacity-100",
                 )}
               >

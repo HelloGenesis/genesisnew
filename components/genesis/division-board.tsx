@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -91,11 +91,29 @@ const CORNERS: OrbFocus[] = [
  * inward alignment from `lg`, where the names sit beside the orb rather than
  * above and below it.
  */
-const PLACEMENT = [
-  "col-start-1 row-start-1 items-center text-center lg:col-start-1 lg:row-start-1 lg:items-end lg:text-right",
-  "col-start-2 row-start-3 items-center text-center lg:col-start-3 lg:row-start-2 lg:items-start lg:text-left",
-  "col-start-1 row-start-3 items-center text-center lg:col-start-1 lg:row-start-2 lg:items-end lg:text-right",
-  "col-start-2 row-start-1 items-center text-center lg:col-start-3 lg:row-start-1 lg:items-start lg:text-left",
+/*
+  THE FOUR NAMES AROUND THE ORB, AS PILLS ON ITS EDGE (Genesis, 4 Oct 2026:
+  "I actually meant like this — just the layout — also reflect it on the
+  website"). Each division sits in a glass pill on the circle's rim, at
+  staggered heights as in Genesis's reference: Influence high on the left,
+  AI Lab a third of the way down the right, Studios low on the left, Brand &
+  Design at the foot on the right. `x`/`y` are the pill's centre as a share
+  of the orb's box; a left-hand pill is pulled 35% of its width over the
+  orb, a right-hand one 65%, so they overlap the rim rather than float off
+  it and stay inside a phone's screen. `up`: the details open above the
+  pill, for the two at the foot.
+*/
+/*
+  FROM lg, SLIMMER PILLS ON THE RIM ITSELF (Genesis, 4 Oct 2026: "thin and
+  sleek, attached to the edge of the orb, the orb should be visible"): `lgX`
+  is where the circle's edge is at that height, and the pill sits outside it
+  with only its inner tip over the rim, so the sphere stays in view.
+*/
+const SPOTS: { x: number; lgX: number; y: number; side: "left" | "right"; up: boolean }[] = [
+  { x: 6, lgX: 27, y: 11, side: "left", up: false }, //  Influence
+  { x: 87, lgX: 70, y: 92, side: "right", up: true }, // Brand & Design
+  { x: 7, lgX: 20, y: 85, side: "left", up: true }, //   Studios
+  { x: 91, lgX: 93, y: 31, side: "right", up: false }, // AI Lab
 ];
 
 /** The entrance, in Genesis's order and inside their 1.5s budget. */
@@ -190,69 +208,51 @@ export function DivisionBoard() {
   const focus = active === null ? null : CORNERS[active];
   const chosen = departing;
 
+  /*
+    ON A TOUCH SCREEN, NO HOVER: each pill has a small glass tab that opens
+    its details — the line of services and the price — below or above it
+    (Genesis, 4 Oct 2026: "don't add hover to the phone, add a glassmorphic
+    little expandable tab"). One open at a time; a tap elsewhere closes it.
+  */
+  const [open, setOpen] = useState<number | null>(null);
+  useEffect(() => {
+    if (open === null) return;
+    const away = (event: PointerEvent) => {
+      if (!stage.current?.querySelector(`[data-vert="${open}"]`)?.contains(event.target as Node)) {
+        setOpen(null);
+        setActive(null);
+      }
+    };
+    document.addEventListener("pointerdown", away);
+    return () => document.removeEventListener("pointerdown", away);
+  }, [open]);
+
   return (
     <div
       ref={stage}
       /*
         --par-x/--par-y are declared here with a value so every consumer below
         has something to read on the first frame. A `calc()` against an
-        undefined custom property is an invalid value, not zero, and the whole
-        transform would be dropped until the first pointer move.
+        undefined custom property is an invalid value, not zero.
       */
       style={{ "--par-x": 0, "--par-y": 0 } as React.CSSProperties}
       /*
-        NO TOP MARGIN. This board is the first thing in its section now — the
-        positioning line moved underneath it — so the space above it is the
-        section's own padding. The margin was here to clear a heading that is
-        no longer above it.
+        THE ORB'S OWN BOX, centred, the pills placed on it. Its size is the
+        orb's: a phone's width less room for the pills, and on a laptop the
+        height bound that keeps the orb, the pills and the hero line under it
+        inside one screen.
       */
-      className="grid grid-cols-2 items-center gap-x-5 gap-y-6 lg:grid-cols-[1fr_minmax(0,20rem)_1fr] lg:grid-rows-2 lg:gap-x-8 lg:gap-y-12 xl:grid-cols-[1fr_minmax(0,26rem)_1fr] xl:gap-x-12"
+      className="relative mx-auto mb-14 mt-8 w-[min(calc(100vw-5rem),24rem,46vh)] lg:mb-12 lg:mt-4 lg:w-[min(64vh,calc(100dvh-19rem),40rem)]"
     >
       <motion.div
         initial={still ? false : { opacity: 0, scale: 0.94 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.9, delay: ENTER.orb, ease: EASE }}
-        className="col-span-2 row-start-2 lg:col-span-1 lg:col-start-2 lg:row-span-2 lg:row-start-1"
       >
-        {/*
-          CENTRED BY TRANSLATE, NOT BY MARGINS. The orb overruns its own column
-          into the grid gap, and negative margins only centre that overrun
-          while the width fills the space they open — on a laptop the height
-          bound wins and the box is narrower, so it sat 20px left of centre.
-          Half the column plus a translate of half the box centres it at any
-          width.
-
-          THE PARALLAX RIDES ON THE SAME TRANSFORM, which is why it is written
-          into the class rather than applied to an inner box: `translate` and
-          `-translate-x-1/2` are one property, and a second element just to
-          hold 6px of drift is a box that exists for nothing. 6px is the
-          middle of Genesis's 4-8.
-
-          THE THIRD BOUND IS FOR SHORT LAPTOPS. The hero copy under the orb
-          made this screen taller, and on a ~750px-high window the names ran
-          up under the nav ("bohot chipak ke hai"). 100dvh - 23rem keeps the
-          orb, the names and the hero inside one screen there; from about
-          870px tall 58vh is the smaller bound again and nothing changes.
-
-          115% / 120% OF THE COLUMN, NOT 130%, since the membership buttons
-          arrived under the names: the orb overran its column into the gap
-          and the top-row buttons, which sit level with its widest point,
-          ran into it by up to 15px at 1180 and 1920 wide. Measured at
-          1024-2560 these bounds leave every button 10px+ clear.
-        */}
-        <div className="relative mx-auto w-[min(62vw,17rem,36vh)] motion-safe:translate-x-[calc(var(--par-x)*6px)] motion-safe:translate-y-[calc(var(--par-y)*6px)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out lg:left-1/2 lg:mx-0 lg:w-[min(115%,58vh,calc(100dvh-23rem))] xl:w-[min(120%,58vh,calc(100dvh-23rem))] lg:-translate-x-1/2 lg:motion-safe:translate-x-[calc(-50%+var(--par-x)*6px)]">
+        <div className="relative w-full motion-safe:translate-x-[calc(var(--par-x)*6px)] motion-safe:translate-y-[calc(var(--par-y)*6px)] motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out">
           <NeuralOrb focus={focus} />
 
-          {/*
-            The wordmark at the core, and the third beat of the entrance. It
-            fades up rather than arriving with the sphere, because the
-            sequence Genesis wrote is orb THEN logo — the sphere has to be a
-            sphere before anything is written across it.
-
-            aria-hidden because the header already carries the real wordmark;
-            a second "Genesis Media" in the accessibility tree is noise, and
-            this one is a picture.
-          */}
+          {/* The wordmark, fading up once the sphere is a sphere. A picture; the header carries the real one. */}
           <motion.div
             aria-hidden
             initial={still ? false : { opacity: 0 }}
@@ -271,26 +271,26 @@ export function DivisionBoard() {
 
       {services.items.map((service, index) => {
         const corner = CORNERS[index];
+        const spot = SPOTS[index];
         const isActive = active === index;
+        const isOpen = open === index;
         const dimmed = active !== null && !isActive;
         /* Everything except the one being travelled to gets out of the way. */
         const leaving = chosen !== null && chosen !== index;
-        /* The hover lift toward the sphere plus the parallax drift, shared by
-           the name and its membership button so they move as one. */
+        /* The hover lift toward the sphere plus the parallax drift. */
         const lift = `translate3d(calc(var(--drift-x, 0px) + ${
           isActive ? -corner.x * 6 : 0
         }px), calc(var(--drift-y, 0px) + ${isActive ? -corner.y * 6 : 0}px), 0)`;
-        /* This division's membership — the price button under its name. */
+        /* This division's subscription — the price under its name. */
         const pricing = verticalCards.find((card) => card.short === service.short);
+        const panelId = `division-${index}-details`;
 
         return (
           <motion.div
             key={service.title}
-            /*
-              ARRIVING FROM ITS OWN CORNER. 20px, which is the middle of
-              Genesis's 15-25, in the direction the name already sits — so the
-              four converge on the sphere rather than all rising together.
-            */
+            data-vert={index}
+            data-open={isOpen || undefined}
+            /* Each name arrives from its own side, closing on the sphere. */
             initial={still ? false : { opacity: 0, x: corner.x * 20, y: corner.y * 20 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
             transition={{
@@ -298,187 +298,107 @@ export function DivisionBoard() {
               delay: ENTER.names + index * ENTER.stagger,
               ease: EASE,
             }}
-            /*
-              `group/vert` spans the name AND the price button under it, so
-              moving the pointer from one to the other keeps both showing —
-              the button is a separate link (a link cannot hold a link) and
-              would otherwise vanish the moment the name lost the hover.
-            */
-            className={cn("group/vert flex flex-col", PLACEMENT[index])}
+            style={{ "--x": `${spot.x}%`, "--lg-x": `${spot.lgX}%`, top: `${spot.y}%` } as React.CSSProperties}
+            className={cn(
+              "group/vert absolute left-[var(--x)] flex -translate-y-1/2 flex-col lg:left-[var(--lg-x)]",
+              spot.side === "left"
+                ? "-translate-x-[35%] items-start lg:-translate-x-[94%]"
+                : "-translate-x-[65%] items-end lg:-translate-x-[6%]",
+              (isActive || isOpen) ? "z-20" : "z-10",
+            )}
+            onPointerEnter={(event) => event.pointerType === "mouse" && setActive(index)}
+            onPointerLeave={(event) => event.pointerType === "mouse" && leave()}
           >
-            <Link
-              href={service.href}
-              /*
-                NO PREFETCH. On this page a plain click scrolls to the
-                division's section rather than navigating (SmoothScroll), so
-                prefetching the four division pages would fetch four documents
-                nobody here opens. The href is for crawlers and for cmd-click.
-              */
-              prefetch={false}
-              onPointerEnter={() => setActive(index)}
-              onPointerLeave={leave}
-              onFocus={() => setActive(index)}
-              onBlur={leave}
-              onClick={() => setDeparting(index)}
-              /*
-                THE WHOLE VERTICAL IS THE TARGET, name and caption together —
-                a two-line block where only the first line is clickable is a
-                small target and an arbitrary one. `group` drives the caption's
-                own state from here.
-              */
+            {/* THE PILL: the name, a link to the division, and on a touch screen the tab that opens its details. */}
+            <div
               className={cn(
-                "group flex min-h-11 w-full flex-col justify-center rounded-sm outline-none lg:min-h-0",
-                "transition-[transform,opacity,filter] duration-300 ease-out",
-                "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-transparent",
-                /* The names take the smallest share of the parallax: 2px,
-                   inside Genesis's 1-3. */
+                "flex items-center gap-1 rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] p-0.5 shadow-[var(--shadow-raised)] backdrop-blur-[14px] backdrop-saturate-[1.3]",
+                "transition-[transform,opacity] duration-300 ease-out",
                 "motion-safe:[--drift-x:calc(var(--par-x)*2px)] motion-safe:[--drift-y:calc(var(--par-y)*2px)]",
                 dimmed && "opacity-45",
                 leaving && "opacity-0",
               )}
-              style={{
-                /*
-                  THE LIFT IS TOWARD THE SPHERE, not up. `-corner` is the
-                  direction from the name back to the centre, so the top-left
-                  division moves right and down and the bottom-right one moves
-                  left and up — four names closing on one body. 6px, in
-                  Genesis's 5-8.
-
-                  Written as an inline transform rather than as a Tailwind
-                  class because it composes the parallax drift with a
-                  per-division direction; as classes that is eight literals
-                  that have to stay in step with CORNERS.
-                */
-                transform: `${lift} scale(${isActive || chosen === index ? 1.035 : 1})`,
-                /*
-                  SCALED FROM THE ORB-SIDE EDGE, so the growth goes outward
-                  and the inner edge only moves by the lift — which the
-                  membership button below takes too, keeping the two flush.
-                */
-                transformOrigin: corner.x < 0 ? "right center" : "left center",
-              }}
+              style={{ transform: `${lift} scale(${isActive || chosen === index ? 1.035 : 1})` }}
             >
-              <DivisionLockup
-                name={service.short}
-                tagline={service.caption}
-                ramp={service.ramp}
-                as="h3"
-                fluid
-                /*
-                  THE NAME SET: the short name, no GENESIS prefix, and the
-                  tagline cropped out of the artwork so it can be live text
-                  below. The wordmark is already at the orb's core, so the
-                  full lockup in all four corners made the composition say
-                  GENESIS five times.
-                */
-                nameOnly
-                /*
-                  HIDDEN UNTIL POINTED AT — back to what it was, at Genesis's
-                  instruction ("sirf hover hone pe dikhe, jaise pehle tha").
-
-                  IT WAS ALWAYS-ON FOR A ROUND, and the reasoning is worth
-                  keeping because it was not wrong, only outvoted: the written
-                  feedback asked that a visitor understand the four divisions
-                  "within the first few seconds without having to scroll
-                  further", which a hidden subtitle cannot do. Living with it,
-                  Genesis's read is that four permanent captions crowd the
-                  composition — the board is a diagram, and four lines of grey
-                  type under four gradient names turns it into a menu. The
-                  heading above the orb now carries the first-few-seconds job
-                  on its own.
-
-                  IT STILL FADES IN AND RISES rather than simply appearing,
-                  which was a separate instruction and survives this one: the
-                  line sits 4px low at rest and settles as it fades up.
-
-                  NOT ON A TOUCH SCREEN AT ALL — "phone me logo ke niche ka
-                  subtext hata hi do". A phone has no hover to reveal it
-                  with, so for a while it showed permanently there instead;
-                  on a phone-width board that was four lines of small grey
-                  type crowding the names. A device without hover now gets
-                  the names alone (`hover:none` → hidden, which also drops
-                  its reserved height). A pointer still fades it in on hover.
-
-                  IT RESERVES ITS SPACE EITHER WAY. Opacity and transform
-                  only, never mounting, so moving between the four names
-                  cannot push the other three around. The min-height keeps the
-                  four marks on one line as the taglines wrap to one line or
-                  two at different widths.
-                */
-                taglineClassName={cn(
-                  /*
-                    `whitespace-normal` IS LOAD-BEARING. DivisionLockup's own
-                    tagline class sets `whitespace-nowrap` below `sm` — that
-                    was written when this line was hidden on phones and only
-                    had to hold one line on the division PAGES. Left in place
-                    here it ran "AI Content · Avatars · Automation · Games &
-                    Apps" as a single 300px line inside a 154px column, so the
-                    two halves of the board printed straight through each
-                    other. It wraps.
-                  */
-                  "mt-2 block min-h-[2.7em] whitespace-normal text-balance text-[0.6875rem] leading-[1.4] text-bone sm:mt-3 sm:text-small",
-                  /*
-                    The resting state, on pointer devices only: invisible and
-                    sitting 4px low, so revealing it is a fade AND a rise. A
-                    touch screen does not show it at all (hover:none below).
-                  */
-                  "[@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",
-                  "[@media(hover:none)]:hidden",
-                  "transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none",
-                  "group-hover:translate-y-0 group-hover:opacity-100",
-                  "group-hover/vert:translate-y-0 group-hover/vert:opacity-100",
-                  "group-focus-visible:translate-y-0 group-focus-visible:opacity-100",
-                  "group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
-                )}
-                /*
-                  ABOVE THE FOLD, SO NOT LAZY. These four names are the
-                  homepage's Largest Contentful Paint — measured, Brand &
-                  Design's is the LCP element — and a lazy image is fetched
-                  only after layout proves it is on screen, at low priority.
-                */
-                priority
-              />
-            </Link>
-
-            {/*
-              "MEMBERSHIP FROM ₹95K/MONTH", under the name — the pricing
-              brief's vertical card, as a button to the pricing on that
-              vertical's own page. Genesis asked for it to behave exactly like the subtext
-              above it, so it carries the same classes: hidden and 4px low at
-              rest on a pointer device, fading up on hover or focus, and not
-              shown at all on a touch screen. Invisible, it also refuses the
-              pointer, so it cannot be clicked before it has been seen.
-
-              FLUSH TO THE ORB SIDE, like the name and the tagline above it —
-              right-aligned on the left, left-aligned on the right, by the
-              column's own items-* ("orb ki side aligned rakho").
-            */}
-            {pricing && (
               <Link
-                href={`${pricing.href}#pricing`}
+                href={service.href}
+                /* The board scrolls to the division's section (SmoothScroll); nothing to prefetch. */
                 prefetch={false}
-                onPointerEnter={() => setActive(index)}
-                onPointerLeave={leave}
                 onFocus={() => setActive(index)}
                 onBlur={leave}
-                className={cn(
-                  "mt-1 inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-brand/40 bg-brand/10 px-3.5 text-[0.75rem] text-brand-ink outline-none sm:text-small",
-                  "hover:border-brand/70 hover:bg-brand/20",
-                  "focus-visible:ring-2 focus-visible:ring-brand",
-                  "[@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:translate-y-1 [@media(hover:hover)]:opacity-0",
-                  "[@media(hover:none)]:hidden",
-                  "transition-[opacity,transform,translate,background-color,border-color] duration-300 ease-out motion-reduce:transition-none",
-                  "motion-safe:[--drift-x:calc(var(--par-x)*2px)] motion-safe:[--drift-y:calc(var(--par-y)*2px)]",
-                  "group-hover/vert:pointer-events-auto group-hover/vert:translate-y-0 group-hover/vert:opacity-100",
-                  "group-focus-within/vert:pointer-events-auto group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
-                  leaving && "opacity-0",
-                )}
-                style={{ transform: lift }}
+                onClick={() => setDeparting(index)}
+                className="flex w-[6.5rem] items-center justify-center rounded-full px-2.5 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-brand sm:w-[8rem] lg:w-[9.5rem] lg:px-3.5 lg:py-1.5 xl:w-[10.5rem]"
               >
-                {pricing.brain}
-                <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
+                <DivisionLockup
+                  name={service.short}
+                  tagline=""
+                  ramp={service.ramp}
+                  as="h3"
+                  fluid
+                  nameOnly
+                  priority
+                  className="flex w-full justify-center"
+                />
               </Link>
-            )}
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+                aria-label={`${isOpen ? "Hide" : "Show"} ${service.short} details`}
+                onClick={() => {
+                  setOpen(isOpen ? null : index);
+                  setActive(isOpen ? null : index);
+                }}
+                className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--hover-wash)] text-bone outline-none focus-visible:ring-2 focus-visible:ring-brand [@media(hover:hover)]:hidden"
+              >
+                <ChevronDown className={cn("size-4 transition-transform duration-300", spot.up !== isOpen && "rotate-180")} aria-hidden />
+              </button>
+            </div>
+
+            {/*
+              THE DETAILS: the division's services and its subscription price.
+              On a computer they fade in on hover or focus, as before; on a
+              touch screen the tab above opens them.
+            */}
+            <div
+              id={panelId}
+              className={cn(
+                "absolute w-[15rem] rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-fill)] p-3.5 shadow-[var(--shadow-panel)] backdrop-blur-[14px] backdrop-saturate-[1.3] lg:w-[17rem] lg:p-4",
+                spot.up ? "bottom-full mb-2" : "top-full mt-2",
+                spot.side === "left" ? "left-0" : "right-0",
+                /* From lg it opens AWAY from the orb, beside the pill, never over the sphere. */
+                "lg:bottom-auto lg:top-0 lg:mb-0 lg:mt-0",
+                spot.side === "left" ? "lg:left-auto lg:right-full lg:mr-3" : "lg:left-full lg:right-auto lg:ml-3",
+                "pointer-events-none translate-y-1 opacity-0 transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none",
+                "[@media(hover:hover)]:group-hover/vert:pointer-events-auto [@media(hover:hover)]:group-hover/vert:translate-y-0 [@media(hover:hover)]:group-hover/vert:opacity-100",
+                "group-focus-within/vert:pointer-events-auto group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
+                "group-data-[open]/vert:pointer-events-auto group-data-[open]/vert:translate-y-0 group-data-[open]/vert:opacity-100",
+                leaving && "opacity-0",
+              )}
+            >
+              <p className="text-pretty text-[0.75rem] leading-relaxed text-ash lg:text-small">{service.caption}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {pricing && (
+                  <Link
+                    href={`${pricing.href}#pricing`}
+                    prefetch={false}
+                    className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-brand/40 bg-brand/10 px-3 text-[0.75rem] text-brand-ink outline-none hover:border-brand/70 hover:bg-brand/20 focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    {pricing.brain}
+                    <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
+                  </Link>
+                )}
+                <Link
+                  href={service.href}
+                  prefetch={false}
+                  onClick={() => setDeparting(index)}
+                  className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] px-3 text-[0.75rem] text-bone outline-none hover:bg-[var(--hover-wash)] focus-visible:ring-2 focus-visible:ring-brand [@media(hover:hover)]:hidden"
+                >
+                  Explore
+                  <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
+                </Link>
+              </div>
+            </div>
           </motion.div>
         );
       })}

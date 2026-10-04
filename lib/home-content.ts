@@ -347,7 +347,7 @@ export const portfolio = {
 export const caseStudies = {
   label: "Case studies",
   heading: "Work that",
-  headingAccent: "moved a number",
+  headingAccent: "moved a needle",
   body: "Campaigns where the outcome was measured, not just delivered.",
   // Clients are real (from the spec). TODO(data): every RESULT figure below is
   // still a placeholder — replace with reported numbers before launch.
@@ -480,7 +480,8 @@ export const aiContent = {
       the section would introduce the avatars, show them, and then introduce
       them again.
     */
-    line: "",
+    /* Under the avatars (Genesis, 4 Oct 2026). */
+    line: "Some of the AI avatars we have created, of real people and virtual ones. Made for brands like Aditya Birla Capital (Health Insurance & more).",
   },
   /*
    * THE AUTOMATION BLOCK, Genesis's copy verbatim. It is the third claim in
@@ -923,7 +924,7 @@ export const influencer = {
       in the word the rest of the site uses for it, and the one Genesis wrote
       this time.
     */
-    label: "Influencer network",
+    label: "Influencer Network",
     /*
       "NETWORK" COMES OUT OF THIS LINE because the label above it now says it.
       With both, the card read "1,00,000+ Influencer network / A curated

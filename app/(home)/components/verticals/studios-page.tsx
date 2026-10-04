@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { WorkHead, WorkWarp } from "@/components/genesis/work-warp";
 import { Reveal } from "@/components/genesis/reveal";
 import { mediaUrl } from "@/lib/media-url";
 import { servicePage } from "@/lib/services";
@@ -15,14 +16,13 @@ import {
 import { ClosingBand, IconCards, StepsBlock, TurnaroundBlock } from "../offer/blocks";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { CheckList, OfferSection, PlanBand, PlanDetails } from "../offer/parts";
-import { PlanGrid } from "../offer/plan-grid";
+import { BillingProvider, PlanGrid, SharedBillingNote, SharedBillingToggle } from "../offer/plan-grid";
 import { OneTimeProducts } from "../offer/starter-pack";
 import { WorkMode } from "../offer/work-mode";
 import { divisionMenu } from "@/lib/home-content";
-import { Studios } from "../studios";
 import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
-import { VideoRail } from "../offer/video-rail";
+import { StudiosPipeline } from "@/components/genesis/studios-pipeline";
 import { BuySteps } from "../offer/buy-steps";
 import { PricingHead } from "../offer/pricing-head";
 import { VerticalPage } from "../offer/vertical-page";
@@ -57,22 +57,28 @@ export function StudiosPageView() {
           ...studiosHero.thumbs.map((src) => ({ src })),
         ]}
         note={studiosHero.note}
-        /* The same video rail as AI Labs, with Studios' shoot work. */
+        /*
+          THE BRIEF-TO-FINAL-CUT STAGES BESIDE THE HEADLINE, IN A GLASS CARD
+          (Genesis, 4 Oct 2026: "replace this element from section 2 to
+          section one, the gallery I asked you to remove; put it inside a
+          bento grid"). The gallery is gone; the stages are the picture.
+        */
         visual={
-          <div>
-            <p aria-hidden className="mb-4 -rotate-2 font-serif text-lead italic text-bone/80">
-              {studiosHero.note}
+          <div className="rounded-panel border border-[var(--glass-border)] bg-[var(--glass-fill)] p-4 shadow-[var(--shadow-panel)] backdrop-blur-[14px] sm:p-5">
+            <p aria-hidden className="mb-3 font-serif text-lead italic text-bone/80">
+              From brief to <span className="text-brand-ink">final cut.</span>
             </p>
-            <VideoRail videos={studiosHero.videos} label="Genesis Studios work" />
+            <StudiosPipeline bare />
           </div>
         }
       />
 
-      {/*
-        THE DIVISION'S HOMEPAGE SECTION, under the hero, without its header
-        or plan bar (Genesis, 2 Oct 2026) — see `onPage`.
-      */}
-      <Studios onPage />
+      {/* SECTION 2: the division's work, in the curved rail every page shares (Genesis, 4 Oct 2026). */}
+      <section className="pb-[var(--section-pad)]">
+        <WorkHead />
+        <WorkWarp divisions={["Studios", "Events"]} />
+      </section>
+
 
       <LogoStrip />
 
@@ -100,7 +106,11 @@ export function StudiosPageView() {
           {/* "View Pricing" lands on the head, so it is inside the anchor. */}
           <div id="pricing" className="scroll-mt-24">
             <PricingHead />
+            {/* The billing switch beside the work-mode switch, centred (Genesis, 4 Oct 2026). */}
+            <BillingProvider>
             <WorkMode
+              controls={<SharedBillingToggle />}
+              note={<SharedBillingNote />}
               oneTime={<OneTimeProducts vertical="studios" bare />}
               membership={
                 <>
@@ -131,6 +141,7 @@ export function StudiosPageView() {
                 </>
               }
             />
+            </BillingProvider>
             {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
             <BuySteps className="mt-10" />
           </div>

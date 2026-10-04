@@ -19,27 +19,8 @@ import { cn } from "@/lib/utils";
 import { useProductOffers } from "../offer-slider";
 import { ShootChip } from "./plan-grid";
 import { aiTierDetail, DEFINES_VIDEO, VideoTierLine, withDefinitions } from "./video-tier-line";
-import { ONE_TIME_GRADIENT, tierGlow, tierGradient } from "./tier-colors";
+import { tierGlow, tierGradient } from "./tier-colors";
 
-/** Each division's card: its name and the line under it. */
-const HEADS: Record<VerticalKey, { name: string; pitch: string }> = {
-  "ai-labs": {
-    name: "AI content, one project at a time",
-    pitch: "Build your avatar, or buy the AI videos and films you need. No subscription needed.",
-  },
-  studios: {
-    name: "Studios, one production at a time",
-    pitch: "Edit the footage you have, or book a single shoot. No subscription needed.",
-  },
-  "brand-design": {
-    name: "Design, one project at a time",
-    pitch: "A logo refresh, a campaign kit or a pitch deck. Buy the one thing you need, no subscription needed.",
-  },
-  influence: {
-    name: "Influence, one campaign at a time",
-    pitch: "Creator-style UGC ready to post, or a full influencer campaign run end to end.",
-  },
-};
 
 /**
  * EVERY DIVISION'S ONE-TIME PRODUCTS — for the visitor who is not ready to
@@ -72,7 +53,6 @@ export function OneTimeProducts({
   const { openProduct, dialog } = useProductOffers(vertical);
   const rail = useRef<HTMLUListElement>(null);
   if (items.length === 0) return null;
-  const head = HEADS[vertical];
 
   return (
     <Reveal className={bare ? undefined : "mt-14"}>
@@ -85,15 +65,11 @@ export function OneTimeProducts({
       )}
 
       <div id={`${vertical}-one-time`} className="scroll-mt-28">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <p
-            className="inline-flex rounded-full px-3 py-1 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-white"
-            style={{ background: ONE_TIME_GRADIENT }}
-          >
-            Pay-per-project · No subscription
-          </p>
-          <p className="text-pretty text-small text-ash">{head.pitch}</p>
-        </div>
+        {/*
+          NO "PAY-PER-PROJECT · NO SUBSCRIPTION" ROW OVER THE CARDS (Genesis,
+          4 Oct 2026: "taking too much space"). The switch above already says
+          Pay-per-project, and its hint says "Buy once. No subscription."
+        */}
 
         {items.length > MAX_IN_ROW ? (
           /*

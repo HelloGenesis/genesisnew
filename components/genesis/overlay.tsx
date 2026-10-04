@@ -284,19 +284,25 @@ export function Overlay({
               tablet — they sat over its text.
             */}
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
-              {pager && (
-                <span className="flex items-center gap-1">
-                  <PagerButton side="left" label={pager.previousLabel} onClick={pager.onPrevious} />
-                  {pager.position && <span className="min-w-[2.75rem] text-center text-micro tabular-nums text-ash">{pager.position}</span>}
-                  <PagerButton side="right" label={pager.nextLabel} onClick={pager.onNext} />
-                </span>
-              )}
               <ThemeToggle className="origin-right scale-[0.8]" />
             </div>
           </div>
 
           {/* The content, scrolling inside the window rather than moving it. */}
           <div className="overflow-y-auto overscroll-contain p-4 sm:p-9">{children}</div>
+
+          {/*
+            THE ARROWS AND THE COUNT, AT THE FOOT OF THE WINDOW (Genesis, 4 Oct
+            2026: "put this below"): a slim bar under the content, always in
+            view, centred.
+          */}
+          {pager && (
+            <div className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--glass-border)] px-4 py-2.5">
+              <PagerButton side="left" label={pager.previousLabel} onClick={pager.onPrevious} />
+              {pager.position && <span className="min-w-[3rem] text-center text-small tabular-nums text-ash">{pager.position}</span>}
+              <PagerButton side="right" label={pager.nextLabel} onClick={pager.onNext} />
+            </div>
+          )}
 
         </div>
 

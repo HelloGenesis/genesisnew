@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/genesis/reveal";
+import { BENTO_WIDE } from "@/lib/bento";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { WorkGrid } from "@/components/genesis/work-grid";
@@ -84,6 +85,8 @@ export function Portfolio() {
       className="relative isolate overflow-hidden py-12 sm:py-14 lg:py-16"
     >
       <div className="relative z-[2] mx-auto w-full max-w-6xl px-6">
+        {/* THE CASE-STUDY BENTO, the same panel everywhere case studies are shown (Genesis, 4 Oct 2026). */}
+        <div className={BENTO_WIDE}>
         <Reveal>
           {/*
             ONE NAME PER THING, WHICH IS THE WHOLE OF GENESIS'S NOTE HERE.
@@ -109,7 +112,7 @@ export function Portfolio() {
           <SectionLabel dot tone="brand">
             Case Studies
           </SectionLabel>
-          <h2 className="mt-4 text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2 lg:text-h1">
+          <h2 className="mt-4 text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
             Everything{" "}
             <span className="font-serif font-normal italic text-brand-ink">
               we&rsquo;ve made.
@@ -141,6 +144,7 @@ export function Portfolio() {
             {footerCta.primaryCta.label}
           </GlassButton>
         </Reveal>
+        </div>
       </div>
     </section>
   );

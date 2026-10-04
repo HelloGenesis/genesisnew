@@ -1,6 +1,9 @@
 "use client";
 
+import { InfluenceShowcase } from "@/components/genesis/influence-showcase";
+import { BENTO } from "@/lib/bento";
 import { DivisionServices } from "@/components/genesis/division-services";
+import { DIVISION_PROCESS, ProcessIcons } from "@/components/genesis/process-icons";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -115,11 +118,38 @@ const INFLUENCE_REELS = (() => {
   THE HERO RAIL'S EIGHT — the interleaved order above, so the first screenful
   is several campaigns rather than one client's cuts.
 */
-const INFLUENCE_RAIL = INFLUENCE_REELS.slice(0, 8).map((reel) => ({
+export const INFLUENCE_RAIL = INFLUENCE_REELS.slice(0, 8).map((reel) => ({
   id: reel.clipId,
   eyebrow: CLIP_LABELS[reel.clipId] ?? "Influencer campaign",
   title: reel.label,
 }));
+
+/** The Influence work rail, for the division page's opening (a client island the server page can place). */
+export function InfluenceVideoRail() {
+  return <VideoRail videos={INFLUENCE_RAIL} label="Genesis Influence work" />;
+}
+
+/** The 1,00,000+ card, compact, for the division page's opening. */
+export function InfluenceNetworkCard({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn("glass glass-lit flex items-center gap-4 rounded-panel p-4 sm:p-5", className)}
+      style={{
+        background:
+          "linear-gradient(102deg, rgb(255 197 22 / 0.17) 0%, rgb(255 197 22 / 0.05) 42%, rgb(255 255 255 / 0.03) 100%)",
+      }}
+    >
+      <GlassIcon name="users" className="size-11 shrink-0 sm:size-12" />
+      <p className="min-w-0 flex-1 leading-tight tracking-tight text-bone">
+        <span className="text-h3 font-medium">
+          <span className="sm:hidden">100K+</span>
+          <span className="max-sm:hidden">{influencer.databaseStat.value}</span>
+        </span>{" "}
+        <span className="text-lead text-brand-ink">{influencer.databaseStat.label}</span>
+      </p>
+    </div>
+  );
+}
 
 /**
  * `onPage`: the section on its own division's page, under the page's hero
@@ -174,6 +204,8 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
           leaves the two columns to do what they are for: the reading on one
           side, the constellation on the other.
         */}
+        {/* The mark, the copy and the work in one glass panel on the homepage (Genesis, 4 Oct 2026). */}
+        <div className={cn(!onPage && BENTO)}>
         {!onPage && (
           <Reveal className="flex flex-col items-center text-center">
             <DivisionLockup
@@ -198,33 +230,6 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
           The heading and the copy that used to sit here have moved down into
           the column, left-aligned. See the note there.
         */}
-        <Reveal delay={0.06} className="mt-6">
-          <LogoMarquee
-            /*
-              SLOWER AGAIN, NOW THAT THE RAIL IS THE FULL WIDTH. A marquee's
-              apparent speed is its track length over its duration — the same
-              90s that read as a gentle drift in a 40% column is nearly three
-              times the distance here. 150s keeps it at the pace it had.
-            */
-            speedSeconds={150}
-            gapClassName="gap-2"
-            fadePercent={10}
-            /*
-              NO "+56 MORE" CHIP ANY MORE. Ten categories plus a count of the
-              rest was a stand-in for the list; Genesis has now given the
-              list, so the rail carries all of it. A chip saying there are
-              more, sitting beside all of them, would be counting itself.
-            */
-            items={influencer.niches.map((niche) => (
-              <span
-                key={niche}
-                className="block whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
-              >
-                {niche}
-              </span>
-            ))}
-          />
-        </Reveal>
 
         {/*
           A DIFFERENT ORDER ON A PHONE, from Genesis's mobile notes: the
@@ -252,7 +257,7 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
           reels all ran off the right edge. A minmax(0,…) track cannot grow
           past the container.
         */}
-        <div className="fit-window mt-6 grid grid-cols-[minmax(0,1fr)] items-center gap-6 md:grid-cols-[0.82fr_1.18fr] md:gap-6 lg:gap-8">
+        <div className="fit-window mt-6 grid grid-cols-[minmax(0,1fr)] items-center gap-6 md:grid-cols-[0.82fr_1.18fr] md:gap-6 lg:items-center lg:gap-8">
           {/*
             min-w-0 is load-bearing. A grid item defaults to `min-width: auto`,
             which refuses to shrink below its content's longest unbreakable
@@ -262,6 +267,13 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
             With min-w-0 the column can shrink and the line wraps instead.
           */}
           <div className="contents lg:flex lg:min-w-0 lg:flex-col">
+            {/* The services, at the head of the column on a desktop (Genesis, 4 Oct 2026). */}
+            {!onPage && (
+              <DivisionServices
+                division="Influence"
+                className="hidden lg:order-3 lg:mb-0 lg:mt-5 lg:block lg:rounded-panel lg:border lg:border-[var(--glass-border)] lg:bg-[var(--glass-fill)] lg:p-5 lg:shadow-[var(--shadow-raised)] [&_ul]:mx-0 [&_ul]:justify-start [&_ul]:gap-x-5"
+              />
+            )}
             {/*
               THE DIVISION'S OWN LOCKUP, replacing a bespoke headline set at
               up to 80px across three lines. Two things were wrong with it:
@@ -309,8 +321,8 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
             */}
             {/* On its own page the 1,00,000+ card is the hero (Genesis, 4 Oct 2026), not this line. */}
             {!onPage && (
-            <Reveal delay={0.08} className="order-2 min-w-0 text-center md:order-3 md:text-left lg:order-none">
-              <h3 className="mx-auto max-w-xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2 md:mx-0">
+            <Reveal delay={0.08} className="order-2 min-w-0 text-center md:order-3 md:text-left lg:order-1">
+              <h3 className="mx-auto max-w-xl text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone max-sm:whitespace-nowrap max-sm:text-[min(1.5rem,5.1vw)] sm:text-h2 md:mx-0">
                 {influencer.heading}{" "}
                 <span className="font-serif font-normal italic text-brand-ink">
                   {influencer.headingAccent}
@@ -319,55 +331,31 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
             </Reveal>
             )}
 
-            <Reveal delay={0.1} className="order-3 text-center md:order-4 md:text-left lg:order-none">
+            <Reveal delay={0.1} className={cn("order-3 text-center md:order-4 md:text-left lg:hidden", !onPage && "max-sm:hidden")}>
               <p className="mx-auto max-w-lg text-pretty text-body leading-relaxed text-ash md:mx-0 lg:mt-5">
                 {influencer.body}
               </p>
             </Reveal>
+            {/* The same sentence as a process, on a desktop. */}
+            {/* Heading, the 1,00,000+ card, the services, then the process, with room between (Genesis, 4 Oct 2026). */}
+            <ProcessIcons steps={DIVISION_PROCESS.Influence} align="start" label={influencer.body} className="lg:order-4 lg:mt-5 lg:rounded-panel lg:border lg:border-[var(--glass-border)] lg:bg-[var(--glass-fill)] lg:p-5 lg:shadow-[var(--shadow-raised)]" />
 
-            {/* The database card: red-tinted glass, icon well, circular arrow. */}
             {/*
-              ON A PHONE, JUST THE NUMBER ("box hatado, sirf text rakho").
-              The glass card below is desktop's: an icon, a description and an
-              arrow in a panel. On a phone Genesis wants the figure on its
-              own, where it reads as the headline it is rather than a widget.
+              THE DATABASE CARD ON EVERY SCREEN (Genesis, 4 Oct 2026: "add the
+              desktop element here on phone for 100k"). A phone showed the
+              figure as bare text; it now gets the same glass card, first in
+              the column, tightened to fit.
             */}
-            <Reveal delay={0.16} className="order-1 min-w-0 text-center lg:hidden">
-              {/* min-w-0 and balance: on a narrow phone the figure and its
-                  label wrap onto two even lines instead of running off the
-                  right edge of the screen. */}
-              <p className="text-balance leading-tight tracking-tight text-bone">
-                <span className="text-[2.25rem] font-normal">
-                  {influencer.databaseStat.value}
-                </span>{" "}
-                {/*
-                  THE SAME FACE AS THE FIGURE BESIDE IT — "keep the font
-                  consistent". This was serif italic, which is the site's
-                  HEADING accent: right for one word inside a headline, wrong
-                  here, where it sits directly against a sans figure at the
-                  same size and reads as two fonts colliding rather than as
-                  one line with a highlight. The colour does the work on its
-                  own, as it does in the positioning line on the Brain.
-
-                  The heading above this block keeps its serif italic, because
-                  that one IS a headline.
-                */}
-                <span className="text-h3 text-brand-ink">
-                  {influencer.databaseStat.label}
-                </span>
-              </p>
-            </Reveal>
-
-            <Reveal delay={0.16} className={cn("hidden lg:block", onPage ? "lg:-order-1" : "lg:order-none")}>
+            <Reveal delay={0.16} className={cn("order-1 min-w-0 text-left lg:block", onPage ? "lg:-order-1" : "lg:order-2")}>
               <div
-                className={cn("glass glass-lit flex items-center gap-5 rounded-panel", onPage ? "p-6" : "p-5 lg:mt-6")}
+                className={cn("glass glass-lit flex items-center gap-3 rounded-panel p-4 sm:gap-5", onPage ? "sm:p-6" : "sm:p-5 lg:mt-8")}
                 style={{
                   background:
                     "linear-gradient(102deg, rgb(255 197 22 / 0.17) 0%, rgb(255 197 22 / 0.05) 42%, rgb(255 255 255 / 0.03) 100%)",
                 }}
               >
                 {/* The site's glass icon set, as the services above (Genesis, 4 Oct 2026). */}
-                <GlassIcon name="users" className={cn("shrink-0", onPage ? "size-16" : "size-14")} />
+                <GlassIcon name="users" className={cn("size-11 shrink-0", onPage ? "sm:size-16" : "sm:size-14")} />
 
                 <div className="min-w-0 flex-1">
                   {/*
@@ -382,16 +370,16 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
                     what keeps the two treatments one design.
                   */}
                   <p className="leading-none tracking-tight text-bone">
-                    <span className={cn("font-medium", onPage ? "text-[3rem]" : "text-h3")}>
-                      {influencer.databaseStat.value}
+                    <span className={cn("font-medium", onPage ? "text-[2rem] sm:text-[3rem]" : "text-h3")}>
+                      {/* "100K+ Influencer Network", one line, on a phone (Genesis, 4 Oct 2026). */}
+                      <span className="sm:hidden">100K+</span>
+                      <span className="max-sm:hidden">{influencer.databaseStat.value}</span>
                     </span>{" "}
                     <span className={cn("text-brand-ink", onPage ? "mt-2 block text-h3" : "text-lead")}>
                       {influencer.databaseStat.label}
                     </span>
                   </p>
-                  <p className="mt-2 text-small leading-relaxed text-ash">
-                    {influencer.databaseStat.description}
-                  </p>
+
                 </div>
 
                 <Link
@@ -436,8 +424,10 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
               title, a slow glide, and each card opening its case study — or
               the film alone where there is none.
             */}
-            <VideoRail videos={INFLUENCE_RAIL} label="Genesis Influence work" />
+            {/* Genesis's two Influence posters in place of the reel gallery (4 Oct 2026). */}
+            <InfluenceShowcase />
           </Reveal>
+        </div>
         </div>
 
         {/*
@@ -455,7 +445,35 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
         */}
 
         {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
-        {!onPage && <DivisionServices division="Influence" className="mt-8" />}
+        {!onPage && <DivisionServices division="Influence" className="mt-8 lg:hidden" />}
+        {/* The niches, above the plans (Genesis, 4 Oct 2026). */}
+        <Reveal delay={0.06} className="mt-10">
+          <LogoMarquee
+            /*
+              SLOWER AGAIN, NOW THAT THE RAIL IS THE FULL WIDTH. A marquee's
+              apparent speed is its track length over its duration — the same
+              90s that read as a gentle drift in a 40% column is nearly three
+              times the distance here. 150s keeps it at the pace it had.
+            */
+            speedSeconds={150}
+            gapClassName="gap-2"
+            fadePercent={10}
+            /*
+              NO "+56 MORE" CHIP ANY MORE. Ten categories plus a count of the
+              rest was a stand-in for the list; Genesis has now given the
+              list, so the rail carries all of it. A chip saying there are
+              more, sitting beside all of them, would be counting itself.
+            */
+            items={influencer.niches.map((niche) => (
+              <span
+                key={niche}
+                className="block whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--hover-wash)] px-3 py-1 text-micro font-medium uppercase tracking-[0.1em] text-ash"
+              >
+                {niche}
+              </span>
+            ))}
+          />
+        </Reveal>
         {!onPage && <PlanBar vertical="influence" className="!mt-6" />}
       </div>
 

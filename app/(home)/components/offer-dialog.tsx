@@ -211,55 +211,9 @@ function OfferDetail({ tile }: { tile: Tile }) {
       )}
       <PaymentOptions className="mt-10" />
 
-      {/* THE WORK BEHIND IT: the division's case studies, with pictures. */}
-      {studies.length > 0 && (
-        <section data-section="work" className="mt-10" aria-labelledby={`${tile.key}-studies`}>
-          <div className="flex items-baseline justify-between gap-3">
-            <h3 id={`${tile.key}-studies`} className="font-sans text-lead text-bone">
-              Previous work &amp; case studies
-            </h3>
-            <Link href="/#library" data-page-link className="text-small text-ash hover:text-brand-ink">
-              All case studies
-            </Link>
-          </div>
-          <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {studies.map(({ study, poster, href }) => {
-              const inner = (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- a poster at card size */}
-                  <img
-                    src={posterSrc(poster, 384)}
-                    alt=""
-                    loading="lazy"
-                    className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <span aria-hidden className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 to-transparent" />
-                  <span className="absolute inset-x-0 bottom-0 p-3">
-                    <span className="block text-small leading-tight text-white">{study.client}</span>
-                    {study.campaign && <span className="mt-0.5 block truncate text-[0.75rem] text-white/70">{study.campaign}</span>}
-                  </span>
-                </>
-              );
-              const box = "group relative block aspect-[4/5] overflow-hidden rounded-card border border-white/10 bg-ink";
-              return (
-                <li key={study.slug}>
-                  {href ? (
-                    <Link href={href} data-page-link className={box}>
-                      {inner}
-                      <ArrowUpRight className="absolute right-2 top-2 size-4 text-white/80" aria-hidden />
-                    </Link>
-                  ) : (
-                    <div className={box}>{inner}</div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
       {/*
-        THE DROPDOWNS, TOGETHER AT THE FOOT (Genesis, 3 Oct 2026: "move this
+        THE DROPDOWNS, UNDER THE PAYMENT OPTIONS AND ABOVE THE WORK (Genesis,
+        4 Oct 2026). Earlier: TOGETHER AT THE FOOT (Genesis, 3 Oct 2026: "move this
         below and align it properly"): what we need from you, the add-ons,
         what the AI video types mean and the terms — one design, one 12px
         gap between each, instead of scattered through the window.
@@ -339,6 +293,54 @@ function OfferDetail({ tile }: { tile: Tile }) {
           </PlanDetails>
         )}
       </div>
+
+
+      {/* THE WORK BEHIND IT: the division's case studies, with pictures. */}
+      {studies.length > 0 && (
+        <section data-section="work" className="mt-10" aria-labelledby={`${tile.key}-studies`}>
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 id={`${tile.key}-studies`} className="font-sans text-lead text-bone">
+              Previous work &amp; case studies
+            </h3>
+            <Link href="/#library" data-page-link className="text-small text-ash hover:text-brand-ink">
+              All case studies
+            </Link>
+          </div>
+          <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {studies.map(({ study, poster, href }) => {
+              const inner = (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- a poster at card size */}
+                  <img
+                    src={posterSrc(poster, 384)}
+                    alt=""
+                    loading="lazy"
+                    className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <span aria-hidden className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 to-transparent" />
+                  <span className="absolute inset-x-0 bottom-0 p-3">
+                    <span className="block text-small leading-tight text-white">{study.client}</span>
+                    {study.campaign && <span className="mt-0.5 block truncate text-[0.75rem] text-white/70">{study.campaign}</span>}
+                  </span>
+                </>
+              );
+              const box = "group relative block aspect-[4/5] overflow-hidden rounded-card border border-white/10 bg-ink";
+              return (
+                <li key={study.slug}>
+                  {href ? (
+                    <Link href={href} data-page-link className={box}>
+                      {inner}
+                      <ArrowUpRight className="absolute right-2 top-2 size-4 text-white/80" aria-hidden />
+                    </Link>
+                  ) : (
+                    <div className={box}>{inner}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* THE BUY BAR: what it is, what it comes to, and the way to the price box. */}
       <BuyBar
@@ -663,17 +665,6 @@ function ProcessSteps({ steps }: { steps: readonly string[] }) {
   );
 }
 
-/*
-  The pills (Genesis, 3 Oct 2026: "add our website gradient, and for the
-  others make the outline gradient"): the site's sweep, in full, behind white
-  type — each pill a different stretch of it, so a row still reads as one
-  gradient — and an outline in the same sweep for the others.
-*/
-const PILL_FILLS = [
-  "linear-gradient(115deg, #8b5cf6 0%, #c066d9 100%)",
-  "linear-gradient(115deg, #c066d9 0%, #f2607e 100%)",
-  "linear-gradient(115deg, #f2607e 0%, #f5923e 100%)",
-];
 
 /**
  * WHO IT IS FOR, AS PILLS (Genesis, 3 Oct 2026: "write this like [a stack of
@@ -687,21 +678,15 @@ function AudiencePills({ tags, need }: { tags: readonly string[]; need?: string 
     <div className="mt-6 max-w-2xl">
       <p className="micro-label">Made for</p>
       <ul className="mt-3 flex flex-wrap gap-2">
-        {tags.map((tag, index) => {
-          const filled = index % 3 !== 0;
-          return (
-            <li
-              key={tag}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-[0.75rem] font-medium uppercase tracking-[0.08em] sm:text-[0.8125rem]",
-                filled ? "text-white shadow-[0_6px_18px_-8px_rgb(192_102_217/0.6)]" : "gradient-outline text-bone",
-              )}
-              style={filled ? { background: PILL_FILLS[index % PILL_FILLS.length] } : undefined}
-            >
-              {tag}
-            </li>
-          );
-        })}
+        {/* Quieter (Genesis, 4 Oct 2026: "make this less flashy"): glass pills with a thin gradient edge, no fills or glow. */}
+        {tags.map((tag) => (
+          <li
+            key={tag}
+            className="gradient-outline rounded-full bg-[var(--hover-wash)] px-3.5 py-1 text-[0.75rem] uppercase tracking-[0.08em] text-ash"
+          >
+            {tag}
+          </li>
+        ))}
       </ul>
       {/* The rest of the sentence, carrying on from the pills: "…who want to stay visible…". */}
       {need && <p className="mt-3 text-pretty text-small leading-relaxed text-ash">&hellip;{need}</p>}

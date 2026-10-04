@@ -114,6 +114,8 @@ export type WarpItem = {
   /** Where the study lives, for crawlers and cmd-click. Absent, not a link. */
   href?: string;
   onOpen?: () => void;
+  /** The study's impact figures, on the card (Genesis, 4 Oct 2026). */
+  stats?: { value: string; label: string }[];
 };
 
 export function WarpRail({
@@ -568,23 +570,40 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
 
   const inner = (
     <>
-      <video
-        ref={video}
-        src={mediaUrl(item.clip)}
-        muted
-        loop
-        playsInline
-        preload="none"
-        aria-label={item.label}
-        {...VIDEO_GUARD_CLIENT}
-        className="size-full object-cover"
-      />
+      {/* A card with no film — Brand & Design's work is stills — shows its picture. */}
+      {item.clip ? (
+        <video
+          ref={video}
+          src={mediaUrl(item.clip)}
+          muted
+          loop
+          playsInline
+          preload="none"
+          aria-label={item.label}
+          {...VIDEO_GUARD_CLIENT}
+          className="size-full object-cover"
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={mediaUrl(item.poster)} alt={item.label} loading="lazy" className="size-full object-cover" />
+      )}
       {/*
         A caption that only exists when the card is worth reading — the ones
         turning away are dimmed to near nothing by the loop, so a label on
         them would be unreadable text the eye still tries to parse.
       */}
-      <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(0deg,rgb(0_0_0/0.8),transparent)] px-3 pb-2.5 pt-8 text-micro text-white/85">
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(0deg,rgb(0_0_0/0.85)_40%,transparent)] px-3 pb-2.5 pt-12 text-micro text-white/85">
+        {/* THE STUDY'S IMPACT ON ITS CARD (Genesis, 4 Oct 2026: "whatever case study this represents should reflect on these cards"). */}
+        {item.stats?.length ? (
+          <span className="mb-2 flex gap-3">
+            {item.stats.slice(0, 3).map((stat) => (
+              <span key={stat.label} className="min-w-0">
+                <span className="block text-[1.05rem] font-light leading-none tracking-tight text-brand-ink">{stat.value}</span>
+                <span className="mt-0.5 block truncate text-[0.625rem] lowercase text-white/75">{stat.label}</span>
+              </span>
+            ))}
+          </span>
+        ) : null}
         {item.label}
       </span>
     </>
@@ -673,6 +692,7 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
   return (
     <a
       href={item.href}
+      data-popup
       aria-hidden={hidden}
       tabIndex={hidden ? -1 : undefined}
       onClick={(event) => {

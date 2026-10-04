@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { BENTO_WIDE } from "@/lib/bento";
 import { Atmosphere } from "@/components/genesis/atmosphere";
 import { CaseStudyGrid, type CaseStudyCard } from "@/components/genesis/case-study-grid";
 import { GlassButton } from "@/components/genesis/glass-button";
@@ -98,7 +99,8 @@ export default function CaseStudiesPage() {
           </p>
         </Reveal>
 
-        <Reveal delay={0.05} className="mt-10">
+        {/* THE CASE-STUDY BENTO, the same panel everywhere case studies are shown (Genesis, 4 Oct 2026). */}
+        <Reveal delay={0.05} className={`mt-10 ${BENTO_WIDE}`}>
           <CaseStudyGrid
             cards={cards}
             filters={workFilters(pieces)}

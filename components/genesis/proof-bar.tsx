@@ -75,10 +75,11 @@ export function ProofBar({ className }: { className?: string }) {
           hairline dividers — a pill on a laptop, a rounded panel on a phone.
         */}
         <div
-          className="rounded-panel px-5 py-5 text-white shadow-[0_24px_60px_-28px_rgb(217_102_79/0.6)] sm:px-7 md:rounded-[2rem]"
+          className="rounded-panel px-3 py-4 text-white sm:px-5 sm:py-5 shadow-[0_24px_60px_-28px_rgb(217_102_79/0.6)] sm:px-7 md:rounded-[2rem]"
           style={{ background: "linear-gradient(100deg, #d9a441 0%, #d8744f 30%, #cf5f63 50%, #a85aa3 75%, #7b5cd8 100%)" }}
         >
-          <div className="grid grid-cols-2 gap-y-5 md:grid-cols-4">
+          {/* ONE ROW ON A PHONE TOO (Genesis, 4 Oct 2026): four across, each figure stacked over its label, so the box is one line as on a desktop. */}
+          <div className="grid grid-cols-4 gap-x-1 sm:grid-cols-2 sm:gap-y-5 md:grid-cols-4">
             {stats.map((stat, index) => {
               const Icon = STAT_ICONS[index] ?? Globe;
 
@@ -86,7 +87,7 @@ export function ProofBar({ className }: { className?: string }) {
                 <div
                   key={stat.label}
                   className={cn(
-                    "group/stat flex items-center gap-4 px-1",
+                    "group/stat flex items-center gap-4 px-1 max-sm:flex-col max-sm:gap-1.5 max-sm:px-0 max-sm:text-center",
                     /*
                       HOVER, AND IT IS THE HIGHLIGHT MOVING RATHER THAN A NEW
                       EFFECT. Genesis asked for "hover features interaction
@@ -111,9 +112,9 @@ export function ProofBar({ className }: { className?: string }) {
                   )}
                 >
                   <span
-                    className="grid size-11 shrink-0 place-items-center rounded-card border border-white/30 bg-white/15 text-white transition-colors duration-300 ease-out group-hover/stat:bg-white/25"
+                    className="grid size-8 shrink-0 place-items-center rounded-xl border sm:size-11 sm:rounded-card border-white/30 bg-white/15 text-white transition-colors duration-300 ease-out group-hover/stat:bg-white/25"
                   >
-                    <Icon className="size-5" aria-hidden />
+                    <Icon className="size-4 sm:size-5" aria-hidden />
                   </span>
                   {/*
                     PLAIN SPANS, NOT A DESCRIPTION LIST, and that is a
@@ -131,10 +132,10 @@ export function ProofBar({ className }: { className?: string }) {
                     announced in that order.
                   */}
                   <span className="min-w-0">
-                    <span className="block text-h3 font-medium leading-none tracking-tight text-white">
+                    <span className="block text-[1.25rem] font-medium leading-none tracking-tight text-white sm:text-h3">
                       {stat.value}
                     </span>
-                    <span className="mt-2 block text-small leading-tight text-white/85">
+                    <span className="mt-1 block text-[0.6875rem] leading-tight text-white/85 sm:mt-2 sm:text-small">
                       {stat.label}
                     </span>
                   </span>

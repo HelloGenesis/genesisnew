@@ -271,7 +271,7 @@ export function AvatarFan({
             className={
               fan
                 ? "pointer-events-none absolute inset-x-0 top-0 flex justify-center"
-                : "w-[72vw] max-w-[18rem] shrink-0 snap-center sm:w-[46vw] sm:max-w-[13rem]"
+                : "w-[56vw] max-w-[14rem] shrink-0 snap-center sm:w-[46vw] sm:max-w-[13rem]"
             }
             style={
               fan

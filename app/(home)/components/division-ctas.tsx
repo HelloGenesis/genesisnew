@@ -24,11 +24,14 @@ export function DivisionCtas({
   vertical,
   size = "md",
   align = "start",
+  primaryOnly = false,
   className,
 }: {
   vertical: VerticalKey;
   size?: "sm" | "md";
   align?: "start" | "center";
+  /** Just "View …", no call or case-studies button (the homepage AI Lab panel, Genesis, 4 Oct 2026). */
+  primaryOnly?: boolean;
   /** Kept so existing callers compile; there is no menu to open any more. */
   opens?: "down" | "up";
   className?: string;
@@ -48,16 +51,18 @@ export function DivisionCtas({
   return (
     <div
       className={cn(
-        "grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3",
+        primaryOnly ? "flex" : "grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3",
         align === "center" && "sm:justify-center",
         className,
       )}
       data-track={`division-ctas:${vertical}`}
     >
       <GlassButton href={homePlans[vertical].page} pageLink variant="brand" arrow className={small}>
-        <span className="sm:hidden">Explore</span>
-        <span className="hidden sm:inline">View {division}</span>
+        <span className={primaryOnly ? "hidden" : "sm:hidden"}>Explore</span>
+        <span className={primaryOnly ? undefined : "hidden sm:inline"}>View {division}</span>
       </GlassButton>
+      {!primaryOnly && (
+      <>
       <GlassButton href={bookingHref(division)} variant="glass" arrow className={small}>
         <span className="sm:hidden">Book a call</span>
         <span className="hidden sm:inline">Book a 15-min Call</span>
@@ -66,6 +71,8 @@ export function DivisionCtas({
         <span className="sm:hidden">Case studies</span>
         <span className="hidden sm:inline">Case Studies</span>
       </GlassButton>
+      </>
+      )}
     </div>
   );
 }

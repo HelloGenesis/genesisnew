@@ -356,7 +356,16 @@ function ModeToggle({ mode, onChange, track }: { mode: Mode; onChange: (mode: Mo
  * cards as the slider: the same hover, the same lit card on a phone, the
  * same progress bar.
  */
-export function DivisionOffers({ vertical, className }: { vertical: VerticalKey; className?: string }) {
+export function DivisionOffers({
+  vertical,
+  className,
+  grid = false,
+}: {
+  vertical: VerticalKey;
+  className?: string;
+  /** Two cards in view at a time, sliding (the homepage plan box's left column, Genesis, 4 Oct 2026). */
+  grid?: boolean;
+}) {
   const rail = useRef<HTMLUListElement>(null);
   const touch = useTouch();
   const [mode, setMode] = useState<Mode>("one-time");
@@ -388,18 +397,56 @@ export function DivisionOffers({ vertical, className }: { vertical: VerticalKey;
         className={cn("mt-3", RAIL)}
       >
         {tiles.map((tile, index) => (
-          <li key={tile.key} className={ITEM}>
-            <OfferCard tile={tile} tier={index} lit={touch && index === active} onOpen={() => openOffer(tile.key)} />
+          <li key={tile.key} className={grid ? "flex w-[calc((100%-0.75rem)/2)] shrink-0 snap-start [perspective:900px] max-sm:w-[92%] max-sm:snap-center" : ITEM}>
+            <OfferCard tile={tile} tier={index} lit={touch && index === active} onOpen={() => openOffer(tile.key)} inBox />
           </li>
         ))}
       </ul>
-      <RailProgress rail={rail} onActive={setActive} className="mt-2" />
+      {/* Arrows beside the progress line (Genesis, 4 Oct 2026: "add arrow buttons here"). */}
+      <div className="mt-2 flex items-center gap-3">
+        <div className="flex shrink-0 gap-1.5">
+          {([-1, 1] as const).map((dir) => (
+            <button
+              key={dir}
+              type="button"
+              aria-label={dir < 0 ? "Previous offers" : "More offers"}
+              onClick={() => {
+                const el = rail.current;
+                const card = el?.querySelector("li");
+                if (!el || !card) return;
+                el.scrollBy({ left: dir * (card.getBoundingClientRect().width + 12), behavior: "smooth" });
+              }}
+              className="grid size-8 place-items-center rounded-full border border-white/20 text-bone transition-colors hover:border-white/40 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              {dir < 0 ? <ChevronLeft className="size-4" aria-hidden /> : <ChevronRight className="size-4" aria-hidden />}
+            </button>
+          ))}
+        </div>
+        <RailProgress rail={rail} onActive={setActive} className="min-w-0 flex-1" />
+      </div>
       {dialog}
     </div>
   );
 }
 
-function OfferCard({ tile, tier, lit, onOpen }: { tile: Tile; tier: number; lit: boolean; onOpen: () => void }) {
+/**
+ * `inBox`: a card inside a division's own plan box on the homepage (Genesis,
+ * 4 Oct 2026). The box already names the division, so the card does not;
+ * the product's name leads, larger, and its line reads in full.
+ */
+function OfferCard({
+  tile,
+  tier,
+  lit,
+  onOpen,
+  inBox = false,
+}: {
+  tile: Tile;
+  tier: number;
+  lit: boolean;
+  onOpen: () => void;
+  inBox?: boolean;
+}) {
   const reduce = useReducedMotion();
   const face = useRef<HTMLElement>(null);
   const [hovered, setHovered] = useState(false);
@@ -479,8 +526,8 @@ function OfferCard({ tile, tier, lit, onOpen }: { tile: Tile; tier: number; lit:
           }}
         />
 
-        <div className="relative flex items-center justify-between gap-2">
-          {tile.custom?.anyDivision ? (
+        <div className={cn("relative flex items-center gap-2", inBox ? "justify-end" : "justify-between")}>
+          {inBox ? null : tile.custom?.anyDivision ? (
             <span className="bg-clip-text font-display text-lead leading-none text-transparent" style={{ backgroundImage: PLANS_GRADIENT }}>
               Any division
             </span>
@@ -495,7 +542,10 @@ function OfferCard({ tile, tier, lit, onOpen }: { tile: Tile; tier: number; lit:
         </div>
 
         <h4
-          className="relative mt-2 line-clamp-2 min-h-[2.5em] bg-clip-text font-display text-lead leading-tight text-transparent"
+          className={cn(
+            "relative line-clamp-2 bg-clip-text font-display leading-tight text-transparent",
+            inBox ? "mt-1 min-h-[2.3em] text-h3" : "mt-2 min-h-[2.5em] text-lead",
+          )}
           style={{ backgroundImage: gradient }}
         >
           {tile.name}
@@ -519,7 +569,7 @@ function OfferCard({ tile, tier, lit, onOpen }: { tile: Tile; tier: number; lit:
           {tile.unit && <span className="w-full pt-1 text-[0.75rem] text-ash">{tile.unit}</span>}
         </p>
 
-        <p className="relative mt-3 line-clamp-3 border-t border-[var(--glass-border)] pt-3 text-pretty text-[0.8125rem] leading-snug text-bone">
+        <p className={cn("relative mt-3 border-t border-[var(--glass-border)] pt-3 text-pretty text-[0.8125rem] leading-snug text-bone", !inBox && "line-clamp-3")}>
           {tile.benefit}
         </p>
 

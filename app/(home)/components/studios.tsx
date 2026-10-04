@@ -1,5 +1,5 @@
-import { DivisionServices } from "@/components/genesis/division-services";
 import { Reveal } from "@/components/genesis/reveal";
+import { BENTO_WIDE as BENTO } from "@/lib/bento";
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { StudiosPipeline } from "@/components/genesis/studios-pipeline";
@@ -47,6 +47,8 @@ export function Studios({ onPage = false }: { onPage?: boolean } = {}) {
       <Spectrum className="seamless" />
 
       <div className="relative z-[2] mx-auto w-full max-w-6xl px-6">
+        {/* The mark and the pipeline in one glass panel on the homepage (Genesis, 4 Oct 2026). */}
+        <div className={onPage ? undefined : BENTO}>
         {!onPage && (
         <div className="flex flex-col items-center text-center">
           <Reveal>
@@ -62,10 +64,9 @@ export function Studios({ onPage = false }: { onPage?: boolean } = {}) {
         <div className={onPage ? "fit-window" : "fit-window mt-[var(--block-gap)]"}>
           <StudiosPipeline />
         </div>
+        </div>
 
-        {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
-        {!onPage && <DivisionServices division="Studios" />}
-        {!onPage && <PlanBar vertical="studios" />}
+        {!onPage && <PlanBar vertical="studios" className="lg:!-mx-16 lg:!w-auto" />}
       </div>
     </section>
   );

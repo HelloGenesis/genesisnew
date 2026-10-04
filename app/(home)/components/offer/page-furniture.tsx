@@ -1,4 +1,5 @@
 
+import { BENTO_WIDE } from "@/lib/bento";
 import { LogoMarquee } from "@/components/genesis/logo-marquee";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
@@ -76,6 +77,8 @@ export function WorkSection({
   return (
     <section id={id} aria-labelledby={`${id}-heading`} className="relative isolate scroll-mt-24 py-[var(--section-pad)]">
       <div className="mx-auto w-full max-w-6xl px-6">
+        {/* THE CASE-STUDY BENTO, the same panel everywhere case studies are shown (Genesis, 4 Oct 2026). */}
+        <div className={BENTO_WIDE}>
         <Reveal>
           <SectionLabel dot tone="brand">
             {label}
@@ -103,6 +106,7 @@ export function WorkSection({
             </GlassButton>
           </Reveal>
         )}
+        </div>
       </div>
     </section>
   );

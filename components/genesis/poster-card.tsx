@@ -120,8 +120,8 @@ export function PosterCard({
     "cards a little bigger"); 20vw alone left it at 12rem, under half.
   */
   const reelWidth = priority
-    ? "min(clamp(min(74vw,21rem),26vw,21rem),calc(60vh*9/16))"
-    : "min(clamp(min(70vw,18rem),20vw,18rem),calc(60vh*9/16))";
+    ? "min(clamp(min(74vw,21rem),26vw,21rem),calc(var(--poster-vh,60vh)*9/16))"
+    : "min(clamp(min(70vw,18rem),20vw,18rem),calc(var(--poster-vh,60vh)*9/16))";
 
   const card = (
     <motion.article

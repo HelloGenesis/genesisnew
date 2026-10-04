@@ -114,8 +114,8 @@ export function LogoMark({ logo }: { logo: (typeof clients.logos)[number] }) {
 }
 
 export function ClientLogos() {
-  const half = Math.ceil(clients.logos.length / 2);
-  const rows = [clients.logos.slice(0, half), clients.logos.slice(half)];
+  /* ONE RAIL OF EVERY LOGO, in the order the two rows read (Genesis, 4 Oct 2026: "just keep 1 line of logos"). */
+  const rows = [clients.logos];
 
   return (
     <SectionShell
@@ -130,7 +130,7 @@ export function ClientLogos() {
         marks it is meant to introduce. One step smaller and the logos are the
         loudest thing in their own section again.
       */
-      headingClassName="text-h3 sm:text-h2 lg:text-h2"
+      headingClassName="text-h3 sm:text-h2 lg:text-h2 max-sm:whitespace-nowrap max-sm:text-[min(1.5rem,4.9vw)]"
       /* No standfirst: Genesis took the "Fifteen brands…" line off at every
          width. The marks make the point. */
       tone="brand"
@@ -145,9 +145,10 @@ export function ClientLogos() {
         both edges and the mask dissolves it into the page.
       */}
       <div className="relative left-1/2 w-screen -translate-x-1/2 space-y-4">
+        {/* One rail of marks on a phone (Genesis, 4 Oct 2026); both from sm. */}
         {rows.map((row, index) => (
+          <div key={index} className={index > 0 ? "max-sm:hidden" : undefined}>
           <LogoMarquee
-            key={index}
             /*
               Different speeds as well as different directions. Two rails at
               the same rate moving opposite ways beat against each other and
@@ -160,6 +161,7 @@ export function ClientLogos() {
               <LogoMark key={logo.file} logo={logo} />
             ))}
           />
+          </div>
         ))}
       </div>
 

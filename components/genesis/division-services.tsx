@@ -42,16 +42,27 @@ const SERVICES: Record<string, { label: string; icon: GlassIconName }[]> = {
   ],
 };
 
-export function DivisionServices({ division, className }: { division: keyof typeof SERVICES; className?: string }) {
+/** `chips`: each service a dark glass pill, like the AI Lab burst's chips (Genesis, 4 Oct 2026). */
+const CHIP = "rounded-full border border-white/15 bg-[rgb(20_18_22/0.72)] shadow-[0_14px_34px_-14px_rgb(0_0_0/0.9),0_0_22px_-12px_rgb(255_143_184/0.5)]";
+
+export function DivisionServices({
+  division,
+  className,
+  chips = false,
+}: {
+  division: keyof typeof SERVICES;
+  className?: string;
+  chips?: boolean;
+}) {
   return (
-    <Reveal className={cn("mt-10", className)}>
+    <Reveal className={cn("mt-10 max-sm:mt-6", className)}>
       <ul
         aria-label={`Genesis ${division} services`}
-        className="mx-auto flex max-w-5xl flex-wrap justify-center gap-x-6 gap-y-3 max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3"
+        className="mx-auto flex max-w-5xl flex-wrap justify-center gap-x-6 gap-y-3 max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-1.5"
       >
         {SERVICES[division].map((service) => (
-          <li key={service.label} className="flex items-center gap-2.5 text-small text-bone/90">
-            <GlassIcon name={service.icon} className="size-7 shrink-0" />
+          <li key={service.label} className={cn("flex items-center gap-2.5 text-small text-bone/90 max-sm:gap-2 max-sm:text-[0.75rem]", chips && cn(CHIP, "py-2 pl-2.5 pr-4"))}>
+            <GlassIcon name={service.icon} className="size-7 shrink-0 max-sm:size-6" />
             {service.label}
           </li>
         ))}
