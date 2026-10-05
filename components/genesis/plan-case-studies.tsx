@@ -25,7 +25,7 @@ const PER_PAGE = 4;
 /* A new page every few seconds (Genesis, 4 Oct 2026), held while the reader is on it. */
 const AUTO_MS = 4000;
 
-type Card = { slug: string; client: string; campaign?: string; image?: string; href?: string; stats?: { value: string; label: string }[] };
+type Card = { slug: string; client: string; brand?: string; tag?: string; campaign?: string; image?: string; href?: string; stats?: { value: string; label: string }[] };
 
 function cardFor(study: CaseStudy): Card {
   const clip = leadClip(study);
@@ -33,7 +33,9 @@ function cardFor(study: CaseStudy): Card {
   return {
     slug: study.slug,
     client: study.client,
-    campaign: study.campaign,
+    campaign: (study.copy !== undefined ? findCopy(study.copy)?.campaign : undefined) ?? study.campaign,
+    brand: study.copy !== undefined ? findCopy(study.copy)?.brand : undefined,
+    tag: [study.discipline].flat()[0],
     image: clip !== undefined ? mediaUrl(reelPoster(clip)) : (piece?.poster ?? piece?.art),
     href: caseStudyPath(study.copy),
     stats: study.copy !== undefined ? findCopy(study.copy)?.outcome ?? undefined : undefined,
@@ -106,19 +108,27 @@ export function PlanCaseStudies({
                 sizes="(min-width: 1024px) 12rem, 45vw"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
               />
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(0deg,rgb(0_0_0/0.85),transparent)] px-3 pb-3 pt-10">
-                {/* Just the headline figure and the client (Genesis, 4 Oct 2026: "don't add so much text here"). */}
+              {/*
+                THE CASE STUDIES PAGE'S CARD, CUT DOWN for a small tile (Genesis,
+                5 Oct 2026): one tag, the brand pill, the campaign and one figure.
+              */}
+              {card.tag && (
+                <span className="glass pointer-events-none absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 text-[0.625rem] font-medium tracking-wide text-bone">{card.tag}</span>
+              )}
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1.5 bg-[linear-gradient(0deg,rgb(0_0_0/0.92),rgb(0_0_0/0.55)_60%,transparent)] px-2 pb-2 pt-10">
+                <span className="max-w-full self-start truncate rounded-full border border-white/20 bg-black/35 px-1.5 py-0.5 text-[0.625rem] font-medium uppercase tracking-[0.06em] text-white/85 backdrop-blur-md">{card.brand ?? card.client}</span>
+                {card.campaign && <span className="truncate px-0.5 text-[0.6875rem] leading-tight text-brand-ink/90">{card.campaign}</span>}
                 {card.stats?.[0] && (
-                  <span className="mb-1 block truncate text-[1rem] font-light leading-none text-brand-ink">
-                    {card.stats[0].value} <span className="text-[0.6875rem] text-white/70">{card.stats[0].label}</span>
+                  <span className="flex items-baseline justify-center gap-1.5 truncate rounded-lg border border-white/15 bg-white/[0.08] px-2 py-1 backdrop-blur-md">
+                    <span className="font-display text-[0.9375rem] leading-none text-brand-ink">{card.stats[0].value}</span>
+                    <span className="truncate text-[0.625rem] uppercase tracking-[0.04em] text-white/75">{card.stats[0].label}</span>
                   </span>
                 )}
-                <span className="block truncate text-small leading-snug text-white">{card.client}</span>
               </span>
             </>
           );
           const box =
-            "group relative block aspect-[4/5] overflow-hidden rounded-card border border-white/12 bg-ink transition-[border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-brand/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+            "group relative block aspect-[4/5] lg:aspect-[5/4] overflow-hidden rounded-card border border-white/12 bg-ink transition-[border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-brand/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
           return (
             <li key={card.slug}>
               {card.href ? (

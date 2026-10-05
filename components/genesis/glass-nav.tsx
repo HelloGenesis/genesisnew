@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { DivisionLockup, DivisionName } from "./division-lockup";
@@ -52,9 +53,23 @@ const NAV_LINK = cn(
   "after:pointer-events-none after:absolute after:inset-x-2.5 after:bottom-1 after:h-px",
   "after:origin-center after:scale-x-0 after:bg-brand after:transition-transform after:duration-300 after:ease-out",
   "hover:after:scale-x-100 focus-visible:after:scale-x-100 motion-reduce:after:transition-none",
+  /*
+    THE CHOSEN ITEM IN THE BRAND GRADIENT (Genesis, 5 Oct 2026): the page
+    you are on, or the menu you have open, in amber → coral → violet, its
+    rule drawn in the same gradient.
+  */
+  "data-[on]:bg-[linear-gradient(100deg,#f5923e,#f2607e_45%,#b45ce0)] data-[on]:bg-clip-text data-[on]:text-transparent",
+  "data-[on]:after:scale-x-100 data-[on]:after:bg-[linear-gradient(90deg,#f5923e,#f2607e,#b45ce0)]",
 );
 
+/** Whether a bar item is the page you are on. */
+function isCurrent(pathname: string, href: string) {
+  const path = href.split(/[?#]/)[0];
+  return path !== "/" && path !== "" && (pathname === path || pathname.startsWith(`${path}/`));
+}
+
 export function GlassNav() {
+  const pathname = usePathname() ?? "/";
   const [condensed, setCondensed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   /*
@@ -243,7 +258,7 @@ export function GlassNav() {
               <NavMenu key={item.label} item={item} />
             ) : (
               <li key={item.label}>
-                <Link href={item.href} {...outbound(item)} className={NAV_LINK}>
+                <Link href={item.href} {...outbound(item)} aria-current={isCurrent(pathname, item.href) ? "page" : undefined} data-on={isCurrent(pathname, item.href) || undefined} className={NAV_LINK}>
                   {item.label}
                 </Link>
               </li>
@@ -415,6 +430,7 @@ export function GlassNav() {
  */
 function NavMenu({ item }: { item: NavItem }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname() ?? "/";
   /* A menu of plain links (Pricing) rather than division columns (Services). */
   const simple = !item.children?.some((child) => child.short || child.items?.length);
   /* A division of its own on the bar: its mark, its services and its page. */
@@ -467,7 +483,7 @@ function NavMenu({ item }: { item: NavItem }) {
         open the menu without leaving the page.
       */}
       <span className="inline-flex items-center">
-        <Link href={item.href} {...outbound(item)} data-page-link className={cn(NAV_LINK, "pr-1 xl:max-2xl:pr-1")}>
+        <Link href={item.href} {...outbound(item)} data-page-link aria-current={isCurrent(pathname, item.href) ? "page" : undefined} data-on={open || isCurrent(pathname, item.href) || undefined} className={cn(NAV_LINK, "pr-1 xl:max-2xl:pr-1")}>
           {item.label}
         </Link>
         <button

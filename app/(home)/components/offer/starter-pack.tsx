@@ -169,7 +169,7 @@ function ProductCard({
         {/* THE HERO PICTURE, with the product's number over it. */}
         {hero && (
           <div className="p-2 pb-0">
-            <Picture image={hero} className="aspect-[4/3] w-full" width={828} zoom />
+            <Picture image={hero} className="aspect-[4/3] w-full lg:aspect-[16/9]" width={828} zoom />
           </div>
         )}
         {/* THE SMALLER ONES, the last carrying "+n" when the pop-up has more. */}
@@ -208,7 +208,7 @@ function ProductCard({
             <span className="mt-1 font-display text-small text-faint">{product.index}</span>
           </div>
           {/* In full (Genesis, 3 Oct 2026: "this should be visible") — it was cut at two lines. */}
-          <p className="relative mt-1.5 text-pretty text-small leading-snug text-ash">{product.pitch}</p>
+          <p className="relative mt-1.5 text-pretty text-small leading-snug text-ash lg:line-clamp-2">{product.pitch}</p>
 
           {/* THE PRICE, large — the first thing a buyer looks for. */}
           <div className="relative mt-4 border-t border-[var(--glass-border)] pt-4">
@@ -231,7 +231,7 @@ function ProductCard({
             {product.inPerson && <ShootChip className="mt-3" />}
           </div>
 
-          <ul className="relative mt-4 space-y-2">
+          <ul className="relative mt-4 space-y-1.5">
             {product.includes.filter((item) => !DEFINES_VIDEO.test(item)).slice(0, HIGHLIGHTS).map((item) => (
               <li key={item} className="flex gap-2.5 text-small leading-snug text-bone">
                 <span aria-hidden className="mt-[0.45em] size-1.5 shrink-0 rounded-full" style={{ background: gradient }} />

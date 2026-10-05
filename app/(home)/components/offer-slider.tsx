@@ -11,7 +11,7 @@ import { RailProgress } from "@/components/genesis/rail-progress";
 import { inr } from "@/lib/money";
 import { bookingHref, homePlans, verticalCard } from "@/lib/pricing";
 import { products } from "@/lib/products";
-import { aiPlans } from "@/lib/verticals/ai-labs";
+import { aiPlans, aiVideoTiers } from "@/lib/verticals/ai-labs";
 import { designProducts } from "@/lib/verticals/brand-design";
 import { campaignPricing } from "@/lib/verticals/influence";
 import { studiosPlans } from "@/lib/verticals/studios";
@@ -19,6 +19,8 @@ import type { VerticalKey } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
 
 import { OfferDialog } from "./offer-dialog";
+import { VideoTiers } from "./offer/blocks";
+import { PlanDetails } from "./offer/parts";
 import { ONE_TIME_GRADIENT, PLANS_GRADIENT, tierGlow, tierGradient } from "./offer/tier-colors";
 
 export type Mode = "membership" | "one-time";
@@ -424,6 +426,12 @@ export function DivisionOffers({
         </div>
         <RailProgress rail={rail} onActive={setActive} className="min-w-0 flex-1" />
       </div>
+      {/* Under the subscriptions, what Standard and Advanced videos are (Genesis, 5 Oct 2026). */}
+      {mode === "membership" && vertical === "ai-labs" && (
+        <PlanDetails id="division-video-types" title={aiVideoTiers.heading} className="mt-3">
+          <VideoTiers data={aiVideoTiers} bare />
+        </PlanDetails>
+      )}
       {dialog}
     </div>
   );

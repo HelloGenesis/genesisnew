@@ -289,7 +289,7 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         the dark glass chips that come out of the Lab above.
       */}
       {!onPage && (
-        <div className={cn("mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-center lg:gap-12", BENTO)}>
+        <div className={cn("mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-stretch lg:gap-12", BENTO)}>
           {/*
             ONE PANEL, TWO SIDES (Genesis, 4 Oct 2026: "think and merge this
             section together"): what the Lab does, how it runs, the proof and
@@ -300,20 +300,22 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
             tags within the box and one more card on the right, complete the
             bento"): the services in one, the way on in the other.
           */}
-          <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-            <div className="rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-5 text-center sm:text-left">
-              <p className="micro-label !text-brand-ink">What the Lab does</p>
-              <DivisionServices division="AI Lab" chips className="mt-4 sm:[&_ul]:flex sm:[&_ul]:justify-start" />
-            </div>
-            <div className="flex flex-col justify-between gap-5 rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-5 text-center sm:text-left">
-              <GlassIcon name="rocket" className="mx-auto size-11 sm:mx-0" />
-              <p className="text-balance text-lead leading-snug text-bone">
+          {/* Heading on top, the services under it, the button in the bottom corner (Genesis, 5 Oct 2026). */}
+          <div className="flex min-w-0 flex-col gap-6 text-center sm:text-left">
+            <div className="flex items-center justify-center gap-4 sm:justify-start">
+              <GlassIcon name="rocket" className="size-11 shrink-0" />
+              <h3 className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
                 Your content engine, <span className="font-serif italic text-brand-ink">built once.</span>
-              </p>
-              <DivisionCtas vertical="ai-labs" align="center" size="sm" primaryOnly className="justify-center sm:justify-start" />
+              </h3>
             </div>
+            <div className="rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-5 sm:p-6">
+              <p className="micro-label !text-brand-ink">What the Lab does</p>
+              <DivisionServices division="AI Lab" chips className="mt-4 sm:[&_ul]:flex sm:[&_ul]:flex-wrap sm:[&_ul]:justify-start" />
+            </div>
+            <DivisionCtas vertical="ai-labs" align="center" size="sm" primaryOnly className="justify-center sm:mt-auto sm:justify-end" />
           </div>
-          <PlanCaseStudies vertical="AI Lab" className="min-w-0" />
+          {/* Two cards, not four, so the box is shorter (Genesis, 5 Oct 2026: "remove these 2 cards"). */}
+          <PlanCaseStudies vertical="AI Lab" perPage={2} className="min-w-0" />
         </div>
       )}
 
@@ -480,46 +482,25 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           right one for a caption, and rendering nothing is one condition
           rather than a component change the day another line arrives.
         */}
-        {aiContent.avatarsIntro.line && (
-          <>
-            {/* One sentence a line, as the two arcs set it on the website. */}
-            <div className="mx-auto mt-4 max-w-2xl space-y-1 px-6 text-center text-small leading-snug text-ash sm:text-body lg:hidden">
-              {aiContent.avatarsIntro.line.split(/(?<=\.)\s+/).map((sentence) => (
-                <p key={sentence} className="text-balance">{sentence}</p>
-              ))}
+        {aiContent.avatarsIntro.line && (() => {
+          /*
+            STRAIGHT AND QUIET, NOT ON ARCS (Genesis, 5 Oct 2026: "this looks
+            ugly"): the first sentence as the caption, the second as a small
+            note under it, centred under the fan on every screen.
+          */
+          const [lead, ...rest] = aiContent.avatarsIntro.line.split(/(?<=\.)\s+/);
+          return (
+            <div className="mx-auto mt-6 flex max-w-3xl flex-col items-center gap-3 px-6 text-center">
+              <p className="text-balance text-body leading-snug text-bone sm:text-lead">{lead}</p>
+              {rest.length ? (
+                <p className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white/[0.04] px-4 py-1.5 text-[0.8125rem] leading-snug text-ash">
+                  <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-brand" />
+                  {rest.join(" ")}
+                </p>
+              ) : null}
             </div>
-            {/*
-              ON A DESKTOP THE LINE BENDS WITH THE CARDS (Genesis, 4 Oct 2026:
-              "make the text circular near the image cards, in the same
-              direction"): set on an arc that rises to the middle, as the fan
-              does, just under it.
-            */}
-            {/*
-              TWO LINES, TWO ARCS, TUCKED UNDER THE CARDS (Genesis, 4 Oct
-              2026: "write this here in two sentences"): one sentence to a
-              curve, the shorter one inside.
-            */}
-            <svg
-              viewBox="0 0 1400 200"
-              className="mx-auto -mt-16 hidden w-full max-w-6xl text-ash lg:block"
-              role="img"
-              aria-label={aiContent.avatarsIntro.line}
-            >
-              <path id="avatar-line-arc-1" d="M 240 120 Q 700 -20 1160 120" fill="none" />
-              <path id="avatar-line-arc-2" d="M 110 188 Q 700 42 1290 188" fill="none" />
-              {aiContent.avatarsIntro.line
-                .split(/(?<=\.)\s+/)
-                .slice(0, 2)
-                .map((sentence, index) => (
-                  <text key={index} fill="currentColor" fontSize="20" className="font-sans">
-                    <textPath href={`#avatar-line-arc-${index + 1}`} startOffset="50%" textAnchor="middle">
-                      {sentence}
-                    </textPath>
-                  </text>
-                ))}
-            </svg>
-          </>
-        )}
+          );
+        })()}
         {/*
           The "Build Your AI Avatar · one-time · Buy Now" strip came off here
           (Genesis, 2 Oct 2026): the avatar is the first card in the AI Lab

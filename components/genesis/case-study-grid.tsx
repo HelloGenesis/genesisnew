@@ -189,6 +189,20 @@ function CardFace({
   const landscape = card.ratio > 1;
   /* A design study's own artwork — see the note below. */
   const art = card.copy?.art;
+  /*
+    THE FIGURES, AS ON THE HOMEPAGE CARDS (Genesis, 5 Oct 2026). A study's own
+    results where it states them; where it states none, what is true of it —
+    how many films and which division — so no number is invented.
+  */
+  const films = card.copy ? (card.copy.films?.length ?? (card.copy.clip ? 1 : 0)) : 0;
+  const figures = card.copy?.outcome?.length
+    ? card.copy.outcome
+    : card.copy
+      ? [
+          ...(films ? [{ value: String(films), label: films === 1 ? "film" : "films" }] : []),
+          { value: card.copy.division, label: "division" },
+        ]
+      : [];
   return (
     <>
       <div
@@ -292,21 +306,48 @@ function CardFace({
         />
         )}
         <div className="absolute left-2.5 right-2.5 top-2.5 flex flex-wrap gap-1.5">
-          {card.labels.map((label) => (
+          {card.labels.map((label, index) => (
             <span
               key={label}
-              className="glass rounded-full px-2.5 py-1 text-micro font-medium tracking-wide text-bone"
+              /* Two tags on a phone, where a reel card is half the screen wide (Genesis, 5 Oct 2026). */
+              className={cn("glass rounded-full px-2.5 py-1 text-micro font-medium tracking-wide text-bone", index >= 2 && "max-sm:hidden")}
             >
               {label}
             </span>
           ))}
         </div>
+        {/*
+          THE HOMEPAGE CARD'S DETAILS (Genesis, 5 Oct 2026: "add the details
+          like the homepage cards"): the campaign and up to three of its
+          figures over the foot of the film, as on the curved rail.
+        */}
+        {card.copy ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-[linear-gradient(0deg,rgb(0_0_0/0.92)_0%,rgb(0_0_0/0.6)_55%,transparent)] px-2.5 pb-2.5 pt-16">
+            {/* The brand in a small, quiet pill over the campaign (Genesis, 5 Oct 2026). */}
+            <span className="max-w-full self-start truncate rounded-full border border-white/20 bg-black/35 px-2.5 py-1 text-[0.625rem] font-medium uppercase tracking-[0.1em] text-white/85 backdrop-blur-md">
+              {card.brand}
+            </span>
+            <span className="truncate px-0.5 text-[0.75rem] leading-tight text-brand-ink/90">{card.copy.campaign}</span>
+            {figures.length ? (
+              <span className="grid grid-flow-col divide-x divide-white/15 overflow-hidden rounded-xl border border-white/15 bg-white/[0.08] backdrop-blur-md">
+                {figures.slice(0, landscape ? 3 : 2).map((stat, index) => (
+                  <span key={stat.label} className={cn("min-w-0 px-2 py-1.5 text-center", !landscape && index > 0 && "max-sm:hidden")}>
+                    <span className="block font-display text-[1rem] leading-none text-brand-ink sm:text-[1.05rem]">{stat.value}</span>
+                    <span className="mt-1 block truncate text-[0.625rem] uppercase tracking-[0.06em] text-white/75">{stat.label}</span>
+                  </span>
+                ))}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      <p className="mt-3 text-body font-semibold leading-snug text-bone">{card.brand}</p>
-      {card.line && (
-        <p className="mt-1 line-clamp-2 text-small leading-snug text-ash">{card.line}</p>
-      )}
+      {/*
+        THE STUDY'S NAME UNDER EACH CARD, whole and readable (Genesis, 5 Oct
+        2026: "this line should be clearly visible"); a film with no write-up
+        keeps its brand.
+      */}
+      <p className="mt-3 text-pretty text-body font-medium leading-snug text-bone">{card.line ?? card.brand}</p>
     </>
   );
 }

@@ -32,6 +32,8 @@ type Card = {
   href?: string;
   study?: CaseStudy;
   clipId: string;
+  /** A logo or artwork, shown whole on white rather than cropped. */
+  art?: boolean;
 };
 
 
@@ -50,10 +52,13 @@ function divisionCards(divisions: readonly string[]): Card[] {
         clipId: clip,
       };
     });
-  if (films.length) return films;
-  /* No films (Brand & Design): its pieces as stills, each opening its study where there is one. */
-  return work
-    .filter((item) => divisions.includes(item.vertical) && (item.art || item.poster))
+  /*
+    The films first, then the pieces with no film as stills (Brand & Design's
+    logos), each opening its study where there is one (Genesis, 5 Oct 2026:
+    the motion graphics join Brand & Design's rail).
+  */
+  const stills = work
+    .filter((item) => divisions.includes(item.vertical) && !item.reel?.length && (item.art || item.poster))
     .map((item) => {
       const study = caseStudyList.find((entry) => entry.work?.includes(item.slug));
       return {
@@ -64,8 +69,10 @@ function divisionCards(divisions: readonly string[]): Card[] {
         href: study ? caseStudyPath(study.copy) : undefined,
         study,
         clipId: item.slug,
+        art: Boolean(item.art),
       };
     });
+  return [...films, ...stills];
 }
 
 function studyCards(): Card[] {
@@ -126,9 +133,13 @@ export function WorkWarp({
             items={cards.map((card) => ({
               id: card.id,
               clip: card.clip,
+              art: card.art,
               poster: card.poster,
               label: card.label,
               href: card.href,
+              campaign: (card.study?.copy !== undefined ? findCopy(card.study.copy)?.campaign : undefined) ?? card.study?.campaign,
+              brand: card.study?.copy !== undefined ? findCopy(card.study.copy)?.brand : undefined,
+              tags: card.study ? [card.study.discipline].flat() : undefined,
               stats: card.study?.copy !== undefined ? findCopy(card.study.copy)?.outcome ?? undefined : undefined,
               onOpen: card.study
                 ? () => {

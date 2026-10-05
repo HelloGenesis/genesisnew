@@ -144,7 +144,7 @@ export const designHowItWorks: Steps = {
 };
 
 export const designOverview = {
-  label: "Plan overview",
+  label: "Compare plans",
   heading: "Genesis Creative Desk.",
   body: ["One subscription.", "Everything you need."],
   price: price(65000),

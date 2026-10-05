@@ -116,6 +116,14 @@ export type WarpItem = {
   onOpen?: () => void;
   /** The study's impact figures, on the card (Genesis, 4 Oct 2026). */
   stats?: { value: string; label: string }[];
+  /** The campaign's name, shown under the client (Genesis, 5 Oct 2026). */
+  campaign?: string;
+  /** The brand, for the pill over the campaign; the label when absent. */
+  brand?: string;
+  /** A logo: shown whole on white, not cropped to the card. */
+  art?: boolean;
+  /** The study's tags, top left, as on the case studies page. */
+  tags?: string[];
 };
 
 export function WarpRail({
@@ -585,26 +593,39 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
         />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={mediaUrl(item.poster)} alt={item.label} loading="lazy" className="size-full object-cover" />
+        <img src={mediaUrl(item.poster)} alt={item.label} loading="lazy" className={item.art ? "size-full bg-white object-contain px-6 pb-28 pt-12" : "size-full object-cover"} />
       )}
       {/*
         A caption that only exists when the card is worth reading — the ones
         turning away are dimmed to near nothing by the loop, so a label on
         them would be unreadable text the eye still tries to parse.
       */}
-      <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(0deg,rgb(0_0_0/0.85)_40%,transparent)] px-3 pb-2.5 pt-12 text-micro text-white/85">
-        {/* THE STUDY'S IMPACT ON ITS CARD (Genesis, 4 Oct 2026: "whatever case study this represents should reflect on these cards"). */}
+      {/*
+        THE CAPTION, DESIGNED (Genesis, 5 Oct 2026: "design this properly"):
+        a deep fade, the client in bold, and the study's figures as a strip
+        of glass cells, each figure over its word, divided by hairlines.
+      */}
+      {item.tags?.length ? (
+        <span className="pointer-events-none absolute left-2.5 right-2.5 top-2.5 flex flex-wrap gap-1">
+          {item.tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="glass rounded-full px-2 py-0.5 text-[0.625rem] font-medium tracking-wide text-bone">{tag}</span>
+          ))}
+        </span>
+      ) : null}
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-[linear-gradient(0deg,rgb(0_0_0/0.92)_0%,rgb(0_0_0/0.6)_55%,transparent)] px-2.5 pb-2.5 pt-16">
+        {/* The case studies page's card, everywhere (Genesis, 5 Oct 2026): the brand in a quiet pill, the campaign in gold, then the figures. */}
+        <span className={`max-w-full self-start truncate px-2 py-0.5 text-[0.625rem] tracking-[0.08em] ${"rounded-full border border-white/20 bg-black/35 font-medium uppercase backdrop-blur-md text-white/85"}`}>{item.brand ?? item.label}</span>
+        {item.campaign ? <span className="truncate px-0.5 text-[0.75rem] leading-tight text-brand-ink/90">{item.campaign}</span> : null}
         {item.stats?.length ? (
-          <span className="mb-2 flex gap-3">
-            {item.stats.slice(0, 3).map((stat) => (
-              <span key={stat.label} className="min-w-0">
-                <span className="block text-[1.05rem] font-light leading-none tracking-tight text-brand-ink">{stat.value}</span>
-                <span className="mt-0.5 block truncate text-[0.625rem] lowercase text-white/75">{stat.label}</span>
+          <span className="grid grid-flow-col divide-x divide-white/15 overflow-hidden rounded-xl border border-white/15 bg-white/[0.08] backdrop-blur-md">
+            {item.stats.slice(0, 3).map((stat, index) => (
+              <span key={stat.label} className={`min-w-0 px-2 py-1.5 text-center ${index === 2 ? "max-sm:hidden" : ""}`}>
+                <span className="block font-display text-[1rem] leading-none text-brand-ink sm:text-[1.05rem]">{stat.value}</span>
+                <span className="mt-1 block truncate text-[0.625rem] uppercase tracking-[0.06em] text-white/75">{stat.label}</span>
               </span>
             ))}
           </span>
         ) : null}
-        {item.label}
       </span>
     </>
   );

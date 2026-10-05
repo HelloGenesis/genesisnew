@@ -449,6 +449,7 @@ function ProjectBody({
       box stays in view while the longer box beside it scrolls.
     */}
     <div data-section="included" className="mt-8 grid items-start gap-6 lg:grid-cols-[1.1fr_0.9fr] [&>*]:min-w-0">
+      <div className="flex flex-col gap-6">
       <div className="glass-card rounded-panel p-5 sm:p-6">
         <p className="micro-label">What&rsquo;s included</p>
         {/*
@@ -472,6 +473,8 @@ function ProjectBody({
         </ul>
         {/* The note as a graphic: its workflow as steps, its other lines with icons (see NoteExplainer). */}
         {product?.note && <NoteExplainer note={product.note} part="notes" />}
+      </div>
+      {product?.name === "Build Your AI Avatar Clone" && <AvatarVision />}
       </div>
 
       <div data-section="customise" className="flex flex-col gap-4 glass-card rounded-panel p-5 sm:p-6 lg:sticky lg:top-16">
@@ -526,6 +529,12 @@ function ProjectBody({
       then the typical turnaround as its own row of three.
     */}
     {/* Build Your AI Avatar Clone only: the avatars Genesis has built, full width (out of the box). */}
+    {/* What Standard and Advanced videos are, in every AI Lab product's window too (Genesis, 5 Oct 2026). */}
+    {tile.vertical === "ai-labs" && (
+      <PlanDetails id={`${tile.key}-product-video-types`} title={aiVideoTiers.heading} className="mt-8">
+        <VideoTiers data={aiVideoTiers} bare />
+      </PlanDetails>
+    )}
     {product?.name === "Build Your AI Avatar Clone" && <AvatarShowcase />}
     {product?.note && <NoteExplainer note={product.note} part="flow" />}
     {TURNAROUND[tile.vertical] && (
@@ -695,6 +704,57 @@ function AudiencePills({ tags, need }: { tags: readonly string[]; need?: string 
 }
 
 /**
+ * YOUR AVATAR, BUILT TO YOUR VISION — in the left column under what's
+ * included, its cards one above another, so it fills the room beside the
+ * price box instead of a row of its own (Genesis, 5 Oct 2026).
+ */
+function AvatarVision() {
+  return (
+    <>
+      {/*
+        WHAT AN AVATAR CAN BE, AND WHAT WE NEED FOR IT (Genesis, 3 Oct 2026:
+        "any setup, any product integration — background, clothes,
+        accessories like a laptop or jewellery … what you need to provide:
+        references of the setting, position, background or product, in a
+        dropdown").
+      */}
+      <div className="glass-card rounded-panel p-5 sm:p-6">
+        <p className="text-body text-bone">Your avatar, built to your vision</p>
+        <p className="mt-1.5 text-pretty text-small leading-relaxed text-ash sm:text-body">
+          Any setting, any look, any product. If you can picture it, we can create it, and change it whenever
+          your content needs something new.
+        </p>
+        <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-1">
+          {AVATAR_CAN.map(([icon, title, line]) => (
+            <li key={title} className="flex items-start gap-3 rounded-card bg-[var(--hover-wash)] p-3">
+              <GlassIcon name={icon} className="size-8 shrink-0" />
+              <span>
+                <span className="block text-small text-bone">{title}</span>
+                <span className="mt-0.5 block text-pretty text-[0.8125rem] leading-snug text-ash">{line}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <PlanDetails
+          title="What you’ll need to provide"
+          summary="Send references for each look you want. The closer the reference, the closer the result."
+          className="mt-4"
+        >
+          <ul className="space-y-2.5">
+            {AVATAR_NEEDS.map((item) => (
+              <li key={item} className="flex items-start gap-2.5 text-small leading-snug text-bone sm:text-body">
+                <span aria-hidden className="mt-[0.5em] size-1.5 shrink-0 rounded-full bg-brand" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </PlanDetails>
+      </div>
+    </>
+  );
+}
+
+/**
  * AVATARS WE'VE BUILT (Genesis, 3 Oct 2026: "add 15–20 polished AI avatar
  * images in this section only, write copy accordingly"): a row of portraits
  * and stills, each named, to slide through, under what the Avatar Clone
@@ -733,45 +793,6 @@ function AvatarShowcase() {
       </ul>
       <RailProgress rail={rail} className="mt-1" />
 
-      {/*
-        WHAT AN AVATAR CAN BE, AND WHAT WE NEED FOR IT (Genesis, 3 Oct 2026:
-        "any setup, any product integration — background, clothes,
-        accessories like a laptop or jewellery … what you need to provide:
-        references of the setting, position, background or product, in a
-        dropdown").
-      */}
-      <div className="mt-6">
-        <p className="text-body text-bone">Your avatar, built to your vision</p>
-        <p className="mt-1.5 text-pretty text-small leading-relaxed text-ash sm:text-body">
-          Any setting, any look, any product. If you can picture it, we can create it, and change it whenever
-          your content needs something new.
-        </p>
-        <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-          {AVATAR_CAN.map(([icon, title, line]) => (
-            <li key={title} className="flex items-start gap-3 rounded-card bg-[var(--hover-wash)] p-3">
-              <GlassIcon name={icon} className="size-8 shrink-0" />
-              <span>
-                <span className="block text-small text-bone">{title}</span>
-                <span className="mt-0.5 block text-pretty text-[0.8125rem] leading-snug text-ash">{line}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <PlanDetails
-          title="What you’ll need to provide"
-          summary="Send references for each look you want. The closer the reference, the closer the result."
-          className="mt-4"
-        >
-          <ul className="space-y-2.5">
-            {AVATAR_NEEDS.map((item) => (
-              <li key={item} className="flex items-start gap-2.5 text-small leading-snug text-bone sm:text-body">
-                <span aria-hidden className="mt-[0.5em] size-1.5 shrink-0 rounded-full bg-brand" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </PlanDetails>
-      </div>
     </section>
   );
 }

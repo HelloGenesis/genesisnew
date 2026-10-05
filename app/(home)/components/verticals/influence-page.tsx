@@ -16,7 +16,8 @@ import {
   influenceProcess,
   influenceServices,
 } from "@/lib/verticals/influence";
-import { InfluenceNetworkCard, InfluenceVideoRail } from "../influencer-marketing";
+import { InfluenceNetworkCard } from "../influencer-marketing";
+import { InfluenceShowcase } from "@/components/genesis/influence-showcase";
 import { WorkHead, WorkWarp } from "@/components/genesis/work-warp";
 import { OneTimeProducts } from "../offer/starter-pack";
 import { WorkMode } from "../offer/work-mode";
@@ -62,7 +63,8 @@ export function InfluencePageView() {
         strip={divisionMenu("/influencer-marketing")}
         images={[]}
         extra={<InfluenceNetworkCard />}
-        visual={<InfluenceVideoRail />}
+        /* The two Influence posters, as on the homepage, in place of the reel gallery (Genesis, 5 Oct 2026). */
+        visual={<InfluenceShowcase />}
       />
 
       {/* SECTION 2: the division's work, in the curved rail every page shares. */}
@@ -189,18 +191,18 @@ function Services() {
           </SectionLabel>
           <h2
             id="services-heading"
-            className="mt-5 text-balance text-h2 font-normal leading-[1.02] tracking-tight text-bone sm:text-h1"
+            className="mt-5 text-balance text-h2 font-normal leading-[1.02] tracking-tight text-bone"
           >
             {influenceServices.heading}{" "}
             <span className="block font-serif italic text-brand-ink">{influenceServices.headingAccent}</span>
           </h2>
           {influenceServices.body.map((line) => (
-            <p key={line} className="mt-3 text-pretty text-body leading-relaxed text-ash first-of-type:mt-6">
+            <p key={line} className="mt-3 text-pretty text-body leading-relaxed text-ash first-of-type:mt-5 [&:not(:first-of-type)]:hidden">
               {line}
             </p>
           ))}
-          <VerticalCtas size="md" className="mt-8" />
-          <dl className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+          <VerticalCtas size="md" className="mt-6" />
+          <dl className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
             {influenceServices.stats.map((stat) => (
               <div key={stat.label} className="border-l border-white/12 pl-4">
                 <dt className="sr-only">{stat.label}</dt>
@@ -215,7 +217,7 @@ function Services() {
           {influenceServices.cards.map((card, index) => (
             <Reveal as="li" key={card.title} delay={0.05 * index} className="flex">
               <article className="glass glass-lit group relative flex w-full flex-col overflow-hidden rounded-panel">
-                <div aria-hidden className="relative h-36 shrink-0 overflow-hidden">
+                <div aria-hidden className="relative h-24 shrink-0 overflow-hidden">
                   <Image
                     src={mediaUrl(card.image)}
                     alt=""
@@ -227,12 +229,12 @@ function Services() {
                 </div>
                 <div className="relative z-[1] -mt-8 flex flex-1 flex-col px-5 pb-5">
                   <IconTile name={card.icon} className="bg-[var(--surface-raised)]" />
-                  <h3 className="font-sans mt-4 text-lead leading-snug text-bone">{card.title}</h3>
-                  <p className="mb-5 mt-2 text-pretty text-small leading-relaxed text-ash">{card.body}</p>
+                  <h3 className="font-sans mt-3 text-body leading-snug text-bone">{card.title}</h3>
+                  <p className="mb-4 mt-1.5 line-clamp-3 text-pretty text-[0.8125rem] leading-snug text-ash">{card.body}</p>
                   <a
                     href="#case-studies"
                     aria-label={`${card.title}: case studies`}
-                    className="mt-auto grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand"
+                    className="mt-auto grid size-8 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors group-hover:border-brand group-hover:bg-brand group-hover:text-on-brand"
                   >
                     <ArrowRight className="size-4" aria-hidden />
                   </a>
@@ -243,7 +245,7 @@ function Services() {
         </ul>
       </div>
 
-      <Reveal className="mt-8">
+      <Reveal className="mt-6">
         <p className="sr-only">Platforms</p>
         <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 border-t border-white/10 pt-6 lg:justify-end">
           {influenceServices.platforms.map((platform) => (

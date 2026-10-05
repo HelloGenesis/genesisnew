@@ -11,9 +11,8 @@ import {
   studiosHowItWorks,
   studiosPlans,
   studiosStarter,
-  studiosTurnaround,
 } from "@/lib/verticals/studios";
-import { ClosingBand, IconCards, StepsBlock, TurnaroundBlock } from "../offer/blocks";
+import { ClosingBand, IconCards, StepsBlock } from "../offer/blocks";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { CheckList, OfferSection, PlanBand, PlanDetails } from "../offer/parts";
 import { BillingProvider, PlanGrid, SharedBillingNote, SharedBillingToggle } from "../offer/plan-grid";
@@ -151,8 +150,7 @@ export function StudiosPageView() {
       {/* SECTION 06 — HOW IT WORKS */}
       <StepsBlock data={studiosHowItWorks} id="how-it-works" />
 
-      {/* SECTION 07 — TURNAROUND */}
-      <TurnaroundBlock data={studiosTurnaround} />
+      {/* Turnaround is in each plan's pricing pop-up, so not repeated here (Genesis, 5 Oct 2026). */}
 
       {/*
         Case studies, between the plans and the shoot — "Add case studies

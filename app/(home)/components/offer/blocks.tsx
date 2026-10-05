@@ -137,10 +137,22 @@ export function VideoTiers({
 }
 
 /** How it works — numbered steps joined by arrows, then the capacity note. */
-export function StepsBlock({ data, id }: { data: Steps; id?: string }) {
+function StepsWrap({ bare, id, className, children }: { bare: boolean; id?: string; className?: string; children: ReactNode }) {
+  return bare ? (
+    <div id={id} aria-labelledby={`${id ?? "steps"}-heading`} className={cn("scroll-mt-24", className)}>{children}</div>
+  ) : (
+    <OfferSection id={id} labelledBy={`${id ?? "steps"}-heading`}>{children}</OfferSection>
+  );
+}
+
+/**
+ * `bare`: inside another section, as a panel of its own (`className` sets the
+ * panel), not a full section with its own padding (Genesis, 5 Oct 2026).
+ */
+export function StepsBlock({ data, id, bare = false, className }: { data: Steps; id?: string; bare?: boolean; className?: string }) {
   const count = data.steps.length;
   return (
-    <OfferSection id={id} labelledBy={`${id ?? "steps"}-heading`}>
+    <StepsWrap bare={bare} id={id} className={className}>
       <SectionHead
         id={`${id ?? "steps"}-heading`}
         label={data.label}
@@ -150,21 +162,21 @@ export function StepsBlock({ data, id }: { data: Steps; id?: string }) {
       />
       <ol
         className={cn(
-          "mt-10 grid gap-4 sm:grid-cols-2",
+          "mt-8 grid gap-3 sm:grid-cols-2", /* compact, so the process fits a desktop screen (Genesis, 5 Oct 2026) */
           count >= 6 ? "lg:grid-cols-3 xl:grid-cols-6" : count === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4",
         )}
       >
         {data.steps.map((step, index) => (
           <Reveal as="li" key={step.title} delay={0.05 * index} className="relative flex">
-            <div className="glass glass-lit flex w-full flex-col rounded-panel p-5">
+            <div className="glass glass-lit flex w-full flex-col rounded-panel p-4">
               <div className="flex items-center justify-between gap-3">
                 {step.icon ? <IconTile name={step.icon} /> : <span />}
                 <span className="font-display text-h3 font-normal leading-none tracking-tight text-brand-ink">
                   {String(index + 1).padStart(2, "0")}
                 </span>
               </div>
-              <h3 className="font-sans mt-5 text-body leading-snug text-bone">{step.title}</h3>
-              <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{step.body}</p>
+              <h3 className="font-sans mt-3 text-body leading-snug text-bone">{step.title}</h3>
+              <p className="mt-1.5 text-pretty text-[0.8125rem] leading-snug text-ash">{step.body}</p>
             </div>
             {index < count - 1 && (
               <ArrowRight
@@ -196,7 +208,7 @@ export function StepsBlock({ data, id }: { data: Steps; id?: string }) {
           {data.note && <p className="text-pretty text-small leading-relaxed text-ash">{data.note}</p>}
         </Reveal>
       )}
-    </OfferSection>
+    </StepsWrap>
   );
 }
 

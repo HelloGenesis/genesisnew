@@ -255,10 +255,10 @@ function WorkPanel() {
           </div>
     
           <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-2 sm:mt-5 sm:pt-3">
-            <span className="text-[0.6875rem] uppercase tracking-[0.3em] text-scene-dim">
+            <span className="whitespace-nowrap text-[0.6875rem] uppercase tracking-[0.3em] text-scene-dim">
               Case studies
             </span>
-            <span className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-scene-dim/70">
+            <span className="hidden items-center gap-2 whitespace-nowrap text-[0.625rem] uppercase tracking-[0.2em] text-scene-dim/70 xl:flex">
               <span aria-hidden className="h-px w-6 bg-white/20" />
               Brands · People · Impact
             </span>
@@ -277,7 +277,7 @@ function WorkPanel() {
                   alt="Activ Health, the finished logo"
                   fill
                   unoptimized
-                  className="object-contain p-4"
+                  className="object-contain px-4 pb-24 pt-8"
                 />
               </Tile>
             )}
@@ -311,11 +311,11 @@ function WorkPanel() {
                       <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
                     ))}
                   </div>
-                  <div className="mt-1 flex">
+                  <div className="mt-1 hidden sm:flex">
                     {palette.map((hex) => (
                       <span
                         key={hex}
-                        className="flex-1 text-center text-[0.625rem] uppercase tracking-wide text-scene-dim"
+                        className="min-w-0 flex-1 truncate text-center text-[0.5rem] uppercase tracking-normal text-scene-dim"
                       >
                         {hex}
                       </span>
@@ -343,7 +343,7 @@ function WorkPanel() {
             </div>
           </div>
     
-          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 sm:mt-4">
+          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 sm:mt-4 sm:pr-20">
             {[
               ["Strategy", "driven design"],
               ["Brands that", "make an impact"],

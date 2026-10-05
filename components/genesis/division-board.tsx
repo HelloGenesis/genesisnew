@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -208,25 +207,6 @@ export function DivisionBoard() {
   const focus = active === null ? null : CORNERS[active];
   const chosen = departing;
 
-  /*
-    ON A TOUCH SCREEN, NO HOVER: each pill has a small glass tab that opens
-    its details — the line of services and the price — below or above it
-    (Genesis, 4 Oct 2026: "don't add hover to the phone, add a glassmorphic
-    little expandable tab"). One open at a time; a tap elsewhere closes it.
-  */
-  const [open, setOpen] = useState<number | null>(null);
-  useEffect(() => {
-    if (open === null) return;
-    const away = (event: PointerEvent) => {
-      if (!stage.current?.querySelector(`[data-vert="${open}"]`)?.contains(event.target as Node)) {
-        setOpen(null);
-        setActive(null);
-      }
-    };
-    document.addEventListener("pointerdown", away);
-    return () => document.removeEventListener("pointerdown", away);
-  }, [open]);
-
   return (
     <div
       ref={stage}
@@ -273,7 +253,6 @@ export function DivisionBoard() {
         const corner = CORNERS[index];
         const spot = SPOTS[index];
         const isActive = active === index;
-        const isOpen = open === index;
         const dimmed = active !== null && !isActive;
         /* Everything except the one being travelled to gets out of the way. */
         const leaving = chosen !== null && chosen !== index;
@@ -283,13 +262,11 @@ export function DivisionBoard() {
         }px), calc(var(--drift-y, 0px) + ${isActive ? -corner.y * 6 : 0}px), 0)`;
         /* This division's subscription — the price under its name. */
         const pricing = verticalCards.find((card) => card.short === service.short);
-        const panelId = `division-${index}-details`;
 
         return (
           <motion.div
             key={service.title}
             data-vert={index}
-            data-open={isOpen || undefined}
             /* Each name arrives from its own side, closing on the sphere. */
             initial={still ? false : { opacity: 0, x: corner.x * 20, y: corner.y * 20 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
@@ -304,12 +281,16 @@ export function DivisionBoard() {
               spot.side === "left"
                 ? "-translate-x-[35%] items-start lg:-translate-x-[94%]"
                 : "-translate-x-[65%] items-end lg:-translate-x-[6%]",
-              (isActive || isOpen) ? "z-20" : "z-10",
+              isActive ? "z-20" : "z-10",
             )}
             onPointerEnter={(event) => event.pointerType === "mouse" && setActive(index)}
             onPointerLeave={(event) => event.pointerType === "mouse" && leave()}
           >
-            {/* THE PILL: the name, a link to the division, and on a touch screen the tab that opens its details. */}
+            {/*
+              THE PILL, A LINK TO THE DIVISION'S PAGE AND NOTHING ELSE (Genesis,
+              5 Oct 2026: "remove these hover cards … if clicked just redirect
+              to their vertical pages", on every screen).
+            */}
             <div
               className={cn(
                 "flex items-center gap-1 rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] p-0.5 shadow-[var(--shadow-raised)] backdrop-blur-[14px] backdrop-saturate-[1.3]",
@@ -321,8 +302,7 @@ export function DivisionBoard() {
               style={{ transform: `${lift} scale(${isActive || chosen === index ? 1.035 : 1})` }}
             >
               <Link
-                href={service.href}
-                /* The board scrolls to the division's section (SmoothScroll); nothing to prefetch. */
+                href={pricing?.href ?? service.href}
                 prefetch={false}
                 onFocus={() => setActive(index)}
                 onBlur={leave}
@@ -340,65 +320,8 @@ export function DivisionBoard() {
                   className="flex w-full justify-center"
                 />
               </Link>
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                aria-controls={panelId}
-                aria-label={`${isOpen ? "Hide" : "Show"} ${service.short} details`}
-                onClick={() => {
-                  setOpen(isOpen ? null : index);
-                  setActive(isOpen ? null : index);
-                }}
-                className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--hover-wash)] text-bone outline-none focus-visible:ring-2 focus-visible:ring-brand [@media(hover:hover)]:hidden"
-              >
-                <ChevronDown className={cn("size-4 transition-transform duration-300", spot.up !== isOpen && "rotate-180")} aria-hidden />
-              </button>
             </div>
 
-            {/*
-              THE DETAILS: the division's services and its subscription price.
-              On a computer they fade in on hover or focus, as before; on a
-              touch screen the tab above opens them.
-            */}
-            <div
-              id={panelId}
-              className={cn(
-                "absolute w-[15rem] rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-fill)] p-3.5 shadow-[var(--shadow-panel)] backdrop-blur-[14px] backdrop-saturate-[1.3] lg:w-[17rem] lg:p-4",
-                spot.up ? "bottom-full mb-2" : "top-full mt-2",
-                spot.side === "left" ? "left-0" : "right-0",
-                /* From lg it opens AWAY from the orb, beside the pill, never over the sphere. */
-                "lg:bottom-auto lg:top-0 lg:mb-0 lg:mt-0",
-                spot.side === "left" ? "lg:left-auto lg:right-full lg:mr-3" : "lg:left-full lg:right-auto lg:ml-3",
-                "pointer-events-none translate-y-1 opacity-0 transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none",
-                "[@media(hover:hover)]:group-hover/vert:pointer-events-auto [@media(hover:hover)]:group-hover/vert:translate-y-0 [@media(hover:hover)]:group-hover/vert:opacity-100",
-                "group-focus-within/vert:pointer-events-auto group-focus-within/vert:translate-y-0 group-focus-within/vert:opacity-100",
-                "group-data-[open]/vert:pointer-events-auto group-data-[open]/vert:translate-y-0 group-data-[open]/vert:opacity-100",
-                leaving && "opacity-0",
-              )}
-            >
-              <p className="text-pretty text-[0.75rem] leading-relaxed text-ash lg:text-small">{service.caption}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {pricing && (
-                  <Link
-                    href={`${pricing.href}#pricing`}
-                    prefetch={false}
-                    className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-brand/40 bg-brand/10 px-3 text-[0.75rem] text-brand-ink outline-none hover:border-brand/70 hover:bg-brand/20 focus-visible:ring-2 focus-visible:ring-brand"
-                  >
-                    {pricing.brain}
-                    <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
-                  </Link>
-                )}
-                <Link
-                  href={service.href}
-                  prefetch={false}
-                  onClick={() => setDeparting(index)}
-                  className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] px-3 text-[0.75rem] text-bone outline-none hover:bg-[var(--hover-wash)] focus-visible:ring-2 focus-visible:ring-brand [@media(hover:hover)]:hidden"
-                >
-                  Explore
-                  <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
-                </Link>
-              </div>
-            </div>
           </motion.div>
         );
       })}

@@ -12,16 +12,17 @@ import { Reveal } from "@/components/genesis/reveal";
 export function PricingHead({ id = "pricing-heading" }: { id?: string }) {
   return (
     <>
-      <Reveal className="mx-auto flex max-w-2xl flex-col items-center text-center">
+      <Reveal className="mx-auto flex max-w-4xl flex-col items-center text-center">
         {/* No "Our products" label (Genesis, 4 Oct 2026: "remove this"). */}
         {/*
           THE LINE IS THE HEADING (Genesis, 4 Oct 2026: "make this the hero,
           replacing 'Two ways to work with us'"), set as the site's headings
           are: the statement, then the turn in yellow italic.
         */}
-        <h2 id={id} className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-          Pay per project, or by subscription.{" "}
-          <span className="font-serif font-normal italic text-brand-ink">Choose what your business needs right now.</span>
+        <h2 id={id} className="text-balance text-h3 font-normal leading-[1.15] tracking-tight text-bone max-sm:text-[min(1.5rem,5.6vw)] sm:text-h2">
+          {/* Two lines, one sentence each (Genesis, 5 Oct 2026). */}
+          <span className="block sm:whitespace-nowrap">Pay per project, or by subscription.</span>
+          <span className="block font-serif font-normal italic text-brand-ink sm:whitespace-nowrap">Choose what your business needs right now.</span>
         </h2>
         {/* A small line, not a pill (Genesis, 4 Oct 2026: "taking too much space"). */}
         <p className="mt-3 inline-flex items-center gap-1.5 text-[0.8125rem] text-ash">

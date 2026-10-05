@@ -59,7 +59,7 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
         style={{ background: "linear-gradient(100deg, #f5923e 0%, #f2607e 40%, #6b4fd8 75%, #c05ce0 100%)" }}
       >
       <div
-        className="relative flex flex-col gap-5 rounded-panel bg-ink p-5 text-left sm:p-6 lg:min-h-[49.5rem]"
+        className="relative flex flex-col gap-5 rounded-panel bg-ink p-5 text-left sm:p-6"
         style={{
           backgroundImage:
             "radial-gradient(120% 140% at 0% 100%, rgb(245 146 62 / 0.22), transparent 45%), radial-gradient(120% 140% at 100% 0%, rgb(180 92 224 / 0.22), transparent 45%)",
@@ -105,7 +105,8 @@ export function PlanBar({ vertical, className }: { vertical: VerticalKey; classN
           <div className="flex min-w-0 flex-col rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-4 sm:p-5">
             <DivisionOffers vertical={vertical} grid />
             {/* How it works, in the space under the cards (Genesis, 4 Oct 2026: "add a small explainer like this in each section"). */}
-            <BuySteps row className="mt-auto pt-6 [&_li]:p-3 [&_li]:text-small" />
+            {/* Small icon and small words from lg, so the steps stay one short row and the box fits a screen (Genesis, 5 Oct 2026). */}
+            <BuySteps row className="mt-auto pt-4 [&_li]:p-3 lg:[&_li]:gap-2 lg:[&_li>:first-child]:size-7 lg:[&_li>:first-child]:shrink-0 lg:[&_li>span:last-child]:text-[0.8125rem] lg:[&_li>span:last-child]:leading-tight" />
           </div>
           <PlanCaseStudies vertical={VERTICAL_NAME[vertical]} className="rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-4 sm:p-5" />
         </div>

@@ -12,14 +12,13 @@ import {
   designHowItWorks,
   designIncluded,
   designOverview,
-  designTurnaround,
 } from "@/lib/verticals/brand-design";
 import { cn } from "@/lib/utils";
 import { BrandingDesign, BrandingStack } from "../branding-design";
 import { ProductCards } from "./design-products";
 import { OneTimeProducts } from "../offer/starter-pack";
 import { SubscriptionOnly, WorkMode } from "../offer/work-mode";
-import { ClosingBand, StepsBlock, TurnaroundStrip } from "../offer/blocks";
+import { ClosingBand, StepsBlock } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { OfferSection, PlanBand, SectionHead } from "../offer/parts";
@@ -44,7 +43,7 @@ export function BrandDesignPageView() {
         { id: "pricing", label: "Plans" },
         { id: "included", label: "What's included", mode: "membership" },
         { id: "how-it-works", label: "How it works" },
-        { id: "overview", label: "Plan overview", mode: "membership" },
+        { id: "overview", label: "Compare plans", mode: "membership" },
         { id: "case-studies", label: "Case studies" },
       ]}>
       <VerticalHero
@@ -59,7 +58,8 @@ export function BrandDesignPageView() {
       {/* SECTION 2: the division's work, in the curved rail every page shares (Genesis, 4 Oct 2026). */}
       <section className="pb-[var(--section-pad)]">
         <WorkHead />
-        <WorkWarp divisions={["Brand & Design"]} />
+        {/* The motion graphics pieces with the identity work (Genesis, 5 Oct 2026: "put these content pieces here"). */}
+        <WorkWarp divisions={["Brand & Design", "Creatives"]} />
       </section>
 
       {/*
@@ -192,15 +192,7 @@ function PlanOverview() {
         </Reveal>
       </div>
 
-      <div className="mt-[var(--section-pad)]">
-        <SectionHead label={designTurnaround.label} heading={designTurnaround.heading} align="left" />
-        <TurnaroundStrip data={designTurnaround} className="mt-8" />
-        {designTurnaround.notes?.map((note) => (
-          <p key={note} className="mt-5 max-w-3xl text-pretty text-small leading-relaxed text-faint">
-            {note}
-          </p>
-        ))}
-      </div>
+      {/* Turnaround is in each plan's pricing pop-up, so not repeated here (Genesis, 5 Oct 2026). */}
     </OfferSection>
   );
 }

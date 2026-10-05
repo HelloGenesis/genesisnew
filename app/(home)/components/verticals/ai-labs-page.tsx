@@ -6,10 +6,9 @@ import {
   aiHero,
   aiHowItWorks,
   aiPlans,
-  aiTurnaround,
   aiVideoTiers,
 } from "@/lib/verticals/ai-labs";
-import { FaqBlock, IconCards, StepsBlock, TurnaroundBlock, VideoTiers } from "../offer/blocks";
+import { FaqBlock, IconCards, StepsBlock, VideoTiers } from "../offer/blocks";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
 import { PlanDetails, OfferSection, PlanBand } from "../offer/parts";
 import { BillingProvider, PlanGrid, SharedBillingNote, SharedBillingToggle } from "../offer/plan-grid";
@@ -19,7 +18,9 @@ import { divisionMenu } from "@/lib/home-content";
 import { AiContent, AiLabDiagram } from "../ai-content";
 import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
+import { BENTO } from "@/lib/bento";
 import { BuySteps } from "../offer/buy-steps";
+import { cn } from "@/lib/utils";
 import { PricingHead } from "../offer/pricing-head";
 import { VerticalPage } from "../offer/vertical-page";
 
@@ -54,7 +55,7 @@ export function AiLabsPageView() {
         */
         /* A bit bigger (Genesis, 4 Oct 2026): it reaches past the column into the margin. */
         fitPhone
-        visual={<AiLabDiagram fit className="lg:-ml-4 lg:-mr-[clamp(2.5rem,calc((100vw-80rem)/2+1.5rem),5rem)]" />}
+        visual={<AiLabDiagram fit interactive className="lg:-ml-4 lg:-mr-[clamp(2.5rem,calc((100vw-80rem)/2+1.5rem),5rem)]" />}
       />
 
       {/*
@@ -102,17 +103,22 @@ export function AiLabsPageView() {
               }
             />
             </BillingProvider>
-            {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
-            <BuySteps className="mt-10" />
+            {/*
+              HOW IT WORKS, IN A BENTO UNDER THE CARDS (Genesis, 5 Oct 2026:
+              "add this in a bento grid and move it to the section above"), with
+              the buy steps in a bento of their own just above it ("you removed
+              the other element, add that as well").
+            */}
+            <div className={cn("mt-10", BENTO)}>
+              <p className="micro-label">How to get started</p>
+              <BuySteps className="mt-4" />
+            </div>
+            <StepsBlock data={aiHowItWorks} id="how-it-works" bare className={cn("mt-6", BENTO)} />
           </div>
         </OfferSection>
       </PlanBand>
 
-      {/* SECTION 6 — HOW IT WORKS */}
-      <StepsBlock data={aiHowItWorks} id="how-it-works" />
-
-      {/* SECTION 7 — TURNAROUND */}
-      <TurnaroundBlock data={aiTurnaround} />
+      {/* Turnaround is in each plan's pricing pop-up, so not repeated here (Genesis, 5 Oct 2026). */}
 
       <WorkSection verticals={["AI Lab"]} />
 
