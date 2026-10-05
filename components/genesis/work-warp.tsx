@@ -128,7 +128,7 @@ export function WorkWarp({
         className={cn("relative left-1/2 w-screen -translate-x-1/2", className)}
       >
         {/* The AI Lab rail's sizes: a phone's, then wider and capped from sm. */}
-        <div className="[--warp-card:11.5rem] [--warp-h:19.5rem] sm:[--warp-card:clamp(11rem,22vw,20rem)] sm:[--warp-h:calc(var(--warp-card)*1.6+1.75rem)]">
+        <div className="[--warp-card:78vw] [--warp-h:calc(78vw*1.6)] sm:[--warp-card:clamp(11rem,22vw,20rem)] sm:[--warp-h:calc(var(--warp-card)*1.6+1.75rem)]">
           <WarpRail
             items={cards.map((card) => ({
               id: card.id,

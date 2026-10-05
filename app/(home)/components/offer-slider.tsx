@@ -8,6 +8,7 @@ import { DivisionName } from "@/components/genesis/division-lockup";
 import { GlassIcon } from "@/components/genesis/glass-icon";
 import { pagerFor } from "@/components/genesis/overlay";
 import { RailProgress } from "@/components/genesis/rail-progress";
+import { useAutoAdvance } from "@/components/genesis/use-auto-advance";
 import { inr } from "@/lib/money";
 import { bookingHref, homePlans, verticalCard } from "@/lib/pricing";
 import { products } from "@/lib/products";
@@ -379,6 +380,7 @@ export function DivisionOffers({
   );
   const tiles = [...(mode === "membership" ? plans : projects), customTile(vertical, mode)];
   const { openOffer, dialog } = useOpenOffer(tiles);
+  useAutoAdvance(rail);
 
   return (
     <div className={className}>
@@ -399,7 +401,7 @@ export function DivisionOffers({
         className={cn("mt-3", RAIL)}
       >
         {tiles.map((tile, index) => (
-          <li key={tile.key} className={grid ? "flex w-[calc((100%-0.75rem)/2)] shrink-0 snap-start [perspective:900px] max-sm:w-[92%] max-sm:snap-center" : ITEM}>
+          <li key={tile.key} className={grid ? "flex w-[calc((100%-0.75rem)/2)] shrink-0 snap-start [perspective:900px] max-sm:w-full" : ITEM}>
             <OfferCard tile={tile} tier={index} lit={touch && index === active} onOpen={() => openOffer(tile.key)} inBox />
           </li>
         ))}

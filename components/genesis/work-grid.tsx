@@ -352,16 +352,22 @@ export function WorkGrid({
               only"): the top strip carries every piece there, the second
               strip's share shown only on a phone; from sm the two strips.
             */}
+            {/*
+              ONE ROW EVERYWHERE NOW (Genesis, 6 Oct 2026: "fit and align the
+              bento grid, reduce the cards so it's easily scannable"): every
+              piece in one strip, a set number of larger cards in view that
+              line up with the panel's edges.
+            */}
             {[
-              visible.map((item, index) => ({ item, phoneOnly: index % 2 === 1 })),
-              visible.filter((_, index) => index % 2 === 1).map((item) => ({ item, phoneOnly: false })),
+              visible.map((item) => ({ item, phoneOnly: false })),
+              [] as { item: (typeof visible)[number]; phoneOnly: boolean }[],
             ].map((row, rowIndex) =>
               row.length === 0 ? null : (
                 <div
                   key={rowIndex}
                   ref={rowIndex === 0 ? rowA : rowB}
                   dir={rowIndex === 1 ? "rtl" : "ltr"}
-                  className={`no-scrollbar -mx-6 flex gap-3 overflow-x-auto px-6 pb-1 sm:gap-4 ${rowIndex === 1 ? "max-sm:hidden" : ""}`}
+                  className={`no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 max-sm:-mx-4 sm:snap-none sm:gap-4 ${rowIndex === 1 ? "max-sm:hidden" : ""}`}
                 >
                   {row.map(({ item, phoneOnly }) => (
                     <div
@@ -380,7 +386,7 @@ export function WorkGrid({
                         hoga toh chalega" — a little scroll past one screen
                         is an acceptable price for posters you can read.
                       */
-                      className={`aspect-[9/13] w-[64vw] shrink-0 sm:w-[clamp(9rem,min(36vw,22vh),16rem)] ${phoneOnly ? "sm:hidden" : ""}`}
+                      className={`aspect-[9/13] w-full shrink-0 snap-center sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-4rem)/5)] ${phoneOnly ? "sm:hidden" : ""}`}
                     >
                       <WorkTile item={item} variant="fill" onOpen={() => setOpenKey(tileKey(item))} />
                     </div>

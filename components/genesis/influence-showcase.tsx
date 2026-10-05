@@ -50,11 +50,14 @@ export function InfluenceShowcase({ className }: { className?: string }) {
               <button
                 type="button"
                 aria-label={poster.alt}
-                onPointerEnter={() => setLit(index)}
-                onPointerLeave={() => setLit(null)}
-                onFocus={() => setLit(index)}
+                /*
+                  A MOUSE OR A KEYBOARD ONLY (Genesis, 6 Oct 2026: "remove the
+                  hover effect on phone"): a tap no longer lifts a poster.
+                */
+                onPointerEnter={(event) => event.pointerType === "mouse" && setLit(index)}
+                onPointerLeave={(event) => event.pointerType === "mouse" && setLit(null)}
+                onFocus={(event) => event.currentTarget.matches(":focus-visible") && setLit(index)}
                 onBlur={() => setLit(null)}
-                onClick={() => setLit(isLit ? null : index)}
                 className={cn(
                   "relative block aspect-[4/5] w-full overflow-hidden rounded-[1.5rem] border outline-none transition-[transform,opacity,box-shadow,filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-brand",
                   isLit

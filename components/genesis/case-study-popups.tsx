@@ -44,6 +44,8 @@ function studyForSlug(slug: string): CaseStudy | undefined {
 
 export function CaseStudyPopups() {
   const [study, setStudy] = useState<CaseStudy | null>(null);
+  /* The film to open on, where the link names one (?clip=…), as the plan boxes' cards do (Genesis, 6 Oct 2026). */
+  const [clip, setClip] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -60,6 +62,7 @@ export function CaseStudyPopups() {
       if (!found) return;
       event.preventDefault();
       event.stopPropagation();
+      setClip(url.searchParams.get("clip") ?? undefined);
       setStudy(found);
     };
     window.addEventListener("click", onClick, true);
@@ -71,8 +74,12 @@ export function CaseStudyPopups() {
   return (
     <CaseStudyDialog
       study={study}
-      onClose={() => setStudy(null)}
-      pager={index >= 0 ? pagerFor(caseStudyList, index, (entry) => setStudy(entry), (entry) => entry.client) : undefined}
+      startClip={clip}
+      onClose={() => {
+        setStudy(null);
+        setClip(undefined);
+      }}
+      pager={index >= 0 ? pagerFor(caseStudyList, index, (entry) => { setClip(undefined); setStudy(entry); }, (entry) => entry.client) : undefined}
     />
   );
 }

@@ -75,7 +75,9 @@ function forHomepage() {
       if (round < queue.length) ordered.push(queue[round]);
     }
   }
-  return expandToClips(ordered);
+  /* Brand campaigns first, the property films after them (Genesis, 6 Oct 2026). */
+  const estate = (item: WorkItem) => item.client === "Genesis Estate";
+  return expandToClips([...ordered.filter((item) => !estate(item)), ...ordered.filter(estate)]);
 }
 
 export function Portfolio() {
@@ -86,7 +88,8 @@ export function Portfolio() {
     >
       <div className="relative z-[2] mx-auto w-full max-w-6xl px-6">
         {/* THE CASE-STUDY BENTO, the same panel everywhere case studies are shown (Genesis, 4 Oct 2026). */}
-        <div className={BENTO_WIDE}>
+        {/* The panel on a phone too (Genesis, 6 Oct 2026: "where's the bento grid"), the cards running under its edges. */}
+        <div className={`${BENTO_WIDE} max-sm:-mx-2 max-sm:overflow-hidden max-sm:rounded-[1.5rem] max-sm:border max-sm:border-[var(--glass-border)] max-sm:bg-[var(--glass-fill)] max-sm:px-4 max-sm:py-6 max-sm:shadow-[var(--shadow-panel)] max-sm:backdrop-blur-[14px]`}>
         <Reveal>
           {/*
             ONE NAME PER THING, WHICH IS THE WHOLE OF GENESIS'S NOTE HERE.
@@ -130,9 +133,11 @@ export function Portfolio() {
           here rather than copied — see FooterCta. Bare hashes, so both
           scroll in place instead of re-rendering the page.
         */}
-        <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center gap-3">
+        <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center gap-3 max-sm:mt-6 max-sm:grid max-sm:grid-cols-2 max-sm:gap-2 max-sm:[&>*]:h-11 max-sm:[&>*]:w-full max-sm:[&>*]:justify-center max-sm:[&>*]:px-3 max-sm:[&>*]:text-[0.8125rem]">
           <GlassButton href="/case-studies" variant="glass" arrow>
-            View all case studies
+            {/* Shorter on a phone, where the button is half the panel (Genesis, 6 Oct 2026). */}
+            <span className="sm:hidden">All work</span>
+            <span className="max-sm:hidden">View all case studies</span>
           </GlassButton>
           <GlassButton
             href={footerCta.primaryCta.href.replace(/^\//, "")}

@@ -19,10 +19,10 @@ export function PricingHead({ id = "pricing-heading" }: { id?: string }) {
           replacing 'Two ways to work with us'"), set as the site's headings
           are: the statement, then the turn in yellow italic.
         */}
-        <h2 id={id} className="text-balance text-h3 font-normal leading-[1.15] tracking-tight text-bone max-sm:text-[min(1.5rem,5.6vw)] sm:text-h2">
+        <h2 id={id} className="text-balance text-h3 font-normal leading-[1.15] tracking-tight text-bone max-sm:text-[4.4vw] sm:text-h2">
           {/* Two lines, one sentence each (Genesis, 5 Oct 2026). */}
-          <span className="block sm:whitespace-nowrap">Pay per project, or by subscription.</span>
-          <span className="block font-serif font-normal italic text-brand-ink sm:whitespace-nowrap">Choose what your business needs right now.</span>
+          <span className="block whitespace-nowrap">Pay per project, or by subscription.</span>
+          <span className="block font-serif font-normal italic text-brand-ink whitespace-nowrap">Choose what your business needs right now.</span>
         </h2>
         {/* A small line, not a pill (Genesis, 4 Oct 2026: "taking too much space"). */}
         <p className="mt-3 inline-flex items-center gap-1.5 text-[0.8125rem] text-ash">

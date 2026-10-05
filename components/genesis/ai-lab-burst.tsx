@@ -33,7 +33,12 @@ const SPOTS: Spot[] = [
   { x: "50%", y: "95%", delay: 0.55 }, // ready
 ];
 
-export function AiLabBurst({ className }: { className?: string }) {
+/**
+ * `row`: the same pieces set out in a tidy group rather than round the pill,
+ * at full size — for a phone, where round the scaled-down diagram they were
+ * too small to read (Genesis, 6 Oct 2026).
+ */
+export function AiLabBurst({ className, row = false }: { className?: string; row?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const seen = useInView(box, { once: true, margin: "-15% 0px" });
   const reduce = useReducedMotion();
@@ -54,6 +59,37 @@ export function AiLabBurst({ className }: { className?: string }) {
       Ready to post
     </Chip>,
   ];
+
+  if (row) {
+    return (
+      <div ref={box} aria-hidden className={cn("flex flex-col items-center gap-3", className)}>
+        <div className="flex items-center justify-center gap-3">
+          {[pieces[0], pieces[2], pieces[1]].map((piece, index) => (
+            <motion.div
+              key={index}
+              initial={reduce ? false : { opacity: 0, y: 14, scale: 0.85 }}
+              animate={shown ? { opacity: 1, y: 0, scale: 1 } : undefined}
+              transition={{ type: "spring", stiffness: 160, damping: 18, delay: 0.08 * index }}
+            >
+              {piece}
+            </motion.div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {[pieces[3], pieces[4], pieces[5]].map((piece, index) => (
+            <motion.div
+              key={index}
+              initial={reduce ? false : { opacity: 0, y: 14, scale: 0.85 }}
+              animate={shown ? { opacity: 1, y: 0, scale: 1 } : undefined}
+              transition={{ type: "spring", stiffness: 160, damping: 18, delay: 0.25 + 0.08 * index }}
+            >
+              {piece}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -25,7 +25,8 @@ export function PricingStrip() {
       aria-labelledby="memberships-heading"
       className="mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-[var(--section-pad)]"
     >
-      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel p-6 sm:p-10">
+      {/* As wide as the bentos above it (Genesis, 6 Oct 2026: "match the bento grids"). */}
+      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel p-6 sm:rounded-[2rem] sm:p-10 lg:-mx-16">
         <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-brand/15 blur-3xl" />
 
         {/*

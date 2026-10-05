@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { ScaledStage } from "./offer/scaled-stage";
 import { PlanBar } from "./plan-bar";
 import { SectionShell } from "./section-shell";
+import { DivisionCtas, PhoneDivisionCtas } from "./division-ctas";
 
 
 /*
@@ -153,6 +154,8 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
         against and the caption does the job it does in every other division.
       */
       body={onPage ? undefined : branding.body}
+      /* On a phone the services stand where this paragraph was (Genesis, 6 Oct 2026). */
+      bodyClassName="max-sm:hidden"
       bodyDesktop={<ProcessIcons steps={DIVISION_PROCESS["Brand & Design"]} label={branding.body} />}
       align="center"
       tone="brand"
@@ -160,6 +163,7 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
       intensity={0.16}
       contentClassName="sm:mt-12"
     >
+      {!onPage && <DivisionServices division="Brand & Design" className="!mt-0 mb-6 sm:hidden" />}
       {/*
         THREE ACROSS FROM xl, where the reference's proportions fit. Below
         that the headline folder spans the row and the other two share the
@@ -194,7 +198,7 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
         <Reveal className="relative z-10 order-3 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-1 xl:w-auto xl:max-w-none">
           <WorkPanel />
 
-          <Pointer className="pointer-events-none absolute -right-14 -bottom-[3.75rem] z-20 hidden w-28 xl:block" />
+          <Pointer className="pointer-events-none absolute -right-14 -bottom-5 z-20 hidden w-28 xl:block" />
         </Reveal>
 
         {/* ─── The positioning ──────────────────────────────────────── */}
@@ -213,10 +217,13 @@ export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
         </Reveal>
 
       </SwipeHintRail>
+      {/* "View Brand & Design" under the folders, out of the plan box (Genesis, 6 Oct 2026); a phone has its pair above the box. */}
+      {!onPage && <DivisionCtas vertical="brand-design" size="sm" primaryOnly className="mt-8 justify-center max-sm:hidden" />}
       </div>
 
       {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
-      {!onPage && <DivisionServices division="Brand & Design" />}
+      {!onPage && <DivisionServices division="Brand & Design" className="max-sm:hidden" />}
+      {!onPage && <PhoneDivisionCtas vertical="brand-design" className="mt-6" />}
       {!onPage && <PlanBar vertical="brand-design" className="lg:!-mx-16 lg:!w-auto xl:mt-20" />}
     </SectionShell>
   );
@@ -277,7 +284,7 @@ function WorkPanel() {
                   alt="Activ Health, the finished logo"
                   fill
                   unoptimized
-                  className="object-contain px-4 pb-24 pt-8"
+                  className="object-contain px-3 pb-[4.5rem] pt-6"
                 />
               </Tile>
             )}
@@ -462,12 +469,12 @@ function MakePanel() {
           {branding.capabilities.map((capability, index) => (
             <li
               key={capability}
-              className="flex items-baseline gap-5 border-b border-white/10 py-1.5 last:border-0 sm:py-2.5"
+              className="flex items-baseline gap-3 border-b border-white/10 py-1 last:border-0 sm:gap-5 sm:py-2.5"
             >
               <span className="w-4 shrink-0 text-[0.6875rem] tracking-[0.15em]" style={{ color: ORANGE }}>
                 {String(index + 1).padStart(2, "0")}
               </span>
-              <span className="text-body leading-snug text-scene">{capability}</span>
+              <span className="text-small leading-snug text-scene sm:text-body">{capability}</span>
             </li>
           ))}
         </ul>
@@ -476,7 +483,7 @@ function MakePanel() {
             href="/#contact"
             quickContact="brand-design:what-we-make"
             label="Start a brand project"
-            className="size-11"
+            className="size-9 sm:size-11"
           />
         </div>
       </FolderPanel>

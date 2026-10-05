@@ -8,6 +8,20 @@ import { posterSrc } from "@/lib/poster";
 import { cn } from "@/lib/utils";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { CaseStudyBody } from "./case-study-body";
+import { PlanBar } from "@/app/(home)/components/plan-bar";
+import { caseStudyPages, relatedStudies } from "@/lib/case-study-pages";
+import { servicePageForVertical } from "@/lib/services";
+import type { VerticalKey } from "@/lib/verticals/types";
+
+/* Which division's plans a study's division sells; events are a Studios shoot, creatives are design work. */
+const DIVISION_KEY: Record<string, VerticalKey> = {
+  "AI Lab": "ai-labs",
+  Studios: "studios",
+  Influence: "influence",
+  "Brand & Design": "brand-design",
+  Events: "studios",
+  Creatives: "brand-design",
+};
 
 /**
  * A case study opened over the page, in the layout Genesis drew:
@@ -279,6 +293,85 @@ export function CaseStudyView({
           )}
         </div>
       </div>
+      {/*
+        THE DIVISION'S PLANS UNDER EVERY CASE STUDY (Genesis, 6 Oct 2026),
+        in the plan box's gradient frame, so a reader who likes the work can
+        buy the same kind of work from here.
+      */}
+      {/*
+        RELATED LINKS IN THE WINDOW (Genesis, 6 Oct 2026: "add relevant
+        backlinks to the case studies for SEO and GEO"). The study's own page
+        already links its division and its neighbours; the window did not, so
+        a reader (or a crawler of the rendered page) met a dead end here. The
+        anchors say what is behind them: the division's service in words a
+        search would use, and each related study by its headline.
+      */}
+      {/* In every window; the study's own page (its h1) lists its related studies itself. */}
+      {Heading !== "h1" && copy && <RelatedLinks copy={copy} />}
+      {/* The way from the work to buying the same kind of work (Genesis, 6 Oct 2026). */}
+      {copy?.division && (
+        <div className="mt-12 text-center sm:mt-14">
+          <p className="text-balance text-h3 font-normal leading-tight tracking-tight text-bone">
+            Want results like these <span className="font-serif italic text-brand-ink">for your brand?</span>
+          </p>
+          <p className="mx-auto mt-3 max-w-xl text-pretty text-body leading-relaxed text-ash">
+            Pick a plan below and get started today: pay per project or subscribe, all prices up front.
+          </p>
+        </div>
+      )}
+      {copy?.division && (
+        <PlanBar vertical={DIVISION_KEY[copy.division] ?? "studios"} onPage plansOnly className="!mt-6" />
+      )}
     </article>
+  );
+}
+
+function RelatedLinks({ copy }: { copy: CaseStudyCopy }) {
+  const service = servicePageForVertical(copy.division);
+  const page = caseStudyPages.find((entry) => entry.slug === copy.slug);
+  const related = page ? relatedStudies(page, 3) : [];
+  if (!service && related.length === 0) return null;
+  return (
+    <nav aria-label="Related" className="mt-10">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <p className="micro-label">Related case studies</p>
+        {service && (
+          <Link href={`/${service.slug}`} className="text-small text-brand-ink underline-offset-4 hover:underline">
+            {service.seo.title}
+          </Link>
+        )}
+      </div>
+      {/*
+        SQUARE CARDS, NOT A LIST (Genesis, 6 Oct 2026: "add 1:1 cards for
+        related case studies"): each study's picture, its brand and its
+        headline, the headline still the link text for search.
+      */}
+      {related.length > 0 && (
+        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {related.map((study) => (
+            <li key={study.slug}>
+              <Link
+                href={`/case-studies/${study.slug}`}
+                className="group relative block aspect-square overflow-hidden rounded-card border border-white/12 bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                {study.poster && (
+                  // eslint-disable-next-line @next/next/no-img-element -- a poster already sized for the web; next/image adds nothing in a dialog.
+                  <img src={study.poster} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                )}
+                <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 bg-[linear-gradient(0deg,rgb(0_0_0/0.92),rgb(0_0_0/0.5)_60%,transparent)] p-3 pt-12">
+                  <span className="max-w-full self-start truncate rounded-full border border-white/20 bg-black/35 px-2 py-0.5 text-[0.625rem] font-medium uppercase tracking-[0.08em] text-white/85 backdrop-blur-md">
+                    {study.copy.brand}
+                  </span>
+                  <span className="line-clamp-2 text-small leading-snug text-white">{study.copy.headline}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link href="/case-studies" className="mt-4 inline-flex text-small text-ash underline-offset-4 hover:text-bone hover:underline">
+        All Genesis Media case studies →
+      </Link>
+    </nav>
   );
 }

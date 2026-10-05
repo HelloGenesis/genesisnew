@@ -1,6 +1,9 @@
 "use client";
 
+
 import { GlassIcon } from "@/components/genesis/glass-icon";
+import { LogoMarquee } from "@/components/genesis/logo-marquee";
+import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { PlanCaseStudies } from "@/components/genesis/plan-case-studies";
 import { findCopy } from "@/lib/case-study-copy";
 import { BENTO_WIDE as BENTO } from "@/lib/bento";
@@ -31,7 +34,9 @@ import { PlanBar } from "./plan-bar";
 
 /* The avatar product — the natural next step under the avatar roster (lib/products). */
 import { SectionShell } from "./section-shell";
+import { FitScale } from "@/components/genesis/fit-scale";
 import { AiLabBurst } from "@/components/genesis/ai-lab-burst";
+import { PhoneDivisionCtas } from "./division-ctas";
 
 
 
@@ -124,7 +129,26 @@ export function AiLabDiagram({
   return (
     <Reveal delay={0.06} className={cn(fit && "max-lg:flex max-lg:h-full max-lg:min-h-0 max-lg:flex-col", className)}>
       <div className={cn("mx-auto w-full max-w-6xl text-center", fit && "max-lg:flex max-lg:h-full max-lg:min-h-0 max-lg:flex-col")}>
-        <figure className={cn("relative mx-auto max-w-[60rem]", fit && "max-lg:flex max-lg:min-h-0 max-lg:w-full max-lg:flex-1 max-lg:justify-center")}>
+        {/*
+          THE DESKTOP DESIGN ON A PHONE AND TABLET TOO (Genesis, 6 Oct 2026),
+          on the homepage panel: the wide diagram and what comes out of the
+          Lab, laid out at a laptop's width and scaled down as one picture.
+        */}
+        {/* The AI Lab page's hero too (Genesis, 6 Oct 2026: "not updated here"). */}
+        {interactive && (
+          <div className="lg:hidden">
+            <FitScale width={800}>
+              <figure className="relative">
+                <AutomationSources interactive wide />
+              </figure>
+            </FitScale>
+            {/* What comes out of the Lab, readable, in a group under it on a phone (Genesis, 6 Oct 2026). */}
+            <AiLabBurst row className="mt-4" />
+            {/* The page and a call under what the Lab makes, on a phone (Genesis, 6 Oct 2026). */}
+            {!fit && <PhoneDivisionCtas vertical="ai-labs" className="mt-6" />}
+          </div>
+        )}
+        <figure className={cn("relative mx-auto max-w-[60rem]", fit && "max-lg:flex max-lg:min-h-0 max-lg:w-full max-lg:flex-1 max-lg:justify-center", interactive && "hidden lg:block")}>
           <AutomationSources interactive={interactive} className={fit ? "max-lg:mx-auto max-lg:h-full max-lg:max-h-full max-lg:w-auto max-lg:max-w-full" : undefined} />
           {/* What comes out of the Lab, around its pill (homepage panel). */}
           {interactive && <AiLabBurst />}
@@ -267,18 +291,34 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
             and the way on.
           */}
           {/* No separate mark: the diagram's pill is the AI Lab logo, and the panel has to fit one screen (Genesis, 4 Oct 2026). */}
+          {/* The AI Lab mark over the heading on every screen, as the other divisions' sections open (Genesis, 6 Oct 2026: "AI Lab logo is missing"). */}
+          <Reveal className="mb-4 flex justify-center sm:mb-6">
+            <DivisionLockup name="AI Lab" tagline="" ramp="linear-gradient(100deg, #ff8fb8 0%, #ffa25c 100%)" />
+          </Reveal>
           <Reveal className="text-center">
             <h2 className="text-balance text-h3 font-normal leading-[1.06] tracking-tight text-bone sm:text-h2">
               {aiContent.heading}{" "}
               <span className="font-serif font-normal italic text-brand-ink">{aiContent.headingAccent}</span>
             </h2>
           </Reveal>
-          <Reveal delay={0.06} className="lg:hidden">
+          {/* Not on a phone (Genesis, 6 Oct 2026: "remove this from phone"); a tablet keeps it. */}
+          <Reveal delay={0.06} className="hidden sm:block lg:hidden">
             <p className="mx-auto mt-4 max-w-xl text-center text-pretty text-body leading-relaxed text-ash">{aiContent.bodyPhone}</p>
           </Reveal>
 
+          {/* On a phone, what the Lab does sits above the diagram (Genesis, 6 Oct 2026: "put this above the element"). */}
+          <div className="mt-5 rounded-panel border border-[var(--glass-border)] bg-white/[0.03] px-3 py-3.5 text-center sm:hidden">
+            <p className="micro-label !text-brand-ink">What the Lab does</p>
+            {/* Small, one line each, wrapping as a cluster (Genesis, 6 Oct 2026: "minimise this"). */}
+            <DivisionServices
+              division="AI Lab"
+              chips
+              className="!mt-2.5 [&_li]:gap-1.5 [&_li]:whitespace-nowrap [&_li]:py-1 [&_li]:pl-1.5 [&_li]:pr-2.5 [&_li]:!text-[0.6875rem] [&_svg]:!size-5 [&_ul]:!flex [&_ul]:flex-wrap [&_ul]:justify-center [&_ul]:!gap-1.5"
+            />
+          </div>
+
           {/* THE MAIN ELEMENT. */}
-          <AiLabDiagram className="mx-auto mt-6 w-full max-w-[min(60rem,calc((100svh-21rem)*2.2))] max-sm:[&_svg]:mx-auto max-sm:[&_svg]:max-h-[34svh] max-sm:[&_svg]:w-auto lg:mt-12" kicker={false} interactive />
+          <AiLabDiagram className="mx-auto mt-6 w-full max-w-[min(60rem,calc((100svh-21rem)*2.2))] lg:mt-12" kicker={false} interactive />
 
 
         </div>
@@ -289,7 +329,13 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         the dark glass chips that come out of the Lab above.
       */}
       {!onPage && (
-        <div className={cn("mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-stretch lg:gap-12", BENTO)}>
+        <div className="mt-6 grid gap-10 sm:rounded-panel sm:border sm:border-transparent sm:p-8 sm:shadow-[-24px_18px_60px_-30px_rgb(245_146_62/0.55),24px_18px_60px_-30px_rgb(180_92_224/0.55)] sm:[background:radial-gradient(120%_140%_at_0%_100%,rgb(245_146_62/0.22),transparent_45%)_padding-box,radial-gradient(120%_140%_at_100%_0%,rgb(180_92_224/0.22),transparent_45%)_padding-box,linear-gradient(rgb(13_13_14),rgb(13_13_14))_padding-box,linear-gradient(100deg,#f5923e_0%,#f2607e_40%,#6b4fd8_75%,#c05ce0_100%)_border-box] lg:-mx-16 lg:grid-cols-[minmax(0,1fr)_34rem] lg:items-stretch lg:gap-12 lg:p-10">
+          {/*
+          IN THE PRICE BOXES' GRADIENT FRAME from sm (Genesis, 6 Oct 2026: "make
+          this entire bento a gradient like the other price sections"): the
+          palette as a 1px edge on the dark, glowing ground. A phone keeps its
+          own layout.
+        */}
           {/*
             ONE PANEL, TWO SIDES (Genesis, 4 Oct 2026: "think and merge this
             section together"): what the Lab does, how it runs, the proof and
@@ -302,20 +348,28 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           */}
           {/* Heading on top, the services under it, the button in the bottom corner (Genesis, 5 Oct 2026). */}
           <div className="flex min-w-0 flex-col gap-6 text-center sm:text-left">
-            <div className="flex items-center justify-center gap-4 sm:justify-start">
-              <GlassIcon name="rocket" className="size-11 shrink-0" />
-              <h3 className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone sm:text-h2">
-                Your content engine, <span className="font-serif italic text-brand-ink">built once.</span>
-              </h3>
-            </div>
-            <div className="rounded-panel border border-[var(--glass-border)] bg-white/[0.03] p-5 sm:p-6">
+            {/* No icon, just the line, centred on a phone and left from sm (Genesis, 6 Oct 2026). */}
+            <h3 className="text-balance text-h3 font-normal leading-[1.05] tracking-tight text-bone max-sm:hidden sm:text-h2">
+              Your content engine, <span className="font-serif italic text-brand-ink">built once.</span>
+            </h3>
+            {/* No box inside the panel (Genesis, 6 Oct 2026: "remove the bento inside a bento"). */}
+            <div className="max-sm:hidden">
               <p className="micro-label !text-brand-ink">What the Lab does</p>
               <DivisionServices division="AI Lab" chips className="mt-4 sm:[&_ul]:flex sm:[&_ul]:flex-wrap sm:[&_ul]:justify-start" />
             </div>
-            <DivisionCtas vertical="ai-labs" align="center" size="sm" primaryOnly className="justify-center sm:mt-auto sm:justify-end" />
+            <DivisionCtas vertical="ai-labs" align="center" size="sm" primaryOnly className="justify-center max-sm:hidden sm:mt-auto sm:justify-end" />
           </div>
           {/* Two cards, not four, so the box is shorter (Genesis, 5 Oct 2026: "remove these 2 cards"). */}
-          <PlanCaseStudies vertical="AI Lab" perPage={2} className="min-w-0" />
+          {/* On a phone, in the plan boxes' gradient frame and dark ground (Genesis, 6 Oct 2026). */}
+          <div className="min-w-0 max-sm:rounded-panel max-sm:bg-[linear-gradient(100deg,#f5923e_0%,#f2607e_40%,#6b4fd8_75%,#c05ce0_100%)] max-sm:p-px max-sm:shadow-[-24px_18px_60px_-30px_rgb(245_146_62/0.55),24px_18px_60px_-30px_rgb(180_92_224/0.55)]">
+            <PlanCaseStudies
+              vertical="AI Lab"
+              perPage={2}
+              /* Bigger, 3:4 cards here (Genesis, 6 Oct 2026). */
+              cardClassName="lg:aspect-[3/4] lg:h-auto"
+              className="min-w-0 max-sm:rounded-panel max-sm:bg-ink max-sm:p-4 max-sm:[background-image:radial-gradient(120%_140%_at_0%_100%,rgb(245_146_62/0.22),transparent_45%),radial-gradient(120%_140%_at_100%_0%,rgb(180_92_224/0.22),transparent_45%)]"
+            />
+          </div>
         </div>
       )}
 
@@ -337,7 +391,7 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           sm up the viewport-relative sizes are unchanged.
         */}
         {/* BIGGER CARDS from sm (Genesis, 4 Oct 2026), bigger again ("make these cards bigger"). */}
-        <div className="[--warp-card:11.5rem] [--warp-h:19.5rem] sm:[--warp-card:clamp(11rem,22vw,20rem)] sm:[--warp-h:calc(var(--warp-card)*1.6+1.75rem)]">
+        <div className="[--warp-card:78vw] [--warp-h:calc(78vw*1.6)] sm:[--warp-card:clamp(11rem,22vw,20rem)] sm:[--warp-h:calc(var(--warp-card)*1.6+1.75rem)]">
           {/*
             EVERY CARD OPENS SOMETHING, which is the fix Genesis reported
             twice — "these videos are still not interactive".
@@ -452,14 +506,20 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           {/* The avatar copy as a process on a desktop (Genesis, 4 Oct 2026). */}
           <ProcessIcons steps={DIVISION_PROCESS["AI Avatars"]} label={aiContent.avatarsIntro.lead} className="mt-8" />
           {/* On a phone too, the process as a row of chips, as on the website (Genesis, 4 Oct 2026). */}
-          <ol aria-label={aiContent.avatarsIntro.lead} className="no-scrollbar -mx-6 mt-5 flex gap-2 overflow-x-auto px-6 lg:hidden">
-            {DIVISION_PROCESS["AI Avatars"].map((step) => (
-              <li key={step.label} className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-white/15 bg-[rgb(20_18_22/0.72)] py-1.5 pl-1.5 pr-3.5 text-small text-bone">
+          {/* A smooth, steady loop rather than a row to swipe (Genesis, 6 Oct 2026: "auto scroll a little fast and smooth"). */}
+          <p className="sr-only">{aiContent.avatarsIntro.lead}</p>
+          <LogoMarquee
+            className="-mx-6 mt-5 lg:hidden"
+            speedSeconds={22}
+            gapClassName="gap-2"
+            fadePercent={6}
+            items={DIVISION_PROCESS["AI Avatars"].map((step) => (
+              <span key={step.label} aria-hidden className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-white/15 bg-[rgb(20_18_22/0.72)] py-1.5 pl-1.5 pr-3.5 text-small text-bone">
                 <GlassIcon name={step.icon} className="size-6" />
                 {step.label}
-              </li>
+              </span>
             ))}
-          </ol>
+          />
 
           {/*
             "One Setup. Real-Time. Every Time" stood here and is gone at
@@ -490,7 +550,13 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
           */
           const [lead, ...rest] = aiContent.avatarsIntro.line.split(/(?<=\.)\s+/);
           return (
-            <div className="mx-auto mt-6 flex max-w-3xl flex-col items-center gap-3 px-6 text-center">
+            <>
+            {/* One line on a phone, both thoughts merged (Genesis, 6 Oct 2026). */}
+            <p className="mx-auto mt-5 max-w-sm px-6 text-center text-pretty text-body leading-snug text-bone sm:hidden">
+              Real people and virtual faces, built as AI avatars for brands like{" "}
+              <span className="whitespace-nowrap text-brand-ink">Aditya Birla Capital.</span>
+            </p>
+            <div className="mx-auto mt-6 flex max-w-3xl flex-col items-center gap-3 px-6 text-center max-sm:hidden">
               <p className="text-balance text-body leading-snug text-bone sm:text-lead">{lead}</p>
               {rest.length ? (
                 <p className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white/[0.04] px-4 py-1.5 text-[0.8125rem] leading-snug text-ash">
@@ -499,6 +565,7 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
                 </p>
               ) : null}
             </div>
+            </>
           );
         })()}
         {/*
@@ -537,6 +604,7 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         outline. The diagram keeps its own generous measure so the labels and
         the node are read rather than squinted at.
       */}
+      {!onPage && <PhoneDivisionCtas vertical="ai-labs" className="mt-6" />}
       {!onPage && <PlanBar vertical="ai-labs" className="lg:!-mx-16 lg:!w-auto" />}
     </SectionShell>
 

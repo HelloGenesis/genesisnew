@@ -8,10 +8,11 @@ import { CaseStudies } from "./components/case-studies";
 import { ClientLogos } from "./components/client-logos";
 import { InfluencerMarketing } from "./components/influencer-marketing";
 import { Portfolio } from "./components/portfolio";
-import { PricingStrip } from "./components/pricing-strip";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
 import { JumpBar, type JumpLink } from "./components/offer/page-aids";
+import { FaqBlock } from "./components/offer/blocks";
+import { servicePages } from "@/lib/services";
 
 /* The homepage's sections, in the order they come. */
 const HOME_SECTIONS: JumpLink[] = [
@@ -22,7 +23,6 @@ const HOME_SECTIONS: JumpLink[] = [
   { id: "studios", label: "Studios" },
   { id: "brand-design", label: "Brand & Design" },
   { id: "library", label: "Work" },
-  { id: "memberships", label: "Pricing" },
 ];
 
 /*
@@ -154,8 +154,17 @@ export default function HomePage() {
       */}
       <Portfolio />
 
-      {/* How Genesis charges, in one line — see PricingStrip. */}
-      <PricingStrip />
+      {/*
+        THE QUESTIONS PEOPLE ASK ABOUT GENESIS (Genesis, 6 Oct 2026: "add FAQs
+        on the main homepage"): two from each division's own list, in the
+        divisions' order, with the FAQPage data that goes with them.
+      */}
+      <FaqBlock
+        heading="Genesis Media: FAQs"
+        items={servicePages.flatMap((service) => service.faqs.slice(0, 2)).map((faq) => ({ q: faq.question, a: [faq.answer] }))}
+      />
+
+      {/* The subscriptions band is off the homepage for now (Genesis, 6 Oct 2026: "remove this section for now"); see PricingStrip. */}
 
 
       {/*

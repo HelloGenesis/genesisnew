@@ -5,6 +5,7 @@ import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { StudiosPipeline } from "@/components/genesis/studios-pipeline";
 import { services } from "@/lib/home-content";
 import { PlanBar } from "./plan-bar";
+import { DivisionCtas, PhoneDivisionCtas } from "./division-ctas";
 
 
 /**
@@ -63,9 +64,12 @@ export function Studios({ onPage = false }: { onPage?: boolean } = {}) {
 
         <div className={onPage ? "fit-window" : "fit-window mt-[var(--block-gap)]"}>
           <StudiosPipeline />
+          {/* "View Studios" under the process, out of the plan box (Genesis, 6 Oct 2026); a phone has its pair above the box. */}
+          {!onPage && <DivisionCtas vertical="studios" size="sm" primaryOnly className="mt-8 justify-center max-sm:hidden" />}
         </div>
         </div>
 
+        {!onPage && <PhoneDivisionCtas vertical="studios" className="mt-6" />}
         {!onPage && <PlanBar vertical="studios" className="lg:!-mx-16 lg:!w-auto" />}
       </div>
     </section>

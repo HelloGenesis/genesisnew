@@ -76,3 +76,22 @@ export function DivisionCtas({
     </div>
   );
 }
+
+/**
+ * A PHONE'S PAIR: the division's page and a call, side by side, set between
+ * a division's work and its plan box (Genesis, 6 Oct 2026). The plan box's
+ * own "View …" button is hidden on a phone where this stands.
+ */
+export function PhoneDivisionCtas({ vertical, className }: { vertical: VerticalKey; className?: string }) {
+  const division = verticalCard(vertical).short;
+  return (
+    <div className={cn("grid grid-cols-2 gap-2 sm:hidden", className)}>
+      <GlassButton href={homePlans[vertical].page} pageLink variant="brand" arrow className="h-11 w-full justify-center px-3 text-[0.8125rem]">
+        View {division}
+      </GlassButton>
+      <GlassButton href={bookingHref(division)} variant="glass" arrow className="h-11 w-full justify-center px-3 text-[0.8125rem]">
+        Book a call
+      </GlassButton>
+    </div>
+  );
+}

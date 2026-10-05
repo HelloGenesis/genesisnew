@@ -1,17 +1,14 @@
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 
-import { GlassButton } from "@/components/genesis/glass-button";
 import { PlatformMark } from "@/components/genesis/platform-icons";
 import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { divisionMenu } from "@/lib/home-content";
 import { mediaUrl } from "@/lib/media-url";
-import { enquiryHref } from "@/lib/pricing";
 import { servicePage } from "@/lib/services";
 import {
   builtFor,
-  campaignPricing,
   influenceClosing,
   influenceProcess,
   influenceServices,
@@ -19,21 +16,19 @@ import {
 import { InfluenceNetworkCard } from "../influencer-marketing";
 import { InfluenceShowcase } from "@/components/genesis/influence-showcase";
 import { WorkHead, WorkWarp } from "@/components/genesis/work-warp";
-import { OneTimeProducts } from "../offer/starter-pack";
-import { WorkMode } from "../offer/work-mode";
 import { IconChips, StepsBlock } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
-import { OfferSection, PlanBand } from "../offer/parts";
+import { OfferSection } from "../offer/parts";
 import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VerticalCtas } from "../offer/vertical-ctas";
-import { BuySteps } from "../offer/buy-steps";
 import { PricingHead } from "../offer/pricing-head";
+import { PlanBar } from "../plan-bar";
+import { FaqBlock } from "../offer/blocks";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("influencer-marketing");
-const planHref = enquiryHref("an influencer campaign");
 
 /**
  * /influencer-marketing — Genesis Influence, in the brief's running order:
@@ -80,23 +75,22 @@ export function InfluencePageView() {
         packs and campaign management to buy once on one side, the managed
         campaign (15% commission) on the other.
       */}
-      <PlanBand>
-        <OfferSection>
-          {/* "View Pricing" lands on the head, so it is inside the anchor. */}
-          <div id="pricing" className="scroll-mt-24">
-            <PricingHead />
-            <WorkMode
-              oneTime={<OneTimeProducts vertical="influence" bare />}
-              membership={<CampaignPricing />}
-            />
-            {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
-            <BuySteps className="mt-10" />
-          </div>
-        </OfferSection>
-      </PlanBand>
+      {/*
+        THE HOMEPAGE'S PLAN BOX IN PLACE OF THE PRICING SECTION (Genesis, 6 Oct
+        2026: "add this same section, replacing the pricing section on all
+        verticals"): the plans and products, the case studies and how it
+        works, in one box. The details each plan carries are in its pop-up.
+      */}
+      {/* Full width, the column inside: the page paints each section only within its own box, so a narrow section cut the plan box's glow (Genesis, 6 Oct 2026: "fix glow"). */}
+      <section id="pricing" aria-labelledby="pricing-heading" className="w-full scroll-mt-24 py-[var(--section-pad)]">
+        <div className="mx-auto w-full max-w-7xl px-6">
+        <PricingHead id="pricing-heading" />
+        <PlanBar vertical="influence" onPage />
+        </div>
+      </section>
 
       <OfferSection className="pt-0">
-        <Reveal className="glass glass-lit rounded-panel p-5 sm:p-6">
+        <Reveal className="glass glass-lit rounded-panel p-5 sm:p-6 lg:-mx-16">
           <SectionLabel dot tone="brand">
             {builtFor.label}
           </SectionLabel>
@@ -114,69 +108,9 @@ export function InfluencePageView() {
       <WorkSection verticals={["Influence"]} />
 
       <Closing />
+      {/* The division's questions (Genesis, 6 Oct 2026: "FAQs are missing on the vertical pages"). */}
+      <FaqBlock heading="Genesis Influence: FAQs" items={page.faqs.map((faq) => ({ q: faq.question, a: [faq.answer] }))} />
     </VerticalPage>
-  );
-}
-
-/** "Influencer & UGC Campaigns — Creator fees + 15% Agency Commission." */
-function CampaignPricing() {
-  return (
-    <section aria-labelledby="campaign-pricing-heading">
-      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel">
-        <div className="relative grid lg:grid-cols-[1fr_0.9fr]">
-          <div className="relative z-[1] p-6 sm:p-10 lg:p-12">
-            <p className="micro-label flex items-center gap-3">
-              {campaignPricing.label}
-              <span aria-hidden className="h-px w-16 bg-gradient-to-r from-brand/70 to-transparent" />
-            </p>
-            <h2
-              id="campaign-pricing-heading"
-              className="mt-5 text-balance text-h2 font-normal leading-[1.02] tracking-tight text-bone sm:text-h1"
-            >
-              {campaignPricing.heading}{" "}
-              <span className="block font-serif italic text-brand-ink">{campaignPricing.headingAccent}</span>
-            </h2>
-            <p className="mt-4 max-w-md text-pretty text-body leading-relaxed text-ash">{campaignPricing.body}</p>
-
-            <div className="mt-8 flex max-w-md items-center gap-6 rounded-panel border border-brand/40 bg-brand/[0.06] p-5 sm:p-6">
-              <p className="font-display text-[3.5rem] font-normal leading-none tracking-tight text-brand-ink sm:text-[4.5rem]">
-                <Figure value={campaignPricing.figure} />
-              </p>
-              <span aria-hidden className="h-14 w-px bg-brand/40" />
-              <p>
-                <span className="block text-lead text-bone">{campaignPricing.figureLabel}</span>
-                <span className="mt-1 block text-small text-ash">{campaignPricing.figureSub}</span>
-              </p>
-            </div>
-
-            <p className="mt-3 max-w-md text-small text-faint">{campaignPricing.example}</p>
-
-            <GlassButton href={planHref} variant="brand" size="lg" arrow magnetic className="mt-8">
-              {campaignPricing.cta}
-            </GlassButton>
-          </div>
-          <div aria-hidden className="relative min-h-64 lg:min-h-0">
-            <Image
-              src={mediaUrl(campaignPricing.image)}
-              alt=""
-              fill
-              sizes="(min-width: 1024px) 32rem, 100vw"
-              className="object-cover"
-            />
-            <span className="absolute inset-0 bg-gradient-to-t from-[var(--surface-base)] via-transparent to-transparent lg:bg-gradient-to-r" />
-          </div>
-        </div>
-        <div className="relative z-[1] flex items-start gap-4 border-t border-white/10 p-5 sm:px-10 sm:py-6">
-          <IconTile name="users" />
-          <p>
-            <span className="micro-label !text-brand-ink">{campaignPricing.includesLabel}</span>
-            <span className="mt-2 block text-pretty text-body leading-relaxed text-bone">
-              {campaignPricing.includes}
-            </span>
-          </p>
-        </div>
-      </Reveal>
-    </section>
   );
 }
 
@@ -263,7 +197,7 @@ function Services() {
 function Closing() {
   return (
     <OfferSection>
-      <Reveal className="glass glass-strong glass-lit relative flex flex-col gap-8 overflow-hidden rounded-panel p-6 sm:p-10 lg:flex-row lg:items-center lg:justify-between lg:p-12">
+      <Reveal className="glass glass-strong glass-lit relative flex flex-col gap-8 overflow-hidden rounded-panel p-6 sm:p-10 lg:-mx-16 lg:flex-row lg:items-center lg:justify-between lg:p-12">
         <span aria-hidden className="pointer-events-none absolute -bottom-24 left-1/2 size-80 rounded-full bg-brand/15 blur-3xl" />
         <div className="relative">
           <p className="micro-label">{influenceClosing.label}</p>

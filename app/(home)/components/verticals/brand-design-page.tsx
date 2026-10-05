@@ -15,19 +15,18 @@ import {
 } from "@/lib/verticals/brand-design";
 import { cn } from "@/lib/utils";
 import { BrandingDesign, BrandingStack } from "../branding-design";
-import { ProductCards } from "./design-products";
-import { OneTimeProducts } from "../offer/starter-pack";
-import { SubscriptionOnly, WorkMode } from "../offer/work-mode";
+import { SubscriptionOnly } from "../offer/work-mode";
 import { ClosingBand, StepsBlock } from "../offer/blocks";
 import { IconTile } from "../offer/icons";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
-import { OfferSection, PlanBand, SectionHead } from "../offer/parts";
+import { OfferSection, SectionHead } from "../offer/parts";
 import { divisionMenu } from "@/lib/home-content";
 import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
 import { VerticalCtas } from "../offer/vertical-ctas";
-import { BuySteps } from "../offer/buy-steps";
 import { PricingHead } from "../offer/pricing-head";
+import { PlanBar } from "../plan-bar";
+import { FaqBlock } from "../offer/blocks";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("brand-design");
@@ -71,18 +70,19 @@ export function BrandDesignPageView() {
       <LogoStrip />
 
       {/* SECTION 02 — TWO WAYS TO WORK WITH US */}
-      <PlanBand>
-      <OfferSection id="pricing" labelledBy="products-heading">
-        <PricingHead id="products-heading" />
-        {/* The same "one-time or membership" switch as /pricing (Genesis, 28 Sep 2026). */}
-        <WorkMode
-          oneTime={<OneTimeProducts vertical="brand-design" bare />}
-          membership={<ProductCards />}
-        />
-        {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
-        <BuySteps className="mt-10" />
-      </OfferSection>
-      </PlanBand>
+      {/*
+        THE HOMEPAGE'S PLAN BOX IN PLACE OF THE PRICING SECTION (Genesis, 6 Oct
+        2026: "add this same section, replacing the pricing section on all
+        verticals"): the plans and products, the case studies and how it
+        works, in one box. The details each plan carries are in its pop-up.
+      */}
+      {/* Full width, the column inside: the page paints each section only within its own box, so a narrow section cut the plan box's glow (Genesis, 6 Oct 2026: "fix glow"). */}
+      <section id="pricing" aria-labelledby="pricing-heading" className="w-full scroll-mt-24 py-[var(--section-pad)]">
+        <div className="mx-auto w-full max-w-7xl px-6">
+        <PricingHead id="pricing-heading" />
+        <PlanBar vertical="brand-design" onPage />
+        </div>
+      </section>
 
       {/*
         SECTION 03 — WHAT'S INCLUDED, as a bento of what Always-On covers.
@@ -131,6 +131,8 @@ export function BrandDesignPageView() {
 
       {/* SECTION 09 — FINAL CTA */}
       <ClosingBand data={designClosing} images={brandBuild.images} />
+      {/* The division's questions (Genesis, 6 Oct 2026: "FAQs are missing on the vertical pages"). */}
+      <FaqBlock heading="Genesis Brand & Design: FAQs" items={page.faqs.map((faq) => ({ q: faq.question, a: [faq.answer] }))} />
     </VerticalPage>
   );
 }
@@ -200,7 +202,7 @@ function PlanOverview() {
 function BrandBuild() {
   return (
     <OfferSection id="brand-build" labelledBy="brand-build-heading">
-      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel p-6 sm:p-10 lg:p-12">
+      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel p-6 sm:p-10 lg:-mx-16 lg:p-12">
         <span aria-hidden className="pointer-events-none absolute -left-24 -top-24 size-96 rounded-full bg-brand/10 blur-3xl" />
         <div className="relative grid gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-end">
           <div>

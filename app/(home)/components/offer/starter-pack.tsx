@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAdvance } from "@/components/genesis/use-auto-advance";
 import { Plus } from "lucide-react";
 import { useRef } from "react";
 
@@ -52,6 +53,7 @@ export function OneTimeProducts({
   const items = productsFor(vertical);
   const { openProduct, dialog } = useProductOffers(vertical);
   const rail = useRef<HTMLUListElement>(null);
+  useAutoAdvance(rail);
   if (items.length === 0) return null;
 
   return (

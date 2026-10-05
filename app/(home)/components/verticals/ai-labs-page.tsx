@@ -1,27 +1,19 @@
 import { servicePage } from "@/lib/services";
 import { WorkHead } from "@/components/genesis/work-warp";
 import {
-  aiEveryVideo,
   aiFaqs,
-  aiHero,
   aiHowItWorks,
-  aiPlans,
-  aiVideoTiers,
+  aiHero,
 } from "@/lib/verticals/ai-labs";
-import { FaqBlock, IconCards, StepsBlock, VideoTiers } from "../offer/blocks";
+import { StepsBlock } from "../offer/blocks";
+import { FaqBlock } from "../offer/blocks";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
-import { PlanDetails, OfferSection, PlanBand } from "../offer/parts";
-import { BillingProvider, PlanGrid, SharedBillingNote, SharedBillingToggle } from "../offer/plan-grid";
-import { OneTimeProducts } from "../offer/starter-pack";
-import { WorkMode } from "../offer/work-mode";
 import { divisionMenu } from "@/lib/home-content";
 import { AiContent, AiLabDiagram } from "../ai-content";
 import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
-import { BENTO } from "@/lib/bento";
-import { BuySteps } from "../offer/buy-steps";
-import { cn } from "@/lib/utils";
 import { PricingHead } from "../offer/pricing-head";
+import { PlanBar } from "../plan-bar";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("ai-content-automation");
@@ -73,50 +65,22 @@ export function AiLabsPageView() {
         SECTION 3 — PRICING, with what the plans buy folded underneath:
         what every video includes and what separates the video types.
       */}
-      <PlanBand>
-        <OfferSection>
-          {/*
-            "CHOOSE HOW YOU WANT TO WORK" — the same switch as /pricing
-            (Genesis, 28 Sep 2026): memberships on one side, the division's
-            one-time products on the other. The anchor sits on the wrapper so
-            "#pricing" lands here whichever side is showing.
-          */}
-          {/* "View Pricing" lands on the head, so it is inside the anchor. */}
-          <div id="pricing" className="scroll-mt-24">
-            <PricingHead />
-            {/* The billing switch beside the work-mode switch, centred (Genesis, 4 Oct 2026). */}
-            <BillingProvider>
-            <WorkMode
-              controls={<SharedBillingToggle />}
-              note={<SharedBillingNote />}
-              oneTime={<OneTimeProducts vertical="ai-labs" bare />}
-              membership={
-                <>
-                  <PlanGrid data={aiPlans} vertical="ai-labs" />
-                  <PlanDetails id="included" title="What every video includes" summary={`${aiEveryVideo.heading} ${aiEveryVideo.body}`}>
-                    <IconCards items={aiEveryVideo.items} />
-                  </PlanDetails>
-                  <PlanDetails id="video-types" title={aiVideoTiers.heading}>
-                    <VideoTiers data={aiVideoTiers} bare />
-                  </PlanDetails>
-                </>
-              }
-            />
-            </BillingProvider>
-            {/*
-              HOW IT WORKS, IN A BENTO UNDER THE CARDS (Genesis, 5 Oct 2026:
-              "add this in a bento grid and move it to the section above"), with
-              the buy steps in a bento of their own just above it ("you removed
-              the other element, add that as well").
-            */}
-            <div className={cn("mt-10", BENTO)}>
-              <p className="micro-label">How to get started</p>
-              <BuySteps className="mt-4" />
-            </div>
-            <StepsBlock data={aiHowItWorks} id="how-it-works" bare className={cn("mt-6", BENTO)} />
-          </div>
-        </OfferSection>
-      </PlanBand>
+      {/*
+        THE HOMEPAGE'S PLAN BOX IN PLACE OF THE PRICING SECTION (Genesis, 6 Oct
+        2026: "add this same section, replacing the pricing section on all
+        verticals"): the plans and products, the case studies and how it
+        works, in one box. The details each plan carries are in its pop-up.
+      */}
+      {/* Full width, the column inside: the page paints each section only within its own box, so a narrow section cut the plan box's glow (Genesis, 6 Oct 2026: "fix glow"). */}
+      <section id="pricing" aria-labelledby="pricing-heading" className="w-full scroll-mt-24 py-[var(--section-pad)]">
+        <div className="mx-auto w-full max-w-7xl px-6">
+        <PricingHead id="pricing-heading" />
+        <PlanBar vertical="ai-labs" onPage />
+        </div>
+      </section>
+
+      {/* How it works, back as a bento of its own under the plans (Genesis, 6 Oct 2026). */}
+      <StepsBlock data={aiHowItWorks} id="how-it-works" />
 
       {/* Turnaround is in each plan's pricing pop-up, so not repeated here (Genesis, 5 Oct 2026). */}
 

@@ -32,9 +32,15 @@ export function OfferSection({
     <section
       id={id}
       aria-labelledby={labelledBy}
-      className={cn("mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-[var(--section-pad)]", className)}
+      className={cn("w-full scroll-mt-24 py-[var(--section-pad)]", className)}
     >
-      {children}
+      {/*
+        THE COLUMN INSIDE, THE SECTION FULL WIDTH (Genesis, 6 Oct 2026: a
+        cut-off FAQ panel). main's children skip painting outside their own
+        box (content-visibility, see globals), and a section only as wide as
+        the column cut off a panel let out past it, corners and all.
+      */}
+      <div className="mx-auto w-full max-w-6xl px-6">{children}</div>
     </section>
   );
 }

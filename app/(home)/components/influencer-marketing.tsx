@@ -19,6 +19,7 @@ import {
 } from "@/lib/case-study-pages";
 import { CLIP_LABELS, expandToClips, reelClip, reelPoster, work } from "@/lib/work";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
+import { DivisionCtas, PhoneDivisionCtas } from "./division-ctas";
 import { Reveal } from "@/components/genesis/reveal";
 import { influencer, services } from "@/lib/home-content";
 import { PlanBar } from "./plan-bar";
@@ -346,7 +347,7 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
               figure as bare text; it now gets the same glass card, first in
               the column, tightened to fit.
             */}
-            <Reveal delay={0.16} className={cn("order-1 min-w-0 text-left lg:block", onPage ? "lg:-order-1" : "lg:order-2")}>
+            <Reveal delay={0.16} className={cn("order-1 min-w-0 text-left lg:block", onPage ? "lg:-order-1" : "lg:order-2 max-sm:hidden")}>
               <div
                 className={cn("glass glass-lit flex items-center gap-3 rounded-panel p-4 sm:gap-5", onPage ? "sm:p-6" : "sm:p-5 lg:mt-8")}
                 style={{
@@ -426,6 +427,8 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
             */}
             {/* Genesis's two Influence posters in place of the reel gallery (4 Oct 2026). */}
             <InfluenceShowcase />
+            {/* "View Influence" under the posters, out of the plan box (Genesis, 6 Oct 2026); a phone has its pair under the 100K+ card. */}
+            {!onPage && <DivisionCtas vertical="influence" size="sm" primaryOnly className="mt-6 justify-center max-sm:hidden" />}
           </Reveal>
         </div>
         </div>
@@ -446,6 +449,11 @@ export function InfluencerMarketing({ onPage = false, opening }: { onPage?: bool
 
         {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
         {!onPage && <DivisionServices division="Influence" className="mt-8 lg:hidden" />}
+        {/* On a phone the 100K+ card sits under the services, after "Regional Campaigns" (Genesis, 6 Oct 2026). */}
+        {!onPage && <InfluenceNetworkCard className="mt-6 sm:hidden" />}
+        {/* "View Influence" under the 100K+ card on a phone (Genesis, 6 Oct 2026), out of the plan box below. */}
+        {/* The page and a call, side by side, under the 100K+ card on a phone (Genesis, 6 Oct 2026). */}
+        {!onPage && <PhoneDivisionCtas vertical="influence" className="mt-4" />}
         {/* The niches, above the plans (Genesis, 4 Oct 2026). */}
         <Reveal delay={0.06} className="mt-10">
           <LogoMarquee

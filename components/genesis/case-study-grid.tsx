@@ -100,7 +100,8 @@ export function CaseStudyGrid({
       </div>
 
       {/* Dense, so a two-column landscape card never leaves a hole. */}
-      <ul className="mt-10 grid grid-flow-row-dense grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
+      {/* One big card at a time on a phone, as on the homepage (Genesis, 6 Oct 2026). */}
+      <ul className="mt-10 grid grid-flow-row-dense grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
         {visible.map((card) => (
           /*
             A LANDSCAPE FILM TAKES TWO REELS' ROOM ("do reels jitni jagah

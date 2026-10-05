@@ -200,7 +200,6 @@ export const refunds: LegalDocument = {
       heading: "4. Content Shoots",
       paragraphs: ["For shoot products (Founder / CEO Video Shoot, Half-Day Content Shoot, Event Content Coverage) and shoots included in a subscription:"],
       bullets: [
-        "Cancelled 7 days or more before the shoot date: full refund of the Genesis fee.",
         "Cancelled 3 to 7 days before: 50% of the Genesis fee is refunded.",
         "Cancelled less than 72 hours before, or a no-show: not refundable.",
         "Third-party costs already committed (talent, locations, studios, hair and makeup, props and set builds) are not refundable once booked.",

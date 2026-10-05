@@ -6,6 +6,8 @@ import { Reveal } from "@/components/genesis/reveal";
 import { mediaUrl } from "@/lib/media-url";
 import type { Closing, Faq, IconCard, Steps, Turnaround } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
+import { BENTO_WIDE } from "@/lib/bento";
+import { JsonLd } from "@/components/genesis/json-ld";
 import { IconTile, OfferIcon } from "./icons";
 import { CheckList, OfferSection, SectionHead } from "./parts";
 import { VerticalCtas } from "./vertical-ctas";
@@ -141,7 +143,10 @@ function StepsWrap({ bare, id, className, children }: { bare: boolean; id?: stri
   return bare ? (
     <div id={id} aria-labelledby={`${id ?? "steps"}-heading`} className={cn("scroll-mt-24", className)}>{children}</div>
   ) : (
-    <OfferSection id={id} labelledBy={`${id ?? "steps"}-heading`}>{children}</OfferSection>
+    /* In a bento panel on every page that has one (Genesis, 6 Oct 2026). */
+    <OfferSection id={id} labelledBy={`${id ?? "steps"}-heading`}>
+      <div className={BENTO_WIDE}>{children}</div>
+    </OfferSection>
   );
 }
 
@@ -297,7 +302,8 @@ export function ClosingBand({
 }) {
   return (
     <OfferSection>
-      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel">
+      {/* As wide as the plan box and the case-study panel (Genesis, 6 Oct 2026). */}
+      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel lg:-mx-16">
         <span
           aria-hidden
           className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-brand/15 blur-3xl"
@@ -351,6 +357,23 @@ export function ClosingBand({
 export function FaqBlock({ heading, items }: { heading: string; items: readonly Faq[] }) {
   return (
     <OfferSection id="faq" labelledBy="faq-heading">
+      {/*
+        THE QUESTIONS AS FAQPage DATA TOO (Genesis, 6 Oct 2026, for SEO and
+        GEO): the same words a reader opens below, marked up so search and
+        AI answers can quote them.
+      */}
+      <JsonLd
+        data={{
+          "@type": "FAQPage",
+          mainEntity: items.map((item) => ({
+            "@type": "Question",
+            name: item.q,
+            acceptedAnswer: { "@type": "Answer", text: item.a.join(" ") },
+          })),
+        }}
+      />
+      {/* In a bento, as the other sections are (Genesis, 6 Oct 2026). */}
+      <div className={BENTO_WIDE}>
       <SectionHead id="faq-heading" label="FAQs" heading={heading} align="left" />
       <div className="mt-10 divide-y divide-white/10 border-y border-white/10">
         {items.map((item) => (
@@ -368,6 +391,7 @@ export function FaqBlock({ heading, items }: { heading: string; items: readonly 
             </div>
           </details>
         ))}
+      </div>
       </div>
     </OfferSection>
   );

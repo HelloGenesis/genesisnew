@@ -256,7 +256,7 @@
        which a per-section pixel height would have opted that division out of.
     */
     --section-pad: 2.25rem;
-    --lockup-h: 84px;
+    --lockup-h: 70px; /* a bit smaller (Genesis, 6 Oct 2026) */
     /* The gap between a section's header and its content, and between that
        content and the buttons under it. Steps with everything else. */
     --block-gap: 1.75rem;
@@ -953,7 +953,7 @@
         --fs-h3: 1.55rem;
         --fs-lead: 1.125rem;
         --section-pad: 1.75rem;
-        --lockup-h: 72px;
+        --lockup-h: 60px;
         --block-gap: 1.35rem;
     }
 }
@@ -965,7 +965,7 @@
         --fs-h3: 1.4rem;
         --fs-lead: 1.0625rem;
         --section-pad: 1.35rem;
-        --lockup-h: 62px;
+        --lockup-h: 52px;
         --block-gap: 1.1rem;
     }
 }
@@ -977,7 +977,7 @@
         --fs-h3: 1.3rem;
         --fs-lead: 1rem;
         --section-pad: 1.1rem;
-        --lockup-h: 52px;
+        --lockup-h: 44px;
         --block-gap: 0.9rem;
     }
 }

@@ -9,6 +9,7 @@ import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/genesis/reveal";
 import { studios } from "@/lib/home-content";
 import { RailProgress } from "@/components/genesis/rail-progress";
+import { useAutoAdvance } from "@/components/genesis/use-auto-advance";
 
 /**
  * FROM BRIEF TO FINAL CUT — the five stages of a Studios job, drawn to
@@ -51,6 +52,8 @@ const STEP_MS = 2600;
  */
 export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
   const cardsRail = useRef<HTMLOListElement>(null);
+  /* The phone row slides on its own, looping (Genesis, 6 Oct 2026); from md it is a grid and has nothing to scroll. */
+  useAutoAdvance(cardsRail);
   const { heading, headingAccent, stages } = studios.pipeline;
   /*
     INTERACTIVE (Genesis, 4 Oct 2026: "make each element of this very
@@ -165,7 +168,7 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
           ref={cardsRail}
           aria-label="The five stages"
           data-lenis-prevent
-          className={`no-scrollbar -mx-6 flex snap-x ${bare ? "mt-3 md:gap-2.5" : "mt-4"} snap-mandatory gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:p-0`}
+          className={`no-scrollbar -mx-6 flex snap-x ${bare ? "mt-3 md:gap-2.5" : "mt-4"} snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain px-[11vw] pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:p-0`}
         >
           {stages.map((stage, index) => {
             const tone = TONES[index];
@@ -173,7 +176,7 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
               <li
                 key={stage.n}
                 {...point(index)}
-                className={`relative w-[70%] shrink-0 snap-start ${live ? "cursor-pointer" : ""} min-[480px]:w-[45%] md:w-auto`}
+                className={`relative w-[78vw] shrink-0 snap-center ${live ? "cursor-pointer" : ""} min-[480px]:w-[45%] md:w-auto`}
               >
                 {/* On a phone, the stage's label rides on its card. */}
                 <div

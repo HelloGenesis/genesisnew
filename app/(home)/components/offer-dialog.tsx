@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAdvance } from "@/components/genesis/use-auto-advance";
 import { ArrowUpRight, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -529,12 +530,6 @@ function ProjectBody({
       then the typical turnaround as its own row of three.
     */}
     {/* Build Your AI Avatar Clone only: the avatars Genesis has built, full width (out of the box). */}
-    {/* What Standard and Advanced videos are, in every AI Lab product's window too (Genesis, 5 Oct 2026). */}
-    {tile.vertical === "ai-labs" && (
-      <PlanDetails id={`${tile.key}-product-video-types`} title={aiVideoTiers.heading} className="mt-8">
-        <VideoTiers data={aiVideoTiers} bare />
-      </PlanDetails>
-    )}
     {product?.name === "Build Your AI Avatar Clone" && <AvatarShowcase />}
     {product?.note && <NoteExplainer note={product.note} part="flow" />}
     {TURNAROUND[tile.vertical] && (
@@ -762,6 +757,7 @@ function AvatarVision() {
  */
 function AvatarShowcase() {
   const rail = useRef<HTMLUListElement>(null);
+  useAutoAdvance(rail);
   return (
     <section className="mt-10" aria-labelledby="avatar-showcase">
       <p id="avatar-showcase" className="micro-label">

@@ -1,29 +1,20 @@
-import Image from "next/image";
 
 import { WorkHead, WorkWarp } from "@/components/genesis/work-warp";
-import { Reveal } from "@/components/genesis/reveal";
-import { mediaUrl } from "@/lib/media-url";
 import { servicePage } from "@/lib/services";
 import {
   studiosClosing,
-  studiosEveryVideo,
   studiosHero,
   studiosHowItWorks,
-  studiosPlans,
-  studiosStarter,
 } from "@/lib/verticals/studios";
-import { ClosingBand, IconCards, StepsBlock } from "../offer/blocks";
+import { ClosingBand, StepsBlock } from "../offer/blocks";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
-import { CheckList, OfferSection, PlanBand, PlanDetails } from "../offer/parts";
-import { BillingProvider, PlanGrid, SharedBillingNote, SharedBillingToggle } from "../offer/plan-grid";
-import { OneTimeProducts } from "../offer/starter-pack";
-import { WorkMode } from "../offer/work-mode";
 import { divisionMenu } from "@/lib/home-content";
 import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
 import { StudiosPipeline } from "@/components/genesis/studios-pipeline";
-import { BuySteps } from "../offer/buy-steps";
 import { PricingHead } from "../offer/pricing-head";
+import { PlanBar } from "../plan-bar";
+import { FaqBlock } from "../offer/blocks";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("content-production");
@@ -78,7 +69,6 @@ export function StudiosPageView() {
         <WorkWarp divisions={["Studios", "Events"]} />
       </section>
 
-
       <LogoStrip />
 
       {/* "A small work content slider gallery here, which will only have shoot work." */}
@@ -94,58 +84,19 @@ export function StudiosPageView() {
         SECTION 03 — CONTENT MONTHLY, with what the plans buy folded under
         them: what every video includes and the Starter breakdown.
       */}
-      <PlanBand>
-        <OfferSection>
-          {/*
-            "CHOOSE HOW YOU WANT TO WORK" — the same switch as /pricing
-            (Genesis, 28 Sep 2026): memberships on one side, the division's
-            one-time products on the other. The anchor sits on the wrapper so
-            "#pricing" lands here whichever side is showing.
-          */}
-          {/* "View Pricing" lands on the head, so it is inside the anchor. */}
-          <div id="pricing" className="scroll-mt-24">
-            <PricingHead />
-            {/* The billing switch beside the work-mode switch, centred (Genesis, 4 Oct 2026). */}
-            <BillingProvider>
-            <WorkMode
-              controls={<SharedBillingToggle />}
-              note={<SharedBillingNote />}
-              oneTime={<OneTimeProducts vertical="studios" bare />}
-              membership={
-                <>
-                  <PlanGrid data={studiosPlans} vertical="studios" />
-                  <PlanDetails id="included" title="What every video includes" summary={`${studiosEveryVideo.heading} ${studiosEveryVideo.body.join(" ")}`}>
-                    <IconCards items={studiosEveryVideo.items} columns={3} />
-                  </PlanDetails>
-                  <PlanDetails title={`${studiosStarter.heading} ${studiosStarter.headingAccent}`} summary={studiosStarter.body[0]}>
-                    <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
-                      <IconCards items={studiosStarter.items} columns={3} className="lg:grid-cols-3" />
-                      <Reveal className="glass glass-lit relative overflow-hidden rounded-panel p-6">
-                        <Image
-                          src={mediaUrl(studiosStarter.image)}
-                          alt=""
-                          fill
-                          sizes="20rem"
-                          className="object-cover opacity-25"
-                        />
-                        <div className="relative">
-                          <p className="micro-label">{studiosStarter.includesHeading}</p>
-                          <p className="mt-3 font-display text-lead text-bone">{studiosStarter.includesLead}</p>
-                          <p className="mt-1 text-small text-ash">{studiosStarter.includesSub}</p>
-                          <CheckList items={studiosPlans.included?.items ?? []} className="mt-4 [&_li]:text-small" />
-                        </div>
-                      </Reveal>
-                    </div>
-                  </PlanDetails>
-                </>
-              }
-            />
-            </BillingProvider>
-            {/* How it works, from paying to publishing, under the cards (Genesis, 2 Oct 2026). */}
-            <BuySteps className="mt-10" />
-          </div>
-        </OfferSection>
-      </PlanBand>
+      {/*
+        THE HOMEPAGE'S PLAN BOX IN PLACE OF THE PRICING SECTION (Genesis, 6 Oct
+        2026: "add this same section, replacing the pricing section on all
+        verticals"): the plans and products, the case studies and how it
+        works, in one box. The details each plan carries are in its pop-up.
+      */}
+      {/* Full width, the column inside: the page paints each section only within its own box, so a narrow section cut the plan box's glow (Genesis, 6 Oct 2026: "fix glow"). */}
+      <section id="pricing" aria-labelledby="pricing-heading" className="w-full scroll-mt-24 py-[var(--section-pad)]">
+        <div className="mx-auto w-full max-w-7xl px-6">
+        <PricingHead id="pricing-heading" />
+        <PlanBar vertical="studios" onPage />
+        </div>
+      </section>
 
       {/* SECTION 06 — HOW IT WORKS */}
       <StepsBlock data={studiosHowItWorks} id="how-it-works" />
@@ -161,9 +112,10 @@ export function StudiosPageView() {
       */}
       <WorkSection verticals={["All"]} showFilters />
 
-
       {/* SECTION 11 — FINAL CTA */}
       <ClosingBand data={studiosClosing} images={[...studiosHero.thumbs]} />
+      {/* The division's questions (Genesis, 6 Oct 2026: "FAQs are missing on the vertical pages"). */}
+      <FaqBlock heading="Genesis Studios: FAQs" items={page.faqs.map((faq) => ({ q: faq.question, a: [faq.answer] }))} />
     </VerticalPage>
   );
 }
