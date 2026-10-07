@@ -167,7 +167,7 @@ export function StudiosPipeline({ bare = false }: { bare?: boolean } = {}) {
         <ol
           ref={cardsRail}
           aria-label="The five stages"
-          data-lenis-prevent
+          data-lenis-prevent-horizontal
           className={`no-scrollbar -mx-6 flex snap-x ${bare ? "mt-3 md:gap-2.5" : "mt-4"} snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain px-[11vw] pb-2 md:mx-0 md:grid md:grid-cols-5 md:overflow-visible md:p-0`}
         >
           {stages.map((stage, index) => {

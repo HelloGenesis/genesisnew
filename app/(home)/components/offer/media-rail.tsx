@@ -26,8 +26,8 @@ export type RailCard = {
  *
  * NATIVE SCROLL, SNAPPED. The arrows only move the track by one card; a
  * trackpad, a finger or the keyboard all move it the same way without them,
- * and `data-lenis-prevent` stops the page's smooth scroll from swallowing the
- * sideways wheel.
+ * and `data-lenis-prevent-horizontal` hands sideways swipes to the rail while
+ * the page's smooth scroll keeps every vertical wheel, even over the cards.
  */
 export function MediaRail({
   items,
@@ -80,7 +80,7 @@ export function MediaRail({
       </div>
       <ul
         ref={track}
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
         aria-label={label}
         className="mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >

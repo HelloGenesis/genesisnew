@@ -124,7 +124,7 @@ export function VideoRail({
     <div onPointerEnter={() => setHovering(true)} onPointerLeave={() => setHovering(false)}>
       <ul
         ref={track}
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
         aria-label={label}
         className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >

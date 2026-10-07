@@ -36,8 +36,8 @@ export function OfferSection({
     >
       {/*
         THE COLUMN INSIDE, THE SECTION FULL WIDTH (Genesis, 6 Oct 2026: a
-        cut-off FAQ panel). main's children skip painting outside their own
-        box (content-visibility, see globals), and a section only as wide as
+        cut-off FAQ panel). main's children used to skip painting outside their own
+        box (content-visibility, since removed), and a section only as wide as
         the column cut off a panel let out past it, corners and all.
       */}
       <div className="mx-auto w-full max-w-6xl px-6">{children}</div>

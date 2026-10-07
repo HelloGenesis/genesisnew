@@ -106,7 +106,7 @@ export function PlanTabs({ tabs, initial }: { tabs: PlanTab[]; initial?: Vertica
         role="tablist"
         aria-label="Genesis verticals"
         onKeyDown={onKeyDown}
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
         className={cn(
           tabs.some((tab) => tab.card)
             ? /* A swipeable row on a small phone — four stacked cards were a screen of tabs before any price. */

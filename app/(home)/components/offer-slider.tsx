@@ -301,7 +301,7 @@ export function OfferSlider() {
 
       <ul
         ref={rail}
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
         aria-label={mode === "membership" ? "Subscriptions" : "Pay-per-project"}
         className={cn("mt-4", RAIL)}
       >
@@ -396,7 +396,7 @@ export function DivisionOffers({
       )}
       <ul
         ref={rail}
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
         aria-label={`${verticalCard(vertical).short}: ${mode === "membership" ? "subscriptions" : "pay-per-project work"}`}
         className={cn("mt-3", RAIL)}
       >

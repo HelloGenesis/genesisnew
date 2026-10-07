@@ -83,7 +83,7 @@ export function OneTimeProducts({
           <>
             <ul
               ref={rail}
-              data-lenis-prevent
+              data-lenis-prevent-horizontal
               className="-mx-1 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {items.map((product, index) => (

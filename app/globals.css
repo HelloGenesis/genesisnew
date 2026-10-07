@@ -1505,45 +1505,19 @@ body:has(main.scene-dark) header {
         box-shadow: var(--shadow-raised);
     }
 
+    /* --- No content-visibility on page sections -------------------------
+       `main > * { content-visibility: auto }` was here to skip offscreen
+       sections. It cost more than it saved: a section that had not been
+       rendered yet stood in at 900px, then grew to its real height (up to
+       2,400px) as it scrolled in. The homepage went from 9,648px to 11,744px
+       mid-scroll, and Lenis, easing toward a target measured on the shorter
+       page, stalled and lurched at every one of those sections. Smooth
+       scrolling needs a page whose height holds still.
+    */
+
     /* An opaque panel for surfaces that do NOT sit over anything worth
        blurring. backdrop-filter over a flat ground costs a buffer and returns
        nothing; this gets the elevation without paying for it. */
-    /* --- Offscreen sections do not get rendered -------------------------
-       MEASURED, not assumed. Scrolling the homepage end to end, with CDP's
-       Performance counters (which are immune to the headless renderer's 30Hz
-       rAF cap that makes frame timing useless here):
-
-           layout       35.7ms -> 8.4ms
-           layout count 230    -> 61
-           style recalcs 417   -> 78
-           total task   671ms  -> 439ms
-
-       The page is fifteen full-height sections of glass, grain and gradient,
-       and without this every one of them is laid out and style-resolved on
-       every scroll frame — including the fourteen nobody is looking at.
-
-       `auto` on contain-intrinsic-size is what keeps this honest: the section
-       remembers the height it last rendered at, so the scrollbar does not
-       jump when a section is skipped and re-rendered.
-
-       `main > *` rather than `main > section`, because half the sections are
-       wrapped in a positioning div by SectionShell and the narrower selector
-       reached only six of the fifteen. Every direct child of main is a
-       section-level block; there is nothing else in there.
-
-       Two things make this safe rather than a gamble, and both were checked
-       rather than assumed. It implies paint containment, so a child can no
-       longer paint outside its own box — every one of these already sets
-       overflow-hidden itself to keep its gradients in. And containment breaks
-       position:sticky, so a sticky descendant would be pinned to a box that
-       is itself scrolling away — main contains no sticky or fixed element at
-       all. The site's only fixed chrome, the nav, lives outside main.
-    */
-    main > * {
-        content-visibility: auto;
-        contain-intrinsic-size: auto 900px;
-    }
-
     .surface-panel {
         background-color: var(--color-panel);
         border: 1px solid rgb(255 255 255 / 0.07);

@@ -181,7 +181,7 @@ export function PlanCaseStudies({
 
       <ul
         ref={rail}
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
         className="no-scrollbar mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain lg:min-h-0 lg:flex-1"
       >
         {cards.map((card) => {

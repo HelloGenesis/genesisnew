@@ -73,7 +73,7 @@ export function VerticalPage({
         {children}
       </main>
       {/*
-      OUTSIDE <main>, AND IT MATTERS. Every direct child of main gets
+      OUTSIDE <main>, AND IT MATTERED. Every direct child of main used to get
       content-visibility: auto with a 900px intrinsic size (globals.css), so
       these two fixed bars, inside it, were given a 900px box while skipped —
       an invisible sheet over the page that could swallow taps on a phone.
