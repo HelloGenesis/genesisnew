@@ -64,7 +64,7 @@ export function PlanBar({ vertical, className, plansOnly = false }: { vertical: 
       */}
       <div className={cn("grid grid-cols-[minmax(0,1fr)] gap-4 lg:gap-5", !plansOnly && "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")}>
         <div className={FRAME} style={{ background: EDGE }}>
-          <div className="relative flex h-full flex-col gap-5 rounded-panel bg-ink p-5 text-left sm:p-6" style={{ backgroundImage: GROUND }}>
+          <div className="relative flex h-full flex-col gap-3.5 rounded-panel bg-ink p-4 text-left sm:gap-5 sm:p-6" style={{ backgroundImage: GROUND }}>
             <div className="min-w-0">
               {/* The N mark and the division, then what it sells. */}
               <Image
@@ -73,7 +73,7 @@ export function PlanBar({ vertical, className, plansOnly = false }: { vertical: 
                 width={MARK[vertical].width}
                 height={MARK[vertical].height}
                 sizes="240px"
-                className="mb-4 h-7 w-auto sm:h-8"
+                className="mb-2.5 h-7 w-auto sm:mb-4 sm:h-8"
               />
               <p className="micro-label !text-brand-ink">{plan.product}</p>
             </div>

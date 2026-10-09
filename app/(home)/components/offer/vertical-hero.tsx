@@ -68,7 +68,8 @@ export function VerticalHero({
       className={cn(
         "mx-auto grid w-full max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-0 px-6 pb-[var(--section-pad)] pt-10 lg:grid lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:py-8 xl:max-w-7xl",
         visual === false && "lg:min-h-0 lg:grid-cols-1 lg:pb-[var(--section-pad)] lg:pt-16",
-        fitPhone && "max-lg:flex max-lg:items-stretch max-lg:h-[calc(100svh-6.25rem)] max-lg:min-h-[33rem] max-lg:flex-col max-lg:pb-5 max-lg:pt-4",
+        /* Its own height, not a fixed screen, now the picture is the full diagram with its pieces (Genesis, 8 Oct 2026: they overlapped the services). */
+        fitPhone && "max-lg:flex max-lg:items-stretch max-lg:flex-col max-lg:pb-5 max-lg:pt-4",
       )}
     >
       {/*
@@ -109,7 +110,7 @@ export function VerticalHero({
           variant="scene"
           className={cn(
             "relative order-2 mx-auto mt-10 w-full max-w-xl lg:order-none lg:mt-0 lg:max-w-none",
-            fitPhone && "max-lg:mt-3 max-lg:min-h-0 max-lg:flex-1",
+            fitPhone && "max-lg:mt-4",
           )}
         >
           {visual}

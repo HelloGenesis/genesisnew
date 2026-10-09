@@ -11,6 +11,7 @@ import { pagerFor } from "./overlay";
 import { VideoDialog } from "./video-dialog";
 import { WorkDialog } from "./work-dialog";
 import { WorkTile } from "./work-tile";
+import { useAutoAdvance } from "./use-auto-advance";
 import { watchReader } from "@/lib/slider";
 import { RailProgress } from "@/components/genesis/rail-progress";
 
@@ -35,6 +36,9 @@ import { RailProgress } from "@/components/genesis/rail-progress";
  * click goes to the page. The interception route is deleted rather than left
  * unreferenced; the page it wrapped is untouched.
  */
+
+/* The old continuous drift; off, see the note in WorkGrid. */
+const DRIFT = false;
 
 export function WorkGrid({
   items,
@@ -137,11 +141,14 @@ export function WorkGrid({
     */
     for (const [ref, sign] of [[rowA, 1], [rowB, -1]] as const) {
       const el = ref.current;
-      if (el) el.scrollBy({ left: sign * direction * el.clientWidth * 0.8, behavior: "smooth" });
+      const card = el?.firstElementChild as HTMLElement | null;
+      /* One whole card a press, so the strip rests on whole cards. */
+      if (el) el.scrollBy({ left: sign * direction * (card ? card.getBoundingClientRect().width + (parseFloat(getComputedStyle(el).columnGap) || 0) : el.clientWidth * 0.8), behavior: "smooth" });
     }
   }, []);
 
   const railBox = useRef<HTMLDivElement>(null);
+  useAutoAdvance(rowA, slides);
 
   /*
     THE STRIPS MOVE ON THEIR OWN ("portfolio me auto move wala rakho"), in
@@ -173,7 +180,13 @@ export function WorkGrid({
       grid, and the drift loop would then be holding a 60Hz timer over two
       refs that point at nothing.
     */
-    if (!slides) return;
+    /*
+      THE DRIFT IS OFF (Genesis, 9 Oct 2026: "fix all the half-cut cards"). A
+      strip creeping a fraction of a pixel a frame always shows a card half in
+      at each edge; the strip now steps one whole card at a time and rests on
+      whole cards (useAutoAdvance, below), as the other sliders do.
+    */
+    if (!slides || !DRIFT) return;
     const box = railBox.current;
     const strips = [rowA.current, rowB.current].filter(
       (el): el is HTMLDivElement => el !== null,
@@ -367,7 +380,7 @@ export function WorkGrid({
                   key={rowIndex}
                   ref={rowIndex === 0 ? rowA : rowB}
                   dir={rowIndex === 1 ? "rtl" : "ltr"}
-                  className={`no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 max-sm:-mx-4 sm:snap-none sm:gap-4 ${rowIndex === 1 ? "max-sm:hidden" : ""}`}
+                  className={`no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 max-sm:-mx-4 sm:gap-4 ${rowIndex === 1 ? "max-sm:hidden" : ""}`}
                 >
                   {row.map(({ item, phoneOnly }) => (
                     <div
@@ -386,7 +399,7 @@ export function WorkGrid({
                         hoga toh chalega" — a little scroll past one screen
                         is an acceptable price for posters you can read.
                       */
-                      className={`aspect-[9/13] w-full shrink-0 snap-center sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-4rem)/5)] ${phoneOnly ? "sm:hidden" : ""}`}
+                      className={`aspect-[9/13] w-full shrink-0 snap-center sm:snap-start sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-4rem)/5)] ${phoneOnly ? "sm:hidden" : ""}`}
                     >
                       <WorkTile item={item} variant="fill" onOpen={() => setOpenKey(tileKey(item))} />
                     </div>

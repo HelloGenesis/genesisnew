@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAdvance } from "@/components/genesis/use-auto-advance";
-import { ArrowUpRight, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
@@ -149,10 +149,12 @@ function OfferDetail({ tile }: { tile: Tile }) {
         … all across"). A product shows its own pictures; a subscription
         shows its division's.
       */}
-      <div data-section="overview" className={cn(gallery.length > 0 && "grid items-start gap-8 lg:grid-cols-[1.1fr_0.9fr]")}>
+      {/* The division's mark above everything, then the pictures, the name, the lines and what's included (Genesis, 9 Oct 2026). */}
+      <DivisionName name={card.short} height={22} className="mb-4" />
+      <div data-section="overview" className={cn(gallery.length > 0 && "grid items-start gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8")}>
+      {gallery.length > 0 && <HeroGallery key={tile.key} images={gallery} />}
       <div>
       <div className="flex flex-wrap items-center gap-3">
-        <DivisionName name={card.short} height={22} />
         <span className="rounded-full border border-[var(--glass-border)] px-2.5 py-0.5 text-[0.6875rem] uppercase tracking-[0.12em] text-ash">
           {subscription ? "Subscription" : "Pay-per-project"}
         </span>
@@ -177,7 +179,6 @@ function OfferDetail({ tile }: { tile: Tile }) {
       <p className="mt-4 max-w-2xl text-pretty text-body leading-relaxed text-bone sm:text-lead">{tile.benefit}</p>
       {full?.audienceTags?.length ? <AudiencePills tags={full.audienceTags} need={full.audienceNeed} /> : null}
       </div>
-      {gallery.length > 0 && <HeroGallery key={tile.key} images={gallery} />}
       </div>
 
       {subscription ? (
@@ -365,7 +366,7 @@ function OfferDetail({ tile }: { tile: Tile }) {
             </>
           )
         }
-        action={subscription ? "Choose a plan" : full?.cta === "call" ? "Book a call" : "Customise & buy"}
+        action={full?.cta === "call" ? "Book a call" : "Purchase Plan"}
         onAction={(from) => scrollToSection(from, subscription ? "plans" : "customise")}
       />
     </div>
@@ -567,11 +568,11 @@ function HeroGallery({ images }: { images: ProductImage[] }) {
   const image = images[index];
 
   return (
-    <section aria-label="Previous work and case studies" className="min-w-0">
+    <section aria-label="What you get, and work we have made" className="min-w-0">
       <div
         className={cn(
           "group/hero relative aspect-[4/3] overflow-hidden rounded-panel border border-white/10",
-          image.contain ? "grid place-items-center bg-[#f4f1ea] p-[12%]" : "bg-ink",
+          image.contain ? "grid place-items-center bg-[#f4f1ea] p-[12%]" : image.clip ? "bg-black" : "bg-ink",
         )}
         onTouchStart={(event) => (touch.current = event.touches[0].clientX)}
         onTouchEnd={(event) => {
@@ -581,7 +582,25 @@ function HeroGallery({ images }: { images: ProductImage[] }) {
           touch.current = null;
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- a picture at panel size, through the image optimiser */}
+        {/*
+          PAST WORK PLAYS (Genesis, 9 Oct 2026: "merge a few case studies or
+          previous work right there, to understand how the output will look").
+          A film is shown whole on black; the product shots fill the frame.
+        */}
+        {image.clip ? (
+          <video
+            key={image.clip}
+            src={mediaUrl(image.clip)}
+            poster={posterSrc(image.src, 828)}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label={image.alt}
+            className="absolute inset-0 size-full object-contain"
+          />
+        ) : (
+        // eslint-disable-next-line @next/next/no-img-element -- a picture at panel size, through the image optimiser
         <img
           key={image.src}
           src={posterSrc(image.src, 828)}
@@ -590,12 +609,20 @@ function HeroGallery({ images }: { images: ProductImage[] }) {
             image.contain ? "max-h-full max-w-full object-contain" : "absolute inset-0 size-full object-cover",
           )}
         />
-        <span className="absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[0.6875rem] uppercase tracking-[0.12em] text-white/85">
-          Previous work &amp; case studies
+        )}
+        <span className={cn("absolute left-3 top-3 rounded-full px-2.5 py-1 text-[0.6875rem] uppercase tracking-[0.12em]", image.work ? "bg-brand text-on-brand" : "bg-black/55 text-white/85")}>
+          {image.work ? "Our work" : "What you get"}
         </span>
+        {/* What this picture shows you get, or which piece of work this is (Genesis, 9 Oct 2026). */}
+        {image.title && (
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(0deg,rgb(0_0_0/0.85),rgb(0_0_0/0.45)_60%,transparent)] px-4 pb-4 pt-12 text-left sm:px-5">
+            <span className="block text-body font-medium leading-snug text-white sm:text-lead">{image.title}</span>
+            {image.caption && <span className="mt-1 block max-w-md text-pretty text-small leading-snug text-white/80">{image.caption}</span>}
+          </span>
+        )}
         {images.length > 1 && (
           <>
-            <span className="absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-1 text-[0.75rem] tabular-nums text-white/85">
+            <span className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[0.75rem] tabular-nums text-white/85">
               {index + 1} / {images.length}
             </span>
             {[-1, 1].map((step) => (
@@ -637,6 +664,11 @@ function HeroGallery({ images }: { images: ProductImage[] }) {
                   loading="lazy"
                   className={thumb.contain ? "max-h-full max-w-full object-contain" : "absolute inset-0 size-full object-cover"}
                 />
+                {thumb.clip && (
+                  <span aria-hidden className="absolute inset-0 grid place-items-center bg-black/25">
+                    <Play className="size-4 text-white" />
+                  </span>
+                )}
               </button>
             </li>
           ))}

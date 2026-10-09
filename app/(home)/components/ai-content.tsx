@@ -148,7 +148,7 @@ export function AiLabDiagram({
             {!fit && <PhoneDivisionCtas vertical="ai-labs" className="mt-6" />}
           </div>
         )}
-        <figure className={cn("relative mx-auto max-w-[60rem]", fit && "max-lg:flex max-lg:min-h-0 max-lg:w-full max-lg:flex-1 max-lg:justify-center", interactive && "hidden lg:block")}>
+        <figure className={cn("relative mx-auto max-w-[60rem]", fit && "max-lg:flex max-lg:min-h-0 max-lg:w-full max-lg:flex-1 max-lg:justify-center", /* Below lg the scaled copy above stands in; `max-lg:hidden` so the fit layout's max-lg:flex cannot bring this one back. */ interactive && "max-lg:hidden")}>
           <AutomationSources interactive={interactive} className={fit ? "max-lg:mx-auto max-lg:h-full max-lg:max-h-full max-lg:w-auto max-lg:max-w-full" : undefined} />
           {/* What comes out of the Lab, around its pill (homepage panel). */}
           {interactive && <AiLabBurst />}

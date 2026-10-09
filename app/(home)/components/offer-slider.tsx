@@ -1,8 +1,8 @@
 "use client";
 
 import { useReducedMotion } from "framer-motion";
-import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useRef, useState, useSyncExternalStore, type PointerEvent } from "react";
+import { ArrowRight, ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from "react";
 
 import { DivisionName } from "@/components/genesis/division-lockup";
 import { GlassIcon } from "@/components/genesis/glass-icon";
@@ -12,6 +12,8 @@ import { useAutoAdvance } from "@/components/genesis/use-auto-advance";
 import { inr } from "@/lib/money";
 import { bookingHref, homePlans, verticalCard } from "@/lib/pricing";
 import { products } from "@/lib/products";
+import { productImages } from "@/lib/product-images";
+import { posterSrc } from "@/lib/poster";
 import { aiPlans, aiVideoTiers } from "@/lib/verticals/ai-labs";
 import { designProducts } from "@/lib/verticals/brand-design";
 import { campaignPricing } from "@/lib/verticals/influence";
@@ -536,6 +538,9 @@ function OfferCard({
           }}
         />
 
+        <CardMedia tile={tile} />
+        {/* In a box the switch above already says the kind; a card with pictures drops the tag to save the room (Genesis, 9 Oct 2026: fit one screen). */}
+        {!(inBox && !tile.custom) && (
         <div className={cn("relative flex items-center gap-2", inBox ? "justify-end" : "justify-between")}>
           {inBox ? null : tile.custom?.anyDivision ? (
             <span className="bg-clip-text font-display text-lead leading-none text-transparent" style={{ backgroundImage: PLANS_GRADIENT }}>
@@ -550,11 +555,12 @@ function OfferCard({
             {tile.custom ? "Custom" : tile.kind === "membership" ? "Subscription" : "Pay-per-project"}
           </span>
         </div>
+        )}
 
         <h4
           className={cn(
             "relative line-clamp-2 bg-clip-text font-display leading-tight text-transparent",
-            inBox ? "mt-1 min-h-[2.3em] text-h3" : "mt-2 min-h-[2.5em] text-lead",
+            inBox ? (tile.custom ? "mt-1 min-h-[2.3em] text-h3" : "text-[1.5rem]") : "mt-2 min-h-[2.5em] text-lead",
           )}
           style={{ backgroundImage: gradient }}
         >
@@ -579,7 +585,7 @@ function OfferCard({
           {tile.unit && <span className="w-full pt-1 text-[0.75rem] text-ash">{tile.unit}</span>}
         </p>
 
-        <p className={cn("relative mt-3 border-t border-[var(--glass-border)] pt-3 text-pretty text-[0.8125rem] leading-snug text-bone", !inBox && "line-clamp-3")}>
+        <p className={cn("relative mt-3 border-t border-[var(--glass-border)] pt-3 text-pretty text-[0.8125rem] leading-snug text-bone", inBox ? "line-clamp-2" : "line-clamp-3")}>
           {tile.benefit}
         </p>
 
@@ -613,5 +619,99 @@ function OfferCard({
         </button>
       </div>
     </article>
+  );
+}
+
+/*
+  THE CARD OPENS ON ITS PICTURES (Genesis, 9 Oct 2026: "one photo bigger and
+  visible, the others small, with an auto slider; the image section above
+  everything, then the name, price and description"). Up to four of the
+  product's own images — no past work here, that is the pop-up's — the big
+  one moving on every few seconds and holding while the pointer is
+  over the card; a thumbnail picks one. A subscription card shows its
+  division's first product. The card itself still opens the pop-up.
+*/
+const MEDIA_MS = 3200;
+
+function CardMedia({ tile }: { tile: Tile }) {
+  const pool = tile.custom
+    ? []
+    : tile.product
+      ? productImages[tile.product.name] ?? []
+      : products.filter((product) => product.vertical === tile.vertical).flatMap((product) => productImages[product.name] ?? []);
+  /* Product pictures only on the cards (Genesis, 9 Oct 2026); the past work and videos live in the pop-up. */
+  const items = pool.filter((image) => !image.work).slice(0, 4);
+  const [index, setIndex] = useState(0);
+  const [hold, setHold] = useState(false);
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    if (items.length < 2 || hold || reduce) return;
+    const timer = window.setInterval(() => setIndex((at) => (at + 1) % items.length), MEDIA_MS);
+    return () => window.clearInterval(timer);
+  }, [items.length, hold, reduce, index]);
+  if (items.length === 0) return null;
+  const current = items[index % items.length];
+
+  return (
+    <div
+      className="relative mb-2.5"
+      onPointerEnter={(event) => event.pointerType === "mouse" && setHold(true)}
+      onPointerLeave={(event) => event.pointerType === "mouse" && setHold(false)}
+    >
+      <div className="relative aspect-[2/1] overflow-hidden rounded-[0.85rem] border border-white/10 bg-black sm:aspect-[16/9]">
+        {items.map((item, i) => (
+          // eslint-disable-next-line @next/next/no-img-element -- a card picture, through the image optimiser
+          <img
+            key={item.src}
+            src={posterSrc(item.src, 828)}
+            alt={i === index % items.length ? item.alt : ""}
+            loading={i === 0 ? "eager" : "lazy"}
+            className={cn(
+              "absolute inset-0 size-full object-cover transition-opacity duration-700",
+              i === index % items.length ? "opacity-100" : "opacity-0",
+            )}
+          />
+        ))}
+        {current.clip && (
+          <span aria-hidden className="absolute inset-0 grid place-items-center">
+            <span className="grid size-10 place-items-center rounded-full bg-white/85 text-[#141216] shadow-lg">
+              <Play className="ml-0.5 size-4 fill-current" />
+            </span>
+          </span>
+        )}
+        <span className={cn("absolute left-2 top-2 rounded-full px-2 py-0.5 text-[0.625rem] uppercase tracking-[0.1em]", current.work ? "bg-brand text-on-brand" : "bg-black/55 text-white/85")}>
+          {current.work ? "Our work" : "What you get"}
+        </span>
+      </div>
+      {items.length > 1 && (
+        <ul className="mt-1.5 flex gap-1.5">
+          {items.map((item, i) => (
+            <li key={item.src}>
+              <button
+                type="button"
+                aria-label={`Show ${item.alt}`}
+                aria-current={i === index % items.length}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIndex(i);
+                }}
+                className={cn(
+                  "relative block size-8 overflow-hidden rounded-[0.45rem] border transition-[border-color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+                  i === index % items.length ? "border-brand opacity-100" : "border-white/12 opacity-60 hover:opacity-100",
+                )}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- a thumbnail, through the image optimiser */}
+                <img src={posterSrc(item.src, 384)} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
+                {item.clip && (
+                  <span aria-hidden className="absolute inset-0 grid place-items-center bg-black/30">
+                    <Play className="size-3 fill-white text-white" />
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
