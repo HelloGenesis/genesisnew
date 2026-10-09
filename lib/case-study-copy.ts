@@ -1,4 +1,5 @@
 import { websiteStudies, type Outcome } from "./case-study-2026";
+import { mergedStudies, sheetMedia, sheetStudies, type SheetStudy, type StudyLink } from "./case-study-sheet";
 import type { ReelId, Vertical } from "./work";
 
 /**
@@ -70,6 +71,12 @@ export type CaseStudyCopy = {
   films?: ReelId[];
   /** Written by Genesis for the site, so the "generated using AI" note does not apply. */
   written?: boolean;
+  /** Where the work lives online — reels, videos, pages (Genesis's sheet, 9 Oct 2026). */
+  links?: StudyLink[];
+  /** Stills from the study — design pieces, photos — shown under the write-up. */
+  gallery?: string[];
+  /** What was delivered, as words (Genesis's sheet). */
+  highlights?: string[];
 };
 
 const masterCopy: CaseStudyCopy[] = [
@@ -1332,7 +1339,38 @@ export const videoOnlyStudies: { n: number; brand: string; clip: ReelId }[] = [
   films. The fields the old structure had no use for here (approach,
   execution, takeaway) are emptied so the page shows only what Genesis wrote.
 */
-export const caseStudyCopy: CaseStudyCopy[] = masterCopy.map((entry) => {
+export const caseStudyCopy: CaseStudyCopy[] = masterCopy
+  /* A study the sheet merged into another is not a page of its own any more (see mergedStudies). */
+  .filter((entry) => !(entry.n in mergedStudies))
+  .map(withWebsiteCopy)
+  .map((entry) => ({ ...entry, ...withoutEmpty(sheetStudies[entry.n]) }))
+  .map(withSheetMedia);
+
+/** A merged study's old page address, and the number of the study that carries it now (see mergedStudies). */
+export const mergedSlugs: Record<string, number> = Object.fromEntries(
+  masterCopy.filter((entry) => entry.n in mergedStudies).map((entry) => [entry.slug, mergedStudies[entry.n]]),
+);
+
+/** The sheet's films lead the study; its stills become the gallery. */
+function withSheetMedia(entry: CaseStudyCopy): CaseStudyCopy {
+  const media = sheetMedia[entry.n];
+  if (!media) return entry;
+  return {
+    ...entry,
+    ...(media.films?.length ? { films: media.films, clip: media.films[0] } : {}),
+    ...(media.gallery?.length ? { gallery: media.gallery } : {}),
+  };
+}
+
+/** Genesis's sheet fields over the rest — only the ones filled in. */
+function withoutEmpty(sheet: SheetStudy | undefined): Partial<CaseStudyCopy> {
+  if (!sheet) return {};
+  return Object.fromEntries(
+    Object.entries(sheet).filter(([, value]) => (Array.isArray(value) ? value.length > 0 : Boolean(value))),
+  ) as Partial<CaseStudyCopy>;
+}
+
+function withWebsiteCopy(entry: CaseStudyCopy): CaseStudyCopy {
   const site = websiteStudies[entry.n];
   if (!site) return entry;
   return {
@@ -1357,7 +1395,7 @@ export const caseStudyCopy: CaseStudyCopy[] = masterCopy.map((entry) => {
     films: site.films,
     written: true,
   };
-});
+}
 
 export function findCopy(n: number): CaseStudyCopy | undefined {
   return caseStudyCopy.find((entry) => entry.n === n);

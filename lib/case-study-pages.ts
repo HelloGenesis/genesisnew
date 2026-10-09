@@ -1,5 +1,5 @@
 import { caseStudyList, disciplines, isPublished, type CaseStudy } from "./case-studies";
-import { caseStudyCopy, findCopy, type CaseStudyCopy } from "./case-study-copy";
+import { caseStudyCopy, findCopy, type CaseStudyCopy, mergedSlugs } from "./case-study-copy";
 import { clipRatio } from "./clip-shape";
 import { filmUrl } from "./films";
 import { mediaUrl } from "./media-url";
@@ -143,6 +143,8 @@ export function caseStudyPath(n: number | undefined): string | undefined {
  * study's page under its new name rather than to a 404.
  */
 export function currentSlugFor(legacySlug: string): string | undefined {
+  /* A study merged into another (Genesis's sheet, 9 Oct 2026) sends its old address to the one that carries it. */
+  if (legacySlug in mergedSlugs) return caseStudyPages.find((page) => page.copy.n === mergedSlugs[legacySlug])?.slug;
   const study = caseStudyList.find((entry) => entry.slug === legacySlug);
   if (study?.copy === undefined) return undefined;
   return caseStudyPages.find((page) => page.copy.n === study.copy)?.slug;

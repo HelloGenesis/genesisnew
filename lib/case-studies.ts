@@ -286,7 +286,8 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "tripgatee-brand-identity",
-    copy: 42,
+    /* #42 is merged into #21 (Genesis's sheet, 9 Oct 2026). */
+    copy: 21,
     client: "TripGatee",
     campaign: "Brand Identity",
     vertical: "Brand & Design",

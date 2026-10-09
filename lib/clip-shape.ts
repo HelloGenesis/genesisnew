@@ -25,6 +25,11 @@ const RATIOS: Record<string, number> = {
   "8-activ-yuva-male-vo-launch-film-24": 16 / 9,
   "27-tanvi-ailab-5": 4 / 5,
   "29-tanvi-ailab-7": 4 / 5,
+  /* Genesis case studies sheet, 4 Oct 2026. */
+  "30-sinet-ailabs-1": 16 / 9,
+  "37-manthan-2026-power-of-10": 16 / 9,
+  "38-sales-pro-power-of-10": 16 / 9,
+  "hdfc-mayank-bathwal-message": 16 / 9,
 };
 
 /** Width over height for a clip; 9:16 unless listed above. */
