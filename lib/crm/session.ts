@@ -9,6 +9,8 @@ import { cache } from "react";
 import { getAuth0IfConfigured, isAuth0Configured } from "@/lib/auth0";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
+
+import { emailLoginEnabled, readSignedEmail, SESSION_COOKIE } from "./email-login";
 import type { AccountKind, MemberRole, StaffRoleKind } from "@/lib/generated/prisma/enums";
 
 /**
@@ -84,6 +86,10 @@ export const devCookie = { name: DEV_COOKIE, options: { httpOnly: true, sameSite
 
 export async function currentIdentity(): Promise<Identity | null> {
   if (devLoginEnabled()) return readDevIdentity((await cookies()).get(DEV_COOKIE)?.value);
+  if (emailLoginEnabled()) {
+    const email = readSignedEmail((await cookies()).get(SESSION_COOKIE)?.value);
+    return email ? { sub: `email|${email}`, email, emailVerified: true, phone: null, phoneVerified: false, name: null, picture: null, amr: [] } : null;
+  }
   const auth0 = getAuth0IfConfigured();
   if (!auth0) return null;
   const session = await auth0.getSession();
@@ -256,8 +262,8 @@ export const STAFF_2FA_COOKIE = "gm_staff_2fa";
 const STAFF_2FA_TTL_SECONDS = 12 * 60 * 60;
 
 function cookieSecret(): string {
-  const secret = process.env.AUTH0_SECRET || (devLoginEnabled() ? devSecret() : "");
-  if (!secret) throw new Error("AUTH0_SECRET is required for the staff two-factor check");
+  const secret = emailLoginEnabled() ? process.env.CRM_SESSION_SECRET : process.env.AUTH0_SECRET || (devLoginEnabled() ? devSecret() : "");
+  if (!secret) throw new Error("AUTH0_SECRET (or CRM_SESSION_SECRET) is required for the staff two-factor check");
   return secret;
 }
 

@@ -104,8 +104,12 @@ Everyone signs in at **`/login`** — no passwords.
 
 ## Security
 
-- **Sign-in is Auth0 only:** Google, or a one-time code by email or SMS.
+- **Sign-in is Auth0:** Google, or a one-time code by email or SMS.
   OTP requests are rate-limited per IP on top of Auth0's own limits.
+  Until Auth0 is set up for genesismedia.co, the CRM sends its own email
+  codes through Resend (`lib/crm/email-login.ts`): six digits, ten minutes,
+  five tries, rate-limited, hashed at rest, and a signed 7-day session
+  cookie. Needs `CRM_SESSION_SECRET`; it switches off once Auth0 is set.
 - **Staff roles:** Owner, Admin, Sales, Producer, Finance. A role is never
   self-assigned; an owner grants it to an email, and it's claimed only when
   that address signs in verified. `CRM_OWNER_EMAILS` bootstraps the first

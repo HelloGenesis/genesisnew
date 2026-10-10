@@ -96,6 +96,11 @@ async function send(to: string[], bcc: string[], subject: string, text: string) 
   if (!response.ok) throw new Error(`Resend ${response.status}: ${(await response.text()).slice(0, 200)}`);
 }
 
+/** Sends one email now, outside the outbox (sign-in codes can't wait for the next run). */
+export async function sendNow(to: string[], subject: string, text: string) {
+  await send(to, [], subject, `${text}${SIGN_OFF}`);
+}
+
 /** Sends up to `limit` due emails. Safe to overlap: each row is claimed once (SKIP LOCKED). */
 export async function deliverEmails(limit = 25) {
   if (!emailConfigured()) return { skipped: "Resend not configured" };

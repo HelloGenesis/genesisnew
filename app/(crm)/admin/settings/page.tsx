@@ -1,5 +1,6 @@
 import { Badge, Card, PageHead, Table } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
+import { emailLoginEnabled } from "@/lib/crm/email-login";
 import { getPrisma } from "@/lib/db";
 import { dateTime } from "@/lib/crm/catalog";
 import { driveStatus } from "@/lib/crm/drive";
@@ -29,7 +30,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     prisma.webhookEvent.count({ where: { error: { not: null }, processedAt: null } }),
   ]);
   const rows: [string, boolean, string][] = [
-    ["Sign-in (Auth0: Google, email & SMS one-time codes)", isAuth0Configured(), devLoginEnabled() ? "Local development sign-in is on" : "AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_SECRET, AUTH0_CONNECTIONS"],
+    ["Sign-in (Auth0: Google, email & SMS one-time codes)", isAuth0Configured() || emailLoginEnabled(), devLoginEnabled() ? "Local development sign-in is on" : emailLoginEnabled() ? "Email codes sent by Genesis (Resend) until Auth0 is set up" : "AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_SECRET, AUTH0_CONNECTIONS"],
     ["Staff two-factor", adminRequiresMfa(), "Authenticator app (TOTP) or Auth0 MFA, every 12 hours"],
     ["Payments (Razorpay)", Boolean(razorpayKeys()), `RAZORPAY_KEY_ID / SECRET, webhook secret ${process.env.RAZORPAY_WEBHOOK_SECRET ? "set" : "missing"}${lastWebhook ? ` · last event ${dateTime(lastWebhook.receivedAt)}` : ""}`],
     ["Email (Resend)", emailConfigured(), `RESEND_API_KEY, CRM_EMAIL_FROM · ${pendingEmails} queued`],

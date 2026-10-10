@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SideNav, type NavGroup } from "@/components/crm/side-nav";
 import { Notice } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
+import { emailLoginEnabled } from "@/lib/crm/email-login";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { can, devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
 
@@ -16,12 +17,12 @@ export const dynamic = "force-dynamic";
  * convenience, not the gate.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  if (!isDatabaseConfigured() || (!isAuth0Configured() && !devLoginEnabled())) {
+  if (!isDatabaseConfigured() || (!isAuth0Configured() && !devLoginEnabled() && !emailLoginEnabled())) {
     return (
       <main className="mx-auto max-w-xl px-4 py-16">
         <h1 className="text-[2rem] font-normal text-bone">Genesis CRM</h1>
         <div className="mt-6">
-          <Notice warn>The CRM needs the database and Auth0 configured. See CRM.md.</Notice>
+          <Notice warn>The CRM needs the database and a sign-in (Auth0, or email codes via Resend and CRM_SESSION_SECRET) configured. See CRM.md.</Notice>
         </div>
       </main>
     );
