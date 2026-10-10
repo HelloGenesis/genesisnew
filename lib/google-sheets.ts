@@ -129,7 +129,7 @@ function headerFor(tab: SheetTab): string[] {
 }
 
 /** Column letter for a 1-based index (1 → A, 27 → AA). */
-function column(n: number): string {
+export function column(n: number): string {
   let out = "";
   for (let i = n; i > 0; i = Math.floor((i - 1) / 26)) {
     out = String.fromCharCode(65 + ((i - 1) % 26)) + out;
@@ -155,7 +155,8 @@ export function isSheetsConfigured(): boolean {
 
 let client: ReturnType<typeof google.sheets> | undefined;
 
-function getSheets() {
+/** The Sheets client on the service account (also used by the CRM mirror, lib/crm/sheets). */
+export function getSheets() {
   if (!client) {
     const credentials = parseServiceAccount(
       process.env.GOOGLE_SERVICE_ACCOUNT_JSON ?? "",
@@ -192,7 +193,7 @@ function getSheets() {
  * Failing here must not stop the append either: if the tab already exists this
  * throws a duplicate error, which is the success case.
  */
-async function ensureTab(spreadsheetId: string, title: string): Promise<void> {
+export async function ensureTab(spreadsheetId: string, title: string): Promise<void> {
   try {
     const sheets = getSheets();
     const meta = await sheets.spreadsheets.get({

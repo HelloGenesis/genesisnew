@@ -11,7 +11,9 @@ import { pagerFor } from "./overlay";
 import { VideoDialog } from "./video-dialog";
 import { WorkDialog } from "./work-dialog";
 import { WorkTile } from "./work-tile";
+import { useAutoAdvance } from "./use-auto-advance";
 import { watchReader } from "@/lib/slider";
+import { RailProgress } from "@/components/genesis/rail-progress";
 
 /**
  * The work grid — filters plus tiles, used by both the homepage Work section
@@ -34,6 +36,9 @@ import { watchReader } from "@/lib/slider";
  * click goes to the page. The interception route is deleted rather than left
  * unreferenced; the page it wrapped is untouched.
  */
+
+/* The old continuous drift; off, see the note in WorkGrid. */
+const DRIFT = false;
 
 export function WorkGrid({
   items,
@@ -136,11 +141,14 @@ export function WorkGrid({
     */
     for (const [ref, sign] of [[rowA, 1], [rowB, -1]] as const) {
       const el = ref.current;
-      if (el) el.scrollBy({ left: sign * direction * el.clientWidth * 0.8, behavior: "smooth" });
+      const card = el?.firstElementChild as HTMLElement | null;
+      /* One whole card a press, so the strip rests on whole cards. */
+      if (el) el.scrollBy({ left: sign * direction * (card ? card.getBoundingClientRect().width + (parseFloat(getComputedStyle(el).columnGap) || 0) : el.clientWidth * 0.8), behavior: "smooth" });
     }
   }, []);
 
   const railBox = useRef<HTMLDivElement>(null);
+  useAutoAdvance(rowA, slides);
 
   /*
     THE STRIPS MOVE ON THEIR OWN ("portfolio me auto move wala rakho"), in
@@ -172,7 +180,13 @@ export function WorkGrid({
       grid, and the drift loop would then be holding a 60Hz timer over two
       refs that point at nothing.
     */
-    if (!slides) return;
+    /*
+      THE DRIFT IS OFF (Genesis, 9 Oct 2026: "fix all the half-cut cards"). A
+      strip creeping a fraction of a pixel a frame always shows a card half in
+      at each edge; the strip now steps one whole card at a time and rests on
+      whole cards (useAutoAdvance, below), as the other sliders do.
+    */
+    if (!slides || !DRIFT) return;
     const box = railBox.current;
     const strips = [rowA.current, rowB.current].filter(
       (el): el is HTMLDivElement => el !== null,
@@ -346,18 +360,29 @@ export function WorkGrid({
             from `sm` up each tile takes its previous width.
           */}
           <div className="flex flex-col gap-3 sm:gap-4">
+            {/*
+              ONE ROW ON A PHONE (Genesis, 4 Oct 2026: "for phone keep it 1
+              only"): the top strip carries every piece there, the second
+              strip's share shown only on a phone; from sm the two strips.
+            */}
+            {/*
+              ONE ROW EVERYWHERE NOW (Genesis, 6 Oct 2026: "fit and align the
+              bento grid, reduce the cards so it's easily scannable"): every
+              piece in one strip, a set number of larger cards in view that
+              line up with the panel's edges.
+            */}
             {[
-              visible.filter((_, index) => index % 2 === 0),
-              visible.filter((_, index) => index % 2 === 1),
+              visible.map((item) => ({ item, phoneOnly: false })),
+              [] as { item: (typeof visible)[number]; phoneOnly: boolean }[],
             ].map((row, rowIndex) =>
               row.length === 0 ? null : (
                 <div
                   key={rowIndex}
                   ref={rowIndex === 0 ? rowA : rowB}
                   dir={rowIndex === 1 ? "rtl" : "ltr"}
-                  className="no-scrollbar -mx-6 flex gap-3 overflow-x-auto px-6 pb-1 sm:gap-4"
+                  className={`no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 max-sm:-mx-4 sm:gap-4 ${rowIndex === 1 ? "max-sm:hidden" : ""}`}
                 >
-                  {row.map((item) => (
+                  {row.map(({ item, phoneOnly }) => (
                     <div
                       key={item.key ?? item.slug}
                       dir="ltr"
@@ -374,7 +399,7 @@ export function WorkGrid({
                         hoga toh chalega" — a little scroll past one screen
                         is an acceptable price for posters you can read.
                       */
-                      className="aspect-[9/13] w-[calc((100vw-3.75rem)/2)] shrink-0 sm:w-[clamp(9rem,min(36vw,22vh),16rem)]"
+                      className={`aspect-[9/13] w-full shrink-0 snap-center sm:snap-start sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-4rem)/5)] ${phoneOnly ? "sm:hidden" : ""}`}
                     >
                       <WorkTile item={item} variant="fill" onOpen={() => setOpenKey(tileKey(item))} />
                     </div>
@@ -383,6 +408,8 @@ export function WorkGrid({
               ),
             )}
           </div>
+          {/* One bar for both strips: they move together, the second mirrored. */}
+          <RailProgress rail={rowA} className="mt-3" />
 
           <RailArrow direction="left" onClick={() => page(-1)} />
           <RailArrow direction="right" onClick={() => page(1)} />

@@ -1,3 +1,6 @@
+import { DivisionServices } from "@/components/genesis/division-services";
+import { BENTO_WIDE as BENTO } from "@/lib/bento";
+import { DIVISION_PROCESS, ProcessIcons } from "@/components/genesis/process-icons";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -13,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { ScaledStage } from "./offer/scaled-stage";
 import { PlanBar } from "./plan-bar";
 import { SectionShell } from "./section-shell";
+import { DivisionCtas, PhoneDivisionCtas } from "./division-ctas";
 
 
 /*
@@ -128,13 +132,19 @@ function identityRoute(assets: string): { phases: string[]; final?: string } {
  * Behind the middle folder is the Genesis N, blurred, standing in for the
  * reference's soft 3D shape ("background logo shd be blurred").
  */
-export function BrandingDesign() {
+/**
+ * `onPage`: the section on its own division's page, under the page's hero
+ * (Genesis, 2 Oct 2026). Without its header — the page's hero already names
+ * the division — and without its plan bar: the page's own pricing section,
+ * further down, is the one place to buy.
+ */
+export function BrandingDesign({ onPage = false }: { onPage?: boolean } = {}) {
   return (
     <SectionShell
       id="brand-design"
-      division={{
+      division={onPage ? undefined : {
         name: "Brand & Design",
-        tagline: services.items[1].caption,
+        tagline: "",
         ramp: services.items[1].ramp,
       }}
       /*
@@ -143,13 +153,17 @@ export function BrandingDesign() {
         the division's claim instead, so there is nothing left to stutter
         against and the caption does the job it does in every other division.
       */
-      body={branding.body}
+      body={onPage ? undefined : branding.body}
+      /* On a phone the services stand where this paragraph was (Genesis, 6 Oct 2026). */
+      bodyClassName="max-sm:hidden"
+      bodyDesktop={<ProcessIcons steps={DIVISION_PROCESS["Brand & Design"]} label={branding.body} />}
       align="center"
       tone="brand"
       origin="top-left"
       intensity={0.16}
       contentClassName="sm:mt-12"
     >
+      {!onPage && <DivisionServices division="Brand & Design" className="!mt-0 mb-6 sm:hidden" />}
       {/*
         THREE ACROSS FROM xl, where the reference's proportions fit. Below
         that the headline folder spans the row and the other two share the
@@ -177,12 +191,14 @@ export function BrandingDesign() {
         row keeps its own order — work, headline, list — which is set by the
         xl:order classes on each card.
       */}
-      <SwipeHintRail className="no-scrollbar -mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 sm:gap-5 xl:mx-[-2.5rem] xl:grid xl:snap-none xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8 xl:overflow-visible xl:px-0">
+      {/* The three folders in one glass panel on the homepage (Genesis, 4 Oct 2026). */}
+      <div className={onPage ? undefined : BENTO}>
+      <SwipeHintRail className="no-scrollbar -mx-6 flex snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-pl-6 px-6 pb-2 sm:gap-5 xl:mx-0 xl:grid xl:snap-none xl:grid-cols-[1fr_1.08fr_0.95fr] xl:gap-8 xl:overflow-visible xl:px-0">
         {/* ─── The work ─────────────────────────────────────────────── */}
         <Reveal className="relative z-10 order-3 w-[84vw] max-w-[26rem] shrink-0 snap-center sm:w-[64vw] xl:order-1 xl:w-auto xl:max-w-none">
           <WorkPanel />
 
-          <Pointer className="pointer-events-none absolute -right-14 -bottom-[3.75rem] z-20 hidden w-28 xl:block" />
+          <Pointer className="pointer-events-none absolute -right-14 -bottom-5 z-20 hidden w-28 xl:block" />
         </Reveal>
 
         {/* ─── The positioning ──────────────────────────────────────── */}
@@ -201,8 +217,14 @@ export function BrandingDesign() {
         </Reveal>
 
       </SwipeHintRail>
+      {/* "View Brand & Design" under the folders, out of the plan box (Genesis, 6 Oct 2026); a phone has its pair above the box. */}
+      {!onPage && <DivisionCtas vertical="brand-design" size="sm" primaryOnly className="mt-8 justify-center max-sm:hidden" />}
+      </div>
 
-      <PlanBar vertical="brand-design" className="xl:mt-20" />
+      {/* The services as icons under the cards, not as a line under the mark (Genesis, 4 Oct 2026). */}
+      {!onPage && <DivisionServices division="Brand & Design" className="max-sm:hidden" />}
+      {!onPage && <PhoneDivisionCtas vertical="brand-design" className="mt-6" />}
+      {!onPage && <PlanBar vertical="brand-design" className="lg:!-mx-16 lg:!w-auto xl:mt-20" />}
     </SectionShell>
   );
 }
@@ -240,10 +262,10 @@ function WorkPanel() {
           </div>
     
           <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-2 sm:mt-5 sm:pt-3">
-            <span className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
+            <span className="whitespace-nowrap text-[0.6875rem] uppercase tracking-[0.3em] text-scene-dim">
               Case studies
             </span>
-            <span className="flex items-center gap-2 text-[0.5rem] uppercase tracking-[0.2em] text-scene-dim/70">
+            <span className="hidden items-center gap-2 whitespace-nowrap text-[0.625rem] uppercase tracking-[0.2em] text-scene-dim/70 xl:flex">
               <span aria-hidden className="h-px w-6 bg-white/20" />
               Brands · People · Impact
             </span>
@@ -262,7 +284,7 @@ function WorkPanel() {
                   alt="Activ Health, the finished logo"
                   fill
                   unoptimized
-                  className="object-contain p-4"
+                  className="object-contain px-3 pb-[4.5rem] pt-6"
                 />
               </Tile>
             )}
@@ -296,11 +318,11 @@ function WorkPanel() {
                       <span key={hex} className="flex-1" style={{ backgroundColor: hex }} />
                     ))}
                   </div>
-                  <div className="mt-1 flex">
+                  <div className="mt-1 hidden sm:flex">
                     {palette.map((hex) => (
                       <span
                         key={hex}
-                        className="flex-1 text-center text-[0.4375rem] uppercase tracking-wide text-scene-dim"
+                        className="min-w-0 flex-1 truncate text-center text-[0.5rem] uppercase tracking-normal text-scene-dim"
                       >
                         {hex}
                       </span>
@@ -311,7 +333,7 @@ function WorkPanel() {
             )}
     
             <div className="relative flex flex-col justify-between rounded-[10px] border border-white/10 bg-white/[0.03] p-2.5">
-              <span className="text-[0.5rem] tracking-[0.2em] text-scene-dim">
+              <span className="text-[0.625rem] tracking-[0.2em] text-scene-dim">
                 {String(sketches.length + 3).padStart(2, "0")}
               </span>
               <p className="mt-3 text-[0.8125rem] font-light italic leading-snug text-scene">
@@ -328,14 +350,14 @@ function WorkPanel() {
             </div>
           </div>
     
-          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 sm:mt-4">
+          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 sm:mt-4 sm:pr-20">
             {[
               ["Strategy", "driven design"],
               ["Brands that", "make an impact"],
             ].map(([a, b]) => (
               <span key={a} className="flex items-center gap-2">
                 <Bloom />
-                <span className="text-[0.5rem] uppercase leading-snug tracking-[0.2em] text-scene-dim">
+                <span className="text-[0.625rem] uppercase leading-snug tracking-[0.2em] text-scene-dim">
                   {a}
                   <br />
                   {b}
@@ -409,7 +431,7 @@ function ClaimPanel() {
         "Build a brand people remember." is theirs. The ramp moves to
         the half that carries the idea.
       */}
-      <h3 className="text-[2rem] leading-[1.04] font-normal tracking-tight text-scene md:text-[2.5rem] xl:text-[clamp(2.25rem,3.1vw,2.875rem)]">
+      <h3 className="text-[2rem] leading-[1.04] font-normal tracking-tight text-scene md:text-h2">
         Build a
         <br />
         brand
@@ -440,19 +462,19 @@ function MakePanel() {
   return (
     <FolderPanel tab={0} dots contentClassName="px-3 pt-9 pb-3 sm:pt-11 sm:px-4 sm:pb-4">
       <FolderPanel tab={0.34} tabHeight={20} radius={16} contentClassName="px-4 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
-        <p className="text-[0.5625rem] uppercase tracking-[0.3em] text-scene-dim">
+        <p className="text-[0.6875rem] uppercase tracking-[0.3em] text-scene-dim">
           What we make
         </p>
         <ul className="mt-3">
           {branding.capabilities.map((capability, index) => (
             <li
               key={capability}
-              className="flex items-baseline gap-5 border-b border-white/10 py-1.5 last:border-0 sm:py-2.5"
+              className="flex items-baseline gap-3 border-b border-white/10 py-1 last:border-0 sm:gap-5 sm:py-2.5"
             >
-              <span className="w-4 shrink-0 text-[0.625rem] tracking-[0.15em]" style={{ color: ORANGE }}>
+              <span className="w-4 shrink-0 text-[0.6875rem] tracking-[0.15em]" style={{ color: ORANGE }}>
                 {String(index + 1).padStart(2, "0")}
               </span>
-              <span className="text-body leading-snug text-scene">{capability}</span>
+              <span className="text-small leading-snug text-scene sm:text-body">{capability}</span>
             </li>
           ))}
         </ul>
@@ -461,7 +483,7 @@ function MakePanel() {
             href="/#contact"
             quickContact="brand-design:what-we-make"
             label="Start a brand project"
-            className="size-11"
+            className="size-9 sm:size-11"
           />
         </div>
       </FolderPanel>
@@ -522,7 +544,7 @@ function Tile({
       {children}
       <span
         className={cn(
-          "absolute top-2 left-2.5 flex items-center gap-1.5 text-[0.5rem] tracking-[0.2em]",
+          "absolute top-2 left-2.5 flex items-center gap-1.5 text-[0.625rem] tracking-[0.2em]",
           ink,
         )}
       >
@@ -531,7 +553,7 @@ function Tile({
       </span>
       <span
         className={cn(
-          "absolute bottom-2 left-2.5 text-[0.4375rem] uppercase leading-snug tracking-[0.18em]",
+          "absolute bottom-2 left-2.5 text-[0.625rem] uppercase leading-snug tracking-[0.18em]",
           ink,
         )}
       >
@@ -571,7 +593,7 @@ function ArrowCircle({
       {...(chat ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       aria-label={label}
       className={cn(
-        "grid shrink-0 place-items-center rounded-full border border-white/25 bg-white/[0.04] text-scene transition-colors duration-300 hover:border-brand hover:bg-brand hover:text-black focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none",
+        "relative grid shrink-0 place-items-center rounded-full border border-white/25 bg-white/[0.04] text-scene after:absolute after:-inset-3 after:content-[''] transition-colors duration-300 hover:border-brand hover:bg-brand hover:text-black focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none",
         className,
       )}
     >

@@ -39,7 +39,19 @@ const HOLD_MS = 5500;
  * nahi hai uski sirf video play ho"), the film alone where there is not.
  * The window's arrows walk the same five cards in the rail's own order.
  */
-export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly RailVideo[]; label?: string }) {
+export function VideoRail({
+  videos,
+  label = "AI Labs work",
+  compact = false,
+  wide = false,
+}: {
+  videos: readonly RailVideo[];
+  label?: string;
+  /** Two cards across on a phone, for a section that has to fit one screen there. */
+  compact?: boolean;
+  /** Five across from lg, for a rail that has a section to itself. */
+  wide?: boolean;
+}) {
   const [active, setActive] = useState(0);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [hovering, setHovering] = useState(false);
@@ -112,24 +124,31 @@ export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly
     <div onPointerEnter={() => setHovering(true)} onPointerLeave={() => setHovering(false)}>
       <ul
         ref={track}
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
         aria-label={label}
-        className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {entries.map((video, index) => {
           const selected = index === active;
           return (
-            <li key={String(video.id)} className="w-[46%] shrink-0 sm:w-[38%]">
+            /*
+              THREE WHOLE CARDS AT A TIME from sm (Genesis, 4 Oct 2026: "3 cards
+              sliding together, the cards are cutting out"): each is a third of
+              the row less its share of the two gaps, so nothing is clipped at
+              the column's edge; the arrows step the row one card along.
+            */
+            <li key={String(video.id)} className={cn("shrink-0 snap-start sm:w-[calc((100%-1.5rem)/3)]", compact ? "w-[calc((100%-0.75rem)/2)]" : "w-[78%]", wide && "lg:w-[calc((100%-3rem)/5)]")}>
               <button
                 type="button"
                 onClick={() => openCard(index)}
                 onFocus={() => setActive(index)}
-                aria-label={`${video.eyebrow}: ${video.title} — ${video.caseStudy ? "open the case study" : "play the film"}`}
+                aria-label={`${video.eyebrow}: ${video.title}: ${video.caseStudy ? "open the case study" : "play the film"}`}
                 data-track={`ai-hero-card:${video.title}`}
                 className={cn(
                   "group relative block aspect-[9/14] w-full overflow-hidden rounded-panel border bg-ink text-left transition-[border-color,box-shadow,opacity] duration-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
                   selected
-                    ? "border-brand/60 shadow-[0_24px_64px_-24px_rgb(255_197_22/0.45)]"
+                    /* No glow: the scrolling row clips a shadow into a hard-edged block under the card (Genesis, 4 Oct 2026). */
+                    ? "border-brand/60"
                     : "border-white/15 opacity-80 hover:opacity-100",
                 )}
               >
@@ -191,7 +210,20 @@ export function VideoRail({ videos, label = "AI Labs work" }: { videos: readonly
         >
           <ArrowRight className="size-4" aria-hidden />
         </button>
-        <span aria-hidden className="mx-2 h-px flex-1 bg-gradient-to-r from-white/25 to-transparent" />
+        {/*
+          THE ONE PROGRESS LINE, between the arrows and the number (Genesis,
+          2 Oct 2026: "keep the gradient line between arrows and 05, remove
+          the other"): it fills in the site's gradient as the clips go by.
+        */}
+        <span aria-hidden className="relative mx-2 h-0.5 flex-1 overflow-hidden rounded-full bg-white/15">
+          <span
+            className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-500 ease-out"
+            style={{
+              width: `${((active + 1) / videos.length) * 100}%`,
+              background: "linear-gradient(115deg, #8b5cf6 0%, #c066d9 30%, #f2607e 65%, #f5923e 100%)",
+            }}
+          />
+        </span>
         <p className="font-display text-h2 font-normal leading-none text-bone" aria-live="polite">
           {String(active + 1).padStart(2, "0")}
           <span className="sr-only"> of {videos.length}</span>

@@ -122,7 +122,15 @@
     --text-small--line-height: 1.5;
     --text-micro: 0.6875rem;
     --text-micro--line-height: 1;
-    --text-micro--letter-spacing: 0.28em;
+    /*
+       0.02em, not 0.28em (Genesis, 2 Oct 2026: "decrease the font spacing
+       horizontally"). The wide tracking is an all-caps eyebrow's; on the
+       mixed-case chips and captions that use this size ("AI Content",
+       "Property Films") it read as spaced-out letters. Every uppercase use
+       sets its own tracking (.micro-label keeps 0.28em), so only those lines
+       tighten.
+    */
+    --text-micro--letter-spacing: 0.02em;
 
     /* --- Text colour ------------------------------------------------------- */
     --color-bone: var(--ink-strong);
@@ -248,7 +256,7 @@
        which a per-section pixel height would have opted that division out of.
     */
     --section-pad: 2.25rem;
-    --lockup-h: 84px;
+    --lockup-h: 70px; /* a bit smaller (Genesis, 6 Oct 2026) */
     /* The gap between a section's header and its content, and between that
        content and the buttons under it. Steps with everything else. */
     --block-gap: 1.75rem;
@@ -572,28 +580,28 @@
     --glow-cast: 0.45;
     --chapter-ground: #000000;
     --chapter-blend: #faf9f6;
-    --surface-ink: #f9f9f9;
+    --surface-ink: #ffffff;
     --surface-raised: #ffffff;
     --surface-panel: #ffffff;
     --surface-float: #ffffff;
-    --ink-strong: #000000;
-    --ink-muted: #3d3c42;
-    --ink-faint: #55545b;
+    --ink-strong: #15121d;
+    --ink-muted: #3a3546;
+    --ink-faint: #5e586b;
 
-    --glass-fill: rgb(255 255 255 / 0.86);
-    --glass-fill-strong: rgb(255 255 255 / 0.97);
-    --glass-border: rgb(17 17 17 / 0.14);
+    --glass-fill: rgb(255 255 255 / 0.6);
+    --glass-fill-strong: rgb(255 255 255 / 0.8);
+    --glass-border: rgb(60 30 110 / 0.13);
     --glass-highlight: rgb(255 255 255 / 0.9);
-    --glass-inset: 0 -1px 0 0 rgb(17 17 17 / 0.05) inset;
+    --glass-inset: 0 1px 0 0 rgb(255 255 255 / 0.95) inset, 0 -1px 0 0 rgb(60 30 110 / 0.05) inset;
 
     --ghost-ink: rgb(17 17 17 / 0.09);
     --spot-beam: 0.22;
     --spot-veil: 1;
     --cool-accent: #35607f;
-    --brand-ink: #b45309;
+    --brand-ink: #6d28d9;
     /* Colour on paper reads about twice as strongly as on black. */
     --spectrum: 0.5;
-    --hover-wash: rgb(17 17 17 / 0.07);
+    --hover-wash: rgb(109 40 217 / 0.055);
     --logo-invert: 1;
 
     --route-1: #6d28d9;
@@ -612,15 +620,15 @@
     --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.08), 0 28px 56px -16px rgb(60 40 120 / 0.24);
 
     --background: #f4f1ec;
-    --foreground: #16141b;
+    --foreground: #15121d;
     --card: #ffffff;
-    --card-foreground: #16141b;
+    --card-foreground: #15121d;
     --popover: #ffffff;
     --popover-foreground: #16141b;
     --secondary: #efebe4;
     --secondary-foreground: #16141b;
     --muted: #efebe4;
-    --muted-foreground: #55525d;
+    --muted-foreground: #5e586b;
     --accent: #efebe4;
     --accent-foreground: #16141b;
     --border: rgb(17 17 17 / 0.12);
@@ -681,28 +689,28 @@
         --glow-cast: 0.45;
         --chapter-ground: #000000;
         --chapter-blend: #faf9f6;
-        --surface-ink: #f9f9f9;
+        --surface-ink: #ffffff;
         --surface-raised: #ffffff;
         --surface-panel: #ffffff;
         --surface-float: #ffffff;
-        --ink-strong: #000000;
-        --ink-muted: #3d3c42;
-        --ink-faint: #55545b;
+        --ink-strong: #15121d;
+        --ink-muted: #3a3546;
+        --ink-faint: #5e586b;
 
-        --glass-fill: rgb(255 255 255 / 0.86);
-        --glass-fill-strong: rgb(255 255 255 / 0.97);
-        --glass-border: rgb(17 17 17 / 0.14);
+        --glass-fill: rgb(255 255 255 / 0.6);
+        --glass-fill-strong: rgb(255 255 255 / 0.8);
+        --glass-border: rgb(60 30 110 / 0.13);
         --glass-highlight: rgb(255 255 255 / 0.9);
-        --glass-inset: 0 -1px 0 0 rgb(17 17 17 / 0.05) inset;
+        --glass-inset: 0 1px 0 0 rgb(255 255 255 / 0.95) inset, 0 -1px 0 0 rgb(60 30 110 / 0.05) inset;
 
         --ghost-ink: rgb(17 17 17 / 0.09);
         --spot-beam: 0.22;
         --spot-veil: 1;
         --cool-accent: #35607f;
-        --brand-ink: #b45309;
+        --brand-ink: #6d28d9;
         /* Colour on paper reads about twice as strongly as on black. */
         --spectrum: 0.5;
-        --hover-wash: rgb(17 17 17 / 0.07);
+        --hover-wash: rgb(109 40 217 / 0.055);
         --logo-invert: 1;
 
         --route-1: #6d28d9;
@@ -720,12 +728,12 @@
         --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.08), 0 28px 56px -16px rgb(60 40 120 / 0.24);
 
         --background: #f4f1ec;
-        --foreground: #16141b;
+        --foreground: #15121d;
         --card: #ffffff;
-        --card-foreground: #16141b;
+        --card-foreground: #15121d;
         --border: rgb(17 17 17 / 0.12);
         --input: rgb(17 17 17 / 0.16);
-        --muted-foreground: #55525d;
+        --muted-foreground: #5e586b;
     }
 }
 
@@ -945,7 +953,7 @@
         --fs-h3: 1.55rem;
         --fs-lead: 1.125rem;
         --section-pad: 1.75rem;
-        --lockup-h: 72px;
+        --lockup-h: 60px;
         --block-gap: 1.35rem;
     }
 }
@@ -957,7 +965,7 @@
         --fs-h3: 1.4rem;
         --fs-lead: 1.0625rem;
         --section-pad: 1.35rem;
-        --lockup-h: 62px;
+        --lockup-h: 52px;
         --block-gap: 1.1rem;
     }
 }
@@ -969,7 +977,7 @@
         --fs-h3: 1.3rem;
         --fs-lead: 1rem;
         --section-pad: 1.1rem;
-        --lockup-h: 52px;
+        --lockup-h: 44px;
         --block-gap: 0.9rem;
     }
 }
@@ -1163,7 +1171,7 @@ li:hover .client-mark {
    preference when no choice has been stamped. */
 :root[data-theme="light"] .scene-charcoal {
     --surface-base: #faf9f6;
-    --surface-ink: #f9f9f9;
+    --surface-ink: #ffffff;
     background-color: transparent;
     background-image: none;
 }
@@ -1171,7 +1179,7 @@ li:hover .client-mark {
 @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]):not([data-theme="light"]) .scene-charcoal {
         --surface-base: #faf9f6;
-        --surface-ink: #f9f9f9;
+        --surface-ink: #ffffff;
         background-color: transparent;
         background-image: none;
     }
@@ -1396,6 +1404,97 @@ body:has(main.scene-dark) header {
             var(--shadow-float);
     }
 
+    /*
+      THE NAV BAR'S BLUR, ON A LAYER BEHIND IT (Genesis, 2 Oct 2026: "make
+      this glassmorphic", of the division menus). An element with a
+      backdrop-filter is a backdrop root: anything inside it that blurs can
+      only blur what the bar itself painted, never the page — so a frosted
+      menu hanging from the bar came out flat. The blur moves to a pseudo
+      element under the bar's content; the bar itself no longer filters, and
+      the menus inside it blur the page.
+    */
+    .nav-bar {
+        isolation: isolate;
+        backdrop-filter: none !important;
+    }
+    .nav-bar::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+        pointer-events: none;
+    }
+    .nav-bar.glass-strong::after {
+        backdrop-filter: blur(var(--glass-blur-heavy)) saturate(160%);
+    }
+
+    /* The menus that drop from the bar: frosted, tinted with the raised
+       surface so the links stay readable over a busy hero. */
+    .menu-glass {
+        position: relative;
+        background-color: color-mix(in srgb, var(--surface-raised) 58%, transparent);
+        backdrop-filter: blur(28px) saturate(170%);
+        border: 1px solid var(--glass-border);
+        box-shadow:
+            0 1px 0 0 rgb(255 255 255 / 0.1) inset,
+            var(--shadow-float);
+    }
+
+    /*
+      A GLASS CARD WITH THE BRAND'S GRADIENT EDGE (Genesis, 3 Oct 2026:
+      "design the pop-up window according to the main design, add
+      glassmorphism"). The fill is the theme's glass token, so it is a frosted
+      dark card on the dark theme and a frosted white one on the light; the
+      1px edge is the violet–coral–amber sweep the offer cards wear, drawn by
+      a masked pseudo-element so the corners stay round.
+    */
+    .glass-card {
+        position: relative;
+        background-color: var(--glass-fill);
+        box-shadow:
+            0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+            var(--shadow-panel);
+    }
+    .glass-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(125deg, rgb(139 92 246 / 0.55), rgb(242 96 126 / 0.4) 50%, rgb(245 146 62 / 0.5));
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+    }
+
+    /* A 1.5px outline in the site's full gradient — the outlined "Made for" pills. */
+    .gradient-outline {
+        position: relative;
+    }
+    .gradient-outline::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1.5px;
+        background: linear-gradient(115deg, #8b5cf6 0%, #c066d9 30%, #f2607e 65%, #f5923e 100%);
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+    }
+
+    /* The pop-up window itself: frosted over the blurred page behind it. */
+    .glass-window {
+        background-color: color-mix(in srgb, var(--surface-raised) 74%, transparent);
+        box-shadow:
+            0 1px 0 0 rgb(255 255 255 / 0.1) inset,
+            var(--shadow-float);
+    }
+
     /* Small inline surfaces — chips, pills, badges. Shallow shadow, and no
        border, because a hairline at this size is what makes a chip look
        pasted on rather than sitting on the page. */
@@ -1406,45 +1505,19 @@ body:has(main.scene-dark) header {
         box-shadow: var(--shadow-raised);
     }
 
+    /* --- No content-visibility on page sections -------------------------
+       `main > * { content-visibility: auto }` was here to skip offscreen
+       sections. It cost more than it saved: a section that had not been
+       rendered yet stood in at 900px, then grew to its real height (up to
+       2,400px) as it scrolled in. The homepage went from 9,648px to 11,744px
+       mid-scroll, and Lenis, easing toward a target measured on the shorter
+       page, stalled and lurched at every one of those sections. Smooth
+       scrolling needs a page whose height holds still.
+    */
+
     /* An opaque panel for surfaces that do NOT sit over anything worth
        blurring. backdrop-filter over a flat ground costs a buffer and returns
        nothing; this gets the elevation without paying for it. */
-    /* --- Offscreen sections do not get rendered -------------------------
-       MEASURED, not assumed. Scrolling the homepage end to end, with CDP's
-       Performance counters (which are immune to the headless renderer's 30Hz
-       rAF cap that makes frame timing useless here):
-
-           layout       35.7ms -> 8.4ms
-           layout count 230    -> 61
-           style recalcs 417   -> 78
-           total task   671ms  -> 439ms
-
-       The page is fifteen full-height sections of glass, grain and gradient,
-       and without this every one of them is laid out and style-resolved on
-       every scroll frame — including the fourteen nobody is looking at.
-
-       `auto` on contain-intrinsic-size is what keeps this honest: the section
-       remembers the height it last rendered at, so the scrollbar does not
-       jump when a section is skipped and re-rendered.
-
-       `main > *` rather than `main > section`, because half the sections are
-       wrapped in a positioning div by SectionShell and the narrower selector
-       reached only six of the fifteen. Every direct child of main is a
-       section-level block; there is nothing else in there.
-
-       Two things make this safe rather than a gamble, and both were checked
-       rather than assumed. It implies paint containment, so a child can no
-       longer paint outside its own box — every one of these already sets
-       overflow-hidden itself to keep its gradients in. And containment breaks
-       position:sticky, so a sticky descendant would be pinned to a box that
-       is itself scrolling away — main contains no sticky or fixed element at
-       all. The site's only fixed chrome, the nav, lives outside main.
-    */
-    main > * {
-        content-visibility: auto;
-        contain-intrinsic-size: auto 900px;
-    }
-
     .surface-panel {
         background-color: var(--color-panel);
         border: 1px solid rgb(255 255 255 / 0.07);
@@ -1978,5 +2051,269 @@ body:has(main.scene-dark) header {
     }
     :root:not([data-theme="dark"]):not([data-theme="light"]) :is(.division-art, .bg-clip-text, .ramp-text):not(.on-dark) {
         filter: saturate(1.9) brightness(0.82) contrast(1.15);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   THE OFFER CARDS' RUNNING EDGE (homepage slider, app/(home)/components/
+   offer-slider). A conic gradient turns around the card while it is hovered
+   or, on a phone, while it is the card in view. The angle is a registered
+   property so the gradient itself can animate; under Reduce Motion it holds
+   still and the edge simply lights.
+   -------------------------------------------------------------------------- */
+@property --offer-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+}
+@keyframes offer-spin {
+    to {
+        --offer-angle: 360deg;
+    }
+}
+.offer-edge {
+    background: conic-gradient(from var(--offer-angle), #8b5cf6, #f7788f, #ffc516, #f2607e, #8b5cf6);
+    animation: offer-spin 3.2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .offer-edge {
+        animation: none;
+    }
+}
+
+
+/* THE AI LAB BOARD, INTERACTIVE (Genesis, 4 Oct 2026: "make the AI Lab
+   element bigger and more interactive"). On the homepage panel each tool's
+   name rises over it on hover, its strand lights and the others step back,
+   and the Lab's halo breathes. */
+.gm-board .gm-app {
+    transition: opacity 320ms ease-out;
+}
+.gm-board:has(.gm-app:hover) .gm-app:not(:hover) {
+    opacity: 0.3;
+}
+.gm-board .gm-app:hover path {
+    stroke-width: 2.5;
+}
+.gm-board .gm-label {
+    opacity: 0;
+    transform: translateY(4px);
+    transform-box: fill-box;
+    transition:
+        opacity 260ms ease-out,
+        transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+    font-weight: 500;
+}
+.gm-board .gm-app:hover .gm-label {
+    opacity: 1;
+    transform: translateY(0);
+}
+.gm-board .gm-halo {
+    animation: gm-halo-breathe 2.8s ease-in-out infinite;
+}
+.gm-board:has(.gm-app:hover) .gm-halo {
+    animation-duration: 1.2s;
+}
+@keyframes gm-halo-breathe {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .gm-board .gm-halo { animation: none; }
+}
+
+/* A page of the plan box's case studies, arriving (see PlanCaseStudies). */
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* The AI Lab burst's moving parts (see AiLabBurst). */
+@keyframes ai-wave {
+    0%, 100% { transform: scaleY(0.45); }
+    50% { transform: scaleY(1); }
+}
+@keyframes ai-render {
+    0% { width: 8%; }
+    70% { width: 100%; }
+    100% { width: 100%; opacity: 0.4; }
+}
+
+/* --------------------------------------------------------------------------
+   A SUBTREE THAT STAYS LIGHT WHATEVER THE THEME — .scene-dark's opposite.
+
+   The gradient pricing boxes (plan-bar) read as Genesis wants them in the
+   light theme, and Genesis asked for them to look the same in dark (10 Oct
+   2026: "yes, but it should match with the light mode"). So the box
+   re-declares the light tokens, and everything inside resolves light.
+   -------------------------------------------------------------------------- */
+.scene-light {
+    --surface-base: #faf9f6;
+    --glow-ink: 180 83 9;
+    --glow-halo: 255 196 60;
+    --glow-capsule: 255 248 224 / 0.75;
+    --glow-edge: 122 96 0 / 0.22;
+    --glow-text-alpha: 0;
+    --glow-cast: 0.45;
+    --chapter-ground: #000000;
+    --chapter-blend: #faf9f6;
+    --surface-ink: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-panel: #ffffff;
+    --surface-float: #ffffff;
+    --ink-strong: #15121d;
+    --ink-muted: #3a3546;
+    --ink-faint: #5e586b;
+
+    --glass-fill: rgb(255 255 255 / 0.9);
+    --glass-fill-strong: rgb(255 255 255 / 0.97);
+    --glass-border: rgb(60 30 110 / 0.13);
+    --glass-highlight: rgb(255 255 255 / 0.9);
+    --glass-inset: 0 -1px 0 0 rgb(17 17 17 / 0.05) inset;
+
+    --ghost-ink: rgb(17 17 17 / 0.09);
+    --spot-beam: 0.22;
+    --spot-veil: 1;
+    --cool-accent: #35607f;
+    --brand-ink: #6d28d9;
+    --spectrum: 0.5;
+    --hover-wash: rgb(109 40 217 / 0.055);
+    --logo-invert: 1;
+
+    --route-1: #6d28d9;
+    --route-2: #a81b6f;
+    --route-3: #c03a17;
+    --route-4: #c2410c;
+    --route-5: #b45309;
+    --ramp-avatars: linear-gradient(100deg, #6d28d9 0%, #a81b6f 42%, #c2410c 74%, #b45309 100%);
+    --menu-hover: #6d28d9;
+    --ramp-avatars-soft: linear-gradient(100deg, #6d28d9 0%, #be185d 52%, #c2410c 100%);
+    --ghost-outline: rgb(17 17 17 / 0.07);
+    --shadow-raised: 0 1px 2px 0 rgb(17 17 17 / 0.06), 0 4px 12px -2px rgb(60 40 120 / 0.10);
+    --shadow-panel: 0 2px 4px -1px rgb(17 17 17 / 0.06), 0 18px 40px -12px rgb(60 40 120 / 0.18);
+    --shadow-float: 0 4px 8px -2px rgb(17 17 17 / 0.08), 0 28px 56px -16px rgb(60 40 120 / 0.24);
+
+    --background: #f4f1ec;
+    --foreground: #15121d;
+    --card: #ffffff;
+    --card-foreground: #15121d;
+    --popover: #ffffff;
+    --popover-foreground: #16141b;
+    --secondary: #efebe4;
+    --secondary-foreground: #16141b;
+    --muted: #efebe4;
+    --muted-foreground: #5e586b;
+    --accent: #efebe4;
+    --accent-foreground: #16141b;
+    --border: rgb(17 17 17 / 0.12);
+    --input: rgb(17 17 17 / 0.16);
+    --sidebar: #f4f1ec;
+    --sidebar-foreground: #16141b;
+    --sidebar-accent: #efebe4;
+    --sidebar-accent-foreground: #16141b;
+    --sidebar-border: rgb(17 17 17 / 0.12);
+    color: var(--ink-strong);
+}
+.scene-light :is(h1, h2, h3) .text-brand-ink {
+    background-image: linear-gradient(100deg, #6d28d9 0%, #be185d 50%, #c2410c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.scene-light :is(.division-art, .bg-clip-text, .ramp-text):not(.on-dark) {
+    filter: saturate(1.9) brightness(0.82) contrast(1.15);
+}
+
+/* On paper the pop-up is a white page, not 74% white over the dimmed site,
+   which read as a grey slab (Genesis, 10 Oct 2026: better card colours). */
+:root[data-theme="light"] .glass-window {
+    background-color: rgb(255 255 255 / 0.96);
+}
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .glass-window {
+        background-color: rgb(255 255 255 / 0.96);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   LIGHT-THEME GLASS (Genesis, 10 Oct 2026: "there are still half done things
+   with colours … also add glassmorphism", on light mode).
+
+   1. Most panels, pills and chips were written for the dark theme with white
+      at a few percent — a border-white/10 hairline, a bg-white/[0.03] fill.
+      On paper those are white on white: the card has no edge and no ground,
+      which is what read as unfinished. Here they become the theme's hairline
+      and a frosted white plate, blur and all.
+   2. Not over pictures. The same classes sit on caption pills over films and
+      photos, inside black scrims and white text; anything inside those (or
+      inside a pinned-dark scene) keeps its dark-theme values.
+   3. The glass tokens themselves drop from 90% white — opaque, on a light
+      ground — to 60%, with a white top edge, so .glass surfaces read as glass.
+   -------------------------------------------------------------------------- */
+:root[data-theme="light"] :is(.border-white\/5, .border-white\/8, .border-white\/10, .border-white\/12, .border-white\/15, .border-white\/20):not(:where(.scene-dark, .on-dark, [class*="bg-black"], [class*="from-black"], [class*="rgb(0_0_0"], [class*="text-white"]) *, [class*="text-white"]) {
+    border-color: var(--glass-border);
+}
+:root[data-theme="light"] :is(.bg-white\/5, .bg-white\/10, .bg-white\/\[0\.02\], .bg-white\/\[0\.03\], .bg-white\/\[0\.04\], .bg-white\/\[0\.06\], .bg-white\/\[0\.08\]):not(:where(.scene-dark, .on-dark, [class*="bg-black"], [class*="from-black"], [class*="rgb(0_0_0"], [class*="text-white"]) *, [class*="text-white"]) {
+    background-color: rgb(255 255 255 / 0.55);
+    -webkit-backdrop-filter: blur(16px) saturate(170%);
+    backdrop-filter: blur(16px) saturate(170%);
+    box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.9) inset, 0 6px 20px -12px rgb(60 40 120 / 0.22);
+}
+:root[data-theme="light"] :is(.glass-card, .glass-chip, .surface-panel) {
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(170%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(170%);
+}
+:root[data-theme="light"] .surface-panel {
+    background-color: rgb(255 255 255 / 0.62);
+    border-color: var(--glass-border);
+}
+:root[data-theme="light"] .glass {
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) :is(.border-white\/5, .border-white\/8, .border-white\/10, .border-white\/12, .border-white\/15, .border-white\/20):not(:where(.scene-dark, .on-dark, [class*="bg-black"], [class*="from-black"], [class*="rgb(0_0_0"], [class*="text-white"]) *, [class*="text-white"]) {
+        border-color: var(--glass-border);
+    }
+    :root:not([data-theme="dark"]):not([data-theme="light"]) :is(.bg-white\/5, .bg-white\/10, .bg-white\/\[0\.02\], .bg-white\/\[0\.03\], .bg-white\/\[0\.04\], .bg-white\/\[0\.06\], .bg-white\/\[0\.08\]):not(:where(.scene-dark, .on-dark, [class*="bg-black"], [class*="from-black"], [class*="rgb(0_0_0"], [class*="text-white"]) *, [class*="text-white"]) {
+        background-color: rgb(255 255 255 / 0.55);
+        -webkit-backdrop-filter: blur(16px) saturate(170%);
+        backdrop-filter: blur(16px) saturate(170%);
+        box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.9) inset, 0 6px 20px -12px rgb(60 40 120 / 0.22);
+    }
+    :root:not([data-theme="dark"]):not([data-theme="light"]) :is(.glass-card, .glass-chip, .surface-panel) {
+        -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(170%);
+        backdrop-filter: blur(var(--glass-blur)) saturate(170%);
+    }
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .surface-panel {
+        background-color: rgb(255 255 255 / 0.62);
+        border-color: var(--glass-border);
+    }
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .glass {
+        backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    }
+}
+
+/* The dark glass chip (the Lab's services, the avatar steps, the burst's
+   floating cards) was a charcoal pill on paper. On light it is white glass. */
+:root[data-theme="light"] .bg-\[rgb\(20_18_22\/0\.72\)\] {
+    background-color: rgb(255 255 255 / 0.62);
+    border-color: rgb(255 255 255 / 0.85);
+    -webkit-backdrop-filter: blur(16px) saturate(170%);
+    backdrop-filter: blur(16px) saturate(170%);
+    box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.95) inset, 0 10px 28px -14px rgb(60 40 120 / 0.28), 0 0 22px -12px rgb(255 143 184 / 0.45);
+}
+.scene-light .bg-\[rgb\(20_18_22\/0\.72\)\] {
+    background-color: rgb(255 255 255 / 0.7);
+    border-color: var(--glass-border);
+    box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.95) inset, 0 10px 28px -14px rgb(60 40 120 / 0.28);
+}
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]):not([data-theme="light"]) .bg-\[rgb\(20_18_22\/0\.72\)\] {
+        background-color: rgb(255 255 255 / 0.62);
+        border-color: rgb(255 255 255 / 0.85);
+        -webkit-backdrop-filter: blur(16px) saturate(170%);
+        backdrop-filter: blur(16px) saturate(170%);
+        box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.95) inset, 0 10px 28px -14px rgb(60 40 120 / 0.28), 0 0 22px -12px rgb(255 143 184 / 0.45);
     }
 }

@@ -1,9 +1,11 @@
 import { Reveal } from "@/components/genesis/reveal";
+import { BENTO_WIDE as BENTO } from "@/lib/bento";
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionLockup } from "@/components/genesis/division-lockup";
 import { StudiosPipeline } from "@/components/genesis/studios-pipeline";
 import { services } from "@/lib/home-content";
 import { PlanBar } from "./plan-bar";
+import { DivisionCtas, PhoneDivisionCtas } from "./division-ctas";
 
 
 /**
@@ -31,7 +33,13 @@ import { PlanBar } from "./plan-bar";
  *   still one click away in the portfolio grid, which is where browsing
  *   belongs.
  */
-export function Studios() {
+/**
+ * `onPage`: the section on its own division's page, under the page's hero
+ * (Genesis, 2 Oct 2026). Without its header — the page's hero already names
+ * the division — and without its plan bar: the page's own pricing section,
+ * further down, is the one place to buy.
+ */
+export function Studios({ onPage = false }: { onPage?: boolean } = {}) {
   return (
     <section
       id="studios"
@@ -40,21 +48,29 @@ export function Studios() {
       <Spectrum className="seamless" />
 
       <div className="relative z-[2] mx-auto w-full max-w-6xl px-6">
+        {/* The mark and the pipeline in one glass panel on the homepage (Genesis, 4 Oct 2026). */}
+        <div className={onPage ? undefined : BENTO}>
+        {!onPage && (
         <div className="flex flex-col items-center text-center">
           <Reveal>
             <DivisionLockup
               name="Studios"
-              tagline={services.items[2].caption}
+              tagline=""
               ramp={services.items[2].ramp}
             />
           </Reveal>
         </div>
+        )}
 
-        <div className="fit-window mt-[var(--block-gap)]">
+        <div className={onPage ? "fit-window" : "fit-window mt-[var(--block-gap)]"}>
           <StudiosPipeline />
+          {/* "View Studios" under the process, out of the plan box (Genesis, 6 Oct 2026); a phone has its pair above the box. */}
+          {!onPage && <DivisionCtas vertical="studios" size="sm" primaryOnly className="mt-8 justify-center max-sm:hidden" />}
+        </div>
         </div>
 
-        <PlanBar vertical="studios" />
+        {!onPage && <PhoneDivisionCtas vertical="studios" className="mt-6" />}
+        {!onPage && <PlanBar vertical="studios" className="lg:!-mx-16 lg:!w-auto" />}
       </div>
     </section>
   );

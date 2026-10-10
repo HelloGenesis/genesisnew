@@ -6,6 +6,8 @@ import { defineConfig } from "prisma/config";
 // source of truth for the connection string, with `.env.local` winning.
 loadEnv({ path: ".env", quiet: true });
 loadEnv({ path: ".env.local", override: true, quiet: true });
+// The local embedded database (scripts/dev-db.mts), development only.
+if (process.env.NODE_ENV !== "production") loadEnv({ path: ".env.development.local", override: true, quiet: true });
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

@@ -37,8 +37,17 @@ export const filmsFromDrive = FROM_DRIVE;
  * to fall back to the preview rather than render a broken player.
  */
 export function filmUrl(n: ReelId): string | undefined {
+  if (LOCAL_FILMS.has(String(n))) return `/work/films/${n}.mp4`;
   return FROM_DRIVE ? `/api/media/films/${n}.mp4` : undefined;
 }
+
+/*
+  FILMS SERVED FROM THE SITE ITSELF, not Drive: masters in a codec a browser
+  may not play. Tanvi's third AI Lab clip arrived as HEVC (an iPhone .mov),
+  which Chrome on Windows and Firefox cannot decode, so it was transcoded to
+  H.264 and committed — it is ten seconds and a megabyte.
+*/
+const LOCAL_FILMS = new Set(["25-tanvi-ailab-3"]);
 
 /**
  * A FILM WINDOW RETRIES ITS FILM BEFORE IT SETTLES FOR THE PREVIEW.

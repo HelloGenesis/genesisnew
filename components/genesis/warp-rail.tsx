@@ -114,6 +114,16 @@ export type WarpItem = {
   /** Where the study lives, for crawlers and cmd-click. Absent, not a link. */
   href?: string;
   onOpen?: () => void;
+  /** The study's impact figures, on the card (Genesis, 4 Oct 2026). */
+  stats?: { value: string; label: string }[];
+  /** The campaign's name, shown under the client (Genesis, 5 Oct 2026). */
+  campaign?: string;
+  /** The brand, for the pill over the campaign; the label when absent. */
+  brand?: string;
+  /** A logo: shown whole on white, not cropped to the card. */
+  art?: boolean;
+  /** The study's tags, top left, as on the case studies page. */
+  tags?: string[];
 };
 
 export function WarpRail({
@@ -133,13 +143,15 @@ export function WarpRail({
     is how a button outside reaches in without any of that becoming state.
   */
   const nudge = useRef<((direction: 1 | -1) => void) | null>(null);
+  /* The phone's progress bar, filled by the loop (no state, as above). */
+  const bar = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const box = viewport.current;
     const rail = track.current;
     if (!box || !rail || items.length === 0) return;
 
-    const cards = Array.from(rail.children) as HTMLElement[];
+    let cards = Array.from(rail.children) as HTMLElement[];
     if (cards.length === 0) return;
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -161,6 +173,7 @@ export function WarpRail({
     */
     let width = 0;
     let stride = 0;
+    let narrow = false;
     let half = 0;
     let total = 0;
     let frame = 0;
@@ -195,13 +208,26 @@ export function WarpRail({
         gains a margin.
       */
       width = cards[0]?.offsetWidth ?? 0;
-      stride = width * STEP;
+      /*
+        A FLAT ROW ON A PHONE (Genesis, 6 Oct 2026: "keep it like this", a
+        mock-up): one big card in the middle, a small even gap, and a slice
+        of the next card at each side, so it reads as something to swipe.
+      */
+      narrow = box.clientWidth < 640;
+      /* Nothing to place until the card has a width (a hidden or not-yet-laid-out rail). */
+      stride = width === 0 ? 0 : narrow ? width + 12 : width * STEP;
       /*
         The viewing distance and the track's pull-back are derived from the
         measured card too, so the whole corridor scales with it rather than
         being pixel constants that only look right at one viewport.
       */
-      box.style.perspective = `${(width * VIEW).toFixed(0)}px`;
+      /*
+        NO 3D ON A PHONE. The flat row needs none, and iOS Safari paints a
+        black backing behind a perspective / preserve-3d layer — the dark band
+        across the rail Genesis saw as a glitch (6 Oct 2026).
+      */
+      box.style.perspective = narrow ? "none" : `${(width * VIEW).toFixed(0)}px`;
+      rail.style.transformStyle = narrow ? "flat" : "preserve-3d";
       /*
         NO PULL-BACK ON THE TRACK. Every card sits at or behind z = 0 already,
         so there is nothing to bring forward — and translating the whole row
@@ -218,6 +244,16 @@ export function WarpRail({
     };
 
     const paint = () => {
+      /*
+        THE CARDS CAN BE REPLACED UNDER THE LOOP — React re-creating the row
+        (a hydration recovery, a re-render with new keys) leaves this closure
+        holding detached nodes while the live ones sit untransformed, all
+        stacked in the middle: the "glitchy" rail (Genesis, 6 Oct 2026).
+      */
+      if (cards.length && !cards[0].isConnected) {
+        cards = Array.from(rail.children) as HTMLElement[];
+        measure();
+      }
       if (stride === 0) return;
       const reach = box.clientWidth / 2;
       for (let i = 0; i < cards.length; i += 1) {
@@ -251,6 +287,13 @@ export function WarpRail({
           to where a card sits in the FRAME rather than to how many cards
           happen to be in the list.
         */
+        if (narrow) {
+          /* Flat, full strength, side by side; only the middle card takes a tap. */
+          cards[i].style.transform = `translate3d(${rel.toFixed(1)}px,0,0)`;
+          cards[i].style.opacity = "1";
+          cards[i].style.pointerEvents = Math.abs(rel) < width / 2 ? "auto" : "none";
+          continue;
+        }
         const d = Math.max(-1.4, Math.min(1.4, rel / reach));
         const away = Math.abs(d);
         const z = -away * DEPTH * width;
@@ -308,6 +351,10 @@ export function WarpRail({
         stay there and the row would sit off its band.
       */
       if (half > 0) offset = ((offset % half) + half) % half;
+      /* How far through one lap the row is, from the first card to the last. */
+      if (bar.current && half > 0) {
+        bar.current.style.width = `${(8 + (offset / half) * 92).toFixed(1)}%`;
+      }
 
       paint();
       frame = requestAnimationFrame(tick);
@@ -320,7 +367,8 @@ export function WarpRail({
     */
     nudge.current = (direction: 1 | -1) => {
       if (stride === 0) return;
-      glide += direction * stride * 3;
+      /* One card at a time on a phone, where one card is most of the screen. */
+      glide += direction * stride * (narrow ? 1 : 3);
       /* A press on a rail that has scrolled out of view should still be
          served when it comes back, so this does not touch `visible`. */
       start();
@@ -335,6 +383,8 @@ export function WarpRail({
     };
     const observer = new ResizeObserver(onResize);
     observer.observe(box);
+    /* And the card: its width can arrive after the box's (a rail laid out while hidden). */
+    if (cards[0]) observer.observe(cards[0]);
 
     const enter = () => {
       hovering = true;
@@ -506,9 +556,14 @@ export function WarpRail({
           this block, and it lights the whole of it rather than a patch.
         */
           /* And the ends dissolve rather than cut, as every rail here does. */
-          "[mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]",
+          "sm:[mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]",
         )}
-        style={{ height: "var(--warp-h)" }}
+        /*
+          Room under the cards for their shadow. The rail clips (and masks) at
+          its own box, so a shadow longer than the space below the card ended
+          in a hard line (Genesis, 6 Oct 2026: "why is this line here").
+        */
+        style={{ height: "calc(var(--warp-h) + 3rem)" }}
       >
         {/*
           POINTER-EVENTS-NONE ON THE TRACK, and it is what makes the cards
@@ -559,6 +614,36 @@ export function WarpRail({
         onClick={() => nudge.current?.(1)}
         className="right-1 sm:right-2"
       />
+      {/*
+        ON A PHONE: ARROWS AND A GRADIENT BAR UNDER THE CARDS (Genesis, 6 Oct
+        2026: "add arrows and slider gradient"), so it is plain the row moves
+        and how far through it you are.
+      */}
+      <div className="mt-3 flex items-center gap-3 px-6 sm:hidden">
+        {([-1, 1] as const).map((dir) => (
+          <button
+            key={dir}
+            type="button"
+            aria-label={dir < 0 ? "Previous work" : "Next work"}
+            onClick={() => nudge.current?.(dir)}
+            className={cn(
+              "grid size-9 shrink-0 place-items-center rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] text-bone backdrop-blur-md outline-none focus-visible:ring-2 focus-visible:ring-brand",
+              dir > 0 && "order-last",
+            )}
+          >
+            <svg aria-hidden viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d={dir < 0 ? "M15 18l-6-6 6-6" : "M9 6l6 6-6 6"} />
+            </svg>
+          </button>
+        ))}
+        <span aria-hidden className="relative h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10">
+          <span
+            ref={bar}
+            className="absolute inset-y-0 left-0 w-[8%] rounded-full"
+            style={{ background: "linear-gradient(115deg, #8b5cf6 0%, #c066d9 30%, #f2607e 65%, #f5923e 100%)" }}
+          />
+        </span>
+      </div>
     </div>
   );
 }
@@ -568,24 +653,54 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
 
   const inner = (
     <>
-      <video
-        ref={video}
-        src={mediaUrl(item.clip)}
-        muted
-        loop
-        playsInline
-        preload="none"
-        aria-label={item.label}
-        {...VIDEO_GUARD_CLIENT}
-        className="size-full object-cover"
-      />
+      {/* A card with no film — Brand & Design's work is stills — shows its picture. */}
+      {item.clip ? (
+        <video
+          ref={video}
+          src={mediaUrl(item.clip)}
+          muted
+          loop
+          playsInline
+          preload="none"
+          aria-label={item.label}
+          {...VIDEO_GUARD_CLIENT}
+          className="size-full object-cover"
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={mediaUrl(item.poster)} alt={item.label} loading="lazy" className={item.art ? "size-full bg-white object-contain px-6 pb-28 pt-12" : "size-full object-cover"} />
+      )}
       {/*
         A caption that only exists when the card is worth reading — the ones
         turning away are dimmed to near nothing by the loop, so a label on
         them would be unreadable text the eye still tries to parse.
       */}
-      <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(0deg,rgb(0_0_0/0.8),transparent)] px-3 pb-2.5 pt-8 text-micro text-white/85">
-        {item.label}
+      {/*
+        THE CAPTION, DESIGNED (Genesis, 5 Oct 2026: "design this properly"):
+        a deep fade, the client in bold, and the study's figures as a strip
+        of glass cells, each figure over its word, divided by hairlines.
+      */}
+      {item.tags?.length ? (
+        <span className="pointer-events-none absolute left-2.5 right-2.5 top-2.5 flex flex-wrap gap-1">
+          {item.tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="glass rounded-full px-2 py-0.5 text-[0.625rem] font-medium tracking-wide text-bone">{tag}</span>
+          ))}
+        </span>
+      ) : null}
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-[linear-gradient(0deg,rgb(0_0_0/0.92)_0%,rgb(0_0_0/0.6)_55%,transparent)] px-2.5 pb-2.5 pt-16">
+        {/* The case studies page's card, everywhere (Genesis, 5 Oct 2026): the brand in a quiet pill, the campaign in gold, then the figures. */}
+        <span className={`max-w-full self-start truncate px-2 py-0.5 text-[0.625rem] tracking-[0.08em] ${"rounded-full border border-white/20 bg-black/35 font-medium uppercase backdrop-blur-md text-white/85"}`}>{item.brand ?? item.label}</span>
+        {item.campaign ? <span className="truncate px-0.5 text-[0.75rem] leading-tight text-brand-ink/90">{item.campaign}</span> : null}
+        {item.stats?.length ? (
+          <span className="grid grid-flow-col divide-x divide-white/15 overflow-hidden rounded-xl border border-white/15 bg-white/[0.08] backdrop-blur-md">
+            {item.stats.slice(0, 3).map((stat, index) => (
+              <span key={stat.label} className={`min-w-0 px-2 py-1.5 text-center ${index === 2 ? "max-sm:hidden" : ""}`}>
+                <span className="block font-display text-[1rem] leading-none text-brand-ink sm:text-[1.05rem]">{stat.value}</span>
+                <span className="mt-1 block truncate text-[0.625rem] uppercase tracking-[0.06em] text-white/75">{stat.label}</span>
+              </span>
+            ))}
+          </span>
+        ) : null}
       </span>
     </>
   );
@@ -622,7 +737,7 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
   const positioner =
     "absolute inset-y-0 left-1/2 ml-[calc(var(--warp-card)/-2)] flex w-[var(--warp-card)] items-center will-change-transform [backface-visibility:hidden]";
   const card =
-    "relative w-full overflow-hidden rounded-[1.25rem] border border-white/10 bg-ink shadow-[0_30px_60px_-24px_rgb(0_0_0/0.9)] aspect-[5/8]";
+    "relative w-full overflow-hidden rounded-[1.25rem] border border-white/10 bg-ink shadow-[0_18px_36px_-18px_rgb(0_0_0/0.85)] aspect-[5/8]";
 
   if (!item.onOpen) {
     return (
@@ -673,6 +788,7 @@ function WarpCard({ item, hidden }: { item: WarpItem; hidden: boolean }) {
   return (
     <a
       href={item.href}
+      data-popup
       aria-hidden={hidden}
       tabIndex={hidden ? -1 : undefined}
       onClick={(event) => {

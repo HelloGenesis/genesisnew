@@ -148,9 +148,11 @@ function logoBox(app: (typeof APPLICATIONS)[number], height: number) {
  * either ground, which is why the board uses one file for both themes.
  */
 const AI_LAB_MARK = {
-  src: "/brand/divisions/name/ai-lab.png",
-  width: 250,
-  height: 98,
+  /* With the yellow N since 2 Oct 2026 — the mark set, cut to the same
+     baseline as the name set, so BODY_MIDPOINT below still holds. */
+  src: "/brand/divisions/mark/ai-lab.png",
+  width: 492,
+  height: 167,
 };
 
 /**
@@ -188,7 +190,9 @@ const BODY_MIDPOINT = 0.41;
  * SVG does not render, so if the two shared ids the visible drawing would
  * reference the hidden one's gradients and paint its lines with nothing.
  */
-export function AutomationSources({ className }: { className?: string }) {
+/** `wide`: the wide drawing at every size (it is then scaled as a whole; see FitScale). */
+export function AutomationSources({ className, interactive = false, wide = false }: { className?: string; interactive?: boolean; wide?: boolean }) {
+  if (wide) return <WideDiagram interactive={interactive} className={className} ids="-wide" />;
   return (
     <>
       {/*
@@ -198,13 +202,14 @@ export function AutomationSources({ className }: { className?: string }) {
         of Genesis's report. The board has no such problem: it reflows as two
         columns of cells at any width.
       */}
-      <WideDiagram className={cn("hidden md:block", className)} />
+      <WideDiagram interactive={interactive} className={cn("hidden md:block", className)} />
       <TallDiagram className={cn("md:hidden", className)} />
     </>
   );
 }
 
-function WideDiagram({ className }: { className?: string }) {
+/** `ids`: a suffix for the drawing's gradient and filter ids, so a second copy on the page (the phone one) does not borrow the first's. */
+function WideDiagram({ className, interactive = false, ids = "" }: { className?: string; interactive?: boolean; ids?: string }) {
   const width = 940;
   /*
     THE CANVAS GREW WITH THE LIST. Seven labels a side at the old 300 units
@@ -253,10 +258,10 @@ function WideDiagram({ className }: { className?: string }) {
       viewBox={`0 0 ${width} ${height}`}
       role="presentation"
       aria-hidden
-      className={cn("h-auto w-full", className)}
+      className={cn("h-auto w-full", interactive && "gm-board", className)}
     >
       <defs>
-        <MarkInk id="gm-app-mark" />
+        <MarkInk id={`gm-app-mark${ids}`} />
         {/*
           THE AI LAB RAMP, which Genesis asked the flowing lines to carry. It
           is the division's own gradient from lib/home-content — pink into
@@ -270,39 +275,39 @@ function WideDiagram({ className }: { className?: string }) {
           reuses the same stops reversed and arrives at the node at full
           strength like its opposite number.
         */}
-        <linearGradient id="gm-ai-line" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={`gm-ai-line${ids}`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
           <stop offset="55%" stopColor="#ff8fb8" stopOpacity="0.9" />
           <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
         </linearGradient>
-        <linearGradient id="gm-ai-line-flip" x1="1" y1="0" x2="0" y2="0">
+        <linearGradient id={`gm-ai-line-flip${ids}`} x1="1" y1="0" x2="0" y2="0">
           <stop offset="0%" stopColor="#ff8fb8" stopOpacity="0.35" />
           <stop offset="55%" stopColor="#ff8fb8" stopOpacity="0.9" />
           <stop offset="100%" stopColor="#ffa25c" stopOpacity="1" />
         </linearGradient>
-        <linearGradient id="gm-ai-dash" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={`gm-ai-dash${ids}`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#ff8fb8" />
           <stop offset="100%" stopColor="#ffa25c" />
         </linearGradient>
-        <radialGradient id="gm-ai-glow">
+        <radialGradient id={`gm-ai-glow${ids}`}>
           <stop offset="0%" stopColor="#ff9a86" stopOpacity="0.34" />
           <stop offset="55%" stopColor="#ff8fb8" stopOpacity="0.12" />
           <stop offset="100%" stopColor="#ff9a86" stopOpacity="0" />
         </radialGradient>
         {/* The node's edge: the AI Lab ramp, pink at the ends and orange through the middle. */}
-        <linearGradient id="gm-ai-edge" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={`gm-ai-edge${ids}`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#ff7eb3" />
           <stop offset="50%" stopColor="#ffa25c" />
           <stop offset="100%" stopColor="#ff7eb3" />
         </linearGradient>
         {/* The glow round it — the same edge, blurred. */}
-        <filter id="gm-ai-halo" x="-30%" y="-80%" width="160%" height="260%">
+        <filter id={`gm-ai-halo${ids}`} x="-30%" y="-80%" width="160%" height="260%">
           <feGaussianBlur stdDeviation="9" />
         </filter>
       </defs>
 
       {/* A bloom behind the node. Small and faint. */}
-      <ellipse cx={hub.x + hub.w / 2} cy={hub.y} rx="240" ry="120" fill="url(#gm-ai-glow)" />
+      <ellipse cx={hub.x + hub.w / 2} cy={hub.y} rx="240" ry="120" fill={`url(#gm-ai-glow${ids})`} />
 
       {sides.map((side) =>
         side.apps.map((app, index) => {
@@ -316,7 +321,7 @@ function WideDiagram({ className }: { className?: string }) {
             at an angle and reads as a wire under tension.
           */
           const d = `M ${side.x} ${y} C ${side.x + 120 * side.dir} ${y}, ${arrive - 120 * side.dir} ${hub.y}, ${arrive} ${hub.y}`;
-          const stroke = side.dir === 1 ? "url(#gm-ai-line)" : "url(#gm-ai-line-flip)";
+          const stroke = side.dir === 1 ? `url(#gm-ai-line${ids})` : `url(#gm-ai-line-flip${ids})`;
           return (
             <g key={app.name} className="gm-app">
               {/* The base: always whole, always visible. */}
@@ -325,7 +330,7 @@ function WideDiagram({ className }: { className?: string }) {
               <path
                 d={d}
                 fill="none"
-                stroke="url(#gm-ai-dash)"
+                stroke={`url(#gm-ai-dash${ids})`}
                 strokeWidth="1.75"
                 strokeLinecap="round"
                 className="gm-flow motion-reduce:[animation:none] motion-reduce:hidden"
@@ -339,11 +344,24 @@ function WideDiagram({ className }: { className?: string }) {
                 width={box.w}
                 height={box.h}
                 preserveAspectRatio="xMidYMid meet"
-                filter={"colour" in app ? undefined : "url(#gm-app-mark)"}
+                filter={"colour" in app ? undefined : `url(#gm-app-mark${ids})`}
                 className={"colour" in app ? undefined : "app-mark"}
               >
                 <title>{app.name}</title>
               </image>
+              {/* Its name, shown on hover where the board is interactive. */}
+              {interactive && (
+                <text
+                  className="gm-label"
+                  x={side.dir === 1 ? side.x - 16 - box.w / 2 : side.x + 16 + box.w / 2}
+                  y={y - box.h / 2 - 9}
+                  textAnchor="middle"
+                  fontSize="13"
+                  fill="#f6f1e7"
+                >
+                  {app.name}
+                </text>
+              )}
             </g>
           );
         }),
@@ -367,10 +385,11 @@ function WideDiagram({ className }: { className?: string }) {
         height={hub.h}
         rx={hub.h / 2.6}
         fill="none"
-        stroke="url(#gm-ai-edge)"
+        stroke={`url(#gm-ai-edge${ids})`}
         strokeWidth="6"
         opacity="0.7"
-        filter="url(#gm-ai-halo)"
+        filter={`url(#gm-ai-halo${ids})`}
+        className={interactive ? "gm-halo" : undefined}
       />
       <rect
         x={hub.x}
@@ -379,7 +398,7 @@ function WideDiagram({ className }: { className?: string }) {
         height={hub.h}
         rx={hub.h / 2.6}
         fill="var(--surface-ink, #0d0d0e)"
-        stroke="url(#gm-ai-edge)"
+        stroke={`url(#gm-ai-edge${ids})`}
         strokeWidth="2"
       />
       {/*

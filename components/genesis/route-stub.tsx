@@ -35,7 +35,7 @@ export function RouteStub({
         </p>
 
         <p className="mt-12 rounded-card border border-white/10 bg-white/[0.03] px-6 py-4 text-small text-faint">
-          This page is a placeholder. It is built out in Phase 4 — the link
+          This page is a placeholder. It is built out in Phase 4, the link
           resolves today so the site has no dead ends.
         </p>
 

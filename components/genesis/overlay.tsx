@@ -3,10 +3,11 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { getLenis } from "./smooth-scroll";
+import { ThemeToggle } from "./theme-toggle";
 
 /**
  * A panel over the landing page, with the page blurred and held still behind.
@@ -202,7 +203,7 @@ export function Overlay({
     <div
       data-lenis-prevent
       onMouseDown={dismissFromBackdrop}
-      className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain bg-black/55 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain bg-black/45 backdrop-blur-2xl"
     >
       <div
         onMouseDown={dismissFromBackdrop}
@@ -213,7 +214,7 @@ export function Overlay({
           scrolls inside itself, so there is nothing left to scroll past and
           a phone gets the same centred window a desktop does.
         */
-        className="flex min-h-full items-center justify-center p-3 sm:p-8"
+        className="flex min-h-full items-center justify-center sm:p-8 lg:p-6"
       >
         <div
           ref={panel}
@@ -224,7 +225,10 @@ export function Overlay({
           onClickCapture={onClickCapture}
           className={cn(
             "relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden",
-            "rounded-xl border border-[var(--glass-border)] bg-[var(--surface-raised)] shadow-2xl outline-none",
+            /* A phone gets the whole screen: no frame around a window it cannot see past anyway (Genesis, 10 Oct 2026). */
+            "max-sm:h-[100dvh] max-sm:max-h-[100dvh]",
+            /* Glass, as the rest of the site (Genesis, 3 Oct 2026); see .glass-window. */
+            "glass-window glass-lit rounded-xl border border-[var(--glass-border)] outline-none max-sm:rounded-none max-sm:border-0",
             "sm:max-h-[calc(100dvh-4rem)] sm:rounded-[0.875rem]",
             className,
           )}
@@ -240,12 +244,12 @@ export function Overlay({
             yellow, yellow and yellow is not one — and they are chrome around
             the content rather than part of the page's palette.
           */}
-          <div className="relative flex h-10 shrink-0 items-center gap-2 border-b border-[var(--glass-border)] bg-[var(--surface-panel)] px-4">
+          <div className="relative flex h-12 shrink-0 items-center gap-2 border-b border-[var(--glass-border)] bg-[color-mix(in_srgb,var(--surface-panel)_55%,transparent)] px-4">
             <button
               type="button"
               onClick={() => close.current()}
               aria-label="Close"
-              className="group grid size-3 place-items-center rounded-full bg-[#ff5f57] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-panel)]"
+              className="group grid size-3 max-sm:hidden place-items-center rounded-full bg-[#ff5f57] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-panel)]"
             >
               <svg
                 aria-hidden
@@ -258,27 +262,60 @@ export function Overlay({
                 <path d="M2.5 2.5 7.5 7.5M7.5 2.5 2.5 7.5" />
               </svg>
             </button>
-            <span aria-hidden className="size-3 rounded-full bg-[#febc2e]" />
-            <span aria-hidden className="size-3 rounded-full bg-[#28c840]" />
+            <span aria-hidden className="size-3 rounded-full bg-[#febc2e] max-sm:hidden" />
+            <span aria-hidden className="size-3 rounded-full bg-[#28c840] max-sm:hidden" />
+            {/* On a phone a plain close button and the title, nothing else in the bar. */}
+            <button
+              type="button"
+              onClick={() => close.current()}
+              aria-label="Close"
+              className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-full text-bone transition-colors hover:bg-[var(--hover-wash)] sm:hidden"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+            <span className="min-w-0 truncate text-small text-bone sm:hidden">{label.replace(/: details$/, "")}</span>
 
             {/*
               The window's title, centred the way a Mac centres it — and
               `pointer-events-none` so it cannot swallow a click meant for
               the buttons underneath its own box.
             */}
-            <span className="pointer-events-none absolute inset-x-24 truncate text-center text-micro font-medium !tracking-normal text-ash">
+            <span className="pointer-events-none absolute inset-x-56 hidden truncate text-center text-micro font-medium !tracking-normal text-ash md:block">
               {label}
             </span>
+
+            {/*
+              THE COUNT AND THE THEME SWITCH, on the right of the bar (Genesis,
+              3 Oct 2026: "add a dark/white toggle all across"). A pop-up
+              covers the nav, so it carries its own way to change the theme.
+            */}
+            {/*
+              THE ARROWS LIVE IN THE BAR, beside the count (Genesis, 3 Oct
+              2026: "this looks faulty"). They floated at the screen's edges,
+              and wherever the window ran close to full width — a phone, a
+              tablet — they sat over its text.
+            */}
+            <div className="ml-auto flex items-center gap-2 sm:gap-3">
+              <ThemeToggle className="origin-right scale-[0.8] max-sm:hidden" />
+            </div>
           </div>
 
           {/* The content, scrolling inside the window rather than moving it. */}
-          <div className="overflow-y-auto overscroll-contain p-6 sm:p-9">{children}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-9">{children}</div>
 
-          {pager?.position && (
-            <span className="pointer-events-none absolute right-4 top-2.5 text-micro tabular-nums text-ash">
-              {pager.position}
-            </span>
+          {/*
+            THE ARROWS AND THE COUNT, AT THE FOOT OF THE WINDOW (Genesis, 4 Oct
+            2026: "put this below"): a slim bar under the content, always in
+            view, centred.
+          */}
+          {pager && (
+            <div className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--glass-border)] px-4 py-1.5 sm:py-2.5">
+              <PagerButton side="left" label={pager.previousLabel} onClick={pager.onPrevious} />
+              {pager.position && <span className="min-w-[3rem] text-center text-small tabular-nums text-ash">{pager.position}</span>}
+              <PagerButton side="right" label={pager.nextLabel} onClick={pager.onNext} />
+            </div>
           )}
+
         </div>
 
         {/*
@@ -287,12 +324,6 @@ export function Overlay({
           they stay put while the window scrolls. On a phone the window runs
           nearly edge to edge and they sit over its sides.
         */}
-        {pager && (
-          <>
-            <PagerButton side="left" label={pager.previousLabel} onClick={pager.onPrevious} />
-            <PagerButton side="right" label={pager.nextLabel} onClick={pager.onNext} />
-          </>
-        )}
       </div>
     </div>,
     document.body,
@@ -316,13 +347,11 @@ function PagerButton({
       onMouseDown={(event) => event.stopPropagation()}
       aria-label={label}
       className={cn(
-        "fixed top-1/2 z-[101] grid size-11 -translate-y-1/2 place-items-center rounded-full",
-        "border border-white/20 bg-black/55 text-white backdrop-blur-md transition-colors hover:bg-black/80",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
-        side === "left" ? "left-2 sm:left-5" : "right-2 sm:right-5",
+        "grid size-8 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors",
+        "hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
       )}
     >
-      <Icon className="size-5" aria-hidden />
+      <Icon className="size-4" aria-hidden />
     </button>
   );
 }

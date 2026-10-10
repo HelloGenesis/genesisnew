@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAuth0IfConfigured } from "./lib/auth0";
+import { checkRateLimit, rateLimitKey } from "./lib/rate-limit";
 
 /**
  * Next.js 16 renamed Middleware to Proxy. This file must be named `proxy.ts`
@@ -18,8 +19,8 @@ import { getAuth0IfConfigured } from "./lib/auth0";
  * that check is the one that actually gates access.
  */
 
-/** Path prefixes requiring an authenticated session. */
-const PROTECTED_PREFIXES = ["/insider"];
+/** Path prefixes requiring an authenticated session: Insider, the CRM (/admin) and the client portal. */
+const PROTECTED_PREFIXES = ["/insider", "/admin", "/portal"];
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(
@@ -38,6 +39,17 @@ export async function proxy(request: Request): Promise<NextResponse> {
     return NextResponse.next();
   }
 
+  /* One-time codes cost money and invite abuse: a per-IP limit on top of Auth0's own (as genesis-coworking). */
+  if (url.pathname === "/auth/passwordless/start" && request.method === "POST") {
+    const limit = await checkRateLimit(rateLimitKey(request, "otp"));
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "too_many_requests", error_description: "Please wait before requesting another code." },
+        { status: 429 },
+      );
+    }
+  }
+
   // Auth0 owns /auth/* entirely and rolls the session for everything else.
   const authResponse = await auth0.middleware(request);
 
@@ -49,9 +61,9 @@ export async function proxy(request: Request): Promise<NextResponse> {
     const session = await auth0.getSession(new NextRequest(request));
 
     if (!session) {
-      const loginUrl = new URL("/auth/login", url.origin);
-      // Bring the user back to where they were headed after logging in.
-      loginUrl.searchParams.set("returnTo", `${url.pathname}${url.search}`);
+      /* Our own sign-in page (Google, email code, mobile code), then back to where they were headed. */
+      const loginUrl = new URL("/login", url.origin);
+      loginUrl.searchParams.set("next", `${url.pathname}${url.search}`);
       return NextResponse.redirect(loginUrl);
     }
   }

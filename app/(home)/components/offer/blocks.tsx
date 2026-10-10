@@ -1,14 +1,16 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, Check, ChevronDown } from "lucide-react";
 
-import { GlassButton } from "@/components/genesis/glass-button";
 import { Reveal } from "@/components/genesis/reveal";
 import { mediaUrl } from "@/lib/media-url";
 import type { Closing, Faq, IconCard, Steps, Turnaround } from "@/lib/verticals/types";
 import { cn } from "@/lib/utils";
+import { BENTO_WIDE } from "@/lib/bento";
+import { JsonLd } from "@/components/genesis/json-ld";
 import { IconTile, OfferIcon } from "./icons";
 import { CheckList, OfferSection, SectionHead } from "./parts";
+import { VerticalCtas } from "./vertical-ctas";
 
 /**
  * The repeating blocks of the four vertical pages. Each takes a slice of a
@@ -137,10 +139,25 @@ export function VideoTiers({
 }
 
 /** How it works — numbered steps joined by arrows, then the capacity note. */
-export function StepsBlock({ data, id }: { data: Steps; id?: string }) {
+function StepsWrap({ bare, id, className, children }: { bare: boolean; id?: string; className?: string; children: ReactNode }) {
+  return bare ? (
+    <div id={id} aria-labelledby={`${id ?? "steps"}-heading`} className={cn("scroll-mt-24", className)}>{children}</div>
+  ) : (
+    /* In a bento panel on every page that has one (Genesis, 6 Oct 2026). */
+    <OfferSection id={id} labelledBy={`${id ?? "steps"}-heading`}>
+      <div className={BENTO_WIDE}>{children}</div>
+    </OfferSection>
+  );
+}
+
+/**
+ * `bare`: inside another section, as a panel of its own (`className` sets the
+ * panel), not a full section with its own padding (Genesis, 5 Oct 2026).
+ */
+export function StepsBlock({ data, id, bare = false, className }: { data: Steps; id?: string; bare?: boolean; className?: string }) {
   const count = data.steps.length;
   return (
-    <OfferSection id={id} labelledBy={`${id ?? "steps"}-heading`}>
+    <StepsWrap bare={bare} id={id} className={className}>
       <SectionHead
         id={`${id ?? "steps"}-heading`}
         label={data.label}
@@ -150,21 +167,21 @@ export function StepsBlock({ data, id }: { data: Steps; id?: string }) {
       />
       <ol
         className={cn(
-          "mt-10 grid gap-4 sm:grid-cols-2",
+          "mt-8 grid gap-3 sm:grid-cols-2", /* compact, so the process fits a desktop screen (Genesis, 5 Oct 2026) */
           count >= 6 ? "lg:grid-cols-3 xl:grid-cols-6" : count === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4",
         )}
       >
         {data.steps.map((step, index) => (
           <Reveal as="li" key={step.title} delay={0.05 * index} className="relative flex">
-            <div className="glass glass-lit flex w-full flex-col rounded-panel p-5">
+            <div className="glass glass-lit flex w-full flex-col rounded-panel p-4">
               <div className="flex items-center justify-between gap-3">
                 {step.icon ? <IconTile name={step.icon} /> : <span />}
                 <span className="font-display text-h3 font-normal leading-none tracking-tight text-brand-ink">
                   {String(index + 1).padStart(2, "0")}
                 </span>
               </div>
-              <h3 className="font-sans mt-5 text-body leading-snug text-bone">{step.title}</h3>
-              <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{step.body}</p>
+              <h3 className="font-sans mt-3 text-body leading-snug text-bone">{step.title}</h3>
+              <p className="mt-1.5 text-pretty text-[0.8125rem] leading-snug text-ash">{step.body}</p>
             </div>
             {index < count - 1 && (
               <ArrowRight
@@ -196,7 +213,7 @@ export function StepsBlock({ data, id }: { data: Steps; id?: string }) {
           {data.note && <p className="text-pretty text-small leading-relaxed text-ash">{data.note}</p>}
         </Reveal>
       )}
-    </OfferSection>
+    </StepsWrap>
   );
 }
 
@@ -215,9 +232,18 @@ export function TurnaroundBlock({ data, id }: { data: Turnaround; id?: string })
   );
 }
 
-export function TurnaroundStrip({ data, className }: { data: Turnaround; className?: string }) {
+export function TurnaroundStrip({
+  data,
+  className,
+  stacked = false,
+}: {
+  data: Turnaround;
+  className?: string;
+  /** One card above another — a narrow column, such as beside a product's price. */
+  stacked?: boolean;
+}) {
   return (
-    <ul className={cn("grid gap-3 md:grid-cols-3", className)}>
+    <ul className={cn("grid gap-3", !stacked && "md:grid-cols-3", className)}>
       {data.tiers.map((tier, index) => (
         <Reveal as="li" key={tier.time} delay={0.05 * index} className="flex">
           <div
@@ -232,6 +258,28 @@ export function TurnaroundStrip({ data, className }: { data: Turnaround; classNa
               <p className="mt-1 text-small text-brand-ink">{tier.title}</p>
               {tier.items && (
                 <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{tier.items.join(" · ")}</p>
+              )}
+              {tier.detail && (
+                <details className="group/tier mt-2">
+                  <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1 rounded-full text-small text-bone/80 transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden">
+                    {tier.detail.label}
+                    <ChevronDown aria-hidden className="size-3.5 transition-transform duration-300 group-open/tier:rotate-180" />
+                  </summary>
+                  {tier.detail.lead && <span className="mt-2 block text-small text-faint">{tier.detail.lead}</span>}
+                  <ul className="mt-2.5 space-y-1.5">
+                    {tier.detail.items.map((item) => (
+                      <li key={item} className="flex gap-2.5 text-small leading-snug text-bone/90">
+                        <Check aria-hidden className="mt-0.5 size-3.5 shrink-0 text-brand-ink" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+              {tier.note && (
+                <p className="mt-2 border-t border-[var(--glass-border)] pt-2 text-pretty text-[0.75rem] leading-relaxed text-faint">
+                  {tier.note}
+                </p>
               )}
             </div>
           </div>
@@ -254,7 +302,8 @@ export function ClosingBand({
 }) {
   return (
     <OfferSection>
-      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel">
+      {/* As wide as the plan box and the case-study panel (Genesis, 6 Oct 2026). */}
+      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel lg:-mx-16">
         <span
           aria-hidden
           className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-brand/15 blur-3xl"
@@ -273,16 +322,7 @@ export function ClosingBand({
                 {line}
               </p>
             ))}
-            <div className="mt-8 flex flex-wrap gap-3">
-              <GlassButton href={data.primary.href} variant="brand" size="lg" arrow magnetic>
-                {data.primary.label}
-              </GlassButton>
-              {data.secondary && (
-                <GlassButton href={data.secondary.href} variant="glass" size="lg" arrow>
-                  {data.secondary.label}
-                </GlassButton>
-              )}
-            </div>
+            <VerticalCtas className="mt-8" />
             {data.footnote && (
               <p className="mt-8 text-small text-faint">{data.footnote.join(" ")}</p>
             )}
@@ -317,6 +357,23 @@ export function ClosingBand({
 export function FaqBlock({ heading, items }: { heading: string; items: readonly Faq[] }) {
   return (
     <OfferSection id="faq" labelledBy="faq-heading">
+      {/*
+        THE QUESTIONS AS FAQPage DATA TOO (Genesis, 6 Oct 2026, for SEO and
+        GEO): the same words a reader opens below, marked up so search and
+        AI answers can quote them.
+      */}
+      <JsonLd
+        data={{
+          "@type": "FAQPage",
+          mainEntity: items.map((item) => ({
+            "@type": "Question",
+            name: item.q,
+            acceptedAnswer: { "@type": "Answer", text: item.a.join(" ") },
+          })),
+        }}
+      />
+      {/* In a bento, as the other sections are (Genesis, 6 Oct 2026). */}
+      <div className={BENTO_WIDE}>
       <SectionHead id="faq-heading" label="FAQs" heading={heading} align="left" />
       <div className="mt-10 divide-y divide-white/10 border-y border-white/10">
         {items.map((item) => (
@@ -334,6 +391,7 @@ export function FaqBlock({ heading, items }: { heading: string; items: readonly 
             </div>
           </details>
         ))}
+      </div>
       </div>
     </OfferSection>
   );

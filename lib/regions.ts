@@ -130,7 +130,7 @@ export function taxFor(countryCode: string | undefined) {
   }
   return {
     rate: 0,
-    label: "Tax — export of services (0%)",
+    label: "Tax: export of services (0%)",
     idLabel: "VAT / Tax ID",
     idHint: "Your business's VAT, GST or tax number, if you have one.",
   };

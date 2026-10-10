@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { recordAuditLog } from "@/lib/audit";
+import { captureSubmission } from "@/lib/crm/capture";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import {
@@ -417,6 +418,9 @@ export async function submitGenesisForm(
       ipAddress,
       userAgent,
     });
+
+    /* Into the CRM: a lead for a brand, the influencer database for a creator (lib/crm/capture). */
+    await captureSubmission(kind, record.id, cells);
 
     return { status: "success", message: spec.successMessage };
   } catch {

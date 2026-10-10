@@ -68,12 +68,17 @@ export type CaseStudy = {
 };
 
 const studies: CaseStudy[] = [
+  /*
+    A CARD FOR THE ONE SITE WRITE-UP THAT HAD NONE (Genesis, 3 Oct 2026). The
+    copy, films and division come from lib/case-study-2026 through `copy`.
+  */
+  { slug: "the-worldgrad", copy: 9, client: "The WorldGrad", campaign: "Study Abroad", vertical: "Influence", discipline: "Creators" },
   {
     slug: "mahindra-finance-influencer-campaign",
     copy: 35,
     client: "Mahindra Finance",
     vertical: "Studios",
-    discipline: "Event film",
+    discipline: ["Event film", "Aftermovie"],
     work: ["mahindra-finance-brand-film"],
     heroClip: "studios-mahindra-cut-44",
     campaign: "Founders' Day 2025",
@@ -83,7 +88,7 @@ const studies: CaseStudy[] = [
     copy: 1,
     client: "Aditya Birla Capital",
     vertical: "Influence",
-    discipline: "Content & campaign",
+    discipline: ["Content & campaign", "Fitness influencer"],
     work: ["aditya-birla-capital-campaign"],
   },
   /*
@@ -111,7 +116,7 @@ const studies: CaseStudy[] = [
     client: "Aditya Birla Capital",
     campaign: "Adi · AI Avatar",
     vertical: "AI Lab",
-    discipline: "AI avatar",
+    discipline: ["AI avatar", "AI content", "Launch film", "Activ Yuva"],
     work: ["aditya-birla-capital-ai-content"],
     heroClip: 29,
   },
@@ -281,7 +286,8 @@ const studies: CaseStudy[] = [
   },
   {
     slug: "tripgatee-brand-identity",
-    copy: 42,
+    /* #42 is merged into #21 (Genesis's sheet, 9 Oct 2026). */
+    copy: 21,
     client: "TripGatee",
     campaign: "Brand Identity",
     vertical: "Brand & Design",
@@ -297,22 +303,27 @@ const studies: CaseStudy[] = [
  * not named here keeps its place at the end.
  */
 const ORDER = [
+  /*
+    GENESIS'S TEN WEBSITE STUDIES FIRST, in the PDF's order (3 Oct 2026 — see
+    lib/case-study-2026). Everything else keeps its place after them.
+  */
   "aditya-birla-capital-brand-performance",
   "aditya-birla-capital-vikrant-massey",
+  "aditya-birla-capital-content-campaign",
   "aditya-birla-capital-jump-for-health",
-  "ai-avatar-bharat",
   "mahindra-finance-content-production",
-  "abhi-ka-star",
-  "ai-avatar-tanvi",
+  "the-worldgrad",
   "aditya-birla-capital-lets-face-it",
-  "house-of-hiranandani",
+  "abhi-ka-star",
   "abhi-world-menopause-day",
+  "ai-avatar-tanvi",
+  "ai-avatar-bharat",
+  "house-of-hiranandani",
   "aditya-birla-capital-bombay-running",
   "income-protect",
   "abhi-100-health",
   "aditya-birla-capital-matcha",
   "mahindra-finance-influencer-campaign",
-  "aditya-birla-capital-content-campaign",
   /*
     THE ONE EVENT CARD SITS LAST. The interleaving above exists so no two
     neighbours look alike, and this is the only card on the board whose
@@ -346,6 +357,8 @@ export const caseStudyList: CaseStudy[] = [...studies]
     if (!copy) return study;
     return {
       ...study,
+      /* A site write-up leads with its own first film and names its own division. */
+      ...(copy.films?.length ? { heroClip: copy.films[0], vertical: copy.division, campaign: copy.campaign } : {}),
       client: copy.brand,
       headline: copy.headline,
       problem: copy.brief.join("\n\n"),
@@ -393,7 +406,7 @@ export function isPublished(study: CaseStudy): boolean {
 export const caseStudiesPage = {
   label: "Case studies",
   heading: "Work that",
-  headingAccent: "moved a number.",
+  headingAccent: "moved a needle.",
   body:
     "Not a gallery. The problem, what we decided to do about it, and what changed. Every study here ends in a number the client agreed to.",
   /*

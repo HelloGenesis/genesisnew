@@ -27,6 +27,7 @@ import {
   samePackage,
   unitCharge,
 } from "@/lib/cart";
+import type { ExtrasChoice } from "@/lib/extras";
 import { shootNote } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +58,10 @@ type CartContext = {
   lines: CartLine[];
   count: number;
   ready: boolean;
-  add: (id: string, options?: { billing?: Billing; qty?: number; open?: boolean }) => void;
+  /** `extras`: a pay-per-project line's longer videos, adaptations and add-ons; replaces what the line had. */
+  add: (id: string, options?: { billing?: Billing; qty?: number; open?: boolean; extras?: ExtrasChoice }) => void;
+  /** The extras on a line already in the cart. */
+  extrasOf: (id: string) => ExtrasChoice | undefined;
   setQty: (id: string, qty: number) => void;
   setBilling: (id: string, billing: Billing) => void;
   remove: (id: string) => void;
@@ -117,7 +121,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
       if (replaced.length) {
         const was = findProduct(replaced[0].id)!;
-        setNotice(`Switched ${product.group} from ${was.name} to ${product.name} — one plan per package.`);
+        setNotice(`Switched ${product.group} from ${was.name} to ${product.name}. One plan per package.`);
       }
       const current = before.filter((line) => !replaced.includes(line));
       const existing = current.find((line) => line.id === id);
@@ -130,9 +134,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       if (existing) {
         if (product.amount === undefined) return current;
+        /* Added again from the pop-up with its extras chosen: the line takes them, the quantity stays. */
+        if (options.extras !== undefined) {
+          return current.map((line) => (line.id === id ? { ...line, extras: options.extras } : line));
+        }
         return current.map((line) => (line.id === id ? { ...line, qty: Math.min(maxQty(product), line.qty + (options.qty ?? 1)) } : line));
       }
-      return [...current, { id, qty: options.qty ?? 1 }];
+      return [...current, { id, qty: options.qty ?? 1, ...(options.extras ? { extras: options.extras } : {}) }];
     });
     if (options.open !== false) setDrawerOpen(true);
   }, []);
@@ -157,6 +165,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       remove: (id) => setLines((current) => current.filter((line) => line.id !== id)),
       clear: () => setLines([]),
       has: (id) => lines.some((line) => line.id === id),
+      extrasOf: (id) => lines.find((line) => line.id === id)?.extras,
       packageSibling: (id) => {
         const product = findProduct(id);
         if (!product) return undefined;
@@ -191,7 +200,7 @@ export function CartButton({ className }: { className?: string }) {
       aria-label={count ? `Cart, ${count} item${count === 1 ? "" : "s"}` : "Cart, empty"}
       data-track="nav:cart"
       className={cn(
-        "relative grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors lg:size-9 hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+        "relative grid size-9 place-items-center rounded-full border sm:size-10 border-[var(--glass-border)] text-bone transition-colors lg:size-9 hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
         className,
       )}
     >
@@ -199,7 +208,7 @@ export function CartButton({ className }: { className?: string }) {
       {ready && count > 0 && (
         <span
           aria-hidden
-          className="absolute -right-1 -top-1 grid min-w-[1.125rem] place-items-center rounded-full bg-brand px-1 text-[0.625rem] font-semibold leading-[1.125rem] text-on-brand"
+          className="absolute -right-1 -top-1 grid min-w-[1.125rem] place-items-center rounded-full bg-brand px-1 text-[0.6875rem] font-semibold leading-[1.125rem] text-on-brand"
         >
           {count > 9 ? "9+" : count}
         </span>
@@ -223,9 +232,15 @@ export function AddToCart({
   variant,
   className,
   label,
+  extras,
+  cartButton = true,
 }: {
   id: string;
+  /** False keeps the purchase button alone (the product pop-up: "Purchase Plan", Genesis 10 Oct 2026). */
+  cartButton?: boolean;
   billing?: Billing;
+  /** Extras chosen beside the button (the product pop-up); the cart line takes them. */
+  extras?: ExtrasChoice;
   /** Show "Purchase" (add and go to checkout) beside "Add to cart". */
   purchase?: boolean;
   size?: "sm" | "md";
@@ -251,21 +266,24 @@ export function AddToCart({
           arrow
           className="flex-1"
           onClick={() => {
-            add(id, { billing, open: false });
+            add(id, { billing, open: false, extras });
             router.push("/cart");
           }}
         >
           {label ?? "Purchase"}
         </GlassButton>
       )}
+      {(cartButton || quoted || !purchase) && (
       <GlassButton
         variant={purchase && !quoted ? "glass" : (variant ?? "glass")}
         size={size}
         className={cn(purchase && !quoted ? "flex-1" : undefined)}
         icon={inCart ? <Check className="size-4" aria-hidden /> : <Plus className="size-4" aria-hidden />}
-        onClick={() => add(id, { billing })}
+        onClick={() => add(id, { billing, extras })}
       >
-        {inCart && quoted
+        {inCart && extras !== undefined && !quoted
+          ? "Update cart"
+          : inCart && quoted
           ? "In cart"
           : quoted
             ? "Add to cart for a quote"
@@ -275,6 +293,7 @@ export function AddToCart({
                 ? "In cart"
                 : "Add to Cart"}
       </GlassButton>
+      )}
     </div>
   );
 }
@@ -396,13 +415,24 @@ export function CartLines({ dense = false }: { dense?: boolean }) {
           <div className="min-w-0 flex-1">
             <p className="text-[0.6875rem] uppercase tracking-[0.14em] text-faint">
               {line.product.group}
-              {line.product.kind === "membership" ? " · Membership" : " · One-time"}
+              {line.product.kind === "membership" ? " · Subscription" : " · Pay-per-project"}
             </p>
             <p className="mt-1 font-sans text-body leading-snug text-bone">{line.product.name}</p>
             {line.product.inPerson && (
               <p className="mt-1 text-[0.6875rem] uppercase tracking-[0.12em] text-brand-ink">Mumbai only, for now</p>
             )}
             <IncludedList items={line.product.includes} className="mt-1.5" />
+            {/* The extras chosen in the product's pop-up, each priced. */}
+            {line.extraLines.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {line.extraLines.map((extra) => (
+                  <li key={extra.label} className="flex justify-between gap-3 text-[0.75rem] text-ash">
+                    <span>{extra.label.startsWith("+") ? extra.label : `+ ${extra.label}`}</span>
+                    <span className="tabular-nums">{rupees(extra.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {line.product.kind === "membership" ? (
                 <BillingSwitch id={line.id} billing={line.billing ?? "quarterly"} />
@@ -418,12 +448,12 @@ export function CartLines({ dense = false }: { dense?: boolean }) {
             {line.product.kind === "membership" && (
               <p className="mt-2 text-[0.75rem] text-faint">
                 {billingNote(line.product, line.billing)}
-                {memberships > 1 && " · all memberships in an order share one billing cycle"}
+                {memberships > 1 && " · all subscriptions in an order share one billing cycle"}
               </p>
             )}
           </div>
           <div className="flex shrink-0 flex-col items-end justify-between gap-2">
-            <p className="text-body tabular-nums text-bone">{line.quoted ? "Quote" : rupees(line.charge)}</p>
+            <p className="text-body tabular-nums text-bone">{line.quoted ? "Quote" : rupees(line.charge + line.extrasCharge)}</p>
             <button
               type="button"
               onClick={() => remove(line.id)}
@@ -548,7 +578,7 @@ export function CartSummary({ country }: { country?: string }) {
       {suggest && <ComboOffer lines={lines} country={country} />}
       {totals.nextTier && totals.bundleItems > 0 && (
         <p className="mb-4 rounded-card border border-brand/30 bg-brand/[0.06] px-4 py-3 text-small text-bone">
-          Add {totals.nextTier.itemsToGo} more one-time product{totals.nextTier.itemsToGo === 1 ? "" : "s"} to save{" "}
+          Add {totals.nextTier.itemsToGo} more pay-per-project item{totals.nextTier.itemsToGo === 1 ? "" : "s"} to save{" "}
           {totals.nextTier.percent}%.
         </p>
       )}
@@ -590,7 +620,7 @@ export function CartSummary({ country }: { country?: string }) {
       )}
       {totals.quoted.length > 0 && (
         <p className="pt-1 text-[0.75rem] leading-relaxed text-faint">
-          {totals.quoted.length} item{totals.quoted.length === 1 ? " is" : "s are"} priced on request — Genesis
+          {totals.quoted.length} item{totals.quoted.length === 1 ? " is" : "s are"} priced on request, Genesis
           quotes {totals.quoted.length === 1 ? "it" : "them"} after your order.
         </p>
       )}
@@ -673,7 +703,7 @@ function CartDrawer() {
                 <ShoppingBag className="size-8 text-faint" aria-hidden />
                 <p className="text-body text-ash">Your cart is empty.</p>
                 <GlassButton href="/pricing" variant="glass" arrow onClick={() => setDrawerOpen(false)}>
-                  Explore Memberships
+                  Explore Subscriptions
                 </GlassButton>
               </div>
             ) : (

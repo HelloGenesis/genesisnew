@@ -66,7 +66,7 @@ export function SiteFooter() {
           empty. Add a group and raise this number with it rather than letting
           the last one wrap underneath on its own.
         */}
-        <div className="glass glass-strong glass-lit grid gap-12 rounded-panel p-8 sm:grid-cols-2 sm:p-12 lg:grid-cols-3">
+        <div className="glass glass-strong glass-lit grid gap-12 rounded-panel p-8 sm:grid-cols-2 sm:p-12 lg:-mx-16 lg:grid-cols-3">
           <Reveal>
             <GenesisMark />
             {/*
@@ -160,14 +160,14 @@ export function SiteFooter() {
                         target="_blank"
                         rel="noopener noreferrer"
                         data-contact-cta={item.contact ? "" : undefined}
-                        className="text-small text-ash transition-colors hover:text-bone"
+                        className="inline-flex min-h-8 items-center text-small text-ash transition-colors hover:text-bone"
                       >
                         {item.label}
                       </a>
                     ) : (
                       <Link
                         href={item.href}
-                        className="text-small text-ash transition-colors hover:text-bone"
+                        className="inline-flex min-h-8 items-center text-small text-ash transition-colors hover:text-bone"
                       >
                         {item.label}
                       </Link>

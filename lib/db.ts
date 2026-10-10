@@ -1,6 +1,7 @@
 import "server-only";
 
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { dbEnv, isPlaceholder } from "./env";
@@ -24,7 +25,10 @@ const globalForPrisma = globalThis as unknown as { genesisPrisma?: Client };
 
 function createClient(): Client {
   const { DATABASE_URL } = dbEnv();
-  const adapter = new PrismaNeon({ connectionString: DATABASE_URL });
+  /* Neon in production and on previews; node-postgres for the local embedded database (scripts/dev-db.ts). */
+  const adapter = /\.neon\.tech\b/.test(DATABASE_URL)
+    ? new PrismaNeon({ connectionString: DATABASE_URL })
+    : new PrismaPg({ connectionString: DATABASE_URL });
 
   return new PrismaClient({
     adapter,

@@ -2,7 +2,20 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "app/api/media/[...path]/route.ts": {
-      "regions": ["bom1"]
+      "regions": [
+        "bom1"
+      ]
+    },
+    "app/api/jobs/run/route.ts": {
+      "regions": [
+        "bom1"
+      ]
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/jobs/run",
+      "schedule": "* * * * *"
+    }
+  ]
 }

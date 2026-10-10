@@ -6,16 +6,17 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { DivisionLockup } from "./division-lockup";
+import { DivisionLockup, DivisionName } from "./division-lockup";
 import { CartButton } from "./cart";
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
-import { homeHref, navItems, primaryCta, type NavItem } from "@/lib/site-config";
+import { homeHref, navItems, type NavItem } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 /**
@@ -45,15 +46,30 @@ const NAV_LINK = cn(
     each side of every link, at those widths only, buys it back; from xl the
     bar has room and is as it was.
   */
-  "relative whitespace-nowrap rounded-full px-2.5 py-2 text-small text-ash lg:max-xl:px-1.5",
+  /* Seven items from xl (four divisions, Case Studies, Pricing, Contact): 2px off each side until 2xl. */
+  "relative whitespace-nowrap rounded-full px-2.5 py-2 text-small text-ash xl:max-2xl:px-2",
   "transition-colors duration-300 hover:bg-[var(--hover-wash)] hover:text-bone",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
   "after:pointer-events-none after:absolute after:inset-x-2.5 after:bottom-1 after:h-px",
   "after:origin-center after:scale-x-0 after:bg-brand after:transition-transform after:duration-300 after:ease-out",
   "hover:after:scale-x-100 focus-visible:after:scale-x-100 motion-reduce:after:transition-none",
+  /*
+    THE CHOSEN ITEM IN THE BRAND GRADIENT (Genesis, 5 Oct 2026): the page
+    you are on, or the menu you have open, in amber → coral → violet, its
+    rule drawn in the same gradient.
+  */
+  "data-[on]:bg-[linear-gradient(100deg,#f5923e,#f2607e_45%,#b45ce0)] data-[on]:bg-clip-text data-[on]:text-transparent",
+  "data-[on]:after:scale-x-100 data-[on]:after:bg-[linear-gradient(90deg,#f5923e,#f2607e,#b45ce0)]",
 );
 
+/** Whether a bar item is the page you are on. */
+function isCurrent(pathname: string, href: string) {
+  const path = href.split(/[?#]/)[0];
+  return path !== "/" && path !== "" && (pathname === path || pathname.startsWith(`${path}/`));
+}
+
 export function GlassNav() {
+  const pathname = usePathname() ?? "/";
   const [condensed, setCondensed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   /*
@@ -142,7 +158,7 @@ export function GlassNav() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 sm:pt-6"
+      className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3 sm:px-4 sm:pt-6"
     >
       {/*
         DRIVEN BY THE TOKENS, not by hardcoded values. This component used to
@@ -159,12 +175,13 @@ export function GlassNav() {
       */}
       <nav
         className={cn(
-          "glass glass-lit pointer-events-auto flex w-full max-w-6xl items-center gap-4 rounded-full",
+          "nav-bar glass glass-lit pointer-events-auto flex w-full max-w-7xl items-center gap-4 rounded-full",
           // No border utility here: .glass already sets one from
           // --glass-border, and the `border-white/10` that used to sit here
           // overrode it with a white line on a near-white pill — measured
           // 1.00:1 against the pill's own surface in the light theme.
-          "px-4 py-3 sm:px-6",
+          /* Slimmer on a phone (Genesis, 4 Oct 2026: "decrease the size of this bar on phone, sleek and tidy"). */
+          "py-1.5 pl-4 pr-1.5 sm:px-6 sm:py-3",
           "transition-[background-color,backdrop-filter] duration-500 ease-out",
           condensed && "glass-strong",
           // Takes the dark scene's tokens — inks, glass fill, border and the
@@ -230,13 +247,18 @@ export function GlassNav() {
           bar becomes the conventional three-part header it always looked like
           it was meant to be: mark left, links centre, actions right.
         */}
-        <ul className="hidden flex-1 items-center justify-center gap-1 lg:flex">
+        {/*
+          THE FULL BAR FROM xl (1280px), the menu button below it (Genesis, 2 Oct
+          2026). With the four divisions on the bar as their own menus, a
+          1024px laptop pushed "Start a Project" off the right edge.
+        */}
+        <ul className="hidden flex-1 items-center justify-center gap-1 xl:flex">
           {navItems.map((item) =>
-            item.children ? (
+            item.children || item.items?.length ? (
               <NavMenu key={item.label} item={item} />
             ) : (
               <li key={item.label}>
-                <Link href={item.href} {...outbound(item)} className={NAV_LINK}>
+                <Link href={item.href} {...outbound(item)} aria-current={isCurrent(pathname, item.href) ? "page" : undefined} data-on={isCurrent(pathname, item.href) || undefined} className={NAV_LINK}>
                   {item.label}
                 </Link>
               </li>
@@ -249,8 +271,8 @@ export function GlassNav() {
           every pixel this cluster needs. The toggle and the CTA are fixed
           furniture — they are what the bar shrinks AROUND, not what shrinks.
         */}
-        <div className="ml-auto flex shrink-0 items-center gap-2">
-          <ThemeToggle className="hidden lg:inline-flex" />
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <ThemeToggle className="hidden xl:inline-flex" />
           <CartButton />
 
           {/*
@@ -262,13 +284,14 @@ export function GlassNav() {
             rather than a ring drawn on it.
           */}
           <GlassButton
-            href={primaryCta.href}
+            /* "Book a 15-min Call" in the bar (Genesis, 4 Oct 2026), down to the footer's calendar. */
+            href="/#book-a-call"
             variant="brand"
             size="sm"
             className="hidden transition-[transform,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-px motion-safe:hover:shadow-[0_6px_20px_-6px_rgb(255_197_22/0.55)] sm:inline-flex"
             arrow
           >
-            {primaryCta.label}
+            Book a 15-min Call
           </GlassButton>
 
           <button
@@ -276,7 +299,7 @@ export function GlassNav() {
             onClick={() => setMenuOpen((open) => !open)}
             aria-expanded={menuOpen}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="grid size-10 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:size-9 lg:hidden"
+            className="grid size-9 place-items-center rounded-full border border-[var(--glass-border)] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:size-10 xl:size-9 xl:hidden"
           >
             {menuOpen ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
@@ -291,7 +314,7 @@ export function GlassNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="glass glass-strong pointer-events-auto absolute inset-x-4 top-20 rounded-panel p-4 lg:hidden"
+            className="glass glass-strong pointer-events-auto absolute inset-x-3 top-[4.25rem] rounded-panel p-4 sm:inset-x-4 sm:top-20 xl:hidden"
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="micro-label">Menu</span>
@@ -317,7 +340,15 @@ export function GlassNav() {
                     onClick={() => setMenuOpen(false)}
                     className="block rounded-card px-3 py-3 text-small text-ash transition-colors hover:bg-[var(--hover-wash)] hover:text-bone"
                   >
-                    {item.label}
+                    {/* A division is its logo — the N and the name — as everywhere else. */}
+                    {item.short ? (
+                      <>
+                        <span className="sr-only">{item.label}</span>
+                        <DivisionName name={item.short} height={22} />
+                      </>
+                    ) : (
+                      item.label
+                    )}
                   </Link>
                   {/*
                     THE SUBMENU IS ALWAYS OPEN ON A PHONE, which is the right
@@ -362,13 +393,13 @@ export function GlassNav() {
 
 
             <GlassButton
-              href={primaryCta.href}
+              href="/#book-a-call"
               variant="brand"
               size="md"
               arrow
               className="mt-3 w-full"
             >
-              {primaryCta.label}
+              Book a 15-min Call
             </GlassButton>
           </motion.div>
         )}
@@ -399,8 +430,11 @@ export function GlassNav() {
  */
 function NavMenu({ item }: { item: NavItem }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname() ?? "/";
   /* A menu of plain links (Pricing) rather than division columns (Services). */
   const simple = !item.children?.some((child) => child.short || child.items?.length);
+  /* A division of its own on the bar: its mark, its services and its page. */
+  const division = !item.children && (item.items?.length ?? 0) > 0;
 
   /*
     CLOSE ON ANY LINK INSIDE, read in the capture phase: SmoothScroll handles
@@ -441,25 +475,87 @@ function NavMenu({ item }: { item: NavItem }) {
         }
       }}
     >
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="true"
-        onClick={() => setOpen((was) => !was)}
-        className={cn(NAV_LINK, "inline-flex items-center gap-1")}
-      >
-        {item.label}
-        <ChevronDown
-          aria-hidden
-          className={cn(
-            "size-3.5 transition-transform duration-300",
-            open && "rotate-180",
-          )}
-        />
-      </button>
+      {/*
+        THE NAME IS A LINK, THE CHEVRON OPENS THE MENU (Genesis, 2 Oct 2026:
+        "make these clickable and redirect to their pages"). Hovering still
+        opens the menu; a click on "Studios" goes to /content-production. The
+        chevron is its own button so a keyboard or a touch screen can still
+        open the menu without leaving the page.
+      */}
+      <span className="inline-flex items-center">
+        <Link href={item.href} {...outbound(item)} data-page-link aria-current={isCurrent(pathname, item.href) ? "page" : undefined} data-on={open || isCurrent(pathname, item.href) || undefined} className={cn(NAV_LINK, "pr-1 xl:max-2xl:pr-1")}>
+          {item.label}
+        </Link>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-haspopup="true"
+          aria-label={`${item.label} menu`}
+          onClick={() => setOpen((was) => !was)}
+          className="-ml-0.5 grid size-7 place-items-center rounded-full text-ash transition-colors hover:bg-[var(--hover-wash)] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              "size-3.5 transition-transform duration-300",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+      </span>
 
       <AnimatePresence>
-        {open && simple && (
+        {open && division && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute left-1/2 top-full z-10 w-72 -translate-x-1/2 pt-3"
+          >
+            <div className="menu-glass rounded-panel p-4">
+              <Link href={item.href} data-page-link onClick={() => setOpen(false)} className="block w-fit focus-visible:outline-none">
+                {item.short ? (
+                  <DivisionLockup
+                    name={item.short}
+                    tagline=""
+                    ramp={item.ramp ?? ""}
+                    as="h3"
+                    nameOnly
+                    height={20}
+                    taglineClassName="hidden"
+                  />
+                ) : (
+                  <span className="text-body text-bone">{item.label}</span>
+                )}
+              </Link>
+              <ul className="mt-3 flex flex-col gap-1 border-t border-[var(--glass-border)] pt-3">
+                {item.items?.map((service) => (
+                  <li key={service}>
+                    <Link
+                      href={item.href}
+                      data-page-link
+                      onClick={() => setOpen(false)}
+                      className="block rounded-card px-2 py-1.5 text-small leading-snug text-ash transition-colors duration-200 hover:bg-[var(--hover-wash)] hover:text-[var(--menu-hover)] focus-visible:text-[var(--menu-hover)] focus-visible:outline-none"
+                    >
+                      {service}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href={item.href}
+                data-page-link
+                onClick={() => setOpen(false)}
+                className="mt-3 inline-flex items-center gap-1.5 border-t border-[var(--glass-border)] pt-3 text-small text-bone transition-colors hover:text-brand-ink"
+              >
+                View {item.label === "AI Lab" ? "AI Labs" : item.label}
+                <ArrowRight className="size-3.5 text-brand-ink" aria-hidden />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+        {open && simple && !division && (
           /*
             A SMALL MENU — Pricing's two links — hangs under its own trigger
             rather than spanning the bar like the Services panel. Padding, not
@@ -472,7 +568,7 @@ function NavMenu({ item }: { item: NavItem }) {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="absolute left-1/2 top-full z-10 w-72 -translate-x-1/2 pt-3"
           >
-            <ul className="rounded-panel border border-[var(--glass-border)] bg-[var(--surface-raised)] p-2 shadow-float">
+            <ul className="menu-glass rounded-panel p-2">
               {item.children?.map((child) => (
                 <li key={child.label}>
                   <Link
@@ -492,7 +588,7 @@ function NavMenu({ item }: { item: NavItem }) {
             </ul>
           </motion.div>
         )}
-        {open && !simple && (
+        {open && !simple && !division && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
@@ -533,7 +629,7 @@ function NavMenu({ item }: { item: NavItem }) {
               in both themes, so the blur below it is belt and braces now
               rather than the thing doing the work.
             */}
-            <div className="rounded-panel border border-[var(--glass-border)] bg-[var(--surface-raised)] p-6 shadow-float backdrop-blur-xl">
+            <div className="menu-glass rounded-panel p-6">
               <div className="grid gap-x-6 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
                 {item.children?.map((child) => (
                   <div key={child.label}>

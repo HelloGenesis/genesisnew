@@ -36,8 +36,14 @@ export function BookingCalendar() {
   const mounted = useSyncExternalStore(noop, () => true, () => false);
   return (
     <div
-      id="contact"
-      className="glass glass-strong glass-lit relative mb-6 grid scroll-mt-24 overflow-hidden rounded-panel lg:grid-cols-[1fr_1.05fr]"
+      /*
+        ITS OWN ANCHOR, #book-a-call (2 Oct 2026). It was #contact, which the
+        homepage's enquiry form also is — and every #contact link is caught
+        by QuickContact and sent to WhatsApp — so "Book a 15-min Call" never
+        reached the calendar.
+      */
+      id="book-a-call"
+      className="glass glass-strong glass-lit relative mb-6 grid scroll-mt-24 overflow-hidden rounded-panel lg:-mx-16 lg:grid-cols-[1fr_1.05fr]"
     >
       <Pitch />
       <div className="min-h-[26rem] border-t border-white/10 p-5 sm:p-8 lg:border-l lg:border-t-0">

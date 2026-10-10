@@ -1,7 +1,9 @@
 
 import { Spectrum } from "@/components/genesis/atmosphere";
 import { DivisionBoard } from "@/components/genesis/division-board";
-import { GlassButton } from "@/components/genesis/glass-button";
+import { ChevronDown } from "lucide-react";
+
+import { WordCycler } from "@/components/genesis/word-cycler";
 import { homeHero } from "@/lib/pricing";
 
 /**
@@ -68,7 +70,7 @@ export function Services() {
         it — and on a 375x667 phone they touched it. The floor keeps a clear
         gap below the nav at any height.
       */
-      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[max(calc(var(--section-pad)*3.4),6.5rem)] lg:pt-[max(calc(var(--section-pad)*3.4),7.5rem)]"
+      className="scene-charcoal grain relative isolate flex min-h-dvh flex-col justify-center overflow-hidden pb-[calc(var(--section-pad)*2)] pt-[max(calc(var(--section-pad)*2),5.5rem)] lg:pt-[max(calc(var(--section-pad)*3.4),7.5rem)]"
     >
       {/*
         Transitions into and out of the dark chapter, for the LIGHT theme
@@ -98,7 +100,8 @@ export function Services() {
 
       <Spectrum />
 
-      <div className="relative z-[2] mx-auto w-full max-w-7xl px-6">
+      {/* On a phone the hero line comes first, over the orb (Genesis, 4 Oct 2026). */}
+      <div className="relative z-[2] mx-auto w-full max-w-7xl px-6 max-lg:flex max-lg:flex-col">
         {/*
           ONE LINE OVER THE ORB, NOT TWO. Genesis has taken "Four divisions.
           One creative system." off at their own request — the four names
@@ -177,36 +180,57 @@ export function Services() {
           captioned it ("We help brands grow through…") with Genesis's hero
           copy and its two buttons. Still the page's one h1.
         */}
-        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center text-center sm:mt-10">
-          <h1 className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-            {homeHero.heading}{" "}
-            <span className="font-serif italic text-brand-ink">
-              {homeHero.headingAccent}
+        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-start text-left sm:mt-10 max-lg:contents lg:max-w-6xl lg:items-center lg:text-center">
+          {/*
+            THE SENTENCE IS THE HEADLINE (Genesis, 2 Oct 2026: "remove One
+            team. On demand. … make 'Plug Genesis into your brand whenever you
+            need' the hero"). It is the page's one h1, set at the size the old
+            heading had, with the services sliding up in the gradient as its
+            second line — see WordCycler. That line is as tall as any word in
+            it, so the orb and everything above never moves.
+          */}
+          {/*
+            ONE LINE FROM lg (Genesis, 3 Oct 2026: "write this in one line"):
+            the sentence and the sliding service together, at a size that fits
+            the longest service on a laptop. A phone still wraps it.
+          */}
+          <h1 className="max-lg:order-first text-balance text-h3 font-normal leading-[1.15] tracking-tight text-bone max-lg:text-[min(2.25rem,9vw)] max-lg:leading-[1.1] max-lg:text-left lg:whitespace-nowrap lg:text-[2rem] 2xl:text-[2.25rem]">
+            {/*
+              THE PHONE'S HERO, OVER THE ORB, LEFT-ALIGNED (Genesis, 4 Oct
+              2026), set like the division pages' headline: the sentence large
+              and light, "whenever you need" in light yellow italic, and the
+              sliding service under it in the gradient, a weight heavier.
+            */}
+            <span className="max-lg:block">{homeHero.lead.replace(/\s+whenever you need$/i, "")}</span>{" "}
+            <span className="max-lg:mt-3 max-lg:block max-lg:text-[0.62em] max-lg:leading-[1.25]">
+              <span className="max-lg:font-display max-lg:font-extralight max-lg:italic max-lg:text-brand-ink">
+                {homeHero.lead.match(/whenever you need$/i)?.[0]}
+              </span>{" "}
+              <WordCycler
+                words={homeHero.services}
+                align="start"
+                suffix={<span className="text-brand-ink">.</span>}
+                className="max-lg:-ml-px max-lg:mt-0.5 max-lg:grid max-lg:py-0 max-lg:font-sans max-lg:font-semibold"
+              />
             </span>
           </h1>
-          <p className="mt-3 text-balance text-small leading-relaxed text-ash sm:mt-4 sm:text-lead">
-            {homeHero.body}
-          </p>
+          {/* Under the orb on a phone (Genesis, 4 Oct 2026); under the line from lg. */}
+          <p className="mt-3 text-small leading-relaxed text-ash max-lg:-mt-4 max-lg:text-center sm:text-lead">{homeHero.close}</p>
+          {/* A small arrow down to the next section (Genesis, 4 Oct 2026). */}
+          <a
+            href="#case-studies"
+            aria-label="Scroll to the next section"
+            data-track="hero:next"
+            className="mx-auto mt-4 grid size-9 place-items-center rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] text-ash backdrop-blur-[14px] transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand motion-safe:animate-bounce"
+          >
+            <ChevronDown className="size-4" aria-hidden />
+          </a>
           {/*
-            THREE WAYS ON (Genesis, 29 Sep 2026), each saying where it starts:
-            memberships, the standalone one-time services, and the case
-            studies. Stacked on a phone, where three long labels cannot share
-            a line; in a row from sm.
+            NO BUTTONS UNDER THE HERO (Genesis, 2 Oct 2026: "remove these
+            buttons from the home page"). The three "Explore Subscriptions /
+            Pay-per-project / Case Studies" buttons are gone; the divisions
+            around the orb and each section's offers are the way on.
           */}
-          <div className="mt-6 flex w-full flex-col items-stretch gap-2 min-[480px]:w-auto min-[480px]:items-center sm:mt-7 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3 lg:w-max lg:flex-nowrap">
-            {homeHero.ctas.map((cta, index) => (
-              <GlassButton
-                key={cta.href}
-                href={cta.href}
-                pageLink
-                variant={index === 0 ? "brand" : "glass"}
-                arrow
-                className="max-sm:h-11 max-sm:px-5 max-sm:text-[0.8125rem]"
-              >
-                {cta.label}
-              </GlassButton>
-            ))}
-          </div>
         </div>
       </div>
     </section>

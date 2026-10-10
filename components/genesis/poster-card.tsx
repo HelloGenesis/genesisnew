@@ -13,6 +13,7 @@ import Link from "next/link";
 import { cn, isPlainClick } from "@/lib/utils";
 import { VIDEO_GUARD_CLIENT } from "@/lib/video-guard";
 import { watchReader } from "@/lib/slider";
+import { RailProgress } from "@/components/genesis/rail-progress";
 
 /**
  * Movie-poster card — the "Genesis Netflix" unit (img-025, img-026, img-013).
@@ -114,9 +115,13 @@ export function PosterCard({
     poster.clip ? poster.image : undefined,
   );
   const ratio = poster.ratio ?? 9 / 16;
+  /*
+    On a phone a reel is at least 70% of the screen (Genesis, 4 Oct 2026:
+    "cards a little bigger"); 20vw alone left it at 12rem, under half.
+  */
   const reelWidth = priority
-    ? "min(clamp(15rem,26vw,21rem),calc(60vh*9/16))"
-    : "min(clamp(12rem,20vw,18rem),calc(54vh*9/16))";
+    ? "min(clamp(min(74vw,21rem),26vw,21rem),calc(var(--poster-vh,60vh)*9/16))"
+    : "min(clamp(min(70vw,18rem),20vw,18rem),calc(var(--poster-vh,60vh)*9/16))";
 
   const card = (
     <motion.article
@@ -150,7 +155,8 @@ export function PosterCard({
       style={{
         width:
           ratio > 1
-            ? `calc(${reelWidth} * 16 / 9 * ${ratio.toFixed(4)})`
+            ? /* never wider than the screen: a landscape film came out 570px on a 430px phone */
+              `min(calc(${reelWidth} * 16 / 9 * ${ratio.toFixed(4)}), calc(100vw - 3rem))`
             : reelWidth,
       }}
     >
@@ -568,6 +574,13 @@ export function PosterCard({
           </div>
         ))}
       </div>
+      {/*
+        IN THE PAGE'S COLUMN, NOT EDGE TO EDGE (Genesis, 2 Oct 2026: "make
+        this as other — why is this end to end"). The cards bleed to the
+        screen's edges; the bar under them keeps to the same 6xl column as
+        every other section's.
+      */}
+      <RailProgress rail={railRef} className="mx-auto mt-1 w-full max-w-6xl px-6" />
       <RailArrow
         direction="left"
         label="Previous case study"

@@ -24,6 +24,8 @@ export function SectionShell({
   headingAccent,
   body,
   bodyPhone,
+  bodyDesktop,
+  before,
   children,
   tone = "brand",
   origin = "top-right",
@@ -64,6 +66,10 @@ export function SectionShell({
   body?: string;
   /** A shorter body for phones — below sm it replaces `body`. */
   bodyPhone?: string;
+  /** On a desktop, this in place of the body paragraph — the process icons. */
+  bodyDesktop?: ReactNode;
+  /** Something set above the header — the case studies' figures on a phone. */
+  before?: ReactNode;
   children?: ReactNode;
   tone?: "brand" | "neutral";
   origin?: "top" | "top-right" | "top-left" | "center" | "bottom";
@@ -133,6 +139,7 @@ export function SectionShell({
       className={cn("py-[var(--section-pad)]", className)}
     >
       <section id={id} className="mx-auto w-full max-w-6xl px-6">
+        {before}
         {/*
           `split` sets the heading left and the standfirst right, on a grid.
           Eleven sections were running the centred, boxed arrangement, which is
@@ -211,7 +218,7 @@ export function SectionShell({
             )}
 
             {body && (
-              <Reveal delay={0.1} className={cn(align === "split" && "lg:pb-2", bodyClassName)}>
+              <Reveal delay={0.1} className={cn(align === "split" && "lg:pb-2", bodyDesktop ? "lg:hidden" : undefined, bodyClassName)}>
                 <p
                   className={cn(
                     "text-pretty text-body text-ash sm:text-lead",
@@ -231,6 +238,7 @@ export function SectionShell({
                 </p>
               </Reveal>
             )}
+            {body && bodyDesktop && <div className="mt-8 hidden lg:block">{bodyDesktop}</div>}
           </header>
         )}
 

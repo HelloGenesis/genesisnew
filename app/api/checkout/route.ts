@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { priceCart } from "@/lib/cart";
+import { recordCheckout } from "@/lib/crm/orders";
 import { TERMS_VERSION } from "@/lib/legal-commerce";
 import { COUNTRIES, SHOOT_CITY, findCountry, validPostal } from "@/lib/regions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
@@ -46,6 +47,15 @@ const bodySchema = z.object({
         id: z.string().max(120),
         qty: z.number().int().min(1).max(99),
         billing: z.enum(["quarterly", "monthly"]).optional(),
+        /* Longer videos, adaptations and add-ons — clamped again by priceCart (lib/extras). */
+        extras: z
+          .object({
+            extendSteps: z.number().int().min(0).max(10).optional(),
+            extendVideos: z.number().int().min(0).max(200).optional(),
+            adaptations: z.number().int().min(0).max(50).optional(),
+            addOns: z.record(z.string().max(80), z.number().int().min(0).max(50)).optional(),
+          })
+          .optional(),
       }),
     )
     .min(1)
@@ -136,6 +146,8 @@ export async function POST(request: Request) {
           line.product.group,
           line.product.name,
           line.billing ? `(${line.billing})` : line.qty > 1 ? `x${line.qty}` : "",
+          /* The extras, so the team sees what to make: "[+30 sec on 2 videos, 1 adaptation]". */
+          line.extraLines.length ? `[${line.extraLines.map((extra) => extra.label).join(", ")}]` : "",
         ]
           .filter(Boolean)
           .join(" "),
@@ -175,6 +187,30 @@ export async function POST(request: Request) {
   const clip = (value: string) => value.slice(0, 250);
   const contactPhone = `${customer.phoneDial}${customer.phone.replace(/[\s-]/g, "")}`;
   const contact = `${customer.name}${customer.designation ? ` (${customer.designation})` : ""} · ${customer.email} · ${phone}`;
+  /*
+    THE ORDER IN THE CRM (lib/crm/orders): kept as pending with its lines and
+    as a lead, so an unpaid checkout is followed up and a paid one becomes
+    projects when Razorpay's webhook confirms it. Never in checkout's way.
+  */
+  const partnerCode = request.headers.get("cookie")?.match(/(?:^|;\s*)gm_partner=([A-Za-z0-9-]+)/)?.[1] ?? null;
+  const keep = (ids: { razorpayLinkId?: string; razorpaySubscriptionId?: string }) =>
+    recordCheckout({
+      reference,
+      order,
+      consent,
+      partnerCode,
+      ...ids,
+      customer: {
+        name: customer.name,
+        designation: customer.designation,
+        email: customer.email,
+        phone,
+        company: customer.company,
+        taxId: customer.taxId ? `${taxIdLabel} ${customer.taxId}` : undefined,
+        address: `${customer.address}, ${place}`,
+        notes: [customer.website && `Website: ${customer.website}`, customer.notes, quotes && `Quote: ${quotes}`].filter(Boolean).join(" · "),
+      },
+    }).catch((error) => console.error("[checkout] CRM record failed", error));
 
   try {
     /*
@@ -189,7 +225,7 @@ export async function POST(request: Request) {
     if (order.recurring.total > 0 && order.billing) {
       const quarterly = order.billing === "quarterly";
       const memberships = order.payable.filter((line) => line.product.kind === "membership");
-      const planName = `Genesis — ${memberships.map((line) => `${line.product.group} ${line.product.name}`).join(" + ")}`;
+      const planName = `Genesis: ${memberships.map((line) => `${line.product.group} ${line.product.name}`).join(" + ")}`;
       const cycle = quarterly ? "every 3 months" : "every month";
 
       const plan = await razorpay<{ id: string }>("plans", {
@@ -199,7 +235,7 @@ export async function POST(request: Request) {
           name: planName.slice(0, 120),
           amount: order.recurring.total * 100, // paise
           currency: "INR",
-          description: clip(`${order.billing} membership, ${order.taxLabel} included`),
+          description: clip(`${order.billing} subscription, ${order.taxLabel} included`),
         },
         notes: { reference },
       });
@@ -215,7 +251,7 @@ export async function POST(request: Request) {
               addons: [
                 {
                   item: {
-                    name: "One-time products (first invoice)",
+                    name: "Pay-per-project work (first invoice)",
                     amount: order.oneTime.total * 100,
                     currency: "INR",
                   },
@@ -240,6 +276,7 @@ export async function POST(request: Request) {
         }),
       });
 
+      await keep({ razorpaySubscriptionId: subscription.id });
       return NextResponse.json({
         mode: "razorpay-subscription",
         key: razorpayKeys()!.id,
@@ -253,12 +290,12 @@ export async function POST(request: Request) {
     }
 
     /* ONE-TIME PRODUCTS ONLY → A PAYMENT LINK for the total, as before. */
-    const link = await razorpay<{ short_url?: string }>("payment_links", {
+    const link = await razorpay<{ id?: string; short_url?: string }>("payment_links", {
       amount: order.total * 100, // paise
       currency: "INR",
       accept_partial: false,
       reference_id: reference,
-      description: clip(`Genesis Media — ${items}`),
+      description: clip(`Genesis Media: ${items}`),
       customer: { name: customer.name, email: customer.email, contact: contactPhone },
       notify: { sms: true, email: true },
       reminder_enable: true,
@@ -284,6 +321,7 @@ export async function POST(request: Request) {
       callback_method: "get",
     });
     if (!link.short_url) throw new Error("No payment link returned");
+    await keep({ razorpayLinkId: link.id });
     return NextResponse.json({ mode: "razorpay", url: link.short_url, reference });
   } catch (error) {
     console.error(

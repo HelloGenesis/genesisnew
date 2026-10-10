@@ -41,7 +41,7 @@ export const LEGAL_EMAIL = "hello@genesismedia.co";
 export const privacy: LegalDocument = {
   slug: "privacy",
   title: "Privacy Policy",
-  updated: "29 September 2026",
+  updated: "2 October 2026",
   standfirst:
     "How Genesis Events and Media Group (Genesis Media) collects, uses, stores, shares and protects personal information.",
   intro: [
@@ -188,9 +188,9 @@ export const privacy: LegalDocument = {
     {
       heading: "16. Purchases, Payments and Checkout",
       paragraphs: [
-        "When you buy a membership or product through our website, we collect the details needed to process and invoice your order: the contact person's name, designation, email and phone number; your business name, country, billing address, GSTIN or other tax ID, business email and phone; the items ordered and their billing choices; the shoot location, where a product requires a shoot; and your agreement to our Terms & Conditions and Cancellation & Refund Policy, with the date and version accepted.",
+        "When you buy a subscription or product through our website, we collect the details needed to process and invoice your order: the contact person's name, designation, email and phone number; your business name, country, billing address, GSTIN or other tax ID, business email and phone; the items ordered and their billing choices; the shoot location, where a product requires a shoot; and your agreement to our Terms & Conditions and Cancellation & Refund Policy, with the date and version accepted.",
         "Payments are processed by Razorpay Software Private Limited. Your card, UPI, net-banking or wallet details are entered on Razorpay's pages and are handled by Razorpay under its own privacy policy; Genesis receives confirmation of payment and a payment reference, not your full payment details.",
-        "We use this information to process and fulfil your order, issue invoices and GST records, meet our tax and accounting obligations, communicate with you about your order and membership, and prevent fraud. Your cart is stored only in your own browser until you check out.",
+        "We use this information to process and fulfil your order, issue invoices and GST records, meet our tax and accounting obligations, communicate with you about your order and subscription, and prevent fraud. Your cart is stored only in your own browser until you check out.",
         "We keep order and invoice records for as long as tax and accounting law requires, which in India is generally at least eight years.",
       ],
     },

@@ -2,10 +2,26 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 
 import { cn } from "@/lib/utils";
 import { AvatarDialog } from "./avatar-dialog";
+import { CaseStudyDialog } from "./case-study-dialog";
+import { caseStudyList, type CaseStudy } from "@/lib/case-studies";
+
+/*
+  THE AVATARS WITH A WRITTEN STUDY OPEN IT (Genesis, 6 Oct 2026: "when
+  clicked treat these cards as case-study pop-ups, all across"). Adi and Diya
+  are the Activ Yuva study; Bharat and Tanvi have their own. The rest keep
+  the avatar window.
+*/
+const STUDY_FOR: Record<string, string> = {
+  adi: "aditya-birla-capital-brand-performance",
+  diya: "aditya-birla-capital-brand-performance",
+  bharat: "ai-avatar-bharat",
+  tanvi: "ai-avatar-tanvi",
+};
+import { RailProgress } from "./rail-progress";
 
 /**
  * The AI avatar roster, dealt as a hand of cards.
@@ -193,6 +209,14 @@ export function AvatarFan({
   const fan = useFanRoom();
   /* Which avatar is open over the page. They were routes; see AvatarDialog. */
   const [openId, setOpenId] = useState<string | null>(null);
+  const [study, setStudy] = useState<CaseStudy | null>(null);
+  const open = (id: string) => {
+    const found = caseStudyList.find((entry) => entry.slug === STUDY_FOR[id]);
+    if (found) setStudy(found);
+    else setOpenId(id);
+  };
+  /* The swiping row on a phone, for its progress bar. */
+  const swipe = useRef<HTMLDivElement>(null);
 
   return (
     /*
@@ -209,6 +233,7 @@ export function AvatarFan({
     */
     <>
     <div
+      ref={swipe}
       className={cn(
         /*
           2.08, NOT 2.2. Measured with the fan actually SPREAD — the first
@@ -229,12 +254,14 @@ export function AvatarFan({
               lets each card be nearly half the screen, and the whole point
               of the section is that you can see the faces.
             */
-            "no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2",
+            /* Sideways only: with overflow-y left to auto the row also scrolled up and down under a finger, cutting the card's top off (Genesis, 6 Oct 2026). */
+            "no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain px-6 pb-2 pt-1",
         className,
       )}
       style={{ "--fan-card": CARD_W } as React.CSSProperties}
     >
-      {avatars.map((avatar, index) => {
+      {/* On a phone the row opens on Shivam, Genesis's founder (Genesis, 6 Oct 2026: "add Shivam first"); the fan keeps its order. */}
+      {(fan ? avatars : [...avatars].sort((a, b) => Number(b.id === "shivam") - Number(a.id === "shivam"))).map((avatar, index) => {
         const offset = index - centre;
         const distance = Math.abs(offset);
         const isCentre = distance < 0.5;
@@ -267,7 +294,7 @@ export function AvatarFan({
             className={
               fan
                 ? "pointer-events-none absolute inset-x-0 top-0 flex justify-center"
-                : "w-[46vw] max-w-[13rem] shrink-0 snap-center"
+                : /* As big as the case cards above on a phone (Genesis, 6 Oct 2026). */ "w-[78vw] shrink-0 snap-center sm:w-[46vw] sm:max-w-[13rem]"
             }
             style={
               fan
@@ -342,7 +369,7 @@ export function AvatarFan({
             >
             <button
               type="button"
-              onClick={() => setOpenId(avatar.id)}
+              onClick={() => open(avatar.id)}
               aria-haspopup="dialog"
               aria-label={`${avatar.name}${avatar.role ? `, ${avatar.role}` : ""}${avatar.kind ? `, ${avatar.kind}` : ""}`}
               className={cn(
@@ -364,7 +391,7 @@ export function AvatarFan({
                   and the section is allowed to run a little past a short
                   screen.
                 */
-                fan ? "w-[var(--fan-card)]" : "w-full",
+                fan ? "w-[var(--fan-card)]" : "w-full max-sm:aspect-[4/5]",
                 // The upright card is the only one carrying a lift, so the
                 // eye is told where to start.
                 isCentre
@@ -437,8 +464,8 @@ export function AvatarFan({
                   className={cn(
                     "glass-chip absolute left-2 top-2 z-[1] max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 font-medium uppercase text-white/90",
                     fan
-                      ? "text-[clamp(0.36rem,0.66vw,0.55rem)] tracking-[0.1em]"
-                      : "text-[0.625rem] tracking-[0.04em]",
+                      ? "text-[clamp(0.625rem,0.8vw,0.75rem)] tracking-[0.08em]"
+                      : "text-[0.6875rem] tracking-[0.04em]",
                   )}
                 >
                   {avatar.kind}
@@ -464,7 +491,7 @@ export function AvatarFan({
                     className={cn(
                       "block font-medium uppercase leading-tight text-white/70",
                       fan
-                        ? "mt-1.5 text-[clamp(0.4rem,0.72vw,0.6rem)] tracking-[0.14em]"
+                        ? "mt-1.5 text-[clamp(0.6875rem,0.85vw,0.8125rem)] tracking-[0.1em]"
                         : "mt-1.5 text-[0.6875rem] tracking-[0.06em]",
                     )}
                   >
@@ -479,7 +506,10 @@ export function AvatarFan({
         );
       })}
     </div>
+    {/* Only where the row scrolls: hidden by itself while the fan is spread. */}
+    {!fan && <RailProgress rail={swipe} className="mx-6 mt-3" />}
     <AvatarDialog id={openId} onClose={() => setOpenId(null)} onNavigate={setOpenId} />
+    <CaseStudyDialog study={study} onClose={() => setStudy(null)} />
     </>
   );
 }

@@ -24,7 +24,7 @@ const INSIDER_ROLES: readonly UserRole[] = [
 
 export type InsiderUser = {
   id: string;
-  email: string;
+  email: string | null;
   name: string | null;
   picture: string | null;
   role: UserRole;

@@ -142,7 +142,16 @@ export type Turnaround = {
   label: string;
   heading: string;
   body?: string;
-  tiers: { time: string; title: string; items?: string[]; icon?: IconName }[];
+  /** `note`: when the clock starts, or what can stretch it — set apart, in smaller type. */
+  tiers: {
+    time: string;
+    title: string;
+    items?: string[];
+    note?: string;
+    /** A dropdown explaining the kind of video the tier names. */
+    detail?: { label: string; lead?: string; items: string[] };
+    icon?: IconName;
+  }[];
   notes?: string[];
 };
 

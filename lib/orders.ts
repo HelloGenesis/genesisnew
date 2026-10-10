@@ -46,8 +46,8 @@ export async function recordOrderEvent(order: OrderEvent) {
       return false;
     }),
   ]);
-  if (!sheeted) console.warn("[orders] not written to the sheet — is GOOGLE_SHEETS_ID set and shared with the service account?");
-  if (!emailed) console.warn("[orders] no email sent — is RESEND_API_KEY / ORDER_EMAIL_FROM set?");
+  if (!sheeted) console.warn("[orders] not written to the sheet, is GOOGLE_SHEETS_ID set and shared with the service account?");
+  if (!emailed) console.warn("[orders] no email sent, is RESEND_API_KEY / ORDER_EMAIL_FROM set?");
 }
 
 async function emailTeam(order: OrderEvent) {
@@ -91,7 +91,7 @@ async function emailTeam(order: OrderEvent) {
     body: JSON.stringify({
       from,
       to,
-      subject: `${order.alert ? "⚠️ " : ""}${order.event}${order.company ? ` — ${order.company}` : ""}`,
+      subject: `${order.alert ? "⚠️ " : ""}${order.event}${order.company ? `: ${order.company}` : ""}`,
       html,
       text: `${order.event}\n\n${text}`,
     }),

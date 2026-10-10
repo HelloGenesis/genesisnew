@@ -1,0 +1,251 @@
+/*
+  THE CRM'S OWN LAYER — /admin, /portal and the sign-in pages.
+
+  Built on the site's tokens (globals.css), so both themes and the brand
+  colours come for free: cards are the light theme's frosted glass, ink is the
+  theme's ink, the accent is the brand yellow. Dense where the marketing site
+  is airy, because a control room is read for hours, not scrolled once.
+*/
+
+.crm {
+  min-height: 100dvh;
+  background: var(--page-ground-compact, var(--surface-base));
+  color: var(--ink-strong);
+}
+
+.crm-card {
+  position: relative;
+  border-radius: 1rem;
+  border: 1px solid var(--glass-border);
+  background-color: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  box-shadow: var(--glass-inset, 0 1px 0 0 rgb(255 255 255 / 0.06) inset), var(--shadow-raised);
+}
+
+.crm-pad {
+  padding: 1.25rem;
+}
+@media (min-width: 640px) {
+  .crm-pad {
+    padding: 1.5rem;
+  }
+}
+
+.crm-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+}
+
+.crm-input {
+  width: 100%;
+  min-height: 2.5rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface-raised) 70%, transparent);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  color: var(--ink-strong);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.crm-input:focus {
+  border-color: #ffc516;
+  box-shadow: 0 0 0 3px rgb(255 197 22 / 0.25);
+}
+textarea.crm-input {
+  min-height: 6rem;
+  resize: vertical;
+}
+select.crm-input {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+.crm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  border-radius: 999px;
+  padding: 0 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
+  cursor: pointer;
+}
+.crm-btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+.crm-btn:active {
+  transform: translateY(1px);
+}
+.crm-btn-primary {
+  color: #141216;
+  background: linear-gradient(180deg, #ffd658 0%, #ffc516 45%, #e0ad13 100%);
+  box-shadow: 0 6px 20px -8px rgb(255 197 22 / 0.6), 0 1px 0 0 rgb(255 255 255 / 0.45) inset;
+}
+.crm-btn-secondary {
+  color: var(--ink-strong);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill);
+}
+.crm-btn-secondary:hover {
+  background: var(--hover-wash);
+}
+.crm-btn-danger {
+  color: #fff;
+  background: #dc2626;
+}
+.crm-btn-sm {
+  min-height: 2rem;
+  padding: 0 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.crm-link {
+  color: var(--brand-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.crm-table {
+  width: 100%;
+  min-width: 720px;
+  text-align: left;
+  font-size: 0.875rem;
+}
+.crm-table thead {
+  border-bottom: 1px solid var(--glass-border);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.crm-table th {
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+}
+.crm-table td {
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+}
+.crm-table tbody tr + tr {
+  border-top: 1px solid var(--glass-border);
+}
+.crm-table tbody tr:hover {
+  background: var(--hover-wash);
+}
+
+.crm-badge {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.crm-tone-good {
+  background: rgb(34 197 94 / 0.14);
+  color: #15803d;
+}
+.crm-tone-warn {
+  background: rgb(245 158 11 / 0.16);
+  color: #b45309;
+}
+.crm-tone-bad {
+  background: rgb(239 68 68 / 0.14);
+  color: #b91c1c;
+}
+.crm-tone-info {
+  background: rgb(139 92 246 / 0.14);
+  color: #6d28d9;
+}
+.crm-tone-muted {
+  background: var(--hover-wash);
+  color: var(--ink-muted);
+}
+:root:not([data-theme="light"]) .crm-tone-good {
+  color: #4ade80;
+}
+:root:not([data-theme="light"]) .crm-tone-warn {
+  color: #fcd34d;
+}
+:root:not([data-theme="light"]) .crm-tone-bad {
+  color: #f87171;
+}
+:root:not([data-theme="light"]) .crm-tone-info {
+  color: #c4b5fd;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .crm-tone-good {
+    color: #15803d;
+  }
+  :root:not([data-theme]) .crm-tone-warn {
+    color: #b45309;
+  }
+  :root:not([data-theme]) .crm-tone-bad {
+    color: #b91c1c;
+  }
+  :root:not([data-theme]) .crm-tone-info {
+    color: #6d28d9;
+  }
+}
+
+.crm-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.375rem;
+  flex: none;
+  border-radius: 0.625rem;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+  transition: background-color 0.15s, color 0.15s;
+}
+.crm-nav-link:hover {
+  background: var(--hover-wash);
+  color: var(--ink-strong);
+}
+.crm-nav-link[aria-current="page"] {
+  color: #141216;
+  font-weight: 600;
+  background: linear-gradient(100deg, #ffd658, #ffc516);
+}
+
+/* The stage tracker on a project: done, current, still to come. */
+.crm-stage {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--hover-wash);
+}
+.crm-stage[data-state="done"] {
+  background: linear-gradient(100deg, #8b5cf6, #f2607e);
+}
+.crm-stage[data-state="current"] {
+  background: #ffc516;
+}
+
+.crm-notice {
+  border-radius: 0.75rem;
+  border: 1px solid var(--glass-border);
+  background: var(--hover-wash);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+}
+.crm-notice-warn {
+  border-color: rgb(245 158 11 / 0.4);
+  background: rgb(245 158 11 / 0.1);
+}

@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 
 import { ConversionEvents } from "@/components/genesis/conversion-events";
+import { CaseStudyPopups } from "@/components/genesis/case-study-popups";
 
 import { INDEXABLE, SITE_URL } from "@/lib/seo";
 import { siteConfig } from "@/lib/site-config";
@@ -180,6 +181,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         suppressHydrationWarning
       >
         {children}
+        {/* Every case study opens in its pop-up, site-wide — see CaseStudyPopups. */}
+        <CaseStudyPopups />
         <Analytics />
         <ConversionEvents />
       </body>

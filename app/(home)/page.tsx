@@ -8,9 +8,22 @@ import { CaseStudies } from "./components/case-studies";
 import { ClientLogos } from "./components/client-logos";
 import { InfluencerMarketing } from "./components/influencer-marketing";
 import { Portfolio } from "./components/portfolio";
-import { PricingStrip } from "./components/pricing-strip";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
+import { JumpBar, type JumpLink } from "./components/offer/page-aids";
+import { FaqBlock } from "./components/offer/blocks";
+import { servicePages } from "@/lib/services";
+
+/* The homepage's sections, in the order they come. */
+const HOME_SECTIONS: JumpLink[] = [
+  { id: "case-studies", label: "Case studies" },
+  { id: "clients", label: "Clients" },
+  { id: "influence", label: "Influence" },
+  { id: "ai-lab", label: "AI Lab" },
+  { id: "studios", label: "Studios" },
+  { id: "brand-design", label: "Brand & Design" },
+  { id: "library", label: "Work" },
+];
 
 /*
   THE TITLE WAS THE TAGLINE — 91 characters, so every result showed "Genesis
@@ -92,6 +105,7 @@ export const metadata: Metadata = pageMetadata({
  */
 export default function HomePage() {
   return (
+    <>
     <main>
       {/* 01 — the Brain. Four verticals, one system, and the way in. */}
       <Services />
@@ -122,16 +136,14 @@ export default function HomePage() {
       */}
       <ClientLogos />
 
-      {/* 05-08 — the four verticals, in Genesis's order: AI Lab, Studios,
-          Brand & Design, Influence. AI Lab carries the automation picture
-          inside its own block. */}
+      {/* 05-08 — the four verticals, in Genesis's order (2 Oct 2026):
+          Influence, AI Lab, Studios, Brand & Design. AI Lab carries the
+          automation picture inside its own block. */}
+      <InfluencerMarketing />
       <AiContent />
       <Studios />
       <BrandingDesign />
-      <InfluencerMarketing />
-      {/* How Genesis charges, in one line — see PricingStrip. */}
-      <PricingStrip />
-
+      {/* The portfolio above the pricing (Genesis, 4 Oct 2026: "case studies will go above membership"). */}
       {/*
         09 — THE PORTFOLIO, once every division has had its say.
 
@@ -143,10 +155,30 @@ export default function HomePage() {
       <Portfolio />
 
       {/*
+        THE QUESTIONS PEOPLE ASK ABOUT GENESIS (Genesis, 6 Oct 2026: "add FAQs
+        on the main homepage"): two from each division's own list, in the
+        divisions' order, with the FAQPage data that goes with them.
+      */}
+      <FaqBlock
+        heading="Genesis Media: FAQs"
+        items={servicePages.flatMap((service) => service.faqs.slice(0, 2)).map((faq) => ({ q: faq.question, a: [faq.answer] }))}
+      />
+
+      {/* The subscriptions band is off the homepage for now (Genesis, 6 Oct 2026: "remove this section for now"); see PricingStrip. */}
+
+
+      {/*
         NO FORM ON THE HOMEPAGE (Genesis, 28 Sep 2026). The page ends on the
         footer's booking calendar and membership card, which carries
         id="contact", so every "contact" link still lands.
       */}
     </main>
+    {/*
+      THE SECTION BAR ON THE RIGHT, as on the division pages (Genesis, 3 Oct
+      2026: "add a slider on the homepage as well, on the right"). Outside
+      <main>, whose children are skipped while off screen — see VerticalPage.
+    */}
+    <JumpBar links={HOME_SECTIONS} bookHref="#book-a-call" />
+    </>
   );
 }

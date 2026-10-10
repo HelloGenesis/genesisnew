@@ -3,6 +3,7 @@ import "server-only";
 import { Auth0Client } from "@auth0/nextjs-auth0/server";
 import type { SessionData } from "@auth0/nextjs-auth0/types";
 import * as Sentry from "@sentry/nextjs";
+import { decodeJwt } from "jose";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -72,6 +73,7 @@ async function syncUserFromSession(session: SessionData): Promise<void> {
 
   const { user } = session;
   const email = user.email;
+  /* A sign-in by mobile code has no email; lib/crm/session maps it to a user on first use. */
   if (!email) return;
 
   const role = resolveRole(user[AUTH0_ROLES_CLAIM]);
@@ -110,32 +112,51 @@ async function syncUserFromSession(session: SessionData): Promise<void> {
   }
 }
 
+/**
+ * Where every sign-in lands: /account/complete maps the identity to its CRM
+ * user, claims any staff or portal invite for a verified address, and sends
+ * staff to /admin and clients, agencies and vendors to /portal.
+ */
+export const SIGN_IN_LANDING = "/account/complete";
+
 /** Builds a same-origin absolute URL, refusing to redirect off-site. */
 function safeRedirectUrl(target: string | undefined, base: string): URL {
   const baseUrl = new URL(base);
   try {
-    const resolved = new URL(target ?? "/insider", baseUrl);
+    const resolved = new URL(target ?? SIGN_IN_LANDING, baseUrl);
     return resolved.origin === baseUrl.origin
       ? resolved
-      : new URL("/insider", baseUrl);
+      : new URL(SIGN_IN_LANDING, baseUrl);
   } catch {
-    return new URL("/insider", baseUrl);
+    return new URL(SIGN_IN_LANDING, baseUrl);
   }
 }
+
+/** Claims kept on the session beyond the SDK's default subset (as in genesis-coworking). */
+const EXTRA_CLAIMS = ["phone_number", "phone_number_verified", "amr"] as const;
 
 function createAuth0Client(): Auth0Client {
   return new Auth0Client({
     // `appBaseUrl` is intentionally left to the SDK when APP_BASE_URL is unset
     // so Vercel preview deployments resolve their own host at runtime.
-    signInReturnToPath: "/insider",
+    signInReturnToPath: SIGN_IN_LANDING,
+    /* Email and mobile one-time codes (Auth0 passwordless) need the phone claims. */
+    authorizationParameters: { scope: "openid profile email phone offline_access" },
+    /* Signed-out visitors get 204 from /auth/profile instead of a noisy 401. */
+    noContentProfileResponseWhenUnauthenticated: true,
 
-    beforeSessionSaved: async (session) => ({
-      ...session,
-      user: {
-        ...session.user,
-        genesisRole: resolveRole(session.user[AUTH0_ROLES_CLAIM]),
-      },
-    }),
+    beforeSessionSaved: async (session, idToken) => {
+      const claims = idToken ? (decodeJwt(idToken) as Record<string, unknown>) : {};
+      const extra = Object.fromEntries(EXTRA_CLAIMS.filter((key) => key in claims).map((key) => [key, claims[key]]));
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          ...extra,
+          genesisRole: resolveRole(session.user[AUTH0_ROLES_CLAIM]),
+        },
+      };
+    },
 
     onCallback: async (error, ctx, session) => {
       const base =
@@ -143,7 +164,7 @@ function createAuth0Client(): Auth0Client {
 
       if (error) {
         Sentry.captureException(error, { tags: { subsystem: "auth0.callback" } });
-        const target = new URL("/insider", base);
+        const target = new URL("/login", base);
         target.searchParams.set("error", "authentication_failed");
         return NextResponse.redirect(target);
       }

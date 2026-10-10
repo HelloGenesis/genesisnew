@@ -38,7 +38,7 @@ export type OgCard = {
   title: string;
   /** Set in the serif italic, in brand yellow, after the title. */
   accent?: string;
-  /** A division's name mark, from /brand/divisions/name. */
+  /** A division's name mark, from /brand/divisions/mark (the N and the name). */
   division?: { slug: string; width: number; height: number };
   /** A case study's poster frame: its file name in public/work/posters. */
   poster?: string;
@@ -47,10 +47,10 @@ export type OgCard = {
 
 /* The name set's files and sizes — the same numbers DivisionLockup uses. */
 const DIVISION_MARK: Record<string, { slug: string; width: number; height: number }> = {
-  Influence: { slug: "influence", width: 362, height: 98 },
-  Studios: { slug: "studios", width: 296, height: 103 },
-  "AI Lab": { slug: "ai-lab", width: 250, height: 98 },
-  "Brand & Design": { slug: "brand-design", width: 616, height: 100 },
+  Influence: { slug: "influence", width: 688, height: 165 },
+  Studios: { slug: "studios", width: 571, height: 168 },
+  "AI Lab": { slug: "ai-lab", width: 492, height: 167 },
+  "Brand & Design": { slug: "brand-design", width: 803, height: 120 },
 };
 
 const MARK_HEIGHT = 64;
@@ -141,7 +141,7 @@ function titleSize(length: number, narrow: boolean): number {
 export async function renderOgCard(card: OgCard): Promise<ImageResponse> {
   const [mont, codec, codecItalic, wordmark] = await assets;
   const mark = card.division
-    ? dataUri(await brand(`divisions/name/${card.division.slug}.png`), "image/png")
+    ? dataUri(await brand(`divisions/mark/${card.division.slug}.png`), "image/png")
     : undefined;
   const poster = card.poster
     ? dataUri(await posterFrame(card.poster), "image/jpeg")

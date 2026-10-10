@@ -86,6 +86,8 @@ const PRICING_REDIRECTS = [
 ].map((redirect) => ({ ...redirect, permanent: true }));
 
 const nextConfig: NextConfig = {
+  /* A second dev server or a check build beside a running one gets its own folder (NEXT_DIST_DIR), so they never share .next. */
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   reactStrictMode: true,
 
   // `googleapis` is a very large CJS package that should not be traced into

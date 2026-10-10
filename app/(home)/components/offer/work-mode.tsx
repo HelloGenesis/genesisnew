@@ -30,9 +30,26 @@ export function WorkModeProvider({ children, initial = "membership" }: { childre
   return <Context.Provider value={{ mode, setMode }}>{children}</Context.Provider>;
 }
 
+/** The page's choice, for anything outside the switch that should follow it. */
+export function useWorkMode() {
+  return useContext(Context);
+}
+
+/**
+ * SUBSCRIPTION DETAILS THAT LIVE OUTSIDE THE SWITCH (Genesis, 2 Oct 2026:
+ * "when toggled to PPP on each vertical it should disappear and only appear
+ * when subscriptions are clicked"). Shown only while Subscriptions is the
+ * page's choice; on a page with no shared choice it simply shows.
+ */
+export function SubscriptionOnly({ children }: { children: ReactNode }) {
+  const shared = useContext(Context);
+  if (shared && shared.mode !== "membership") return null;
+  return <>{children}</>;
+}
+
 const OPTIONS: { value: WorkModeValue; label: string; hint: string; gradient: string }[] = [
-  { value: "one-time", label: "One-Time Projects", hint: "Buy once. No subscription.", gradient: ONE_TIME_GRADIENT },
-  { value: "membership", label: "Membership", hint: "A monthly creative team.", gradient: PLANS_GRADIENT },
+  { value: "one-time", label: "Pay-per-project", hint: "Buy once. No subscription.", gradient: ONE_TIME_GRADIENT },
+  { value: "membership", label: "Subscriptions", hint: "A monthly creative team.", gradient: PLANS_GRADIENT },
 ];
 
 /**
@@ -41,7 +58,19 @@ const OPTIONS: { value: WorkModeValue; label: string; hint: string; gradient: st
  * wears its own colours — the one-time violet-to-coral, the plans' sweep —
  * so the switch says which world a reader is in before they read a word.
  */
-export function WorkMode({ oneTime, membership }: { oneTime: ReactNode; membership: ReactNode }) {
+export function WorkMode({
+  oneTime,
+  membership,
+  controls,
+  note,
+}: {
+  oneTime: ReactNode;
+  membership: ReactNode;
+  /** Beside the switch while Membership is chosen — the /pricing hub's billing switch. */
+  controls?: ReactNode;
+  /** Appended to the Membership line — "Paid upfront for 3 months." */
+  note?: ReactNode;
+}) {
   const shared = useContext(Context);
   const [own, setOwn] = useState<WorkModeValue>("membership");
   const mode = shared?.mode ?? own;
@@ -50,12 +79,17 @@ export function WorkMode({ oneTime, membership }: { oneTime: ReactNode; membersh
   const labelId = useId();
 
   return (
-    <div className="mt-10">
-      {/* IN THE MIDDLE (Genesis, 28 Sep 2026): the heading, the switch and its line, centred. */}
-      <div className="flex flex-col items-center gap-4 text-center">
-        <p id={labelId} className="font-sans text-lead text-bone">
-          Choose how you want to work
-        </p>
+    <div className="mt-6">
+      {/*
+        IN THE MIDDLE (Genesis, 28 Sep 2026), and ONE ROW (29 Sep 2026): the
+        way of working and — for memberships — the billing, side by side
+        under the division cards, with one line saying what the pair means.
+        The prices are then the next thing down.
+      */}
+      <p id={labelId} className="sr-only">
+        Choose how you want to work
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2.5">
         <div
           role="radiogroup"
           aria-labelledby={labelId}
@@ -72,7 +106,7 @@ export function WorkMode({ oneTime, membership }: { oneTime: ReactNode; membersh
                 data-track={`work-mode:${option.value}`}
                 onClick={() => setMode(option.value)}
                 className={cn(
-                  "min-h-11 whitespace-nowrap rounded-full px-2.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:px-6 sm:text-small",
+                  "min-h-10 whitespace-nowrap rounded-full px-2.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:px-5 sm:text-small",
                   selected ? "text-white shadow-[0_8px_24px_-10px_rgb(139_92_246/0.6)]" : "text-ash hover:text-bone",
                 )}
                 style={selected ? { background: option.gradient } : undefined}
@@ -82,13 +116,17 @@ export function WorkMode({ oneTime, membership }: { oneTime: ReactNode; membersh
             );
           })}
         </div>
+        {mode === "membership" && controls}
       </div>
-      <p className="mt-2 text-center text-small text-ash">{OPTIONS.find((option) => option.value === mode)?.hint}</p>
+      <p className="mt-2 text-center text-[0.8125rem] text-ash">
+        {OPTIONS.find((option) => option.value === mode)?.hint}
+        {mode === "membership" && note && <span className="text-faint"> · {note}</span>}
+      </p>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={mode}
-          className="mt-8"
+          className="mt-5"
           initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}

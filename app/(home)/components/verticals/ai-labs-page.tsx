@@ -1,29 +1,19 @@
-import Image from "next/image";
-
-import { Reveal } from "@/components/genesis/reveal";
-import { mediaUrl } from "@/lib/media-url";
 import { servicePage } from "@/lib/services";
+import { WorkHead } from "@/components/genesis/work-warp";
 import {
-  aiClosing,
-  aiCreatives,
-  aiEveryVideo,
   aiFaqs,
-  aiFormats,
-  aiHero,
   aiHowItWorks,
-  aiPlans,
-  aiTurnaround,
-  aiVideoTiers,
+  aiHero,
 } from "@/lib/verticals/ai-labs";
-import { ClosingBand, FaqBlock, IconCards, StepsBlock, TurnaroundBlock, VideoTiers } from "../offer/blocks";
-import { FormatShowcase } from "../offer/format-showcase";
+import { StepsBlock } from "../offer/blocks";
+import { FaqBlock } from "../offer/blocks";
 import { LogoStrip, WorkSection } from "../offer/page-furniture";
-import { PlanDetails, OfferSection, PlanBand, SectionHead } from "../offer/parts";
-import { PlanGrid } from "../offer/plan-grid";
-import { OneTimeProducts } from "../offer/starter-pack";
-import { WorkMode } from "../offer/work-mode";
+import { divisionMenu } from "@/lib/home-content";
+import { AiContent, AiLabDiagram } from "../ai-content";
+import { PlugHeadline } from "../offer/plug-headline";
 import { VerticalHero } from "../offer/vertical-hero";
-import { VideoRail } from "../offer/video-rail";
+import { PricingHead } from "../offer/pricing-head";
+import { PlanBar } from "../plan-bar";
 import { VerticalPage } from "../offer/vertical-page";
 
 const page = servicePage("ai-content-automation");
@@ -37,138 +27,64 @@ const page = servicePage("ai-content-automation");
 export function AiLabsPageView() {
   return (
     <VerticalPage page={page} current="ai-labs"
-      primary={{ label: "See plans", href: "#pricing" }}
       jump={[
-        { id: "formats", label: "Formats" },
         { id: "pricing", label: "Plans" },
-        { id: "included", label: "Every video" },
-        { id: "video-types", label: "Video types" },
+        { id: "included", label: "Every video", mode: "membership" },
+        { id: "video-types", label: "Video types", mode: "membership" },
         { id: "how-it-works", label: "How it works" },
         { id: "library", label: "Work" },
         { id: "faq", label: "FAQs" },
       ]}>
       <VerticalHero
         label={aiHero.label}
-        lines={[aiHero.heading]}
-        accent={aiHero.headingAccent}
-        lead={aiHero.lead}
-        body={aiHero.body}
-        primary={{ label: aiHero.primary, href: "#pricing" }}
-        secondary={{ label: aiHero.secondary, href: "#library" }}
-        strip={aiHero.trust}
+        heading={<PlugHeadline division="AI Lab" services={divisionMenu("/ai-content-automation")} className="mt-5 max-sm:mt-0" />}
+        strip={divisionMenu("/ai-content-automation")}
         images={aiHero.images}
-        /* A rail of Genesis's own AI clips in place of the photo collage. */
-        visual={
-          <div>
-            <p aria-hidden className="mb-4 -rotate-2 font-serif text-lead italic text-bone/80">
-              {aiHero.note}
-            </p>
-            <VideoRail videos={aiHero.videos} />
-          </div>
-        }
+        /*
+          THE AI LAB DIAGRAM, the tools plugged into the lab, in place of the
+          clip rail (Genesis, 4 Oct 2026: "add this element replacing the
+          gallery/slider on this section"); it no longer sits under the logos.
+        */
+        /* A bit bigger (Genesis, 4 Oct 2026): it reaches past the column into the margin. */
+        fitPhone
+        visual={<AiLabDiagram fit interactive className="lg:-ml-4 lg:-mr-[clamp(2.5rem,calc((100vw-80rem)/2+1.5rem),5rem)]" />}
       />
 
-      <LogoStrip />
+      {/*
+        THE DIVISION'S HOMEPAGE SECTION, under the hero, without its header
+        or plan bar (Genesis, 2 Oct 2026) — see `onPage`.
+      */}
+      {/* Section 2's head, as on every division page (Genesis, 4 Oct 2026). */}
+      <WorkHead />
+      <AiContent onPage />
 
-      {/* SECTION 2 — SHOW THE OUTPUT */}
-      <OfferSection id="formats" labelledBy="formats-heading">
-        <FormatShowcase
-          label={aiFormats.label}
-          items={aiFormats.items}
-          headerSlot={
-            <SectionHead
-              id="formats-heading"
-              label={aiFormats.label}
-              heading={aiFormats.heading}
-              accent={aiFormats.headingAccent}
-              body={aiFormats.body}
-              align="left"
-            />
-          }
-        />
-      </OfferSection>
+      {/* The formats, the creatives and the closing band are gone (Genesis, 4 Oct 2026: "remove these"). */}
+      <LogoStrip />
 
       {/*
         SECTION 3 — PRICING, with what the plans buy folded underneath:
         what every video includes and what separates the video types.
       */}
-      <PlanBand>
-        <OfferSection>
-          {/*
-            "CHOOSE HOW YOU WANT TO WORK" — the same switch as /pricing
-            (Genesis, 28 Sep 2026): memberships on one side, the division's
-            one-time products on the other. The anchor sits on the wrapper so
-            "#pricing" lands here whichever side is showing.
-          */}
-          <div id="pricing" className="scroll-mt-24">
-            <WorkMode
-              oneTime={<OneTimeProducts vertical="ai-labs" bare />}
-              membership={
-                <>
-                  <PlanGrid data={aiPlans} vertical="ai-labs" />
-                  <PlanDetails id="included" title="What every video includes" summary={`${aiEveryVideo.heading} ${aiEveryVideo.body}`}>
-                    <IconCards items={aiEveryVideo.items} />
-                  </PlanDetails>
-                  <PlanDetails id="video-types" title={aiVideoTiers.heading} summary={aiVideoTiers.body}>
-                    <VideoTiers data={aiVideoTiers} bare />
-                  </PlanDetails>
-                </>
-              }
-            />
-          </div>
-        </OfferSection>
-      </PlanBand>
+      {/*
+        THE HOMEPAGE'S PLAN BOX IN PLACE OF THE PRICING SECTION (Genesis, 6 Oct
+        2026: "add this same section, replacing the pricing section on all
+        verticals"): the plans and products, the case studies and how it
+        works, in one box. The details each plan carries are in its pop-up.
+      */}
+      {/* Full width, the column inside: the page paints each section only within its own box, so a narrow section cut the plan box's glow (Genesis, 6 Oct 2026: "fix glow"). */}
+      <section id="pricing" aria-labelledby="pricing-heading" className="w-full scroll-mt-24 py-[var(--section-pad)]">
+        <div className="mx-auto w-full max-w-7xl px-6">
+        <PricingHead id="pricing-heading" />
+        <PlanBar vertical="ai-labs" onPage />
+        </div>
+      </section>
 
-      {/* SECTION 5 — CAMPAIGN CREATIVES */}
-      <OfferSection labelledBy="creatives-heading">
-        <SectionHead
-          id="creatives-heading"
-          label={aiCreatives.label}
-          heading={aiCreatives.heading}
-          accent={aiCreatives.headingAccent}
-          body={[aiCreatives.body, aiCreatives.support]}
-        />
-        <ul className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {aiCreatives.items.map((item, index) => (
-            <Reveal as="li" key={item.title} delay={0.04 * index}>
-              <div className="group relative aspect-square overflow-hidden rounded-card border border-[var(--glass-border)] bg-ink">
-                <Image
-                  src={mediaUrl(item.image)}
-                  alt=""
-                  fill
-                  sizes="(min-width: 1024px) 12rem, (min-width: 768px) 30vw, 45vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              <h3 className="font-sans mt-3 text-body leading-snug text-bone">{item.title}</h3>
-              <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{item.body}</p>
-            </Reveal>
-          ))}
-        </ul>
-        <Reveal className="glass-chip mt-8 inline-flex flex-wrap items-center gap-x-5 gap-y-2 rounded-full px-5 py-2.5">
-          <span className="text-small text-faint">{aiCreatives.monthlyLabel}</span>
-          {aiCreatives.monthly.map((row) => (
-            <span key={row.plan} className="flex items-baseline gap-2 text-small text-ash">
-              {row.plan}
-              <span className="font-display text-lead text-bone">{row.value}</span>
-            </span>
-          ))}
-        </Reveal>
-      </OfferSection>
-
-      {/* SECTION 6 — HOW IT WORKS */}
+      {/* How it works, back as a bento of its own under the plans (Genesis, 6 Oct 2026). */}
       <StepsBlock data={aiHowItWorks} id="how-it-works" />
 
-      {/* SECTION 7 — TURNAROUND */}
-      <TurnaroundBlock data={aiTurnaround} />
+      {/* Turnaround is in each plan's pricing pop-up, so not repeated here (Genesis, 5 Oct 2026). */}
 
       <WorkSection verticals={["AI Lab"]} />
-
-      {/* SECTION 9 — FINAL CTA */}
-      <ClosingBand
-        data={aiClosing}
-        images={["/work/posters/ai-lab-tanvi-uiiui.jpg", "/avatars/diya.jpg", "/work/posters/36.jpg"]}
-      />
 
       <FaqBlock heading={aiFaqs.heading} items={aiFaqs.items} />
     </VerticalPage>
