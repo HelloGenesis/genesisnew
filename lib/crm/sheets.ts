@@ -3,7 +3,8 @@ import "server-only";
 import { getPrisma } from "@/lib/db";
 import { column, ensureTab, getSheets, isSheetsConfigured } from "@/lib/google-sheets";
 
-import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, SUBSCRIPTION_STATUS, projectRef, requestRef, stageLabel } from "./catalog";
+import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, SUBSCRIPTION_STATUS, projectRef, requestRef } from "./catalog";
+import { stageName } from "@/lib/crm/stages";
 
 /**
  * THE CRM, MIRRORED LIVE TO GOOGLE SHEETS (as genesis-coworking's mirror).
@@ -97,7 +98,7 @@ const BUILDERS: Record<SheetTabKey, (keys: string[]) => Promise<Map<string, Cell
   async projects(keys) {
     const rows = await getPrisma().project.findMany({ where: { id: { in: keys } }, include: { account: true, manager: true, _count: { select: { deliverables: { where: { status: "APPROVED" } } } } } });
     return new Map(rows.map((p) => [p.id, {
-      Ref: projectRef(p.number), Project: p.name, Client: p.account.name, Division: DIVISION_LABEL[p.division], Stage: stageLabel(p.division, p.stage),
+      Ref: projectRef(p.number), Project: p.name, Client: p.account.name, Division: DIVISION_LABEL[p.division], Stage: stageName(p),
       Status: PROJECT_STATUS[p.status].label, Delivered: p.quota ? `${p._count.deliverables} of ${p.quota}` : String(p._count.deliverables),
       Manager: p.manager?.name ?? p.manager?.email ?? "", Due: day(p.dueDate), Updated: ist(p.updatedAt),
     }]));

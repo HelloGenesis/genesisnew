@@ -4,7 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { STAFF_ROLE, date } from "@/lib/crm/catalog";
 import { requireStaff } from "@/lib/crm/session";
 
-import { inviteStaff, revokeStaff } from "../actions/finance";
+import { inviteStaff, resetTwoFactor, revokeStaff } from "../actions/finance";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Staff & roles" };
@@ -56,7 +56,15 @@ export default async function StaffPage() {
                 ))}
               </span>
             </td>
-            <td>{u.staffTotp?.confirmedAt ? `Set up ${date(u.staffTotp.confirmedAt)}` : "Not yet"}</td>
+            <td>
+              {u.staffTotp?.confirmedAt ? `Set up ${date(u.staffTotp.confirmedAt)}` : "Not yet"}
+              {u.staffTotp && (
+                <form action={resetTwoFactor} className="mt-1">
+                  <input type="hidden" name="userId" value={u.id} />
+                  <button className="text-[0.75rem] text-ash hover:text-bone" title="Their next sign-in shows a new QR code to scan">Reset (new phone)</button>
+                </form>
+              )}
+            </td>
             <td>{date(u.lastLoginAt)}</td>
           </tr>
         ))}

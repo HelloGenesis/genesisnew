@@ -30,16 +30,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (staffAccess(viewer) !== "granted") return <main className="mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6">{children}</main>;
 
   const prisma = getPrisma();
-  const [openRequests, dueLeads, review] = await Promise.all([
+  const [openRequests, dueLeads, review, myTasks] = await Promise.all([
     prisma.request.count({ where: { status: { in: ["OPEN"] } } }),
     prisma.lead.count({ where: { status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: new Date() } } }),
     prisma.deliverable.count({ where: { status: "CHANGES_REQUESTED" } }),
+    prisma.task.count({ where: { status: "OPEN", ownerId: viewer!.id, dueDate: { lte: new Date() } } }),
   ]);
 
   const groups: NavGroup[] = [
-    { label: "Today", items: [{ href: "/admin", label: "Overview" }, { href: "/admin/tasks", label: "Tasks" }] },
+    { label: "Today", items: [{ href: "/admin", label: "Overview" }, { href: "/admin/tasks", label: "Tasks", count: myTasks }, { href: "/admin/reports", label: "Reports" }] },
     ...(can(viewer, "sales")
-      ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/accounts", label: "Clients & agencies" }] }]
+      ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/quotes", label: "Quotes & plans" }, { href: "/admin/accounts", label: "Clients & agencies" }] }]
       : []),
     ...(can(viewer, "delivery") || can(viewer, "sales")
       ? [

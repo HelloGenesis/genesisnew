@@ -9,6 +9,8 @@ import { products } from "@/lib/products";
 
 import { divisionOf, money, quotaFrom } from "./catalog";
 import { accountEmails, appUrl, queueEmail, queueStaffEmail } from "./notify";
+import { openProject } from "./projects";
+import { openFor } from "./quotes";
 import { queueSheet } from "./sheets";
 
 /**
@@ -347,30 +349,41 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
 
   if (subscriptionId) await prisma.subscription.update({ where: { id: subscriptionId }, data: { accountId } });
 
-  /* One project per product. A plan's project is this month's; renewals add the next. */
-  for (const line of order.lines) {
-    if (line.kind === "QUOTED") continue;
-    const product = findProduct(line.productId);
-    const quota = quotaFrom(product?.includes);
-    const project = await prisma.project.upsert({
-      where: { orderLineId: line.id },
-      create: {
+  /* The lead this order closes, so its project carries the lead (every won lead has a project). */
+  const leads = await prisma.lead.findMany({ where: { email: order.contactEmail, status: { notIn: ["WON", "LOST"] } }, select: { id: true } });
+  const quote = order.quoteId ? await prisma.quote.findUnique({ where: { id: order.quoteId } }) : null;
+  const opened = await prisma.project.count({ where: { orderId } });
+
+  if (opened === 0 && quote) {
+    /* A quote is one piece of work, whatever its lines: its project (already open if the client accepted first), now paid. */
+    if (!quote.accountId) await prisma.quote.update({ where: { id: quote.id }, data: { accountId } });
+    const projectId = await openFor(quote.id);
+    const linked = await prisma.project.findUniqueOrThrow({ where: { id: projectId }, select: { leadId: true } });
+    await prisma.project.update({ where: { id: projectId }, data: { orderId, ...(linked.leadId ? {} : { leadId: leads[0]?.id ?? null }) } });
+  } else if (opened === 0) {
+    /* One project per product. A plan's project is this month's; renewals add the next. */
+    for (const [i, line] of order.lines.entries()) {
+      if (line.kind === "QUOTED") continue;
+      const product = findProduct(line.productId);
+      const quota = quotaFrom(product?.includes);
+      await openProject({
+        accountId,
         name: line.kind === "MEMBERSHIP" ? `${line.group} ${line.name} · ${monthName(new Date())}` : line.name,
         division: line.division,
+        productName: line.name,
         productId: line.productId,
-        accountId,
+        membership: line.kind === "MEMBERSHIP",
         orderId,
         orderLineId: line.id,
         subscriptionId: line.kind === "MEMBERSHIP" ? (subscriptionId ?? null) : null,
+        leadId: i === 0 ? (leads[0]?.id ?? null) : null,
         quota: quota ? quota * (line.kind === "ONE_TIME" ? line.qty : 1) : null,
-        startDate: new Date(),
         brief: line.extraLabels.length ? `Extras bought: ${line.extraLabels.join(", ")}` : null,
-      },
-      update: {},
-    });
-    await prisma.activity.create({ data: { projectId: project.id, kind: "SYSTEM", body: `Opened from order ${order.reference}.` } });
-    await queueSheet("projects", project.id);
+        why: `Opened from order ${order.reference}.`,
+      });
+    }
   }
+  if (quote) await prisma.quote.update({ where: { id: quote.id }, data: { status: "PAID" } });
 
   const amount = num(payment?.amount) ?? order.totalPaise;
   const paymentRow = str(payment?.id)
@@ -384,7 +397,6 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
   await commission(order.account?.referredBy ?? null, order.partnerId, orderId, paymentRow?.id ?? null, amount, order.taxPaise, order.totalPaise);
 
   /* The lead that became this order. */
-  const leads = await prisma.lead.findMany({ where: { email: order.contactEmail, status: { notIn: ["WON", "LOST"] } }, select: { id: true } });
   for (const lead of leads) {
     await prisma.lead.update({ where: { id: lead.id }, data: { status: "WON", accountId, valuePaise: order.totalPaise } });
     await prisma.activity.create({ data: { leadId: lead.id, kind: "STATUS", body: `Won: order ${order.reference} paid (${money(order.totalPaise)}).` } });
@@ -430,21 +442,18 @@ async function renew(subscriptionId: string, payment: Entity | undefined) {
   await commission(subscription.account?.referredBy ?? null, subscription.order?.partnerId ?? null, subscription.orderId, row.id, amount, null, null);
 
   for (const line of subscription.order?.lines.filter((l) => l.kind === "MEMBERSHIP") ?? []) {
-    const quota = quotaFrom(findProduct(line.productId)?.includes);
-    const project = await prisma.project.create({
-      data: {
-        name: `${line.group} ${line.name} · ${monthName(new Date())}`,
-        division: line.division,
-        productId: line.productId,
-        accountId: subscription.accountId,
-        orderId: subscription.orderId,
-        subscriptionId,
-        quota,
-        startDate: new Date(),
-      },
+    await openProject({
+      accountId: subscription.accountId,
+      name: `${line.group} ${line.name} · ${monthName(new Date())}`,
+      division: line.division,
+      productName: line.name,
+      productId: line.productId,
+      membership: true,
+      orderId: subscription.orderId,
+      subscriptionId,
+      quota: quotaFrom(findProduct(line.productId)?.includes),
+      why: `Opened for renewal ${subscription.paidCount}.`,
     });
-    await prisma.activity.create({ data: { projectId: project.id, kind: "SYSTEM", body: `Opened for renewal ${subscription.paidCount}.` } });
-    await queueSheet("projects", project.id);
   }
   await queueEmail({
     kind: "subscription_renewed",

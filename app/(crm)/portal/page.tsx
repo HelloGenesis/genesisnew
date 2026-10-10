@@ -2,8 +2,9 @@ import Link from "next/link";
 
 import { Card, PageHead, StageBar, Stats, Status } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
-import { DIVISION_LABEL, PROJECT_STATUS, REQUEST_STATUS, STAGES, SUBSCRIPTION_STATUS, date, money, requestRef } from "@/lib/crm/catalog";
+import { DIVISION_LABEL, PROJECT_STATUS, REQUEST_STATUS, SUBSCRIPTION_STATUS, date, money, requestRef } from "@/lib/crm/catalog";
 import { requirePortal } from "@/lib/crm/session";
+import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Overview" };
@@ -85,7 +86,7 @@ export default async function PortalHome() {
                     <span className="text-bone">{p.name}</span>
                     <span className="flex items-center gap-2 text-[0.8125rem] text-ash">{DIVISION_LABEL[p.division]}{p.quota ? ` · ${p._count.deliverables} of ${p.quota} delivered` : ""} <Status value={PROJECT_STATUS[p.status]} /></span>
                   </span>
-                  <span className="mt-2 block"><StageBar stages={STAGES[p.division]} stage={p.stage} /></span>
+                  <span className="mt-2 block"><StageBar stages={stagesOf(p)} stage={p.stage} /></span>
                 </Link>
               </li>
             ))}

@@ -57,6 +57,51 @@ Everyone signs in at **`/login`** — no passwords.
   - delivers queued emails;
   - syncs the sheet.
 
+## Added 10 October 2026
+
+- **Quotes & influencer plans** (`/admin/quotes`). Build one from Genesis's
+  catalogue (plans, products, their add-ons, at their real prices) or custom
+  lines, pick creators from the influencer database for an influencer plan,
+  and load notes and legal terms from a template — the production/UGC terms
+  are those of Price Quote #0000039.
+  - Start from a lead, a client or an incoming request (manual briefs).
+  - "Send" emails the quotation with a Razorpay payment link.
+  - The client opens `/quote/<link>`: Genesis's quote layout, logos,
+    printable to PDF, with Accept and Pay.
+  - Accepting or paying wins the lead and opens the project; an approved
+    influencer plan shortlists its creators.
+  - Numbering continues from #0000039.
+- **Every won lead starts a project.** Stages follow the service and can be
+  edited per project (`lib/crm/stages.ts`). For example AI avatar: Lead won →
+  Ideation & scripting → AI avatar & voice → Approvals → First cut (image
+  draft + music) → Second cut → Third cut / final delivery. UGC, influencer,
+  Studios, events, design and monthly plans have their own.
+- **Project files in Google Drive.** Each project has folders: brief &
+  assets, scripts, avatar & voice, raw footage, edited files, first cut,
+  second cut, final delivery, internal. They're stored in
+  hello@genesismedia.co's Drive and viewed in the CRM and portal as a
+  gallery (images and videos play in place).
+  - Genesis sees everything; the client sees brief, scripts, cuts and
+    finals; vendors on the project also see raw and edited files.
+  - Internal is Genesis only. Staff can change who sees any file.
+  - Uploads go straight from the browser to Google, so large files are fine.
+  - Connect once in Integrations → Connect Google Drive, signed in as
+    hello@genesismedia.co. This needs a Google OAuth web client:
+    `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`, with redirect
+    URI `https://www.genesismedia.co/api/crm/drive/callback`, Drive API
+    enabled and scope `drive.file`.
+- **Tasks** can be assigned to anyone on the team. The assignee is emailed,
+  and the task shows on their overview and in the sidebar count.
+- **Reports** (`/admin/reports`): live posts and their numbers, raw footage
+  and file totals per project, every influencer campaign (views, reach,
+  likes, comments, shares, saves, engagement rate, spend, cost per view and
+  per engagement), the delivery pipeline, money by month and division, sales
+  conversion and team workload.
+  - Each campaign has a report editor and a "share with client" switch; the
+    client sees it in their portal without Genesis's creator fees.
+- **Two-factor reset.** Owners can reset anyone's authenticator in Staff &
+  roles (lost or new phone).
+
 ## Security
 
 - **Sign-in is Auth0 only:** Google, or a one-time code by email or SMS.

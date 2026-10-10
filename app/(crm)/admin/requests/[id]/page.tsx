@@ -33,6 +33,8 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
         sub={<>From <Link href={`/admin/accounts/${request.accountId}`} className="crm-link">{request.account.name}</Link>{request.createdBy ? ` · ${request.createdBy.name ?? request.createdBy.email}` : ""} · {dateTime(request.createdAt)}</>}
       >
         <Status value={REQUEST_STATUS[request.status]} />
+        <Link href={`/admin/quotes/new?request=${request.id}`} className="crm-btn crm-btn-primary crm-btn-sm">Send a quotation</Link>
+        <Link href={`/admin/quotes/new?request=${request.id}&kind=INFLUENCER_PLAN`} className="crm-btn crm-btn-secondary crm-btn-sm">Send influencer plan</Link>
       </PageHead>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="space-y-6">

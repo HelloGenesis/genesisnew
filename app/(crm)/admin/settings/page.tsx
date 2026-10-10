@@ -2,20 +2,23 @@ import { Badge, Card, PageHead, Table } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
 import { getPrisma } from "@/lib/db";
 import { dateTime } from "@/lib/crm/catalog";
+import { driveStatus } from "@/lib/crm/drive";
 import { emailConfigured } from "@/lib/crm/notify";
 import { crmSheetsConfigured } from "@/lib/crm/sheets";
-import { adminRequiresMfa, devLoginEnabled, requireStaff } from "@/lib/crm/session";
+import { adminRequiresMfa, can, devLoginEnabled, requireStaff } from "@/lib/crm/session";
 import { upstashConfigured } from "@/lib/env";
 import { razorpayKeys } from "@/lib/razorpay";
 
-import { retryEmail } from "../actions/finance";
+import { disconnectGoogleDrive, retryEmail } from "../actions/finance";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Integrations" };
 
 /** Is every integration connected, and is anything stuck? */
-export default async function SettingsPage() {
-  await requireStaff();
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ drive?: string }> }) {
+  const viewer = await requireStaff();
+  const driveResult = (await searchParams).drive;
+  const drive = await driveStatus();
   const prisma = getPrisma();
   const [failed, pendingEmails, sheetBacklog, sheetErrors, lastWebhook, webhookErrors] = await Promise.all([
     prisma.emailOutbox.findMany({ where: { status: "FAILED" }, orderBy: { createdAt: "desc" }, take: 20 }),
@@ -31,6 +34,7 @@ export default async function SettingsPage() {
     ["Payments (Razorpay)", Boolean(razorpayKeys()), `RAZORPAY_KEY_ID / SECRET, webhook secret ${process.env.RAZORPAY_WEBHOOK_SECRET ? "set" : "missing"}${lastWebhook ? ` · last event ${dateTime(lastWebhook.receivedAt)}` : ""}`],
     ["Email (Resend)", emailConfigured(), `RESEND_API_KEY, CRM_EMAIL_FROM · ${pendingEmails} queued`],
     ["Google Sheets mirror", crmSheetsConfigured(), `GOOGLE_SHEETS_ID (or CRM_SHEETS_ID) + service account · ${sheetBacklog} rows queued`],
+    ["Google Drive (project files)", Boolean(drive.account), drive.account ? `Connected as ${drive.account}` : "GOOGLE_OAUTH_CLIENT_ID / SECRET, then Connect below"],
     ["Scheduled jobs (Vercel Cron)", Boolean(process.env.CRON_SECRET), "CRON_SECRET · /api/jobs/run every minute"],
     ["Rate limiting (Upstash)", upstashConfigured(), "UPSTASH_REDIS_REST_URL / TOKEN · sign-in codes and forms"],
   ];
@@ -46,6 +50,22 @@ export default async function SettingsPage() {
           </tr>
         ))}
       </Table>
+      <Card title="Google Drive" action={drive.account ? <span className="text-[0.8125rem] text-ash">{drive.connectedAt ? `since ${dateTime(drive.connectedAt)}` : ""}</span> : undefined}>
+        {driveResult === "connected" && <p className="crm-notice mb-3">Connected. New project files go to that Drive.</p>}
+        {driveResult === "failed" && <p className="crm-notice crm-notice-warn mb-3">Google didn&apos;t complete the connection. Try again, and allow access when asked.</p>}
+        {driveResult === "unconfigured" && <p className="crm-notice crm-notice-warn mb-3">Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET first (see CRM.md).</p>}
+        <p className="text-ash">
+          Project files (briefs, raw footage, cuts, finals) are stored in <strong className="text-bone">hello@genesismedia.co</strong>&apos;s Google Drive under &quot;Genesis CRM / client / project / folder&quot;, and viewed here. The CRM can only see the files it put there.
+        </p>
+        {can(viewer, "staff") && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a href="/api/crm/drive/connect" className="crm-btn crm-btn-primary crm-btn-sm">{drive.account ? "Reconnect Google Drive" : "Connect Google Drive"}</a>
+            {drive.account && !drive.account.startsWith("local") && (
+              <form action={disconnectGoogleDrive}><button className="crm-btn crm-btn-secondary crm-btn-sm">Disconnect</button></form>
+            )}
+          </div>
+        )}
+      </Card>
       {(sheetErrors || webhookErrors > 0) && (
         <Card title="Errors">
           {sheetErrors && <p className="text-ash">Sheets: {sheetErrors.lastError}</p>}

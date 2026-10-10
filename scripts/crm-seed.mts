@@ -16,6 +16,8 @@ import { config } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../lib/generated/prisma/client";
+import { templateFor } from "../lib/crm/stages";
+import { TERMS } from "../lib/crm/quote-templates";
 
 config({ path: ".env.local", quiet: true });
 config({ path: ".env.development.local", override: true, quiet: true });
@@ -101,7 +103,7 @@ await prisma.order.create({
 });
 
 /* Projects in every division */
-const ai = await prisma.project.create({ data: { name: "AI Content Studio Growth · October 2026", division: "AI_LAB", accountId: brand.id, orderId: planOrder.id, subscriptionId: sub.id, stage: 2, quota: 8, managerId: producer.id, startDate: date(-10), dueDate: date(5), brief: "Festive skincare explainers with the Aurum avatar." } });
+const ai = await prisma.project.create({ data: { stages: [...templateFor("AI_LAB", "Growth", true).stages], name: "AI Content Studio Growth · October 2026", division: "AI_LAB", accountId: brand.id, orderId: planOrder.id, subscriptionId: sub.id, stage: 2, quota: 8, managerId: producer.id, startDate: date(-10), dueDate: date(5), brief: "Festive skincare explainers with the Aurum avatar." } });
 await prisma.deliverable.createMany({
   data: [
     { projectId: ai.id, title: "Reel 1 · Night-repair serum", url: "https://drive.google.com/demo-1", status: "APPROVED", version: 2 },
@@ -109,9 +111,9 @@ await prisma.deliverable.createMany({
     { projectId: ai.id, title: "Reel 3 · Diwali gift box", url: "https://drive.google.com/demo-3", status: "DRAFT" },
   ],
 });
-const ugc = await prisma.project.create({ data: { name: "UGC Performance Pack", division: "INFLUENCE", accountId: brand.id, orderId: ugcOrder.id, stage: 3, quota: 6, managerId: producer.id, dueDate: date(9) } });
-const studio = await prisma.project.create({ data: { name: "Founder film · PaySetu", division: "STUDIOS", accountId: fintech.id, stage: 1, managerId: producer.id, dueDate: date(2) } });
-await prisma.project.create({ data: { name: "Brand Build · Skyline Realty", division: "BRAND_DESIGN", accountId: realty.id, stage: 2, managerId: producer.id, dueDate: date(18) } });
+const ugc = await prisma.project.create({ data: { stages: [...templateFor("INFLUENCE", "UGC Performance Pack").stages], reportSummary: "Mira's routine reel drove most of the reach; save rate was strong across the set. Next: whitelist the top two posts for paid.", reportShared: true, name: "UGC Performance Pack", division: "INFLUENCE", accountId: brand.id, orderId: ugcOrder.id, stage: 3, quota: 6, managerId: producer.id, dueDate: date(9) } });
+const studio = await prisma.project.create({ data: { stages: [...templateFor("STUDIOS").stages], name: "Founder film · PaySetu", division: "STUDIOS", accountId: fintech.id, stage: 1, managerId: producer.id, dueDate: date(2) } });
+await prisma.project.create({ data: { stages: [...templateFor("BRAND_DESIGN").stages], name: "Brand Build · Skyline Realty", division: "BRAND_DESIGN", accountId: realty.id, stage: 2, managerId: producer.id, dueDate: date(18) } });
 await prisma.vendorAssignment.create({ data: { projectId: studio.id, vendorId: dop.id, role: "DOP + crew, half day", feePaise: rs(35000), dueDate: date(2), status: "ACCEPTED" } });
 await prisma.vendorAssignment.create({ data: { projectId: ai.id, vendorId: editor.id, role: "Reel edits ×4", feePaise: rs(24000), dueDate: date(4), status: "OFFERED", brief: "Cut 4 reels from the AI renders; brand fonts in the Drive folder." } });
 await prisma.vendorInvoice.create({ data: { vendorId: dop.id, number: "FW-2026-118", amountPaise: rs(35000), taxPaise: rs(6300), status: "SUBMITTED" } });
@@ -128,7 +130,8 @@ const tier = (f: number) => (f >= 1e6 ? "MEGA" : f >= 5e5 ? "MACRO" : f >= 1e5 ?
 for (const [name, handle, followers, er, niches, city, reel] of creators) {
   const c = await prisma.creator.create({ data: { name, handle, followers, engagementRate: er, niches: [...niches], city, reelRatePaise: rs(reel), tier: tier(followers), languages: ["Hindi", "English"] } });
   if (niches.includes("Beauty" as never) || niches.includes("Skincare" as never)) {
-    await prisma.campaignCreator.create({ data: { projectId: ugc.id, creatorId: c.id, status: handle === "mira.glows" ? "POSTED" : "CONFIRMED", feePaise: rs(reel), deliverables: "1 reel + 2 stories", views: handle === "mira.glows" ? 214000 : null, postUrl: handle === "mira.glows" ? "https://instagram.com/p/demo" : null } });
+    await prisma.campaignCreator.create({ data: { projectId: ugc.id, creatorId: c.id, status: handle === "mira.glows" ? "POSTED" : "APPROVED", feePaise: rs(reel), deliverables: "1 reel + 2 stories",
+      ...(handle === "mira.glows" ? { views: 214000, reach: 168000, likes: 12400, comments: 386, shares: 940, saves: 2210, postedAt: date(-4), postUrl: "https://instagram.com/p/demo-mira" } : { views: 8200, reach: 7400, likes: 910, comments: 64, shares: 22, saves: 140, postedAt: date(-2), postUrl: "https://instagram.com/p/demo-ishita" }) } });
   }
 }
 
@@ -144,6 +147,45 @@ await prisma.task.createMany({
     { title: "Chase Ledgerly checkout", ownerId: owner.id, dueDate: date(-1) },
   ],
 });
+
+/* Genesis's Price Quote #0000039, as sent (6 Oct 2026). */
+const ugcTerms = TERMS.find((t) => t.key === "production-ugc")!;
+await prisma.quote.create({
+  data: {
+    number: 39, token: "sample-primezen-0000039", kind: "QUOTE", status: "SENT", title: "Primezen + Sensinova — Premium UGC Product Content", division: "INFLUENCE",
+    contactName: "Hirak", contactEmail: "hirak.sensinovadm@gmail.com", contactPhone: "+91 95749 65805", company: "Primezen + Sensinova",
+    issuedAt: new Date("2026-10-06T10:00:00+05:30"), expiresAt: new Date("2026-10-20T23:59:59+05:30"), sentAt: new Date("2026-10-06T10:05:00+05:30"),
+    notes: ugcTerms.notes, terms: ugcTerms.terms.join("\n"), addGst: false, gstPercent: 18, subtotalPaise: rs(99999), taxPaise: 0, totalPaise: rs(99999), createdById: sales.id,
+    lines: { create: [
+      { position: 0, kind: "custom", division: "STUDIOS", title: "Premium UGC Content Production | 10 Videos", subtitle: "Professional UGC Production Shoot", qty: 1, unitPaise: rs(34999),
+        details: ["1 full-day production shoot (6 hours)", "1 Camera + production crew", "Basic Professional lighting setup", "Clean wireless audio setup", "Product demonstrations & application shots", "Product close-ups", "Creator-led talking shots", "Supporting product B-roll", "Multiple camera angles"].join("\n"),
+        note: "Production planned to capture content for up to 12 final UGC reels.\n\nShoot location and schedule to be mutually finalised." },
+      { position: 1, kind: "custom", division: "INFLUENCE", title: "UGC Creator", subtitle: "UGC Creator Sourcing & Coordination", qty: 5, unitPaise: rs(8000),
+        details: ["5 UGC creators in total", "Creator sourcing & shortlisting", "Brand/category-fit evaluation", "Creator coordination", "Shoot scheduling & briefing", "Product coordination"].join("\n"),
+        note: "Final creator selection, commercials, and availability will be confirmed after client intent and final shortlisting.\nCreator posting/collaboration is not included unless specifically mentioned." },
+      { position: 2, kind: "custom", division: "STUDIOS", title: "Creative, Scripting & Editing", subtitle: "Creative Development & Post-Production for 12 UGC Reels", qty: 1, unitPaise: rs(25000),
+        details: ["Content concepts & creative direction", "Hooks and scripts", "Shoot/content flow planning", "Editing of 12 final reels", "Subtitles & supers", "Clean transitions", "Brand styling", "Basic motion graphics where required", "Music & sound finishing", "Social / paid-media-ready exports", "9:16 / 1080p final delivery", "1 consolidated revision round per reel"].join("\n") },
+    ] },
+  },
+});
+/* An influencer plan, drafted from the database. */
+const planCreators = await prisma.creator.findMany({ orderBy: { followers: "desc" } });
+const infTerms = TERMS.find((t) => t.key === "influencer")!;
+await prisma.quote.create({
+  data: {
+    number: 40, token: "sample-plan-0000040", kind: "INFLUENCER_PLAN", status: "DRAFT", title: "Kindred Clinics — Women's Health Month Influencer Plan", division: "INFLUENCE",
+    contactName: "Sara Thomas", contactEmail: "sara@kindredclinics.example", company: "Kindred Clinics",
+    expiresAt: date(14), notes: infTerms.notes, terms: infTerms.terms.join("\n"), addGst: true, gstPercent: 18, createdById: sales.id,
+    subtotalPaise: rs(35000) + planCreators.slice(0, 4).reduce((s2, c) => s2 + (c.reelRatePaise ?? 0), 0),
+    lines: { create: [{ position: 0, kind: "custom", division: "INFLUENCE", title: "Campaign strategy & management", subtitle: "Influence campaign management", qty: 1, unitPaise: rs(35000), details: "Creator strategy & briefs\nShortlisting & negotiation\nContent approvals\nPosting coordination\nEnd-of-campaign report" }] },
+    creators: { create: planCreators.slice(0, 4).map((c, i) => ({ position: i, creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: "1 reel + 2 stories", feePaise: c.reelRatePaise })) },
+  },
+});
+await prisma.$executeRawUnsafe(`select setval(pg_get_serial_sequence('crm_quotes','number'), 40)`);
+{
+  const q = await prisma.quote.findUniqueOrThrow({ where: { number: 40 } });
+  await prisma.quote.update({ where: { id: q.id }, data: { taxPaise: Math.round(q.subtotalPaise * 0.18), totalPaise: q.subtotalPaise + Math.round(q.subtotalPaise * 0.18) } });
+}
 
 console.log(`Seeded. Sign in at /login as ${email} (owner, and portal owner of Aurum Skincare, Northlight Agency and the editor vendor).`);
 await prisma.$disconnect();

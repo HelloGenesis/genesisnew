@@ -269,6 +269,8 @@ model Account {
   tasks          Task[]
   assignments    VendorAssignment[]
   vendorInvoices VendorInvoice[]
+  quotes         Quote[]
+  files          DriveFile[]
 
   @@index([kind, status])
   @@index([parentId])
@@ -370,6 +372,8 @@ model Lead {
 
   activities   Activity[]
   tasks        Task[]
+  projects     Project[]
+  quotes       Quote[]
 
   @@index([status])
   @@index([nextFollowUp])
@@ -504,6 +508,9 @@ model Order {
   createdAt          DateTime     @default(now()) @map("created_at")
   updatedAt          DateTime     @updatedAt @map("updated_at")
 
+  /// The quote this order pays for.
+  quoteId       String?       @unique @map("quote_id")
+  quote         Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   lines         OrderLine[]
   subscription  Subscription?
   payments      Payment[]
@@ -672,8 +679,16 @@ model Project {
   orderLine      OrderLine?    @relation(fields: [orderLineId], references: [id], onDelete: SetNull)
   subscriptionId String?       @map("subscription_id")
   subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  /// Index into the division's stages (lib/crm/catalog STAGES).
+  /// This project's own stages, from the service's template (lib/crm/stages) — editable per project.
+  stages         String[]      @default([])
+  /// Index into `stages`.
   stage          Int           @default(0)
+  /// The lead whose win opened it.
+  leadId         String?       @map("lead_id")
+  lead           Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  /// The quote it was sold on.
+  quoteId        String?       @map("quote_id")
+  quote          Quote?        @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   status         ProjectStatus @default(ACTIVE)
   managerId      String?       @map("manager_id")
   manager        User?         @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
@@ -683,6 +698,10 @@ model Project {
   quota          Int?
   brief          String?
   driveUrl       String?       @map("drive_url")
+  /// The campaign report's written summary (insights, learnings, next steps).
+  reportSummary  String?       @map("report_summary")
+  /// The report is visible to the client in their portal.
+  reportShared   Boolean       @default(false) @map("report_shared")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
@@ -693,6 +712,7 @@ model Project {
   tasks          Task[]
   assignments    VendorAssignment[]
   creators       CampaignCreator[]
+  files          DriveFile[]
 
   @@index([accountId, status])
   @@index([status, dueDate])
@@ -723,6 +743,9 @@ model Deliverable {
   url          String
   version      Int               @default(1)
   status       DeliverableStatus @default(DRAFT)
+  /// The file in the project's folders it points at, when it was uploaded through the CRM.
+  fileId       String?           @map("file_id")
+  file         DriveFile?        @relation(fields: [fileId], references: [id], onDelete: SetNull)
   /// Set when a vendor submitted it.
   assignmentId String?           @map("assignment_id")
   assignment   VendorAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
@@ -777,6 +800,7 @@ model Request {
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
   messages    Message[]
+  quotes      Quote[]
 
   @@index([accountId, status])
   @@index([status, createdAt])
@@ -957,6 +981,10 @@ model CampaignCreator {
   views        Int?
   likes        Int?
   comments     Int?
+  shares       Int?
+  saves        Int?
+  reach        Int?
+  postedAt     DateTime?             @map("posted_at")
   /// Shown to the client on the portal once the creator is confirmed.
   clientVisible Boolean              @default(true) @map("client_visible")
   notes        String?
@@ -1015,4 +1043,169 @@ model SheetOutbox {
   @@unique([tab, key])
   @@index([sentAt])
   @@map("crm_sheet_outbox")
+}
+
+// --- Quotes and influencer plans (10 Oct 2026) ----------------------------------
+
+enum QuoteKind {
+  /// A price quote: plans, products, add-ons and custom lines.
+  QUOTE
+  /// An influencer plan: the creator list, with fees, for the client to approve.
+  INFLUENCER_PLAN
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  VIEWED
+  ACCEPTED
+  PAID
+  DECLINED
+  EXPIRED
+}
+
+/// A quotation (like Genesis's Price Quote #0000039), sent from the CRM with a payment link.
+model Quote {
+  id            String      @id @default(cuid())
+  number        Int         @unique @default(autoincrement())
+  /// The secret in the client's link, /quote/<token>.
+  token         String      @unique
+  kind          QuoteKind   @default(QUOTE)
+  status        QuoteStatus @default(DRAFT)
+  title         String
+  division      Division?
+  accountId     String?     @map("account_id")
+  account       Account?    @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  leadId        String?     @map("lead_id")
+  lead          Lead?       @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  requestId     String?     @map("request_id")
+  request       Request?    @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  contactName   String      @map("contact_name")
+  contactEmail  String      @map("contact_email")
+  contactPhone  String?     @map("contact_phone")
+  company       String?
+  issuedAt      DateTime    @default(now()) @map("issued_at")
+  expiresAt     DateTime    @map("expires_at")
+  notes         String?
+  terms         String?
+  /// GST added on top (the sample quote's prices are exclusive of GST).
+  addGst        Boolean     @default(true) @map("add_gst")
+  gstPercent    Int         @default(18) @map("gst_percent")
+  discountPaise Int         @default(0) @map("discount_paise")
+  subtotalPaise Int         @default(0) @map("subtotal_paise")
+  taxPaise      Int         @default(0) @map("tax_paise")
+  totalPaise    Int         @default(0) @map("total_paise")
+  razorpayLinkId String?    @unique @map("razorpay_link_id")
+  paymentUrl    String?     @map("payment_url")
+  createdById   String?     @map("created_by_id")
+  sentAt        DateTime?   @map("sent_at")
+  viewedAt      DateTime?   @map("viewed_at")
+  acceptedAt    DateTime?   @map("accepted_at")
+  acceptedBy    String?     @map("accepted_by")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  lines         QuoteLine[]
+  creators      QuoteCreator[]
+  order         Order?
+  projects      Project[]
+
+  @@index([status, createdAt])
+  @@index([accountId])
+  @@index([leadId])
+  @@map("crm_quotes")
+}
+
+model QuoteLine {
+  id        String  @id @default(cuid())
+  quoteId   String  @map("quote_id")
+  quote     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  position  Int     @default(0)
+  /// "plan" | "product" | "addon" | "custom" | "creator"
+  kind      String  @default("custom")
+  productId String? @map("product_id")
+  division  Division?
+  title     String
+  subtitle  String?
+  /// One bullet per line.
+  details   String?
+  /// Smaller print under the bullets ("Shoot location and schedule to be mutually finalised.").
+  note      String?
+  qty       Int     @default(1)
+  unitPaise Int     @default(0) @map("unit_paise")
+
+  @@index([quoteId, position])
+  @@map("crm_quote_lines")
+}
+
+/// A creator on an influencer plan, snapshotted so the plan the client approved never changes under them.
+model QuoteCreator {
+  id           String  @id @default(cuid())
+  quoteId      String  @map("quote_id")
+  quote        Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  creatorId    String? @map("creator_id")
+  position     Int     @default(0)
+  name         String
+  handle       String
+  platform     String
+  profileUrl   String? @map("profile_url")
+  followers    Int     @default(0)
+  avgViews     Int?    @map("avg_views")
+  niches       String[] @default([])
+  city         String?
+  deliverables String?
+  feePaise     Int?    @map("fee_paise")
+
+  @@map("crm_quote_creators")
+}
+
+// --- Google Drive (hello@genesismedia.co) ------------------------------------------
+
+/// Who can see a project file. Genesis staff always can.
+enum FileAudience {
+  /// Genesis only — internal notes, costings, rough material.
+  TEAM
+  /// Genesis and the vendors on the project — raw footage, project files.
+  TEAM_VENDOR
+  /// Genesis and the client — drafts for review, finals.
+  TEAM_CLIENT
+  /// Genesis, the client and the project's vendors — briefs, scripts, references.
+  EVERYONE
+}
+
+/// A file in a project's folder (raw, edited, first cut…), stored in Genesis's Google Drive and viewed in the CRM.
+model DriveFile {
+  id           String       @id @default(cuid())
+  driveId      String       @unique @map("drive_id")
+  name         String
+  mimeType     String?      @map("mime_type")
+  sizeBytes    BigInt?      @map("size_bytes")
+  webViewLink  String?      @map("web_view_link")
+  /// lib/crm/files FOLDERS key: brief, scripts, raw, avatar, first-cut, second-cut, final, internal.
+  folder       String       @default("brief")
+  audience     FileAudience @default(EVERYONE)
+  projectId    String?      @map("project_id")
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  accountId    String?      @map("account_id")
+  account      Account?     @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  uploadedById String?      @map("uploaded_by_id")
+  /// "staff" | "client" | "vendor"
+  uploadedAs   String       @default("staff") @map("uploaded_as")
+  note         String?
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  deliverables Deliverable[]
+
+  @@index([projectId, folder, createdAt])
+  @@index([accountId, createdAt])
+  @@map("crm_drive_files")
+}
+
+/// Small encrypted settings the CRM keeps for itself — the Google Drive connection, Drive folder ids.
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("crm_settings")
 }

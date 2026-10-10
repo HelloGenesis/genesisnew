@@ -22,3 +22,6 @@ export async function accountOptions(kinds?: AccountKind[], resellersOnly = fals
 /** Today + n days as an input[type=date] value. */
 export const inDays = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 export const dateValue = (d: Date | null | undefined) => (d ? d.toISOString().slice(0, 10) : "");
+
+/** A moment n days from now (negative for the past) — for date filters in server pages. */
+export const daysFromNow = (n: number) => new Date(Date.now() + n * 864e5);

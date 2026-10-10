@@ -12,6 +12,7 @@ import { DIVISIONS, LEAD_SOURCE, LEAD_STATUS, money, toPaise } from "@/lib/crm/c
 import { type ActionState, day, fail, isEmail, ok, text } from "@/lib/crm/form-state";
 import { appUrl, queueEmail } from "@/lib/crm/notify";
 import { queueSheet } from "@/lib/crm/sheets";
+import { winLead } from "@/lib/crm/projects";
 import { requireStaff } from "@/lib/crm/session";
 import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 
@@ -84,6 +85,7 @@ export async function updateLead(_: ActionState, form: FormData): Promise<Action
   });
   if (status !== before.status) {
     await prisma.activity.create({ data: { leadId: id, kind: "STATUS", actorId: viewer.id, body: `${LEAD_STATUS[before.status].label} → ${LEAD_STATUS[status].label}` } });
+    if (status === "WON") await winLead(id, viewer.id, "Lead won.");
   }
   await queueSheet("leads", id);
   done();
@@ -102,6 +104,8 @@ export async function moveLead(form: FormData) {
   await prisma.lead.update({ where: { id }, data: { status, ...(status === "WON" || status === "LOST" ? { nextFollowUp: null } : {}) } });
   await prisma.activity.create({ data: { leadId: id, kind: "STATUS", actorId: viewer.id, body: `${LEAD_STATUS[before.status].label} → ${LEAD_STATUS[status].label}` } });
   await queueSheet("leads", id);
+  /* Won on the board: the client and its project open now (lib/crm/projects). */
+  if (status === "WON") await winLead(id, viewer.id, "Lead won on the pipeline.");
   done();
 }
 
@@ -137,23 +141,11 @@ export async function convertLead(form: FormData) {
   const viewer = await requireStaff("sales");
   const id = text(form, "id");
   if (!id) return;
-  const prisma = getPrisma();
-  const lead = await prisma.lead.findUnique({ where: { id } });
-  if (!lead) return;
-  const accountId =
-    lead.accountId ??
-    (
-      await prisma.account.create({
-        data: { name: lead.company ?? lead.name, email: lead.email, phone: lead.phone, status: "ACTIVE", managerId: lead.ownerId ?? viewer.id, referredById: lead.partnerId, notes: lead.notes },
-      })
-    ).id;
-  await prisma.lead.update({ where: { id }, data: { status: "WON", accountId, nextFollowUp: null } });
-  await prisma.activity.create({ data: { leadId: id, kind: "STATUS", actorId: viewer.id, body: "Won and converted to a client account." } });
-  if (lead.email) await invite(accountId, lead.email, "OWNER", viewer.id, true);
-  await queueSheet("leads", id);
-  await queueSheet("accounts", accountId);
+  const result = await winLead(id, viewer.id, "Lead won and converted.");
+  if (!result) return;
+  await getPrisma().activity.create({ data: { leadId: id, kind: "STATUS", actorId: viewer.id, body: "Won: client account and project opened." } });
   done();
-  redirect(`/admin/accounts/${accountId}`);
+  redirect(result.projectId ? `/admin/projects/${result.projectId}` : `/admin/accounts/${result.accountId}`);
 }
 
 // --- Accounts ---------------------------------------------------------------------

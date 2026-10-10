@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
-import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, projectRef, requestRef, stageLabel } from "@/lib/crm/catalog";
+import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, projectRef, requestRef } from "@/lib/crm/catalog";
 import { type StaffArea, can, getViewer, staffAccess } from "@/lib/crm/session";
+import { stageName } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,7 @@ const EXPORTS: Record<string, { area?: StaffArea; build: () => Promise<Cell[][]>
     async build() {
       const rows = await getPrisma().project.findMany({ orderBy: { createdAt: "desc" }, include: { account: true, manager: true, _count: { select: { deliverables: { where: { status: "APPROVED" } } } } } });
       return [["Ref", "Project", "Client", "Division", "Stage", "Status", "Delivered", "Quota", "Producer", "Due", "Created"],
-        ...rows.map((p) => [projectRef(p.number), p.name, p.account.name, DIVISION_LABEL[p.division], stageLabel(p.division, p.stage), PROJECT_STATUS[p.status].label, p._count.deliverables, p.quota, p.manager?.email, d(p.dueDate).slice(0, 10), d(p.createdAt)])];
+        ...rows.map((p) => [projectRef(p.number), p.name, p.account.name, DIVISION_LABEL[p.division], stageName(p), PROJECT_STATUS[p.status].label, p._count.deliverables, p.quota, p.manager?.email, d(p.dueDate).slice(0, 10), d(p.createdAt)])];
     },
   },
   requests: {

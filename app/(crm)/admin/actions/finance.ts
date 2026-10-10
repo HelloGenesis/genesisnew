@@ -8,6 +8,7 @@ import type { CommissionStatus, StaffRoleKind, VendorInvoiceStatus } from "@/lib
 import { money } from "@/lib/crm/catalog";
 import { type ActionState, fail, isEmail, ok, text } from "@/lib/crm/form-state";
 import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
+import { disconnectDrive } from "@/lib/crm/drive";
 import { fulfil } from "@/lib/crm/orders";
 import { queueSheet } from "@/lib/crm/sheets";
 import { requireStaff } from "@/lib/crm/session";
@@ -148,5 +149,23 @@ export async function retryEmail(form: FormData) {
   const id = text(form, "id");
   if (!id) return;
   await getPrisma().emailOutbox.update({ where: { id }, data: { status: "PENDING", attempts: 0, nextAttemptAt: new Date() } });
+  done();
+}
+
+/** Owners: forget the Google Drive connection (files already uploaded stay in the Drive). */
+export async function disconnectGoogleDrive() {
+  const viewer = await requireStaff("staff");
+  await disconnectDrive();
+  await recordAuditLog({ action: "drive.disconnected", entity: "settings", actorId: viewer.id });
+  done();
+}
+
+/** Owners: clear someone's authenticator, so their next sign-in shows a fresh QR code (lost or new phone). */
+export async function resetTwoFactor(form: FormData) {
+  const viewer = await requireStaff("staff");
+  const userId = text(form, "userId");
+  if (!userId) return;
+  await getPrisma().staffTotp.deleteMany({ where: { userId } });
+  await recordAuditLog({ action: "staff.two_factor_reset", entity: "user", entityId: userId, actorId: viewer.id });
   done();
 }

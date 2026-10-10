@@ -10,6 +10,7 @@ import type {
   LeadStatus,
   OrderStatus,
   ProjectStatus,
+  QuoteStatus,
   RequestKind,
   RequestStatus,
   StaffRoleKind,
@@ -44,20 +45,6 @@ const FROM_VERTICAL: Record<VerticalKey, Division> = {
 
 export const divisionOf = (vertical: VerticalKey): Division => FROM_VERTICAL[vertical];
 
-/** The stages of a project, per division. A project's `stage` is an index into its list. */
-export const STAGES: Record<Division, readonly string[]> = {
-  AI_LAB: ["Brief", "Script lock", "Draft 1: images & timeline", "AI video generation", "Draft 2: final", "Delivered"],
-  STUDIOS: ["Brief", "Pre-production", "Shoot", "Edit", "Review", "Delivered"],
-  BRAND_DESIGN: ["Brief", "Discovery", "Concepts", "Revisions", "Final files", "Delivered"],
-  INFLUENCE: ["Brief", "Creator shortlist", "Creators confirmed", "Content & approvals", "Live", "Report"],
-};
-
-export const stageLabel = (division: Division, stage: number) => {
-  const list = STAGES[division];
-  return list[Math.max(0, Math.min(stage, list.length - 1))]!;
-};
-
-export const lastStage = (division: Division) => STAGES[division].length - 1;
 
 /**
  * How many pieces a product includes, read from its own "What's included"
@@ -230,3 +217,13 @@ export const todayIst = () => new Intl.DateTimeFormat("en-CA", { timeZone: IST }
 /** "GM-P-0042" for a project, "GM-R-0107" for a request. */
 export const projectRef = (number: number) => `P-${String(number).padStart(4, "0")}`;
 export const requestRef = (number: number) => `R-${String(number).padStart(4, "0")}`;
+
+export const QUOTE_STATUS: Record<QuoteStatus, { label: string; tone: Tone }> = {
+  DRAFT: { label: "Draft", tone: "muted" },
+  SENT: { label: "Sent", tone: "info" },
+  VIEWED: { label: "Viewed by client", tone: "warn" },
+  ACCEPTED: { label: "Accepted", tone: "good" },
+  PAID: { label: "Paid", tone: "good" },
+  DECLINED: { label: "Declined", tone: "bad" },
+  EXPIRED: { label: "Expired", tone: "muted" },
+};

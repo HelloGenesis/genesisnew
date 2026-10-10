@@ -60,6 +60,11 @@ export default async function StaffVerifyPage({ searchParams }: { searchParams: 
           </p>
         )}
         <CodeForm next={next} />
+        {!setup && (
+          <p className="text-[0.8125rem] text-ash">
+            New phone, or the app shows no Genesis Media entry? Ask an owner to reset your two-factor in Staff &amp; roles, then sign in again to scan a new code. Codes change every 30 seconds; check the phone&apos;s clock is set automatically.
+          </p>
+        )}
         <p className="text-[0.75rem] text-faint">Signed in as {viewer.email ?? viewer.phone}. You&apos;ll be asked again after 12 hours.</p>
       </div>
     </main>

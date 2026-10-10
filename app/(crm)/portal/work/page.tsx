@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
@@ -38,9 +39,12 @@ export default async function PortalWork() {
               {a.deliverables.map((d) => <li key={d.id}><a href={d.url} target="_blank" rel="noopener noreferrer" className="crm-link">{d.title} v{d.version}</a> <span className="text-faint">· {d.status === "DRAFT" ? "with Genesis for review" : d.status.toLowerCase().replace("_", " ")}</span></li>)}
             </ul>
           )}
+          {["ACCEPTED", "SUBMITTED", "APPROVED", "PAID"].includes(a.status) && (
+            <Link href={`/portal/work/${a.id}`} className="crm-btn crm-btn-primary crm-btn-sm mt-4">Open project files</Link>
+          )}
           {(a.status === "ACCEPTED" || a.status === "SUBMITTED") && (
             <details className="mt-4 border-t border-[var(--glass-border)] pt-3">
-              <summary className="cursor-pointer text-[0.9375rem] text-bone">Deliver files</summary>
+              <summary className="cursor-pointer text-[0.9375rem] text-bone">Deliver a link instead</summary>
               <ActionForm action={submitVendorWork} submit="Deliver" className="mt-3" reset>
                 <input type="hidden" name="assignmentId" value={a.id} />
                 <div className="grid gap-3 sm:grid-cols-2">

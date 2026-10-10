@@ -4,11 +4,12 @@ import { Badge, Empty, PageHead, Select, StageBar, Status } from "@/components/c
 import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Division, ProjectStatus } from "@/lib/generated/prisma/enums";
-import { DIVISION_LABEL, DIVISIONS, PROJECT_STATUS, STAGES, date, projectRef, todayIst } from "@/lib/crm/catalog";
+import { DIVISION_LABEL, DIVISIONS, PROJECT_STATUS, date, projectRef, todayIst } from "@/lib/crm/catalog";
 import { staffOptions } from "@/lib/crm/options";
 import { requireStaff } from "@/lib/crm/session";
 
 import { advanceStage } from "../actions/delivery";
+import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Projects" };
@@ -81,7 +82,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                     <Status value={PROJECT_STATUS[p.status]} />
                   </span>
                 </Link>
-                <StageBar stages={STAGES[p.division]} stage={p.stage} compact />
+                <StageBar stages={stagesOf(p)} stage={p.stage} compact />
                 <span className="flex flex-wrap gap-1">
                   <Badge tone="info">{DIVISION_LABEL[p.division]}</Badge>
                   {p.quota ? <Badge>{approved}/{p.quota} delivered</Badge> : approved ? <Badge>{approved} delivered</Badge> : null}
@@ -93,7 +94,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                   <span className={late ? "font-semibold text-[#dc2626]" : "text-ash"}>
                     {p.dueDate ? `Due ${date(p.dueDate)}` : "No due date"} · {p.manager?.name ?? p.manager?.email ?? "Unassigned"}
                   </span>
-                  {p.status === "ACTIVE" && p.stage < STAGES[p.division].length - 1 && (
+                  {p.status === "ACTIVE" && p.stage < stagesOf(p).length - 1 && (
                     <form action={advanceStage}>
                       <input type="hidden" name="id" value={p.id} />
                       <button className="text-ash hover:text-bone">Next stage →</button>

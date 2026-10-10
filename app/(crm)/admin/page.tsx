@@ -2,8 +2,9 @@ import Link from "next/link";
 
 import { Badge, Card, PageHead, Stats, Status, StageBar } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
-import { DIVISION_LABEL, DIVISIONS, LEAD_STATUS, ORDER_STATUS, REQUEST_KIND, REQUEST_STATUS, STAGES, date, money, projectRef, requestRef, todayIst } from "@/lib/crm/catalog";
+import { DIVISION_LABEL, DIVISIONS, LEAD_STATUS, ORDER_STATUS, REQUEST_KIND, REQUEST_STATUS, date, money, projectRef, requestRef, todayIst } from "@/lib/crm/catalog";
 import { requireStaff } from "@/lib/crm/session";
+import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +103,7 @@ export default async function AdminOverview() {
                       <span className="shrink-0 text-[0.8125rem] text-ash">{date(p.dueDate)}</span>
                     </span>
                     <span className="mb-1.5 block text-[0.8125rem] text-ash">{p.account.name} · {DIVISION_LABEL[p.division]}</span>
-                    <StageBar stages={STAGES[p.division]} stage={p.stage} compact />
+                    <StageBar stages={stagesOf(p)} stage={p.stage} compact />
                   </Link>
                 </li>
               ))}

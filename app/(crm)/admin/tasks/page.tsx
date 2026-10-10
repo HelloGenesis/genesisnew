@@ -7,7 +7,7 @@ import { date, todayIst } from "@/lib/crm/catalog";
 import { inDays, staffOptions } from "@/lib/crm/options";
 import { requireStaff } from "@/lib/crm/session";
 
-import { createTask, toggleTask } from "../actions/delivery";
+import { createTask, toggleTask, updateTask } from "../actions/delivery";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Tasks" };
@@ -22,6 +22,10 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       orderBy: params.done ? { completedAt: "desc" } : [{ dueDate: { sort: "asc", nulls: "last" } }, { priority: "desc" }],
       take: 300,
       include: { owner: true, lead: true, account: true, project: true },
+    }).then(async (rows) => {
+      const ids = [...new Set(rows.map((r) => r.createdById).filter((x): x is string => Boolean(x)))];
+      const people = await getPrisma().user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, email: true } });
+      return rows.map((r) => ({ ...r, by: people.find((p) => p.id === r.createdById) }));
     }),
     staffOptions(),
   ]);
@@ -40,7 +44,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             <Field label="Task" className="sm:col-span-2"><input name="title" required className="crm-input" /></Field>
             <Field label="Due"><input name="dueDate" type="date" defaultValue={inDays(1)} className="crm-input" /></Field>
             <Field label="Priority"><Select name="priority" required defaultValue="NORMAL" options={[["LOW", "Low"], ["NORMAL", "Normal"], ["HIGH", "High"]]} /></Field>
-            <Field label="Owner"><Select name="ownerId" options={staff} defaultValue={viewer.id} /></Field>
+            <Field label="Assign to" hint="They get an email and see it on their dashboard."><Select name="ownerId" options={staff} defaultValue={viewer.id} /></Field>
           </div>
           <Field label="Details"><textarea name="details" className="crm-input !min-h-16" /></Field>
         </ActionForm>
@@ -64,8 +68,19 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 </span>
                 {about && <Link href={about.href} className="text-[0.8125rem] text-ash hover:text-bone">{about.label} ↗</Link>}
                 {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}
-                <span className="text-[0.8125rem] text-ash">{t.owner?.name ?? t.owner?.email ?? ""}</span>
+                <span className="text-[0.8125rem] text-ash">{t.owner?.name ?? t.owner?.email ?? "Unassigned"}{t.by && t.createdById !== t.ownerId ? <span className="text-faint"> · from {t.by.name ?? t.by.email}</span> : null}</span>
                 <span className={`text-[0.8125rem] ${late ? "font-semibold text-[#dc2626]" : "text-faint"}`}>{date(t.dueDate)}</span>
+                <details className="w-full">
+                  <summary className="cursor-pointer text-[0.75rem] text-faint">Edit · reassign</summary>
+                  <ActionForm action={updateTask} submit="Save" inline className="mt-2">
+                    <input type="hidden" name="id" value={t.id} />
+                    <input name="title" defaultValue={t.title} className="crm-input min-w-[12rem] flex-1" />
+                    <Select name="ownerId" defaultValue={t.ownerId} options={staff} className="w-auto" placeholder="Unassigned" />
+                    <input name="dueDate" type="date" defaultValue={t.dueDate ? t.dueDate.toISOString().slice(0, 10) : ""} className="crm-input w-auto" />
+                    <Select name="priority" required defaultValue={t.priority} options={[["LOW", "Low"], ["NORMAL", "Normal"], ["HIGH", "High"]]} className="w-auto" />
+                    <input type="hidden" name="details" value={t.details ?? ""} />
+                  </ActionForm>
+                </details>
               </li>
             );
           })}

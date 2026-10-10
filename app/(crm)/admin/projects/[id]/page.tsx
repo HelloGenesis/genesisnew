@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
+import { ProjectFiles } from "@/components/crm/project-files";
 import { Badge, Card, Field, PageHead, Select, StageBar, Status, Thread } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import {
@@ -11,7 +12,7 @@ import {
   PROJECT_STATUS,
   REQUEST_KIND,
   REQUEST_STATUS,
-  STAGES,
+ 
   date,
   dateTime,
   money,
@@ -19,6 +20,7 @@ import {
   requestRef,
 } from "@/lib/crm/catalog";
 import { accountOptions, dateValue, inDays, staffOptions } from "@/lib/crm/options";
+import { filesFor } from "@/lib/crm/files-view";
 import { requireStaff } from "@/lib/crm/session";
 
 import {
@@ -34,6 +36,7 @@ import {
   updateCampaignCreator,
   updateProject,
 } from "../../actions/delivery";
+import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +70,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       ? prisma.creator.findMany({ where: { blacklisted: false, campaigns: { none: { projectId: id } } }, orderBy: { followers: "desc" }, take: 200, select: { id: true, name: true, handle: true, platform: true, followers: true, niches: true, city: true } })
       : [],
   ]);
-  const stages = STAGES[project.division];
+  const stages = stagesOf(project);
+  const files = await filesFor(project.id, "staff", { avatar: stages.some((s) => /avatar/i.test(s)) });
   const approved = project.deliverables.filter((d) => d.status === "APPROVED").length;
   const fees = project.creators.reduce((s, c) => s + (c.status !== "DROPPED" ? (c.feePaise ?? 0) : 0), 0);
   const views = project.creators.reduce((s, c) => s + (c.views ?? 0), 0);
@@ -87,6 +91,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         }
       >
         <Status value={PROJECT_STATUS[project.status]} />
+        {influence && <Link href={`/admin/reports/campaign/${project.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">Campaign report</Link>}
         {project.driveUrl && <a href={project.driveUrl} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Drive folder ↗</a>}
         {project.status === "ACTIVE" && project.stage < stages.length - 1 && (
           <form action={advanceStage}>
@@ -98,6 +103,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
       <Card>
         <StageBar stages={stages} stage={project.stage} />
+      </Card>
+
+      <Card title="Files" action={<span className="text-[0.8125rem] text-ash">Stored in Genesis&apos;s Google Drive · clients and vendors see only their folders</span>}>
+        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} />
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -243,6 +252,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                 <Field label="Drive folder"><input name="driveUrl" type="url" defaultValue={project.driveUrl ?? ""} className="crm-input" /></Field>
               </div>
               <Field label="Brief"><textarea name="brief" defaultValue={project.brief ?? ""} className="crm-input" /></Field>
+              <Field label="Stages (one per line)" hint="Every service runs differently; change this project's steps here."><textarea name="stages" defaultValue={stages.join("\n")} className="crm-input !min-h-40" /></Field>
             </ActionForm>
           </Card>
 

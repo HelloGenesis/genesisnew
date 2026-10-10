@@ -2,13 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
+import { ProjectFiles } from "@/components/crm/project-files";
+import { filesFor } from "@/lib/crm/files-view";
 import { Card, Field, PageHead, StageBar, Status, Table, Thread } from "@/components/crm/ui";
 import { findProduct } from "@/lib/cart";
 import { getPrisma } from "@/lib/db";
-import { CAMPAIGN_CREATOR_STATUS, DELIVERABLE_STATUS, DIVISION_LABEL, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, STAGES, date, projectRef, requestRef } from "@/lib/crm/catalog";
+import { CAMPAIGN_CREATOR_STATUS, DELIVERABLE_STATUS, DIVISION_LABEL, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, date, projectRef, requestRef } from "@/lib/crm/catalog";
 import { portalAccounts, requirePortal } from "@/lib/crm/session";
 
 import { postClientMessage, reviewDeliverable } from "../../actions";
+import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +40,7 @@ export default async function PortalProject({ params }: { params: Promise<{ id: 
     },
   });
   if (!project || !allowed.has(project.accountId)) notFound();
+  const files = await filesFor(project.id, "client", { avatar: stagesOf(project).some((s) => /avatar/i.test(s)) });
   const included = project.productId ? findProduct(project.productId)?.includes : undefined;
   const toReview = project.deliverables.filter((d) => d.status === "IN_REVIEW");
   const rest = project.deliverables.filter((d) => d.status !== "IN_REVIEW");
@@ -48,11 +52,16 @@ export default async function PortalProject({ params }: { params: Promise<{ id: 
         <Status value={PROJECT_STATUS[project.status]} />
         {project.driveUrl && <a href={project.driveUrl} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Shared folder ↗</a>}
         <Link href={`/portal/requests/new?project=${project.id}&kind=REVISION`} className="crm-btn crm-btn-secondary crm-btn-sm">Ask for a change</Link>
+        {project.reportShared && <Link href={`/portal/projects/${project.id}/report`} className="crm-btn crm-btn-primary crm-btn-sm">Campaign report</Link>}
       </PageHead>
 
       <Card>
-        <StageBar stages={STAGES[project.division]} stage={project.stage} />
+        <StageBar stages={stagesOf(project)} stage={project.stage} />
         {project.quota ? <p className="mt-3 text-[0.875rem] text-ash">{approved} of {project.quota} pieces delivered and approved.</p> : null}
+      </Card>
+
+      <Card title="Files" action={<span className="text-[0.8125rem] text-ash">Upload your brief, logos and product photos to Brief &amp; assets</span>}>
+        <ProjectFiles projectId={project.id} role="client" folders={files.folders} files={files.files} />
       </Card>
 
       {toReview.length > 0 && (

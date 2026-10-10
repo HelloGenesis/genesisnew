@@ -15,11 +15,13 @@ import type {
   ProjectStatus,
   RequestStatus,
 } from "@/lib/generated/prisma/enums";
-import { CAMPAIGN_CREATOR_STATUS, DIVISIONS, PROJECT_STATUS, REQUEST_STATUS, STAGES, money, projectRef, requestRef, stageLabel, tierFor, toPaise } from "@/lib/crm/catalog";
+import { CAMPAIGN_CREATOR_STATUS, DIVISIONS, PROJECT_STATUS, REQUEST_STATUS, money, projectRef, requestRef, tierFor, toPaise } from "@/lib/crm/catalog";
 import { type ActionState, day, fail, links, ok, text } from "@/lib/crm/form-state";
 import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
 import { queueSheet } from "@/lib/crm/sheets";
 import { requireStaff } from "@/lib/crm/session";
+import { openProject } from "@/lib/crm/projects";
+import { stagesOf } from "@/lib/crm/stages";
 
 /** Server actions for projects, deliverables, messages, requests, tasks, vendors and creators. */
 
@@ -34,21 +36,19 @@ export async function createProject(_: ActionState, form: FormData): Promise<Act
   const name = text(form, "name", 200);
   const division = oneOf(text(form, "division"), DIVISIONS);
   if (!accountId || !name || !division) return fail("Choose a client, a division and a name.");
-  const project = await getPrisma().project.create({
-    data: {
-      accountId,
-      name,
-      division,
-      managerId: text(form, "managerId") ?? viewer.id,
-      startDate: day(form, "startDate") ?? new Date(),
-      dueDate: day(form, "dueDate"),
-      quota: Number(form.get("quota")) || null,
-      brief: text(form, "brief"),
-      driveUrl: text(form, "driveUrl", 500),
-    },
+  const project = await openProject({
+    accountId,
+    name,
+    division,
+    templateKey: text(form, "template"),
+    managerId: text(form, "managerId") ?? viewer.id,
+    dueDate: day(form, "dueDate"),
+    quota: Number(form.get("quota")) || null,
+    brief: text(form, "brief"),
+    driveUrl: text(form, "driveUrl", 500),
+    why: "Project opened by hand.",
+    actorId: viewer.id,
   });
-  await getPrisma().activity.create({ data: { projectId: project.id, kind: "SYSTEM", actorId: viewer.id, body: "Project opened." } });
-  await queueSheet("projects", project.id);
   done();
   redirect(`/admin/projects/${project.id}`);
 }
@@ -60,7 +60,11 @@ export async function updateProject(_: ActionState, form: FormData): Promise<Act
   const prisma = getPrisma();
   const before = await prisma.project.findUnique({ where: { id } });
   if (!before) return fail("That project no longer exists.");
-  const stage = Math.max(0, Math.min(STAGES[before.division].length - 1, Number(form.get("stage") ?? before.stage)));
+  /* The stage list itself is editable: one per line ("it may vary from service to service"). */
+  const stageText = text(form, "stages", 2000);
+  const stageList = stageText ? stageText.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 15) : null;
+  const stages = stageList?.length ? stageList : stagesOf(before);
+  const stage = Math.max(0, Math.min(stages.length - 1, Number(form.get("stage") ?? before.stage)));
   const status = (oneOf(text(form, "status"), Object.keys(PROJECT_STATUS) as ProjectStatus[]) ?? before.status) as ProjectStatus;
   await prisma.project.update({
     where: { id },
@@ -73,6 +77,7 @@ export async function updateProject(_: ActionState, form: FormData): Promise<Act
       quota: Number(form.get("quota")) || null,
       brief: text(form, "brief"),
       driveUrl: text(form, "driveUrl", 500),
+      ...(stageList ? { stages: stageList } : {}),
     },
   });
   if (stage !== before.stage || status !== before.status) await afterProgress(id, before.stage, stage, before.status, status, viewer.id);
@@ -89,7 +94,7 @@ export async function advanceStage(form: FormData) {
   const prisma = getPrisma();
   const p = await prisma.project.findUnique({ where: { id } });
   if (!p) return;
-  const last = STAGES[p.division].length - 1;
+  const last = stagesOf(p).length - 1;
   const stage = Math.min(last, p.stage + 1);
   const status: ProjectStatus = stage === last ? "DELIVERED" : p.status;
   await prisma.project.update({ where: { id }, data: { stage, status } });
@@ -102,17 +107,17 @@ export async function advanceStage(form: FormData) {
 async function afterProgress(id: string, from: number, to: number, fromStatus: ProjectStatus, toStatus: ProjectStatus, actorId: string) {
   const prisma = getPrisma();
   const p = await prisma.project.findUniqueOrThrow({ where: { id } });
-  const moved = from !== to ? `${stageLabel(p.division, from)} → ${stageLabel(p.division, to)}` : "";
+  const moved = from !== to ? `${stagesOf(p)[from]} → ${stagesOf(p)[to]}` : "";
   const status = fromStatus !== toStatus ? `${PROJECT_STATUS[fromStatus].label} → ${PROJECT_STATUS[toStatus].label}` : "";
   await prisma.activity.create({ data: { projectId: id, kind: "STATUS", actorId, body: [moved, status].filter(Boolean).join(" · ") } });
   await queueEmail({
     kind: "project_progress",
     to: await accountEmails(p.accountId),
-    subject: toStatus === "DELIVERED" ? `Delivered: ${p.name}` : `${p.name}: now at ${stageLabel(p.division, to)}`,
+    subject: toStatus === "DELIVERED" ? `Delivered: ${p.name}` : `${p.name}: now at ${stagesOf(p)[to]}`,
     text:
       toStatus === "DELIVERED"
         ? `${p.name} is delivered. Final files are in your portal.\n\n${appUrl(`/portal/projects/${id}`)}\n\nThank you for working with us. If you'd like more of the same, send a new brief from the portal any time.`
-        : `Your project ${projectRef(p.number)} · ${p.name} has moved to ${stageLabel(p.division, to)}.\n\nFollow it here: ${appUrl(`/portal/projects/${id}`)}`,
+        : `Your project ${projectRef(p.number)} · ${p.name} has moved to ${stagesOf(p)[to]}.\n\nFollow it here: ${appUrl(`/portal/projects/${id}`)}`,
     dedupeKey: `progress:${id}:${to}:${toStatus}`,
   });
 }
@@ -239,10 +244,8 @@ export async function requestToProject(form: FormData) {
   const prisma = getPrisma();
   const r = await prisma.request.findUnique({ where: { id } });
   if (!r) return;
-  const project = await prisma.project.create({ data: { accountId: r.accountId, name: r.title, division, brief: r.body, managerId: viewer.id, startDate: new Date() } });
+  const project = await openProject({ accountId: r.accountId, name: r.title, division, productName: r.title, brief: r.body, managerId: viewer.id, why: `Opened from ${requestRef(r.number)}.`, actorId: viewer.id });
   await prisma.request.update({ where: { id }, data: { projectId: project.id, status: "IN_PROGRESS" } });
-  await prisma.activity.create({ data: { projectId: project.id, kind: "SYSTEM", actorId: viewer.id, body: `Opened from ${requestRef(r.number)}.` } });
-  await queueSheet("projects", project.id);
   await queueSheet("requests", id);
   done();
   redirect(`/admin/projects/${project.id}`);
@@ -254,7 +257,7 @@ export async function createTask(_: ActionState, form: FormData): Promise<Action
   const viewer = await requireStaff();
   const title = text(form, "title", 200);
   if (!title) return fail("Add a title.");
-  await getPrisma().task.create({
+  const task = await getPrisma().task.create({
     data: {
       title,
       details: text(form, "details"),
@@ -267,8 +270,60 @@ export async function createTask(_: ActionState, form: FormData): Promise<Action
       createdById: viewer.id,
     },
   });
+  await notifyAssignee(task.id, viewer.id);
   done();
-  return ok("Task added.");
+  return ok(task.ownerId && task.ownerId !== viewer.id ? "Task assigned and emailed." : "Task added.");
+}
+
+/** Reassign, reschedule or reprioritise a task; a new owner is emailed. */
+export async function updateTask(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff();
+  const id = text(form, "id");
+  if (!id) return fail("Missing task.");
+  const prisma = getPrisma();
+  const before = await prisma.task.findUnique({ where: { id } });
+  if (!before) return fail("That task no longer exists.");
+  const ownerId = text(form, "ownerId");
+  await prisma.task.update({
+    where: { id },
+    data: {
+      title: text(form, "title", 200) ?? before.title,
+      details: text(form, "details"),
+      ownerId,
+      dueDate: day(form, "dueDate"),
+      priority: (oneOf(text(form, "priority"), ["LOW", "NORMAL", "HIGH"] as const) ?? before.priority) as Priority,
+    },
+  });
+  if (ownerId && ownerId !== before.ownerId) await notifyAssignee(id, viewer.id);
+  done();
+  return ok("Saved.");
+}
+
+/** "You've got a task": to the assignee, unless they assigned it to themselves. */
+async function notifyAssignee(taskId: string, assignerId: string) {
+  const prisma = getPrisma();
+  const t = await prisma.task.findUnique({ where: { id: taskId }, include: { owner: true, lead: true, project: true, account: true } });
+  if (!t?.owner?.email || t.ownerId === assignerId) return;
+  const assigner = await prisma.user.findUnique({ where: { id: assignerId }, select: { name: true, email: true } });
+  const about = t.project ? `Project: ${t.project.name}` : t.lead ? `Lead: ${t.lead.name}` : t.account ? `Client: ${t.account.name}` : "";
+  await queueEmail({
+    kind: "task_assigned",
+    to: [t.owner.email],
+    subject: `${t.priority === "HIGH" ? "[High] " : ""}New task: ${t.title}`,
+    text: [
+      `${assigner?.name ?? assigner?.email ?? "Someone"} assigned you a task in the Genesis CRM.`,
+      "",
+      t.title,
+      t.details ?? "",
+      about,
+      t.dueDate ? `Due: ${t.dueDate.toISOString().slice(0, 10)}` : "",
+      "",
+      `Your tasks: ${appUrl("/admin/tasks")}`,
+    ]
+      .filter((l, i, all) => l !== "" || all[i - 1] !== "")
+      .join("\n"),
+    dedupeKey: `task-assigned:${t.id}:${t.ownerId}`,
+  });
 }
 
 export async function toggleTask(form: FormData) {
@@ -393,10 +448,34 @@ export async function updateCampaignCreator(_: ActionState, form: FormData): Pro
       views: n("views"),
       likes: n("likes"),
       comments: n("comments"),
+      shares: n("shares"),
+      saves: n("saves"),
+      reach: n("reach"),
+      postedAt: day(form, "postedAt"),
       clientVisible: form.get("clientVisible") === "on",
       notes: text(form, "notes"),
     },
   });
   done();
   return ok("Saved.");
+}
+
+/** The campaign report's summary, and whether the client sees it in their portal. */
+export async function saveReport(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff("delivery");
+  const id = text(form, "projectId");
+  if (!id) return fail("Missing project.");
+  const shared = form.get("shared") === "on";
+  const p = await getPrisma().project.update({ where: { id }, data: { reportSummary: text(form, "summary", 8000), reportShared: shared } });
+  if (shared && form.get("notify") === "on") {
+    await queueEmail({
+      kind: "report_shared",
+      to: await accountEmails(p.accountId),
+      subject: `Your campaign report: ${p.name}`,
+      text: `The latest report for ${p.name} is ready: live posts, views, engagement and what it cost.\n\n${appUrl(`/portal/projects/${id}/report`)}`,
+    });
+  }
+  await getPrisma().activity.create({ data: { projectId: id, kind: "SYSTEM", actorId: viewer.id, body: shared ? "Campaign report shared with the client." : "Campaign report updated." } });
+  done();
+  return ok(shared ? "Saved and shared with the client." : "Saved.");
 }

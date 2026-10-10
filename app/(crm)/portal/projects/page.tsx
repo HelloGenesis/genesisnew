@@ -3,8 +3,9 @@ import Link from "next/link";
 
 import { Badge, Empty, PageHead, StageBar, Status } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
-import { DIVISION_LABEL, PROJECT_STATUS, STAGES, date, projectRef } from "@/lib/crm/catalog";
+import { DIVISION_LABEL, PROJECT_STATUS, date, projectRef } from "@/lib/crm/catalog";
 import { requirePortal } from "@/lib/crm/session";
+import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Projects" };
@@ -35,7 +36,7 @@ export default async function PortalProjects() {
                     <span className="min-w-0"><span className="block text-bone">{p.name}</span><span className="block text-[0.8125rem] text-ash">{projectRef(p.number)} · {DIVISION_LABEL[p.division]}{p.dueDate ? ` · due ${date(p.dueDate)}` : ""}</span></span>
                     <Status value={PROJECT_STATUS[p.status]} />
                   </span>
-                  <StageBar stages={STAGES[p.division]} stage={p.stage} compact />
+                  <StageBar stages={stagesOf(p)} stage={p.stage} compact />
                   <span className="flex flex-wrap gap-1">
                     {review > 0 && <Badge tone="warn">{review} to review</Badge>}
                     {(p.quota || approved > 0) && <Badge tone="good">{approved}{p.quota ? ` of ${p.quota}` : ""} delivered</Badge>}

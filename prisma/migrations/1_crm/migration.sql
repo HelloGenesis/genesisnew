@@ -79,6 +79,15 @@ CREATE TYPE "CampaignCreatorStatus" AS ENUM ('SHORTLISTED', 'APPROACHED', 'NEGOT
 -- CreateEnum
 CREATE TYPE "OutboxStatus" AS ENUM ('PENDING', 'SENT', 'FAILED', 'SKIPPED');
 
+-- CreateEnum
+CREATE TYPE "QuoteKind" AS ENUM ('QUOTE', 'INFLUENCER_PLAN');
+
+-- CreateEnum
+CREATE TYPE "QuoteStatus" AS ENUM ('DRAFT', 'SENT', 'VIEWED', 'ACCEPTED', 'PAID', 'DECLINED', 'EXPIRED');
+
+-- CreateEnum
+CREATE TYPE "FileAudience" AS ENUM ('TEAM', 'TEAM_VENDOR', 'TEAM_CLIENT', 'EVERYONE');
+
 -- AlterTable
 ALTER TABLE "users" ADD COLUMN     "email_verified" BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN     "phone" TEXT,
@@ -263,6 +272,7 @@ CREATE TABLE "crm_orders" (
     "created_by_id" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "quote_id" TEXT,
 
     CONSTRAINT "crm_orders_pkey" PRIMARY KEY ("id")
 );
@@ -365,7 +375,10 @@ CREATE TABLE "crm_projects" (
     "order_id" TEXT,
     "order_line_id" TEXT,
     "subscription_id" TEXT,
+    "stages" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "stage" INTEGER NOT NULL DEFAULT 0,
+    "lead_id" TEXT,
+    "quote_id" TEXT,
     "status" "ProjectStatus" NOT NULL DEFAULT 'ACTIVE',
     "manager_id" TEXT,
     "start_date" DATE,
@@ -373,6 +386,8 @@ CREATE TABLE "crm_projects" (
     "quota" INTEGER,
     "brief" TEXT,
     "drive_url" TEXT,
+    "report_summary" TEXT,
+    "report_shared" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -388,6 +403,7 @@ CREATE TABLE "crm_deliverables" (
     "url" TEXT NOT NULL,
     "version" INTEGER NOT NULL DEFAULT 1,
     "status" "DeliverableStatus" NOT NULL DEFAULT 'DRAFT',
+    "file_id" TEXT,
     "assignment_id" TEXT,
     "submitted_by_id" TEXT,
     "feedback" TEXT,
@@ -514,6 +530,10 @@ CREATE TABLE "crm_campaign_creators" (
     "views" INTEGER,
     "likes" INTEGER,
     "comments" INTEGER,
+    "shares" INTEGER,
+    "saves" INTEGER,
+    "reach" INTEGER,
+    "posted_at" TIMESTAMP(3),
     "client_visible" BOOLEAN NOT NULL DEFAULT true,
     "notes" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -554,6 +574,112 @@ CREATE TABLE "crm_sheet_outbox" (
     "last_error" TEXT,
 
     CONSTRAINT "crm_sheet_outbox_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "crm_quotes" (
+    "id" TEXT NOT NULL,
+    "number" SERIAL NOT NULL,
+    "token" TEXT NOT NULL,
+    "kind" "QuoteKind" NOT NULL DEFAULT 'QUOTE',
+    "status" "QuoteStatus" NOT NULL DEFAULT 'DRAFT',
+    "title" TEXT NOT NULL,
+    "division" "Division",
+    "account_id" TEXT,
+    "lead_id" TEXT,
+    "request_id" TEXT,
+    "contact_name" TEXT NOT NULL,
+    "contact_email" TEXT NOT NULL,
+    "contact_phone" TEXT,
+    "company" TEXT,
+    "issued_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "notes" TEXT,
+    "terms" TEXT,
+    "add_gst" BOOLEAN NOT NULL DEFAULT true,
+    "gst_percent" INTEGER NOT NULL DEFAULT 18,
+    "discount_paise" INTEGER NOT NULL DEFAULT 0,
+    "subtotal_paise" INTEGER NOT NULL DEFAULT 0,
+    "tax_paise" INTEGER NOT NULL DEFAULT 0,
+    "total_paise" INTEGER NOT NULL DEFAULT 0,
+    "razorpay_link_id" TEXT,
+    "payment_url" TEXT,
+    "created_by_id" TEXT,
+    "sent_at" TIMESTAMP(3),
+    "viewed_at" TIMESTAMP(3),
+    "accepted_at" TIMESTAMP(3),
+    "accepted_by" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "crm_quotes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "crm_quote_lines" (
+    "id" TEXT NOT NULL,
+    "quote_id" TEXT NOT NULL,
+    "position" INTEGER NOT NULL DEFAULT 0,
+    "kind" TEXT NOT NULL DEFAULT 'custom',
+    "product_id" TEXT,
+    "division" "Division",
+    "title" TEXT NOT NULL,
+    "subtitle" TEXT,
+    "details" TEXT,
+    "note" TEXT,
+    "qty" INTEGER NOT NULL DEFAULT 1,
+    "unit_paise" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "crm_quote_lines_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "crm_quote_creators" (
+    "id" TEXT NOT NULL,
+    "quote_id" TEXT NOT NULL,
+    "creator_id" TEXT,
+    "position" INTEGER NOT NULL DEFAULT 0,
+    "name" TEXT NOT NULL,
+    "handle" TEXT NOT NULL,
+    "platform" TEXT NOT NULL,
+    "profile_url" TEXT,
+    "followers" INTEGER NOT NULL DEFAULT 0,
+    "avg_views" INTEGER,
+    "niches" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "city" TEXT,
+    "deliverables" TEXT,
+    "fee_paise" INTEGER,
+
+    CONSTRAINT "crm_quote_creators_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "crm_drive_files" (
+    "id" TEXT NOT NULL,
+    "drive_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "mime_type" TEXT,
+    "size_bytes" BIGINT,
+    "web_view_link" TEXT,
+    "folder" TEXT NOT NULL DEFAULT 'brief',
+    "audience" "FileAudience" NOT NULL DEFAULT 'EVERYONE',
+    "project_id" TEXT,
+    "account_id" TEXT,
+    "uploaded_by_id" TEXT,
+    "uploaded_as" TEXT NOT NULL DEFAULT 'staff',
+    "note" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "crm_drive_files_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "crm_settings" (
+    "key" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "crm_settings_pkey" PRIMARY KEY ("key")
 );
 
 -- CreateIndex
@@ -612,6 +738,9 @@ CREATE UNIQUE INDEX "crm_orders_razorpay_link_id_key" ON "crm_orders"("razorpay_
 
 -- CreateIndex
 CREATE UNIQUE INDEX "crm_orders_razorpay_subscription_id_key" ON "crm_orders"("razorpay_subscription_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "crm_orders_quote_id_key" ON "crm_orders"("quote_id");
 
 -- CreateIndex
 CREATE INDEX "crm_orders_status_created_at_idx" ON "crm_orders"("status", "created_at");
@@ -712,6 +841,36 @@ CREATE INDEX "crm_sheet_outbox_sent_at_idx" ON "crm_sheet_outbox"("sent_at");
 -- CreateIndex
 CREATE UNIQUE INDEX "crm_sheet_outbox_tab_key_key" ON "crm_sheet_outbox"("tab", "key");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "crm_quotes_number_key" ON "crm_quotes"("number");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "crm_quotes_token_key" ON "crm_quotes"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "crm_quotes_razorpay_link_id_key" ON "crm_quotes"("razorpay_link_id");
+
+-- CreateIndex
+CREATE INDEX "crm_quotes_status_created_at_idx" ON "crm_quotes"("status", "created_at");
+
+-- CreateIndex
+CREATE INDEX "crm_quotes_account_id_idx" ON "crm_quotes"("account_id");
+
+-- CreateIndex
+CREATE INDEX "crm_quotes_lead_id_idx" ON "crm_quotes"("lead_id");
+
+-- CreateIndex
+CREATE INDEX "crm_quote_lines_quote_id_position_idx" ON "crm_quote_lines"("quote_id", "position");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "crm_drive_files_drive_id_key" ON "crm_drive_files"("drive_id");
+
+-- CreateIndex
+CREATE INDEX "crm_drive_files_project_id_folder_created_at_idx" ON "crm_drive_files"("project_id", "folder", "created_at");
+
+-- CreateIndex
+CREATE INDEX "crm_drive_files_account_id_created_at_idx" ON "crm_drive_files"("account_id", "created_at");
+
 -- AddForeignKey
 ALTER TABLE "crm_staff_roles" ADD CONSTRAINT "crm_staff_roles_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -776,6 +935,9 @@ ALTER TABLE "crm_orders" ADD CONSTRAINT "crm_orders_account_id_fkey" FOREIGN KEY
 ALTER TABLE "crm_orders" ADD CONSTRAINT "crm_orders_partner_id_fkey" FOREIGN KEY ("partner_id") REFERENCES "crm_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "crm_orders" ADD CONSTRAINT "crm_orders_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "crm_quotes"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "crm_order_lines" ADD CONSTRAINT "crm_order_lines_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "crm_orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -815,10 +977,19 @@ ALTER TABLE "crm_projects" ADD CONSTRAINT "crm_projects_order_line_id_fkey" FORE
 ALTER TABLE "crm_projects" ADD CONSTRAINT "crm_projects_subscription_id_fkey" FOREIGN KEY ("subscription_id") REFERENCES "crm_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "crm_projects" ADD CONSTRAINT "crm_projects_lead_id_fkey" FOREIGN KEY ("lead_id") REFERENCES "crm_leads"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "crm_projects" ADD CONSTRAINT "crm_projects_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "crm_quotes"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "crm_projects" ADD CONSTRAINT "crm_projects_manager_id_fkey" FOREIGN KEY ("manager_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "crm_deliverables" ADD CONSTRAINT "crm_deliverables_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "crm_projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "crm_deliverables" ADD CONSTRAINT "crm_deliverables_file_id_fkey" FOREIGN KEY ("file_id") REFERENCES "crm_drive_files"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "crm_deliverables" ADD CONSTRAINT "crm_deliverables_assignment_id_fkey" FOREIGN KEY ("assignment_id") REFERENCES "crm_vendor_assignments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -865,3 +1036,27 @@ ALTER TABLE "crm_campaign_creators" ADD CONSTRAINT "crm_campaign_creators_projec
 -- AddForeignKey
 ALTER TABLE "crm_campaign_creators" ADD CONSTRAINT "crm_campaign_creators_creator_id_fkey" FOREIGN KEY ("creator_id") REFERENCES "crm_creators"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+-- AddForeignKey
+ALTER TABLE "crm_quotes" ADD CONSTRAINT "crm_quotes_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "crm_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "crm_quotes" ADD CONSTRAINT "crm_quotes_lead_id_fkey" FOREIGN KEY ("lead_id") REFERENCES "crm_leads"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "crm_quotes" ADD CONSTRAINT "crm_quotes_request_id_fkey" FOREIGN KEY ("request_id") REFERENCES "crm_requests"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "crm_quote_lines" ADD CONSTRAINT "crm_quote_lines_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "crm_quotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "crm_quote_creators" ADD CONSTRAINT "crm_quote_creators_quote_id_fkey" FOREIGN KEY ("quote_id") REFERENCES "crm_quotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "crm_drive_files" ADD CONSTRAINT "crm_drive_files_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "crm_projects"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "crm_drive_files" ADD CONSTRAINT "crm_drive_files_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "crm_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+
+-- Genesis quote numbers continue from Price Quote #0000039 (sent 6 Oct 2026).
+SELECT setval(pg_get_serial_sequence('crm_quotes', 'number'), 39);

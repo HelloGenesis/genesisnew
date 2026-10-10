@@ -14,7 +14,7 @@ import {
   PROJECT_STATUS,
   REQUEST_KIND,
   REQUEST_STATUS,
-  STAGES,
+ 
   SUBSCRIPTION_STATUS,
   date,
   dateTime,
@@ -25,9 +25,11 @@ import {
 import { appUrl } from "@/lib/crm/notify";
 import { accountOptions, inDays, staffOptions } from "@/lib/crm/options";
 import { can, requireStaff } from "@/lib/crm/session";
+import { TEMPLATES } from "@/lib/crm/stages";
 
 import { createProject } from "../../actions/delivery";
 import { inviteMember, logActivity, removeMember, sendPaymentLink, updateAccount } from "../../actions/sales";
+import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +74,8 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
       >
         <Status value={ACCOUNT_STATUS[account.status]} />
         {account.isReseller && <Badge tone="warn">Reseller · {account.commissionPercent}%</Badge>}
+        {!vendor && <Link href={`/admin/quotes/new?account=${account.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">New quote</Link>}
+        {!vendor && <Link href={`/admin/quotes/new?account=${account.id}&kind=INFLUENCER_PLAN`} className="crm-btn crm-btn-secondary crm-btn-sm">Influencer plan</Link>}
       </PageHead>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -91,7 +95,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
                             {DIVISION_LABEL[p.division]} · {p.quota ? `${p._count.deliverables}/${p.quota} delivered` : ""} <Status value={PROJECT_STATUS[p.status]} />
                           </span>
                         </span>
-                        <span className="mt-1.5 block"><StageBar stages={STAGES[p.division]} stage={p.stage} compact /></span>
+                        <span className="mt-1.5 block"><StageBar stages={stagesOf(p)} stage={p.stage} compact /></span>
                       </Link>
                     </li>
                   ))}
@@ -105,6 +109,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Field label="Name"><input name="name" required className="crm-input" placeholder="Diwali campaign · 6 reels" /></Field>
                       <Field label="Division"><Select name="division" required options={DIVISIONS.map((d) => [d, DIVISION_LABEL[d]] as const)} /></Field>
+                      <Field label="Stages" hint="Blank = picked from the division."><Select name="template" placeholder="From the division" options={TEMPLATES.map((t) => [t.key, t.label] as const)} /></Field>
                       <Field label="Pieces included"><input name="quota" type="number" min={0} className="crm-input" /></Field>
                       <Field label="Due"><input name="dueDate" type="date" defaultValue={inDays(14)} className="crm-input" /></Field>
                       <Field label="Producer"><Select name="managerId" options={staff} /></Field>
