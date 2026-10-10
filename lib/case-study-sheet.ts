@@ -28,6 +28,10 @@ export type SheetStudy = {
   /** What was delivered, where the sheet gives it as words rather than a figure. */
   highlights?: string[];
   links?: StudyLink[];
+  /** Final copy from the sheet (11 Oct 2026): fields it leaves blank are cleared, not kept from the old draft. */
+  final?: boolean;
+  /** Read as Genesis wrote it (the written layout, no "generated using AI" note). */
+  written?: boolean;
 };
 
 export const sheetStudies: Record<number, SheetStudy> = {
@@ -999,288 +1003,466 @@ export const sheetStudies: Record<number, SheetStudy> = {
     ]
   },
   "30": {
-    "headline": "Inside Genesis Media's Video Production for Mpower Minds x ABHI",
-    "campaign": "Mpower Minds x ABHI",
-    "service": "Video production, motion design and content adaptation",
+    "headline": "Mpower Minds x ABHI: Expert Led Content Series",
+    "campaign": "Mpower Minds x ABHI: Expert Led Content Series",
+    "service": "Expert-led video shoot, edits and content adaptation",
     "industry": "Health insurance and wellness",
     "keyword": "video production agency Mumbai",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "Mpower Minds x ABHI demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "brand": "Aditya Birla Health Insurance",
     "brief": [
-      "Genesis developed four focused films with psychologist Dr Reet Patel, pairing one useful question per video with a warm on-camera tone and adaptations for landscape and vertical formats.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
-    ],
-    "approach": [
-      "Genesis built the narrative around one clear promise: mental-health expertise made human. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
-    ],
-    "execution": [
-      "Script and narrative structure",
-      "Production, editing and motion-graphics treatment",
-      "Primary master and channel-specific adaptations"
+      "Aditya Birla Health Insurance collaborates with Mpower Minds, an initiative of the Aditya Birla Education Trust, to help audiences understand the connection between physical activity and mental wellbeing. Featuring psychologist Dr. Reet Patel, the content brings expert guidance into everyday situations, from taking a walk to managing stress at work.",
+      "Genesis handles the shoot, using two camera angles, professional lighting and clear audio to capture her insights across four topics. The footage is organised by subject and camera angle, with edits delivered in 1:1, 9:16 and 16:9 to support different viewing formats."
     ],
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
-    ]
+      "4 expert-led topics",
+      "2 camera angles",
+      "1:1 + 9:16 + 16:9 video formats",
+      "Shoot + edits + delivery — production support"
+    ],
+    "outcome": [
+      {
+        "value": "4",
+        "label": "expert-led topics"
+      },
+      {
+        "value": "2",
+        "label": "camera angles"
+      },
+      {
+        "value": "1:1 + 9:16 + 16:9",
+        "label": "video formats"
+      },
+      {
+        "value": "Shoot + edits + delivery",
+        "label": "production support"
+      }
+    ],
+    "card": "Genesis shoots with Dr. Reet Patel, a psychologist with Mpower Minds, for ABHI’s HLTH Meter, capturing practical conversations about walking, exercise, strength training and workplace stress, with edits delivered in three formats.",
+    "final": true,
+    "written": true
   },
   "31": {
-    "headline": "Inside Genesis Media's Video Production for ABHI Diabetes Awareness",
-    "campaign": "ABHI Diabetes Awareness",
-    "service": "Video production, motion design and content adaptation",
+    "headline": "ABHI: Bringing Health Messages to Social through Creator-Led Reels",
+    "campaign": "ABHI: Bringing Health Messages to Social through Creator-Led Reels",
+    "service": "Creator-led social reel production, shoot direction and editing",
     "industry": "Health insurance and wellness",
     "keyword": "video production agency Mumbai",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "ABHI Diabetes Awareness demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "brand": "Aditya Birla Health Insurance",
     "brief": [
-      "Genesis used a recognisable social scenario and comedy to hold attention before landing the importance of diabetes awareness and health protection.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
-    ],
-    "approach": [
-      "Genesis built the narrative around one clear promise: humour opens a serious health conversation. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
-    ],
-    "execution": [
-      "Script and narrative structure",
-      "Production, editing and motion-graphics treatment",
-      "Primary master and channel-specific adaptations"
+      "Aditya Birla Health Insurance wanted social content that could bring everyday health habits and insurance benefits into formats people already enjoy watching. Genesis adapts social trends into creator-led reels around walking, exercise, healthy choices, HealthReturns, customer appreciation and diabetes awareness.",
+      "Genesis handles creator coordination, shoot planning, direction and editing. Group performances, lip-syncs, office scenarios and fashion transitions give each message its own expression, while on-screen copy connects the entertainment to ABHI’s offering. The work builds a varied library of short-form content for the brand’s social channels."
     ],
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
-    ]
+      "12 reels delivered across September and November 2024",
+      "Creator-led short-form reels",
+      "Trend-led humour, audio and transitions",
+      "Health + insurance awareness",
+      "Shoot + edit + delivery — complete production"
+    ],
+    "outcome": [
+      {
+        "value": "12",
+        "label": "reels delivered across September and November 2024"
+      },
+      {
+        "value": "Shoot + edit + delivery",
+        "label": "complete production"
+      }
+    ],
+    "highlights": [
+      "Creator-led short-form reels",
+      "Trend-led humour, audio and transitions",
+      "Health + insurance awareness"
+    ],
+    "card": "Genesis creates short-form reels for Aditya Birla Health Insurance, using creators, trending audio, humour and playful transitions to make health and insurance messages feel familiar across social feeds.",
+    "final": true,
+    "written": true
   },
   "32": {
-    "headline": "Inside Genesis Media's Video Production for DHA Face Scan",
-    "campaign": "DHA Face Scan",
-    "service": "Video production, motion design and content adaptation",
+    "headline": "ABHI: A Simple Guide to DHA Face Scan on the Activ Health App",
+    "campaign": "ABHI: A Simple Guide to DHA Face Scan on the Activ Health App",
+    "service": "Presenter-led video shoot, editing and app walkthrough",
     "industry": "Health insurance and wellness",
     "keyword": "video production agency Mumbai",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "DHA Face Scan demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "brand": "Aditya Birla Health Insurance",
     "brief": [
-      "Genesis created a presenter-led explainer around the Digital Health Assessment face scan, pairing a human guide with concise visual cues so users can understand the action quickly.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
-    ],
-    "approach": [
-      "Genesis built the narrative around one clear promise: a health assessment made easy to understand. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
-    ],
-    "execution": [
-      "Script and narrative structure",
-      "Production, editing and motion-graphics treatment",
-      "Primary master and channel-specific adaptations"
+      "Aditya Birla Health Insurance needed an easy-to-follow introduction to the Digital Health Assessment, or DHA, feature in the Activ Health App. The video explains the health insights shown in its report, including blood pressure, body mass, SpO₂ (blood oxygen saturation), respiration rate, stress index and heart rate.",
+      "Genesis handles the shoot, edit and delivery, bringing presenter-led explanations together with app screen recordings and on-screen instructions. The walkthrough guides viewers from logging in and selecting the DHA tile to answering basic health questions, completing the face scan and viewing their report. Practical cues, such as finding good lighting and holding still during the scan, make the process easier to follow."
     ],
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
-    ]
+      "1 presenter-led explainer",
+      "9:16 vertical video",
+      "Step-by-step app walkthrough",
+      "Shoot + edit + delivery — complete production"
+    ],
+    "outcome": [
+      {
+        "value": "1",
+        "label": "presenter-led explainer"
+      },
+      {
+        "value": "9:16",
+        "label": "vertical video"
+      },
+      {
+        "value": "Shoot + edit + delivery",
+        "label": "complete production"
+      }
+    ],
+    "highlights": [
+      "Step-by-step app walkthrough"
+    ],
+    "card": "Genesis shoots and edits a presenter-led video for Aditya Birla Health Insurance, combining clear explanations and app visuals to introduce the DHA face scan and guide users through the assessment.",
+    "final": true,
+    "written": true
   },
   "33": {
-    "headline": "Inside Genesis Media's Video Production for Income Protect Cover",
-    "campaign": "Income Protect Cover",
-    "service": "Video production, motion design and content adaptation",
+    "headline": "ABHI: Introducing Activ Yuva’s Seven Features through Motion Graphics",
+    "campaign": "ABHI: Introducing Activ Yuva’s Seven Features through Motion Graphics",
+    "service": "Motion graphics, animation and feature-introduction videos",
     "industry": "Health insurance and wellness",
     "keyword": "BFSI video production",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "Income Protect Cover demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "brand": "Aditya Birla Health Insurance",
     "brief": [
-      "Genesis visualised eligibility, continuous hospitalisation and the distinction between income protection and hospital bills using a clear AI-led narrative built for social viewing.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
-    ],
-    "approach": [
-      "Genesis built the narrative around one clear promise: complex insurance logic simplified through ai storytelling. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
-    ],
-    "execution": [
-      "Script and narrative structure",
-      "Production, editing and motion-graphics treatment",
-      "Primary master and channel-specific adaptations"
+      "Aditya Birla Health Insurance needed a youthful visual style to introduce the features of its new product, Activ Yuva. Genesis develops seven short videos covering Eat. Move. Heal. and HealthReturns, Unlimited Sum Insured, Travel ON/OFF, Worldwide Maternity Cover, OPD Cover, Yuva Reload 11x and Income Protect.",
+      "Motion design, animated typography and app-inspired visuals give each feature a distinct introduction while keeping the series visually consistent. Clear messaging makes insurance terminology easier to follow, building a feature library that supports the product launch and ongoing communication."
     ],
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
-    ]
-  },
-  "34": {
-    "headline": "Inside Genesis Media's Video Production for Eat Move Heal",
-    "campaign": "Eat Move Heal",
-    "service": "Video production, motion design and content adaptation",
-    "industry": "Health insurance and wellness",
-    "keyword": "video production agency Mumbai",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "Eat Move Heal demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
-    "brand": "Aditya Birla Health Insurance",
-    "brief": [
-      "Genesis used playful motion and game-inspired visual language to connect nutrition, movement and recovery into a memorable health journey.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
+      "7 feature-introduction videos",
+      "9:16 vertical format",
+      "Motion graphics animation and typography",
+      "One consistent visual style"
     ],
-    "approach": [
-      "Genesis built the narrative around one clear promise: wellness behaviours connected in one energetic system. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
+    "outcome": [
+      {
+        "value": "7",
+        "label": "feature-introduction videos"
+      },
+      {
+        "value": "9:16",
+        "label": "vertical format"
+      }
     ],
-    "execution": [
-      "Script and narrative structure",
-      "Production, editing and motion-graphics treatment",
-      "Primary master and channel-specific adaptations"
+    "highlights": [
+      "Motion graphics animation and typography",
+      "One consistent visual style"
     ],
-    "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
-    ]
+    "card": "Genesis creates seven motion graphics videos for ABHI’s new health insurance product, Activ Yuva, using playful visuals and clear messaging to introduce its features.",
+    "final": true,
+    "written": true
   },
   "35": {
-    "headline": "Inside Genesis Media's Video Production for Mahindra Finance Founders' Day 2025",
-    "campaign": "Mahindra Finance Founders' Day 2025",
+    "headline": "Mahindra Finance Founders’ Day 2025: Capturing the Celebration",
+    "campaign": "Mahindra Finance Founders’ Day 2025: Capturing the Celebration",
     "service": "Event content production and social-first editing",
     "industry": "BFSI and financial services",
     "keyword": "event content production",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "Mahindra Finance Founders' Day 2025 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "brand": "Mahindra Finance",
     "brief": [
-      "Genesis shaped leadership and team moments into an event film that records the occasion while retaining the warmth of a people-led culture story.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
-    ],
-    "approach": [
-      "Genesis built the narrative around one clear promise: a milestone film built around people and legacy. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
-    ],
-    "execution": [
-      "Event coverage plan and story beats",
-      "Multi-zone production and rapid editorial workflow",
-      "Vertical, landscape and social-first deliverables"
+      "Mahindra Finance wanted to capture its Founders’ Day celebration and turn the occasion into a concise video. The content needed to carry the atmosphere of the event while making its highlights easy to watch and share.",
+      "Genesis handles the on-ground shoot, edit and delivery, shaping the event footage into a short 9:16 video. The vertical format brings the celebration beyond the venue, giving the brand a visual record of the day for its digital communications."
     ],
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
-    ]
+      "1 event highlight video",
+      "9:16 vertical format",
+      "Shoot + edit + delivery — complete production"
+    ],
+    "outcome": [
+      {
+        "value": "1",
+        "label": "event highlight video"
+      },
+      {
+        "value": "9:16",
+        "label": "vertical format"
+      },
+      {
+        "value": "Shoot + edit + delivery",
+        "label": "complete production"
+      }
+    ],
+    "card": "Genesis shoots, edits and delivers a short event highlight video for Mahindra Finance’s Founders’ Day 2025, bringing the celebration into a format designed for social sharing.",
+    "final": true,
+    "written": true
   },
   "36": {
-    "headline": "Inside Genesis Media's Video Production for ABHI Utsav Milestone",
-    "campaign": "ABHI Utsav Milestone",
+    "headline": "ABHI Utsav Milestone 2025: Capturing the People behind the Celebration",
+    "campaign": "ABHI Utsav Milestone 2025: Capturing the People behind the Celebration",
     "service": "Event content production and social-first editing",
     "industry": "Health insurance and wellness",
     "keyword": "event content production",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "ABHI Utsav Milestone demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "brand": "Aditya Birla Health Insurance",
     "brief": [
-      "Genesis captured leadership moments and programme highlights, then shaped them into a social-first aftermovie rather than a chronological event record.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
-    ],
-    "approach": [
-      "Genesis built the narrative around one clear promise: leadership and event content designed for digital life. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
-    ],
-    "execution": [
-      "Event coverage plan and story beats",
-      "Multi-zone production and rapid editorial workflow",
-      "Vertical, landscape and social-first deliverables"
+      "Aditya Birla Health Insurance wanted to capture its Utsav Milestone celebration through content that reflected both the occasion and the people who brought it to life. The coverage brings together preparations, leadership conversations, employee stories, awards and celebrations.",
+      "Genesis handles the event shoot, photography, editing and delivery, bringing behind-the-scenes moments and the main event together through distinct video edits. Moments with Mr. Mayank Bathwal and Mrs. Vishakha Mulye sit alongside candid interactions, audience reactions and stage highlights. Edited photographs extend the coverage into a visual library for the brand’s communications."
     ],
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
-    ]
+      "2 event video edits — BTS and aftermovie",
+      "9:16 vertical video format",
+      "Event photography — candid and edited images",
+      "Shoot + edit + delivery — complete production"
+    ],
+    "outcome": [
+      {
+        "value": "2 event video edits",
+        "label": "BTS and aftermovie"
+      },
+      {
+        "value": "9:16",
+        "label": "vertical video format"
+      },
+      {
+        "value": "Event photography",
+        "label": "candid and edited images"
+      },
+      {
+        "value": "Shoot + edit + delivery",
+        "label": "complete production"
+      }
+    ],
+    "card": "Genesis shoots and edits event videos and photographs for Aditya Birla Health Insurance’s Utsav Milestone 2025, capturing leadership moments, employee participation and the energy of the celebration.",
+    "final": true,
+    "written": true
   },
   "37": {
-    "headline": "Inside Genesis Media's Video Production for HDFC Bank x ABHI",
+    "headline": "HDFC Bank x ABHI: Making Policy Benefits Easy to Understand",
     "campaign": "HDFC Bank x ABHI",
-    "service": "Video production, motion design and content adaptation",
+    "service": "Policy explainer videos, motion graphics and digital animation",
     "industry": "Health insurance and wellness",
-    "keyword": "BFSI video production",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "HDFC Bank x ABHI demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
+    "keyword": "HDFC Bank policy explainer videos",
     "brand": "HDFC Bank and Aditya Birla Health Insurance",
     "brief": [
-      "Genesis reorganised detailed insurance information into clear steps, visual supers and motion-led explanations. Versioning supported partner and product contexts without rebuilding the complete narrative.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
+      "HDFC Bank x Aditya Birla Health Insurance needed quick, easy-to-understand videos for wide internal distribution. Genesis develops two 9:16 explainers, turning detailed product information into clear visual stories through animated cutouts, motion graphics and concise on-screen text.",
+      "The Sampoorna 2.0 video builds on “Precaution is better than cure,” explaining everyday OPD benefits such as doctor consultations, diagnostic tests and medicines alongside hospitalisation, day-care treatments and AYUSH coverage. The second video introduces three protection combos for HDFC Salary Account holders—Elder Care Companion, ActiveLife Care and Super Shield Plus—covering elder assistance, teleconsultations, preventive check-ups, medical protection and personal accident cover."
     ],
     "approach": [
-      "Genesis built the narrative around one clear promise: insurance explainers people can follow. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
+      "Animated cutouts, playful animation, motion graphics and concise on-screen text simplify product benefits."
     ],
     "execution": [
-      "Script and narrative structure",
-      "Production, editing and motion-graphics treatment",
-      "Primary master and channel-specific adaptations"
+      "Sampoorna 2.0 policy explainer",
+      "HDFC Salary Account Protection Combos explainer",
+      "9:16 vertical videos for wide internal distribution"
     ],
+    "executionNote": "Two distinct explainers; the salary-account video also has an adaptation without the HDFC slide.",
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
-    ]
+      "2 policy explainer videos",
+      "9:16 vertical format",
+      "Motion graphics – visual-led explanations",
+      "Internal distribution – easy-to-share content"
+    ],
+    "takeaway": "Short visual explanations make detailed policy benefits easier to understand and share internally.",
+    "outcome": [
+      {
+        "value": "2",
+        "label": "policy explainer videos"
+      },
+      {
+        "value": "9:16",
+        "label": "vertical format"
+      },
+      {
+        "value": "Motion graphics",
+        "label": "visual-led explanations"
+      },
+      {
+        "value": "Internal distribution",
+        "label": "easy-to-share content"
+      }
+    ],
+    "card": "Genesis creates two short, visual-led policy explainers for HDFC Bank x Aditya Birla Health Insurance, simplifying benefits through playful animation and clear motion graphics.",
+    "final": true,
+    "written": true
   },
   "38": {
-    "headline": "Inside Genesis Media's Video Production for Unveiling Activ One",
+    "headline": "ABHI Activ One: Capturing the Product Launch Event",
     "campaign": "Unveiling Activ One",
     "service": "Event content production and social-first editing",
     "industry": "Health insurance and wellness",
     "keyword": "event content production",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "Unveiling Activ One demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "brand": "Aditya Birla Health Insurance",
     "brief": [
-      "Genesis planned dynamic coverage, brand-led story beats and pace-focused editing so the launch film communicated the character of Activ One and continued to work as an evergreen digital asset. The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
+      "Aditya Birla Health Insurance wanted to capture the launch of Activ One through a video that conveyed the excitement of the occasion and the brand’s identity. The content needed to give viewers a clear sense of the event while keeping the product launch at its centre.",
+      "Genesis handles the shoot, edit and delivery, shaping the event coverage into a high-energy 9:16 aftermovie. Creative camera work and well-paced editing bring the key moments together, giving ABHI a concise recap to share beyond the event."
     ],
     "approach": [
-      "Genesis built the narrative around one clear promise: a launch event built to live beyond the room. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
+      "Creative camera work and well-paced editing bring the event’s key moments together while keeping the product launch at its centre."
     ],
     "execution": [
-      "Event coverage plan and story beats",
-      "Multi-zone production and rapid editorial workflow",
-      "Vertical, landscape and social-first deliverables"
+      "Event shoot",
+      "Editing and delivery of one product launch aftermovie",
+      "9:16 vertical format"
     ],
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
+      "1 product launch aftermovie",
+      "9:16 vertical format",
+      "Event highlights – captured and edited",
+      "Shoot + edit + delivery – complete production"
+    ],
+    "takeaway": "A concise event recap carries the launch’s energy beyond the occasion.",
+    "outcome": [
+      {
+        "value": "1",
+        "label": "product launch aftermovie"
+      },
+      {
+        "value": "9:16",
+        "label": "vertical format"
+      },
+      {
+        "value": "Event highlights",
+        "label": "captured and edited"
+      },
+      {
+        "value": "Shoot + edit + delivery",
+        "label": "complete production"
+      }
+    ],
+    "card": "Genesis shoots and edits an event aftermovie for Aditya Birla Health Insurance’s Activ One launch, bringing the occasion’s energy and key highlights into one engaging video.",
+    "final": true,
+    "written": true,
+    "links": [
+      {
+        "label": "Instagram reel",
+        "url": "https://www.instagram.com/reel/C0mABAJBNCQ/"
+      }
     ]
   },
   "39": {
-    "headline": "Inside Genesis Media's Video Production for UMANG 2024",
+    "headline": "ABHI UMANG 2024: Capturing the Energy of Go Active Fest",
     "campaign": "UMANG 2024",
     "service": "Event content production and social-first editing",
     "industry": "Health insurance and wellness",
     "keyword": "event content production",
-    "executionNote": "Genesis delivered the campaign video assets and platform-ready adaptations, with creative direction designed to keep the central idea consistent across every format.",
-    "takeaway": "UMANG 2024 demonstrates how Genesis Media can translate a clear marketing objective into a practical content system, combining strategy, production and delivery while keeping the audience experience easy to understand.",
     "brand": "Aditya Birla Health Insurance",
     "brief": [
-      "Genesis coordinated creative direction, production, videography and editing across multiple zones, stages, leadership moments and performances, producing both vertical and landscape assets in a compressed window.",
-      "The film needed to communicate quickly across digital and presentation environments. Genesis therefore had to balance information, visual pace and brand accuracy while planning for multiple versions and attention spans."
-    ],
-    "approach": [
-      "Genesis built the narrative around one clear promise: high-volume event content delivered at speed. The information was sequenced into short story steps so viewers could follow the message without the film becoming a list of disconnected claims or event moments.",
-      "The approach was effective because it reduced the message to a clear viewing journey. Strong information hierarchy and planned versioning made the content useful beyond a single placement or moment."
-    ],
-    "execution": [
-      "Event coverage plan and story beats",
-      "Multi-zone production and rapid editorial workflow",
-      "Vertical, landscape and social-first deliverables"
+      "Aditya Birla Health Insurance’s UMANG Go Active Fest brings health, participation and company culture together through five activity zones. The Unplug Zone features open mic performances and mandala art; the Mindful Zone offers posture training and sound baths; the Active Zone combines silent Bhangra Zumba and playlist yoga; the Nourish Zone explores skincare and herbal masks; and the Good Food Zone features pedal-powered juicing.",
+      "Genesis handles the shoot, edit and delivery, capturing the experience through on-ground coverage, drone footage and candid photography. The 29-video library includes event walkthroughs, individual zone highlights, Vikrant Massey’s fireside chat and Mr. Mayank Bathwal’s address. Longer sessions become focused short edits covering teams, products and business priorities, with landscape and vertical adaptations extending the event’s content into internal communications."
     ],
     "results": [
-      "For brand and marketing teams, this shows how Genesis can turn complex information or live production moments into clear, reusable video content."
+      "29 videos delivered",
+      "5 activity zones covered",
+      "16:9 + 9:16 video formats",
+      "Event + leadership video content",
+      "Photography: event moments and candid coverage",
+      "Shoot + edit + delivery: complete production"
+    ],
+    "outcome": [
+      {
+        "value": "29",
+        "label": "videos delivered"
+      },
+      {
+        "value": "5",
+        "label": "activity zones covered"
+      },
+      {
+        "value": "16:9 + 9:16",
+        "label": "video formats"
+      },
+      {
+        "value": "Photography",
+        "label": "event moments and candid coverage"
+      },
+      {
+        "value": "Shoot + edit + delivery",
+        "label": "complete production"
+      }
+    ],
+    "highlights": [
+      "Event + leadership video content"
+    ],
+    "card": "Genesis captures ABHI’s UMANG 2024 through event coverage, leadership conversations and photography, delivering 29 videos across landscape and vertical formats.",
+    "final": true,
+    "written": true,
+    "links": [
+      {
+        "label": "YouTube video",
+        "url": "https://www.youtube.com/watch?v=Nms4xLrnhQk"
+      }
     ]
   },
+  "40": {
+    "headline": "ABHI Power of Ten: Celebrating 10 Years through Leadership Voices",
+    "campaign": "Manthan: Power of Ten",
+    "service": "Leadership video production: shoot, edit and delivery",
+    "industry": "Health insurance and wellness",
+    "keyword": "leadership video production",
+    "brand": "Aditya Birla Health Insurance",
+    "brief": [
+      "To mark ten years of Aditya Birla Health Insurance, ABHI brings its leadership voices together to reflect on the company’s journey and ambitions for the future. Created for Manthan, the video connects perspectives on health-first insurance, customer experience, partnerships, digital innovation and the people behind the business.",
+      "Genesis handles the shoot across two locations in December 2025, followed by editing and delivery. Consistent framing, lighting and sound bring the individual leadership segments into one cohesive narrative, supported by on-screen names, designations and key messages. The finished video presents a shared story of ABHI’s progress and direction through the people helping shape it."
+    ],
+    "results": [
+      "2 shoot locations",
+      "16:9 video format",
+      "Leadership voices: ExCom perspectives",
+      "Shoot + edit + delivery: complete production"
+    ],
+    "outcome": [
+      {
+        "value": "2",
+        "label": "shoot locations"
+      },
+      {
+        "value": "16:9",
+        "label": "video format"
+      },
+      {
+        "value": "Leadership voices",
+        "label": "ExCom perspectives"
+      },
+      {
+        "value": "Shoot + edit + delivery",
+        "label": "complete production"
+      }
+    ],
+    "card": "Genesis shoots with ABHI’s senior leadership across two locations, bringing their perspectives together in a video celebrating ten years of Aditya Birla Health Insurance for Manthan.",
+    "final": true,
+    "written": true
+  },
   "41": {
-    "headline": "Activ Health App: Making a Familiar Mark Work at App Size",
+    "headline": "ABHI Activ Health App: Refreshing the Logo for a Digital Health Experience",
     "campaign": "Activ Health App Logo",
     "service": "Logo icon revamp and concept exploration",
     "industry": "Health insurance and wellness",
     "keyword": "app icon logo redesign case study",
-    "executionNote": "The supplied design documents concept exploration and feedback, not a final approved logo or live rollout.",
-    "takeaway": "An app identity must remain recognisable when reduced to an icon. The exploration shows how fewer details and stronger geometry can refine a familiar mark for digital use.",
     "brand": "Aditya Birla Health Insurance",
     "brief": [
-      "The Activ Health App brings health tracking, rewards, policy information and care services into one digital experience. Its logo had to carry that breadth of purpose in a very small space: an app icon.",
-      "The existing symbol already had recognition, but multiple cuts, shadows and an orange gradient made it visually complex. The challenge was to make it clearer and more contemporary while keeping the shape familiar."
+      "Aditya Birla Health Insurance’s Activ Health App needs a contemporary identity that stays recognisable and works clearly on mobile screens. Genesis develops the logo refresh around simplicity, brand continuity and the app’s focus on proactive wellbeing, retaining its red and yellow colours.",
+      "The creative approach explores a boomerang-inspired form with subtle heart cues integrated through geometry and negative space. Refinements to angle, thickness, curves and edges develop distinct directions while keeping the icon clear at small sizes. The work brings together visual research, hand sketches, form exploration and colour refinement, supported by app mockups, logo presentations and editable artwork."
     ],
-    "approach": [
-      "Genesis explored a simplified boomerang form around forward motion, momentum, balance and wellness. The proposed direction reduced visual noise, replaced gradients with solid red and yellow, and used geometry to suggest care without relying on a literal medical symbol."
+    "results": [
+      "Logo refresh — refined design directions",
+      "App icon — mobile-focused visual development",
+      "Red + yellow — brand continuity",
+      "Editable artwork — Illustrator and PDF files"
     ],
-    "execution": [
-      "Early sketches and form explorations led to a preferred direction; feedback called for red to lead and the ends of the mark to be more symmetrical."
-    ]
+    "outcome": [
+      {
+        "value": "Logo refresh",
+        "label": "refined design directions"
+      },
+      {
+        "value": "App icon",
+        "label": "mobile-focused visual development"
+      },
+      {
+        "value": "Red + yellow",
+        "label": "brand continuity"
+      },
+      {
+        "value": "Editable artwork",
+        "label": "Illustrator and PDF files"
+      }
+    ],
+    "card": "Genesis refreshes the Activ Health App’s visual identity through logo and app-icon explorations, bringing a clearer expression of health and wellbeing to a familiar brand.",
+    "final": true,
+    "written": true
   }
 };
 
 /** Studies the sheet merged into another: their number, and the study that now carries them. */
-export const mergedStudies: Record<number, number> = {"40": 20, "42": 21};
+export const mergedStudies: Record<number, number> = {"34": 33, "42": 21};
 
 const still = (name: string) => `/work/stills/${name}.jpg`;
 
@@ -1326,3 +1508,28 @@ export const sheetMedia: Record<number, { films?: string[]; gallery?: string[] }
     ],
   },
 };
+
+/* Genesis case studies sheet, 11 Oct 2026: studies 30–41 made final. */
+Object.assign(sheetMedia, {
+  30: { films: ["mpower-walking-cam-a-16x9"] },
+  31: { films: ["abhi-reels-sept-harlem-shake", "abhi-reels-sept-gym", "abhi-reels-sept-please-please", "abhi-reels-sept-friends"] },
+  32: { films: ["studios-dha-1"] },
+  33: {
+    films: [
+      "feature-intro-videos-15-seconds-1-draft-9-eat-move-heal-health-returns-motion-graphic",
+      "feature-intro-videos-15-seconds-2-draft-5-unlimited-sum-insured-motion-graphics",
+      "feature-intro-videos-15-seconds-3-draft-4-travel-onoff-motion-graphic",
+      "feature-intro-videos-15-seconds-4-draft-3-wwymc-motion-graphic",
+      "feature-intro-videos-15-seconds-5-draft-7-opd-motion-graphic",
+      "feature-intro-videos-15-seconds-6-draft-2-yuva-reload-11x-motion-graphic",
+      "feature-intro-videos-15-seconds-7-draft6-income-protect-motion-graphic",
+    ],
+  },
+  35: { films: ["studios-mahindra-cut-44"] },
+  36: { films: ["studios-utsav-aftermovie"] },
+  37: { films: ["studios-hdfc-x-abhi-sampoorna2-0", "studios-with-hdfc-slide"] },
+  38: { films: ["studios-on-dec-1-2023-we-ushered-in-a-new-era-of-100-health-and-100-health-insurance"] },
+  39: { films: ["studios-umang-2024"] },
+  40: { films: ["55-power-of-10-studio-1", "studios-abhi-ex-coms"] },
+  41: { gallery: [1, 2, 3, 4, 5, 6].map((i) => still(`${55 + i}-activ-health-logo-${i}`)) },
+});

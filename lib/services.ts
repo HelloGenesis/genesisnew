@@ -436,7 +436,6 @@ export const servicePages: ServicePage[] = [
       "activ-health-app-logo",
       "tripgatee-brand-identity",
       "income-protect-cover",
-      "eat-move-heal",
       "abhi-ka-star",
     ],
   },

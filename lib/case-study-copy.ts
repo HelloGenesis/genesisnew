@@ -1339,11 +1339,15 @@ export const videoOnlyStudies: { n: number; brand: string; clip: ReelId }[] = [
   films. The fields the old structure had no use for here (approach,
   execution, takeaway) are emptied so the page shows only what Genesis wrote.
 */
+/** A final sheet study replaces the whole write-up: anything it leaves blank is blank, not the old draft's text. */
+const FINAL_CLEARS: Partial<CaseStudyCopy> = { approach: [], execution: [], executionNote: "", takeaway: "", highlight: null, flagged: false };
+
 export const caseStudyCopy: CaseStudyCopy[] = masterCopy
   /* A study the sheet merged into another is not a page of its own any more (see mergedStudies). */
   .filter((entry) => !(entry.n in mergedStudies))
   .map(withWebsiteCopy)
-  .map((entry) => ({ ...entry, ...withoutEmpty(sheetStudies[entry.n]) }))
+  /* Every study in Genesis's sheet is approved copy (11 Oct 2026: "35 fully written, 0 in draft"), so none carries the AI note. */
+  .map((entry) => ({ ...entry, ...(sheetStudies[entry.n]?.final ? FINAL_CLEARS : {}), ...withoutEmpty(sheetStudies[entry.n]), ...(sheetStudies[entry.n] ? { written: true } : {}) }))
   .map(withSheetMedia);
 
 /** A merged study's old page address, and the number of the study that carries it now (see mergedStudies). */

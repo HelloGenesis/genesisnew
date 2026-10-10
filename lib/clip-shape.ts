@@ -30,6 +30,11 @@ const RATIOS: Record<string, number> = {
   "37-manthan-2026-power-of-10": 16 / 9,
   "38-sales-pro-power-of-10": 16 / 9,
   "hdfc-mayank-bathwal-message": 16 / 9,
+  /* Genesis case studies sheet, 11 Oct 2026. */
+  "mpower-walking-cam-a-16x9": 16 / 9,
+  "mpower-stress-at-work-cam-b-16x9": 16 / 9,
+  "mpower-strength-cam-a-1x1": 1,
+  "55-power-of-10-studio-1": 16 / 9,
 };
 
 /** Width over height for a clip; 9:16 unless listed above. */
