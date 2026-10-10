@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { priceCart } from "@/lib/cart";
+import { recordCheckout } from "@/lib/crm/orders";
 import { TERMS_VERSION } from "@/lib/legal-commerce";
 import { COUNTRIES, SHOOT_CITY, findCountry, validPostal } from "@/lib/regions";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
@@ -186,6 +187,30 @@ export async function POST(request: Request) {
   const clip = (value: string) => value.slice(0, 250);
   const contactPhone = `${customer.phoneDial}${customer.phone.replace(/[\s-]/g, "")}`;
   const contact = `${customer.name}${customer.designation ? ` (${customer.designation})` : ""} · ${customer.email} · ${phone}`;
+  /*
+    THE ORDER IN THE CRM (lib/crm/orders): kept as pending with its lines and
+    as a lead, so an unpaid checkout is followed up and a paid one becomes
+    projects when Razorpay's webhook confirms it. Never in checkout's way.
+  */
+  const partnerCode = request.headers.get("cookie")?.match(/(?:^|;\s*)gm_partner=([A-Za-z0-9-]+)/)?.[1] ?? null;
+  const keep = (ids: { razorpayLinkId?: string; razorpaySubscriptionId?: string }) =>
+    recordCheckout({
+      reference,
+      order,
+      consent,
+      partnerCode,
+      ...ids,
+      customer: {
+        name: customer.name,
+        designation: customer.designation,
+        email: customer.email,
+        phone,
+        company: customer.company,
+        taxId: customer.taxId ? `${taxIdLabel} ${customer.taxId}` : undefined,
+        address: `${customer.address}, ${place}`,
+        notes: [customer.website && `Website: ${customer.website}`, customer.notes, quotes && `Quote: ${quotes}`].filter(Boolean).join(" · "),
+      },
+    }).catch((error) => console.error("[checkout] CRM record failed", error));
 
   try {
     /*
@@ -251,6 +276,7 @@ export async function POST(request: Request) {
         }),
       });
 
+      await keep({ razorpaySubscriptionId: subscription.id });
       return NextResponse.json({
         mode: "razorpay-subscription",
         key: razorpayKeys()!.id,
@@ -264,7 +290,7 @@ export async function POST(request: Request) {
     }
 
     /* ONE-TIME PRODUCTS ONLY → A PAYMENT LINK for the total, as before. */
-    const link = await razorpay<{ short_url?: string }>("payment_links", {
+    const link = await razorpay<{ id?: string; short_url?: string }>("payment_links", {
       amount: order.total * 100, // paise
       currency: "INR",
       accept_partial: false,
@@ -295,6 +321,7 @@ export async function POST(request: Request) {
       callback_method: "get",
     });
     if (!link.short_url) throw new Error("No payment link returned");
+    await keep({ razorpayLinkId: link.id });
     return NextResponse.json({ mode: "razorpay", url: link.short_url, reference });
   } catch (error) {
     console.error(

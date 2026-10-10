@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 
+import { applyRazorpayEvent } from "@/lib/crm/orders";
 import { type OrderEvent, recordOrderEvent } from "@/lib/orders";
 import { signatureMatches } from "@/lib/razorpay";
 
@@ -141,6 +142,12 @@ export async function POST(request: Request) {
     if (delivery) order.razorpay = [order.razorpay, `event ${delivery}`].filter(Boolean).join(" · ");
     after(() => recordOrderEvent(order));
   }
+
+  /* The CRM's record: the order paid, the client's account and projects, renewals and failures (lib/crm/orders). */
+  const deliveryId = request.headers.get("x-razorpay-event-id");
+  after(() =>
+    applyRazorpayEvent(event as Parameters<typeof applyRazorpayEvent>[0], deliveryId).catch((error) => console.error("[razorpay] CRM update failed", error)),
+  );
 
   return NextResponse.json({ ok: true });
 }

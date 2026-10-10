@@ -1,8 +1,11 @@
 // Genesis Media — Prisma schema
 //
-// SCOPE: Phase 0 only. Auth, audit trail, and marketing-site form capture.
-// The Genesis Workspace tables (clients, projects, invoices, content,
-// automations) are deliberately NOT here — see PROGRESS.md §Out of scope.
+// SCOPE: auth, audit trail and marketing-site form capture (Phase 0), and
+// the Genesis CRM (10 Oct 2026, below the CRM marker): leads, accounts —
+// brands, agencies and vendors — orders, subscriptions and payments from
+// Razorpay, projects and deliverables, requests and messages, the influencer
+// database, and the email and Google Sheets outboxes. Modelled on the
+// genesis-coworking control room.
 //
 // Datasource URL is configured in `prisma.config.ts` (Prisma 7 convention),
 // not inline here.
@@ -29,7 +32,12 @@ model User {
   id          String    @id @default(cuid())
   /// Auth0 `sub` claim — the stable external identity key.
   auth0Sub    String    @unique @map("auth0_sub")
-  email       String    @unique
+  /// Null for a sign-in by mobile code only.
+  email       String?   @unique
+  /// True once Auth0 says the address is verified — invites are only ever claimed by a verified address.
+  emailVerified Boolean @default(false) @map("email_verified")
+  phone       String?
+  phoneVerified Boolean @default(false) @map("phone_verified")
   name        String?
   picture     String?
   role        UserRole  @default(VIEWER)
@@ -38,6 +46,18 @@ model User {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   auditLogs AuditLog[]
+
+  staffRoles      StaffRole[]       @relation("StaffRoleUser")
+  staffTotp       StaffTotp?
+  memberships     AccountMember[]
+  ownedLeads      Lead[]            @relation("LeadOwner")
+  managedAccounts Account[]         @relation("AccountManager")
+  managedProjects Project[]         @relation("ProjectManager")
+  tasks           Task[]            @relation("TaskOwner")
+  activities      Activity[]
+  messages        Message[]
+  requests        Request[]         @relation("RequestAuthor")
+  assignedRequests Request[]        @relation("RequestAssignee")
 
   @@index([email])
   @@map("users")
@@ -108,4 +128,891 @@ model ContactSubmission {
   @@index([email])
   @@index([createdAt])
   @@map("contact_submissions")
+}
+
+// =============================================================================
+// GENESIS CRM (10 Oct 2026)
+//
+// Three sides on one database: Genesis's staff (/admin), and its clients,
+// agencies and vendors (/portal). Every portal query is scoped by the
+// viewer's account memberships; every admin page requires a staff role and
+// a two-factor session. Money is integer paise throughout.
+// =============================================================================
+
+/// Genesis's four divisions — lib/verticals' VerticalKey, as a column.
+enum Division {
+  AI_LAB
+  STUDIOS
+  BRAND_DESIGN
+  INFLUENCE
+}
+
+/// What a staff member may do. Owner implies everything.
+enum StaffRoleKind {
+  OWNER
+  ADMIN
+  SALES
+  PRODUCER
+  FINANCE
+}
+
+model StaffRole {
+  userId      String        @map("user_id")
+  user        User          @relation("StaffRoleUser", fields: [userId], references: [id], onDelete: Cascade)
+  role        StaffRoleKind
+  grantedById String?       @map("granted_by_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@id([userId, role])
+  @@map("crm_staff_roles")
+}
+
+/// A role waiting for an email address; granted the moment that address signs in VERIFIED.
+model StaffInvite {
+  email       String
+  role        StaffRoleKind
+  invitedById String?       @map("invited_by_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@id([email, role])
+  @@map("crm_staff_invites")
+}
+
+/// The staff authenticator (TOTP) secret; `lastStep` stops a code being used twice.
+model StaffTotp {
+  userId      String    @id @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secret      String
+  lastStep    Int       @default(0) @map("last_step")
+  confirmedAt DateTime? @map("confirmed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("crm_staff_totp")
+}
+
+// --- Accounts: brands, agencies, vendors -------------------------------------
+
+enum AccountKind {
+  /// A business buying from Genesis directly.
+  BRAND
+  /// An agency: buys for its brands (child accounts), resells Genesis, or both.
+  AGENCY
+  /// A freelancer, crew or production house Genesis hires.
+  VENDOR
+}
+
+enum AccountStatus {
+  PROSPECT
+  ACTIVE
+  PAUSED
+  CHURNED
+}
+
+model Account {
+  id             String        @id @default(cuid())
+  kind           AccountKind   @default(BRAND)
+  status         AccountStatus @default(PROSPECT)
+  name           String
+  legalName      String?       @map("legal_name")
+  gstin          String?
+  billingAddress String?       @map("billing_address")
+  city           String?
+  state          String?
+  country        String        @default("IN")
+  website        String?
+  industry       String?
+  email          String?
+  phone          String?
+  notes          String?
+  tags           String[]      @default([])
+
+  /// Agency-as-client: the agency that manages this brand.
+  parentId       String?       @map("parent_id")
+  parent         Account?      @relation("AgencyBrands", fields: [parentId], references: [id], onDelete: SetNull)
+  brands         Account[]     @relation("AgencyBrands")
+
+  /// Partner / reseller: earns commission on the accounts it refers.
+  isReseller        Boolean    @default(false) @map("is_reseller")
+  commissionPercent Int        @default(0) @map("commission_percent")
+  /// The reseller's link code: genesismedia.co/p/<code> credits checkouts to them.
+  referralCode      String?    @unique @map("referral_code")
+  referredById      String?    @map("referred_by_id")
+  referredBy        Account?   @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals         Account[]  @relation("Referrals")
+
+  /// Vendor profile.
+  vendorSkills   String[]      @default([]) @map("vendor_skills")
+  vendorRateNote String?       @map("vendor_rate_note")
+  /// How the vendor is paid (UPI id or bank note) — entered by the vendor, shown to finance only.
+  payoutNote     String?       @map("payout_note")
+
+  /// Genesis's account manager.
+  managerId      String?       @map("manager_id")
+  manager        User?         @relation("AccountManager", fields: [managerId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  members        AccountMember[]
+  invites        AccountInvite[]
+  leads          Lead[]          @relation("LeadAccount")
+  partnerLeads   Lead[]          @relation("LeadPartner")
+  orders         Order[]         @relation("OrderAccount")
+  partnerOrders  Order[]         @relation("OrderPartner")
+  subscriptions  Subscription[]
+  payments       Payment[]
+  commissions    Commission[]
+  projects       Project[]
+  requests       Request[]
+  messages       Message[]
+  activities     Activity[]
+  tasks          Task[]
+  assignments    VendorAssignment[]
+  vendorInvoices VendorInvoice[]
+
+  @@index([kind, status])
+  @@index([parentId])
+  @@index([referredById])
+  @@map("crm_accounts")
+}
+
+enum MemberRole {
+  OWNER
+  MEMBER
+  BILLING
+}
+
+model AccountMember {
+  accountId String     @map("account_id")
+  account   Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  userId    String     @map("user_id")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      MemberRole @default(MEMBER)
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@id([accountId, userId])
+  @@index([userId])
+  @@map("crm_account_members")
+}
+
+/// Portal access waiting for an email; claimed by a VERIFIED sign-in with that address.
+model AccountInvite {
+  id          String     @id @default(cuid())
+  accountId   String     @map("account_id")
+  account     Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  email       String
+  role        MemberRole @default(MEMBER)
+  invitedById String?    @map("invited_by_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@unique([accountId, email])
+  @@index([email])
+  @@map("crm_account_invites")
+}
+
+// --- Sales -------------------------------------------------------------------
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CALL_BOOKED
+  PROPOSAL_SENT
+  NEGOTIATION
+  WON
+  LOST
+  NURTURE
+}
+
+enum LeadSource {
+  WEBSITE_FORM
+  CHECKOUT
+  WHATSAPP
+  CALL
+  REFERRAL
+  PARTNER
+  INSTAGRAM
+  LINKEDIN
+  EVENT
+  OUTBOUND
+  OTHER
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  company      String?
+  designation  String?
+  division     Division?
+  /// The product or plan they asked about, in words.
+  interest     String?
+  source       LeadSource @default(WEBSITE_FORM)
+  status       LeadStatus @default(NEW)
+  valuePaise   Int        @default(0) @map("value_paise")
+  ownerId      String?    @map("owner_id")
+  owner        User?      @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  nextFollowUp DateTime?  @map("next_follow_up") @db.Date
+  notes        String?
+  lostReason   String?    @map("lost_reason")
+  /// The website form it came from — one lead per submission.
+  contactSubmissionId String? @unique @map("contact_submission_id")
+  /// Set when won and turned into a client.
+  accountId    String?    @map("account_id")
+  account      Account?   @relation("LeadAccount", fields: [accountId], references: [id], onDelete: SetNull)
+  /// A reseller that brought it in.
+  partnerId    String?    @map("partner_id")
+  partner      Account?   @relation("LeadPartner", fields: [partnerId], references: [id], onDelete: SetNull)
+  createdById  String?    @map("created_by_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  activities   Activity[]
+  tasks        Task[]
+
+  @@index([status])
+  @@index([nextFollowUp])
+  @@index([ownerId])
+  @@index([email])
+  @@map("crm_leads")
+}
+
+enum ActivityKind {
+  NOTE
+  CALL
+  EMAIL
+  MEETING
+  WHATSAPP
+  STATUS
+  SYSTEM
+}
+
+/// The timeline on a lead, account or project.
+model Activity {
+  id        String       @id @default(cuid())
+  kind      ActivityKind @default(NOTE)
+  body      String
+  leadId    String?      @map("lead_id")
+  lead      Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  accountId String?      @map("account_id")
+  account   Account?     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  projectId String?      @map("project_id")
+  project   Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actorId   String?      @map("actor_id")
+  actor     User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@index([leadId, createdAt])
+  @@index([accountId, createdAt])
+  @@index([projectId, createdAt])
+  @@map("crm_activities")
+}
+
+enum TaskStatus {
+  OPEN
+  DONE
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  details     String?
+  priority    Priority   @default(NORMAL)
+  status      TaskStatus @default(OPEN)
+  dueDate     DateTime?  @map("due_date") @db.Date
+  ownerId     String?    @map("owner_id")
+  owner       User?      @relation("TaskOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  leadId      String?    @map("lead_id")
+  lead        Lead?      @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  accountId   String?    @map("account_id")
+  account     Account?   @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  projectId   String?    @map("project_id")
+  project     Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdById String?    @map("created_by_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  completedAt DateTime?  @map("completed_at")
+
+  @@index([status, dueDate])
+  @@map("crm_tasks")
+}
+
+// --- Billing -----------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum OrderChannel {
+  WEBSITE
+  MANUAL
+  PARTNER
+}
+
+enum LineKind {
+  MEMBERSHIP
+  ONE_TIME
+  QUOTED
+}
+
+/// One checkout on the site (or an order staff raise by hand), priced by lib/cart.
+model Order {
+  id                 String       @id @default(cuid())
+  /// GM-… — the reference Razorpay carries.
+  reference          String       @unique
+  status             OrderStatus  @default(PENDING)
+  channel            OrderChannel @default(WEBSITE)
+  accountId          String?      @map("account_id")
+  account            Account?     @relation("OrderAccount", fields: [accountId], references: [id], onDelete: SetNull)
+  partnerId          String?      @map("partner_id")
+  partner            Account?     @relation("OrderPartner", fields: [partnerId], references: [id], onDelete: SetNull)
+  /// "monthly" | "quarterly" for an order with a membership.
+  billing            String?
+  subtotalPaise      Int          @default(0) @map("subtotal_paise")
+  discountPaise      Int          @default(0) @map("discount_paise")
+  comboDiscountPaise Int          @default(0) @map("combo_discount_paise")
+  taxPaise           Int          @default(0) @map("tax_paise")
+  taxLabel           String       @default("GST 18%") @map("tax_label")
+  totalPaise         Int          @default(0) @map("total_paise")
+  /// Charged every cycle (memberships), tax included.
+  recurringPaise     Int          @default(0) @map("recurring_paise")
+  /// Charged once, tax included.
+  oneTimePaise       Int          @default(0) @map("one_time_paise")
+  contactName        String       @map("contact_name")
+  contactEmail       String       @map("contact_email")
+  contactPhone       String?      @map("contact_phone")
+  company            String?
+  taxId              String?      @map("tax_id")
+  billingAddress     String?      @map("billing_address")
+  notes              String?
+  consent            String?
+  razorpayLinkId         String?  @unique @map("razorpay_link_id")
+  razorpaySubscriptionId String?  @unique @map("razorpay_subscription_id")
+  razorpayPaymentId      String?  @map("razorpay_payment_id")
+  paidAt             DateTime?    @map("paid_at")
+  createdById        String?      @map("created_by_id")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  lines         OrderLine[]
+  subscription  Subscription?
+  payments      Payment[]
+  commissions   Commission[]
+  projects      Project[]
+
+  @@index([status, createdAt])
+  @@index([accountId])
+  @@index([contactEmail])
+  @@map("crm_orders")
+}
+
+model OrderLine {
+  id           String   @id @default(cuid())
+  orderId      String   @map("order_id")
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// lib/cart's product id, e.g. "ai-labs.one-time.build-your-ai-avatar-clone".
+  productId    String   @map("product_id")
+  name         String
+  group        String
+  division     Division
+  kind         LineKind
+  qty          Int      @default(1)
+  chargePaise  Int      @default(0) @map("charge_paise")
+  extras       Json?
+  extraLabels  String[] @default([]) @map("extra_labels")
+  extrasPaise  Int      @default(0) @map("extras_paise")
+
+  project      Project?
+
+  @@index([orderId])
+  @@map("crm_order_lines")
+}
+
+enum SubscriptionStatus {
+  CREATED
+  AUTHENTICATED
+  ACTIVE
+  PENDING
+  HALTED
+  PAUSED
+  CANCELLED
+  COMPLETED
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  razorpayId        String             @unique @map("razorpay_id")
+  status            SubscriptionStatus @default(CREATED)
+  accountId         String?            @map("account_id")
+  account           Account?           @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  orderId           String?            @unique @map("order_id")
+  order             Order?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  billing           String?
+  amountPaise       Int                @default(0) @map("amount_paise")
+  paidCount         Int                @default(0) @map("paid_count")
+  currentEnd        DateTime?          @map("current_end")
+  nextChargeAt      DateTime?          @map("next_charge_at")
+  cancelRequestedAt DateTime?          @map("cancel_requested_at")
+  cancelledAt       DateTime?          @map("cancelled_at")
+  /// When Razorpay created the newest event applied — an older event that arrives late never overwrites the status.
+  lastEventAt       DateTime?          @map("last_event_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  payments          Payment[]
+  projects          Project[]
+
+  @@index([status])
+  @@map("crm_subscriptions")
+}
+
+enum PaymentStatus {
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  razorpayId     String        @unique @map("razorpay_id")
+  status         PaymentStatus @default(CAPTURED)
+  amountPaise    Int           @map("amount_paise")
+  method         String?
+  orderId        String?       @map("order_id")
+  order          Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  subscriptionId String?       @map("subscription_id")
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  accountId      String?       @map("account_id")
+  account        Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  /// Razorpay's own invoice for a subscription charge, where there is one.
+  invoiceId      String?       @map("invoice_id")
+  invoiceUrl     String?       @map("invoice_url")
+  paidAt         DateTime      @default(now()) @map("paid_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  commission     Commission?
+
+  @@index([accountId, paidAt])
+  @@map("crm_payments")
+}
+
+/// Every Razorpay webhook delivery, once — a retried delivery is recognised and skipped.
+model WebhookEvent {
+  id          String    @id
+  event       String
+  /// The event as Razorpay sent it, so one that failed to apply is retried by the job runner.
+  payload     Json?
+  attempts    Int       @default(0)
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+  error       String?
+
+  @@map("crm_webhook_events")
+}
+
+enum CommissionStatus {
+  DUE
+  APPROVED
+  PAID
+  VOID
+}
+
+/// A reseller's share of a payment from an account it referred.
+model Commission {
+  id          String           @id @default(cuid())
+  partnerId   String           @map("partner_id")
+  partner     Account          @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  orderId     String?          @map("order_id")
+  order       Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  paymentId   String?          @unique @map("payment_id")
+  payment     Payment?         @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  percent     Int
+  basePaise   Int              @map("base_paise")
+  amountPaise Int              @map("amount_paise")
+  status      CommissionStatus @default(DUE)
+  paidAt      DateTime?        @map("paid_at")
+  note        String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@index([partnerId, status])
+  @@map("crm_commissions")
+}
+
+// --- Delivery ----------------------------------------------------------------
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  DELIVERED
+  CANCELLED
+}
+
+/// One piece of work: a pay-per-project product, a month of a plan, or a campaign.
+model Project {
+  id             String        @id @default(cuid())
+  number         Int           @unique @default(autoincrement())
+  name           String
+  division       Division
+  productId      String?       @map("product_id")
+  accountId      String        @map("account_id")
+  account        Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  orderId        String?       @map("order_id")
+  order          Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  orderLineId    String?       @unique @map("order_line_id")
+  orderLine      OrderLine?    @relation(fields: [orderLineId], references: [id], onDelete: SetNull)
+  subscriptionId String?       @map("subscription_id")
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  /// Index into the division's stages (lib/crm/catalog STAGES).
+  stage          Int           @default(0)
+  status         ProjectStatus @default(ACTIVE)
+  managerId      String?       @map("manager_id")
+  manager        User?         @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+  startDate      DateTime?     @map("start_date") @db.Date
+  dueDate        DateTime?     @map("due_date") @db.Date
+  /// Pieces included (videos, posts, creators) — for the "3 of 4 delivered" count.
+  quota          Int?
+  brief          String?
+  driveUrl       String?       @map("drive_url")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  deliverables   Deliverable[]
+  requests       Request[]
+  messages       Message[]
+  activities     Activity[]
+  tasks          Task[]
+  assignments    VendorAssignment[]
+  creators       CampaignCreator[]
+
+  @@index([accountId, status])
+  @@index([status, dueDate])
+  @@map("crm_projects")
+}
+
+enum DeliverableKind {
+  VIDEO
+  IMAGE
+  DESIGN
+  DOCUMENT
+  LINK
+}
+
+enum DeliverableStatus {
+  DRAFT
+  IN_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+}
+
+model Deliverable {
+  id           String            @id @default(cuid())
+  projectId    String            @map("project_id")
+  project      Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title        String
+  kind         DeliverableKind   @default(VIDEO)
+  url          String
+  version      Int               @default(1)
+  status       DeliverableStatus @default(DRAFT)
+  /// Set when a vendor submitted it.
+  assignmentId String?           @map("assignment_id")
+  assignment   VendorAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  submittedById String?          @map("submitted_by_id")
+  feedback     String?
+  reviewedById String?           @map("reviewed_by_id")
+  reviewedAt   DateTime?         @map("reviewed_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@index([projectId, status])
+  @@map("crm_deliverables")
+}
+
+enum RequestKind {
+  NEW_BRIEF
+  REVISION
+  NEW_CONTENT
+  SUPPORT
+  BILLING
+  CANCELLATION
+}
+
+enum RequestStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_CLIENT
+  DONE
+  DECLINED
+}
+
+/// A brief, revision, new-content ask or support ticket from a client — or raised by staff for one.
+model Request {
+  id          String        @id @default(cuid())
+  number      Int           @unique @default(autoincrement())
+  kind        RequestKind   @default(NEW_BRIEF)
+  status      RequestStatus @default(OPEN)
+  priority    Priority      @default(NORMAL)
+  title       String
+  body        String
+  links       String[]      @default([])
+  accountId   String        @map("account_id")
+  account     Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  projectId   String?       @map("project_id")
+  project     Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdById String?       @map("created_by_id")
+  createdBy   User?         @relation("RequestAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  assigneeId  String?       @map("assignee_id")
+  assignee    User?         @relation("RequestAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  closedAt    DateTime?     @map("closed_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  messages    Message[]
+
+  @@index([accountId, status])
+  @@index([status, createdAt])
+  @@map("crm_requests")
+}
+
+/// A message on a project or request. `internal` notes are staff-only and never reach the portal.
+model Message {
+  id        String   @id @default(cuid())
+  accountId String   @map("account_id")
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  projectId String?  @map("project_id")
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requestId String?  @map("request_id")
+  request   Request? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String?  @map("author_id")
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  /// True when written by Genesis staff.
+  fromStaff Boolean  @default(false) @map("from_staff")
+  internal  Boolean  @default(false)
+  body      String
+  links     String[] @default([])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([projectId, createdAt])
+  @@index([requestId, createdAt])
+  @@index([accountId, createdAt])
+  @@map("crm_messages")
+}
+
+// --- Vendors -----------------------------------------------------------------
+
+enum AssignmentStatus {
+  OFFERED
+  ACCEPTED
+  DECLINED
+  SUBMITTED
+  APPROVED
+  PAID
+  CANCELLED
+}
+
+/// Work given to a vendor on a project: an edit, a shoot, a design.
+model VendorAssignment {
+  id          String           @id @default(cuid())
+  projectId   String           @map("project_id")
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  vendorId    String           @map("vendor_id")
+  vendor      Account          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  role        String
+  brief       String?
+  feePaise    Int              @default(0) @map("fee_paise")
+  dueDate     DateTime?        @map("due_date") @db.Date
+  status      AssignmentStatus @default(OFFERED)
+  createdById String?          @map("created_by_id")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  deliverables Deliverable[]
+  invoices     VendorInvoice[]
+
+  @@index([vendorId, status])
+  @@map("crm_vendor_assignments")
+}
+
+enum VendorInvoiceStatus {
+  SUBMITTED
+  APPROVED
+  PAID
+  REJECTED
+}
+
+model VendorInvoice {
+  id            String              @id @default(cuid())
+  vendorId      String              @map("vendor_id")
+  vendor        Account             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  assignmentId  String?             @map("assignment_id")
+  assignment    VendorAssignment?   @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  number        String
+  amountPaise   Int                 @map("amount_paise")
+  taxPaise      Int                 @default(0) @map("tax_paise")
+  fileUrl       String?             @map("file_url")
+  status        VendorInvoiceStatus @default(SUBMITTED)
+  note          String?
+  submittedById String?             @map("submitted_by_id")
+  decidedById   String?             @map("decided_by_id")
+  paidAt        DateTime?           @map("paid_at")
+  createdAt     DateTime            @default(now()) @map("created_at")
+
+  @@unique([vendorId, number])
+  @@index([status])
+  @@map("crm_vendor_invoices")
+}
+
+// --- Influencer database -----------------------------------------------------
+
+enum Platform {
+  INSTAGRAM
+  YOUTUBE
+  LINKEDIN
+  X
+  FACEBOOK
+  MOJ
+  JOSH
+  SNAPCHAT
+  OTHER
+}
+
+/// Follower bands: nano < 10K, micro < 100K, mid < 500K, macro < 1M, mega 1M+; celebrity by hand.
+enum CreatorTier {
+  NANO
+  MICRO
+  MID
+  MACRO
+  MEGA
+  CELEBRITY
+}
+
+model Creator {
+  id               String      @id @default(cuid())
+  name             String
+  handle           String
+  platform         Platform    @default(INSTAGRAM)
+  profileUrl       String?     @map("profile_url")
+  followers        Int         @default(0)
+  avgViews         Int?        @map("avg_views")
+  /// Percent, e.g. 3.4.
+  engagementRate   Float?      @map("engagement_rate")
+  tier             CreatorTier @default(MICRO)
+  niches           String[]    @default([])
+  languages        String[]    @default([])
+  city             String?
+  gender           String?
+  reelRatePaise    Int?        @map("reel_rate_paise")
+  storyRatePaise   Int?        @map("story_rate_paise")
+  postRatePaise    Int?        @map("post_rate_paise")
+  email            String?
+  phone            String?
+  /// Agency or manager who represents them.
+  managedBy        String?     @map("managed_by")
+  notes            String?
+  tags             String[]    @default([])
+  blacklisted      Boolean     @default(false)
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  campaigns        CampaignCreator[]
+
+  @@unique([platform, handle])
+  @@index([tier])
+  @@index([city])
+  @@map("crm_creators")
+}
+
+enum CampaignCreatorStatus {
+  SHORTLISTED
+  APPROACHED
+  NEGOTIATING
+  CONFIRMED
+  CONTENT_RECEIVED
+  APPROVED
+  POSTED
+  PAID
+  DROPPED
+}
+
+/// A creator on an Influence campaign (an Influence project).
+model CampaignCreator {
+  id           String                @id @default(cuid())
+  projectId    String                @map("project_id")
+  project      Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creatorId    String                @map("creator_id")
+  creator      Creator               @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  status       CampaignCreatorStatus @default(SHORTLISTED)
+  feePaise     Int?                  @map("fee_paise")
+  deliverables String?
+  postUrl      String?               @map("post_url")
+  views        Int?
+  likes        Int?
+  comments     Int?
+  /// Shown to the client on the portal once the creator is confirmed.
+  clientVisible Boolean              @default(true) @map("client_visible")
+  notes        String?
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  @@unique([projectId, creatorId])
+  @@map("crm_campaign_creators")
+}
+
+// --- Integrations ------------------------------------------------------------
+
+enum OutboxStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+/// Email, delivered by the job runner through Resend. A delivery failure never
+/// touches the change it describes; it retries with backoff and staff can see it.
+model EmailOutbox {
+  id            String       @id @default(cuid())
+  kind          String
+  /// Recipients; empty with `toStaff` set means "every staff member in `staffScope`".
+  to            String[]     @default([])
+  toStaff       Boolean      @default(false) @map("to_staff")
+  /// "all" | "sales" | "finance" | "producers"
+  staffScope    String?      @map("staff_scope")
+  subject       String
+  text          String
+  /// Same key twice = one email (a retried webhook never mails twice).
+  dedupeKey     String?      @unique @map("dedupe_key")
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at")
+  lastError     String?      @map("last_error")
+  sentAt        DateTime?    @map("sent_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  @@index([status, nextAttemptAt])
+  @@map("crm_email_outbox")
+}
+
+/// A row that changed and should be mirrored to the CRM Google Sheet.
+model SheetOutbox {
+  id        String    @id @default(cuid())
+  tab       String
+  key       String
+  deleted   Boolean   @default(false)
+  changedAt DateTime  @default(now()) @map("changed_at")
+  sentAt    DateTime? @map("sent_at")
+  attempts  Int       @default(0)
+  lastError String?   @map("last_error")
+
+  @@unique([tab, key])
+  @@index([sentAt])
+  @@map("crm_sheet_outbox")
 }
