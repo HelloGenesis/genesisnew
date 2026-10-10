@@ -3,7 +3,7 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { getLenis } from "./smooth-scroll";
@@ -214,7 +214,7 @@ export function Overlay({
           scrolls inside itself, so there is nothing left to scroll past and
           a phone gets the same centred window a desktop does.
         */
-        className="flex min-h-full items-center justify-center p-3 sm:p-8"
+        className="flex min-h-full items-center justify-center sm:p-8 lg:p-6"
       >
         <div
           ref={panel}
@@ -225,8 +225,10 @@ export function Overlay({
           onClickCapture={onClickCapture}
           className={cn(
             "relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden",
+            /* A phone gets the whole screen: no frame around a window it cannot see past anyway (Genesis, 10 Oct 2026). */
+            "max-sm:h-[100dvh] max-sm:max-h-[100dvh]",
             /* Glass, as the rest of the site (Genesis, 3 Oct 2026); see .glass-window. */
-            "glass-window glass-lit rounded-xl border border-[var(--glass-border)] outline-none",
+            "glass-window glass-lit rounded-xl border border-[var(--glass-border)] outline-none max-sm:rounded-none max-sm:border-0",
             "sm:max-h-[calc(100dvh-4rem)] sm:rounded-[0.875rem]",
             className,
           )}
@@ -247,7 +249,7 @@ export function Overlay({
               type="button"
               onClick={() => close.current()}
               aria-label="Close"
-              className="group grid size-3 place-items-center rounded-full bg-[#ff5f57] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-panel)]"
+              className="group grid size-3 max-sm:hidden place-items-center rounded-full bg-[#ff5f57] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-panel)]"
             >
               <svg
                 aria-hidden
@@ -260,8 +262,18 @@ export function Overlay({
                 <path d="M2.5 2.5 7.5 7.5M7.5 2.5 2.5 7.5" />
               </svg>
             </button>
-            <span aria-hidden className="size-3 rounded-full bg-[#febc2e]" />
-            <span aria-hidden className="size-3 rounded-full bg-[#28c840]" />
+            <span aria-hidden className="size-3 rounded-full bg-[#febc2e] max-sm:hidden" />
+            <span aria-hidden className="size-3 rounded-full bg-[#28c840] max-sm:hidden" />
+            {/* On a phone a plain close button and the title, nothing else in the bar. */}
+            <button
+              type="button"
+              onClick={() => close.current()}
+              aria-label="Close"
+              className="-ml-1.5 grid size-9 shrink-0 place-items-center rounded-full text-bone transition-colors hover:bg-[var(--hover-wash)] sm:hidden"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+            <span className="min-w-0 truncate text-small text-bone sm:hidden">{label.replace(/: details$/, "")}</span>
 
             {/*
               The window's title, centred the way a Mac centres it — and
@@ -284,12 +296,12 @@ export function Overlay({
               tablet — they sat over its text.
             */}
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
-              <ThemeToggle className="origin-right scale-[0.8]" />
+              <ThemeToggle className="origin-right scale-[0.8] max-sm:hidden" />
             </div>
           </div>
 
           {/* The content, scrolling inside the window rather than moving it. */}
-          <div className="overflow-y-auto overscroll-contain p-4 sm:p-9">{children}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-9">{children}</div>
 
           {/*
             THE ARROWS AND THE COUNT, AT THE FOOT OF THE WINDOW (Genesis, 4 Oct
@@ -297,7 +309,7 @@ export function Overlay({
             view, centred.
           */}
           {pager && (
-            <div className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--glass-border)] px-4 py-2.5">
+            <div className="flex shrink-0 items-center justify-center gap-2 border-t border-[var(--glass-border)] px-4 py-1.5 sm:py-2.5">
               <PagerButton side="left" label={pager.previousLabel} onClick={pager.onPrevious} />
               {pager.position && <span className="min-w-[3rem] text-center text-small tabular-nums text-ash">{pager.position}</span>}
               <PagerButton side="right" label={pager.nextLabel} onClick={pager.onNext} />

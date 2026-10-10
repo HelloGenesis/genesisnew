@@ -233,8 +233,11 @@ export function AddToCart({
   className,
   label,
   extras,
+  cartButton = true,
 }: {
   id: string;
+  /** False keeps the purchase button alone (the product pop-up: "Purchase Plan", Genesis 10 Oct 2026). */
+  cartButton?: boolean;
   billing?: Billing;
   /** Extras chosen beside the button (the product pop-up); the cart line takes them. */
   extras?: ExtrasChoice;
@@ -270,6 +273,7 @@ export function AddToCart({
           {label ?? "Purchase"}
         </GlassButton>
       )}
+      {(cartButton || quoted || !purchase) && (
       <GlassButton
         variant={purchase && !quoted ? "glass" : (variant ?? "glass")}
         size={size}
@@ -289,6 +293,7 @@ export function AddToCart({
                 ? "In cart"
                 : "Add to Cart"}
       </GlassButton>
+      )}
     </div>
   );
 }

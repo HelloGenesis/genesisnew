@@ -203,10 +203,10 @@ export function PlanCaseStudies({
               )}
               <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1.5 bg-[linear-gradient(0deg,rgb(0_0_0/0.92),rgb(0_0_0/0.55)_60%,transparent)] px-2 pb-2 pt-10">
                 <span className="max-w-full self-start truncate rounded-full border border-white/20 bg-black/35 px-1.5 py-0.5 text-[0.625rem] font-medium uppercase tracking-[0.06em] text-white/85 backdrop-blur-md">{card.brand ?? card.client}</span>
-                {card.campaign && <span className="truncate px-0.5 text-[0.6875rem] leading-tight text-brand-ink/90">{card.campaign}</span>}
+                {card.campaign && <span className="truncate px-0.5 text-[0.6875rem] leading-tight text-[#ffc516]/90">{card.campaign}</span>}
                 {card.stats?.[0] && (
                   <span className="flex items-baseline justify-center gap-1.5 truncate rounded-lg border border-white/15 bg-white/[0.08] px-2 py-1 backdrop-blur-md">
-                    <span className="font-display text-[0.9375rem] leading-none text-brand-ink">{card.stats[0].value}</span>
+                    <span className="font-display text-[0.9375rem] leading-none text-[#ffc516]">{card.stats[0].value}</span>
                     <span className="truncate text-[0.625rem] uppercase tracking-[0.04em] text-white/75">{card.stats[0].label}</span>
                   </span>
                 )}

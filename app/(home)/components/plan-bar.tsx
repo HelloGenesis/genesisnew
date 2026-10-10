@@ -64,7 +64,7 @@ export function PlanBar({ vertical, className, plansOnly = false }: { vertical: 
       */}
       <div className={cn("grid grid-cols-[minmax(0,1fr)] gap-4 lg:gap-5", !plansOnly && "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")}>
         <div className={FRAME} style={{ background: EDGE }}>
-          <div className="relative flex h-full flex-col gap-3.5 rounded-panel bg-ink p-4 text-left sm:gap-5 sm:p-6" style={{ backgroundImage: GROUND }}>
+          <div className="scene-light relative flex h-full flex-col gap-3.5 rounded-panel bg-ink p-4 text-left sm:gap-5 sm:p-6" style={{ backgroundImage: GROUND }}>
             <div className="min-w-0">
               {/* The N mark and the division, then what it sells. */}
               <Image
@@ -94,7 +94,7 @@ export function PlanBar({ vertical, className, plansOnly = false }: { vertical: 
 
         {!plansOnly && (
           <div className={cn(FRAME, "max-sm:hidden")} style={{ background: EDGE }}>
-            <div className="relative flex h-full flex-col gap-4 rounded-panel bg-ink p-5 sm:p-6" style={{ backgroundImage: GROUND }}>
+            <div className="scene-light relative flex h-full flex-col gap-4 rounded-panel bg-ink p-5 sm:p-6" style={{ backgroundImage: GROUND }}>
               {/* The "View …" button lives in the division's own section, under its picture (Genesis, 6 Oct 2026), not in the box. */}
               {/* Two cards at a time, tall, filling the panel (Genesis, 6 Oct 2026). */}
               <PlanCaseStudies vertical={VERTICAL_NAME[vertical]} perPage={2} className="min-h-0 flex-1" />
@@ -106,7 +106,7 @@ export function PlanBar({ vertical, className, plansOnly = false }: { vertical: 
       {/* On a phone the case studies are a box of their own under the plans, two cards at a time. */}
       {!plansOnly && (
         <div className={cn(FRAME, "mt-4 sm:hidden")} style={{ background: EDGE }}>
-          <PlanCaseStudies vertical={VERTICAL_NAME[vertical]} perPage={2} className="rounded-panel bg-ink p-4" style={{ backgroundImage: GROUND }} />
+          <PlanCaseStudies vertical={VERTICAL_NAME[vertical]} perPage={2} className="scene-light rounded-panel bg-ink p-4" style={{ backgroundImage: GROUND }} />
         </div>
       )}
     </Reveal>

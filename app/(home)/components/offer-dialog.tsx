@@ -111,8 +111,9 @@ function termsFor(tile: Tile): LegalSection[] {
  *  - The arrows step through the other cards of the same row.
  */
 export function OfferDialog({ tile, onClose, pager }: { tile: Tile | null; onClose: () => void; pager?: OverlayPager }) {
+  /* Nearly the whole window on a laptop (Genesis, 10 Oct 2026: "change the size to this"). */
   return (
-    <Overlay open={tile !== null} label={tile ? `${tile.name}: details` : "Offer"} onClose={onClose} className="max-w-6xl" pager={pager}>
+    <Overlay open={tile !== null} label={tile ? `${tile.name}: details` : "Offer"} onClose={onClose} className="max-w-6xl lg:h-[calc(100dvh-3rem)] lg:max-h-[calc(100dvh-3rem)] lg:max-w-[93vw]" pager={pager}>
       {tile && <OfferDetail key={tile.key} tile={tile} />}
     </Overlay>
   );
@@ -211,7 +212,7 @@ function OfferDetail({ tile }: { tile: Tile }) {
           <TurnaroundStrip data={TURNAROUND[tile.vertical]!} />
         </section>
       )}
-      <PaymentOptions className="mt-10" />
+      <PaymentOptions className="mt-10 max-sm:hidden" />
 
       {/*
         THE DROPDOWNS, UNDER THE PAYMENT OPTIONS AND ABOVE THE WORK (Genesis,
@@ -302,9 +303,9 @@ function OfferDetail({ tile }: { tile: Tile }) {
         <section data-section="work" className="mt-10" aria-labelledby={`${tile.key}-studies`}>
           <div className="flex items-baseline justify-between gap-3">
             <h3 id={`${tile.key}-studies`} className="font-sans text-lead text-bone">
-              Previous work &amp; case studies
+              Previous work<span className="max-sm:hidden"> &amp; case studies</span>
             </h3>
-            <Link href="/#library" data-page-link className="text-small text-ash hover:text-brand-ink">
+            <Link href="/#library" data-page-link className="whitespace-nowrap text-small text-ash hover:text-brand-ink">
               All case studies
             </Link>
           </div>
@@ -452,7 +453,7 @@ function ProjectBody({
     */}
     <div data-section="included" className="mt-8 grid items-start gap-6 lg:grid-cols-[1.1fr_0.9fr] [&>*]:min-w-0">
       <div className="flex flex-col gap-6">
-      <div className="glass-card rounded-panel p-5 sm:p-6">
+      <div className="glass-card rounded-panel p-5 sm:p-6 max-sm:bg-transparent max-sm:p-0 max-sm:shadow-none max-sm:before:hidden">
         <p className="micro-label">What&rsquo;s included</p>
         {/*
           READABLE (Genesis, 3 Oct 2026: "make the font bigger and more UI/UX
@@ -479,7 +480,7 @@ function ProjectBody({
       {product?.name === "Build Your AI Avatar Clone" && <AvatarVision />}
       </div>
 
-      <div data-section="customise" className="flex flex-col gap-4 glass-card rounded-panel p-5 sm:p-6 lg:sticky lg:top-16">
+      <div data-section="customise" className="flex flex-col gap-4 glass-card rounded-panel p-5 sm:p-6 lg:sticky lg:top-16 max-sm:border-t max-sm:border-[var(--glass-border)] max-sm:bg-transparent max-sm:px-0 max-sm:pb-0 max-sm:pt-6 max-sm:shadow-none max-sm:before:hidden max-sm:rounded-none">
         <p className="micro-label">Price</p>
         <p className="flex flex-wrap items-baseline gap-x-2" aria-live="polite">
           <span className="font-display text-h2 font-normal leading-none tracking-tight text-bone">
@@ -494,7 +495,7 @@ function ProjectBody({
           </p>
         )}
         {product?.inPerson && <ShootChip className="self-start" />}
-        <ul className="space-y-2.5 text-small text-ash">
+        <ul className="space-y-2.5 text-small text-ash max-sm:hidden">
           {(
             [
               ["check2", "Buy once. No subscription."],
@@ -518,7 +519,7 @@ function ProjectBody({
             </GlassButton>
           )}
         </div>
-        <Link href={homePlans[tile.vertical].page} data-page-link className="inline-flex items-center gap-1 text-small text-ash hover:text-brand-ink">
+        <Link href={homePlans[tile.vertical].page} data-page-link className="inline-flex items-center gap-1 text-small text-ash hover:text-brand-ink max-sm:hidden">
           More about {division}
           <ArrowUpRight className="size-3.5" aria-hidden />
         </Link>
@@ -684,7 +685,7 @@ function HeroGallery({ images }: { images: ProductImage[] }) {
  */
 function ProcessSteps({ steps }: { steps: readonly string[] }) {
   return (
-    <ol className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <ol className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
       {steps.map((step, index) => (
         <li key={step} className="glass-card flex items-center gap-3 rounded-card p-3.5 sm:p-4">
           <span
@@ -711,7 +712,8 @@ function ProcessSteps({ steps }: { steps: readonly string[] }) {
  */
 function AudiencePills({ tags, need }: { tags: readonly string[]; need?: string }) {
   return (
-    <div className="mt-6 max-w-2xl">
+    /* Not on a phone: a wall of pills between the name and what's included (Genesis, 10 Oct 2026: "easy to read"). */
+    <div className="mt-6 max-w-2xl max-sm:hidden">
       <p className="micro-label">Made for</p>
       <ul className="mt-3 flex flex-wrap gap-2">
         {/* Quieter (Genesis, 4 Oct 2026: "make this less flashy"): glass pills with a thin gradient edge, no fills or glow. */}

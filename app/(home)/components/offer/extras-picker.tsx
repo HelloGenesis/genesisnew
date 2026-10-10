@@ -51,7 +51,7 @@ export function ExtrasPicker({
   useEffect(() => onExtrasChange?.(extraTotal), [extraTotal, onExtrasChange]);
 
   if (!extras) {
-    return <AddToCart id={id} purchase label="Buy Now" variant="brand" />;
+    return <AddToCart id={id} purchase label="Purchase Plan" variant="brand" cartButton={false} />;
   }
 
   const set = (patch: Partial<ExtrasChoice>) => setChoice((before) => ({ ...before, ...patch }));
@@ -178,7 +178,7 @@ export function ExtrasPicker({
         </div>
       )}
 
-      <AddToCart id={id} purchase label="Buy Now" variant="brand" extras={chosen} />
+      <AddToCart id={id} purchase label="Purchase Plan" variant="brand" cartButton={false} extras={chosen} />
     </div>
   );
 }

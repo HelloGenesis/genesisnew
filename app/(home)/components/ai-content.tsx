@@ -329,11 +329,12 @@ export function AiContent({ onPage = false }: { onPage?: boolean } = {}) {
         the dark glass chips that come out of the Lab above.
       */}
       {!onPage && (
-        <div className="mt-6 grid gap-10 sm:rounded-panel sm:border sm:border-transparent sm:p-8 sm:shadow-[-24px_18px_60px_-30px_rgb(245_146_62/0.55),24px_18px_60px_-30px_rgb(180_92_224/0.55)] sm:[background:radial-gradient(120%_140%_at_0%_100%,rgb(245_146_62/0.22),transparent_45%)_padding-box,radial-gradient(120%_140%_at_100%_0%,rgb(180_92_224/0.22),transparent_45%)_padding-box,linear-gradient(rgb(13_13_14),rgb(13_13_14))_padding-box,linear-gradient(100deg,#f5923e_0%,#f2607e_40%,#6b4fd8_75%,#c05ce0_100%)_border-box] lg:-mx-16 lg:grid-cols-[minmax(0,1fr)_34rem] lg:items-stretch lg:gap-12 lg:p-10">
+        <div className="scene-light mt-6 grid gap-10 sm:rounded-panel sm:border sm:border-transparent sm:p-8 sm:shadow-[-24px_18px_60px_-30px_rgb(245_146_62/0.55),24px_18px_60px_-30px_rgb(180_92_224/0.55)] sm:[background:radial-gradient(120%_140%_at_0%_100%,rgb(245_146_62/0.22),transparent_45%)_padding-box,radial-gradient(120%_140%_at_100%_0%,rgb(180_92_224/0.22),transparent_45%)_padding-box,linear-gradient(#fff,#fff)_padding-box,linear-gradient(100deg,#f5923e_0%,#f2607e_40%,#6b4fd8_75%,#c05ce0_100%)_border-box] lg:-mx-16 lg:grid-cols-[minmax(0,1fr)_34rem] lg:items-stretch lg:gap-12 lg:p-10">
           {/*
           IN THE PRICE BOXES' GRADIENT FRAME from sm (Genesis, 6 Oct 2026: "make
           this entire bento a gradient like the other price sections"): the
-          palette as a 1px edge on the dark, glowing ground. A phone keeps its
+          palette as a 1px edge on a white, glowing ground — light in both
+          themes, like the price boxes (Genesis, 10 Oct 2026). A phone keeps its
           own layout.
         */}
           {/*

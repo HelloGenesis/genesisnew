@@ -290,12 +290,12 @@ export function WorkTile({
               <span className="max-w-full self-start truncate rounded-full border border-white/20 bg-black/35 px-2 py-0.5 text-[0.625rem] font-medium uppercase tracking-[0.08em] text-white/85 backdrop-blur-md">
                 {copy?.brand ?? item.client}
               </span>
-              <p className="truncate px-0.5 text-[0.75rem] leading-tight text-brand-ink/90">{campaign}</p>
+              <p className="truncate px-0.5 text-[0.75rem] leading-tight text-[#ffc516]/90">{campaign}</p>
               {figures.length > 0 && (
                 <span className="grid grid-flow-col divide-x divide-white/15 overflow-hidden rounded-xl border border-white/15 bg-white/[0.08] backdrop-blur-md">
                   {figures.map((stat) => (
                     <span key={stat.label} className="min-w-0 px-1.5 py-1.5 text-center">
-                      <span className="block font-display text-[0.9375rem] leading-none text-brand-ink">{stat.value}</span>
+                      <span className="block font-display text-[0.9375rem] leading-none text-[#ffc516]">{stat.value}</span>
                       <span className="mt-1 block truncate text-[0.625rem] uppercase tracking-[0.04em] text-white/75">{stat.label}</span>
                     </span>
                   ))}
