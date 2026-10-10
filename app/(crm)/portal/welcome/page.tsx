@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getViewer, portalAccounts } from "@/lib/crm/session";
+import { SignOut } from "@/components/crm/sign-out";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Welcome" };
@@ -23,7 +24,7 @@ export default async function WelcomePage() {
       <div className="flex flex-wrap gap-3">
         <Link href="/pricing" className="crm-btn crm-btn-primary">See plans & pricing</Link>
         <a href="mailto:hello@genesismedia.co" className="crm-btn crm-btn-secondary">Email the team</a>
-        <Link href="/signout" className="crm-btn crm-btn-secondary">Sign out</Link>
+        <SignOut className="crm-btn crm-btn-secondary" />
       </div>
     </div>
   );

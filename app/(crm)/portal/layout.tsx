@@ -7,6 +7,7 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { getViewer, portalAccountCookie, portalAccounts } from "@/lib/crm/session";
 
 import { switchAccount } from "./actions";
+import { SignOut } from "@/components/crm/sign-out";
 
 export const metadata: Metadata = { title: { default: "Portal", template: "%s · Genesis portal" } };
 export const dynamic = "force-dynamic";
@@ -73,7 +74,7 @@ export default async function PortalLayout({ children }: { children: React.React
           <p className="truncate text-ash">{viewer.name ?? viewer.email ?? viewer.phone}</p>
           <div className="mt-2 flex gap-3">
             {viewer.roles.length > 0 && <Link href="/admin" className="crm-link">CRM</Link>}
-            <Link href="/signout" className="crm-link">Sign out</Link>
+            <SignOut className="crm-link" />
           </div>
         </div>
       </div>
