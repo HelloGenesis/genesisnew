@@ -7,6 +7,7 @@ import { isAuth0Configured } from "@/lib/auth0";
 import { emailLoginEnabled } from "@/lib/crm/email-login";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { can, devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
+import { SignOut } from "@/components/crm/sign-out";
 
 export const metadata: Metadata = { title: { default: "CRM", template: "%s · Genesis CRM" } };
 export const dynamic = "force-dynamic";
@@ -75,9 +76,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 Portal
               </Link>
             )}
-            <Link href="/signout" className="crm-link">
-              Sign out
-            </Link>
+            <SignOut className="crm-link" />
           </div>
         </div>
       </div>

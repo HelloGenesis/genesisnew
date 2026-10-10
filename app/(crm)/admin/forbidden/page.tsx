@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getViewer } from "@/lib/crm/session";
+import { SignOut } from "@/components/crm/sign-out";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,7 @@ export default async function ForbiddenPage() {
               Go to your portal
             </Link>
           ) : null}
-          <Link className="crm-btn crm-btn-secondary" href="/signout">
-            Sign out
-          </Link>
+          <SignOut className="crm-btn crm-btn-secondary" />
         </div>
       </div>
     </div>
