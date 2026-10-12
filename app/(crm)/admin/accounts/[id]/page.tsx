@@ -37,6 +37,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
   const viewer = await requireStaff("sales");
   const { id } = await params;
   const prisma = getPrisma();
+  const found = await prisma.inboxItem.findMany({ where: { accountId: id, status: { not: "DISMISSED" }, kind: { not: "OTHER" } }, orderBy: { occurredAt: "desc" }, take: 12 });
   const account = await prisma.account.findUnique({
     where: { id },
     include: {
@@ -74,6 +75,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
       >
         <Status value={ACCOUNT_STATUS[account.status]} />
         {account.isReseller && <Badge tone="warn">Reseller · {account.commissionPercent}%</Badge>}
+        {!vendor && <Link href={`/admin/briefs?account=${account.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">Add brief</Link>}
         {!vendor && <Link href={`/admin/quotes/new?account=${account.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">New quote</Link>}
         {!vendor && <Link href={`/admin/quotes/new?account=${account.id}&kind=INFLUENCER_PLAN`} className="crm-btn crm-btn-secondary crm-btn-sm">Influencer plan</Link>}
       </PageHead>
@@ -249,6 +251,21 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
                       {requestRef(r.number)} · {REQUEST_KIND[r.kind]} · {r.title}
                     </Link>
                     <Status value={REQUEST_STATUS[r.status]} />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* Proposals, Canva and Drive links, details and invoices found in the team's Gmail and Drive (lib/crm/ingest). */}
+          {found.length > 0 && (
+            <Card title="From Gmail & Drive" action={<Link href="/admin/inbox?status=ALL" className="crm-link text-[0.8125rem]">Inbox ↗</Link>}>
+              <ul className="space-y-3">
+                {found.map((f) => (
+                  <li key={f.id}>
+                    <a href={f.url ?? "#"} target="_blank" rel="noreferrer" className="block truncate text-bone hover:underline">{f.title}</a>
+                    <span className="block text-[0.75rem] text-ash">{f.kind.charAt(0) + f.kind.slice(1).toLowerCase()} · {date(f.occurredAt)}</span>
+                    {f.links.slice(0, 3).map((l) => <a key={l} href={l} target="_blank" rel="noreferrer" className="crm-link block truncate text-[0.75rem]">{l.replace(/^https?:\/\/(www\.)?/, "")}</a>)}
                   </li>
                 ))}
               </ul>

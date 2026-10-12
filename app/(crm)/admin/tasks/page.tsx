@@ -15,10 +15,12 @@ export const metadata = { title: "Tasks" };
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ owner?: string; done?: string }> }) {
   const viewer = await requireStaff();
   const params = await searchParams;
+  /* No filter chosen: two panels, what's mine and what I've given others (Genesis, 11 Oct 2026). */
+  const split = !params.owner;
   const owner = params.owner === "all" ? undefined : (params.owner ?? viewer.id);
   const [tasks, staff] = await Promise.all([
     getPrisma().task.findMany({
-      where: { ...(owner ? { ownerId: owner } : {}), status: params.done ? "DONE" : "OPEN" },
+      where: { ...(split ? { OR: [{ ownerId: viewer.id }, { createdById: viewer.id }] } : owner ? { ownerId: owner } : {}), status: params.done ? "DONE" : "OPEN" },
       orderBy: params.done ? { completedAt: "desc" } : [{ dueDate: { sort: "asc", nulls: "last" } }, { priority: "desc" }],
       take: 300,
       include: { owner: true, lead: true, account: true, project: true },
@@ -30,30 +32,9 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     staffOptions(),
   ]);
   const today = todayIst();
-  return (
-    <>
-      <PageHead kicker="Today" title="Tasks" sub={params.done ? "Done" : "Open, by due date"} />
-      <form action="/admin/tasks" className="flex flex-wrap items-end gap-2">
-        <Select name="owner" required defaultValue={params.owner ?? viewer.id} options={[...staff, ["all", "Everyone"]]} className="max-w-[14rem]" />
-        <label className="flex items-center gap-2 text-[0.875rem] text-ash"><input type="checkbox" name="done" value="1" defaultChecked={Boolean(params.done)} /> Show done</label>
-        <button className="crm-btn crm-btn-secondary crm-btn-sm">Show</button>
-      </form>
-      <AddPanel label="Add a task">
-        <ActionForm action={createTask} submit="Add task" reset>
-          <div className="grid gap-3 sm:grid-cols-4">
-            <Field label="Task" className="sm:col-span-2"><input name="title" required className="crm-input" /></Field>
-            <Field label="Due"><input name="dueDate" type="date" defaultValue={inDays(1)} className="crm-input" /></Field>
-            <Field label="Priority"><Select name="priority" required defaultValue="NORMAL" options={[["LOW", "Low"], ["NORMAL", "Normal"], ["HIGH", "High"]]} /></Field>
-            <Field label="Assign to" hint="They get an email and see it on their dashboard."><Select name="ownerId" options={staff} defaultValue={viewer.id} /></Field>
-          </div>
-          <Field label="Details"><textarea name="details" className="crm-input !min-h-16" /></Field>
-        </ActionForm>
-      </AddPanel>
-      {tasks.length === 0 ? (
-        <Empty>No tasks here.</Empty>
-      ) : (
-        <ul className="crm-card divide-y divide-[var(--glass-border)]">
-          {tasks.map((t) => {
+  const mine = tasks.filter((t) => t.ownerId === viewer.id);
+  const given = tasks.filter((t) => t.ownerId !== viewer.id && t.createdById === viewer.id);
+  const rows = (list: typeof tasks) => list.map((t) => {
             const late = t.status === "OPEN" && t.dueDate && t.dueDate.toISOString().slice(0, 10) < today;
             const about = t.lead ? { href: `/admin/leads/${t.lead.id}`, label: t.lead.name } : t.project ? { href: `/admin/projects/${t.project.id}`, label: t.project.name } : t.account ? { href: `/admin/accounts/${t.account.id}`, label: t.account.name } : null;
             return (
@@ -83,8 +64,39 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 </details>
               </li>
             );
-          })}
-        </ul>
+  });
+  return (
+    <>
+      <PageHead kicker="Today" title="Tasks" sub={params.done ? "Done" : "Open, by due date"} />
+      <form action="/admin/tasks" className="flex flex-wrap items-end gap-2">
+        <Select name="owner" defaultValue={params.owner} options={[...staff, ["all", "Everyone"]]} placeholder="Mine & assigned by me" className="max-w-[16rem]" />
+        <label className="flex items-center gap-2 text-[0.875rem] text-ash"><input type="checkbox" name="done" value="1" defaultChecked={Boolean(params.done)} /> Show done</label>
+        <button className="crm-btn crm-btn-secondary crm-btn-sm">Show</button>
+      </form>
+      <AddPanel label="Add a task">
+        <ActionForm action={createTask} submit="Add task" reset>
+          <div className="grid gap-3 sm:grid-cols-4">
+            <Field label="Task" className="sm:col-span-2"><input name="title" required className="crm-input" /></Field>
+            <Field label="Due"><input name="dueDate" type="date" defaultValue={inDays(1)} className="crm-input" /></Field>
+            <Field label="Priority"><Select name="priority" required defaultValue="NORMAL" options={[["LOW", "Low"], ["NORMAL", "Normal"], ["HIGH", "High"]]} /></Field>
+            <Field label="Assign to" hint="They get an email and see it on their dashboard."><Select name="ownerId" options={staff} defaultValue={viewer.id} /></Field>
+          </div>
+          <Field label="Details"><textarea name="details" className="crm-input !min-h-16" /></Field>
+        </ActionForm>
+      </AddPanel>
+      {split && !params.done ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {([["My tasks", mine, "Nothing assigned to you."], ["Assigned by me", given, "You haven't given anyone a task."]] as const).map(([heading, list, empty]) => (
+            <section key={heading} className="crm-card overflow-hidden">
+              <h2 className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3 text-bone">{heading}<span className="text-[0.8125rem] text-ash">{list.length}</span></h2>
+              {list.length === 0 ? <p className="px-4 py-6 text-ash">{empty}</p> : <ul className="divide-y divide-[var(--glass-border)]">{rows(list)}</ul>}
+            </section>
+          ))}
+        </div>
+      ) : tasks.length === 0 ? (
+        <Empty>No tasks here.</Empty>
+      ) : (
+        <ul className="crm-card divide-y divide-[var(--glass-border)]">{rows(tasks)}</ul>
       )}
     </>
   );

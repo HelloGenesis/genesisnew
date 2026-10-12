@@ -55,7 +55,7 @@ function contentSecurityPolicy(): string {
     "img-src": ["'self'", "data:", "blob:", "https://i.ytimg.com", "https://cdn.razorpay.com"],
     // YouTube embeds for the journal's video-linked articles. Restricted to
     // the nocookie host, and the frame only mounts on an explicit click.
-    "frame-src": ["'self'", "https://www.youtube-nocookie.com", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+    "frame-src": ["'self'", "https://calendar.google.com", "https://www.youtube-nocookie.com", "https://api.razorpay.com", "https://checkout.razorpay.com"],
     "font-src": ["'self'", "data:"],
     "media-src": ["'self'", "https:"],
     "worker-src": ["'self'", "blob:"],

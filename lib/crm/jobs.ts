@@ -3,6 +3,7 @@ import "server-only";
 import { getPrisma } from "@/lib/db";
 
 import { LEAD_STATUS, date, todayIst } from "./catalog";
+import { moneyReminders } from "./company";
 import { appUrl, deliverEmails, queueStaffEmail } from "./notify";
 import { retryWebhookEvents } from "./orders";
 import { syncSheets } from "./sheets";
@@ -23,6 +24,7 @@ export async function runAllJobs() {
   };
   await step("webhooks", () => retryWebhookEvents());
   await step("digest", morningDigest);
+  await step("money", moneyReminders);
   await step("emails", () => deliverEmails());
   await step("sheets", () => syncSheets());
   return report;

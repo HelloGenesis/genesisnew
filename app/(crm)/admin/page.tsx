@@ -31,14 +31,122 @@ export default async function AdminOverview() {
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { account: true } }),
     prisma.request.findMany({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } }, orderBy: { createdAt: "asc" }, take: 6, include: { account: true } }),
     prisma.project.findMany({ where: { status: "ACTIVE", dueDate: { lte: weekAhead } }, orderBy: { dueDate: "asc" }, take: 6, include: { account: true } }),
-    prisma.task.findMany({ where: { status: "OPEN", ownerId: viewer.id }, orderBy: [{ dueDate: "asc" }], take: 6 }),
+    prisma.task.findMany({ where: { status: "OPEN", OR: [{ ownerId: viewer.id }, { createdById: viewer.id }] }, orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }], take: 40, include: { owner: true } }),
     prisma.project.groupBy({ by: ["division"], where: { status: "ACTIVE" }, _count: true }),
   ]);
+  /* What Gmail and Drive turned up: everyone's for owners and admins, your own otherwise. */
+  const seesAll = viewer.roles.some((r) => r === "OWNER" || r === "ADMIN");
+  const scope = seesAll ? {} : { userId: viewer.id };
+  const [found, waiting, connected] = await Promise.all([
+    prisma.inboxItem.findMany({ where: { ...scope, kind: { not: "OTHER" } }, orderBy: { occurredAt: "desc" }, take: 6 }),
+    prisma.inboxItem.groupBy({ by: ["kind"], where: { ...scope, status: "NEW" }, _count: true }),
+    prisma.googleConnection.count(),
+  ]);
+  const finders = await prisma.user.findMany({ where: { id: { in: [...new Set(found.map((f) => f.userId).filter((x): x is string => Boolean(x)))] } }, select: { id: true, name: true, email: true } });
+  const mine = myTasks.filter((t) => t.ownerId === viewer.id).slice(0, 8);
+  const given = myTasks.filter((t) => t.ownerId !== viewer.id).slice(0, 8);
+  const todayStr = todayIst();
+  const greetingName = viewer.name?.split(" ")[0] ?? viewer.email?.split("@")[0] ?? "there";
+  const longDate = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(new Date());
   const mrr = subs.reduce((sum, s) => sum + monthly(s.amountPaise, s.billing), 0);
 
   return (
     <>
-      <PageHead kicker="Genesis CRM" title={`Good to see you${viewer.name ? `, ${viewer.name.split(" ")[0]}` : ""}.`} sub="What needs attention across sales, delivery and money today." />
+      {/* Hi, by name and title (Genesis, 11 Oct 2026); names and titles are set in Staff & roles. */}
+      <PageHead kicker={longDate} title={`Hi ${greetingName}`} sub={viewer.title ? <span className="text-bone">{viewer.title}<span className="text-ash"> · What needs attention today.</span></span> : "What needs attention today."} />
+
+      {/* TASKS FIRST, BESIDE THE CALENDAR (Genesis, 11 Oct 2026: "move the task section above and add a calendar"). */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <Card title="Tasks" action={<Link href="/admin/tasks" className="crm-link text-[0.875rem]">All tasks ↗</Link>}>
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+            {([["Mine", mine, "Nothing assigned to you."], ["Assigned by me", given, "Nothing you've given anyone."]] as const).map(([heading, list, empty]) => (
+              <div key={heading}>
+                <p className="micro-label">{heading} · {list.length}</p>
+                {list.length === 0 ? (
+                  <p className="mt-2 text-[0.875rem] text-ash">{empty}</p>
+                ) : (
+                  <ul className="mt-1 divide-y divide-[var(--glass-border)]">
+                    {list.map((t) => {
+                      const late = t.dueDate && t.dueDate.toISOString().slice(0, 10) < todayStr;
+                      return (
+                        <li key={t.id} className="flex items-center justify-between gap-3 py-2">
+                          <span className="min-w-0">
+                            <span className="block truncate text-bone">{t.title}</span>
+                            {t.ownerId !== viewer.id && <span className="block truncate text-[0.75rem] text-ash">to {t.owner?.name ?? t.owner?.email ?? "unassigned"}</span>}
+                          </span>
+                          <span className="flex shrink-0 items-center gap-2">
+                            {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}
+                            <span className={`text-[0.8125rem] ${late ? "font-semibold text-[#dc2626]" : "text-ash"}`}>{date(t.dueDate)}</span>
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card
+          title="Calendar"
+          action={<a href="https://calendar.google.com/calendar/r/week" target="_blank" rel="noreferrer" className="crm-link text-[0.875rem]">Open Google Calendar ↗</a>}
+        >
+          {viewer.email ? (
+            <>
+              {/*
+                THEIR OWN GOOGLE CALENDAR, EMBEDDED. Google shows it to whoever
+                is signed in to that Google account in this browser (Workspace
+                calendars are private to the domain), so nothing is stored here.
+              */}
+              <iframe
+                title="Your Google Calendar"
+                src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(viewer.email)}&ctz=Asia%2FKolkata&mode=WEEK&showTitle=0&showPrint=0&showCalendars=0&showTz=0&wkst=2`}
+                className="h-[26rem] w-full rounded-xl border border-[var(--glass-border)] bg-white"
+                loading="lazy"
+              />
+              <p className="mt-2 text-[0.75rem] text-faint">Showing {viewer.email}. Blank? Sign in to Google in this browser as {viewer.email}.</p>
+            </>
+          ) : (
+            <p className="text-ash">Sign in with an email to see your calendar.</p>
+          )}
+        </Card>
+      </div>
+
+      <Card
+        title="From Gmail & Drive"
+        action={<Link href="/admin/inbox" className="crm-link text-[0.875rem]">Inbox ↗</Link>}
+      >
+        {found.length === 0 ? (
+          <p className="text-ash">
+            {connected ? "Nothing found yet. Briefs, client and vendor details, invoices and links from connected Gmail and Drive show up here." : "Nobody has connected Google yet."}{" "}
+            <Link href="/admin/inbox" className="crm-link">Connect yours</Link>
+          </p>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
+            <ul className="divide-y divide-[var(--glass-border)]">
+              {found.map((f) => (
+                <li key={f.id} className="flex items-center justify-between gap-3 py-2">
+                  <Link href={f.briefId ? `/admin/briefs/${f.briefId}` : `/admin/inbox?item=${f.id}&status=ALL`} className="min-w-0">
+                    <span className="block truncate text-bone">{f.title}</span>
+                    <span className="block truncate text-[0.75rem] text-ash">{f.sender ?? f.senderEmail ?? "—"} · {date(f.occurredAt)}{seesAll ? ` · ${finders.find((u) => u.id === f.userId)?.name ?? finders.find((u) => u.id === f.userId)?.email ?? ""}` : ""}</span>
+                  </Link>
+                  <Badge tone={f.kind === "BRIEF" ? "good" : f.kind === "INVOICE" ? "warn" : "info"}>{f.kind === "BRIEF" ? "Brief" : f.kind.charAt(0) + f.kind.slice(1).toLowerCase()}</Badge>
+                </li>
+              ))}
+            </ul>
+            <ul className="grid grid-cols-2 gap-2 self-start">
+              {(["BRIEF", "CLIENT", "VENDOR", "INVOICE"] as const).map((k) => (
+                <li key={k} className="rounded-xl bg-[var(--hover-wash)] px-3 py-2">
+                  <Link href={`/admin/inbox?kind=${k}`}>
+                    <span className="block text-[0.75rem] text-ash">{k === "BRIEF" ? "Briefs" : k === "CLIENT" ? "Clients" : k === "VENDOR" ? "Vendors" : "Invoices"} to handle</span>
+                    <span className="text-[1.25rem] text-bone">{waiting.find((w) => w.kind === k)?._count ?? 0}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Card>
 
       <Stats
         items={[
@@ -123,24 +231,6 @@ export default async function AdminOverview() {
                     <span className="block text-[0.8125rem] text-ash">{o.reference} · {money(o.totalPaise)} · {date(o.createdAt)}</span>
                   </Link>
                   <Status value={ORDER_STATUS[o.status]} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card title="Your tasks" action={<Link href="/admin/tasks" className="crm-link text-[0.875rem]">All tasks ↗</Link>}>
-          {myTasks.length === 0 ? (
-            <p className="text-ash">Nothing assigned to you.</p>
-          ) : (
-            <ul className="divide-y divide-[var(--glass-border)]">
-              {myTasks.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <span className="truncate text-bone">{t.title}</span>
-                  <span className="flex items-center gap-2">
-                    {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}
-                    <span className="text-[0.8125rem] text-ash">{date(t.dueDate)}</span>
-                  </span>
                 </li>
               ))}
             </ul>

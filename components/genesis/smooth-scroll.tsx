@@ -195,6 +195,36 @@ export function getLenis(): Lenis | null {
   return instance;
 }
 
+/*
+  ONE SCROLL LOCK FOR EVERY LAYER (Genesis, 11 Oct 2026: "stop scroll at
+  times"). The pop-ups, the cart drawer and the contact panel each stopped the
+  page and, on closing, put back what they found. Opened one inside another —
+  "Purchase Plan" in a pop-up opens the cart as the pop-up closes — the last to
+  close restored "hidden" and the page stayed frozen. Now they share a count:
+  the page stops with the first layer and moves again only when the last one
+  has gone.
+*/
+let locks = 0;
+let savedOverflow = "";
+export function lockScroll(): () => void {
+  if (locks === 0) {
+    savedOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    instance?.stop();
+  }
+  locks += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    locks = Math.max(0, locks - 1);
+    if (locks === 0) {
+      document.documentElement.style.overflow = savedOverflow === "hidden" ? "" : savedOverflow;
+      instance?.start();
+    }
+  };
+}
+
 /**
  * LANDING ON A SECTION AFTER A PAGE CHANGE — /pricing#one-time from the nav.
  *

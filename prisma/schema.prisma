@@ -39,6 +39,8 @@ model User {
   phone       String?
   phoneVerified Boolean @default(false) @map("phone_verified")
   name        String?
+  /// Job title shown in the CRM ("Founder & CEO"), staff only.
+  title       String?
   picture     String?
   role        UserRole  @default(VIEWER)
   lastLoginAt DateTime? @map("last_login_at")
@@ -337,6 +339,11 @@ enum LeadSource {
   LINKEDIN
   EVENT
   OUTBOUND
+  CHATGPT
+  CALENDAR_BOOKING
+  EMAIL
+  GOOGLE_DRIVE
+  SHEET_IMPORT
   OTHER
 }
 
@@ -1208,4 +1215,238 @@ model AppSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("crm_settings")
+}
+
+// --- Company money: expenses, our own subscriptions, GST (Genesis, 12 Oct 2026) ---
+
+enum ExpenseCategory {
+  SALARY
+  FREELANCER
+  SOFTWARE
+  RENT
+  UTILITIES
+  MARKETING
+  PRODUCTION
+  TRAVEL
+  EQUIPMENT
+  PROFESSIONAL_FEES
+  TAXES
+  OTHER
+}
+
+/// Money Genesis spends: salaries, vendors, rent, software, everything.
+model Expense {
+  id           String          @id @default(cuid())
+  date         DateTime        @db.Date
+  category     ExpenseCategory
+  description  String
+  /// Who was paid: the employee for a salary, otherwise the vendor.
+  payee        String?
+  amountPaise  Int             @map("amount_paise")
+  /// Input GST on the bill, claimable against output GST.
+  gstPaise     Int             @default(0) @map("gst_paise")
+  paidVia      String?         @map("paid_via")
+  reference    String?
+  notes        String?
+  projectId    String?         @map("project_id")
+  createdById  String?         @map("created_by_id")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  @@index([date])
+  @@index([category, date])
+  @@map("crm_expenses")
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  YEARLY
+}
+
+/// The tools and services Genesis itself pays for, with their renewal dates.
+model CompanySubscription {
+  id            String       @id @default(cuid())
+  name          String
+  vendor        String?
+  category      String?
+  amountPaise   Int          @map("amount_paise")
+  cycle         BillingCycle @default(MONTHLY)
+  nextDueDate   DateTime     @map("next_due_date") @db.Date
+  autoRenew     Boolean      @default(true) @map("auto_renew")
+  paymentMethod String?      @map("payment_method")
+  ownerId       String?      @map("owner_id")
+  notes         String?
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@index([active, nextDueDate])
+  @@map("crm_company_subscriptions")
+}
+
+enum GstReturnStatus {
+  PENDING
+  FILED
+  NOT_APPLICABLE
+}
+
+/// A GST return for a period (GSTR-1, GSTR-3B monthly; GSTR-9 yearly) and whether it is filed.
+model GstFiling {
+  id          String          @id @default(cuid())
+  returnType  String          @map("return_type")
+  /// "2026-09" for a month, "2025-26" for a financial year.
+  period      String
+  dueDate     DateTime        @map("due_date") @db.Date
+  status      GstReturnStatus @default(PENDING)
+  filedOn     DateTime?       @map("filed_on") @db.Date
+  arn         String?
+  taxPaidPaise Int?           @map("tax_paid_paise")
+  notes       String?
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  @@unique([returnType, period])
+  @@index([status, dueDate])
+  @@map("crm_gst_filings")
+}
+
+/// A brief taken from a new lead or an existing client, before it is quoted.
+model Brief {
+  id           String     @id @default(cuid())
+  number       Int        @unique @default(autoincrement())
+  title        String
+  leadId       String?    @map("lead_id")
+  accountId    String?    @map("account_id")
+  division     Division?
+  services     String[]   @default([])
+  objective    String?
+  audience     String?
+  deliverables String?
+  platforms    String[]   @default([])
+  budgetPaise  Int?       @map("budget_paise")
+  deadline     DateTime?  @db.Date
+  references   String[]   @default([])
+  notes        String?
+  status       String     @default("NEW")
+  createdById  String?    @map("created_by_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@index([leadId])
+  @@index([accountId])
+  @@map("crm_briefs")
+}
+
+// --- Google, the inbox and notifications (Genesis, 12 Oct 2026) ---------------
+
+/// A team member's own Google account, connected once: Gmail, Drive and Sheets, read-only.
+model GoogleConnection {
+  id           String    @id @default(cuid())
+  userId       String    @unique @map("user_id")
+  email        String
+  /// Sealed (AES-GCM) refresh token.
+  refreshToken String    @map("refresh_token")
+  scopes       String
+  status       String    @default("ACTIVE")
+  lastError    String?   @map("last_error")
+  /// Gmail historyId reached; null until the first scan.
+  gmailCursor  String?   @map("gmail_cursor")
+  /// Latest Drive modifiedTime processed.
+  driveCursor  DateTime? @map("drive_cursor")
+  lastSyncAt   DateTime? @map("last_sync_at")
+  connectedAt  DateTime  @default(now()) @map("connected_at")
+
+  @@map("crm_google_connections")
+}
+
+enum InboxSource {
+  GMAIL
+  DRIVE
+  SHEET
+  RAZORPAY
+}
+
+enum InboxKind {
+  BRIEF
+  CLIENT
+  VENDOR
+  INVOICE
+  PROPOSAL
+  LINK
+  OTHER
+}
+
+enum InboxStatus {
+  NEW
+  DONE
+  DISMISSED
+}
+
+/// Something found in a connected Gmail or Drive (or imported), sorted by the AI: a brief, client or vendor details, an invoice, a proposal, an important link.
+model InboxItem {
+  id          String      @id @default(cuid())
+  /// "<source>:<user or org>:<external id>", so a message or file is only ever one item.
+  dedupeKey   String      @unique @map("dedupe_key")
+  userId      String?     @map("user_id")
+  source      InboxSource
+  externalId  String      @map("external_id")
+  kind        InboxKind
+  status      InboxStatus @default(NEW)
+  confidence  Float?
+  title       String
+  sender      String?
+  senderEmail String?     @map("sender_email")
+  summary     String?
+  url         String?
+  links       String[]    @default([])
+  /// What the AI pulled out: company, contact, budget, deliverables, GSTIN, amounts…
+  data        Json?
+  occurredAt  DateTime    @map("occurred_at")
+  leadId      String?     @map("lead_id")
+  briefId     String?     @map("brief_id")
+  accountId   String?     @map("account_id")
+  expenseId   String?     @map("expense_id")
+  handledById String?     @map("handled_by_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@index([userId, status, occurredAt])
+  @@index([status, kind])
+  @@index([accountId])
+  @@index([leadId])
+  @@map("crm_inbox_items")
+}
+
+/// The bell in the CRM: one row per person per event.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, readAt, createdAt])
+  @@map("crm_notifications")
+}
+
+/// A Google Sheet brought into the CRM, and whether it is kept in sync.
+model SheetImport {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  spreadsheetId String    @map("spreadsheet_id")
+  sheetName     String    @map("sheet_name")
+  title         String
+  kind          String
+  /// Column → field, as the AI (or a person) matched them.
+  mapping       Json
+  autoSync      Boolean   @default(false) @map("auto_sync")
+  rowsImported  Int       @default(0) @map("rows_imported")
+  lastRunAt     DateTime? @map("last_run_at")
+  lastError     String?   @map("last_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@unique([spreadsheetId, sheetName, kind])
+  @@map("crm_sheet_imports")
 }

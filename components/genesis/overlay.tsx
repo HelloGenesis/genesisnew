@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { getLenis } from "./smooth-scroll";
+import { getLenis, lockScroll } from "./smooth-scroll";
 import { ThemeToggle } from "./theme-toggle";
 
 /**
@@ -105,11 +105,7 @@ export function Overlay({
     if (!open) return;
     opener.current = document.activeElement;
 
-    const lenis = getLenis();
-    lenis?.stop();
-    const root = document.documentElement;
-    const previousOverflow = root.style.overflow;
-    root.style.overflow = "hidden";
+    const unlock = lockScroll();
 
     panel.current?.focus();
 
@@ -160,8 +156,7 @@ export function Overlay({
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      root.style.overflow = previousOverflow;
-      lenis?.start();
+      unlock();
       const target = opener.current;
       if (target instanceof HTMLElement) target.focus({ preventScroll: true });
     };

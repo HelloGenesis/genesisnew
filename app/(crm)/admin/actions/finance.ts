@@ -169,3 +169,14 @@ export async function resetTwoFactor(form: FormData) {
   await recordAuditLog({ action: "staff.two_factor_reset", entity: "user", entityId: userId, actorId: viewer.id });
   done();
 }
+
+/** A staff member's name and job title, as the dashboard greets them. */
+export async function setStaffProfile(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff("staff");
+  const userId = text(form, "userId");
+  if (!userId) return fail("Pick someone.");
+  await getPrisma().user.update({ where: { id: userId }, data: { name: text(form, "name", 80), title: text(form, "title", 80) } });
+  await recordAuditLog({ action: "staff.profile", entity: "user", entityId: userId, actorId: viewer.id });
+  done();
+  return ok("Saved.");
+}

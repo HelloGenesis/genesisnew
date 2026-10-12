@@ -10,12 +10,21 @@
       "regions": [
         "bom1"
       ]
+    },
+    "app/api/jobs/google/route.ts": {
+      "regions": [
+        "bom1"
+      ]
     }
   },
   "crons": [
     {
       "path": "/api/jobs/run",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/jobs/google",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

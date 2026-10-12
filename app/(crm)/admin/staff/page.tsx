@@ -4,7 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { STAFF_ROLE, date } from "@/lib/crm/catalog";
 import { requireStaff } from "@/lib/crm/session";
 
-import { inviteStaff, resetTwoFactor, revokeStaff } from "../actions/finance";
+import { inviteStaff, resetTwoFactor, revokeStaff, setStaffProfile } from "../actions/finance";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Staff & roles" };
@@ -43,7 +43,18 @@ export default async function StaffPage() {
       <Table head={["Person", "Roles", "Two-factor app", "Last sign-in"]}>
         {people.map((u) => (
           <tr key={u.id}>
-            <td className="text-bone">{u.name ?? u.email}<span className="block text-[0.8125rem] text-ash">{u.email}</span></td>
+            <td className="text-bone">
+              {u.name ?? u.email}
+              <span className="block text-[0.8125rem] text-ash">{u.title ? `${u.title} · ` : ""}{u.email}</span>
+              <details className="mt-1">
+                <summary className="cursor-pointer text-[0.75rem] text-faint">Name & title</summary>
+                <ActionForm action={setStaffProfile} submit="Save" inline className="mt-2">
+                  <input type="hidden" name="userId" value={u.id} />
+                  <input name="name" defaultValue={u.name ?? ""} placeholder="Name" className="crm-input w-36" />
+                  <input name="title" defaultValue={u.title ?? ""} placeholder="Job title" className="crm-input w-44" />
+                </ActionForm>
+              </details>
+            </td>
             <td>
               <span className="flex flex-wrap gap-2">
                 {roles.filter((r) => r.userId === u.id).map((r) => (

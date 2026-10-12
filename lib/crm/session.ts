@@ -11,6 +11,7 @@ import { recordAuditLog } from "@/lib/audit";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 
 import { emailLoginEnabled, readSignedEmail, SESSION_COOKIE } from "./email-login";
+import { TEAM } from "./team";
 import type { AccountKind, MemberRole, StaffRoleKind } from "@/lib/generated/prisma/enums";
 
 /**
@@ -47,6 +48,7 @@ export type Viewer = {
   email: string | null;
   phone: string | null;
   name: string | null;
+  title: string | null;
   roles: StaffRoleKind[];
   mfa: boolean;
   memberships: Membership[];
@@ -187,10 +189,13 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   if (!identity) return null;
   const prisma = getPrisma();
   /* By this sign-in, or by the same verified email from another method (Google, then an email code). */
-  const user =
+  let user =
     (await prisma.user.findUnique({ where: { auth0Sub: identity.sub } })) ??
     (identity.emailVerified && identity.email ? await prisma.user.findFirst({ where: { email: identity.email, emailVerified: true } }) : null) ??
     (await syncIdentity(identity));
+  /* The team's names and titles, the first time (lib/crm/team). */
+  const known = user.email ? TEAM[user.email] : undefined;
+  if (known && (!user.name || !user.title)) user = await prisma.user.update({ where: { id: user.id }, data: { name: user.name ?? known.name, title: user.title ?? known.title } });
 
   const [roles, memberships] = await Promise.all([
     prisma.staffRole.findMany({ where: { userId: user.id }, select: { role: true } }),
@@ -208,6 +213,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     email: user.email,
     phone: user.phone,
     name: user.name,
+    title: user.title,
     roles: roles.map((r) => r.role),
     mfa: identity.amr.includes("mfa") || readStaffTwoFactor(jar.get(STAFF_2FA_COOKIE)?.value, user.id, identity.sub),
     memberships: memberships.map((m) => ({ accountId: m.account.id, role: m.role, name: m.account.name, kind: m.account.kind, isReseller: m.account.isReseller, parentId: m.account.parentId })),

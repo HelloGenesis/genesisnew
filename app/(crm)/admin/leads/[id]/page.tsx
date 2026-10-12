@@ -32,6 +32,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     <>
       <PageHead kicker="Lead" title={lead.name} sub={[lead.company, lead.designation, LEAD_SOURCE[lead.source], `added ${date(lead.createdAt)}`].filter(Boolean).join(" · ")}>
         <Status value={LEAD_STATUS[lead.status]} />
+        <Link href={`/admin/briefs?lead=${lead.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">Add brief</Link>
         <Link href={`/admin/quotes/new?lead=${lead.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">Create quote</Link>
         <Link href={`/admin/quotes/new?lead=${lead.id}&kind=INFLUENCER_PLAN`} className="crm-btn crm-btn-secondary crm-btn-sm">Influencer plan</Link>
         {lead.account ? (

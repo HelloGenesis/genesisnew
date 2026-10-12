@@ -102,6 +102,35 @@ Everyone signs in at **`/login`** — no passwords.
 - **Two-factor reset.** Owners can reset anyone's authenticator in Staff &
   roles (lost or new phone).
 
+## Added 12 October 2026
+
+- **Money** (finance and owners): Expenses & salaries, Our subscriptions
+  (renewal reminders a week ahead), GST (returns and due dates, output vs
+  input GST by month, registration details). `lib/crm/company.ts`.
+- **Briefs** (`/admin/briefs`), from a lead or a client, one click to a quote.
+- **Gmail, Drive and Sheets** (`/admin/inbox`, `lib/crm/ingest.ts`). Each
+  person connects their own Google, read-only. Every five minutes
+  (`/api/jobs/google`) new inbox mail and changed Drive docs are read by
+  Claude (`lib/crm/ai.ts`):
+  - a **brief** becomes a brief on the client, their open lead, or a new lead
+    owned by that person, with a notification (bell + email);
+  - **client and vendor details, invoices, proposals and links** wait in the
+    Inbox for one click (add client or vendor, record expense, keep on a
+    client or lead);
+  - everything else (personal, newsletters, notifications) is skipped and not
+    stored. Newsletters and team-internal mail are filtered before the AI.
+  - Owners and admins see everyone's Inbox; others see their own.
+- **Sheets import** (`/admin/inbox/sheets`): leads, clients, vendors,
+  influencers, expenses or briefs; the AI matches columns; optional daily
+  sync. Re-runs add new rows and fill empty fields only.
+- **Razorpay history**: past payments and invoices, matched to clients.
+- **Notifications** (`/admin/notifications`).
+
+Setup: `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` (an Internal
+OAuth app in the genesismedia.co Workspace with Gmail, Drive and Sheets APIs
+on; redirect URIs `/api/crm/google/callback` and `/api/crm/drive/callback`),
+and `ANTHROPIC_API_KEY` (optional `CRM_AI_MODEL`, default claude-haiku-5-5).
+
 ## Security
 
 - **Sign-in is Auth0:** Google, or a one-time code by email or SMS.
