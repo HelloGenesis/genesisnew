@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
 import { CampaignReport } from "@/components/crm/campaign-report";
 import { Card, Field, PageHead, Select } from "@/components/crm/ui";
 import { CAMPAIGN_CREATOR_STATUS, projectRef } from "@/lib/crm/catalog";
 import { campaign } from "@/lib/crm/report";
+import { sees } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { saveReport, updateCampaignCreator } from "../../../actions/delivery";
@@ -20,7 +21,9 @@ export const metadata = { title: "Campaign report" };
  * can print it to PDF.
  */
 export default async function CampaignReportPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireStaff();
+  const viewer = await requireStaff();
+  /* Reports show everyone's numbers: super admins, or whoever they open it to (lib/crm/scope). */
+  if (!sees(viewer, "reports")) redirect("/admin/forbidden");
   const { id } = await params;
   const data = await campaign(id);
   if (!data) notFound();

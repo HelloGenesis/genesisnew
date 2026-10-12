@@ -4,6 +4,7 @@ import { ActionForm } from "@/components/crm/action-form";
 import { AddPanel, Badge, Empty, PageHead, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, date, money } from "@/lib/crm/catalog";
+import { briefScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { saveBrief } from "../actions/company";
@@ -19,10 +20,10 @@ export const metadata = { title: "Briefs" };
  * taken down on the call, kept in one place, and one click from a quote.
  */
 export default async function BriefsPage({ searchParams }: { searchParams: Promise<{ lead?: string; account?: string }> }) {
-  await requireStaff("sales");
+  const viewer = await requireStaff("sales");
   const p = await searchParams;
   const prisma = getPrisma();
-  const [briefs, options] = await Promise.all([prisma.brief.findMany({ orderBy: { createdAt: "desc" }, take: 300 }), briefOptions()]);
+  const [briefs, options] = await Promise.all([prisma.brief.findMany({ where: briefScope(viewer), orderBy: { createdAt: "desc" }, take: 300 }), briefOptions()]);
   const leadIds = [...new Set(briefs.map((b) => b.leadId).filter((x): x is string => Boolean(x)))];
   const accountIds = [...new Set(briefs.map((b) => b.accountId).filter((x): x is string => Boolean(x)))];
   const [leads, accounts] = await Promise.all([

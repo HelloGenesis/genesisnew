@@ -6,6 +6,7 @@ import { Notice } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
 import { emailLoginEnabled } from "@/lib/crm/email-login";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
+import { accountScope, leadScope, projectScope, sees, through } from "@/lib/crm/scope";
 import { can, devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
 import { SignOut } from "@/components/crm/sign-out";
 
@@ -32,20 +33,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (staffAccess(viewer) !== "granted") return <main className="mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6">{children}</main>;
 
   const prisma = getPrisma();
-  const seesAll = viewer!.roles.some((r) => r === "OWNER" || r === "ADMIN");
+  const seesAll = sees(viewer!, "inbox");
   const [openRequests, dueLeads, review, myTasks, inboxNew, unread] = await Promise.all([
-    prisma.request.count({ where: { status: { in: ["OPEN"] } } }),
-    prisma.lead.count({ where: { status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: new Date() } } }),
-    prisma.deliverable.count({ where: { status: "CHANGES_REQUESTED" } }),
+    prisma.request.count({ where: { ...through("account", accountScope(viewer!)), status: { in: ["OPEN"] } } }),
+    prisma.lead.count({ where: { ...leadScope(viewer!), status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: new Date() } } }),
+    prisma.deliverable.count({ where: { ...through("project", projectScope(viewer!)), status: "CHANGES_REQUESTED" } }),
     prisma.task.count({ where: { status: "OPEN", ownerId: viewer!.id, dueDate: { lte: new Date() } } }),
     prisma.inboxItem.count({ where: { status: "NEW", ...(seesAll ? {} : { userId: viewer!.id }) } }),
     prisma.notification.count({ where: { userId: viewer!.id, readAt: null } }),
   ]);
 
   const groups: NavGroup[] = [
-    { label: "Today", items: [{ href: "/admin", label: "Overview" }, { href: "/admin/notifications", label: "Notifications", count: unread }, { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew }, { href: "/admin/tasks", label: "Tasks", count: myTasks }, { href: "/admin/reports", label: "Reports" }] },
+    { label: "Today", items: [{ href: "/admin", label: "Dashboard" }, { href: "/admin/notifications", label: "Notifications", count: unread }, { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew }, { href: "/admin/tasks", label: "Tasks", count: myTasks }, ...(sees(viewer!, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : [])] },
     ...(can(viewer, "sales")
-      ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/briefs", label: "Briefs" }, { href: "/admin/quotes", label: "Quotes & plans" }, { href: "/admin/accounts", label: "Clients & agencies" }] }]
+      ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/briefs", label: "Briefs" }, { href: "/admin/quotes", label: "Quotes & plans" }, { href: "/admin/invoices", label: "Invoices" }, { href: "/admin/accounts", label: "Clients & agencies" }] }]
       : []),
     ...(can(viewer, "delivery") || can(viewer, "sales")
       ? [
@@ -61,7 +62,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         ]
       : []),
     ...(can(viewer, "finance")
-      ? [{ label: "Money", items: [{ href: "/admin/billing", label: "Orders & subscriptions" }, { href: "/admin/payouts", label: "Commissions & payouts" }, { href: "/admin/expenses", label: "Expenses & salaries" }, { href: "/admin/expenses/subscriptions", label: "Our subscriptions" }, { href: "/admin/expenses/gst", label: "GST" }] }]
+      ? [{ label: "Money", items: [{ href: "/admin/billing", label: "Orders & subscriptions" }, ...(can(viewer, "sales") ? [] : [{ href: "/admin/invoices", label: "Invoices" }]), { href: "/admin/payouts", label: "Commissions & payouts" }, { href: "/admin/expenses", label: "Expenses & salaries" }, { href: "/admin/expenses/subscriptions", label: "Our subscriptions" }, { href: "/admin/expenses/gst", label: "GST" }] }]
       : []),
     { label: "Setup", items: [...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []), { href: "/admin/settings", label: "Integrations" }] },
   ];

@@ -4,6 +4,7 @@ import { Empty, PageHead, Stats, Status, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import type { OrderStatus } from "@/lib/generated/prisma/enums";
 import { ORDER_STATUS, SUBSCRIPTION_STATUS, date, dateTime, money } from "@/lib/crm/catalog";
+import { orderScope, through, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -15,23 +16,24 @@ export const metadata = { title: "Billing" };
  * Razorpay has confirmed.
  */
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  await requireStaff("finance");
+  const viewer = await requireStaff("finance");
+  const mine = orderScope(viewer);
   const { status } = await searchParams;
   const prisma = getPrisma();
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const [orders, subscriptions, payments, month, pending] = await Promise.all([
-    prisma.order.findMany({ where: status && status in ORDER_STATUS ? { status: status as OrderStatus } : {}, orderBy: { createdAt: "desc" }, take: 100, include: { account: true, lines: true } }),
-    prisma.subscription.findMany({ orderBy: [{ status: "asc" }, { updatedAt: "desc" }], take: 100, include: { account: true, order: { include: { lines: true } } } }),
-    prisma.payment.findMany({ orderBy: { paidAt: "desc" }, take: 50, include: { account: true, order: true } }),
-    prisma.payment.aggregate({ where: { paidAt: { gte: monthStart }, status: "CAPTURED" }, _sum: { amountPaise: true }, _count: true }),
-    prisma.order.aggregate({ where: { status: "PENDING" }, _sum: { totalPaise: true }, _count: true }),
+    prisma.order.findMany({ where: { ...mine, ...(status && status in ORDER_STATUS ? { status: status as OrderStatus } : {}) }, orderBy: { createdAt: "desc" }, take: 100, include: { account: true, lines: true } }),
+    prisma.subscription.findMany({ where: through("order", mine), orderBy: [{ status: "asc" }, { updatedAt: "desc" }], take: 100, include: { account: true, order: { include: { lines: true } } } }),
+    prisma.payment.findMany({ where: through("order", mine), orderBy: { paidAt: "desc" }, take: 50, include: { account: true, order: true } }),
+    prisma.payment.aggregate({ where: { ...through("order", mine), paidAt: { gte: monthStart }, status: "CAPTURED" }, _sum: { amountPaise: true }, _count: true }),
+    prisma.order.aggregate({ where: { ...mine, status: "PENDING" }, _sum: { totalPaise: true }, _count: true }),
   ]);
   const active = subscriptions.filter((s) => s.status === "ACTIVE");
   const mrr = active.reduce((sum, s) => sum + (s.billing === "quarterly" ? Math.round(s.amountPaise / 3) : s.amountPaise), 0);
   const failing = subscriptions.filter((s) => s.status === "PENDING" || s.status === "HALTED");
   return (
     <>
-      <PageHead kicker="Money" title="Orders & subscriptions" exportKind="orders" />
+      <PageHead kicker="Money" title="Orders & subscriptions" exportKind={isSuperAdmin(viewer) ? "orders" : undefined} />
       <Stats
         items={[
           { label: "Collected this month", value: money(month._sum.amountPaise ?? 0), hint: `${month._count} payments` },

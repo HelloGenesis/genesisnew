@@ -1,14 +1,16 @@
 import Link from "next/link";
 
 import { ActionForm } from "@/components/crm/action-form";
-import { AddPanel, Badge, Empty, Field, PageHead, Select, Status, Table } from "@/components/crm/ui";
+import { AddPanel, Empty, Field, PageHead, Select, Status, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import type { Division, LeadStatus, Prisma } from "@/lib/generated/prisma/client";
-import { DIVISION_LABEL, DIVISIONS, LEAD_SOURCE, LEAD_STATUS, PIPELINE, date, money, todayIst } from "@/lib/crm/catalog";
+import { LeadBoard } from "@/components/crm/lead-board";
+import { DIVISION_LABEL, DIVISIONS, LEAD_SOURCE, LEAD_STATUS, PIPELINE, SERVICES, date, money, todayIst } from "@/lib/crm/catalog";
+import { leadScope, isSuperAdmin } from "@/lib/crm/scope";
 import { accountOptions, inDays, staffOptions } from "@/lib/crm/options";
 import { requireStaff } from "@/lib/crm/session";
 
-import { createLead, moveLead } from "../actions/sales";
+import { createLead, moveLead, planLeadEvent } from "../actions/sales";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Leads" };
@@ -20,11 +22,12 @@ export const metadata = { title: "Leads" };
  * digest. Lost and Nurture leave the board and stay in the list.
  */
 export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; division?: string; owner?: string; due?: string; q?: string; status?: string }> }) {
-  await requireStaff("sales");
+  const viewer = await requireStaff("sales");
   const params = await searchParams;
   const prisma = getPrisma();
   const division = DIVISIONS.includes(params.division as Division) ? (params.division as Division) : undefined;
   const where: Prisma.LeadWhereInput = {
+    ...leadScope(viewer),
     ...(division ? { division } : {}),
     ...(params.owner ? { ownerId: params.owner } : {}),
     ...(params.due ? { nextFollowUp: { lte: new Date(todayIst()) }, status: { notIn: ["WON", "LOST"] } } : {}),
@@ -51,7 +54,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHead kicker="Sales" title="Leads & pipeline" sub={`${leads.length} lead${leads.length === 1 ? "" : "s"} · ${money(leads.filter((l) => !["WON", "LOST"].includes(l.status)).reduce((s, l) => s + l.valuePaise, 0))} open`} exportKind="leads">
+      <PageHead kicker="Sales" title="Leads & pipeline" sub={`${leads.length} lead${leads.length === 1 ? "" : "s"} · ${money(leads.filter((l) => !["WON", "LOST"].includes(l.status)).reduce((s, l) => s + l.valuePaise, 0))} open`} exportKind={isSuperAdmin(viewer) ? "leads" : undefined}>
         <Link href={filter("view", board ? "list" : undefined)} className="crm-btn crm-btn-secondary crm-btn-sm">
           {board ? "List view" : "Board view"}
         </Link>
@@ -61,7 +64,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         {params.view && <input type="hidden" name="view" value={params.view} />}
         <input name="q" defaultValue={params.q} placeholder="Search name, company, email" className="crm-input max-w-xs" />
         <Select name="division" placeholder="All divisions" defaultValue={params.division} options={DIVISIONS.map((d) => [d, DIVISION_LABEL[d]] as const)} className="max-w-[12rem]" />
-        <Select name="owner" placeholder="Any owner" defaultValue={params.owner} options={staff} className="max-w-[12rem]" />
+        {Object.keys(leadScope(viewer)).length === 0 && <Select name="owner" placeholder="Any owner" defaultValue={params.owner} options={staff} className="max-w-[12rem]" />}
         <label className="flex items-center gap-2 text-[0.875rem] text-ash">
           <input type="checkbox" name="due" value="1" defaultChecked={Boolean(params.due)} /> Due now
         </label>
@@ -76,7 +79,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
             <Field label="Email"><input name="email" type="email" className="crm-input" /></Field>
             <Field label="Phone"><input name="phone" className="crm-input" /></Field>
             <Field label="Division"><Select name="division" options={DIVISIONS.map((d) => [d, DIVISION_LABEL[d]] as const)} /></Field>
-            <Field label="Interested in"><input name="interest" className="crm-input" placeholder="AI Avatar Clone, Studios Growth…" /></Field>
+            <Field label="Interested in" hint="Pick one, or type your own.">
+              <input name="interest" list="crm-services" className="crm-input" placeholder="Choose a service" />
+              <datalist id="crm-services">{SERVICES.map((s) => <option key={s} value={s} />)}</datalist>
+            </Field>
             <Field label="Source"><Select name="source" options={LEAD_SOURCE} defaultValue="CALL" required /></Field>
             <Field label="Value (₹)"><input name="value" inputMode="decimal" className="crm-input" /></Field>
             <Field label="Owner"><Select name="ownerId" options={staff} /></Field>
@@ -90,52 +96,25 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
       {leads.length === 0 ? (
         <Empty>No leads match. Website enquiries and unpaid checkouts land here automatically.</Empty>
       ) : board ? (
-        <div className="-mx-4 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6">
-          <div className="grid min-w-[1400px] grid-cols-7 gap-3">
-            {PIPELINE.map((status) => {
-              const column = leads.filter((l) => l.status === status);
-              return (
-                <section key={status} className="min-w-0">
-                  <header className="mb-2 flex items-baseline justify-between px-1">
-                    <h2 className="text-[0.875rem] font-medium text-bone">{LEAD_STATUS[status].label}</h2>
-                    <span className="text-[0.75rem] text-faint">
-                      {column.length} · {money(column.reduce((s, l) => s + l.valuePaise, 0))}
-                    </span>
-                  </header>
-                  <ol className="space-y-2">
-                    {column.map((lead) => {
-                      const next = PIPELINE[PIPELINE.indexOf(status) + 1];
-                      return (
-                        <li key={lead.id} className="crm-card p-3">
-                          <Link href={`/admin/leads/${lead.id}`} className="block">
-                            <span className="block truncate text-[0.9375rem] text-bone">{lead.name}</span>
-                            {lead.company && <span className="block truncate text-[0.8125rem] text-ash">{lead.company}</span>}
-                            <span className="mt-1.5 flex flex-wrap gap-1">
-                              {lead.division && <Badge tone="info">{DIVISION_LABEL[lead.division]}</Badge>}
-                              {lead.valuePaise > 0 && <Badge>{money(lead.valuePaise)}</Badge>}
-                              {lead.partner && <Badge tone="warn">via {lead.partner.name}</Badge>}
-                            </span>
-                            {lead.nextFollowUp && (
-                              <span className={`mt-1.5 block text-[0.75rem] ${overdue(lead.nextFollowUp) ? "font-semibold text-[#dc2626]" : "text-faint"}`}>
-                                Follow up {date(lead.nextFollowUp)}
-                              </span>
-                            )}
-                          </Link>
-                          {next && (
-                            <form action={moveLead} className="mt-2">
-                              <input type="hidden" name="id" value={lead.id} />
-                              <input type="hidden" name="status" value={next} />
-                              <button className="text-[0.75rem] text-ash hover:text-bone">Move to {LEAD_STATUS[next].label} →</button>
-                            </form>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </section>
-              );
-            })}
-          </div>
+        <div>
+          <LeadBoard
+            move={moveLead}
+            plan={planLeadEvent}
+            columns={PIPELINE.map((status) => ({ status, label: LEAD_STATUS[status].label }))}
+            leads={leads
+              .filter((l) => PIPELINE.includes(l.status))
+              .map((l) => ({
+                id: l.id,
+                name: l.name,
+                company: l.company,
+                status: l.status,
+                division: l.division ? DIVISION_LABEL[l.division] : null,
+                value: l.valuePaise > 0 ? money(l.valuePaise) : null,
+                partner: l.partner?.name ?? null,
+                followUp: l.nextFollowUp ? date(l.nextFollowUp) : null,
+                overdue: overdue(l.nextFollowUp),
+              }))}
+          />
           {leads.some((l) => l.status === "LOST" || l.status === "NURTURE") && (
             <p className="mt-3 text-[0.8125rem] text-faint">
               Off the board: {leads.filter((l) => l.status === "NURTURE").length} nurture, {leads.filter((l) => l.status === "LOST").length} lost.{" "}

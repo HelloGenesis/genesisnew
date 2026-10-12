@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Badge, Card, PageHead, Stats, Status, StageBar } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, DIVISIONS, LEAD_STATUS, ORDER_STATUS, REQUEST_KIND, REQUEST_STATUS, date, money, projectRef, requestRef, todayIst } from "@/lib/crm/catalog";
+import { staffOptions } from "@/lib/crm/options";
+import { accountScope, inboxScope, isSuperAdmin, leadScope, orderScope, projectScope, through } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { stagesOf } from "@/lib/crm/stages";
 
@@ -11,40 +13,56 @@ export const dynamic = "force-dynamic";
 /** Monthly value of a subscription: a quarterly plan's charge is three months. */
 const monthly = (amountPaise: number, billing: string | null) => (billing === "quarterly" ? Math.round(amountPaise / 3) : amountPaise);
 
-export default async function AdminOverview() {
+export default async function AdminOverview({ searchParams }: { searchParams: Promise<{ person?: string }> }) {
   const viewer = await requireStaff();
   const prisma = getPrisma();
+  /*
+    THE DASHBOARD IS YOURS; A SUPER ADMIN'S IS EVERYONE'S (Genesis, 12 Oct
+    2026). Shivam and Tanvi see the whole company here, and can look at it as
+    any one person sees it; everyone else sees their own leads, quotes,
+    clients, projects and finds (lib/crm/scope).
+  */
+  const superAdmin = isSuperAdmin(viewer);
+  const { person: personParam } = await searchParams;
+  const person = superAdmin && personParam ? personParam : null;
+  const leads = leadScope(viewer, person);
+  const orders = orderScope(viewer, person);
+  const projects = projectScope(viewer, person);
+  const accounts = accountScope(viewer, person);
+  const taskOwner = person ?? viewer.id;
   const today = new Date(todayIst());
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
   const weekAhead = new Date(today.getTime() + 7 * 864e5);
 
   const [pipeline, dueLeads, subs, revenue, activeProjects, inReview, changes, openRequests, failing, latestOrders, requests, dueProjects, myTasks, byDivision] = await Promise.all([
-    prisma.lead.aggregate({ where: { status: { notIn: ["WON", "LOST", "NURTURE"] } }, _sum: { valuePaise: true }, _count: true }),
-    prisma.lead.findMany({ where: { status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: today } }, orderBy: { nextFollowUp: "asc" }, take: 8 }),
-    prisma.subscription.findMany({ where: { status: { in: ["ACTIVE", "AUTHENTICATED"] } }, select: { amountPaise: true, billing: true } }),
-    prisma.payment.aggregate({ where: { paidAt: { gte: monthStart }, status: "CAPTURED" }, _sum: { amountPaise: true } }),
-    prisma.project.count({ where: { status: "ACTIVE" } }),
-    prisma.deliverable.count({ where: { status: "IN_REVIEW" } }),
-    prisma.deliverable.count({ where: { status: "CHANGES_REQUESTED" } }),
-    prisma.request.count({ where: { status: "OPEN" } }),
-    prisma.subscription.count({ where: { status: { in: ["PENDING", "HALTED"] } } }),
-    prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { account: true } }),
-    prisma.request.findMany({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } }, orderBy: { createdAt: "asc" }, take: 6, include: { account: true } }),
-    prisma.project.findMany({ where: { status: "ACTIVE", dueDate: { lte: weekAhead } }, orderBy: { dueDate: "asc" }, take: 6, include: { account: true } }),
-    prisma.task.findMany({ where: { status: "OPEN", OR: [{ ownerId: viewer.id }, { createdById: viewer.id }] }, orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }], take: 40, include: { owner: true } }),
-    prisma.project.groupBy({ by: ["division"], where: { status: "ACTIVE" }, _count: true }),
+    prisma.lead.aggregate({ where: { ...leads, status: { notIn: ["WON", "LOST", "NURTURE"] } }, _sum: { valuePaise: true }, _count: true }),
+    prisma.lead.findMany({ where: { ...leads, status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: today } }, orderBy: { nextFollowUp: "asc" }, take: 8 }),
+    prisma.subscription.findMany({ where: { ...through("order", orders), status: { in: ["ACTIVE", "AUTHENTICATED"] } }, select: { amountPaise: true, billing: true } }),
+    prisma.payment.aggregate({ where: { ...through("order", orders), paidAt: { gte: monthStart }, status: "CAPTURED" }, _sum: { amountPaise: true } }),
+    prisma.project.count({ where: { ...projects, status: "ACTIVE" } }),
+    prisma.deliverable.count({ where: { ...through("project", projects), status: "IN_REVIEW" } }),
+    prisma.deliverable.count({ where: { ...through("project", projects), status: "CHANGES_REQUESTED" } }),
+    prisma.request.count({ where: { ...through("account", accounts), status: "OPEN" } }),
+    prisma.subscription.count({ where: { ...through("order", orders), status: { in: ["PENDING", "HALTED"] } } }),
+    prisma.order.findMany({ where: orders, orderBy: { createdAt: "desc" }, take: 6, include: { account: true } }),
+    prisma.request.findMany({ where: { ...through("account", accounts), status: { in: ["OPEN", "IN_PROGRESS"] } }, orderBy: { createdAt: "asc" }, take: 6, include: { account: true } }),
+    prisma.project.findMany({ where: { ...projects, status: "ACTIVE", dueDate: { lte: weekAhead } }, orderBy: { dueDate: "asc" }, take: 6, include: { account: true } }),
+    prisma.task.findMany({ where: { status: "OPEN", OR: [{ ownerId: taskOwner }, { createdById: taskOwner }] }, orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }], take: 40, include: { owner: true } }),
+    prisma.project.groupBy({ by: ["division"], where: { ...projects, status: "ACTIVE" }, _count: true }),
   ]);
   /* What Gmail and Drive turned up: everyone's for owners and admins, your own otherwise. */
-  const seesAll = viewer.roles.some((r) => r === "OWNER" || r === "ADMIN");
-  const scope = seesAll ? {} : { userId: viewer.id };
+  const seesAll = Object.keys(inboxScope(viewer, person)).length === 0;
+  const scope = inboxScope(viewer, person);
   const [found, waiting, connected] = await Promise.all([
     prisma.inboxItem.findMany({ where: { ...scope, kind: { not: "OTHER" } }, orderBy: { occurredAt: "desc" }, take: 6 }),
     prisma.inboxItem.groupBy({ by: ["kind"], where: { ...scope, status: "NEW" }, _count: true }),
     prisma.googleConnection.count(),
   ]);
   const finders = await prisma.user.findMany({ where: { id: { in: [...new Set(found.map((f) => f.userId).filter((x): x is string => Boolean(x)))] } }, select: { id: true, name: true, email: true } });
-  const mine = myTasks.filter((t) => t.ownerId === viewer.id).slice(0, 8);
-  const given = myTasks.filter((t) => t.ownerId !== viewer.id).slice(0, 8);
+  const mine = myTasks.filter((t) => t.ownerId === taskOwner).slice(0, 8);
+  const given = myTasks.filter((t) => t.ownerId !== taskOwner).slice(0, 8);
+  const team = superAdmin ? await staffOptions() : [];
+  const viewing = person ? team.find(([id]) => id === person)?.[1] : null;
   const todayStr = todayIst();
   const greetingName = viewer.name?.split(" ")[0] ?? viewer.email?.split("@")[0] ?? "there";
   const longDate = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(new Date());
@@ -53,7 +71,17 @@ export default async function AdminOverview() {
   return (
     <>
       {/* Hi, by name and title (Genesis, 11 Oct 2026); names and titles are set in Staff & roles. */}
-      <PageHead kicker={longDate} title={`Hi ${greetingName}`} sub={viewer.title ? <span className="text-bone">{viewer.title}<span className="text-ash"> · What needs attention today.</span></span> : "What needs attention today."} />
+      <PageHead kicker={`Dashboard · ${longDate}`} title={`Hi ${greetingName}`} sub={viewer.title ? <span className="text-bone">{viewer.title}<span className="text-ash"> · {viewing ? `Viewing ${viewing}'s dashboard.` : superAdmin ? "Everything across the team." : "What needs attention today."}</span></span> : "What needs attention today."}>
+        {superAdmin && (
+          <form action="/admin" className="flex items-center gap-2">
+            <select name="person" defaultValue={person ?? ""} className="crm-input w-auto !py-1.5 text-[0.875rem]" aria-label="View the dashboard as">
+              <option value="">Everyone (all data)</option>
+              {team.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            </select>
+            <button className="crm-btn crm-btn-secondary crm-btn-sm">View</button>
+          </form>
+        )}
+      </PageHead>
 
       {/* TASKS FIRST, BESIDE THE CALENDAR (Genesis, 11 Oct 2026: "move the task section above and add a calendar"). */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
@@ -72,7 +100,7 @@ export default async function AdminOverview() {
                         <li key={t.id} className="flex items-center justify-between gap-3 py-2">
                           <span className="min-w-0">
                             <span className="block truncate text-bone">{t.title}</span>
-                            {t.ownerId !== viewer.id && <span className="block truncate text-[0.75rem] text-ash">to {t.owner?.name ?? t.owner?.email ?? "unassigned"}</span>}
+                            {t.ownerId !== taskOwner && <span className="block truncate text-[0.75rem] text-ash">to {t.owner?.name ?? t.owner?.email ?? "unassigned"}</span>}
                           </span>
                           <span className="flex shrink-0 items-center gap-2">
                             {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}

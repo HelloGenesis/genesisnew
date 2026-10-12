@@ -24,6 +24,7 @@ import {
 } from "@/lib/crm/catalog";
 import { appUrl } from "@/lib/crm/notify";
 import { accountOptions, inDays, staffOptions } from "@/lib/crm/options";
+import { accountScope } from "@/lib/crm/scope";
 import { can, requireStaff } from "@/lib/crm/session";
 import { TEMPLATES } from "@/lib/crm/stages";
 
@@ -38,8 +39,8 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const prisma = getPrisma();
   const found = await prisma.inboxItem.findMany({ where: { accountId: id, status: { not: "DISMISSED" }, kind: { not: "OTHER" } }, orderBy: { occurredAt: "desc" }, take: 12 });
-  const account = await prisma.account.findUnique({
-    where: { id },
+  const account = await prisma.account.findFirst({
+    where: { id, ...accountScope(viewer) },
     include: {
       parent: true,
       referredBy: true,

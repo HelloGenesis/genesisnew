@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ActionForm } from "@/components/crm/action-form";
 import { CreatorFields, PLATFORMS } from "@/components/crm/creator-fields";
 import { AddPanel, Badge, Empty, PageHead, Select, Table } from "@/components/crm/ui";
+import { NICHES } from "@/lib/crm/niches";
 import { getPrisma } from "@/lib/db";
+import { isSuperAdmin } from "@/lib/crm/scope";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { CreatorTier, Platform } from "@/lib/generated/prisma/enums";
 import { CREATOR_TIER, money } from "@/lib/crm/catalog";
@@ -22,7 +24,7 @@ const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { nota
  * applies through the website's Influencer Onboarding form lands here too.
  */
 export default async function CreatorsPage({ searchParams }: { searchParams: Promise<{ q?: string; platform?: string; tier?: string; niche?: string; city?: string; min?: string }> }) {
-  await requireStaff();
+  const viewer = await requireStaff();
   const p = await searchParams;
   const where: Prisma.CreatorWhereInput = {
     ...(p.q ? { OR: [{ name: { contains: p.q, mode: "insensitive" } }, { handle: { contains: p.q.replace(/^@/, ""), mode: "insensitive" } }] } : {}),
@@ -40,12 +42,12 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
   ]);
   return (
     <>
-      <PageHead kicker="Influence" title="Influencer database" sub={`${total} creators · ${creators.length} shown`} exportKind="creators" />
+      <PageHead kicker="Influence" title="Influencer database" sub={`${total} creators · ${creators.length} shown`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined} />
       <form action="/admin/creators" className="flex flex-wrap items-end gap-2">
         <input name="q" defaultValue={p.q} placeholder="Name or @handle" className="crm-input max-w-[14rem]" />
         <Select name="platform" placeholder="Any platform" defaultValue={p.platform} options={PLATFORMS} className="max-w-[10rem]" />
         <Select name="tier" placeholder="Any tier" defaultValue={p.tier} options={CREATOR_TIER} className="max-w-[12rem]" />
-        <Select name="niche" placeholder="Any niche" defaultValue={p.niche} options={nicheRows.map((n) => [n.niche, n.niche] as const)} className="max-w-[12rem]" />
+        <Select name="niche" placeholder="Any niche" defaultValue={p.niche} options={[...new Set([...NICHES, ...nicheRows.map((n) => n.niche)])].map((n) => [n, n] as const)} className="max-w-[12rem]" />
         <input name="city" defaultValue={p.city} placeholder="City" className="crm-input max-w-[9rem]" />
         <input name="min" defaultValue={p.min} placeholder="Min followers" inputMode="numeric" className="crm-input max-w-[9rem]" />
         <button className="crm-btn crm-btn-secondary crm-btn-sm">Search</button>

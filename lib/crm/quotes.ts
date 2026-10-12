@@ -42,7 +42,7 @@ export async function refreshTotals(quoteId: string) {
  * cancelled, so a client can never pay a superseded figure), a pending order
  * the webhook can fulfil, the email, and the lead moved to Proposal sent.
  */
-export async function sendQuote(quoteId: string, actorId: string, message: string | null, withPayment: boolean) {
+export async function sendQuote(quoteId: string, actorId: string, message: string | null, withPayment: boolean, view: "both" | "proposal" | "pricing" = "both") {
   const prisma = getPrisma();
   const t = await refreshTotals(quoteId);
   const q = t.quote;
@@ -104,32 +104,38 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
     where: { id: q.id },
     data: { status: "SENT", sentAt: new Date(), ...(linkId ? { razorpayLinkId: linkId, paymentUrl } : withPayment ? {} : { razorpayLinkId: null, paymentUrl: null }) },
   });
-  if (q.leadId) {
-    await prisma.lead.updateMany({ where: { id: q.leadId, status: { in: ["NEW", "CONTACTED", "QUALIFIED", "CALL_BOOKED"] } }, data: { status: "PROPOSAL_SENT", valuePaise: t.total } });
-    await prisma.activity.create({ data: { leadId: q.leadId, kind: "EMAIL", actorId, body: `${q.kind === "INFLUENCER_PLAN" ? "Influencer plan" : "Quote"} ${ref} sent: ${money(t.total)}.` } });
-    await queueSheet("leads", q.leadId);
+  /* The lead it answers, even when the quote started from a brief or a client: theirs by email (Genesis, 12 Oct 2026). */
+  const leadId = q.leadId ?? (await prisma.lead.findFirst({ where: { email: q.contactEmail, status: { notIn: ["WON", "LOST"] } }, orderBy: { createdAt: "desc" }, select: { id: true } }))?.id ?? null;
+  if (leadId && !q.leadId) await prisma.quote.update({ where: { id: q.id }, data: { leadId } });
+  if (leadId) {
+    await prisma.lead.updateMany({ where: { id: leadId, status: { in: ["NEW", "CONTACTED", "QUALIFIED", "CALL_BOOKED"] } }, data: { status: "PROPOSAL_SENT", valuePaise: t.total } });
+    await prisma.activity.create({ data: { leadId, kind: "EMAIL", actorId, body: `${view === "proposal" ? "Proposal" : q.kind === "INFLUENCER_PLAN" ? "Influencer plan" : "Quote"} ${ref} sent${view === "proposal" ? "" : `: ${money(t.total)}`}.` } });
+    await queueSheet("leads", leadId);
   }
 
   const plan = q.kind === "INFLUENCER_PLAN";
-  const lines = q.lines.map((l) => `• ${l.title}${l.qty > 1 ? ` × ${l.qty}` : ""}: ${money(l.qty * l.unitPaise)}`);
-  if (plan && q.creators.length) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
+  const pricing = view !== "proposal";
+  const link = appUrl(`/quote/${q.token}${view === "both" ? "" : `?view=${view}`}`);
+  const lines = pricing ? q.lines.map((l) => `• ${l.title}${l.qty > 1 ? ` × ${l.qty}` : ""}: ${money(l.qty * l.unitPaise)}`) : [];
+  if (pricing && plan && q.creators.length) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
+  const half = Math.round(t.tax / 2);
   await queueEmail({
     kind: "quote_sent",
     to: [q.contactEmail],
-    subject: `${plan ? "Influencer plan" : "Quotation"} ${ref} · ${q.title}`,
+    subject: `${view === "proposal" ? "Proposal" : plan ? "Influencer plan" : "Quotation"} ${ref} · ${q.title}`,
     text: [
       `Hi ${q.contactName.split(" ")[0]},`,
       "",
-      message ?? (plan ? "Here's the influencer plan we've put together for you, with the creator list." : "Thank you for the brief. Here's our quotation."),
+      message ?? (view === "proposal" ? "Thank you for the brief. Here's our proposal: the platforms, the problems we'll solve, the objectives and the creators." : plan ? "Here's the influencer plan we've put together for you, with the creator list." : "Thank you for the brief. Here's our quotation."),
       "",
       `${q.title}`,
       ...lines,
-      t.discount ? `Discount: −${money(t.discount)}` : "",
-      q.addGst ? `GST ${q.gstPercent}%: ${money(t.tax)}` : "",
-      `Total: ${money(t.total)}`,
+      pricing && t.discount ? `Discount: −${money(t.discount)}` : "",
+      pricing && q.addGst ? (q.igst ? `IGST ${q.gstPercent}%: ${money(t.tax)}` : `CGST ${q.gstPercent / 2}%: ${money(half)}\nSGST ${q.gstPercent / 2}%: ${money(t.tax - half)}`) : "",
+      pricing ? `Total: ${money(t.total)}` : "",
       "",
-      `View the full ${plan ? "plan" : "quotation"} (scope, notes and terms)${plan ? " and approve it" : ""}:`,
-      appUrl(`/quote/${q.token}`),
+      `View the full ${view === "proposal" ? "proposal" : plan ? "plan" : "quotation"}${view === "pricing" ? "" : " (scope, notes and terms)"}${plan ? " and approve it" : ""}:`,
+      link,
       paymentUrl ? `\nPay securely (card, UPI, net banking): ${paymentUrl}` : "",
       "",
       `Valid until ${date(q.expiresAt)}. Reply to this email with any questions.`,

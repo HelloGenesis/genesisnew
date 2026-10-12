@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/crm/action-form";
 import { Card, Field, PageHead, Select, Status } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
-import { DIVISION_LABEL, DIVISIONS, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, date, dateTime, money } from "@/lib/crm/catalog";
+import { DIVISION_LABEL, DIVISIONS, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, SERVICES, date, dateTime, money } from "@/lib/crm/catalog";
 import { accountOptions, dateValue, inDays, staffOptions } from "@/lib/crm/options";
+import { leadScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { createTask, toggleTask } from "../../actions/delivery";
@@ -14,11 +15,11 @@ import { convertLead, deleteLead, logActivity, updateLead } from "../../actions/
 export const dynamic = "force-dynamic";
 
 export default async function LeadPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireStaff("sales");
+  const viewer = await requireStaff("sales");
   const { id } = await params;
   const prisma = getPrisma();
-  const lead = await prisma.lead.findUnique({
-    where: { id },
+  const lead = await prisma.lead.findFirst({
+    where: { id, ...leadScope(viewer) },
     include: { activities: { orderBy: { createdAt: "desc" }, include: { actor: true } }, tasks: { orderBy: { createdAt: "desc" } }, account: true, partner: true },
   });
   if (!lead) notFound();
@@ -58,7 +59,10 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               <Field label="Phone"><input name="phone" defaultValue={lead.phone ?? ""} className="crm-input" /></Field>
               <Field label="Designation"><input name="designation" defaultValue={lead.designation ?? ""} className="crm-input" /></Field>
               <Field label="Division"><Select name="division" defaultValue={lead.division} options={DIVISIONS.map((d) => [d, DIVISION_LABEL[d]] as const)} /></Field>
-              <Field label="Interested in"><input name="interest" defaultValue={lead.interest ?? ""} className="crm-input" /></Field>
+              <Field label="Interested in">
+                <input name="interest" list="crm-services-lead" defaultValue={lead.interest ?? ""} className="crm-input" placeholder="Choose a service" />
+                <datalist id="crm-services-lead">{SERVICES.map((s) => <option key={s} value={s} />)}</datalist>
+              </Field>
               <Field label="Source"><Select name="source" defaultValue={lead.source} options={LEAD_SOURCE} required /></Field>
               <Field label="Stage"><Select name="status" defaultValue={lead.status} options={Object.entries(LEAD_STATUS).map(([k, v]) => [k, v.label] as const)} required /></Field>
               <Field label="Value (₹)"><input name="value" defaultValue={lead.valuePaise ? lead.valuePaise / 100 : ""} inputMode="decimal" className="crm-input" /></Field>

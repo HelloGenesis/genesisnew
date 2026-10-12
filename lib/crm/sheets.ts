@@ -20,7 +20,7 @@ import { stageName } from "@/lib/crm/stages";
  * separate one. Tabs are created on first use.
  */
 
-export type SheetTabKey = "leads" | "accounts" | "orders" | "payments" | "projects" | "requests";
+export type SheetTabKey = "leads" | "accounts" | "orders" | "payments" | "projects" | "requests" | "creators";
 
 const TITLES: Record<SheetTabKey, string> = {
   leads: "CRM Leads",
@@ -29,6 +29,7 @@ const TITLES: Record<SheetTabKey, string> = {
   payments: "CRM Payments",
   projects: "CRM Projects",
   requests: "CRM Requests",
+  creators: "CRM Influencers",
 };
 
 /*
@@ -103,6 +104,16 @@ const BUILDERS: Record<SheetTabKey, (keys: string[]) => Promise<Map<string, Cell
       Manager: p.manager?.name ?? p.manager?.email ?? "", Due: day(p.dueDate), Updated: ist(p.updatedAt),
     }]));
   },
+  /* The influencer database, one row per creator, kept in step with the CRM (Genesis, 12 Oct 2026: "connect it to google sheets"). */
+  async creators(keys) {
+    const rows = await getPrisma().creator.findMany({ where: { id: { in: keys } } });
+    return new Map(rows.map((c) => [c.id, {
+      Name: c.name, Handle: `@${c.handle}`, Platform: c.platform, Profile: c.profileUrl ?? "", Followers: c.followers, "Avg views": c.avgViews ?? "",
+      "Engagement %": c.engagementRate ?? "", Tier: c.tier, Niches: c.niches.join(", "), Languages: c.languages.join(", "), City: c.city ?? "", Gender: c.gender ?? "",
+      "Reel (₹)": rs(c.reelRatePaise), "Story (₹)": rs(c.storyRatePaise), "Post (₹)": rs(c.postRatePaise), Email: c.email ?? "", Phone: c.phone ?? "",
+      "Managed by": c.managedBy ?? "", "Do not work with": c.blacklisted ? "Yes" : "", Notes: c.notes ?? "", Updated: ist(c.updatedAt),
+    }]));
+  },
   async requests(keys) {
     const rows = await getPrisma().request.findMany({ where: { id: { in: keys } }, include: { account: true, assignee: true } });
     return new Map(rows.map((r) => [r.id, {
@@ -155,4 +166,17 @@ export async function syncSheets(limit = 200) {
     }
   }
   return { sent };
+}
+
+/** Every creator changed since the last run goes to the "CRM Influencers" tab. Cheap to call each minute. */
+export async function mirrorCreators() {
+  if (!crmSheetsConfigured()) return { skipped: "Google Sheets not configured" };
+  const prisma = getPrisma();
+  const key = "creators-mirror-at";
+  const since = await prisma.appSetting.findUnique({ where: { key } }).then((r) => (r ? new Date(r.value) : new Date(0)));
+  const now = new Date();
+  const changed = await prisma.creator.findMany({ where: { updatedAt: { gt: since } }, select: { id: true }, take: 2000 });
+  for (const c of changed) await queueSheet("creators", c.id);
+  await prisma.appSetting.upsert({ where: { key }, create: { key, value: now.toISOString() }, update: { value: now.toISOString() } });
+  return { queued: changed.length };
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Badge, Empty, PageHead, Select, Status, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
+import { isSuperAdmin } from "@/lib/crm/scope";
 import type { RequestKind, RequestStatus } from "@/lib/generated/prisma/enums";
 import { REQUEST_KIND, REQUEST_STATUS, dateTime, requestRef } from "@/lib/crm/catalog";
 import { staffOptions } from "@/lib/crm/options";
@@ -12,7 +13,7 @@ export const metadata = { title: "Requests" };
 
 /** Briefs, revisions, new-content asks and support from the portal — the team's shared inbox. */
 export default async function RequestsPage({ searchParams }: { searchParams: Promise<{ status?: string; kind?: string; assignee?: string }> }) {
-  await requireStaff();
+  const viewer = await requireStaff();
   const params = await searchParams;
   const open = !params.status;
   const [requests, staff] = await Promise.all([
@@ -30,7 +31,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: Pro
   ]);
   return (
     <>
-      <PageHead kicker="Delivery" title="Requests & support" sub={open ? "Open, in progress and waiting on the client." : undefined} exportKind="requests" />
+      <PageHead kicker="Delivery" title="Requests & support" sub={open ? "Open, in progress and waiting on the client." : undefined} exportKind={isSuperAdmin(viewer) ? "requests" : undefined} />
       <form action="/admin/requests" className="flex flex-wrap items-end gap-2">
         <Select name="status" placeholder="Still open" defaultValue={params.status} options={[...Object.entries(REQUEST_STATUS).map(([k, v]) => [k, v.label] as const), ["all", "Any"] as const]} className="max-w-[12rem]" />
         <Select name="kind" placeholder="Any type" defaultValue={params.kind} options={REQUEST_KIND} className="max-w-[12rem]" />

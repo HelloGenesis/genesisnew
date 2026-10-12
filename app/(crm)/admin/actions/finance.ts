@@ -11,6 +11,7 @@ import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
 import { disconnectDrive } from "@/lib/crm/drive";
 import { fulfil } from "@/lib/crm/orders";
 import { queueSheet } from "@/lib/crm/sheets";
+import { AREAS, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { RazorpayError, razorpay, razorpayKeys } from "@/lib/razorpay";
 
@@ -179,4 +180,17 @@ export async function setStaffProfile(_: ActionState, form: FormData): Promise<A
   await recordAuditLog({ action: "staff.profile", entity: "user", entityId: userId, actorId: viewer.id });
   done();
   return ok("Saved.");
+}
+
+/** What a person sees beyond their own records (lib/crm/scope): super admins decide. */
+export async function setGrants(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff("staff");
+  if (!isSuperAdmin(viewer)) return fail("Only super admins can change this.");
+  const userId = text(form, "userId");
+  if (!userId) return fail("Pick someone.");
+  const grants = form.getAll("grants").map(String).filter((g) => g in AREAS);
+  await getPrisma().user.update({ where: { id: userId }, data: { grants } });
+  await recordAuditLog({ action: "staff.grants", entity: "user", entityId: userId, actorId: viewer.id, metadata: { grants } });
+  done();
+  return ok(grants.length ? `Now sees: ${grants.map((g) => AREAS[g]).join(", ")}.` : "Sees only their own records.");
 }

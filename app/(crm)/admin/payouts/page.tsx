@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Empty, PageHead, Stats, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
+import { isSuperAdmin } from "@/lib/crm/scope";
 import { date, money } from "@/lib/crm/catalog";
 import { requireStaff } from "@/lib/crm/session";
 
@@ -22,7 +23,7 @@ function Step({ action, id, status, label }: { action: (form: FormData) => Promi
 
 /** Money out: resellers' commission on the clients they referred, and vendors' invoices. */
 export default async function PayoutsPage() {
-  await requireStaff("finance");
+  const viewer = await requireStaff("finance");
   const prisma = getPrisma();
   const [commissions, invoices] = await Promise.all([
     prisma.commission.findMany({ orderBy: [{ status: "asc" }, { createdAt: "desc" }], take: 200, include: { partner: true, order: true } }),
@@ -32,7 +33,7 @@ export default async function PayoutsPage() {
   const bills = invoices.filter((i) => i.status === "SUBMITTED" || i.status === "APPROVED").reduce((s, i) => s + i.amountPaise + i.taxPaise, 0);
   return (
     <>
-      <PageHead kicker="Money" title="Commissions & payouts" exportKind="payouts" />
+      <PageHead kicker="Money" title="Commissions & payouts" exportKind={isSuperAdmin(viewer) ? "payouts" : undefined} />
       <Stats items={[{ label: "Commission owed", value: money(owed) }, { label: "Vendor invoices to pay", value: money(bills), tone: bills ? "warn" : undefined }]} />
       <section className="space-y-3">
         <h2 className="text-[1.125rem] text-bone">Reseller commission</h2>

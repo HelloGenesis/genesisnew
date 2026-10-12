@@ -6,6 +6,7 @@ import type { QuoteStatus } from "@/lib/generated/prisma/enums";
 import { QUOTE_STATUS, date, money } from "@/lib/crm/catalog";
 import { quoteRef } from "@/lib/crm/quote-templates";
 import { daysFromNow } from "@/lib/crm/options";
+import { quoteScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -13,13 +14,13 @@ export const metadata = { title: "Quotes" };
 
 /** Every quotation and influencer plan, with what happened to it. */
 export default async function QuotesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  await requireStaff("sales");
+  const viewer = await requireStaff("sales");
   const { status } = await searchParams;
   const prisma = getPrisma();
   const [quotes, open, won] = await Promise.all([
-    prisma.quote.findMany({ where: status && status in QUOTE_STATUS ? { status: status as QuoteStatus } : {}, orderBy: { createdAt: "desc" }, take: 200, include: { account: true, lead: true, _count: { select: { creators: true } } } }),
-    prisma.quote.aggregate({ where: { status: { in: ["SENT", "VIEWED"] } }, _sum: { totalPaise: true }, _count: true }),
-    prisma.quote.aggregate({ where: { status: { in: ["ACCEPTED", "PAID"] }, createdAt: { gte: daysFromNow(-30) } }, _sum: { totalPaise: true }, _count: true }),
+    prisma.quote.findMany({ where: { ...quoteScope(viewer), ...(status && status in QUOTE_STATUS ? { status: status as QuoteStatus } : {}) }, orderBy: { createdAt: "desc" }, take: 200, include: { account: true, lead: true, _count: { select: { creators: true } } } }),
+    prisma.quote.aggregate({ where: { ...quoteScope(viewer), status: { in: ["SENT", "VIEWED"] } }, _sum: { totalPaise: true }, _count: true }),
+    prisma.quote.aggregate({ where: { ...quoteScope(viewer), status: { in: ["ACCEPTED", "PAID"] }, createdAt: { gte: daysFromNow(-30) } }, _sum: { totalPaise: true }, _count: true }),
   ]);
   return (
     <>

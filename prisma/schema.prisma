@@ -41,6 +41,8 @@ model User {
   name        String?
   /// Job title shown in the CRM ("Founder & CEO"), staff only.
   title       String?
+  /// What a super admin has opened up to this person beyond their own records: "leads", "quotes", "billing", "clients", "projects", "inbox", "reports".
+  grants      String[]  @default([])
   picture     String?
   role        UserRole  @default(VIEWER)
   lastLoginAt DateTime? @map("last_login_at")
@@ -435,6 +437,8 @@ model Task {
   id          String     @id @default(cuid())
   title       String
   details     String?
+  /// Drive folders, Docs, references.
+  links       String[]   @default([])
   priority    Priority   @default(NORMAL)
   status      TaskStatus @default(OPEN)
   dueDate     DateTime?  @map("due_date") @db.Date
@@ -1098,7 +1102,14 @@ model Quote {
   /// GST added on top (the sample quote's prices are exclusive of GST).
   addGst        Boolean     @default(true) @map("add_gst")
   gstPercent    Int         @default(18) @map("gst_percent")
+  /// Client outside Maharashtra: IGST in place of CGST + SGST.
+  igst          Boolean     @default(false)
   discountPaise Int         @default(0) @map("discount_paise")
+  /// The proposal block (Genesis, 12 Oct 2026): sent with the pricing, or on its own.
+  proposalPlatforms   String[] @default([]) @map("proposal_platforms")
+  proposalProblems    String?  @map("proposal_problems")
+  proposalObjectives  String?  @map("proposal_objectives")
+  proposalInfluencers String?  @map("proposal_influencers")
   subtotalPaise Int         @default(0) @map("subtotal_paise")
   taxPaise      Int         @default(0) @map("tax_paise")
   totalPaise    Int         @default(0) @map("total_paise")
@@ -1449,4 +1460,71 @@ model SheetImport {
 
   @@unique([spreadsheetId, sheetName, kind])
   @@map("crm_sheet_imports")
+}
+
+// --- Invoices (Genesis, 12 Oct 2026: "create an invoice") ---------------------
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  CANCELLED
+}
+
+/// A GST tax invoice: numbered in a series per financial year, CGST + SGST (or IGST), emailed with a pay link.
+model Invoice {
+  id            String        @id @default(cuid())
+  /// "GM/2026-27/0001".
+  number        String        @unique
+  seq           Int
+  fy            String
+  token         String        @unique
+  status        InvoiceStatus @default(DRAFT)
+  accountId     String?       @map("account_id")
+  quoteId       String?       @map("quote_id")
+  orderId       String?       @map("order_id")
+  billToName    String        @map("bill_to_name")
+  billToEmail   String?       @map("bill_to_email")
+  billToGstin   String?       @map("bill_to_gstin")
+  billToAddress String?       @map("bill_to_address")
+  placeOfSupply String        @default("Maharashtra") @map("place_of_supply")
+  igst          Boolean       @default(false)
+  issueDate     DateTime      @map("issue_date") @db.Date
+  dueDate       DateTime?     @map("due_date") @db.Date
+  subtotalPaise Int           @default(0) @map("subtotal_paise")
+  discountPaise Int           @default(0) @map("discount_paise")
+  cgstPaise     Int           @default(0) @map("cgst_paise")
+  sgstPaise     Int           @default(0) @map("sgst_paise")
+  igstPaise     Int           @default(0) @map("igst_paise")
+  totalPaise    Int           @default(0) @map("total_paise")
+  notes         String?
+  terms         String?
+  razorpayLinkId String?      @unique @map("razorpay_link_id")
+  paymentUrl    String?       @map("payment_url")
+  sentAt        DateTime?     @map("sent_at")
+  paidAt        DateTime?     @map("paid_at")
+  createdById   String?       @map("created_by_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  lines         InvoiceLine[]
+
+  @@unique([fy, seq])
+  @@index([status, issueDate])
+  @@index([accountId])
+  @@index([createdById])
+  @@map("crm_invoices")
+}
+
+model InvoiceLine {
+  id          String  @id @default(cuid())
+  invoiceId   String  @map("invoice_id")
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  position    Int     @default(0)
+  description String
+  sac         String  @default("998361")
+  qty         Int     @default(1)
+  unitPaise   Int     @map("unit_paise")
+
+  @@map("crm_invoice_lines")
 }

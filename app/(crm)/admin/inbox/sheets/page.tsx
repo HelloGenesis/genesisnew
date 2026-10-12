@@ -5,6 +5,7 @@ import { Badge, Card, Field, PageHead, Select, Table } from "@/components/crm/ui
 import { getPrisma } from "@/lib/db";
 import { dateTime } from "@/lib/crm/catalog";
 import { IMPORT_KINDS, planImport } from "@/lib/crm/sheet-import";
+import { sees } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { deleteSheetImport, rerunSheetImport, saveMappingAndRun, startSheetImport } from "../../actions/inbox";
@@ -21,7 +22,7 @@ export default async function SheetsPage({ searchParams }: { searchParams: Promi
   const viewer = await requireStaff();
   const p = await searchParams;
   const prisma = getPrisma();
-  const seesAll = viewer.roles.some((r) => r === "OWNER" || r === "ADMIN");
+  const seesAll = sees(viewer, "inbox");
   const [imports, plan] = await Promise.all([
     prisma.sheetImport.findMany({ where: seesAll ? {} : { userId: viewer.id }, orderBy: { createdAt: "desc" } }),
     p.plan ? prisma.sheetImport.findUnique({ where: { id: p.plan } }) : null,

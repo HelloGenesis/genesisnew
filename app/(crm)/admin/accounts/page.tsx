@@ -7,6 +7,7 @@ import { getPrisma } from "@/lib/db";
 import type { AccountKind } from "@/lib/generated/prisma/enums";
 import { ACCOUNT_KIND, ACCOUNT_STATUS, date } from "@/lib/crm/catalog";
 import { accountOptions, staffOptions } from "@/lib/crm/options";
+import { accountScope, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { createAccount } from "../actions/sales";
@@ -17,11 +18,12 @@ export const metadata = { title: "Clients & agencies" };
 const TABS: [string, string][] = [["", "All"], ["BRAND", "Brands"], ["AGENCY", "Agencies"], ["resellers", "Resellers"], ["VENDOR", "Vendors & crew"]];
 
 export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ kind?: string; q?: string }> }) {
-  await requireStaff("sales");
+  const viewer = await requireStaff("sales");
   const { kind, q } = await searchParams;
   const prisma = getPrisma();
   const accounts = await prisma.account.findMany({
     where: {
+      ...accountScope(viewer),
       ...(kind === "resellers" ? { isReseller: true } : kind && kind in ACCOUNT_KIND ? { kind: kind as AccountKind } : {}),
       ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { email: { contains: q, mode: "insensitive" } }, { gstin: { contains: q, mode: "insensitive" } }] } : {}),
     },
@@ -38,7 +40,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHead kicker="Sales" title="Clients & agencies" sub="Brands, the agencies that buy for them or resell Genesis, and the vendors and crew Genesis hires." exportKind="accounts" />
+      <PageHead kicker="Sales" title="Clients & agencies" sub="Brands, the agencies that buy for them or resell Genesis, and the vendors and crew Genesis hires." exportKind={isSuperAdmin(viewer) ? "accounts" : undefined} />
       <nav className="flex flex-wrap gap-1.5">
         {TABS.map(([value, label]) => (
           <Link key={label} href={value ? `/admin/accounts?kind=${value}` : "/admin/accounts"} aria-current={(kind ?? "") === value ? "page" : undefined} className="crm-nav-link !min-h-9">

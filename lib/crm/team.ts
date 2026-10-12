@@ -4,9 +4,10 @@
  * neither; afterwards Staff & roles is where they change.
  */
 export const TEAM: Record<string, { name: string; title: string }> = {
-  "hello@genesismedia.co": { name: "Genesis Media", title: "Team account" },
+  "hello@genesismedia.co": { name: "Genesis Media", title: "hello@ inbox" },
   "shivam@genesismedia.co": { name: "Shivam", title: "Founder & CEO" },
   "ganesh@genesismedia.co": { name: "Ganesh", title: "VP Finance" },
   "tanvi@genesismedia.co": { name: "Tanvi", title: "Head of Creative" },
   "gaurav@genesismedia.co": { name: "Gaurav", title: "AI Content & Automation" },
+  "sandesh@genesismedia.co": { name: "Sandesh", title: "In-house editor" },
 };

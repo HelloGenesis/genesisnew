@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/crm/action-form";
 import { Card, Field, PageHead, Status, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, ORDER_STATUS, PROJECT_STATUS, SUBSCRIPTION_STATUS, date, dateTime, money, projectRef } from "@/lib/crm/catalog";
+import { orderScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { cancelOrder, cancelSubscription, markOrderPaid } from "../../actions/finance";
@@ -12,10 +13,10 @@ import { cancelOrder, cancelSubscription, markOrderPaid } from "../../actions/fi
 export const dynamic = "force-dynamic";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireStaff("finance");
+  const viewer = await requireStaff("finance");
   const { id } = await params;
-  const order = await getPrisma().order.findUnique({
-    where: { id },
+  const order = await getPrisma().order.findFirst({
+    where: { id, ...orderScope(viewer) },
     include: { lines: true, account: true, partner: true, subscription: true, payments: { orderBy: { paidAt: "desc" } }, projects: true, commissions: true },
   });
   if (!order) notFound();

@@ -5,6 +5,7 @@ import { AddPanel, Badge, Empty, Field, PageHead, Select } from "@/components/cr
 import { getPrisma } from "@/lib/db";
 import { date, todayIst } from "@/lib/crm/catalog";
 import { inDays, staffOptions } from "@/lib/crm/options";
+import { isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { createTask, toggleTask, updateTask } from "../actions/delivery";
@@ -16,8 +17,10 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const viewer = await requireStaff();
   const params = await searchParams;
   /* No filter chosen: two panels, what's mine and what I've given others (Genesis, 11 Oct 2026). */
-  const split = !params.owner;
-  const owner = params.owner === "all" ? undefined : (params.owner ?? viewer.id);
+  /* Other people's tasks: super admins only (lib/crm/scope). */
+  const superAdmin = isSuperAdmin(viewer);
+  const split = !params.owner || !superAdmin;
+  const owner = !superAdmin ? viewer.id : params.owner === "all" ? undefined : (params.owner ?? viewer.id);
   const [tasks, staff] = await Promise.all([
     getPrisma().task.findMany({
       where: { ...(split ? { OR: [{ ownerId: viewer.id }, { createdById: viewer.id }] } : owner ? { ownerId: owner } : {}), status: params.done ? "DONE" : "OPEN" },
@@ -46,6 +49,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 <span className="min-w-0 flex-1">
                   <span className={t.status === "DONE" ? "text-faint line-through" : "text-bone"}>{t.title}</span>
                   {t.details && <span className="block text-[0.8125rem] text-ash">{t.details}</span>}
+                  {t.links.length > 0 && (
+                    <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.8125rem]">
+                      {t.links.map((l) => <a key={l} href={l} target="_blank" rel="noreferrer" className="crm-link max-w-[18rem] truncate">{/drive\.google|docs\.google/.test(l) ? "📁 " : ""}{l.replace(/^https?:\/\/(www\.)?/, "")}</a>)}
+                    </span>
+                  )}
                 </span>
                 {about && <Link href={about.href} className="text-[0.8125rem] text-ash hover:text-bone">{about.label} ↗</Link>}
                 {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}
@@ -60,6 +68,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                     <input name="dueDate" type="date" defaultValue={t.dueDate ? t.dueDate.toISOString().slice(0, 10) : ""} className="crm-input w-auto" />
                     <Select name="priority" required defaultValue={t.priority} options={[["LOW", "Low"], ["NORMAL", "Normal"], ["HIGH", "High"]]} className="w-auto" />
                     <input type="hidden" name="details" value={t.details ?? ""} />
+                    <input name="links" defaultValue={t.links.join(", ")} placeholder="Links (comma separated)" className="crm-input min-w-[14rem] flex-1" />
                   </ActionForm>
                 </details>
               </li>
@@ -69,7 +78,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     <>
       <PageHead kicker="Today" title="Tasks" sub={params.done ? "Done" : "Open, by due date"} />
       <form action="/admin/tasks" className="flex flex-wrap items-end gap-2">
-        <Select name="owner" defaultValue={params.owner} options={[...staff, ["all", "Everyone"]]} placeholder="Mine & assigned by me" className="max-w-[16rem]" />
+        {superAdmin && <Select name="owner" defaultValue={params.owner} options={[...staff, ["all", "Everyone"]]} placeholder="Mine & assigned by me" className="max-w-[16rem]" />}
         <label className="flex items-center gap-2 text-[0.875rem] text-ash"><input type="checkbox" name="done" value="1" defaultChecked={Boolean(params.done)} /> Show done</label>
         <button className="crm-btn crm-btn-secondary crm-btn-sm">Show</button>
       </form>
@@ -82,6 +91,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             <Field label="Assign to" hint="They get an email and see it on their dashboard."><Select name="ownerId" options={staff} defaultValue={viewer.id} /></Field>
           </div>
           <Field label="Details"><textarea name="details" className="crm-input !min-h-16" /></Field>
+          <Field label="Links" hint="Drive folders, Docs, Canva, references: one a line."><textarea name="links" className="crm-input !min-h-14" placeholder="https://drive.google.com/…" /></Field>
         </ActionForm>
       </AddPanel>
       {split && !params.done ? (

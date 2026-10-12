@@ -24,7 +24,12 @@ export type BuilderQuote = {
   terms?: string | null;
   addGst: boolean;
   gstPercent: number;
+  igst?: boolean;
   discount: number;
+  proposalPlatforms?: string[];
+  proposalProblems?: string | null;
+  proposalObjectives?: string | null;
+  proposalInfluencers?: string | null;
   lines: BuilderLine[];
   creators: BuilderCreator[];
 };
@@ -35,6 +40,18 @@ type Terms = { key: string; label: string; notes: string; terms: string[] };
 const DIVISIONS: [string, string][] = [["AI_LAB", "AI Lab"], ["STUDIOS", "Studios"], ["BRAND_DESIGN", "Brand & Design"], ["INFLUENCE", "Influence"]];
 const inr = (r: number) => `₹${r.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const compact = (n: number) => new Intl.NumberFormat("en-IN", { notation: "compact" }).format(n);
+const PLATFORMS = ["Instagram", "YouTube", "LinkedIn", "Facebook", "X", "Snapchat", "Moj / Josh", "Website", "OTT / TV", "Events"];
+
+/** A creator from a profile link: the platform and handle it names (Genesis, 12 Oct 2026: "link + add more influencer"). */
+function fromLink(url: string): BuilderCreator | null {
+  const m = url.trim().match(/^(?:https?:\/\/)?(?:www\.|m\.)?(instagram\.com|youtube\.com|youtu\.be|linkedin\.com\/in|x\.com|twitter\.com|facebook\.com|snapchat\.com\/add)\/@?([A-Za-z0-9._-]+)/i);
+  if (!m) return null;
+  const host = m[1]!.toLowerCase();
+  const platform = host.startsWith("instagram") ? "INSTAGRAM" : host.startsWith("youtu") ? "YOUTUBE" : host.startsWith("linkedin") ? "LINKEDIN" : host.startsWith("x.") || host.startsWith("twitter") ? "X" : host.startsWith("facebook") ? "FACEBOOK" : "SNAPCHAT";
+  const handle = m[2]!.replace(/^@/, "");
+  if (["p", "reel", "reels", "watch", "channel", "c", "user", "shorts", "stories"].includes(handle.toLowerCase())) return null;
+  return { creatorId: null, name: handle, handle, platform, profileUrl: url.trim().startsWith("http") ? url.trim() : `https://${url.trim()}`, followers: 0, avgViews: null, niches: [], city: null, deliverables: "1 reel + 2 stories", fee: null };
+}
 
 /**
  * THE QUOTE BUILDER — Genesis's Price Quote, assembled on screen: the
@@ -46,6 +63,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
   const [q, setQ] = useState<BuilderQuote>(initial);
   const [pick, setPick] = useState("");
   const [search, setSearch] = useState("");
+  const [link, setLink] = useState("");
+  const [linkError, setLinkError] = useState<string | null>(null);
   const [state, action, pending] = useActionState(saveQuote, null);
   const set = <K extends keyof BuilderQuote>(k: K, v: BuilderQuote[K]) => setQ((x) => ({ ...x, [k]: v }));
   const setLine = (i: number, patch: Partial<BuilderLine>) => setQ((x) => ({ ...x, lines: x.lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) }));
@@ -168,6 +187,36 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
         </div>
         <div className="crm-card crm-pad space-y-3">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search the influencer database: name, @handle, niche, city" className="crm-input" />
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              value={link}
+              onChange={(e) => {
+                setLink(e.target.value);
+                setLinkError(null);
+              }}
+              placeholder="…or paste a profile link: instagram.com/handle, youtube.com/@channel"
+              className="crm-input min-w-[16rem] flex-1"
+            />
+            <button
+              type="button"
+              className="crm-btn crm-btn-secondary crm-btn-sm"
+              onClick={() => {
+                const added = link
+                  .split(/[\s,]+/)
+                  .filter(Boolean)
+                  .map(fromLink)
+                  .filter((c): c is BuilderCreator => c !== null)
+                  .filter((c) => !q.creators.some((x) => x.handle.toLowerCase() === c.handle.toLowerCase() && x.platform === c.platform));
+                if (added.length === 0) return setLinkError("That doesn't look like a profile link.");
+                setQ((x) => ({ ...x, creators: [...x.creators, ...added] }));
+                setLink("");
+              }}
+            >
+              <Plus className="size-4" /> Add by link
+            </button>
+            {linkError && <span className="text-[0.8125rem] text-[#dc2626]">{linkError}</span>}
+          </div>
+          <p className="text-[0.75rem] text-faint">Several links at once work too. New creators are added to the influencer database when you save.</p>
           {search && (
             <ul className="divide-y divide-[var(--glass-border)]">
               {matches.length === 0 && <li className="py-2 text-ash">No match.</li>}
@@ -200,6 +249,32 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
         </div>
       </section>
 
+      {/* THE PROPOSAL (Genesis, 12 Oct 2026): what the campaign is, apart from what it costs; it can be sent on its own. */}
+      <section className="crm-card crm-pad space-y-3">
+        <div>
+          <h2 className="text-[1.125rem] text-bone">Proposal</h2>
+          <p className="text-[0.8125rem] text-ash">Shown above the pricing. When sending you can send the proposal on its own, the pricing on its own, or both.</p>
+        </div>
+        <fieldset>
+          <legend className="crm-label">Platforms</legend>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {PLATFORMS.map((p) => {
+              const on = (q.proposalPlatforms ?? []).includes(p);
+              return (
+                <button key={p} type="button" aria-pressed={on} onClick={() => set("proposalPlatforms", on ? (q.proposalPlatforms ?? []).filter((x) => x !== p) : [...(q.proposalPlatforms ?? []), p])} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${on ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+        <div className="grid gap-3 md:grid-cols-3">
+          <label><span className="crm-label">Problems we&apos;ll solve</span><textarea value={q.proposalProblems ?? ""} onChange={(e) => set("proposalProblems", e.target.value)} className="crm-input !min-h-28" placeholder={"Low awareness in Tier-2 cities\nNo creator content for the launch"} /></label>
+          <label><span className="crm-label">Objectives</span><textarea value={q.proposalObjectives ?? ""} onChange={(e) => set("proposalObjectives", e.target.value)} className="crm-input !min-h-28" placeholder={"10k app installs in 30 days\n2M+ views"} /></label>
+          <label><span className="crm-label">Influencers</span><textarea value={q.proposalInfluencers ?? ""} onChange={(e) => set("proposalInfluencers", e.target.value)} className="crm-input !min-h-28" placeholder={"15 fitness & food creators, 50k–500k followers\nMumbai, Pune, Bengaluru"} /></label>
+        </div>
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <section className="crm-card crm-pad space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-2">
@@ -220,6 +295,19 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
             <dd><input type="number" min={0} value={q.discount} onChange={(e) => set("discount", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-32 text-right" /></dd>
             <dt className="text-ash"><label className="flex items-center gap-2"><input type="checkbox" checked={q.addGst} onChange={(e) => set("addGst", e.target.checked)} /> Add GST at <input type="number" min={0} max={28} value={q.gstPercent} onChange={(e) => set("gstPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-16" />%</label></dt>
             <dd className="tabular-nums">{inr(totals.tax)}</dd>
+            {q.addGst && (
+              <>
+                <dt className="col-span-2 -mt-1"><label className="flex items-center gap-2 text-[0.8125rem] text-ash"><input type="checkbox" checked={Boolean(q.igst)} onChange={(e) => set("igst", e.target.checked)} /> Client outside Maharashtra (IGST)</label></dt>
+                {q.igst ? (
+                  <><dt className="pl-6 text-[0.875rem] text-ash">IGST {q.gstPercent}%</dt><dd className="text-[0.875rem] tabular-nums">{inr(totals.tax)}</dd></>
+                ) : (
+                  <>
+                    <dt className="pl-6 text-[0.875rem] text-ash">CGST {q.gstPercent / 2}%</dt><dd className="text-[0.875rem] tabular-nums">{inr(Math.round(totals.tax * 50) / 100)}</dd>
+                    <dt className="pl-6 text-[0.875rem] text-ash">SGST {q.gstPercent / 2}%</dt><dd className="text-[0.875rem] tabular-nums">{inr(totals.tax - Math.round(totals.tax * 50) / 100)}</dd>
+                  </>
+                )}
+              </>
+            )}
             <dt className="border-t border-[var(--glass-border)] pt-2 font-semibold text-bone">Total price</dt>
             <dd className="border-t border-[var(--glass-border)] pt-2 text-[1.25rem] font-semibold tabular-nums text-bone">{inr(totals.total)}</dd>
           </dl>

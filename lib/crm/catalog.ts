@@ -73,6 +73,15 @@ export const LEAD_STATUS: Record<LeadStatus, { label: string; tone: Tone }> = {
   NURTURE: { label: "Nurture", tone: "muted" },
 };
 
+/** What a lead can be interested in: the "Interested in" dropdown (Genesis, 12 Oct 2026); anything else can still be typed. */
+export const SERVICES = [
+  "AI videos", "AI avatar / clone", "Voice & localisation", "Automation", "Games & apps",
+  "Influencer marketing", "UGC videos", "Celebrity partnership", "Creator activation", "Regional campaign",
+  "Studio shoot", "Ad film", "Podcast / video series", "Event coverage",
+  "Brand identity", "Packaging", "Social media design", "Website",
+  "Monthly content plan", "Other",
+];
+
 /** The board's columns, left to right; Lost and Nurture sit off the board. */
 export const PIPELINE: readonly LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "CALL_BOOKED", "PROPOSAL_SENT", "NEGOTIATION", "WON"];
 

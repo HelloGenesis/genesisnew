@@ -7,6 +7,7 @@ import type { Reading } from "@/lib/crm/ai";
 import { aiConfigured } from "@/lib/crm/ai";
 import { dateTime, money } from "@/lib/crm/catalog";
 import { googleConfigured } from "@/lib/crm/google";
+import { sees } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { addAccountFromItem, attachItem, disconnectMyGoogle, dismissItem, expenseFromItem, importRazorpay, syncMyGoogle } from "../actions/inbox";
@@ -40,7 +41,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   const viewer = await requireStaff();
   const p = await searchParams;
   const prisma = getPrisma();
-  const seesAll = viewer.roles.some((r) => r === "OWNER" || r === "ADMIN");
+  const seesAll = sees(viewer, "inbox");
   const finance = viewer.roles.some((r) => ["OWNER", "ADMIN", "FINANCE"].includes(r));
   const status = p.status === "DONE" || p.status === "DISMISSED" || p.status === "ALL" ? p.status : "NEW";
   const kind = p.kind && p.kind in KINDS ? p.kind : undefined;
