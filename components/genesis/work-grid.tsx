@@ -148,7 +148,7 @@ export function WorkGrid({
   }, []);
 
   const railBox = useRef<HTMLDivElement>(null);
-  useAutoAdvance(rowA, slides);
+  useAutoAdvance(rowA, slides, railBox);
 
   /*
     THE STRIPS MOVE ON THEIR OWN ("portfolio me auto move wala rakho"), in

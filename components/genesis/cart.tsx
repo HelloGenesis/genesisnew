@@ -32,7 +32,7 @@ import { shootNote } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
 import { GlassButton } from "./glass-button";
-import { getLenis } from "./smooth-scroll";
+import { lockScroll } from "./smooth-scroll";
 
 /* ------------------------------------------------------------------ state */
 
@@ -640,18 +640,13 @@ function CartDrawer() {
 
   useEffect(() => {
     if (!drawerOpen) return;
-    const lenis = getLenis();
-    lenis?.stop();
-    const root = document.documentElement;
-    const previous = root.style.overflow;
-    root.style.overflow = "hidden";
+    const unlock = lockScroll();
     panel.current?.focus();
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && setDrawerOpen(false);
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
-      root.style.overflow = previous;
-      lenis?.start();
+      unlock();
     };
   }, [drawerOpen, setDrawerOpen]);
 

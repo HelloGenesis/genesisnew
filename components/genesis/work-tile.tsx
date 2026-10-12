@@ -205,7 +205,8 @@ export function WorkTile({
               }}
             />
             <div className="relative flex max-w-full items-center gap-1.5">
-              {item.featured && <PriorityMark className="shrink-0" />}
+              {/* On every tile now (Genesis, 11 Oct 2026: "add the logo"). */}
+              <PriorityMark className="shrink-0" />
               <span className="glass-chip min-w-0 truncate rounded-full px-2.5 py-1 text-micro text-white/90">
                 {item.format}
               </span>
@@ -280,7 +281,8 @@ export function WorkTile({
               and decoration. See PriorityMark.
             */}
             <div className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] items-center gap-1.5">
-              {item.featured && <PriorityMark className="shrink-0" />}
+              {/* On every tile now (Genesis, 11 Oct 2026: "add the logo"). */}
+              <PriorityMark className="shrink-0" />
               <span className="glass-chip min-w-0 truncate rounded-full px-2.5 py-1 text-micro text-white/90">
                 {item.format}
               </span>

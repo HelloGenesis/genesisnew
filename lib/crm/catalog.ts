@@ -87,6 +87,8 @@ export const LEAD_SOURCE: Record<LeadSource, string> = {
   LINKEDIN: "LinkedIn",
   EVENT: "Event",
   OUTBOUND: "Outbound",
+  CHATGPT: "ChatGPT",
+  CALENDAR_BOOKING: "Website calendar booking",
   OTHER: "Other",
 };
 

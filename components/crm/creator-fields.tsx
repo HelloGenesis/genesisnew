@@ -1,4 +1,5 @@
 import { Field, Select } from "@/components/crm/ui";
+import { NichePicker } from "@/components/crm/niche-picker";
 import { CREATOR_TIER } from "@/lib/crm/catalog";
 
 const PLATFORMS: [string, string][] = [["INSTAGRAM", "Instagram"], ["YOUTUBE", "YouTube"], ["LINKEDIN", "LinkedIn"], ["X", "X"], ["FACEBOOK", "Facebook"], ["MOJ", "Moj"], ["JOSH", "Josh"], ["SNAPCHAT", "Snapchat"], ["OTHER", "Other"]];
@@ -24,7 +25,7 @@ export function CreatorFields({ creator }: { creator?: Creator }) {
         <Field label="Average views"><input name="avgViews" defaultValue={creator?.avgViews ?? ""} className="crm-input" /></Field>
         <Field label="Engagement rate %"><input name="engagementRate" type="number" step="0.01" defaultValue={creator?.engagementRate ?? ""} className="crm-input" /></Field>
         <Field label="Tier" hint="Blank = from followers."><Select name="tier" defaultValue={creator?.tier} options={CREATOR_TIER} /></Field>
-        <Field label="Niches" hint="Comma separated."><input name="niches" defaultValue={creator?.niches.join(", ")} className="crm-input" placeholder="Fitness, finance, food" /></Field>
+        <Field label="Niches" hint="Pick any number, or add your own."><NichePicker defaultValue={creator?.niches} /></Field>
         <Field label="Languages"><input name="languages" defaultValue={creator?.languages.join(", ")} className="crm-input" placeholder="Hindi, English" /></Field>
         <Field label="City"><input name="city" defaultValue={creator?.city ?? ""} className="crm-input" /></Field>
         <Field label="Gender"><input name="gender" defaultValue={creator?.gender ?? ""} className="crm-input" /></Field>

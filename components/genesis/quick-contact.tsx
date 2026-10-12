@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GenesisForm } from "./genesis-form";
 import { FORMS } from "@/lib/forms";
 import { ctaContextFor, ctaWhatsappLink, isContactHref } from "@/lib/site-config";
-import { getLenis } from "./smooth-scroll";
+import { lockScroll } from "./smooth-scroll";
 
 /**
  * What a contextual CTA does — which is now open WhatsApp, and only falls
@@ -153,10 +153,7 @@ export function QuickContact() {
   useEffect(() => {
     if (!open) return;
 
-    const lenis = getLenis();
-    lenis?.stop();
-    const { overflow } = document.documentElement.style;
-    document.documentElement.style.overflow = "hidden";
+    const unlock = lockScroll();
 
     panelRef.current?.focus();
 
@@ -188,8 +185,7 @@ export function QuickContact() {
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.documentElement.style.overflow = overflow;
-      lenis?.start();
+      unlock();
       // Focus goes back to the button that opened it, not the top of the page.
       openerRef.current?.focus?.();
     };

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
+import { EXPENSE_CATEGORY } from "@/lib/crm/company";
 import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, projectRef, requestRef } from "@/lib/crm/catalog";
 import { type StaffArea, can, getViewer, staffAccess } from "@/lib/crm/session";
 import { stageName } from "@/lib/crm/stages";
@@ -28,6 +29,14 @@ function csv(rows: Cell[][]): string {
 }
 
 const EXPORTS: Record<string, { area?: StaffArea; build: () => Promise<Cell[][]> }> = {
+  expenses: {
+    area: "finance",
+    async build() {
+      const rows = await getPrisma().expense.findMany({ orderBy: { date: "desc" } });
+      return [["Date", "Category", "What", "Paid to", "Paid via", "Amount (₹)", "GST (₹)", "Reference", "Notes"],
+        ...rows.map((e) => [d(e.date).slice(0, 10), EXPENSE_CATEGORY[e.category], e.description, e.payee, e.paidVia, rs(e.amountPaise), rs(e.gstPaise), e.reference, e.notes])];
+    },
+  },
   leads: {
     area: "sales",
     async build() {

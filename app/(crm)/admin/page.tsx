@@ -31,14 +31,77 @@ export default async function AdminOverview() {
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { account: true } }),
     prisma.request.findMany({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } }, orderBy: { createdAt: "asc" }, take: 6, include: { account: true } }),
     prisma.project.findMany({ where: { status: "ACTIVE", dueDate: { lte: weekAhead } }, orderBy: { dueDate: "asc" }, take: 6, include: { account: true } }),
-    prisma.task.findMany({ where: { status: "OPEN", ownerId: viewer.id }, orderBy: [{ dueDate: "asc" }], take: 6 }),
+    prisma.task.findMany({ where: { status: "OPEN", OR: [{ ownerId: viewer.id }, { createdById: viewer.id }] }, orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }], take: 40, include: { owner: true } }),
     prisma.project.groupBy({ by: ["division"], where: { status: "ACTIVE" }, _count: true }),
   ]);
+  const mine = myTasks.filter((t) => t.ownerId === viewer.id).slice(0, 8);
+  const given = myTasks.filter((t) => t.ownerId !== viewer.id).slice(0, 8);
+  const todayStr = todayIst();
+  const greetingName = viewer.name?.split(" ")[0] ?? viewer.email?.split("@")[0] ?? "there";
+  const longDate = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(new Date());
   const mrr = subs.reduce((sum, s) => sum + monthly(s.amountPaise, s.billing), 0);
 
   return (
     <>
-      <PageHead kicker="Genesis CRM" title={`Good to see you${viewer.name ? `, ${viewer.name.split(" ")[0]}` : ""}.`} sub="What needs attention across sales, delivery and money today." />
+      {/* Hi, by name and title (Genesis, 11 Oct 2026); names and titles are set in Staff & roles. */}
+      <PageHead kicker={longDate} title={`Hi ${greetingName}`} sub={viewer.title ? <span className="text-bone">{viewer.title}<span className="text-ash"> · What needs attention today.</span></span> : "What needs attention today."} />
+
+      {/* TASKS FIRST, BESIDE THE CALENDAR (Genesis, 11 Oct 2026: "move the task section above and add a calendar"). */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <Card title="Tasks" action={<Link href="/admin/tasks" className="crm-link text-[0.875rem]">All tasks ↗</Link>}>
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+            {([["Mine", mine, "Nothing assigned to you."], ["Assigned by me", given, "Nothing you've given anyone."]] as const).map(([heading, list, empty]) => (
+              <div key={heading}>
+                <p className="micro-label">{heading} · {list.length}</p>
+                {list.length === 0 ? (
+                  <p className="mt-2 text-[0.875rem] text-ash">{empty}</p>
+                ) : (
+                  <ul className="mt-1 divide-y divide-[var(--glass-border)]">
+                    {list.map((t) => {
+                      const late = t.dueDate && t.dueDate.toISOString().slice(0, 10) < todayStr;
+                      return (
+                        <li key={t.id} className="flex items-center justify-between gap-3 py-2">
+                          <span className="min-w-0">
+                            <span className="block truncate text-bone">{t.title}</span>
+                            {t.ownerId !== viewer.id && <span className="block truncate text-[0.75rem] text-ash">to {t.owner?.name ?? t.owner?.email ?? "unassigned"}</span>}
+                          </span>
+                          <span className="flex shrink-0 items-center gap-2">
+                            {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}
+                            <span className={`text-[0.8125rem] ${late ? "font-semibold text-[#dc2626]" : "text-ash"}`}>{date(t.dueDate)}</span>
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card
+          title="Calendar"
+          action={<a href="https://calendar.google.com/calendar/r/week" target="_blank" rel="noreferrer" className="crm-link text-[0.875rem]">Open Google Calendar ↗</a>}
+        >
+          {viewer.email ? (
+            <>
+              {/*
+                THEIR OWN GOOGLE CALENDAR, EMBEDDED. Google shows it to whoever
+                is signed in to that Google account in this browser (Workspace
+                calendars are private to the domain), so nothing is stored here.
+              */}
+              <iframe
+                title="Your Google Calendar"
+                src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(viewer.email)}&ctz=Asia%2FKolkata&mode=WEEK&showTitle=0&showPrint=0&showCalendars=0&showTz=0&wkst=2`}
+                className="h-[26rem] w-full rounded-xl border border-[var(--glass-border)] bg-white"
+                loading="lazy"
+              />
+              <p className="mt-2 text-[0.75rem] text-faint">Showing {viewer.email}. Blank? Sign in to Google in this browser as {viewer.email}.</p>
+            </>
+          ) : (
+            <p className="text-ash">Sign in with an email to see your calendar.</p>
+          )}
+        </Card>
+      </div>
 
       <Stats
         items={[
@@ -123,24 +186,6 @@ export default async function AdminOverview() {
                     <span className="block text-[0.8125rem] text-ash">{o.reference} · {money(o.totalPaise)} · {date(o.createdAt)}</span>
                   </Link>
                   <Status value={ORDER_STATUS[o.status]} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card title="Your tasks" action={<Link href="/admin/tasks" className="crm-link text-[0.875rem]">All tasks ↗</Link>}>
-          {myTasks.length === 0 ? (
-            <p className="text-ash">Nothing assigned to you.</p>
-          ) : (
-            <ul className="divide-y divide-[var(--glass-border)]">
-              {myTasks.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <span className="truncate text-bone">{t.title}</span>
-                  <span className="flex items-center gap-2">
-                    {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}
-                    <span className="text-[0.8125rem] text-ash">{date(t.dueDate)}</span>
-                  </span>
                 </li>
               ))}
             </ul>

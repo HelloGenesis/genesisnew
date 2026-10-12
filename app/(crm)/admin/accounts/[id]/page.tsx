@@ -74,6 +74,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
       >
         <Status value={ACCOUNT_STATUS[account.status]} />
         {account.isReseller && <Badge tone="warn">Reseller · {account.commissionPercent}%</Badge>}
+        {!vendor && <Link href={`/admin/briefs?account=${account.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">Add brief</Link>}
         {!vendor && <Link href={`/admin/quotes/new?account=${account.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">New quote</Link>}
         {!vendor && <Link href={`/admin/quotes/new?account=${account.id}&kind=INFLUENCER_PLAN`} className="crm-btn crm-btn-secondary crm-btn-sm">Influencer plan</Link>}
       </PageHead>

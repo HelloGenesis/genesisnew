@@ -8,7 +8,10 @@ export type NavGroup = { label: string; items: { href: string; label: string; co
 /** Sidebar on desktop, a scrollable strip on phones (as genesis-coworking's AdminNav). */
 export function SideNav({ groups, root, label }: { groups: NavGroup[]; root: string; label: string }) {
   const path = usePathname() ?? root;
-  const active = (href: string) => (href === root ? path === root : path === href || path.startsWith(`${href}/`));
+  const matches = (href: string) => (href === root ? path === root : path === href || path.startsWith(`${href}/`));
+  /* The most specific item wins: /admin/expenses/gst lights GST, not Expenses too. */
+  const best = groups.flatMap((g) => g.items.map((i) => i.href)).filter(matches).sort((a, b) => b.length - a.length)[0];
+  const active = (href: string) => href === best;
   const link = (item: NavGroup["items"][number]) => (
     <Link key={item.href} href={item.href} aria-current={active(item.href) ? "page" : undefined} className="crm-nav-link justify-between">
       <span>{item.label}</span>
