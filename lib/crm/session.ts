@@ -49,6 +49,8 @@ export type Viewer = {
   phone: string | null;
   name: string | null;
   title: string | null;
+  /** Areas a super admin has opened up beyond this person's own records (lib/crm/scope). */
+  grants: string[];
   roles: StaffRoleKind[];
   mfa: boolean;
   memberships: Membership[];
@@ -214,6 +216,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     phone: user.phone,
     name: user.name,
     title: user.title,
+    grants: user.grants ?? [],
     roles: roles.map((r) => r.role),
     mfa: identity.amr.includes("mfa") || readStaffTwoFactor(jar.get(STAFF_2FA_COOKIE)?.value, user.id, identity.sub),
     memberships: memberships.map((m) => ({ accountId: m.account.id, role: m.role, name: m.account.name, kind: m.account.kind, isReseller: m.account.isReseller, parentId: m.account.parentId })),

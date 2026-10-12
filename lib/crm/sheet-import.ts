@@ -346,3 +346,76 @@ export async function syncSheetImports() {
   }
   return report;
 }
+
+/* --- Influencer sheets found in Drive ------------------------------------- */
+
+/** A tab is an influencer list when its header row names followers and a handle, profile or platform. */
+const looksLikeInfluencers = (headers: string[]) => {
+  const h = headers.map((x) => String(x ?? "").toLowerCase());
+  return h.some((x) => /follower|subscriber|subs\b/.test(x)) && h.some((x) => /handle|username|insta|profile|link|youtube|channel|platform|@/.test(x));
+};
+
+/**
+ * THE INFLUENCER DATA, IN ONE PLACE (Genesis, 12 Oct 2026: "it's all over the
+ * place in Google Sheets, mostly with me and Tanvi"). Once a day for each
+ * person who connected Google: every spreadsheet in their Drive that holds an
+ * influencer list — by its name or its columns, however old — is brought into
+ * the influencer database and kept in sync daily. They and the super admins
+ * are told what came in.
+ */
+export async function scanInfluencerSheets(userId: string) {
+  const prisma = getPrisma();
+  const marker = `influencer-scan:${userId}`;
+  const last = await prisma.appSetting.findUnique({ where: { key: marker } });
+  if (last && Date.now() - new Date(last.value).getTime() < 24 * 3600_000) return { skipped: "scanned today" };
+  const fields = encodeURIComponent("files(id,name,modifiedTime)");
+  const named = `mimeType='application/vnd.google-apps.spreadsheet' and trashed = false and (name contains 'nfluencer' or name contains 'reator' or name contains 'alent' or name contains 'KOL' or name contains 'logger' or name contains 'UGC' or name contains 'ugc')`;
+  const recent = `mimeType='application/vnd.google-apps.spreadsheet' and trashed = false`;
+  const [a, b] = await Promise.all([
+    google<{ files?: { id: string; name: string }[] }>(userId, `https://www.googleapis.com/drive/v3/files?pageSize=60&orderBy=modifiedTime desc&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=allDrives&q=${encodeURIComponent(named)}&fields=${fields}`),
+    google<{ files?: { id: string; name: string }[] }>(userId, `https://www.googleapis.com/drive/v3/files?pageSize=40&orderBy=modifiedTime desc&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=allDrives&q=${encodeURIComponent(recent)}&fields=${fields}`),
+  ]);
+  const files = [...new Map([...(a.files ?? []), ...(b.files ?? [])].map((f) => [f.id, f])).values()];
+  const found: { title: string; added: number; updated: number }[] = [];
+  for (const file of files) {
+    let tabs: string[] = [];
+    try {
+      const meta = await google<{ sheets: { properties: { title: string } }[] }>(userId, `https://sheets.googleapis.com/v4/spreadsheets/${file.id}?fields=sheets.properties.title`);
+      tabs = meta.sheets.map((s) => s.properties.title).slice(0, 8);
+    } catch {
+      continue;
+    }
+    for (const tab of tabs) {
+      if (await prisma.sheetImport.findUnique({ where: { spreadsheetId_sheetName_kind: { spreadsheetId: file.id, sheetName: tab, kind: "influencers" } }, select: { id: true } })) continue;
+      let head: string[][] = [];
+      try {
+        const range = encodeURIComponent(`'${tab.replace(/'/g, "''")}'!A1:AZ6`);
+        head = (await google<{ values?: string[][] }>(userId, `https://sheets.googleapis.com/v4/spreadsheets/${file.id}/values/${range}`)).values ?? [];
+      } catch {
+        continue;
+      }
+      const headerRow = head.find((r) => r.filter((c) => String(c ?? "").trim()).length >= 2) ?? [];
+      if (!looksLikeInfluencers(headerRow)) continue;
+      try {
+        const plan = await planImport(userId, file.id, tab, "influencers");
+        if (!Object.values(plan.mapping).includes("handle") && !Object.values(plan.mapping).includes("profileUrl")) continue;
+        const job = await prisma.sheetImport.create({ data: { userId, spreadsheetId: file.id, sheetName: tab, title: `${file.name} · ${tab}`, kind: "influencers", mapping: plan.mapping, autoSync: true } });
+        const result = await runImport(job.id);
+        found.push({ title: job.title, ...result });
+      } catch (error) {
+        console.error("[crm] influencer sheet skipped", file.id, tab, (error as Error).message);
+      }
+    }
+  }
+  await prisma.appSetting.upsert({ where: { key: marker }, create: { key: marker, value: new Date().toISOString() }, update: { value: new Date().toISOString() } });
+  if (found.length) {
+    const { adminIds, notify } = await import("./notifications");
+    const added = found.reduce((s, f) => s + f.added, 0);
+    await notify([userId, ...(await adminIds())], {
+      title: `Influencer sheets synced: ${added} creators added`,
+      body: found.map((f) => `${f.title}: ${f.added} added, ${f.updated} updated`).join("\n"),
+      href: "/admin/creators",
+    });
+  }
+  return { sheets: found.length, added: found.reduce((s, f) => s + f.added, 0) };
+}

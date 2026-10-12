@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/crm/action-form";
 import { Card, PageHead } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, date, money } from "@/lib/crm/catalog";
+import { briefScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { saveBrief, setBriefStatus } from "../../actions/company";
@@ -14,10 +15,10 @@ import { BRIEF_STATUS, BriefFields } from "../brief-fields";
 export const dynamic = "force-dynamic";
 
 export default async function BriefPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireStaff("sales");
+  const viewer = await requireStaff("sales");
   const { id } = await params;
   const prisma = getPrisma();
-  const brief = await prisma.brief.findUnique({ where: { id } });
+  const brief = await prisma.brief.findFirst({ where: { id, ...briefScope(viewer) } });
   if (!brief) notFound();
   const [lead, account, options] = await Promise.all([
     brief.leadId ? prisma.lead.findUnique({ where: { id: brief.leadId } }) : null,

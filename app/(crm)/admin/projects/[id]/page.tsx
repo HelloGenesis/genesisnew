@@ -21,6 +21,7 @@ import {
 } from "@/lib/crm/catalog";
 import { accountOptions, dateValue, inDays, staffOptions } from "@/lib/crm/options";
 import { filesFor } from "@/lib/crm/files-view";
+import { projectScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import {
@@ -46,8 +47,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const viewer = await requireStaff();
   const { id } = await params;
   const prisma = getPrisma();
-  const project = await prisma.project.findUnique({
-    where: { id },
+  const project = await prisma.project.findFirst({
+    where: { id, ...projectScope(viewer) },
     include: {
       account: true,
       manager: true,

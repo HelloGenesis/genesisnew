@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
+import { isSuperAdmin } from "@/lib/crm/scope";
 import { EXPENSE_CATEGORY } from "@/lib/crm/company";
 import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, projectRef, requestRef } from "@/lib/crm/catalog";
 import { type StaffArea, can, getViewer, staffAccess } from "@/lib/crm/session";
@@ -100,6 +101,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ kind: stri
   if (!spec) return NextResponse.json({ error: "Unknown export" }, { status: 404 });
   const viewer = await getViewer();
   if (staffAccess(viewer) !== "granted" || (spec.area && !can(viewer, spec.area))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  /* A whole-table export is everyone's data: super admins only (expenses: finance too). */
+  if (kind !== "expenses" && !isSuperAdmin(viewer!)) return NextResponse.json({ error: "Only super admins can export everything." }, { status: 403 });
   const body = csv(await spec.build());
   await recordAuditLog({ action: "crm.exported", entity: kind, actorId: viewer!.id });
   return new NextResponse(`﻿${body}`, {

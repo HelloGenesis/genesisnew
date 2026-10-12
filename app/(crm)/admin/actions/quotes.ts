@@ -7,7 +7,10 @@ import { z } from "zod";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
 import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
+import type { Platform } from "@/lib/generated/prisma/enums";
+import { tierFor } from "@/lib/crm/catalog";
 import { newToken, openFor, refreshTotals, sendQuote } from "@/lib/crm/quotes";
+import { quoteScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { RazorpayError, razorpay } from "@/lib/razorpay";
 
@@ -33,6 +36,11 @@ const payload = z.object({
   terms: z.string().max(12000).nullable().optional(),
   addGst: z.boolean(),
   gstPercent: z.coerce.number().int().min(0).max(28),
+  igst: z.boolean().optional(),
+  proposalPlatforms: z.array(z.string().max(40)).max(12).optional(),
+  proposalProblems: z.string().max(6000).nullable().optional(),
+  proposalObjectives: z.string().max(6000).nullable().optional(),
+  proposalInfluencers: z.string().max(6000).nullable().optional(),
   discount: rupees,
   lines: z
     .array(
@@ -94,15 +102,32 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     terms: q.terms || null,
     addGst: q.addGst,
     gstPercent: q.gstPercent,
+    igst: q.igst ?? false,
     discountPaise: paise(q.discount),
+    proposalPlatforms: q.proposalPlatforms ?? [],
+    proposalProblems: q.proposalProblems || null,
+    proposalObjectives: q.proposalObjectives || null,
+    proposalInfluencers: q.proposalInfluencers || null,
   };
   const lines = q.lines.map((l, i) => ({ position: i, kind: l.kind, productId: l.productId ?? null, division: l.division ?? null, title: l.title, subtitle: l.subtitle || null, details: l.details || null, note: l.note || null, qty: l.qty, unitPaise: paise(l.unit) }));
+  /* Influencers added by link (not from the database) join the influencer database too (Genesis, 12 Oct 2026). */
+  for (const c of q.creators) {
+    if (c.creatorId || !c.handle) continue;
+    const platform = (["INSTAGRAM", "YOUTUBE", "LINKEDIN", "X", "FACEBOOK", "MOJ", "JOSH", "SNAPCHAT", "OTHER"].includes(c.platform) ? c.platform : "INSTAGRAM") as Platform;
+    const handle = c.handle.replace(/^@/, "").toLowerCase();
+    const creator = await prisma.creator.upsert({
+      where: { platform_handle: { platform, handle } },
+      create: { name: c.name || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: c.niches, city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote." },
+      update: {},
+    });
+    c.creatorId = creator.id;
+  }
   const creators = q.creators.map((c, i) => ({ position: i, creatorId: c.creatorId ?? null, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl ?? null, followers: c.followers, avgViews: c.avgViews ?? null, niches: c.niches, city: c.city ?? null, deliverables: c.deliverables || null, feePaise: c.fee === null || c.fee === undefined ? null : paise(c.fee) }));
 
   let id = q.id;
   if (id) {
-    const before = await prisma.quote.findUnique({ where: { id } });
-    if (!before) return fail("That quote no longer exists.");
+    const before = await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) } });
+    if (!before) return fail("That quote isn't yours, or no longer exists.");
     if (before.status === "PAID") return fail("This quote is paid; duplicate it to change it.");
     await prisma.$transaction([
       prisma.quoteLine.deleteMany({ where: { quoteId: id } }),
@@ -124,11 +149,12 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
   const viewer = await requireStaff("sales");
   const id = text(form, "id");
   if (!id) return fail("Save the quote first.");
-  const q = await getPrisma().quote.findUnique({ where: { id } });
-  if (!q) return fail("That quote no longer exists.");
+  const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) } });
+  if (!q) return fail("That quote isn't yours, or no longer exists.");
   if (q.status === "PAID") return fail("Already paid.");
   try {
-    const { paymentUrl } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on");
+    const view = (["both", "proposal", "pricing"] as const).find((v) => v === text(form, "view")) ?? "both";
+    const { paymentUrl } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && view !== "proposal", view);
     await recordAuditLog({ action: "quote.sent", entity: "quote", entityId: id, actorId: viewer.id });
     revalidatePath("/admin", "layout");
     return ok(`Sent to ${q.contactEmail}${paymentUrl ? " with a payment link" : ""}.`);
@@ -145,7 +171,7 @@ export async function setQuoteStatus(form: FormData) {
   const status = text(form, "status");
   if (!id || !status) return;
   const prisma = getPrisma();
-  const q = await prisma.quote.findUnique({ where: { id } });
+  const q = await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) } });
   if (!q || q.status === "PAID") return;
   if (status === "ACCEPTED") {
     await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED", acceptedAt: new Date(), acceptedBy: `Recorded by ${viewer.name ?? viewer.email}` } });
@@ -174,13 +200,14 @@ export async function duplicateQuote(form: FormData) {
   const viewer = await requireStaff("sales");
   const id = text(form, "id");
   if (!id) return;
-  const q = await getPrisma().quote.findUnique({ where: { id }, include: { lines: true, creators: true } });
+  const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, include: { lines: true, creators: true } });
   if (!q) return;
   const copy = await getPrisma().quote.create({
     data: {
       kind: q.kind, title: q.title, division: q.division, accountId: q.accountId, leadId: q.leadId, requestId: q.requestId,
       contactName: q.contactName, contactEmail: q.contactEmail, contactPhone: q.contactPhone, company: q.company,
-      expiresAt: new Date(Date.now() + 14 * 864e5), notes: q.notes, terms: q.terms, addGst: q.addGst, gstPercent: q.gstPercent, discountPaise: q.discountPaise,
+      expiresAt: new Date(Date.now() + 14 * 864e5), notes: q.notes, terms: q.terms, addGst: q.addGst, gstPercent: q.gstPercent, igst: q.igst, discountPaise: q.discountPaise,
+      proposalPlatforms: q.proposalPlatforms, proposalProblems: q.proposalProblems, proposalObjectives: q.proposalObjectives, proposalInfluencers: q.proposalInfluencers,
       token: newToken(), createdById: viewer.id,
       lines: { create: q.lines.map((l) => omitIds(l)) },
       creators: { create: q.creators.map((c) => omitIds(c)) },
@@ -194,7 +221,7 @@ export async function deleteQuote(form: FormData) {
   const viewer = await requireStaff("sales");
   const id = text(form, "id");
   if (!id) return;
-  const q = await getPrisma().quote.findUnique({ where: { id } });
+  const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) } });
   if (!q || q.status === "PAID" || q.status === "ACCEPTED") return;
   if (q.razorpayLinkId) await razorpay(`payment_links/${q.razorpayLinkId}/cancel`, {}).catch(() => undefined);
   await getPrisma().order.deleteMany({ where: { quoteId: id, status: "PENDING" } });

@@ -2,9 +2,10 @@ import { ActionForm } from "@/components/crm/action-form";
 import { Card, Field, PageHead, Select, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { STAFF_ROLE, date } from "@/lib/crm/catalog";
+import { AREAS, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
-import { inviteStaff, resetTwoFactor, revokeStaff, setStaffProfile } from "../actions/finance";
+import { inviteStaff, resetTwoFactor, revokeStaff, setGrants, setStaffProfile } from "../actions/finance";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Staff & roles" };
@@ -15,7 +16,7 @@ export const metadata = { title: "Staff & roles" };
  * signs in VERIFIED (as genesis-coworking's staff invites).
  */
 export default async function StaffPage() {
-  await requireStaff("staff");
+  const viewer = await requireStaff("staff");
   const prisma = getPrisma();
   const [roles, invites] = await Promise.all([
     prisma.staffRole.findMany({ include: { user: { include: { staffTotp: true } } }, orderBy: { createdAt: "asc" } }),
@@ -40,7 +41,11 @@ export default async function StaffPage() {
           </div>
         </ActionForm>
       </Card>
-      <Table head={["Person", "Roles", "Two-factor app", "Last sign-in"]}>
+      <p className="text-[0.875rem] text-ash">
+        <b className="text-bone">Owner = super admin</b>: sees everything, everyone&apos;s. Everyone else sees only their own leads, quotes, invoices, clients, projects and Gmail &amp; Drive finds,
+        plus anything ticked under &ldquo;Can also see&rdquo;.
+      </p>
+      <Table head={["Person", "Roles", "Can also see", "Two-factor app", "Last sign-in"]}>
         {people.map((u) => (
           <tr key={u.id}>
             <td className="text-bone">
@@ -68,6 +73,23 @@ export default async function StaffPage() {
               </span>
             </td>
             <td>
+              {roles.some((r) => r.userId === u.id && r.role === "OWNER") ? (
+                <span className="text-[0.8125rem] text-ash">Everything (super admin)</span>
+              ) : isSuperAdmin(viewer) ? (
+                <details>
+                  <summary className="cursor-pointer text-[0.8125rem] text-ash">{u.grants.length ? u.grants.map((g) => AREAS[g] ?? g).join(", ") : "Only their own"}</summary>
+                  <ActionForm action={setGrants} submit="Save" className="mt-2 min-w-[14rem]">
+                    <input type="hidden" name="userId" value={u.id} />
+                    {Object.entries(AREAS).map(([k, label]) => (
+                      <label key={k} className="flex items-center gap-2 text-[0.8125rem] text-ash"><input type="checkbox" name="grants" value={k} defaultChecked={u.grants.includes(k)} /> {label}</label>
+                    ))}
+                  </ActionForm>
+                </details>
+              ) : (
+                <span className="text-[0.8125rem] text-ash">{u.grants.length ? u.grants.map((g) => AREAS[g] ?? g).join(", ") : "Only their own"}</span>
+              )}
+            </td>
+            <td>
               {u.staffTotp?.confirmedAt ? `Set up ${date(u.staffTotp.confirmedAt)}` : "Not yet"}
               {u.staffTotp && (
                 <form action={resetTwoFactor} className="mt-1">
@@ -90,6 +112,7 @@ export default async function StaffPage() {
                 <button aria-label="Revoke invite" className="text-faint hover:text-[#dc2626]">×</button>
               </form>
             </td>
+            <td>—</td>
             <td>—</td>
             <td>—</td>
           </tr>

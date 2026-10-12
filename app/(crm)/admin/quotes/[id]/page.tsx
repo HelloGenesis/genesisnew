@@ -3,12 +3,13 @@ import { notFound } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
 import { QuoteBuilder, type BuilderQuote } from "@/components/crm/quote-builder";
-import { Card, Field, Notice, PageHead, Status } from "@/components/crm/ui";
+import { Card, Field, Notice, PageHead, Select, Status } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { QUOTE_STATUS, dateTime, money, projectRef } from "@/lib/crm/catalog";
 import { appUrl } from "@/lib/crm/notify";
 import { builderData } from "@/lib/crm/quote-data";
 import { quoteRef } from "@/lib/crm/quote-templates";
+import { quoteScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
@@ -17,11 +18,11 @@ import { deleteQuote, duplicateQuote, sendQuoteAction, setQuoteStatus } from "..
 export const dynamic = "force-dynamic";
 
 export default async function QuotePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> }) {
-  await requireStaff("sales");
+  const viewer = await requireStaff("sales");
   const { id } = await params;
   const { saved } = await searchParams;
-  const q = await getPrisma().quote.findUnique({
-    where: { id },
+  const q = await getPrisma().quote.findFirst({
+    where: { id, ...quoteScope(viewer) },
     include: { lines: { orderBy: { position: "asc" } }, creators: { orderBy: { position: "asc" } }, order: true, projects: true, lead: true, account: true, request: true },
   });
   if (!q) notFound();
@@ -42,6 +43,11 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     terms: q.terms,
     addGst: q.addGst,
     gstPercent: q.gstPercent,
+    igst: q.igst,
+    proposalPlatforms: q.proposalPlatforms,
+    proposalProblems: q.proposalProblems,
+    proposalObjectives: q.proposalObjectives,
+    proposalInfluencers: q.proposalInfluencers,
     discount: q.discountPaise / 100,
     lines: q.lines.map((l) => ({ kind: l.kind, productId: l.productId, division: l.division, title: l.title, subtitle: l.subtitle, details: l.details, note: l.note, qty: l.qty, unit: l.unitPaise / 100 })),
     creators: q.creators.map((c) => ({ creatorId: c.creatorId, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: c.deliverables, fee: c.feePaise === null ? null : c.feePaise / 100 })),
@@ -66,13 +72,16 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         <Card title={q.status === "DRAFT" ? "Send to the client" : "Send again"}>
           <ActionForm action={sendQuoteAction} submit={q.status === "DRAFT" ? "Send quotation email" : "Re-send with the latest changes"} confirm={`Email this ${plan ? "plan" : "quote"} to ${q.contactEmail}?`}>
             <input type="hidden" name="id" value={q.id} />
+            <Field label="Send" hint="Proposal = platforms, problems, objectives and influencers. Pricing = the lines, totals and terms.">
+              <Select name="view" required defaultValue="both" options={[["both", "Proposal + pricing"], ["proposal", "Proposal only (no prices)"], ["pricing", "Pricing only"]]} />
+            </Field>
             <Field label={`Message to ${q.contactName}`} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
             <label className="flex items-center gap-2 text-[0.875rem] text-ash">
               <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys())} disabled={!razorpayKeys()} /> Include a Razorpay payment link for {money(q.totalPaise)}
               {!razorpayKeys() && <span className="text-faint">(Razorpay keys not set)</span>}
             </label>
           </ActionForm>
-          <p className="mt-3 break-all text-[0.8125rem] text-faint">Client link: {clientLink}</p>
+          <p className="mt-3 break-all text-[0.8125rem] text-faint">Client link: {clientLink} · <a className="crm-link" href={`${clientLink}?view=proposal`} target="_blank" rel="noreferrer">proposal only</a> · <a className="crm-link" href={`${clientLink}?view=pricing`} target="_blank" rel="noreferrer">pricing only</a></p>
           {q.paymentUrl && <p className="break-all text-[0.8125rem] text-faint">Payment link: {q.paymentUrl}</p>}
         </Card>
         <Card title="History">

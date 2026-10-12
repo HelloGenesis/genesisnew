@@ -19,6 +19,7 @@ import { CAMPAIGN_CREATOR_STATUS, DIVISIONS, PROJECT_STATUS, REQUEST_STATUS, mon
 import { type ActionState, day, fail, links, ok, text } from "@/lib/crm/form-state";
 import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
 import { queueSheet } from "@/lib/crm/sheets";
+import { isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { openProject } from "@/lib/crm/projects";
 import { stagesOf } from "@/lib/crm/stages";
@@ -261,6 +262,7 @@ export async function createTask(_: ActionState, form: FormData): Promise<Action
     data: {
       title,
       details: text(form, "details"),
+      links: links(form, "links"),
       priority: (oneOf(text(form, "priority"), ["LOW", "NORMAL", "HIGH"] as const) ?? "NORMAL") as Priority,
       dueDate: day(form, "dueDate"),
       ownerId: text(form, "ownerId") ?? viewer.id,
@@ -283,12 +285,15 @@ export async function updateTask(_: ActionState, form: FormData): Promise<Action
   const prisma = getPrisma();
   const before = await prisma.task.findUnique({ where: { id } });
   if (!before) return fail("That task no longer exists.");
+  /* Your own tasks, or ones you gave out; super admins any. */
+  if (!isSuperAdmin(viewer) && before.ownerId !== viewer.id && before.createdById !== viewer.id) return fail("That task isn't yours.");
   const ownerId = text(form, "ownerId");
   await prisma.task.update({
     where: { id },
     data: {
       title: text(form, "title", 200) ?? before.title,
       details: text(form, "details"),
+      ...(form.has("links") ? { links: links(form, "links") } : {}),
       ownerId,
       dueDate: day(form, "dueDate"),
       priority: (oneOf(text(form, "priority"), ["LOW", "NORMAL", "HIGH"] as const) ?? before.priority) as Priority,

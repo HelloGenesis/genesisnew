@@ -13,12 +13,13 @@ import { disconnectGoogle } from "@/lib/crm/google";
 import { syncPerson } from "@/lib/crm/ingest";
 import { importRazorpayHistory } from "@/lib/crm/razorpay-import";
 import { IMPORT_KINDS, planImport, runImport, sheetInfo, spreadsheetIdFrom } from "@/lib/crm/sheet-import";
+import { sees } from "@/lib/crm/scope";
 import { requireStaff, type Viewer } from "@/lib/crm/session";
 
 /** The Inbox: what Gmail and Drive turned up, and the one-click moves into the CRM. */
 
 const done = () => revalidatePath("/admin", "layout");
-const seesAll = (v: Viewer) => v.roles.some((r) => r === "OWNER" || r === "ADMIN");
+const seesAll = (v: Viewer) => sees(v, "inbox");
 const rupees = (n?: number) => (typeof n === "number" && Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null);
 
 /** An item this person may act on: their own, or anyone's for owners and admins. */

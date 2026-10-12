@@ -8,6 +8,7 @@ import type { SubscriptionStatus } from "@/lib/generated/prisma/enums";
 import { products } from "@/lib/products";
 
 import { divisionOf, money, quotaFrom } from "./catalog";
+import { markInvoicePaid } from "./invoices";
 import { accountEmails, appUrl, queueEmail, queueStaffEmail } from "./notify";
 import { openProject } from "./projects";
 import { openFor } from "./quotes";
@@ -175,6 +176,11 @@ export async function applyRazorpayEvent(event: RazorpayEvent, deliveryId: strin
     if (event.event === "payment_link.paid" && link) {
       const order = await prisma.order.findFirst({ where: { OR: [{ razorpayLinkId: str(link.id) ?? "-" }, { reference: str(link.reference_id) ?? "-" }] } });
       if (order && (await claimPaid(order.id, payment))) await fulfil(order.id, payment);
+      /* An invoice's pay link (lib/crm/invoices). */
+      if (!order) {
+        const invoice = await prisma.invoice.findFirst({ where: { razorpayLinkId: str(link.id) ?? "-" }, select: { id: true } });
+        if (invoice) await markInvoicePaid(invoice.id, str(payment?.id), str(payment?.method));
+      }
     } else if (sub && SUBSCRIPTION_EVENTS[event.event]) {
       await applySubscription(event.event, sub, payment, when(event.created_at) ?? new Date());
     }

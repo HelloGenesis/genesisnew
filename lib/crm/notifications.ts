@@ -27,8 +27,8 @@ export async function notify(userIds: (string | null | undefined)[], input: { ti
   }
 }
 
-/** Owners and admins: they see everything that comes in. */
+/** Super admins (the Owner role): they see everything that comes in. */
 export async function adminIds(): Promise<string[]> {
-  const rows = await getPrisma().staffRole.findMany({ where: { role: { in: ["OWNER", "ADMIN"] } }, select: { userId: true } });
+  const rows = await getPrisma().staffRole.findMany({ where: { role: "OWNER" }, select: { userId: true } });
   return [...new Set(rows.map((r) => r.userId))];
 }

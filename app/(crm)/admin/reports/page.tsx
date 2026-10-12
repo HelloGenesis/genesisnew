@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { Card, Empty, PageHead, Stats, Table } from "@/components/crm/ui";
@@ -6,6 +7,7 @@ import { DIVISION_LABEL, DIVISIONS, LEAD_STATUS, PIPELINE, date, money, projectR
 import { FOLDERS } from "@/lib/crm/files";
 import { compact, metrics, pct } from "@/lib/crm/report";
 import { daysFromNow } from "@/lib/crm/options";
+import { sees } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { stagesOf } from "@/lib/crm/stages";
 
@@ -25,7 +27,9 @@ const month = (d: Date) => new Intl.DateTimeFormat("en-IN", { month: "short", ye
  * and who on the team is carrying what.
  */
 export default async function ReportsPage() {
-  await requireStaff();
+  const viewer = await requireStaff();
+  /* Reports show everyone's numbers: super admins, or whoever they open it to (lib/crm/scope). */
+  if (!sees(viewer, "reports")) redirect("/admin/forbidden");
   const prisma = getPrisma();
   const since = daysFromNow(-180);
   const [posts, campaigns, fileGroups, rawByProject, active, deliverables, payments, leads, quotes, tasks, vendorPaid] = await Promise.all([

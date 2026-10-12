@@ -13,7 +13,8 @@ import { type ActionState, day, fail, isEmail, ok, text } from "@/lib/crm/form-s
 import { appUrl, queueEmail } from "@/lib/crm/notify";
 import { queueSheet } from "@/lib/crm/sheets";
 import { winLead } from "@/lib/crm/projects";
-import { requireStaff } from "@/lib/crm/session";
+import { leadScope } from "@/lib/crm/scope";
+import { requireStaff, type Viewer } from "@/lib/crm/session";
 import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 
 /** Server actions for leads, accounts and portal access. Every one re-checks the caller's role. */
@@ -23,6 +24,9 @@ const oneOf = <T extends string>(value: string | null, list: readonly T[]): T | 
 
 const LEAD_STATUSES = Object.keys(LEAD_STATUS) as LeadStatus[];
 const LEAD_SOURCES = Object.keys(LEAD_SOURCE) as LeadSource[];
+
+/** A lead this person may change: their own, or any for a super admin (lib/crm/scope). */
+const mayTouch = async (viewer: Viewer, id: string) => Boolean(await getPrisma().lead.findFirst({ where: { id, ...leadScope(viewer) }, select: { id: true } }));
 
 // --- Leads ------------------------------------------------------------------------
 
@@ -59,6 +63,7 @@ export async function updateLead(_: ActionState, form: FormData): Promise<Action
   const viewer = await requireStaff("sales");
   const id = text(form, "id");
   if (!id) return fail("Missing lead.");
+  if (!(await mayTouch(viewer, id))) return fail("That lead isn't yours.");
   const prisma = getPrisma();
   const before = await prisma.lead.findUnique({ where: { id } });
   if (!before) return fail("That lead no longer exists.");
@@ -97,7 +102,7 @@ export async function moveLead(form: FormData) {
   const viewer = await requireStaff("sales");
   const id = text(form, "id");
   const status = oneOf(text(form, "status"), LEAD_STATUSES);
-  if (!id || !status) return;
+  if (!id || !status || !(await mayTouch(viewer, id))) return;
   const prisma = getPrisma();
   const before = await prisma.lead.findUnique({ where: { id } });
   if (!before || before.status === status) return;
@@ -128,7 +133,7 @@ export async function logActivity(_: ActionState, form: FormData): Promise<Actio
 export async function deleteLead(form: FormData) {
   const viewer = await requireStaff("sales");
   const id = text(form, "id");
-  if (!id) return;
+  if (!id || !(await mayTouch(viewer, id))) return;
   await getPrisma().lead.delete({ where: { id } }).catch(() => undefined);
   await queueSheet("leads", id, true);
   await recordAuditLog({ action: "lead.deleted", entity: "lead", entityId: id, actorId: viewer.id });
@@ -140,7 +145,7 @@ export async function deleteLead(form: FormData) {
 export async function convertLead(form: FormData) {
   const viewer = await requireStaff("sales");
   const id = text(form, "id");
-  if (!id) return;
+  if (!id || !(await mayTouch(viewer, id))) return;
   const result = await winLead(id, viewer.id, "Lead won and converted.");
   if (!result) return;
   await getPrisma().activity.create({ data: { leadId: id, kind: "STATUS", actorId: viewer.id, body: "Won: client account and project opened." } });
@@ -320,4 +325,45 @@ export async function sendPaymentLink(_: ActionState, form: FormData): Promise<A
     console.error("[crm] payment link failed", error);
     return fail("Razorpay couldn't make the link. Check the amount and try again.");
   }
+}
+
+/**
+ * A CALL OR A FOLLOW-UP, PUT ON THE CALENDAR (Genesis, 12 Oct 2026: "book a
+ * call / follow up; overall process on the calendar"). It becomes a task with
+ * its date, the lead's next follow-up and a line in its timeline; the browser
+ * then opens Google Calendar with the event filled in (the client as a guest),
+ * one click to save.
+ */
+export async function planLeadEvent(form: FormData): Promise<{ ok: boolean; calendarUrl?: string; message?: string }> {
+  const viewer = await requireStaff("sales");
+  const id = text(form, "id");
+  const kind = text(form, "kind") === "CALL" ? "CALL" : "FOLLOW_UP";
+  const when = text(form, "when"); // "2026-10-14T15:30" in India time
+  if (!id || !when || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(when)) return { ok: false, message: "Pick a date and time." };
+  if (!(await mayTouch(viewer, id))) return { ok: false, message: "That lead isn't yours." };
+  const prisma = getPrisma();
+  const lead = await prisma.lead.findUniqueOrThrow({ where: { id } });
+  const who = lead.company ?? lead.name;
+  const title = kind === "CALL" ? `Call with ${who}` : `Follow up with ${who}`;
+  const day = new Date(`${when.slice(0, 10)}T00:00:00Z`);
+  await prisma.$transaction([
+    prisma.task.create({ data: { title, details: `${when.replace("T", " ")} IST`, priority: "NORMAL", dueDate: day, ownerId: viewer.id, leadId: id, createdById: viewer.id, links: [appUrl(`/admin/leads/${id}`)] } }),
+    prisma.lead.update({ where: { id }, data: { nextFollowUp: day } }),
+    prisma.activity.create({ data: { leadId: id, kind: kind === "CALL" ? "MEETING" : "NOTE", actorId: viewer.id, body: `${kind === "CALL" ? "Call booked" : "Follow-up planned"} for ${when.replace("T", " ")} IST.` } }),
+  ]);
+  /* Google Calendar's own "new event" page, filled in: India time, 30 minutes, the client invited. */
+  const start = when.replace(/[-:]/g, "") + "00";
+  const endDate = new Date(`${when}:00+05:30`);
+  endDate.setMinutes(endDate.getMinutes() + 30);
+  const end = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(endDate).replace(/[-: ]/g, (c) => (c === " " ? "T" : ""));
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `${title} · Genesis Media`,
+    dates: `${start}/${end}`,
+    ctz: "Asia/Kolkata",
+    details: [lead.interest ? `About: ${lead.interest}` : "", `CRM: ${appUrl(`/admin/leads/${id}`)}`].filter(Boolean).join("\n"),
+    ...(lead.email ? { add: lead.email } : {}),
+  });
+  done();
+  return { ok: true, calendarUrl: `https://calendar.google.com/calendar/render?${params}` };
 }

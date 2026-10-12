@@ -8,6 +8,7 @@ import { aiConfigured, type Reading, readItem } from "./ai";
 import { todayIst } from "./catalog";
 import { google, GoogleAuthError, googleConfigured, googleText } from "./google";
 import { notify } from "./notifications";
+import { scanInfluencerSheets } from "./sheet-import";
 
 /**
  * FROM GMAIL AND DRIVE INTO THE CRM (Genesis, 12 Oct 2026: "integrate our
@@ -361,6 +362,8 @@ export async function syncGoogle() {
     /* Inside the job's five minutes: nobody new is started after three. */
     if (Date.now() - started > 180_000) break;
     report[conn.email] = await syncPerson(conn.userId);
+    /* Their Drive's influencer sheets, once a day (lib/crm/sheet-import). */
+    if (Date.now() - started < 200_000) report[`${conn.email} influencers`] = await scanInfluencerSheets(conn.userId).catch((error: Error) => ({ error: error.message.slice(0, 200) }));
   }
   return report;
 }
