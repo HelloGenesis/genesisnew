@@ -1,4 +1,4 @@
-import { Download } from "lucide-react";
+import { Download, ExternalLink, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 
 /** The CRM's building blocks (server components). Styles: app/(crm)/crm.css. */
@@ -16,9 +16,20 @@ export function PageHead({ kicker, title, sub, exportKind, children }: { kicker:
       <div className="flex flex-wrap items-center gap-2">
         {children}
         {exportKind && (
-          <a href={`/admin/export/${exportKind}`} className="crm-btn crm-btn-secondary crm-btn-sm" download>
-            Export CSV <Download className="size-4" aria-hidden />
-          </a>
+          <>
+            {/* The live Google Sheet for this list, and an Excel download (Genesis, 12 Oct 2026). */}
+            {exportKind !== "payouts" && (
+              <a href={`/admin/export/${exportKind}?open=sheet`} target="_blank" rel="noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">
+                Open in Google Sheets <ExternalLink className="size-4" aria-hidden />
+              </a>
+            )}
+            <a href={`/admin/export/${exportKind}?format=xlsx`} className="crm-btn crm-btn-secondary crm-btn-sm" download>
+              Export Excel <FileSpreadsheet className="size-4" aria-hidden />
+            </a>
+            <a href={`/admin/export/${exportKind}`} className="crm-btn crm-btn-secondary crm-btn-sm" download>
+              Export CSV <Download className="size-4" aria-hidden />
+            </a>
+          </>
         )}
       </div>
     </header>

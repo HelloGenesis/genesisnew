@@ -1,7 +1,10 @@
 import "server-only";
 
 import { getPrisma } from "@/lib/db";
+import { parseServiceAccount } from "@/lib/google-drive";
 import { column, ensureTab, getSheets, isSheetsConfigured } from "@/lib/google-sheets";
+
+import { companyConnection, companyToken } from "./google";
 
 import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, SUBSCRIPTION_STATUS, projectRef, requestRef } from "./catalog";
 import { stageName } from "@/lib/crm/stages";
@@ -20,7 +23,7 @@ import { stageName } from "@/lib/crm/stages";
  * separate one. Tabs are created on first use.
  */
 
-export type SheetTabKey = "leads" | "accounts" | "orders" | "payments" | "projects" | "requests" | "creators";
+export type SheetTabKey = "leads" | "accounts" | "orders" | "payments" | "projects" | "requests" | "creators" | "invoices" | "quotes" | "briefs" | "expenses";
 
 const TITLES: Record<SheetTabKey, string> = {
   leads: "CRM Leads",
@@ -30,7 +33,102 @@ const TITLES: Record<SheetTabKey, string> = {
   projects: "CRM Projects",
   requests: "CRM Requests",
   creators: "CRM Influencers",
+  invoices: "CRM Invoices",
+  quotes: "CRM Quotes",
+  briefs: "CRM Briefs",
+  expenses: "CRM Expenses",
 };
+
+/**
+ * ONE GOOGLE SHEET PER THING (Genesis, 12 Oct 2026: "dedicated Google Sheets
+ * linked to each thing, like leads, influencers and invoices, updated in real
+ * time"). Each is its own spreadsheet in the company Drive, "Genesis CRM ·
+ * Leads" and so on, made the first time it's needed and shared with the
+ * website's service account (which writes the rows) and the super admins
+ * (everyone's data is in it). Rows follow the CRM within a minute. Until the
+ * company account has connected Google, they stay tabs in the forms sheet.
+ */
+export const SHEET_NAMES: Record<SheetTabKey, string> = {
+  leads: "Leads",
+  accounts: "Clients",
+  orders: "Orders",
+  payments: "Payments",
+  projects: "Projects",
+  requests: "Requests",
+  creators: "Influencers",
+  invoices: "Invoices",
+  quotes: "Quotes",
+  briefs: "Briefs",
+  expenses: "Expenses",
+};
+
+/** The dedicated spreadsheet for a kind, made and shared on first use. Null until the company account can create files. */
+export async function dedicatedSheet(tab: SheetTabKey): Promise<string | null> {
+  const prisma = getPrisma();
+  const key = `sheet:${tab}`;
+  const known = await prisma.appSetting.findUnique({ where: { key } });
+  if (known) return known.value;
+  if (!(await companyConnection())) return null;
+  const token = await companyToken();
+  const created = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ properties: { title: `Genesis CRM · ${SHEET_NAMES[tab]}` }, sheets: [{ properties: { title: SHEET_NAMES[tab], gridProperties: { frozenRowCount: 1 } } }] }),
+  }).then((r) => r.json() as Promise<{ spreadsheetId?: string; error?: { message?: string } }>);
+  if (!created.spreadsheetId) throw new Error(`Couldn't create the ${SHEET_NAMES[tab]} sheet: ${created.error?.message ?? "unknown"}`);
+  await prisma.appSetting.create({ data: { key, value: created.spreadsheetId } });
+  await shareDedicated(tab, created.spreadsheetId);
+  await backfill(tab);
+  return created.spreadsheetId;
+}
+
+/** The service account writes; super admins (Owners) can open and edit. Re-run when someone becomes a super admin. */
+async function shareDedicated(tab: SheetTabKey, id: string) {
+  const prisma = getPrisma();
+  const sharedKey = `sheet-shared:${tab}`;
+  const already = new Set((await prisma.appSetting.findUnique({ where: { key: sharedKey } }))?.value.split(",") ?? []);
+  const owners = await prisma.staffRole.findMany({ where: { role: "OWNER" }, select: { user: { select: { email: true } } } });
+  const robot = parseServiceAccount(process.env.GOOGLE_SERVICE_ACCOUNT_JSON ?? "").client_email;
+  const wanted = [robot, ...owners.map((o) => o.user.email).filter((e): e is string => Boolean(e))].map((e) => e.toLowerCase());
+  const missing = wanted.filter((e) => !already.has(e));
+  if (missing.length === 0) return;
+  const token = await companyToken();
+  for (const email of missing) {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}/permissions?sendNotificationEmail=false&supportsAllDrives=true`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "user", role: "writer", emailAddress: email }),
+    });
+    if (r.ok) already.add(email);
+  }
+  const value = [...already].join(",");
+  await prisma.appSetting.upsert({ where: { key: sharedKey }, create: { key: sharedKey, value }, update: { value } });
+}
+
+/** Everything of that kind, queued for its new sheet. */
+async function backfill(tab: SheetTabKey) {
+  const prisma = getPrisma();
+  const pick = { select: { id: true }, take: 20000 } as const;
+  const ids: { id: string }[] =
+    tab === "leads" ? await prisma.lead.findMany(pick)
+    : tab === "accounts" ? await prisma.account.findMany(pick)
+    : tab === "orders" ? await prisma.order.findMany(pick)
+    : tab === "payments" ? await prisma.payment.findMany(pick)
+    : tab === "projects" ? await prisma.project.findMany(pick)
+    : tab === "requests" ? await prisma.request.findMany(pick)
+    : tab === "creators" ? await prisma.creator.findMany(pick)
+    : tab === "invoices" ? await prisma.invoice.findMany(pick)
+    : tab === "quotes" ? await prisma.quote.findMany(pick)
+    : tab === "briefs" ? await prisma.brief.findMany(pick)
+    : await prisma.expense.findMany(pick);
+  for (const { id } of ids) await queueSheet(tab, id);
+}
+
+/** The sheet's link, for the "Open in Google Sheets" buttons. */
+export async function sheetUrl(tab: SheetTabKey) {
+  const id = (await getPrisma().appSetting.findUnique({ where: { key: `sheet:${tab}` } }))?.value;
+  return id ? `https://docs.google.com/spreadsheets/d/${id}/edit` : null;
+}
 
 /*
   Development never writes to the live forms spreadsheet: locally the mirror
@@ -114,6 +212,34 @@ const BUILDERS: Record<SheetTabKey, (keys: string[]) => Promise<Map<string, Cell
       "Managed by": c.managedBy ?? "", "Do not work with": c.blacklisted ? "Yes" : "", Notes: c.notes ?? "", Updated: ist(c.updatedAt),
     }]));
   },
+  async invoices(keys) {
+    const rows = await getPrisma().invoice.findMany({ where: { id: { in: keys } } });
+    return new Map(rows.map((i) => [i.id, {
+      Number: i.number, Date: day(i.issueDate), Due: day(i.dueDate), Status: i.status, "Billed to": i.billToName, GSTIN: i.billToGstin ?? "", Email: i.billToEmail ?? "",
+      "Place of supply": i.placeOfSupply, "Taxable (₹)": rs(i.subtotalPaise - i.discountPaise), "CGST (₹)": rs(i.cgstPaise), "SGST (₹)": rs(i.sgstPaise), "IGST (₹)": rs(i.igstPaise),
+      "Total (₹)": rs(i.totalPaise), Paid: ist(i.paidAt), Link: i.paymentUrl ?? "",
+    }]));
+  },
+  async quotes(keys) {
+    const rows = await getPrisma().quote.findMany({ where: { id: { in: keys } } });
+    return new Map(rows.map((q) => [q.id, {
+      Number: `#${String(q.number).padStart(7, "0")}`, Kind: q.kind === "INFLUENCER_PLAN" ? "Influencer plan" : "Quote", Title: q.title, Client: q.company ?? q.contactName,
+      Email: q.contactEmail, Status: q.status, "Total (₹)": rs(q.totalPaise), Issued: ist(q.issuedAt), Sent: ist(q.sentAt), Accepted: ist(q.acceptedAt), Expires: day(q.expiresAt),
+    }]));
+  },
+  async briefs(keys) {
+    const rows = await getPrisma().brief.findMany({ where: { id: { in: keys } } });
+    return new Map(rows.map((b) => [b.id, {
+      Ref: `B-${String(b.number).padStart(4, "0")}`, Title: b.title, Division: b.division ? DIVISION_LABEL[b.division] : "", Services: b.services.join(", "), Platforms: b.platforms.join(", "),
+      "Budget (₹)": rs(b.budgetPaise), "Needed by": day(b.deadline), Objective: b.objective ?? "", Deliverables: b.deliverables ?? "", Status: b.status, Added: ist(b.createdAt),
+    }]));
+  },
+  async expenses(keys) {
+    const rows = await getPrisma().expense.findMany({ where: { id: { in: keys } } });
+    return new Map(rows.map((e) => [e.id, {
+      Date: day(e.date), Category: e.category, What: e.description, "Paid to": e.payee ?? "", "Paid via": e.paidVia ?? "", "Amount (₹)": rs(e.amountPaise), "GST (₹)": rs(e.gstPaise), Reference: e.reference ?? "",
+    }]));
+  },
   async requests(keys) {
     const rows = await getPrisma().request.findMany({ where: { id: { in: keys } }, include: { account: true, assignee: true } });
     return new Map(rows.map((r) => [r.id, {
@@ -125,21 +251,27 @@ const BUILDERS: Record<SheetTabKey, (keys: string[]) => Promise<Map<string, Cell
 
 /** Writes up to `limit` queued rows. Safe to overlap; rows changed mid-send stay queued. */
 export async function syncSheets(limit = 200) {
-  if (!crmSheetsConfigured()) return { skipped: "Google Sheets not configured" };
+  if (!isSheetsConfigured()) return { skipped: "Google Sheets not configured" };
   const prisma = getPrisma();
   const claimedAt = new Date();
   const pending = await prisma.sheetOutbox.findMany({ where: { sentAt: null, attempts: { lt: 8 } }, orderBy: { changedAt: "asc" }, take: limit });
   if (pending.length === 0) return { sent: 0 };
   await prisma.sheetOutbox.updateMany({ where: { id: { in: pending.map((p) => p.id) } }, data: { attempts: { increment: 1 } } });
 
-  const id = spreadsheetId();
   const sheets = getSheets();
   let sent = 0;
   for (const tab of Object.keys(BUILDERS) as SheetTabKey[]) {
     const items = pending.filter((p) => p.tab === tab);
     if (!items.length) continue;
-    const title = TITLES[tab];
     try {
+      /* Its own spreadsheet when the company Drive can make one; a tab in the forms sheet until then. */
+      const dedicated = await dedicatedSheet(tab).catch((error: Error) => {
+        console.error("[crm] dedicated sheet", tab, error.message);
+        return null;
+      });
+      const id = dedicated ?? spreadsheetId();
+      if (!id) continue;
+      const title = dedicated ? SHEET_NAMES[tab] : TITLES[tab];
       const live = await BUILDERS[tab](items.filter((i) => !i.deleted).map((i) => i.key));
       await ensureTab(id, title);
       const existing = await sheets.spreadsheets.values.get({ spreadsheetId: id, range: `'${title}'!A:A` });
@@ -168,15 +300,34 @@ export async function syncSheets(limit = 200) {
   return { sent };
 }
 
-/** Every creator changed since the last run goes to the "CRM Influencers" tab. Cheap to call each minute. */
+/**
+ * Influencers, invoices, quotes, briefs and expenses changed since the last
+ * run are queued for their sheets (the other kinds are queued where they
+ * change). Cheap to call each minute; also keeps the super admins shared in.
+ */
 export async function mirrorCreators() {
-  if (!crmSheetsConfigured()) return { skipped: "Google Sheets not configured" };
+  if (!isSheetsConfigured()) return { skipped: "Google Sheets not configured" };
   const prisma = getPrisma();
   const key = "creators-mirror-at";
   const since = await prisma.appSetting.findUnique({ where: { key } }).then((r) => (r ? new Date(r.value) : new Date(0)));
   const now = new Date();
-  const changed = await prisma.creator.findMany({ where: { updatedAt: { gt: since } }, select: { id: true }, take: 2000 });
-  for (const c of changed) await queueSheet("creators", c.id);
+  const changed = { updatedAt: { gt: since } };
+  const pick = { select: { id: true }, take: 2000 } as const;
+  const [creators, invoices, quotes, briefs, expenses] = await Promise.all([
+    prisma.creator.findMany({ where: changed, ...pick }),
+    prisma.invoice.findMany({ where: changed, ...pick }),
+    prisma.quote.findMany({ where: changed, ...pick }),
+    prisma.brief.findMany({ where: changed, ...pick }),
+    prisma.expense.findMany({ where: { createdAt: { gt: since } }, ...pick }),
+  ]);
+  for (const c of creators) await queueSheet("creators", c.id);
+  for (const c of invoices) await queueSheet("invoices", c.id);
+  for (const c of quotes) await queueSheet("quotes", c.id);
+  for (const c of briefs) await queueSheet("briefs", c.id);
+  for (const c of expenses) await queueSheet("expenses", c.id);
   await prisma.appSetting.upsert({ where: { key }, create: { key, value: now.toISOString() }, update: { value: now.toISOString() } });
-  return { queued: changed.length };
+  /* New super admins get the sheets too (a database read; Google only when someone's missing). */
+  const made = await prisma.appSetting.findMany({ where: { key: { startsWith: "sheet:" } } });
+  for (const row of made) await shareDedicated(row.key.slice(6) as SheetTabKey, row.value).catch(() => undefined);
+  return { queued: creators.length + invoices.length + quotes.length + briefs.length + expenses.length };
 }

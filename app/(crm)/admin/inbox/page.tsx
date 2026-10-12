@@ -6,7 +6,7 @@ import { getPrisma } from "@/lib/db";
 import type { Reading } from "@/lib/crm/ai";
 import { aiConfigured } from "@/lib/crm/ai";
 import { dateTime, money } from "@/lib/crm/catalog";
-import { googleConfigured } from "@/lib/crm/google";
+import { COMPANY_ACCOUNT, googleConfigured } from "@/lib/crm/google";
 import { sees } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
@@ -88,6 +88,12 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           {conn ? (
             <div className="space-y-3">
               <p className="text-bone">Connected as {conn.email}</p>
+              {!conn.scopes.includes("auth/drive.file") && (
+                <Notice warn>
+                  Reconnect once to allow file access: project uploads and the live CRM Google Sheets need it{conn.email === COMPANY_ACCOUNT() ? " (this is the company account they use)" : ""}.{" "}
+                  <a href="/api/crm/google/connect" className="crm-link">Reconnect Google</a>
+                </Notice>
+              )}
               <p className="text-[0.875rem] text-ash">
                 Gmail inbox and Drive, read-only. {conn.lastSyncAt ? `Last checked ${dateTime(conn.lastSyncAt)}.` : "First check within five minutes."}
               </p>

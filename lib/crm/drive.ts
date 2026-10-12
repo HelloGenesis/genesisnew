@@ -7,6 +7,8 @@ import { Readable } from "node:stream";
 
 import { getPrisma } from "@/lib/db";
 
+import { companyConnection, companyToken } from "./google";
+
 /**
  * GENESIS'S GOOGLE DRIVE (hello@genesismedia.co), FOR THE CRM'S FILES.
  *
@@ -130,7 +132,10 @@ export async function completeConnection(origin: string, code: string) {
 
 export async function driveStatus() {
   if (localDrive()) return { configured: true, account: "local development folder (.tmp/drive)", connectedAt: null };
-  return { configured: driveOAuthConfigured(), account: await getSetting("drive:account"), connectedAt: await getSetting("drive:connectedAt") };
+  const own = await getSetting("drive:account");
+  if (own) return { configured: driveOAuthConfigured(), account: own, connectedAt: await getSetting("drive:connectedAt") };
+  const company = await companyConnection().catch(() => null);
+  return { configured: driveOAuthConfigured(), account: company?.email ?? null, connectedAt: company ? company.connectedAt.toISOString() : null };
 }
 
 export async function disconnectDrive() {
@@ -144,14 +149,26 @@ let cached: { token: string; expires: number } | undefined;
 
 export class DriveNotConnected extends Error {
   constructor() {
-    super("Google Drive is not connected. An owner can connect it in CRM → Integrations.");
+    super("Google Drive isn't connected yet: sign in as hello@genesismedia.co and click Connect Google on the Inbox page (allow file access).");
   }
 }
 
 async function accessToken(): Promise<string> {
   if (cached && cached.expires > Date.now()) return cached.token;
   const refresh = driveOAuthConfigured() ? await getSetting("drive:refresh", true) : null;
-  if (!refresh) throw new DriveNotConnected();
+  /*
+    ONE CONNECTION, NOT TWO (Genesis, 12 Oct 2026: "fix the Google upload and
+    download issue"). Uploads failed because this separate Drive connection was
+    never made. Without it, the company account's own "Connect Google" (Inbox)
+    is used, which now includes file access.
+  */
+  if (!refresh) {
+    try {
+      return await companyToken();
+    } catch {
+      throw new DriveNotConnected();
+    }
+  }
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
