@@ -8,6 +8,7 @@ import { mapColumns } from "./ai";
 import { tierFor, todayIst } from "./catalog";
 import { EXPENSE_CATEGORY } from "./company";
 import { google } from "./google";
+import { cleanNiches } from "./niches";
 
 /**
  * GOOGLE SHEETS INTO THE CRM (Genesis, 12 Oct 2026: "integrate our current
@@ -283,6 +284,8 @@ export async function importRows(kind: string, userId: string, headers: string[]
         if (!handle) continue;
         const platform = PLATFORM[(r.platform ?? (r.profileUrl?.includes("youtube") ? "youtube" : "instagram")).toLowerCase().trim()] ?? "INSTAGRAM";
         const followers = Math.round(num(r.followers) ?? 0);
+        /* The sheet's categories in the standard names; anything else is kept in the notes. */
+        const sorted = cleanNiches([r.niches ?? ""]);
         const data = {
           name: (r.name ?? handle).slice(0, 120),
           profileUrl: r.profileUrl ?? null,
@@ -290,7 +293,7 @@ export async function importRows(kind: string, userId: string, headers: string[]
           avgViews: num(r.avgViews) === null ? null : Math.round(num(r.avgViews)!),
           engagementRate: num(r.engagementRate?.replace("%", "")),
           tier: tierFor(followers),
-          niches: list(r.niches),
+          niches: sorted.niches,
           languages: list(r.languages),
           city: r.city ?? null,
           gender: r.gender ?? null,
@@ -302,7 +305,7 @@ export async function importRows(kind: string, userId: string, headers: string[]
           email: email(r.email),
           phone: r.phone ?? null,
           managedBy: r.managedBy ?? null,
-          notes: r.notes ?? null,
+          notes: [r.notes, sorted.other.length ? `Categories in the sheet: ${sorted.other.join(", ")}` : null].filter(Boolean).join("\n") || null,
         };
         const existing = await prisma.creator.findUnique({ where: { platform_handle: { platform, handle } } });
         if (existing) {

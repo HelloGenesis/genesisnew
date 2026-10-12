@@ -4,6 +4,7 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import type { Division } from "@/lib/generated/prisma/enums";
 
 import { tierFor } from "./catalog";
+import { tidyNiches } from "./niches";
 import { appUrl, queueStaffEmail } from "./notify";
 import { queueSheet } from "./sheets";
 
@@ -115,7 +116,7 @@ export async function captureSubmission(kind: string, submissionId: string, data
           followers,
           avgViews: count(data.avgViews) || null,
           tier: tierFor(followers),
-          niches: (data.niche ?? "").split(/[,/]/).map((n) => n.trim()).filter(Boolean),
+          niches: tidyNiches([data.niche ?? ""]),
           city: data.city || null,
           email: data.email?.toLowerCase() ?? null,
           phone: data.phone || null,

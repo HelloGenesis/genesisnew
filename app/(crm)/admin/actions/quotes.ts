@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { recordAuditLog } from "@/lib/audit";
+import { tidyNiches } from "@/lib/crm/niches";
 import { getPrisma } from "@/lib/db";
 import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
 import type { Platform } from "@/lib/generated/prisma/enums";
@@ -132,7 +133,7 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     const handle = c.handle.replace(/^@/, "").toLowerCase();
     const creator = await prisma.creator.upsert({
       where: { platform_handle: { platform, handle } },
-      create: { name: c.name || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: c.niches, city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote." },
+      create: { name: c.name || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote." },
       update: {},
     });
     c.creatorId = creator.id;

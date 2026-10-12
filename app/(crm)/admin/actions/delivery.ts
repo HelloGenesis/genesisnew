@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db";
+import { tidyNiches } from "@/lib/crm/niches";
 import type {
   AssignmentStatus,
   CampaignCreatorStatus,
@@ -391,7 +392,7 @@ function creatorData(form: FormData) {
     avgViews: Number(String(form.get("avgViews") ?? "").replace(/[,\s]/g, "")) || null,
     engagementRate: Number.isFinite(er) && er > 0 ? er : null,
     tier: (oneOf(text(form, "tier"), TIERS) ?? tierFor(followers)) as CreatorTier,
-    niches: list(form, "niches"),
+    niches: tidyNiches(list(form, "niches")),
     languages: list(form, "languages"),
     city: text(form, "city", 80),
     gender: text(form, "gender", 40),
