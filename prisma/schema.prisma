@@ -341,6 +341,9 @@ enum LeadSource {
   OUTBOUND
   CHATGPT
   CALENDAR_BOOKING
+  EMAIL
+  GOOGLE_DRIVE
+  SHEET_IMPORT
   OTHER
 }
 
@@ -1332,4 +1335,118 @@ model Brief {
   @@index([leadId])
   @@index([accountId])
   @@map("crm_briefs")
+}
+
+// --- Google, the inbox and notifications (Genesis, 12 Oct 2026) ---------------
+
+/// A team member's own Google account, connected once: Gmail, Drive and Sheets, read-only.
+model GoogleConnection {
+  id           String    @id @default(cuid())
+  userId       String    @unique @map("user_id")
+  email        String
+  /// Sealed (AES-GCM) refresh token.
+  refreshToken String    @map("refresh_token")
+  scopes       String
+  status       String    @default("ACTIVE")
+  lastError    String?   @map("last_error")
+  /// Gmail historyId reached; null until the first scan.
+  gmailCursor  String?   @map("gmail_cursor")
+  /// Latest Drive modifiedTime processed.
+  driveCursor  DateTime? @map("drive_cursor")
+  lastSyncAt   DateTime? @map("last_sync_at")
+  connectedAt  DateTime  @default(now()) @map("connected_at")
+
+  @@map("crm_google_connections")
+}
+
+enum InboxSource {
+  GMAIL
+  DRIVE
+  SHEET
+  RAZORPAY
+}
+
+enum InboxKind {
+  BRIEF
+  CLIENT
+  VENDOR
+  INVOICE
+  PROPOSAL
+  LINK
+  OTHER
+}
+
+enum InboxStatus {
+  NEW
+  DONE
+  DISMISSED
+}
+
+/// Something found in a connected Gmail or Drive (or imported), sorted by the AI: a brief, client or vendor details, an invoice, a proposal, an important link.
+model InboxItem {
+  id          String      @id @default(cuid())
+  /// "<source>:<user or org>:<external id>", so a message or file is only ever one item.
+  dedupeKey   String      @unique @map("dedupe_key")
+  userId      String?     @map("user_id")
+  source      InboxSource
+  externalId  String      @map("external_id")
+  kind        InboxKind
+  status      InboxStatus @default(NEW)
+  confidence  Float?
+  title       String
+  sender      String?
+  senderEmail String?     @map("sender_email")
+  summary     String?
+  url         String?
+  links       String[]    @default([])
+  /// What the AI pulled out: company, contact, budget, deliverables, GSTIN, amounts…
+  data        Json?
+  occurredAt  DateTime    @map("occurred_at")
+  leadId      String?     @map("lead_id")
+  briefId     String?     @map("brief_id")
+  accountId   String?     @map("account_id")
+  expenseId   String?     @map("expense_id")
+  handledById String?     @map("handled_by_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@index([userId, status, occurredAt])
+  @@index([status, kind])
+  @@index([accountId])
+  @@index([leadId])
+  @@map("crm_inbox_items")
+}
+
+/// The bell in the CRM: one row per person per event.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, readAt, createdAt])
+  @@map("crm_notifications")
+}
+
+/// A Google Sheet brought into the CRM, and whether it is kept in sync.
+model SheetImport {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  spreadsheetId String    @map("spreadsheet_id")
+  sheetName     String    @map("sheet_name")
+  title         String
+  kind          String
+  /// Column → field, as the AI (or a person) matched them.
+  mapping       Json
+  autoSync      Boolean   @default(false) @map("auto_sync")
+  rowsImported  Int       @default(0) @map("rows_imported")
+  lastRunAt     DateTime? @map("last_run_at")
+  lastError     String?   @map("last_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@unique([spreadsheetId, sheetName, kind])
+  @@map("crm_sheet_imports")
 }

@@ -34,6 +34,15 @@ export default async function AdminOverview() {
     prisma.task.findMany({ where: { status: "OPEN", OR: [{ ownerId: viewer.id }, { createdById: viewer.id }] }, orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }], take: 40, include: { owner: true } }),
     prisma.project.groupBy({ by: ["division"], where: { status: "ACTIVE" }, _count: true }),
   ]);
+  /* What Gmail and Drive turned up: everyone's for owners and admins, your own otherwise. */
+  const seesAll = viewer.roles.some((r) => r === "OWNER" || r === "ADMIN");
+  const scope = seesAll ? {} : { userId: viewer.id };
+  const [found, waiting, connected] = await Promise.all([
+    prisma.inboxItem.findMany({ where: { ...scope, kind: { not: "OTHER" } }, orderBy: { occurredAt: "desc" }, take: 6 }),
+    prisma.inboxItem.groupBy({ by: ["kind"], where: { ...scope, status: "NEW" }, _count: true }),
+    prisma.googleConnection.count(),
+  ]);
+  const finders = await prisma.user.findMany({ where: { id: { in: [...new Set(found.map((f) => f.userId).filter((x): x is string => Boolean(x)))] } }, select: { id: true, name: true, email: true } });
   const mine = myTasks.filter((t) => t.ownerId === viewer.id).slice(0, 8);
   const given = myTasks.filter((t) => t.ownerId !== viewer.id).slice(0, 8);
   const todayStr = todayIst();
@@ -102,6 +111,42 @@ export default async function AdminOverview() {
           )}
         </Card>
       </div>
+
+      <Card
+        title="From Gmail & Drive"
+        action={<Link href="/admin/inbox" className="crm-link text-[0.875rem]">Inbox ↗</Link>}
+      >
+        {found.length === 0 ? (
+          <p className="text-ash">
+            {connected ? "Nothing found yet. Briefs, client and vendor details, invoices and links from connected Gmail and Drive show up here." : "Nobody has connected Google yet."}{" "}
+            <Link href="/admin/inbox" className="crm-link">Connect yours</Link>
+          </p>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_14rem]">
+            <ul className="divide-y divide-[var(--glass-border)]">
+              {found.map((f) => (
+                <li key={f.id} className="flex items-center justify-between gap-3 py-2">
+                  <Link href={f.briefId ? `/admin/briefs/${f.briefId}` : `/admin/inbox?item=${f.id}&status=ALL`} className="min-w-0">
+                    <span className="block truncate text-bone">{f.title}</span>
+                    <span className="block truncate text-[0.75rem] text-ash">{f.sender ?? f.senderEmail ?? "—"} · {date(f.occurredAt)}{seesAll ? ` · ${finders.find((u) => u.id === f.userId)?.name ?? finders.find((u) => u.id === f.userId)?.email ?? ""}` : ""}</span>
+                  </Link>
+                  <Badge tone={f.kind === "BRIEF" ? "good" : f.kind === "INVOICE" ? "warn" : "info"}>{f.kind === "BRIEF" ? "Brief" : f.kind.charAt(0) + f.kind.slice(1).toLowerCase()}</Badge>
+                </li>
+              ))}
+            </ul>
+            <ul className="grid grid-cols-2 gap-2 self-start">
+              {(["BRIEF", "CLIENT", "VENDOR", "INVOICE"] as const).map((k) => (
+                <li key={k} className="rounded-xl bg-[var(--hover-wash)] px-3 py-2">
+                  <Link href={`/admin/inbox?kind=${k}`}>
+                    <span className="block text-[0.75rem] text-ash">{k === "BRIEF" ? "Briefs" : k === "CLIENT" ? "Clients" : k === "VENDOR" ? "Vendors" : "Invoices"} to handle</span>
+                    <span className="text-[1.25rem] text-bone">{waiting.find((w) => w.kind === k)?._count ?? 0}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Card>
 
       <Stats
         items={[
