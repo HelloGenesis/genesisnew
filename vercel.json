@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": [
+    "sin1"
+  ],
   "functions": {
     "app/api/media/[...path]/route.ts": {
       "regions": [
@@ -8,12 +11,12 @@
     },
     "app/api/jobs/run/route.ts": {
       "regions": [
-        "bom1"
+        "sin1"
       ]
     },
     "app/api/jobs/google/route.ts": {
       "regions": [
-        "bom1"
+        "sin1"
       ]
     }
   },

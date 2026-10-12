@@ -41,6 +41,8 @@ const payload = z.object({
   proposalProblems: z.string().max(6000).nullable().optional(),
   proposalObjectives: z.string().max(6000).nullable().optional(),
   proposalInfluencers: z.string().max(6000).nullable().optional(),
+  markupPercent: z.coerce.number().int().min(0).max(500).optional(),
+  planBudget: z.string().max(120).nullable().optional(),
   discount: rupees,
   lines: z
     .array(
@@ -71,12 +73,23 @@ const payload = z.object({
         city: z.string().max(80).nullable().optional(),
         deliverables: z.string().max(300).nullable().optional(),
         fee: rupees.nullable().optional(),
+        er: z.coerce.number().min(0).max(100).nullable().optional(),
+        reelCost: rupees.nullable().optional(),
+        storyCost: rupees.nullable().optional(),
+        dlCost: rupees.nullable().optional(),
+        reelPrice: rupees.nullable().optional(),
+        storyPrice: rupees.nullable().optional(),
+        dlPrice: rupees.nullable().optional(),
+        reachout: z.string().max(60).nullable().optional(),
+        contact: z.string().max(300).nullable().optional(),
+        remarks: z.string().max(1000).nullable().optional(),
       }),
     )
     .max(200),
 });
 
 const paise = (r: number) => Math.round(r * 100);
+const p = (r: number | null | undefined) => (typeof r === "number" ? paise(r) : null);
 
 /** Creates or updates a quote from the builder (the form posts its state as JSON). */
 export async function saveQuote(_: ActionState, form: FormData): Promise<ActionState> {
@@ -108,6 +121,8 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     proposalProblems: q.proposalProblems || null,
     proposalObjectives: q.proposalObjectives || null,
     proposalInfluencers: q.proposalInfluencers || null,
+    markupPercent: q.markupPercent ?? 30,
+    planBudget: q.planBudget || null,
   };
   const lines = q.lines.map((l, i) => ({ position: i, kind: l.kind, productId: l.productId ?? null, division: l.division ?? null, title: l.title, subtitle: l.subtitle || null, details: l.details || null, note: l.note || null, qty: l.qty, unitPaise: paise(l.unit) }));
   /* Influencers added by link (not from the database) join the influencer database too (Genesis, 12 Oct 2026). */
@@ -122,7 +137,11 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     });
     c.creatorId = creator.id;
   }
-  const creators = q.creators.map((c, i) => ({ position: i, creatorId: c.creatorId ?? null, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl ?? null, followers: c.followers, avgViews: c.avgViews ?? null, niches: c.niches, city: c.city ?? null, deliverables: c.deliverables || null, feePaise: c.fee === null || c.fee === undefined ? null : paise(c.fee) }));
+  const creators = q.creators.map((c, i) => ({ position: i, creatorId: c.creatorId ?? null, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl ?? null, followers: c.followers, avgViews: c.avgViews ?? null, niches: c.niches, city: c.city ?? null, deliverables: c.deliverables || null,
+    /* The client's total for a creator is the sum of the priced deliverables, when they're priced one by one. */
+    feePaise: [c.reelPrice, c.storyPrice, c.dlPrice].some((v) => typeof v === "number") ? paise((c.reelPrice ?? 0) + (c.storyPrice ?? 0) + (c.dlPrice ?? 0)) : c.fee === null || c.fee === undefined ? null : paise(c.fee),
+    engagementRate: c.er ?? null, reelCostPaise: p(c.reelCost), storyCostPaise: p(c.storyCost), dlCostPaise: p(c.dlCost), reelPricePaise: p(c.reelPrice), storyPricePaise: p(c.storyPrice), dlPricePaise: p(c.dlPrice),
+    reachout: c.reachout || null, contact: c.contact || null, remarks: c.remarks || null }));
 
   let id = q.id;
   if (id) {

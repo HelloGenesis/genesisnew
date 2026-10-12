@@ -6,7 +6,7 @@ import type { QuoteStatus } from "@/lib/generated/prisma/enums";
 import { QUOTE_STATUS, date, money } from "@/lib/crm/catalog";
 import { quoteRef } from "@/lib/crm/quote-templates";
 import { daysFromNow } from "@/lib/crm/options";
-import { quoteScope } from "@/lib/crm/scope";
+import { quoteScope, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
   ]);
   return (
     <>
-      <PageHead kicker="Sales" title="Quotes & influencer plans" sub="Build from the standard plans and add-ons or write a custom quote, then send it with a payment link.">
+      <PageHead kicker="Sales" title="Quotes & influencer plans" exportKind={isSuperAdmin(viewer) ? "quotes" : undefined} sub="Build from the standard plans and add-ons or write a custom quote, then send it with a payment link.">
         <Link href="/admin/quotes/new" className="crm-btn crm-btn-primary crm-btn-sm">New quote</Link>
         <Link href="/admin/quotes/new?kind=INFLUENCER_PLAN" className="crm-btn crm-btn-secondary crm-btn-sm">New influencer plan</Link>
       </PageHead>

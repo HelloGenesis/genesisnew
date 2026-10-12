@@ -88,7 +88,11 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={`/brand/${GROUP_LOGO}`} alt="Genesis Events and Media Group" className="h-9 w-auto" />
               ) : (
-                <span className="text-[0.8125rem] font-bold uppercase leading-tight tracking-[0.14em] text-[#0f172a]">Genesis Events<br />&amp; Media Group</span>
+                <span className="flex flex-col items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/brand/genesis-only-dark.png" alt="Genesis" className="h-7 w-auto" />
+                  <span className="mt-1 text-[0.5rem] font-bold tracking-[0.18em] text-[#0f172a]">EVENTS &amp; MEDIA GROUP</span>
+                </span>
               )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/brand/genesis-wordmark-dark.png" alt="Genesis Media" className="h-[16px] w-auto" />

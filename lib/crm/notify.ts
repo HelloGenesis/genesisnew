@@ -79,7 +79,7 @@ async function staffRecipients(scope: StaffScope): Promise<string[]> {
   return [...new Set([ops, ...rows.map((r) => r.user.email!)].map((e) => e.toLowerCase()))];
 }
 
-async function send(to: string[], bcc: string[], subject: string, text: string) {
+async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
@@ -87,7 +87,7 @@ async function send(to: string[], bcc: string[], subject: string, text: string) 
       from: process.env.CRM_EMAIL_FROM || process.env.ORDER_EMAIL_FROM,
       to,
       ...(bcc.length ? { bcc } : {}),
-      reply_to: LEGAL_EMAIL,
+      reply_to: replyTo || LEGAL_EMAIL,
       subject,
       text,
     }),
@@ -97,8 +97,8 @@ async function send(to: string[], bcc: string[], subject: string, text: string) 
 }
 
 /** Sends one email now, outside the outbox (sign-in codes can't wait for the next run). */
-export async function sendNow(to: string[], subject: string, text: string) {
-  await send(to, [], subject, `${text}${SIGN_OFF}`);
+export async function sendNow(to: string[], subject: string, text: string, opts: { replyTo?: string | null; signOff?: boolean } = {}) {
+  await send(to, [], subject, opts.signOff === false ? text : `${text}${SIGN_OFF}`, opts.replyTo);
 }
 
 /** Sends up to `limit` due emails. Safe to overlap: each row is claimed once (SKIP LOCKED). */

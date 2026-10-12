@@ -59,13 +59,57 @@ export function invoiceTotals(lines: { qty: number; unitPaise: number }[], disco
   return { subtotal, discount, taxable, cgst, sgst, igst: igst ? tax : 0, total: taxable + tax };
 }
 
-/** The next number in this financial year's series. Retried if two are made at the same moment. */
+/** Genesis's own invoices are numbered 110141, 110142…: the series carries on from the last one issued outside the CRM. */
+export const FIRST_INVOICE_NUMBER = Number(process.env.CRM_INVOICE_START || 110142);
+
+/** The next number in the series. Retried if two are made at the same moment. */
 export async function nextNumber(issueDate: Date) {
   const fy = financialYear(issueDate);
-  const last = await getPrisma().invoice.findFirst({ where: { fy }, orderBy: { seq: "desc" }, select: { seq: true } });
-  const seq = (last?.seq ?? 0) + 1;
-  return { fy, seq, number: `GM/${fy}/${String(seq).padStart(4, "0")}` };
+  const last = await getPrisma().invoice.findFirst({ orderBy: { seq: "desc" }, select: { seq: true } });
+  const seq = Math.max((last?.seq ?? 0) + 1, FIRST_INVOICE_NUMBER);
+  return { fy, seq, number: String(seq) };
 }
+
+/**
+ * WHO IS BILLING: Genesis Events and Media Group, as on invoice 110141. The
+ * GST page's registration details override any of these.
+ */
+export const SUPPLIER = {
+  name: "Genesis Events and Media Group",
+  address: "004, Sankalp Siddhi CHS Ltd, Plot No.122/123, Sector-10, New Panvel (E), Navi Mumbai-410206",
+  phone: "9768622444",
+  email: "shivam@genesismedia.co",
+  website: "www.genesismedia.co",
+  gstin: "27ECGPM5601D1ZU",
+  payee: "GENESIS EVENTS AND MEDIA GROUP",
+  bank: "UNION BANK OF INDIA",
+  account: "636801010050469",
+  ifsc: "UBIN0563684",
+  mode: "DIRECT TRANSFER",
+};
+
+export type SupplierDetails = typeof SUPPLIER & { pan: string };
+
+export async function supplierDetails(): Promise<SupplierDetails> {
+  const row = await getPrisma().appSetting.findUnique({ where: { key: "gst-profile" } });
+  const p = row ? (JSON.parse(row.value) as Record<string, string | undefined>) : {};
+  const merged = {
+    ...SUPPLIER,
+    name: p.legalName || SUPPLIER.name,
+    gstin: p.gstin || SUPPLIER.gstin,
+    address: p.address || SUPPLIER.address,
+    phone: p.phone || SUPPLIER.phone,
+    email: p.invoiceEmail || SUPPLIER.email,
+    payee: p.payee || SUPPLIER.payee,
+    bank: p.bank || SUPPLIER.bank,
+    account: p.account || SUPPLIER.account,
+    ifsc: p.ifsc || SUPPLIER.ifsc,
+  };
+  return { ...merged, pan: merged.gstin.slice(2, 12) };
+}
+
+/** The standing lines at the foot of every invoice (as on 110141). */
+export const INVOICE_TERMS = ["Interest @24% pa will be charged on delayed payment beyond the due date", "TDS will be deducted under section 194C of the Income Tax Act", "Subject to Mumbai Jurisdiction"];
 
 export const newInvoiceToken = () => randomBytes(18).toString("base64url");
 
@@ -88,7 +132,7 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
       amount: inv.totalPaise,
       currency: "INR",
       reference_id: `${inv.number.replace(/\//g, "-")}-${randomBytes(2).toString("hex")}`.toUpperCase(),
-      description: `Genesis Media invoice ${inv.number}`,
+      description: `Genesis Events and Media Group invoice ${inv.number}`,
       customer: { name: inv.billToName, ...(inv.billToEmail ? { email: inv.billToEmail } : {}) },
       notify: { sms: false, email: false },
       reminder_enable: true,
@@ -140,4 +184,18 @@ export async function markInvoicePaid(id: string, razorpayPaymentId?: string | n
   }
   await queueStaffEmail({ kind: "invoice_paid", scope: "finance", subject: `Paid: invoice ${inv.number} · ${inv.billToName} · ${money(inv.totalPaise)}`, text: appUrl(`/admin/invoices/${inv.id}`), dedupeKey: `invoice-paid:${inv.id}` });
   return true;
+}
+
+/**
+ * Names the person who signs it (GST page → "Signs invoices", Shivam by
+ * default) and asks them to: download, sign by hand, upload the signed copy.
+ */
+export async function assignSignatory(invoiceId: string) {
+  const prisma = getPrisma();
+  const profile = await prisma.appSetting.findUnique({ where: { key: "gst-profile" } });
+  const email = ((profile ? (JSON.parse(profile.value) as { signatoryEmail?: string }).signatoryEmail : undefined) || "shivam@genesismedia.co").toLowerCase();
+  const person = await prisma.user.findFirst({ where: { email }, select: { id: true } });
+  const inv = await prisma.invoice.update({ where: { id: invoiceId }, data: { signatoryId: person?.id ?? null } });
+  const { notify } = await import("./notifications");
+  if (person) await notify([person.id], { title: `Please sign invoice ${inv.number}`, body: `${inv.billToName}. Download it, sign by hand, and upload the signed copy on the invoice.`, href: `/admin/invoices/${inv.id}`, email: true, dedupeKey: `sign-invoice:${inv.id}` });
 }

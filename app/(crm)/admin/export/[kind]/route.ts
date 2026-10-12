@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
 import { isSuperAdmin } from "@/lib/crm/scope";
+import { dedicatedSheet, type SheetTabKey } from "@/lib/crm/sheets";
+import { xlsx } from "@/lib/xlsx";
 import { EXPENSE_CATEGORY } from "@/lib/crm/company";
 import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, projectRef, requestRef } from "@/lib/crm/catalog";
 import { type StaffArea, can, getViewer, staffAccess } from "@/lib/crm/session";
@@ -11,7 +13,7 @@ import { stageName } from "@/lib/crm/stages";
 export const dynamic = "force-dynamic";
 
 type Cell = string | number | null | undefined;
-const rs = (p: number | null | undefined) => (p === null || p === undefined ? "" : (p / 100).toFixed(2));
+const rs = (p: number | null | undefined) => (p === null || p === undefined ? "" : Math.round(p) / 100);
 const d = (v: Date | null | undefined) => (v ? v.toISOString() : "");
 
 /** Spreadsheet-safe CSV: quoted, and a leading = + - @ neutralised so a cell can't run as a formula. */
@@ -30,6 +32,21 @@ function csv(rows: Cell[][]): string {
 }
 
 const EXPORTS: Record<string, { area?: StaffArea; build: () => Promise<Cell[][]> }> = {
+  invoices: {
+    async build() {
+      const rows = await getPrisma().invoice.findMany({ orderBy: [{ issueDate: "desc" }, { seq: "desc" }] });
+      return [["Number", "Date", "Due", "Status", "Billed to", "GSTIN", "Place of supply", "Taxable (₹)", "CGST (₹)", "SGST (₹)", "IGST (₹)", "Total (₹)", "Paid at"],
+        ...rows.map((i) => [i.number, d(i.issueDate).slice(0, 10), d(i.dueDate).slice(0, 10), i.status, i.billToName, i.billToGstin, i.placeOfSupply, rs(i.subtotalPaise - i.discountPaise), rs(i.cgstPaise), rs(i.sgstPaise), rs(i.igstPaise), rs(i.totalPaise), d(i.paidAt)])];
+    },
+  },
+  quotes: {
+    area: "sales",
+    async build() {
+      const rows = await getPrisma().quote.findMany({ orderBy: { number: "desc" } });
+      return [["Number", "Kind", "Title", "Client", "Email", "Status", "Total (₹)", "Issued", "Sent", "Accepted", "Expires"],
+        ...rows.map((q) => [`#${String(q.number).padStart(7, "0")}`, q.kind, q.title, q.company ?? q.contactName, q.contactEmail, q.status, rs(q.totalPaise), d(q.issuedAt), d(q.sentAt), d(q.acceptedAt), d(q.expiresAt).slice(0, 10)])];
+    },
+  },
   expenses: {
     area: "finance",
     async build() {
@@ -95,17 +112,49 @@ const EXPORTS: Record<string, { area?: StaffArea; build: () => Promise<Cell[][]>
   },
 };
 
-export async function GET(_: Request, { params }: { params: Promise<{ kind: string }> }) {
+/* Which live Google Sheet each export matches (lib/crm/sheets). */
+const SHEET: Record<string, SheetTabKey> = { leads: "leads", accounts: "accounts", orders: "orders", projects: "projects", requests: "requests", creators: "creators", expenses: "expenses", invoices: "invoices", quotes: "quotes" };
+
+/**
+ * CSV by default; ?format=xlsx for Excel; ?open=sheet to the live Google
+ * Sheet for this kind (made on first use, filled within a minute).
+ */
+export async function GET(request: Request, { params }: { params: Promise<{ kind: string }> }) {
   const { kind } = await params;
+  const url = new URL(request.url);
   const spec = EXPORTS[kind];
   if (!spec) return NextResponse.json({ error: "Unknown export" }, { status: 404 });
   const viewer = await getViewer();
   if (staffAccess(viewer) !== "granted" || (spec.area && !can(viewer, spec.area))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   /* A whole-table export is everyone's data: super admins only (expenses: finance too). */
   if (kind !== "expenses" && !isSuperAdmin(viewer!)) return NextResponse.json({ error: "Only super admins can export everything." }, { status: 403 });
-  const body = csv(await spec.build());
-  await recordAuditLog({ action: "crm.exported", entity: kind, actorId: viewer!.id });
+  if (url.searchParams.get("open") === "sheet") {
+    const tab = SHEET[kind];
+    if (!tab) return NextResponse.json({ error: "There's no Google Sheet for this list." }, { status: 404 });
+    try {
+      const id = await dedicatedSheet(tab);
+      if (id) {
+        await recordAuditLog({ action: "crm.sheet_opened", entity: kind, actorId: viewer!.id });
+        return NextResponse.redirect(`https://docs.google.com/spreadsheets/d/${id}/edit`);
+      }
+    } catch (error) {
+      console.error("[crm] open sheet", kind, error);
+    }
+    return new NextResponse(
+      "The live Google Sheets need the company account (hello@genesismedia.co) to connect Google with file access: sign in as hello@, open Inbox · Gmail & Drive and click Connect Google (or Reconnect).",
+      { status: 409, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
+  const rows = await spec.build();
+  await recordAuditLog({ action: "crm.exported", entity: kind, actorId: viewer!.id, metadata: { format: url.searchParams.get("format") ?? "csv" } });
+  const stamp = new Date().toISOString().slice(0, 10);
+  if (url.searchParams.get("format") === "xlsx") {
+    return new NextResponse(new Uint8Array(xlsx(kind, rows)), {
+      headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="genesis-${kind}-${stamp}.xlsx"`, "Cache-Control": "no-store" },
+    });
+  }
+  const body = csv(rows);
   return new NextResponse(`﻿${body}`, {
-    headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="genesis-${kind}-${new Date().toISOString().slice(0, 10)}.csv"`, "Cache-Control": "no-store" },
+    headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="genesis-${kind}-${stamp}.csv"`, "Cache-Control": "no-store" },
   });
 }

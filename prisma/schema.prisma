@@ -948,6 +948,9 @@ model Creator {
   reelRatePaise    Int?        @map("reel_rate_paise")
   storyRatePaise   Int?        @map("story_rate_paise")
   postRatePaise    Int?        @map("post_rate_paise")
+  /// "DL (1 month)": digital licensing — the brand's paid use of the content for a month.
+  dlRatePaise      Int?        @map("dl_rate_paise")
+  youtubeUrl       String?     @map("youtube_url")
   email            String?
   phone            String?
   /// Agency or manager who represents them.
@@ -1110,6 +1113,11 @@ model Quote {
   proposalProblems    String?  @map("proposal_problems")
   proposalObjectives  String?  @map("proposal_objectives")
   proposalInfluencers String?  @map("proposal_influencers")
+  /// Influencer plans: the markup on creator costs, and the two Google Sheets made from the plan.
+  markupPercent Int        @default(30) @map("markup_percent")
+  planBudget    String?    @map("plan_budget")
+  extSheetId    String?    @map("ext_sheet_id")
+  intSheetId    String?    @map("int_sheet_id")
   subtotalPaise Int         @default(0) @map("subtotal_paise")
   taxPaise      Int         @default(0) @map("tax_paise")
   totalPaise    Int         @default(0) @map("total_paise")
@@ -1173,6 +1181,18 @@ model QuoteCreator {
   city         String?
   deliverables String?
   feePaise     Int?    @map("fee_paise")
+  /// The plan's columns (Genesis, 12 Oct 2026): what the creator charges us, and what we charge the client.
+  reelCostPaise  Int?    @map("reel_cost_paise")
+  storyCostPaise Int?    @map("story_cost_paise")
+  dlCostPaise    Int?    @map("dl_cost_paise")
+  reelPricePaise  Int?   @map("reel_price_paise")
+  storyPricePaise Int?   @map("story_price_paise")
+  dlPricePaise    Int?   @map("dl_price_paise")
+  engagementRate Float?  @map("engagement_rate")
+  /// Reach-out status: WhatsApp, email, agency/freelancer, confirmed, not relevant…
+  reachout     String?
+  contact      String?
+  remarks      String?
 
   @@map("crm_quote_creators")
 }
@@ -1499,6 +1519,19 @@ model Invoice {
   totalPaise    Int           @default(0) @map("total_paise")
   notes         String?
   terms         String?
+  /// As on Genesis's own invoices (#110141): the quotation and PO it answers, when the work was done, payment terms.
+  quotationRef  String?       @map("quotation_ref")
+  quotationDate DateTime?     @map("quotation_date") @db.Date
+  poNumber      String?       @map("po_number")
+  poDate        DateTime?     @map("po_date") @db.Date
+  executionDate DateTime?     @map("execution_date") @db.Date
+  paymentTermDays Int         @default(15) @map("payment_term_days")
+  reference     String?
+  billToPan     String?       @map("bill_to_pan")
+  /// Who signs it by hand; the signed copy is uploaded back (InvoiceFile kind SIGNED).
+  signatoryId   String?       @map("signatory_id")
+  signedAt      DateTime?     @map("signed_at")
+  signedById    String?       @map("signed_by_id")
   razorpayLinkId String?      @unique @map("razorpay_link_id")
   paymentUrl    String?       @map("payment_url")
   sentAt        DateTime?     @map("sent_at")
@@ -1508,6 +1541,7 @@ model Invoice {
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
   lines         InvoiceLine[]
+  files         InvoiceFile[]
 
   @@unique([fy, seq])
   @@index([status, issueDate])
@@ -1524,7 +1558,28 @@ model InvoiceLine {
   description String
   sac         String  @default("998361")
   qty         Int     @default(1)
+  unit        String  @default("NOS")
   unitPaise   Int     @map("unit_paise")
 
   @@map("crm_invoice_lines")
+}
+
+/// A file on an invoice: the supporting document's screenshots, or the hand-signed copy uploaded back. Stored in the company Drive.
+model InvoiceFile {
+  id          String   @id @default(cuid())
+  invoiceId   String   @map("invoice_id")
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  /// SUPPORTING (a screenshot or proof page) or SIGNED (the signed invoice).
+  kind        String
+  driveId     String   @map("drive_id")
+  name        String
+  mimeType    String   @map("mime_type")
+  size        Int      @default(0)
+  caption     String?
+  position    Int      @default(0)
+  uploadedById String? @map("uploaded_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([invoiceId, kind])
+  @@map("crm_invoice_files")
 }

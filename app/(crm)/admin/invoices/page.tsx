@@ -7,7 +7,7 @@ import type { InvoiceStatus } from "@/lib/generated/prisma/enums";
 import { date, money } from "@/lib/crm/catalog";
 import { INVOICE_STATUS } from "@/lib/crm/invoices";
 import { quoteRef } from "@/lib/crm/quote-templates";
-import { invoiceScope, quoteScope } from "@/lib/crm/scope";
+import { invoiceScope, quoteScope, isSuperAdmin } from "@/lib/crm/scope";
 import { can, requireStaff } from "@/lib/crm/session";
 
 import { invoiceFromQuote } from "../actions/invoices";
@@ -31,7 +31,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const overdue = invoices.filter((i) => i.status === "SENT" && i.dueDate && i.dueDate < new Date());
   return (
     <>
-      <PageHead kicker="Sales" title="Invoices" sub="GST tax invoices: CGST + SGST within Maharashtra, IGST outside">
+      <PageHead kicker="Sales" title="Invoices" exportKind={isSuperAdmin(viewer) ? "invoices" : undefined} sub="GST tax invoices: CGST + SGST within Maharashtra, IGST outside">
         <Link href="/admin/invoices/new" className="crm-btn crm-btn-primary crm-btn-sm">New invoice</Link>
       </PageHead>
       <Stats

@@ -40,7 +40,7 @@ export const IMPORT_KINDS: Record<string, { label: string; fields: Record<string
   influencers: {
     label: "Influencers",
     sync: true,
-    fields: { name: "creator name", handle: "handle / username", platform: "platform", profileUrl: "profile link", followers: "followers", avgViews: "average views", engagementRate: "engagement rate %", niches: "niche / category", city: "city / location", languages: "languages", gender: "gender", reelRate: "reel rate (₹)", storyRate: "story rate (₹)", postRate: "post / video rate (₹)", email: "email", phone: "phone", managedBy: "agency / manager", notes: "notes" },
+    fields: { name: "creator name", handle: "handle / username", platform: "platform", profileUrl: "profile link", followers: "followers", avgViews: "average views", engagementRate: "engagement rate %", niches: "niche / category", city: "city / location", languages: "languages", gender: "gender", reelRate: "1 IG reel rate (₹)", storyRate: "story + link in bio rate (₹)", dlRate: "DL / digital licensing, 1 month (₹)", postRate: "post / video rate (₹)", youtubeUrl: "YouTube link", email: "email", phone: "phone", managedBy: "agency / manager", notes: "notes" },
   },
   expenses: {
     label: "Expenses / bills",
@@ -110,6 +110,8 @@ const SYNONYMS: Record<string, RegExp> = {
   languages: /language/i,
   gender: /gender/i,
   reelRate: /reel/i,
+  dlRate: /\b(dl|dr)\b|licens|usage|digital rights/i,
+  youtubeUrl: /yt|youtube/i,
   storyRate: /story/i,
   postRate: /post|video rate|yt/i,
   managedBy: /manag|agency/i,
@@ -283,6 +285,8 @@ export async function runImport(importId: string) {
           reelRatePaise: paise(r.reelRate),
           storyRatePaise: paise(r.storyRate),
           postRatePaise: paise(r.postRate),
+          dlRatePaise: paise(r.dlRate),
+          youtubeUrl: r.youtubeUrl && /^https?:\/\//.test(r.youtubeUrl) ? r.youtubeUrl : null,
           email: email(r.email),
           phone: r.phone ?? null,
           managedBy: r.managedBy ?? null,

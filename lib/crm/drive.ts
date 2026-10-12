@@ -7,6 +7,8 @@ import { Readable } from "node:stream";
 
 import { getPrisma } from "@/lib/db";
 
+import { companyConnection, companyToken } from "./google";
+
 /**
  * GENESIS'S GOOGLE DRIVE (hello@genesismedia.co), FOR THE CRM'S FILES.
  *
@@ -130,7 +132,10 @@ export async function completeConnection(origin: string, code: string) {
 
 export async function driveStatus() {
   if (localDrive()) return { configured: true, account: "local development folder (.tmp/drive)", connectedAt: null };
-  return { configured: driveOAuthConfigured(), account: await getSetting("drive:account"), connectedAt: await getSetting("drive:connectedAt") };
+  const own = await getSetting("drive:account");
+  if (own) return { configured: driveOAuthConfigured(), account: own, connectedAt: await getSetting("drive:connectedAt") };
+  const company = await companyConnection().catch(() => null);
+  return { configured: driveOAuthConfigured(), account: company?.email ?? null, connectedAt: company ? company.connectedAt.toISOString() : null };
 }
 
 export async function disconnectDrive() {
@@ -144,14 +149,26 @@ let cached: { token: string; expires: number } | undefined;
 
 export class DriveNotConnected extends Error {
   constructor() {
-    super("Google Drive is not connected. An owner can connect it in CRM → Integrations.");
+    super("Google Drive isn't connected yet: sign in as hello@genesismedia.co and click Connect Google on the Inbox page (allow file access).");
   }
 }
 
 async function accessToken(): Promise<string> {
   if (cached && cached.expires > Date.now()) return cached.token;
   const refresh = driveOAuthConfigured() ? await getSetting("drive:refresh", true) : null;
-  if (!refresh) throw new DriveNotConnected();
+  /*
+    ONE CONNECTION, NOT TWO (Genesis, 12 Oct 2026: "fix the Google upload and
+    download issue"). Uploads failed because this separate Drive connection was
+    never made. Without it, the company account's own "Connect Google" (Inbox)
+    is used, which now includes file access.
+  */
+  if (!refresh) {
+    try {
+      return await companyToken();
+    } catch {
+      throw new DriveNotConnected();
+    }
+  }
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -195,6 +212,37 @@ export async function projectFolderId(p: { accountId: string; accountName: strin
   const client = await folder(p.accountName, root, `account:${p.accountId}`);
   const project = await folder(p.projectLabel, client, `project:${p.projectId}`);
   return folder(p.folderLabel, project, `project:${p.projectId}:${p.folderKey}`);
+}
+
+/** Genesis CRM / Invoices / <number>: an invoice's supporting screenshots and its signed copy. */
+export async function invoiceFolderId(invoiceId: string, number: string) {
+  const root = await folder(ROOT_NAME, null, "root");
+  const invoices = await folder("Invoices", root, "invoices");
+  return folder(`Invoice ${number}`, invoices, `invoice:${invoiceId}`);
+}
+
+/** A small file (a screenshot, a signed PDF) uploaded by the server in one request. Returns its Drive id. */
+export async function uploadSmall(input: { name: string; mimeType: string; bytes: Buffer; parentId: string }): Promise<string> {
+  if (localDrive()) {
+    mkdirSync(LOCAL_DIR, { recursive: true });
+    const id = `local${randomBytes(8).toString("hex")}`;
+    writeFileSync(localMeta(id), JSON.stringify({ id, name: clean(input.name), mimeType: input.mimeType, size: String(input.bytes.length), parents: [input.parentId] }));
+    writeFileSync(localData(id), input.bytes);
+    return id;
+  }
+  const boundary = `gm${randomBytes(12).toString("hex")}`;
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: clean(input.name), parents: [input.parentId] })}\r\n--${boundary}\r\nContent-Type: ${input.mimeType || "application/octet-stream"}\r\n\r\n`),
+    input.bytes,
+    Buffer.from(`\r\n--${boundary}--`),
+  ]);
+  const response = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+    body,
+  });
+  if (!response.ok) throw new Error(`Drive upload failed (${response.status}): ${(await response.text()).slice(0, 160)}`);
+  return ((await response.json()) as { id: string }).id;
 }
 
 // --- Files -------------------------------------------------------------------------

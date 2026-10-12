@@ -23,7 +23,25 @@ export const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/drive.readonly",
   "https://www.googleapis.com/auth/spreadsheets.readonly",
+  /* Files the CRM itself makes: project uploads and the live CRM sheets (Genesis, 12 Oct 2026). Nothing else in Drive can be changed. */
+  "https://www.googleapis.com/auth/drive.file",
 ];
+
+/** The company Google account whose Drive holds project files and the CRM sheets. */
+export const COMPANY_ACCOUNT = () => (process.env.CRM_DRIVE_ACCOUNT || "hello@genesismedia.co").toLowerCase();
+
+/** That account's connection, when it has allowed the CRM to create files. */
+export async function companyConnection() {
+  const conn = await getPrisma().googleConnection.findFirst({ where: { email: COMPANY_ACCOUNT(), status: "ACTIVE" } });
+  return conn && conn.scopes.includes("auth/drive.file") ? conn : null;
+}
+
+/** An access token for the company account (project files, the CRM sheets). */
+export async function companyToken(): Promise<string> {
+  const conn = await companyConnection();
+  if (!conn) throw new GoogleAuthError(`${COMPANY_ACCOUNT()} hasn't connected Google with file access yet (Inbox → Connect Google).`);
+  return accessToken(conn.userId);
+}
 
 export const googleConfigured = () => Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET);
 

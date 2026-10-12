@@ -134,7 +134,7 @@ export async function updateGstFiling(_: ActionState, form: FormData): Promise<A
 }
 
 const GST_PROFILE = "gst-profile";
-export type GstProfile = { gstin?: string; legalName?: string; state?: string; frequency?: string; accountant?: string; accountantEmail?: string; portalUser?: string; notes?: string };
+export type GstProfile = { gstin?: string; legalName?: string; state?: string; frequency?: string; accountant?: string; accountantEmail?: string; portalUser?: string; notes?: string; address?: string; phone?: string; invoiceEmail?: string; payee?: string; bank?: string; account?: string; ifsc?: string; signatoryEmail?: string };
 
 export async function saveGstProfile(_: ActionState, form: FormData): Promise<ActionState> {
   await requireStaff("finance");
@@ -147,6 +147,14 @@ export async function saveGstProfile(_: ActionState, form: FormData): Promise<Ac
     accountantEmail: text(form, "accountantEmail", 160) ?? undefined,
     portalUser: text(form, "portalUser", 80) ?? undefined,
     notes: text(form, "notes", 2000) ?? undefined,
+    address: text(form, "address", 300) ?? undefined,
+    phone: text(form, "phone", 30) ?? undefined,
+    invoiceEmail: text(form, "invoiceEmail", 160) ?? undefined,
+    payee: text(form, "payee", 160) ?? undefined,
+    bank: text(form, "bank", 120) ?? undefined,
+    account: text(form, "account", 40) ?? undefined,
+    ifsc: text(form, "ifsc", 20)?.toUpperCase() ?? undefined,
+    signatoryEmail: text(form, "signatoryEmail", 160)?.toLowerCase() ?? undefined,
   };
   if (value.gstin && !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/.test(value.gstin)) return fail("That GSTIN doesn't look right (15 characters, like 27ABCDE1234F1Z5).");
   await getPrisma().appSetting.upsert({ where: { key: GST_PROFILE }, create: { key: GST_PROFILE, value: JSON.stringify(value) }, update: { value: JSON.stringify(value) } });

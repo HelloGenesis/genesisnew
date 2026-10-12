@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
+import { ShareBox } from "@/components/crm/share-box";
 import { Card, PageHead } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, date, money } from "@/lib/crm/catalog";
@@ -53,6 +54,23 @@ export default async function BriefPage({ params }: { params: Promise<{ id: stri
         <div className="space-y-6">
           <Card title="Details">
             <dl className="space-y-2 text-[0.875rem]">{rows.map(([k, v]) => <div key={k} className="flex justify-between gap-3"><dt className="text-ash">{k}</dt><dd className="text-right text-bone">{v}</dd></div>)}</dl>
+          </Card>
+          <Card title="Share the brief">
+            <ShareBox
+              subject={`Brief: ${brief.title}`}
+              phone={lead?.phone}
+              text={[
+                `Brief: ${brief.title}`,
+                lead || account ? `For: ${lead?.company ?? lead?.name ?? account?.name}` : "",
+                brief.objective ? `\nObjective: ${brief.objective}` : "",
+                brief.audience ? `Audience: ${brief.audience}` : "",
+                brief.deliverables ? `Deliverables: ${brief.deliverables}` : "",
+                brief.platforms.length ? `Platforms: ${brief.platforms.join(", ")}` : "",
+                brief.deadline ? `Needed by: ${date(brief.deadline)}` : "",
+                brief.references.length ? `\nReferences:\n${brief.references.join("\n")}` : "",
+                "\n— Genesis Media",
+              ].filter(Boolean).join("\n")}
+            />
           </Card>
           <Card title="Status">
             <div className="flex flex-wrap gap-2">

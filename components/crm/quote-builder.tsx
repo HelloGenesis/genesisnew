@@ -6,7 +6,12 @@ import { useActionState, useMemo, useState } from "react";
 import { saveQuote } from "@/app/(crm)/admin/actions/quotes";
 
 export type BuilderLine = { kind: string; productId?: string | null; division?: string | null; title: string; subtitle?: string | null; details?: string | null; note?: string | null; qty: number; unit: number };
-export type BuilderCreator = { creatorId?: string | null; name: string; handle: string; platform: string; profileUrl?: string | null; followers: number; avgViews?: number | null; niches: string[]; city?: string | null; deliverables?: string | null; fee?: number | null };
+export type BuilderCreator = {
+  creatorId?: string | null; name: string; handle: string; platform: string; profileUrl?: string | null; followers: number; avgViews?: number | null; niches: string[]; city?: string | null; deliverables?: string | null; fee?: number | null;
+  /* The plan's columns: the creator's cost to us and the client's price, per deliverable (Genesis, 12 Oct 2026). */
+  er?: number | null; reelCost?: number | null; storyCost?: number | null; dlCost?: number | null; reelPrice?: number | null; storyPrice?: number | null; dlPrice?: number | null;
+  reachout?: string | null; contact?: string | null; remarks?: string | null;
+};
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -30,17 +35,25 @@ export type BuilderQuote = {
   proposalProblems?: string | null;
   proposalObjectives?: string | null;
   proposalInfluencers?: string | null;
+  markupPercent?: number;
+  planBudget?: string | null;
   lines: BuilderLine[];
   creators: BuilderCreator[];
 };
 type CatalogItem = { id: string; kind: string; group: string; division: string; title: string; subtitle?: string; details: string; note?: string; price: number };
-type PoolCreator = { id: string; name: string; handle: string; platform: string; profileUrl: string | null; followers: number; avgViews: number | null; niches: string[]; city: string | null; reel: number | null };
+type PoolCreator = { id: string; name: string; handle: string; platform: string; profileUrl: string | null; followers: number; avgViews: number | null; niches: string[]; city: string | null; reel: number | null; story: number | null; dl: number | null; contact: string | null };
 type Terms = { key: string; label: string; notes: string; terms: string[] };
 
 const DIVISIONS: [string, string][] = [["AI_LAB", "AI Lab"], ["STUDIOS", "Studios"], ["BRAND_DESIGN", "Brand & Design"], ["INFLUENCE", "Influence"]];
 const inr = (r: number) => `₹${r.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const compact = (n: number) => new Intl.NumberFormat("en-IN", { notation: "compact" }).format(n);
 const PLATFORMS = ["Instagram", "YouTube", "LinkedIn", "Facebook", "X", "Snapchat", "Moj / Josh", "Website", "OTT / TV", "Events"];
+
+/** A creator's total to the client: the priced deliverables when priced one by one, else the single fee. */
+const priced = (c: BuilderCreator) => [c.reelPrice, c.storyPrice, c.dlPrice].some((v) => typeof v === "number");
+const creatorTotal = (c: BuilderCreator) => (priced(c) ? (c.reelPrice ?? 0) + (c.storyPrice ?? 0) + (c.dlPrice ?? 0) : (c.fee ?? 0));
+const creatorCost = (c: BuilderCreator) => (c.reelCost ?? 0) + (c.storyCost ?? 0) + (c.dlCost ?? 0);
+const REACHOUT = ["", "WhatsApp", "Email", "Agency/Freelancer", "Hashfame", "Awaiting reply", "Costs received", "Confirmed", "Not relevant", "Declined"];
 
 /** A creator from a profile link: the platform and handle it names (Genesis, 12 Oct 2026: "link + add more influencer"). */
 function fromLink(url: string): BuilderCreator | null {
@@ -80,7 +93,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
 
   const totals = useMemo(() => {
     const lines = q.lines.reduce((s, l) => s + l.qty * l.unit, 0);
-    const creators = q.creators.reduce((s, c) => s + (c.fee ?? 0), 0);
+    const creators = q.creators.reduce((s, c) => s + creatorTotal(c), 0);
     const subtotal = lines + creators;
     const taxable = Math.max(0, subtotal - q.discount);
     const tax = q.addGst ? Math.round(taxable * q.gstPercent) / 100 : 0;
@@ -223,28 +236,72 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
               {matches.map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-2 py-2">
                   <span className="min-w-0 truncate"><span className="text-bone">{c.name}</span> <span className="text-[0.8125rem] text-ash">@{c.handle} · {c.platform.toLowerCase()} · {compact(c.followers)} · {c.niches.join(", ")} {c.city ? `· ${c.city}` : ""}</span></span>
-                  <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => setQ((x) => ({ ...x, creators: [...x.creators, { creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: "1 reel + 2 stories", fee: c.reel }] }))}>Add</button>
+                  <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => setQ((x) => ({ ...x, creators: [...x.creators, { creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: "1 IG Reel + Story & link in bio", fee: null, reelCost: c.reel, storyCost: c.story, dlCost: c.dl, reelPrice: c.reel === null ? null : Math.round(c.reel * (1 + (x.markupPercent ?? 30) / 100)), storyPrice: c.story === null ? null : Math.round(c.story * (1 + (x.markupPercent ?? 30) / 100)), dlPrice: c.dl === null ? null : Math.round(c.dl * (1 + (x.markupPercent ?? 30) / 100)), contact: c.contact }] }))}>Add</button>
                 </li>
               ))}
             </ul>
           )}
           {q.creators.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="crm-table !min-w-[640px]">
-                <thead><tr><th>Creator</th><th>Followers</th><th>Deliverables</th><th>Fee (₹)</th><th /></tr></thead>
-                <tbody>
-                  {q.creators.map((c, i) => (
-                    <tr key={`${c.handle}-${i}`}>
-                      <td className="text-bone">{c.name}<span className="block text-[0.75rem] text-ash">@{c.handle} · {c.platform.toLowerCase()}</span></td>
-                      <td className="tabular-nums">{compact(c.followers)}</td>
-                      <td><input value={c.deliverables ?? ""} onChange={(e) => setCreator(i, { deliverables: e.target.value })} className="crm-input !min-h-9" /></td>
-                      <td><input type="number" min={0} value={c.fee ?? ""} onChange={(e) => setCreator(i, { fee: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-9 w-28" /></td>
-                      <td><button type="button" aria-label="Remove creator" onClick={() => setQ((x) => ({ ...x, creators: x.creators.filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><X className="size-4" /></button></td>
+            <>
+              {/* MARKUP: the client's price is the creator's cost plus this, rounded (Genesis's plans: cost → price → profit). */}
+              <div className="flex flex-wrap items-center gap-2 text-[0.875rem] text-ash">
+                Client price = creator cost +
+                <input type="number" min={0} max={500} value={q.markupPercent ?? 30} onChange={(e) => set("markupPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-20" />%
+                <button
+                  type="button"
+                  className="crm-btn crm-btn-secondary crm-btn-sm"
+                  onClick={() => {
+                    const m = 1 + (q.markupPercent ?? 30) / 100;
+                    const up = (v?: number | null) => (typeof v === "number" ? Math.round(v * m) : v);
+                    setQ((x) => ({ ...x, creators: x.creators.map((c) => ({ ...c, reelPrice: up(c.reelCost), storyPrice: up(c.storyCost), dlPrice: up(c.dlCost) })) }));
+                  }}
+                >
+                  Apply to every price
+                </button>
+                <label className="ml-auto flex items-center gap-2">Budget line <input value={q.planBudget ?? ""} onChange={(e) => set("planBudget", e.target.value)} className="crm-input !min-h-8 w-40" placeholder="As per Brand" /></label>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="crm-table !min-w-[1200px] text-[0.8125rem]">
+                  <thead>
+                    <tr>
+                      <th>Creator</th><th>Followers</th><th>ER %</th><th>Reach-out</th>
+                      <th colSpan={3} className="text-center">Creator cost (₹): Reel · Story+LIB · DL 1m</th>
+                      <th colSpan={3} className="text-center">Client price (₹): Reel · Story+LIB · DL 1m</th>
+                      <th>Profit</th><th>Remarks</th><th />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {q.creators.map((c, i) => {
+                      const num = (k: keyof BuilderCreator) => (
+                        <td key={k}><input type="number" min={0} value={(c[k] as number | null | undefined) ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 w-[5.5rem] !px-2" /></td>
+                      );
+                      return (
+                        <tr key={`${c.handle}-${i}`}>
+                          <td className="text-bone">{c.name}<span className="block text-[0.75rem] text-ash">@{c.handle}{c.city ? ` · ${c.city}` : ""}</span></td>
+                          <td className="tabular-nums">{compact(c.followers)}</td>
+                          <td><input type="number" min={0} step="0.1" value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 w-16 !px-2" /></td>
+                          <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 w-32 !px-2">{REACHOUT.map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>
+                          {num("reelCost")}{num("storyCost")}{num("dlCost")}
+                          {num("reelPrice")}{num("storyPrice")}{num("dlPrice")}
+                          <td className={`tabular-nums ${creatorTotal(c) - creatorCost(c) < 0 ? "text-[#dc2626]" : "text-bone"}`}>{inr(creatorTotal(c) - creatorCost(c))}</td>
+                          <td><input value={c.remarks ?? ""} onChange={(e) => setCreator(i, { remarks: e.target.value })} className="crm-input !min-h-8 w-36 !px-2" /></td>
+                          <td><button type="button" aria-label="Remove creator" onClick={() => setQ((x) => ({ ...x, creators: x.creators.filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><X className="size-4" /></button></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="text-bone">
+                      <td colSpan={4}>{q.creators.length} creators</td>
+                      <td colSpan={3} className="tabular-nums">Cost {inr(q.creators.reduce((s, c) => s + creatorCost(c), 0))}</td>
+                      <td colSpan={3} className="tabular-nums">Client {inr(totals.creators)}</td>
+                      <td className="tabular-nums">{inr(totals.creators - q.creators.reduce((s, c) => s + creatorCost(c), 0))}</td>
+                      <td colSpan={2} />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </section>
