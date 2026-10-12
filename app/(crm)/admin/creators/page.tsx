@@ -2,8 +2,9 @@ import Link from "next/link";
 
 import { ActionForm } from "@/components/crm/action-form";
 import { CreatorFields, PLATFORMS } from "@/components/crm/creator-fields";
+import { MultiSelect } from "@/components/crm/multi-select";
 import { PickBar } from "@/components/crm/pick-bar";
-import { AddPanel, Badge, Empty, PageHead, Select, Table } from "@/components/crm/ui";
+import { AddPanel, Badge, Empty, PageHead, Table } from "@/components/crm/ui";
 import { NICHES } from "@/lib/crm/niches";
 import { getPrisma } from "@/lib/db";
 import { isSuperAdmin } from "@/lib/crm/scope";
@@ -24,34 +25,59 @@ const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { nota
  * scouted, with reach, rates and campaign history — and every creator who
  * applies through the website's Influencer Onboarding form lands here too.
  */
-export default async function CreatorsPage({ searchParams }: { searchParams: Promise<{ q?: string; platform?: string; tier?: string; niche?: string; city?: string; min?: string }> }) {
+type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; min?: string; max?: string; limit?: string };
+const many = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
+
+/* A niche worth offering: words, not a number or a stray sentence from an imported sheet. */
+const usableNiche = (n: string) => /^[A-Za-z][A-Za-z &/'+.-]{1,38}$/.test(n.trim()) && !/^\d/.test(n);
+
+export default async function CreatorsPage({ searchParams }: { searchParams: Promise<Params> }) {
   const viewer = await requireStaff();
   const p = await searchParams;
+  const platforms = many(p.platform).filter((x) => PLATFORMS.some(([v]) => v === x)) as Platform[];
+  const tiers = many(p.tier).filter((x) => x in CREATOR_TIER) as CreatorTier[];
+  const niches = many(p.niche);
+  const cities = many(p.city);
+  const min = Number(p.min) || 0;
+  const max = Number(p.max) || 0;
+  const limit = Math.min(Math.max(Number(p.limit) || 300, 300), 3000);
+  /* Several values in one filter widen it (any of them); different filters narrow each other. */
   const where: Prisma.CreatorWhereInput = {
-    ...(p.q ? { OR: [{ name: { contains: p.q, mode: "insensitive" } }, { handle: { contains: p.q.replace(/^@/, ""), mode: "insensitive" } }] } : {}),
-    ...(p.platform ? { platform: p.platform as Platform } : {}),
-    ...(p.tier && p.tier in CREATOR_TIER ? { tier: p.tier as CreatorTier } : {}),
-    ...(p.niche ? { niches: { has: p.niche } } : {}),
-    ...(p.city ? { city: { contains: p.city, mode: "insensitive" } } : {}),
-    ...(Number(p.min) > 0 ? { followers: { gte: Number(p.min) } } : {}),
+    AND: [
+      p.q ? { OR: [{ name: { contains: p.q, mode: "insensitive" } }, { handle: { contains: p.q.replace(/^@/, ""), mode: "insensitive" } }] } : {},
+      platforms.length ? { platform: { in: platforms } } : {},
+      tiers.length ? { tier: { in: tiers } } : {},
+      niches.length ? { niches: { hasSome: niches } } : {},
+      cities.length ? { OR: cities.map((c) => ({ city: { contains: c, mode: "insensitive" as const } })) } : {},
+      min || max ? { followers: { ...(min ? { gte: min } : {}), ...(max ? { lte: max } : {}) } } : {},
+    ],
   };
   const prisma = getPrisma();
-  const [creators, total, nicheRows] = await Promise.all([
-    prisma.creator.findMany({ where, orderBy: { followers: "desc" }, take: 300, include: { _count: { select: { campaigns: true } } } }),
+  const [creators, total, matching, nicheRows, cityRows] = await Promise.all([
+    prisma.creator.findMany({ where, orderBy: { followers: "desc" }, take: limit, include: { _count: { select: { campaigns: true } } } }),
     prisma.creator.count(),
-    prisma.$queryRaw<{ niche: string }[]>`select distinct unnest(niches) as niche from crm_creators order by 1 limit 200`,
+    prisma.creator.count({ where }),
+    prisma.$queryRaw<{ niche: string; n: bigint }[]>`select trim(n) as niche, count(*) as n from crm_creators, unnest(niches) n group by 1 order by 2 desc limit 400`,
+    prisma.$queryRaw<{ city: string; n: bigint }[]>`select trim(split_part(city, '-', 1)) as city, count(*) as n from crm_creators where city is not null and city <> '' group by 1 order by 2 desc limit 300`,
   ]);
+  const nicheOptions = [...new Set([...NICHES, ...nicheRows.map((n) => n.niche).filter(usableNiche)])].map((n) => [n, n] as const);
+  const cityOptions = [...new Set(cityRows.map((c) => c.city.replace(/\s+/g, " ")).filter((c) => /^[A-Za-z][A-Za-z .'-]{1,40}$/.test(c)).map((c) => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()))].map((c) => [c, c] as const);
+  const more = new URLSearchParams();
+  for (const [k, v] of Object.entries(p)) for (const x of many(v as string | string[])) if (k !== "limit") more.append(k, x);
+  more.set("limit", String(limit + 300));
   return (
     <>
-      <PageHead kicker="Influence" title="Influencer database" sub={`${total} creators · ${creators.length} shown`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined} />
-      <form action="/admin/creators" className="flex flex-wrap items-end gap-2">
-        <input name="q" defaultValue={p.q} placeholder="Name or @handle" className="crm-input max-w-[14rem]" />
-        <Select name="platform" placeholder="Any platform" defaultValue={p.platform} options={PLATFORMS} className="max-w-[10rem]" />
-        <Select name="tier" placeholder="Any tier" defaultValue={p.tier} options={CREATOR_TIER} className="max-w-[12rem]" />
-        <Select name="niche" placeholder="Any niche" defaultValue={p.niche} options={[...new Set([...NICHES, ...nicheRows.map((n) => n.niche)])].map((n) => [n, n] as const)} className="max-w-[12rem]" />
-        <input name="city" defaultValue={p.city} placeholder="City" className="crm-input max-w-[9rem]" />
-        <input name="min" defaultValue={p.min} placeholder="Min followers" inputMode="numeric" className="crm-input max-w-[9rem]" />
-        <button className="crm-btn crm-btn-secondary crm-btn-sm">Search</button>
+      <PageHead kicker="Influence" title="Influencer database" sub={`${total} creators · ${matching} match · ${creators.length} shown`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined} />
+      <form action="/admin/creators" className="flex flex-wrap items-start gap-2">
+        <input name="q" defaultValue={p.q} placeholder="Name or @handle" className="crm-input max-w-[13rem]" />
+        <MultiSelect name="platform" label="Any platform" options={PLATFORMS} defaultValue={platforms} className="w-[10rem]" />
+        <MultiSelect name="tier" label="Any tier" options={Object.entries(CREATOR_TIER)} defaultValue={tiers} className="w-[11rem]" />
+        <MultiSelect name="niche" label="Any niche" options={nicheOptions} defaultValue={niches} className="w-[13rem]" />
+        <MultiSelect name="city" label="Any city" options={cityOptions} defaultValue={cities} className="w-[12rem]" />
+        <input name="min" defaultValue={p.min} placeholder="Min followers" inputMode="numeric" className="crm-input max-w-[8.5rem]" />
+        <input name="max" defaultValue={p.max} placeholder="Max followers" inputMode="numeric" className="crm-input max-w-[8.5rem]" />
+        <button className="crm-btn crm-btn-primary crm-btn-sm">Search</button>
+        {(p.q || platforms.length || tiers.length || niches.length || cities.length || min || max) ? <Link href="/admin/creators" className="crm-btn crm-btn-secondary crm-btn-sm">Clear all</Link> : null}
       </form>
       <AddPanel label="Add a creator">
         <ActionForm action={saveCreator} submit="Add creator">
@@ -93,6 +119,11 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
               ))}
             </Table>
           </form>
+          {matching > creators.length && (
+            <p className="text-center text-[0.875rem] text-ash">
+              Showing {creators.length} of {matching}. <Link href={`/admin/creators?${more}`} className="crm-link">Show 300 more</Link>
+            </p>
+          )}
           <PickBar formId="pick-creators" />
         </>
       )}

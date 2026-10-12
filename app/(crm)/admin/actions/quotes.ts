@@ -172,8 +172,8 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
   if (!q) return fail("That quote isn't yours, or no longer exists.");
   if (q.status === "PAID") return fail("Already paid.");
   try {
-    const view = (["both", "proposal", "pricing"] as const).find((v) => v === text(form, "view")) ?? "both";
-    const { paymentUrl } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && view !== "proposal", view);
+    const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";
+    const { paymentUrl } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && (view === "both" || view === "pricing"), view);
     await recordAuditLog({ action: "quote.sent", entity: "quote", entityId: id, actorId: viewer.id });
     revalidatePath("/admin", "layout");
     return ok(`Sent to ${q.contactEmail}${paymentUrl ? " with a payment link" : ""}.`);

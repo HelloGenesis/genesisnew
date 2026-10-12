@@ -46,8 +46,11 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const { token } = await params;
   const { paid, view: viewParam } = await searchParams;
   /* Proposal and pricing can go separately (Genesis, 12 Oct 2026): ?view=proposal hides every price, ?view=pricing the proposal. */
-  const view = viewParam === "proposal" || viewParam === "pricing" ? viewParam : "both";
-  const showPricing = view !== "proposal";
+  const view = viewParam === "proposal" || viewParam === "pricing" || viewParam === "plan" || viewParam === "proposal-plan" ? viewParam : "both";
+  /* Each part on its own or together (Genesis, 12 Oct 2026): proposal, pricing, influencer plan. */
+  const showPricing = view === "both" || view === "pricing";
+  const showCreators = view === "both" || view === "plan" || view === "proposal-plan";
+  const showCreatorFees = view === "both" || view === "plan";
   const prisma = getPrisma();
   const q = await prisma.quote.findUnique({ where: { token }, include: { lines: { orderBy: { position: "asc" } }, creators: { orderBy: { position: "asc" } } } });
   if (!q) notFound();
@@ -66,7 +69,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
     ["Objectives", q.proposalObjectives],
     ["Influencers", q.proposalInfluencers],
   ].filter((row): row is [string, string] => Boolean(row[1]));
-  const showProposal = view !== "pricing" && proposal.length > 0;
+  const showProposal = (view === "both" || view === "proposal" || view === "proposal-plan") && proposal.length > 0;
   const cgst = Math.round(q.taxPaise / 2);
 
   return (
@@ -105,7 +108,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
             </address>
           </div>
           <dl className="text-right text-[0.9375rem] leading-relaxed text-[#334155]">
-            <div><dt className="inline">{view === "proposal" ? "Proposal" : plan ? "Influencer Plan" : "Price Quote"}: </dt><dd className="inline font-medium text-[#0f172a]">{quoteRef(q.number)}</dd></div>
+            <div><dt className="inline">{view === "proposal" || view === "proposal-plan" ? "Proposal" : view === "plan" || plan ? "Influencer Plan" : "Price Quote"}: </dt><dd className="inline font-medium text-[#0f172a]">{quoteRef(q.number)}</dd></div>
             <div><dt className="inline">Issued on: </dt><dd className="inline">{day(q.issuedAt)}</dd></div>
             <div><dt className="inline">Expiry Date: </dt><dd className="inline">{day(q.expiresAt)}</dd></div>
           </dl>
@@ -189,22 +192,37 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
         </table>
         )}
 
-        {q.creators.length > 0 && (
+        {showCreators && q.creators.length > 0 && (
           <section className="break-inside-avoid border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
             <h2 className="mb-3 font-semibold">{plan ? "Influencer plan" : "Creators"}</h2>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] text-left text-[0.875rem]">
-                <thead className="text-[#64748b]"><tr><th className="py-2 pr-3 font-medium">Creator</th><th className="py-2 pr-3 font-medium">Platform</th><th className="py-2 pr-3 font-medium">Followers</th><th className="py-2 pr-3 font-medium">Avg views</th><th className="py-2 pr-3 font-medium">Niche</th><th className="py-2 pr-3 font-medium">Deliverables</th><th className="py-2 text-right font-medium">{showPricing ? "Fee" : ""}</th></tr></thead>
+              {/* The plan's columns, as on Genesis's influencer plans: prices per deliverable only when pricing is part of what's sent. */}
+              <table className="w-full min-w-[760px] text-left text-[0.8125rem]">
+                <thead className="bg-[#fff2cc] text-[#1e293b]">
+                  <tr>
+                    {["Tier", "Name", "Category", "IG Link", "Followers", "Avg Views", "ER", ...(showCreatorFees ? ["1 IG Reel", "Story + LIB", "DL (1 month)"] : []), "Location"].map((h) => (
+                      <th key={h} className="whitespace-nowrap px-2 py-2 font-semibold">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
                 <tbody className="divide-y divide-[#f1f5f9]">
-                  {q.creators.map((c) => (
-                    <tr key={c.id}>
-                      <td className="py-2 pr-3"><span className="font-medium">{c.name}</span><span className="block text-[#64748b]">{c.profileUrl ? <a className="underline" href={c.profileUrl} target="_blank" rel="noopener noreferrer">@{c.handle}</a> : `@${c.handle}`}{c.city ? ` · ${c.city}` : ""}</span></td>
-                      <td className="py-2 pr-3">{c.platform.charAt(0) + c.platform.slice(1).toLowerCase()}</td>
-                      <td className="py-2 pr-3">{compact(c.followers)}</td>
-                      <td className="py-2 pr-3">{compact(c.avgViews)}</td>
-                      <td className="py-2 pr-3">{c.niches.join(", ") || "—"}</td>
-                      <td className="py-2 pr-3">{c.deliverables ?? "—"}</td>
-                      <td className="whitespace-nowrap py-2 text-right">{!showPricing ? "" : c.feePaise === null ? "—" : inr(c.feePaise)}</td>
+                  {[...q.creators].sort((a, b) => a.followers - b.followers).map((c) => (
+                    <tr key={c.id} className="align-top">
+                      <td className="whitespace-nowrap px-2 py-2 font-medium">{c.followers < 100_000 ? "Nano & Micro" : "Macro & Mega"}</td>
+                      <td className="px-2 py-2 font-medium">{c.name}</td>
+                      <td className="px-2 py-2">{c.niches.join(" & ") || "—"}</td>
+                      <td className="px-2 py-2">{c.profileUrl ? <a className="underline" href={c.profileUrl} target="_blank" rel="noopener noreferrer">@{c.handle}</a> : `@${c.handle}`}</td>
+                      <td className="whitespace-nowrap px-2 py-2">{compact(c.followers)}</td>
+                      <td className="whitespace-nowrap px-2 py-2">{compact(c.avgViews)}</td>
+                      <td className="whitespace-nowrap px-2 py-2">{c.engagementRate ? `${c.engagementRate}%` : "—"}</td>
+                      {showCreatorFees && (
+                        <>
+                          <td className="whitespace-nowrap px-2 py-2">{c.reelPricePaise ? inr(c.reelPricePaise) : "—"}</td>
+                          <td className="whitespace-nowrap px-2 py-2">{c.storyPricePaise ? inr(c.storyPricePaise) : "—"}</td>
+                          <td className="whitespace-nowrap px-2 py-2">{c.dlPricePaise ? inr(c.dlPricePaise) : "—"}</td>
+                        </>
+                      )}
+                      <td className="px-2 py-2">{c.city ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>

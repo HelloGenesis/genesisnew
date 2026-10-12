@@ -42,7 +42,7 @@ export async function refreshTotals(quoteId: string) {
  * cancelled, so a client can never pay a superseded figure), a pending order
  * the webhook can fulfil, the email, and the lead moved to Proposal sent.
  */
-export async function sendQuote(quoteId: string, actorId: string, message: string | null, withPayment: boolean, view: "both" | "proposal" | "pricing" = "both") {
+export async function sendQuote(quoteId: string, actorId: string, message: string | null, withPayment: boolean, view: "both" | "proposal" | "pricing" | "plan" | "proposal-plan" = "both") {
   const prisma = getPrisma();
   const t = await refreshTotals(quoteId);
   const q = t.quote;
@@ -114,7 +114,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   }
 
   const plan = q.kind === "INFLUENCER_PLAN";
-  const pricing = view !== "proposal";
+  const pricing = view === "both" || view === "pricing";
   const link = appUrl(`/quote/${q.token}${view === "both" ? "" : `?view=${view}`}`);
   const lines = pricing ? q.lines.map((l) => `• ${l.title}${l.qty > 1 ? ` × ${l.qty}` : ""}: ${money(l.qty * l.unitPaise)}`) : [];
   if (pricing && plan && q.creators.length) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
@@ -122,11 +122,11 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   await queueEmail({
     kind: "quote_sent",
     to: [q.contactEmail],
-    subject: `${view === "proposal" ? "Proposal" : plan ? "Influencer plan" : "Quotation"} ${ref} · ${q.title}`,
+    subject: `${view === "proposal" || view === "proposal-plan" ? "Proposal" : view === "plan" || plan ? "Influencer plan" : "Quotation"} ${ref} · ${q.title}`,
     text: [
       `Hi ${q.contactName.split(" ")[0]},`,
       "",
-      message ?? (view === "proposal" ? "Thank you for the brief. Here's our proposal: the platforms, the problems we'll solve, the objectives and the creators." : plan ? "Here's the influencer plan we've put together for you, with the creator list." : "Thank you for the brief. Here's our quotation."),
+      message ?? (view === "proposal" || view === "proposal-plan" ? "Thank you for the brief. Here's our proposal: the platforms, the problems we'll solve, the objectives and the creators." : plan ? "Here's the influencer plan we've put together for you, with the creator list." : "Thank you for the brief. Here's our quotation."),
       "",
       `${q.title}`,
       ...lines,
@@ -134,7 +134,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
       pricing && q.addGst ? (q.igst ? `IGST ${q.gstPercent}%: ${money(t.tax)}` : `CGST ${q.gstPercent / 2}%: ${money(half)}\nSGST ${q.gstPercent / 2}%: ${money(t.tax - half)}`) : "",
       pricing ? `Total: ${money(t.total)}` : "",
       "",
-      `View the full ${view === "proposal" ? "proposal" : plan ? "plan" : "quotation"}${view === "pricing" ? "" : " (scope, notes and terms)"}${plan ? " and approve it" : ""}:`,
+      `View the full ${view === "proposal" || view === "proposal-plan" ? "proposal" : view === "plan" || plan ? "plan" : "quotation"}${view === "pricing" ? "" : " (scope, notes and terms)"}${plan ? " and approve it" : ""}:`,
       link,
       paymentUrl ? `\nPay securely (card, UPI, net banking): ${paymentUrl}` : "",
       "",

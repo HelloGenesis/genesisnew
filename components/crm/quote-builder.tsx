@@ -79,6 +79,12 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
   const [link, setLink] = useState("");
   const [linkError, setLinkError] = useState<string | null>(null);
   const [state, action, pending] = useActionState(saveQuote, null);
+  /* Which parts this document holds (shown in the builder; the send step picks which go). */
+  const [parts, setParts] = useState({
+    proposal: Boolean(initial.proposalProblems || initial.proposalObjectives || initial.proposalInfluencers || initial.proposalPlatforms?.length) || initial.kind === "QUOTE",
+    pricing: initial.kind === "QUOTE" || initial.lines.length > 0,
+    plan: initial.kind === "INFLUENCER_PLAN" || initial.creators.length > 0,
+  });
   const set = <K extends keyof BuilderQuote>(k: K, v: BuilderQuote[K]) => setQ((x) => ({ ...x, [k]: v }));
   const setLine = (i: number, patch: Partial<BuilderLine>) => setQ((x) => ({ ...x, lines: x.lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) }));
   const setCreator = (i: number, patch: Partial<BuilderCreator>) => setQ((x) => ({ ...x, creators: x.creators.map((c, j) => (j === i ? { ...c, ...patch } : c)) }));
@@ -131,12 +137,32 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
       <input type="hidden" name="payload" value={JSON.stringify(q)} />
 
       <section className="crm-card crm-pad space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {(["QUOTE", "INFLUENCER_PLAN"] as const).map((k) => (
-            <button key={k} type="button" onClick={() => set("kind", k)} aria-current={q.kind === k ? "page" : undefined} className="crm-nav-link !min-h-9">
-              {k === "QUOTE" ? "Price quote" : "Influencer plan (with creator list)"}
-            </button>
-          ))}
+        {/*
+          TOGETHER OR SEPARATE (Genesis, 12 Oct 2026: "influencer plan, proposal
+          and other quotes should be together or separate, give the option").
+          Tick what this document holds; when sending, choose which parts go.
+        */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[0.875rem] text-ash">This document has:</span>
+          {([["proposal", "Proposal"], ["pricing", "Price lines"], ["plan", "Influencer plan"]] as const).map(([k, label]) => {
+            const on = parts[k];
+            return (
+              <button
+                key={k}
+                type="button"
+                aria-pressed={on}
+                onClick={() => {
+                  const next = { ...parts, [k]: !on };
+                  if (!next.proposal && !next.pricing && !next.plan) return;
+                  setParts(next);
+                  set("kind", next.plan && !next.pricing ? "INFLUENCER_PLAN" : "QUOTE");
+                }}
+                className={`rounded-full border px-3 py-1.5 text-[0.875rem] ${on ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}
+              >
+                {on ? "✓ " : ""}{label}
+              </button>
+            );
+          })}
         </div>
         <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
           <label><span className="crm-label">Title (as on the quote)</span><input value={q.title} onChange={(e) => set("title", e.target.value)} required className="crm-input" placeholder="Primezen + Sensinova — Premium UGC Product Content" /></label>
@@ -153,7 +179,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className={`space-y-3 ${parts.pricing ? "" : "hidden"}`}>
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 className="text-[1.125rem] text-bone">Product or service</h2>
           <div className="flex flex-wrap gap-2">
@@ -193,7 +219,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
         ))}
       </section>
 
-      <section className={`space-y-3 ${plan ? "" : "opacity-90"}`}>
+      <section className={`space-y-3 ${parts.plan ? "" : "hidden"}`}>
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 className="text-[1.125rem] text-bone">Creators {plan ? "on this plan" : "(optional)"}</h2>
           <span className="text-[0.8125rem] text-ash">{q.creators.length} creators · {inr(totals.creators)} fees</span>
@@ -245,8 +271,9 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
             <>
               {/* MARKUP: the client's price is the creator's cost plus this, rounded (Genesis's plans: cost → price → profit). */}
               <div className="flex flex-wrap items-center gap-2 text-[0.875rem] text-ash">
-                Client price = creator cost +
-                <input type="number" min={0} max={500} value={q.markupPercent ?? 30} onChange={(e) => set("markupPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-20" />%
+                <span>Client price = creator cost +</span>
+                <input type="number" min={0} max={500} value={q.markupPercent ?? 30} onChange={(e) => set("markupPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 !w-20" />
+                <span>%</span>
                 <button
                   type="button"
                   className="crm-btn crm-btn-secondary crm-btn-sm"
@@ -258,33 +285,42 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
                 >
                   Apply to every price
                 </button>
-                <label className="ml-auto flex items-center gap-2">Budget line <input value={q.planBudget ?? ""} onChange={(e) => set("planBudget", e.target.value)} className="crm-input !min-h-8 w-40" placeholder="As per Brand" /></label>
+                <span className="ml-auto flex items-center gap-2">Budget line <input value={q.planBudget ?? ""} onChange={(e) => set("planBudget", e.target.value)} className="crm-input !min-h-8 !w-44" placeholder="As per Brand" /></span>
               </div>
-              <div className="overflow-x-auto">
-                <table className="crm-table !min-w-[1200px] text-[0.8125rem]">
+              {/* THE PLAN AS GENESIS'S SHEET, every column (Genesis, 12 Oct 2026: "fields are still missing"); scrolls sideways, the name stays put. */}
+              <div className="-mx-1 overflow-x-auto pb-2">
+                <table className="crm-table !min-w-[2150px] text-[0.8125rem] [&_td]:!px-1.5 [&_th]:!px-1.5 [&_th]:whitespace-nowrap">
                   <thead>
                     <tr>
-                      <th>Creator</th><th>Followers</th><th>ER %</th><th>Reach-out</th>
-                      <th colSpan={3} className="text-center">Creator cost (₹): Reel · Story+LIB · DL 1m</th>
-                      <th colSpan={3} className="text-center">Client price (₹): Reel · Story+LIB · DL 1m</th>
-                      <th>Profit</th><th>Remarks</th><th />
+                      <th className="sticky left-0 z-10 bg-[var(--surface-panel)]">Name</th>
+                      <th>Tier</th><th>Category</th><th>IG link</th><th>Followers</th><th>Avg views</th><th>ER %</th><th>Location</th><th>Reach-out</th>
+                      <th className="bg-[var(--hover-wash)]">Cost: 1 IG Reel</th><th className="bg-[var(--hover-wash)]">Cost: Story + LIB</th><th className="bg-[var(--hover-wash)]">Cost: DL (1 month)</th>
+                      <th>Price: 1 IG Reel</th><th>Price: Story + LIB</th><th>Price: DL (1 month)</th>
+                      <th>Profit</th><th>Contact</th><th>Remarks</th><th />
                     </tr>
                   </thead>
                   <tbody>
                     {q.creators.map((c, i) => {
-                      const num = (k: keyof BuilderCreator) => (
-                        <td key={k}><input type="number" min={0} value={(c[k] as number | null | undefined) ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 w-[5.5rem] !px-2" /></td>
+                      const money = (k: "reelCost" | "storyCost" | "dlCost" | "reelPrice" | "storyPrice" | "dlPrice", cost = false) => (
+                        <td key={k} className={cost ? "bg-[var(--hover-wash)]" : ""}><input type="number" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
                       );
+                      const profit = creatorTotal(c) - creatorCost(c);
                       return (
                         <tr key={`${c.handle}-${i}`}>
-                          <td className="text-bone">{c.name}<span className="block text-[0.75rem] text-ash">@{c.handle}{c.city ? ` · ${c.city}` : ""}</span></td>
-                          <td className="tabular-nums">{compact(c.followers)}</td>
-                          <td><input type="number" min={0} step="0.1" value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 w-16 !px-2" /></td>
-                          <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 w-32 !px-2">{REACHOUT.map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>
-                          {num("reelCost")}{num("storyCost")}{num("dlCost")}
-                          {num("reelPrice")}{num("storyPrice")}{num("dlPrice")}
-                          <td className={`tabular-nums ${creatorTotal(c) - creatorCost(c) < 0 ? "text-[#dc2626]" : "text-bone"}`}>{inr(creatorTotal(c) - creatorCost(c))}</td>
-                          <td><input value={c.remarks ?? ""} onChange={(e) => setCreator(i, { remarks: e.target.value })} className="crm-input !min-h-8 w-36 !px-2" /></td>
+                          <td className="sticky left-0 z-10 min-w-[11rem] bg-[var(--surface-panel)] text-bone">{c.name}<span className="block text-[0.75rem] text-ash">@{c.handle}</span></td>
+                          <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>
+                          <td><input value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>
+                          <td>{c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link">Profile ↗</a> : "—"}</td>
+                          <td className="tabular-nums whitespace-nowrap">{compact(c.followers)}</td>
+                          <td><input type="number" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>
+                          <td><input type="number" min={0} step="0.1" value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>
+                          <td><input value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>
+                          <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{REACHOUT.map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>
+                          {money("reelCost", true)}{money("storyCost", true)}{money("dlCost", true)}
+                          {money("reelPrice")}{money("storyPrice")}{money("dlPrice")}
+                          <td className={`whitespace-nowrap tabular-nums ${profit < 0 ? "text-[#dc2626]" : "text-bone"}`}>{inr(profit)}</td>
+                          <td><input value={c.contact ?? ""} onChange={(e) => setCreator(i, { contact: e.target.value })} className="crm-input !min-h-8 !w-44 !px-2" placeholder="+91… / email / agency" /></td>
+                          <td><input value={c.remarks ?? ""} onChange={(e) => setCreator(i, { remarks: e.target.value })} className="crm-input !min-h-8 !w-48 !px-2" /></td>
                           <td><button type="button" aria-label="Remove creator" onClick={() => setQ((x) => ({ ...x, creators: x.creators.filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><X className="size-4" /></button></td>
                         </tr>
                       );
@@ -292,11 +328,12 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
                   </tbody>
                   <tfoot>
                     <tr className="text-bone">
-                      <td colSpan={4}>{q.creators.length} creators</td>
-                      <td colSpan={3} className="tabular-nums">Cost {inr(q.creators.reduce((s, c) => s + creatorCost(c), 0))}</td>
-                      <td colSpan={3} className="tabular-nums">Client {inr(totals.creators)}</td>
-                      <td className="tabular-nums">{inr(totals.creators - q.creators.reduce((s, c) => s + creatorCost(c), 0))}</td>
-                      <td colSpan={2} />
+                      <td className="sticky left-0 z-10 bg-[var(--surface-panel)]">{q.creators.length} creators</td>
+                      <td colSpan={8} />
+                      <td colSpan={3} className="whitespace-nowrap tabular-nums">Cost {inr(q.creators.reduce((s, c) => s + creatorCost(c), 0))}</td>
+                      <td colSpan={3} className="whitespace-nowrap tabular-nums">Client {inr(totals.creators)}</td>
+                      <td className="whitespace-nowrap tabular-nums">{inr(totals.creators - q.creators.reduce((s, c) => s + creatorCost(c), 0))}</td>
+                      <td colSpan={3} />
                     </tr>
                   </tfoot>
                 </table>
@@ -307,7 +344,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
       </section>
 
       {/* THE PROPOSAL (Genesis, 12 Oct 2026): what the campaign is, apart from what it costs; it can be sent on its own. */}
-      <section className="crm-card crm-pad space-y-3">
+      <section className={`crm-card crm-pad space-y-3 ${parts.proposal ? "" : "hidden"}`}>
         <div>
           <h2 className="text-[1.125rem] text-bone">Proposal</h2>
           <p className="text-[0.8125rem] text-ash">Shown above the pricing. When sending you can send the proposal on its own, the pricing on its own, or both.</p>
