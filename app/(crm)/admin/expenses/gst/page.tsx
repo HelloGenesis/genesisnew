@@ -3,6 +3,7 @@ import { Badge, Card, Field, PageHead, Select, Stats, Table } from "@/components
 import { getPrisma } from "@/lib/db";
 import { date, money, todayIst } from "@/lib/crm/catalog";
 import { ensureGstFilings, GST_RETURNS, gstMonth } from "@/lib/crm/company";
+import { SUPPLIER } from "@/lib/crm/invoices";
 import { requireStaff } from "@/lib/crm/session";
 
 import { type GstProfile, saveGstProfile, updateGstFiling } from "../../actions/company";
@@ -103,13 +104,22 @@ export default async function GstPage() {
 
         <Card title="Registration & filing details">
           <ActionForm action={saveGstProfile} submit="Save">
-            <Field label="GSTIN"><input name="gstin" defaultValue={profile.gstin} className="crm-input uppercase" placeholder="27ABCDE1234F1Z5" /></Field>
+            <Field label="GSTIN"><input name="gstin" defaultValue={profile.gstin ?? SUPPLIER.gstin} className="crm-input uppercase" placeholder="27ABCDE1234F1Z5" /></Field>
             <Field label="Legal name"><input name="legalName" defaultValue={profile.legalName ?? "Genesis Events and Media Group"} className="crm-input" /></Field>
             <Field label="State"><input name="state" defaultValue={profile.state ?? "Maharashtra"} className="crm-input" /></Field>
             <Field label="Filing"><Select name="frequency" defaultValue={profile.frequency ?? "Monthly"} options={[["Monthly", "Monthly (GSTR-1 by 11th, GSTR-3B by 20th)"], ["QRMP", "Quarterly (QRMP scheme)"]]} /></Field>
             <Field label="CA / accountant"><input name="accountant" defaultValue={profile.accountant} className="crm-input" /></Field>
             <Field label="Their email"><input name="accountantEmail" type="email" defaultValue={profile.accountantEmail} className="crm-input" /></Field>
             <Field label="GST portal username" hint="The username only — never store the password here."><input name="portalUser" defaultValue={profile.portalUser} className="crm-input" /></Field>
+            <p className="crm-label pt-2">On every invoice</p>
+            <Field label="Address"><input name="address" defaultValue={profile.address ?? SUPPLIER.address} className="crm-input" /></Field>
+            <Field label="Phone"><input name="phone" defaultValue={profile.phone ?? SUPPLIER.phone} className="crm-input" /></Field>
+            <Field label="Email"><input name="invoiceEmail" defaultValue={profile.invoiceEmail ?? SUPPLIER.email} className="crm-input" /></Field>
+            <Field label="Payee name"><input name="payee" defaultValue={profile.payee ?? SUPPLIER.payee} className="crm-input" /></Field>
+            <Field label="Bank"><input name="bank" defaultValue={profile.bank ?? SUPPLIER.bank} className="crm-input" /></Field>
+            <Field label="Account number"><input name="account" defaultValue={profile.account ?? SUPPLIER.account} className="crm-input" /></Field>
+            <Field label="IFSC"><input name="ifsc" defaultValue={profile.ifsc ?? SUPPLIER.ifsc} className="crm-input uppercase" /></Field>
+            <Field label="Signs invoices" hint="Emailed to sign each new invoice by hand, then uploads the signed copy."><input name="signatoryEmail" type="email" defaultValue={profile.signatoryEmail ?? "shivam@genesismedia.co"} className="crm-input" /></Field>
             <Field label="Notes"><textarea name="notes" defaultValue={profile.notes} className="crm-input !min-h-20" /></Field>
           </ActionForm>
         </Card>

@@ -15,14 +15,14 @@ export default async function NewInvoicePage() {
   const viewer = await requireStaff();
   if (!can(viewer, "sales") && !can(viewer, "finance")) redirect("/admin/forbidden");
   const today = inDays(0);
-  const due = inDays(7);
+  const due = inDays(15);
   return (
     <>
       <PageHead kicker="Sales" title="New invoice" sub="Numbered when saved, GM/2026-27/0001 and on." />
       <InvoiceBuilder
         states={STATES}
         accounts={await invoiceAccounts(viewer)}
-        initial={{ billToName: "", placeOfSupply: HOME_STATE, issueDate: today, dueDate: due, discount: 0, terms: DEFAULT_TERMS, lines: [{ description: "", sac: "998361", qty: 1, unit: 0 }] }}
+        initial={{ billToName: "", placeOfSupply: HOME_STATE, issueDate: today, dueDate: due, discount: 0, terms: DEFAULT_TERMS, paymentTermDays: 15, quotationRef: "E-Mail", poNumber: "E-Mail", lines: [{ description: "", sac: "996211", qty: 1, uom: "NOS", unit: 0 }] }}
       />
     </>
   );

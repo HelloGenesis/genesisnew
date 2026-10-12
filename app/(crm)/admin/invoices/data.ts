@@ -10,8 +10,11 @@ export async function invoiceAccounts(viewer: Viewer) {
   return rows.map((a) => ({ id: a.id, name: a.name, legalName: a.legalName, email: a.email, gstin: a.gstin, address: a.billingAddress, state: a.state }));
 }
 
-export const DEFAULT_TERMS = [
+export const DEFAULT_TERMS_OLD = [
   "Payment due within 7 days of the invoice date.",
   "Please quote the invoice number with your payment.",
   "Bank: (add Genesis's account name, number, IFSC and branch here, or pay by the link in the email).",
 ].join("\n");
+
+/** Invoices carry Genesis's standing terms and bank details in the layout itself; this box is for anything extra. */
+export const DEFAULT_TERMS = "";

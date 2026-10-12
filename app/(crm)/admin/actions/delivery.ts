@@ -398,6 +398,8 @@ function creatorData(form: FormData) {
     reelRatePaise: toPaise(form.get("reelRate")),
     storyRatePaise: toPaise(form.get("storyRate")),
     postRatePaise: toPaise(form.get("postRate")),
+    dlRatePaise: toPaise(form.get("dlRate")),
+    youtubeUrl: text(form, "youtubeUrl", 300),
     email: text(form, "email", 200)?.toLowerCase() ?? null,
     phone: text(form, "phone", 30),
     managedBy: text(form, "managedBy", 160),

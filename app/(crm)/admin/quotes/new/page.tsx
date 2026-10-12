@@ -14,7 +14,7 @@ export const metadata = { title: "New quote" };
  * interest), a client account, or a client's request — "every manual brief
  * that comes in" gets its quotation or influencer plan right there.
  */
-export default async function NewQuote({ searchParams }: { searchParams: Promise<{ lead?: string; account?: string; request?: string; kind?: string; brief?: string }> }) {
+export default async function NewQuote({ searchParams }: { searchParams: Promise<{ lead?: string; account?: string; request?: string; kind?: string; brief?: string; creators?: string | string[] }> }) {
   await requireStaff("sales");
   const p = await searchParams;
   const prisma = getPrisma();
@@ -27,7 +27,9 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
   ]);
   const accountId = p.account ?? brief?.accountId ?? request?.accountId ?? lead?.accountId ?? null;
   const account = accountId ? await prisma.account.findUnique({ where: { id: accountId }, include: { members: { include: { user: true }, take: 1 } } }) : null;
-  const kind = p.kind === "INFLUENCER_PLAN" ? "INFLUENCER_PLAN" : "QUOTE";
+  const pickedIds = (Array.isArray(p.creators) ? p.creators : p.creators ? [p.creators] : []).slice(0, 200);
+  const picked = pickedIds.length ? await prisma.creator.findMany({ where: { id: { in: pickedIds } }, orderBy: { followers: "asc" } }) : [];
+  const kind = p.kind === "INFLUENCER_PLAN" || picked.length ? "INFLUENCER_PLAN" : "QUOTE";
   const division = brief?.division ?? lead?.division ?? (kind === "INFLUENCER_PLAN" ? "INFLUENCE" : null);
   const terms = kind === "INFLUENCER_PLAN" ? termsByKey("influencer")! : termsFor(division);
   const contact = account?.members[0]?.user;
@@ -54,7 +56,19 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
     proposalInfluencers: brief?.deliverables ?? null,
     discount: 0,
     lines: [],
-    creators: [],
+    markupPercent: 30,
+    planBudget: "As per Brand",
+    /* Ticked in the influencer database (Genesis, 12 Oct 2026): their rates as our cost, the client's price marked up 30%. */
+    creators: picked.map((c) => {
+      const cost = (v: number | null) => (v === null ? null : v / 100);
+      const price = (v: number | null) => (v === null ? null : Math.round((v / 100) * 1.3));
+      return {
+        creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city,
+        deliverables: "1 IG Reel + Story & link in bio", er: c.engagementRate, reelCost: cost(c.reelRatePaise), storyCost: cost(c.storyRatePaise), dlCost: cost(c.dlRatePaise),
+        reelPrice: price(c.reelRatePaise), storyPrice: price(c.storyRatePaise), dlPrice: price(c.dlRatePaise), reachout: null, contact: [c.phone, c.email, c.managedBy].filter(Boolean).join(" · ") || null, remarks: null,
+        fee: null,
+      };
+    }),
   };
   const data = await builderData();
   return (

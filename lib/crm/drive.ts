@@ -214,6 +214,37 @@ export async function projectFolderId(p: { accountId: string; accountName: strin
   return folder(p.folderLabel, project, `project:${p.projectId}:${p.folderKey}`);
 }
 
+/** Genesis CRM / Invoices / <number>: an invoice's supporting screenshots and its signed copy. */
+export async function invoiceFolderId(invoiceId: string, number: string) {
+  const root = await folder(ROOT_NAME, null, "root");
+  const invoices = await folder("Invoices", root, "invoices");
+  return folder(`Invoice ${number}`, invoices, `invoice:${invoiceId}`);
+}
+
+/** A small file (a screenshot, a signed PDF) uploaded by the server in one request. Returns its Drive id. */
+export async function uploadSmall(input: { name: string; mimeType: string; bytes: Buffer; parentId: string }): Promise<string> {
+  if (localDrive()) {
+    mkdirSync(LOCAL_DIR, { recursive: true });
+    const id = `local${randomBytes(8).toString("hex")}`;
+    writeFileSync(localMeta(id), JSON.stringify({ id, name: clean(input.name), mimeType: input.mimeType, size: String(input.bytes.length), parents: [input.parentId] }));
+    writeFileSync(localData(id), input.bytes);
+    return id;
+  }
+  const boundary = `gm${randomBytes(12).toString("hex")}`;
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: clean(input.name), parents: [input.parentId] })}\r\n--${boundary}\r\nContent-Type: ${input.mimeType || "application/octet-stream"}\r\n\r\n`),
+    input.bytes,
+    Buffer.from(`\r\n--${boundary}--`),
+  ]);
+  const response = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+    body,
+  });
+  if (!response.ok) throw new Error(`Drive upload failed (${response.status}): ${(await response.text()).slice(0, 160)}`);
+  return ((await response.json()) as { id: string }).id;
+}
+
 // --- Files -------------------------------------------------------------------------
 
 /**

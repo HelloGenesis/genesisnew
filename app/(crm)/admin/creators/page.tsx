@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ActionForm } from "@/components/crm/action-form";
 import { CreatorFields, PLATFORMS } from "@/components/crm/creator-fields";
+import { PickBar } from "@/components/crm/pick-bar";
 import { AddPanel, Badge, Empty, PageHead, Select, Table } from "@/components/crm/ui";
 import { NICHES } from "@/lib/crm/niches";
 import { getPrisma } from "@/lib/db";
@@ -60,28 +61,40 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
       {creators.length === 0 ? (
         <Empty>No creators match.</Empty>
       ) : (
-        <Table head={["Creator", "Platform", "Followers", "Avg views", "ER", "Niches", "City", "Reel rate", "Campaigns"]}>
-          {creators.map((c) => (
-            <tr key={c.id} className={c.blacklisted ? "opacity-50" : ""}>
-              <td>
-                <Link href={`/admin/creators/${c.id}`} className="text-bone hover:underline">{c.name}</Link>
-                <span className="block text-[0.8125rem] text-ash">@{c.handle}</span>
-                <span className="flex flex-wrap gap-1">
-                  {c.tags.map((t) => <Badge key={t} tone={t.startsWith("Applied") ? "info" : "muted"}>{t}</Badge>)}
-                  {c.blacklisted && <Badge tone="bad">Do not use</Badge>}
-                </span>
-              </td>
-              <td>{c.platform.toLowerCase()}</td>
-              <td className="tabular-nums">{compact(c.followers)}<span className="block text-[0.75rem] text-faint">{CREATOR_TIER[c.tier].split(" ")[0]}</span></td>
-              <td className="tabular-nums">{compact(c.avgViews)}</td>
-              <td className="tabular-nums">{c.engagementRate ? `${c.engagementRate}%` : "—"}</td>
-              <td className="max-w-[14rem]">{c.niches.join(", ") || "—"}</td>
-              <td>{c.city ?? "—"}</td>
-              <td className="tabular-nums">{money(c.reelRatePaise)}</td>
-              <td className="tabular-nums">{c._count.campaigns}</td>
-            </tr>
-          ))}
-        </Table>
+        <>
+          {/* IN THE PLAN'S OWN COLUMNS (Genesis, 12 Oct 2026, from the IndusInd Nippon plan), with a tick to put creators on a new plan. */}
+          <form id="pick-creators" action="/admin/quotes/new" method="get">
+            <input type="hidden" name="kind" value="INFLUENCER_PLAN" />
+            <Table head={["", "Tier", "Name", "Category", "IG link", "Followers", "Avg views", "ER", "1 IG Reel", "Story + LIB", "DL (1 month)", "Location", "Contact", "Campaigns"]}>
+              {creators.map((c) => (
+                <tr key={c.id} className={c.blacklisted ? "opacity-50" : ""}>
+                  <td><input type="checkbox" name="creators" value={c.id} disabled={c.blacklisted} aria-label={`Select ${c.name}`} className="size-4 accent-[#ffc516]" /></td>
+                  <td className="whitespace-nowrap text-[0.8125rem]">{CREATOR_TIER[c.tier].split(" ")[0]}</td>
+                  <td>
+                    <Link href={`/admin/creators/${c.id}`} className="text-bone hover:underline">{c.name}</Link>
+                    <span className="block text-[0.8125rem] text-ash">@{c.handle}{c.platform !== "INSTAGRAM" ? ` · ${c.platform.toLowerCase()}` : ""}</span>
+                    <span className="flex flex-wrap gap-1">
+                      {c.tags.map((t) => <Badge key={t} tone={t.startsWith("Applied") ? "info" : "muted"}>{t}</Badge>)}
+                      {c.blacklisted && <Badge tone="bad">Do not use</Badge>}
+                    </span>
+                  </td>
+                  <td className="max-w-[12rem] text-[0.875rem]">{c.niches.join(", ") || "—"}</td>
+                  <td>{c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">Profile ↗</a> : "—"}{c.youtubeUrl && <a href={c.youtubeUrl} target="_blank" rel="noreferrer" className="crm-link block text-[0.8125rem]">YouTube ↗</a>}</td>
+                  <td className="tabular-nums">{compact(c.followers)}</td>
+                  <td className="tabular-nums">{compact(c.avgViews)}</td>
+                  <td className="tabular-nums">{c.engagementRate ? `${c.engagementRate}%` : "—"}</td>
+                  <td className="tabular-nums">{c.reelRatePaise ? money(c.reelRatePaise) : "—"}</td>
+                  <td className="tabular-nums">{c.storyRatePaise ? money(c.storyRatePaise) : "—"}</td>
+                  <td className="tabular-nums">{c.dlRatePaise ? money(c.dlRatePaise) : "—"}</td>
+                  <td>{c.city ?? "—"}</td>
+                  <td className="max-w-[12rem] text-[0.8125rem]">{[c.phone, c.email, c.managedBy].filter(Boolean).join(" · ") || "—"}</td>
+                  <td className="tabular-nums">{c._count.campaigns}</td>
+                </tr>
+              ))}
+            </Table>
+          </form>
+          <PickBar formId="pick-creators" />
+        </>
       )}
     </>
   );

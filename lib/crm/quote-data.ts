@@ -10,6 +10,6 @@ export async function builderData() {
   return {
     catalog: CATALOG.map((c) => ({ ...c })),
     terms: TERMS.map((t) => ({ key: t.key, label: t.label, notes: t.notes, terms: [...t.terms] })),
-    pool: pool.map((c) => ({ id: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, reel: c.reelRatePaise ? c.reelRatePaise / 100 : null })),
+    pool: pool.map((c) => ({ id: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, reel: c.reelRatePaise ? c.reelRatePaise / 100 : null, story: c.storyRatePaise ? c.storyRatePaise / 100 : null, dl: c.dlRatePaise ? c.dlRatePaise / 100 : null, contact: [c.phone, c.email, c.managedBy].filter(Boolean).join(" · ") || null })),
   };
 }

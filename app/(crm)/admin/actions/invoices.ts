@@ -7,7 +7,7 @@ import { z } from "zod";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
 import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
-import { HOME_STATE, markInvoicePaid, newInvoiceToken, nextNumber, refreshInvoice, sendInvoice, stateFromGstin } from "@/lib/crm/invoices";
+import { assignSignatory, HOME_STATE, markInvoicePaid, newInvoiceToken, nextNumber, refreshInvoice, sendInvoice, stateFromGstin } from "@/lib/crm/invoices";
 import { invoiceScope, quoteScope } from "@/lib/crm/scope";
 import { can, requireStaff, type Viewer } from "@/lib/crm/session";
 import { RazorpayError, razorpay } from "@/lib/razorpay";
@@ -15,6 +15,7 @@ import { RazorpayError, razorpay } from "@/lib/razorpay";
 /** Invoices: made by sales or finance; each person their own, super admins all (lib/crm/scope). */
 
 const done = () => revalidatePath("/admin", "layout");
+const day = (v?: string | null) => (v ? new Date(`${v}T00:00:00Z`) : null);
 
 async function staff(): Promise<Viewer> {
   const viewer = await requireStaff();
@@ -38,7 +39,15 @@ const payload = z.object({
   discount: rupees,
   notes: z.string().max(4000).nullable().optional(),
   terms: z.string().max(6000).nullable().optional(),
-  lines: z.array(z.object({ description: z.string().trim().min(1).max(500), sac: z.string().trim().max(10).default("998361"), qty: z.coerce.number().int().min(1).max(100000), unit: rupees })).min(1).max(60),
+  quotationRef: z.string().max(60).nullable().optional(),
+  quotationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().or(z.literal("")),
+  poNumber: z.string().max(60).nullable().optional(),
+  poDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().or(z.literal("")),
+  executionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().or(z.literal("")),
+  paymentTermDays: z.coerce.number().int().min(0).max(365).optional(),
+  reference: z.string().max(200).nullable().optional(),
+  billToPan: z.string().trim().max(10).nullable().optional(),
+  lines: z.array(z.object({ description: z.string().trim().min(1).max(500), sac: z.string().trim().max(10).default("996211"), qty: z.coerce.number().int().min(1).max(100000), uom: z.string().max(10).optional(), unit: rupees })).min(1).max(60),
 });
 
 export async function saveInvoice(_: ActionState, form: FormData): Promise<ActionState> {
@@ -64,8 +73,16 @@ export async function saveInvoice(_: ActionState, form: FormData): Promise<Actio
     discountPaise: Math.round(v.discount * 100),
     notes: v.notes || null,
     terms: v.terms || null,
+    quotationRef: v.quotationRef || null,
+    quotationDate: day(v.quotationDate),
+    poNumber: v.poNumber || null,
+    poDate: day(v.poDate),
+    executionDate: day(v.executionDate),
+    paymentTermDays: v.paymentTermDays ?? 15,
+    reference: v.reference || null,
+    billToPan: v.billToPan?.toUpperCase() || (gstin ? gstin.slice(2, 12) : null),
   };
-  const lines = v.lines.map((l, i) => ({ position: i, description: l.description, sac: l.sac || "998361", qty: l.qty, unitPaise: Math.round(l.unit * 100) }));
+  const lines = v.lines.map((l, i) => ({ position: i, description: l.description, sac: l.sac || "996211", qty: l.qty, unit: l.uom || "NOS", unitPaise: Math.round(l.unit * 100) }));
   let id = v.id;
   if (id) {
     const before = await mine(viewer, id);
@@ -84,6 +101,7 @@ export async function saveInvoice(_: ActionState, form: FormData): Promise<Actio
     }
   }
   await refreshInvoice(id!);
+  if (!v.id) await assignSignatory(id!);
   done();
   if (!v.id) redirect(`/admin/invoices/${id}?saved=1`);
   return ok("Saved.");
@@ -150,19 +168,45 @@ export async function invoiceFromQuote(form: FormData) {
       placeOfSupply: place,
       igst: place !== HOME_STATE,
       issueDate,
-      dueDate: new Date(issueDate.getTime() + 7 * 864e5),
+      dueDate: new Date(issueDate.getTime() + 15 * 864e5),
       discountPaise: q.discountPaise,
-      notes: `Against quotation #${String(q.number).padStart(7, "0")}: ${q.title}`,
+      notes: null,
+      quotationRef: `#${String(q.number).padStart(7, "0")}`,
+      quotationDate: q.sentAt ?? q.issuedAt,
+      paymentTermDays: 15,
+      billToPan: gstin ? gstin.slice(2, 12) : null,
       createdById: viewer.id,
       lines: {
         create: [
-          ...q.lines.map((l, i) => ({ position: i, description: [l.title, l.subtitle].filter(Boolean).join(" — "), qty: l.qty, unitPaise: l.unitPaise })),
-          ...(fees > 0 ? [{ position: q.lines.length, description: `Creator fees (${q.creators.length} creators)`, qty: 1, unitPaise: fees }] : []),
+          ...q.lines.map((l, i) => ({ position: i, description: [l.title, l.subtitle].filter(Boolean).join(" — "), sac: "996211", qty: l.qty, unitPaise: l.unitPaise })),
+          ...(fees > 0 ? [{ position: q.lines.length, description: `Creator fees (${q.creators.length} creators)`, sac: "996211", qty: 1, unitPaise: fees }] : []),
         ],
       },
     },
   });
   await refreshInvoice(inv.id);
+  await assignSignatory(inv.id);
   done();
   redirect(`/admin/invoices/${inv.id}`);
+}
+
+/** The supporting document's link (a Drive folder, the live post), with its label. */
+export async function setSupportingLink(form: FormData) {
+  const viewer = await staff();
+  const inv = await mine(viewer, text(form, "id"));
+  if (!inv) return;
+  const url = text(form, "url", 500);
+  await getPrisma().invoiceFile.deleteMany({ where: { invoiceId: inv.id, kind: "LINK" } });
+  if (url && /^https?:\/\//.test(url)) await getPrisma().invoiceFile.create({ data: { invoiceId: inv.id, kind: "LINK", driveId: url, name: text(form, "label", 200) ?? url, mimeType: "text/uri-list", uploadedById: viewer.id } });
+  done();
+}
+
+export async function removeInvoiceFile(form: FormData) {
+  const viewer = await staff();
+  const id = text(form, "fileId");
+  const file = id ? await getPrisma().invoiceFile.findUnique({ where: { id } }) : null;
+  if (!file || !(await mine(viewer, file.invoiceId))) return;
+  await getPrisma().invoiceFile.delete({ where: { id: file.id } });
+  if (file.kind === "SIGNED") await getPrisma().invoice.update({ where: { id: file.invoiceId }, data: { signedAt: null, signedById: null } });
+  done();
 }

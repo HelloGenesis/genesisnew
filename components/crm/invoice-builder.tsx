@@ -19,7 +19,15 @@ export type InvoiceDraft = {
   discount: number;
   notes?: string | null;
   terms?: string | null;
-  lines: { description: string; sac: string; qty: number; unit: number }[];
+  quotationRef?: string | null;
+  quotationDate?: string | null;
+  poNumber?: string | null;
+  poDate?: string | null;
+  executionDate?: string | null;
+  paymentTermDays?: number;
+  reference?: string | null;
+  billToPan?: string | null;
+  lines: { description: string; sac: string; qty: number; uom?: string; unit: number }[];
 };
 
 const inr = (r: number) => `₹${r.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -65,6 +73,7 @@ export function InvoiceBuilder({ initial, states, accounts }: { initial: Invoice
           <label className="lg:col-span-2"><span className="crm-label">Name (as registered) *</span><input value={v.billToName} onChange={(e) => set("billToName", e.target.value)} required className="crm-input" /></label>
           <label><span className="crm-label">Email</span><input type="email" value={v.billToEmail ?? ""} onChange={(e) => set("billToEmail", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">GSTIN</span><input value={v.billToGstin ?? ""} onChange={(e) => set("billToGstin", e.target.value.toUpperCase())} className="crm-input uppercase" placeholder="27ABCDE1234F1Z5" /></label>
+          <label><span className="crm-label">PAN</span><input value={v.billToPan ?? ""} onChange={(e) => set("billToPan", e.target.value.toUpperCase())} className="crm-input uppercase" placeholder="From the GSTIN when blank" /></label>
           <label className="lg:col-span-2"><span className="crm-label">Billing address</span><input value={v.billToAddress ?? ""} onChange={(e) => set("billToAddress", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">Place of supply</span>
             <select value={v.placeOfSupply} onChange={(e) => set("placeOfSupply", e.target.value)} className="crm-input">{states.map((s) => <option key={s} value={s}>{s}</option>)}</select>
@@ -74,25 +83,35 @@ export function InvoiceBuilder({ initial, states, accounts }: { initial: Invoice
             <label><span className="crm-label">Due</span><input type="date" value={v.dueDate ?? ""} onChange={(e) => set("dueDate", e.target.value)} className="crm-input" /></label>
           </div>
         </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label><span className="crm-label">Quotation no.</span><input value={v.quotationRef ?? ""} onChange={(e) => set("quotationRef", e.target.value)} className="crm-input" placeholder="E-Mail, or #0000041" /></label>
+          <label><span className="crm-label">Quotation date</span><input type="date" value={v.quotationDate ?? ""} onChange={(e) => set("quotationDate", e.target.value)} className="crm-input" /></label>
+          <label><span className="crm-label">PO no.</span><input value={v.poNumber ?? ""} onChange={(e) => set("poNumber", e.target.value)} className="crm-input" placeholder="E-Mail" /></label>
+          <label><span className="crm-label">PO date</span><input type="date" value={v.poDate ?? ""} onChange={(e) => set("poDate", e.target.value)} className="crm-input" /></label>
+          <label><span className="crm-label">Date of execution</span><input type="date" value={v.executionDate ?? ""} onChange={(e) => set("executionDate", e.target.value)} className="crm-input" /></label>
+          <label><span className="crm-label">Payment term (days)</span><input type="number" min={0} value={v.paymentTermDays ?? 15} onChange={(e) => set("paymentTermDays", Number(e.target.value) || 0)} className="crm-input" /></label>
+          <label className="lg:col-span-2"><span className="crm-label">Ref</span><input value={v.reference ?? ""} onChange={(e) => set("reference", e.target.value)} className="crm-input" /></label>
+        </div>
         <p className="text-[0.8125rem] text-faint">{interstate ? "Outside Maharashtra: IGST 18%." : "Within Maharashtra: CGST 9% + SGST 9%."} The GSTIN&apos;s first two digits decide it when one is given.</p>
       </section>
 
       <section className="crm-card crm-pad space-y-3">
         <div className="flex items-end justify-between gap-2">
           <h2 className="text-[1.125rem] text-bone">Lines</h2>
-          <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => setV((x) => ({ ...x, lines: [...x.lines, { description: "", sac: "998361", qty: 1, unit: 0 }] }))}><Plus className="size-4" /> Add line</button>
+          <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => setV((x) => ({ ...x, lines: [...x.lines, { description: "", sac: "996211", qty: 1, uom: "NOS", unit: 0 }] }))}><Plus className="size-4" /> Add line</button>
         </div>
         {v.lines.map((l, i) => (
-          <div key={i} className="grid gap-2 sm:grid-cols-[1fr_7rem_5rem_9rem_8rem_auto] sm:items-end">
+          <div key={i} className="grid gap-2 sm:grid-cols-[1fr_6rem_4.5rem_4.5rem_8rem_8rem_auto] sm:items-end">
             <label><span className="crm-label">Description</span><input value={l.description} onChange={(e) => setLine(i, { description: e.target.value })} required className="crm-input" placeholder="UGC content production — 10 videos" /></label>
             <label><span className="crm-label">SAC</span><input value={l.sac} onChange={(e) => setLine(i, { sac: e.target.value })} className="crm-input" /></label>
             <label><span className="crm-label">Qty</span><input type="number" min={1} value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} className="crm-input" /></label>
+            <label><span className="crm-label">Unit</span><input value={l.uom ?? "NOS"} onChange={(e) => setLine(i, { uom: e.target.value.toUpperCase() })} className="crm-input" /></label>
             <label><span className="crm-label">Rate (₹)</span><input type="number" min={0} step="0.01" value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
             <p className="pb-2.5 text-right tabular-nums text-bone">{inr(l.qty * l.unit)}</p>
             <button type="button" aria-label="Remove line" onClick={() => setV((x) => ({ ...x, lines: x.lines.filter((_, j) => j !== i) }))} className="pb-2.5 text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
           </div>
         ))}
-        <p className="text-[0.75rem] text-faint">SAC 998361 is advertising services; 998397 sponsorship, 999612 video production, 998391 design.</p>
+        <p className="text-[0.75rem] text-faint">HSN/SAC as on your invoices (996211); others: 998361 advertising, 999612 video production, 998391 design.</p>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">

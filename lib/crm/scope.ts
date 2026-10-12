@@ -78,3 +78,9 @@ export function inboxScope(v: Viewer, person?: string | null): Prisma.InboxItemW
 
 /** A scope used through a relation ("payments whose order is mine"); nothing at all when the scope is everything. */
 export const through = <K extends string, W extends object>(relation: K, scope: W) => (Object.keys(scope).length ? ({ [relation]: scope } as Record<K, W>) : {});
+
+/** Invoices this person may open: in their scope, or ones they're named to sign. (An empty scope can't sit inside an OR: Prisma reads OR [{}] as matching nothing.) */
+export function invoiceAccess(v: Viewer): Prisma.InvoiceWhereInput {
+  const scope = invoiceScope(v);
+  return Object.keys(scope).length === 0 ? {} : { OR: [scope, { signatoryId: v.id }] };
+}
