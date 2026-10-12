@@ -152,9 +152,13 @@ export async function planImport(userId: string, spreadsheetId: string, tab: str
   if (headerIndex < 0) throw new Error("That tab looks empty.");
   const headers = rows[headerIndex]!.map((h) => String(h ?? "").trim());
   const sample = rows.slice(headerIndex + 1, headerIndex + 6);
+  return { headers, mapping: await mapHeaders(kind, headers, sample), rowCount: Math.max(0, rows.length - headerIndex - 1), sample };
+}
+
+/** Matches a header row to the CRM's fields: the AI first, plain names as a fallback. */
+export async function mapHeaders(kind: string, headers: string[], sample: string[][]) {
   const ai = await mapColumns(IMPORT_KINDS[kind]!.label, IMPORT_KINDS[kind]!.fields, headers.filter(Boolean), sample).catch(() => ({}));
-  const mapping = Object.keys(ai).length ? ai : guessMapping(kind, headers);
-  return { headers, mapping, rowCount: Math.max(0, rows.length - headerIndex - 1), sample };
+  return Object.keys(ai).length ? ai : guessMapping(kind, headers);
 }
 
 /* --- Bringing rows in ---------------------------------------------------- */
@@ -192,8 +196,16 @@ export async function runImport(importId: string) {
   const headerIndex = rows.findIndex((r) => r.filter((c) => String(c ?? "").trim()).length >= 2);
   if (headerIndex < 0) return { added: 0, updated: 0 };
   const headers = rows[headerIndex]!.map((h) => String(h ?? "").trim());
-  const mapping = job.mapping as Record<string, string>;
-  const records = rows.slice(headerIndex + 1).map((row) => {
+  const result = await importRows(job.kind, job.userId, headers, rows.slice(headerIndex + 1), job.mapping as Record<string, string>);
+  await prisma.sheetImport.update({ where: { id: importId }, data: { lastRunAt: new Date(), lastError: null, rowsImported: { increment: result.added } } });
+  return result;
+}
+
+/** Brings rows in as leads, clients, vendors, influencers, expenses or briefs: from a Google Sheet, or an uploaded Excel / CSV file. */
+export async function importRows(kind: string, userId: string, headers: string[], body: unknown[][], mapping: Record<string, string>) {
+  const prisma = getPrisma();
+  const job = { kind, userId };
+  const records = body.map((row) => {
     const rec: Record<string, string> = {};
     headers.forEach((h, i) => {
       const field = mapping[h];
@@ -330,7 +342,6 @@ export async function runImport(importId: string) {
       console.error("[crm] sheet row skipped", (error as Error).message);
     }
   }
-  await prisma.sheetImport.update({ where: { id: importId }, data: { lastRunAt: new Date(), lastError: null, rowsImported: { increment: added } } });
   return { added, updated };
 }
 

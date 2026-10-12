@@ -1,3 +1,4 @@
+import { Upload } from "lucide-react";
 import Link from "next/link";
 
 import { ActionForm } from "@/components/crm/action-form";
@@ -41,18 +42,27 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
   const min = Number(p.min) || 0;
   const max = Number(p.max) || 0;
   const limit = Math.min(Math.max(Number(p.limit) || 300, 300), 3000);
+  const prisma = getPrisma();
+  /*
+   * A niche matches by its words, whatever the sheet called it: "Health &
+   * Wellness" finds "Health", "holistic health", "Health&fitness" and
+   * "Wellness"; "Skincare" finds "Skin Care".
+   */
+  const nicheWords = [...new Set(niches.flatMap((n) => n.toLowerCase().split(/\s*(?:&|\/|,|\band\b|\+)\s*/).map((w) => w.replace(/[^a-z0-9]/g, "")).filter((w) => w.length > 1)))];
+  const nicheIds = nicheWords.length
+    ? (await prisma.$queryRaw<{ id: string }[]>`select id from crm_creators c where exists (select 1 from unnest(c.niches) n where regexp_replace(lower(n), '[^a-z0-9]', '', 'g') like any (${nicheWords.map((w) => `%${w}%`)}::text[]))`).map((r) => r.id)
+    : null;
   /* Several values in one filter widen it (any of them); different filters narrow each other. */
   const where: Prisma.CreatorWhereInput = {
     AND: [
       p.q ? { OR: [{ name: { contains: p.q, mode: "insensitive" } }, { handle: { contains: p.q.replace(/^@/, ""), mode: "insensitive" } }] } : {},
       platforms.length ? { platform: { in: platforms } } : {},
       tiers.length ? { tier: { in: tiers } } : {},
-      niches.length ? { niches: { hasSome: niches } } : {},
+      nicheIds ? { id: { in: nicheIds } } : {},
       cities.length ? { OR: cities.map((c) => ({ city: { contains: c, mode: "insensitive" as const } })) } : {},
       min || max ? { followers: { ...(min ? { gte: min } : {}), ...(max ? { lte: max } : {}) } } : {},
     ],
   };
-  const prisma = getPrisma();
   const [creators, total, matching, nicheRows, cityRows] = await Promise.all([
     prisma.creator.findMany({ where, orderBy: { followers: "desc" }, take: limit, include: { _count: { select: { campaigns: true } } } }),
     prisma.creator.count(),
@@ -60,14 +70,22 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
     prisma.$queryRaw<{ niche: string; n: bigint }[]>`select trim(n) as niche, count(*) as n from crm_creators, unnest(niches) n group by 1 order by 2 desc limit 400`,
     prisma.$queryRaw<{ city: string; n: bigint }[]>`select trim(split_part(city, '-', 1)) as city, count(*) as n from crm_creators where city is not null and city <> '' group by 1 order by 2 desc limit 300`,
   ]);
-  const nicheOptions = [...new Set([...NICHES, ...nicheRows.map((n) => n.niche).filter(usableNiche)])].map((n) => [n, n] as const);
+  const seen = new Set<string>();
+  const nicheOptions = [...NICHES, ...nicheRows.map((n) => n.niche).filter(usableNiche)]
+    .filter((n) => {
+      const key = n.toLowerCase().replace(/[^a-z0-9]/g, "");
+      return !seen.has(key) && Boolean(seen.add(key));
+    })
+    .map((n) => [n, n.charAt(0).toUpperCase() + n.slice(1)] as const);
   const cityOptions = [...new Set(cityRows.map((c) => c.city.replace(/\s+/g, " ")).filter((c) => /^[A-Za-z][A-Za-z .'-]{1,40}$/.test(c)).map((c) => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()))].map((c) => [c, c] as const);
   const more = new URLSearchParams();
   for (const [k, v] of Object.entries(p)) for (const x of many(v as string | string[])) if (k !== "limit") more.append(k, x);
   more.set("limit", String(limit + 300));
   return (
     <>
-      <PageHead kicker="Influence" title="Influencer database" sub={`${total} creators · ${matching} match · ${creators.length} shown`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined} />
+      <PageHead kicker="Influence" title="Influencer database" sub={`${total} creators · ${matching} match · ${creators.length} shown`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined}>
+        <Link href="/admin/creators/import" className="crm-btn crm-btn-secondary crm-btn-sm">Import <Upload className="size-4" aria-hidden /></Link>
+      </PageHead>
       <form action="/admin/creators" className="flex flex-wrap items-start gap-2">
         <input name="q" defaultValue={p.q} placeholder="Name or @handle" className="crm-input max-w-[13rem]" />
         <MultiSelect name="platform" label="Any platform" options={PLATFORMS} defaultValue={platforms} className="w-[10rem]" />
