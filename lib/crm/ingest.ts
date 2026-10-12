@@ -32,7 +32,10 @@ import { scanInfluencerSheets } from "./sheet-import";
  * Owners and admins see everyone's inbox; everyone else sees their own.
  */
 
-const OWN_DOMAIN = "genesismedia.co";
+/* Genesis's own addresses, subdomains included: the CRM sends from hello@coworking.genesismedia.co. */
+const isOwn = (email?: string | null) => Boolean(email && /@([a-z0-9-]+\.)*genesismedia\.co$/i.test(email));
+/* Addresses the CRM itself sends from, whatever their domain. */
+const crmSenders = () => [process.env.CRM_EMAIL_FROM, process.env.ORDER_EMAIL_FROM].map((f) => f?.match(/<([^>]+)>/)?.[1] ?? f).filter(Boolean).map((e) => e!.toLowerCase().trim());
 const PER_RUN = 20;
 const FIRST_LOOK_DAYS = 21;
 const SKIP_LABELS = ["SPAM", "TRASH", "DRAFT", "CATEGORY_PROMOTIONS", "CATEGORY_SOCIAL", "CATEGORY_UPDATES", "CATEGORY_FORUMS"];
@@ -97,8 +100,16 @@ async function readGmailMessage(userId: string, id: string, ownEmail: string): P
   const subject = header("subject") || "(no subject)";
   const sender = emailOf(from);
   if (!sender || sender === ownEmail) return null;
+  /*
+    NEVER THE CRM'S OWN MAIL (Genesis, 12 Oct 2026: "a mail keeps hitting me
+    non-stop"). The "New brief" notification landed in the inbox being read,
+    was read as a brief, and made another notification — every ten minutes.
+    Anything the CRM sent carries X-Genesis-CRM; its sending addresses and
+    every genesismedia.co subdomain are skipped too.
+  */
+  if (header("x-genesis-crm") || crmSenders().includes(sender)) return null;
   /* Our own team writing to each other is not a brief, unless it's one forwarded in. */
-  if (sender.endsWith(`@${OWN_DOMAIN}`) && !/^(fwd?|fw):/i.test(subject)) return null;
+  if (isOwn(sender) && !/^(fwd?|fw):/i.test(subject)) return null;
   /* Newsletters and machines, unless it looks like a bill or a brief. */
   const bulk = Boolean(header("list-unsubscribe")) || /no-?reply|notifications?@|mailer-daemon/i.test(sender);
   if (bulk && !WORTH_IT.test(subject)) return null;
@@ -222,7 +233,7 @@ const isoDay = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(`$
 
 /** The client or open lead someone belongs to, by their email (or their company's domain, for a client). */
 async function whoIs(email?: string | null) {
-  if (!email || email.endsWith(`@${OWN_DOMAIN}`)) return { accountId: null, leadId: null };
+  if (!email || isOwn(email)) return { accountId: null, leadId: null };
   const prisma = getPrisma();
   const lead = await prisma.lead.findFirst({ where: { email, status: { notIn: ["WON", "LOST"] } }, orderBy: { createdAt: "desc" }, select: { id: true, accountId: true } });
   const member = await prisma.accountMember.findFirst({ where: { user: { email } }, select: { accountId: true } });
@@ -235,7 +246,9 @@ async function file(found: Found): Promise<boolean> {
   const prisma = getPrisma();
   const r = found.reading;
   if (r.kind === "OTHER" || (r.confidence ?? 0) < 0.5) return false;
-  const contactEmail = (r.contact?.email ?? found.senderEmail)?.toLowerCase() ?? null;
+  /* A forwarded brief's contact is the client inside it, never the teammate who forwarded it. */
+  const rawContact = (r.contact?.email ?? found.senderEmail)?.toLowerCase() ?? null;
+  const contactEmail = rawContact && !isOwn(rawContact) && rawContact !== "<unknown>" ? rawContact : null;
   const who = await whoIs(contactEmail);
   const item = await prisma.inboxItem.create({
     data: {
@@ -264,6 +277,20 @@ async function file(found: Found): Promise<boolean> {
     return false;
   }
 
+  /* One brief per sender and subject a day: a safety net against any loop or re-sent thread. */
+  const subjectKey = found.title.replace(/^(re|fwd?|fw):\s*/gi, "").trim().slice(0, 120);
+  const recent = await prisma.inboxItem.count({
+    where: { id: { not: item.id }, kind: "BRIEF", senderEmail: found.senderEmail ?? undefined, title: { contains: subjectKey, mode: "insensitive" }, createdAt: { gt: new Date(Date.now() - 24 * 3600_000) } },
+  });
+  if (recent > 0) {
+    await prisma.inboxItem.update({ where: { id: item.id }, data: { status: "DISMISSED" } });
+    return false;
+  }
+  /* Without a client contact (a teammate's note with no client in it) it waits in the Inbox instead of becoming a lead. */
+  if (!contactEmail && !who.accountId && !(r.contact?.company ?? r.company?.name)) {
+    await notify([found.userId], { title: `Possible brief: ${found.title.slice(0, 80)}`, body: r.summary, href: `/admin/inbox?item=${item.id}` });
+    return false;
+  }
   /* A brief: on the client, on their open lead, or on a new lead for this person. */
   const b = r.brief ?? {};
   const c = r.contact ?? {};
