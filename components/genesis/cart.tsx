@@ -11,6 +11,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useTransition,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -250,6 +251,16 @@ export function AddToCart({
 }) {
   const { add, has, packageSibling } = useCart();
   const router = useRouter();
+  /*
+    "PURCHASE" FELT DEAD (Genesis, 12 Oct 2026: "purchase button is not
+    working"). It worked, but the cart route loaded only on the click, so for a
+    second or two nothing on screen changed. The cart is now fetched ahead,
+    and the button says what it's doing the instant it's pressed.
+  */
+  const [going, startGoing] = useTransition();
+  useEffect(() => {
+    if (purchase) router.prefetch("/cart");
+  }, [purchase, router]);
   const product = findProduct(id);
   if (!product) return null;
   const inCart = has(id);
@@ -265,12 +276,13 @@ export function AddToCart({
           size={size}
           arrow
           className="flex-1"
+          disabled={going}
           onClick={() => {
             add(id, { billing, open: false, extras });
-            router.push("/cart");
+            startGoing(() => router.push("/cart"));
           }}
         >
-          {label ?? "Purchase"}
+          {going ? "Opening checkout…" : (label ?? "Purchase")}
         </GlassButton>
       )}
       {(cartButton || quoted || !purchase) && (
