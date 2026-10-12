@@ -78,12 +78,21 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
     })
     .map((n) => [n, n.charAt(0).toUpperCase() + n.slice(1)] as const);
   const cityOptions = [...new Set(cityRows.map((c) => c.city.replace(/\s+/g, " ")).filter((c) => /^[A-Za-z][A-Za-z .'-]{1,40}$/.test(c)).map((c) => c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()))].map((c) => [c, c] as const);
+  const filters = [
+    p.q && `“${p.q}”`,
+    ...platforms.map((x) => PLATFORMS.find(([v]) => v === x)?.[1] ?? x),
+    ...tiers.map((x) => CREATOR_TIER[x]),
+    ...niches,
+    ...cities,
+    min && `≥ ${min.toLocaleString("en-IN")} followers`,
+    max && `≤ ${max.toLocaleString("en-IN")} followers`,
+  ].filter(Boolean) as string[];
   const more = new URLSearchParams();
   for (const [k, v] of Object.entries(p)) for (const x of many(v as string | string[])) if (k !== "limit") more.append(k, x);
   more.set("limit", String(limit + 300));
   return (
     <>
-      <PageHead kicker="Influence" title="Influencer database" sub={`${total} creators · ${matching} match · ${creators.length} shown`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined}>
+      <PageHead kicker="Influence" title="Influencer database" sub={`${total.toLocaleString("en-IN")} creators in the database`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined}>
         <Link href="/admin/creators/import" className="crm-btn crm-btn-secondary crm-btn-sm">Import <Upload className="size-4" aria-hidden /></Link>
       </PageHead>
       <form action="/admin/creators" className="flex flex-wrap items-start gap-2">
@@ -97,6 +106,12 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
         <button className="crm-btn crm-btn-primary crm-btn-sm">Search</button>
         {(p.q || platforms.length || tiers.length || niches.length || cities.length || min || max) ? <Link href="/admin/creators" className="crm-btn crm-btn-secondary crm-btn-sm">Clear all</Link> : null}
       </form>
+      {/* The search's result, said plainly (Genesis, 13 Oct 2026: "show search results as well"). */}
+      <p className="text-[0.9375rem] text-ash" role="status">
+        <span className="text-[1.25rem] font-semibold tabular-nums text-bone">{matching.toLocaleString("en-IN")}</span> {matching === 1 ? "result" : "results"}
+        {filters.length > 0 && <> for {filters.map((f, i) => <span key={i} className="ml-1 inline-block rounded-full border border-[var(--glass-border)] px-2 py-0.5 text-[0.8125rem] text-bone">{f}</span>)}</>}
+        {creators.length < matching && <span className="text-faint"> · showing the top {creators.length} by followers</span>}
+      </p>
       <AddPanel label="Add a creator">
         <ActionForm action={saveCreator} submit="Add creator">
           <CreatorFields />
