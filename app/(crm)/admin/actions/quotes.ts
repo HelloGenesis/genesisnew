@@ -50,7 +50,7 @@ const payload = z.object({
   proposalTg: z.string().max(60000).nullable().optional(),
   proposalSections: z.array(z.object({ title: z.string().max(120), html: z.string().max(60000) })).max(20).optional(),
   parts: z.array(z.enum(["proposal", "plan", "pricing"])).max(3).optional(),
-  planColumns: z.object({ hidden: z.array(z.string().max(40)).max(40).optional(), custom: z.array(z.string().trim().max(60)).max(20).optional(), share: z.enum(["table", "sheet", "both"]).optional(), extPrices: z.boolean().optional(), feesInTotal: z.boolean().optional() }).optional(),
+  planColumns: z.object({ hidden: z.array(z.string().max(40)).max(40).optional(), custom: z.array(z.string().trim().max(60)).max(20).optional(), share: z.enum(["table", "sheet", "both"]).optional(), extPrices: z.boolean().optional(), feesInTotal: z.boolean().optional(), sheetUrl: z.string().trim().max(500).optional() }).optional(),
   markupPercent: z.coerce.number().min(0).max(1000).transform(Math.round).optional(),
   planBudget: z.string().max(120).nullable().optional(),
   discount: rupees,
@@ -148,7 +148,7 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     proposalInfluencers: rich(q.proposalInfluencers),
     proposalTg: rich(q.proposalTg),
     proposalSections: (q.proposalSections ?? []).map((x) => ({ title: x.title.trim(), html: sanitizeHtml(x.html) })).filter((x) => x.title || x.html) as Prisma.InputJsonValue,
-    planColumns: { hidden: q.planColumns?.hidden ?? [], custom: [...new Set((q.planColumns?.custom ?? []).filter(Boolean))], share: q.planColumns?.share ?? "table", extPrices: q.planColumns?.extPrices ?? true, feesInTotal: q.planColumns?.feesInTotal ?? false } as Prisma.InputJsonValue,
+    planColumns: { hidden: q.planColumns?.hidden ?? [], custom: [...new Set((q.planColumns?.custom ?? []).filter(Boolean))], share: q.planColumns?.share ?? "table", extPrices: q.planColumns?.extPrices ?? true, feesInTotal: q.planColumns?.feesInTotal ?? false, sheetUrl: /^https:\/\/\S+$/i.test(q.planColumns?.sheetUrl ?? "") ? q.planColumns!.sheetUrl : "" } as Prisma.InputJsonValue,
     markupPercent: q.markupPercent ?? 30,
     planBudget: q.planBudget || null,
     parts: q.parts ?? [],
@@ -227,7 +227,10 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
    * always made from the saved plan, so it's current by itself.
    */
   const hasSheets = Boolean((await getPrisma().quote.findUnique({ where: { id }, select: { extSheetId: true } }))?.extSheetId);
-  if ((form.get("then") === "sheets" || hasSheets) && result.creators > 0) {
+  /* "Send Google Sheet to client" with no link of its own: Save makes the external sheet, so the quote and PDF carry its link. */
+  const cols = ((await getPrisma().quote.findUnique({ where: { id }, select: { planColumns: true } }))?.planColumns ?? {}) as { share?: string; sheetUrl?: string };
+  const wantsSheet = (cols.share === "sheet" || cols.share === "both") && !cols.sheetUrl?.trim();
+  if ((form.get("then") === "sheets" || hasSheets || wantsSheet) && result.creators > 0) {
     try {
       const made = await makePlanSheets(id, viewer.email, viewer.id);
       sheets = made.own ? " Both Google Sheets are in your Drive." : ` Both Google Sheets are up to date (in ${made.account}'s Drive).`;
