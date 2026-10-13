@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, Columns3, ExternalLink, FileSpreadsheet, Plus, Trash2, X } from "lucide-react";
 import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { saveQuote } from "@/app/(crm)/admin/actions/quotes";
+import { autosaveQuote, saveQuote } from "@/app/(crm)/admin/actions/quotes";
 import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 
 import { RichText } from "./rich-text";
@@ -161,6 +161,38 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   const [newColumn, setNewColumn] = useState("");
   const [download, setDownload] = useState<string | null>(null);
   const [state, action, pending] = useActionState(saveQuote, null);
+  /*
+   * SAVED AS YOU WORK (Genesis, 13 Oct 2026): a moment after each change the
+   * draft is saved; the first save makes it (and the address becomes the
+   * draft's own). A plan opened from ticked creators is saved straight away.
+   * Sent quotes still change only when you press Save changes.
+   */
+  const snapshot = (x: BuilderQuote) => JSON.stringify({ ...x, id: undefined });
+  const idRef = useRef<string | undefined>(initial.id);
+  const lastSaved = useRef<string>(!initial.id && initial.creators.length > 0 ? "" : snapshot({ ...initial, proposalSections: initial.proposalSections ?? [], planColumns: initial.planColumns ?? {} }));
+  const saving = useRef(false);
+  const [retry, setRetry] = useState(0);
+  const [autoNote, setAutoNote] = useState<string | null>(null);
+  useEffect(() => {
+    const snap = snapshot(q);
+    if (snap === lastSaved.current) return;
+    const timer = setTimeout(async () => {
+      if (saving.current) return void setTimeout(() => setRetry((n) => n + 1), 800);
+      saving.current = true;
+      setAutoNote("Saving…");
+      const result = await autosaveQuote(JSON.stringify({ ...q, id: idRef.current }));
+      saving.current = false;
+      if (!result.ok) return setAutoNote(result.message ?? "Not saved yet");
+      lastSaved.current = snap;
+      setAutoNote(`Draft saved · ${new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`);
+      if (result.id && !idRef.current) {
+        idRef.current = result.id;
+        setQ((x) => ({ ...x, id: result.id }));
+        window.history.replaceState(null, "", `/admin/quotes/${result.id}`);
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [q, retry]);
   /* Which parts this document holds (shown in the builder; the send step picks which go). */
   const [parts, setParts] = useState({
     proposal: Boolean(initial.proposalProblems || initial.proposalObjectives || initial.proposalInfluencers || initial.proposalTg || initial.proposalPlatforms?.length || initial.proposalSections?.length) || initial.kind === "QUOTE",
@@ -292,6 +324,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           Tick what this document holds; when sending, choose which parts go.
         */}
         <div className="flex flex-wrap items-center gap-2">
+          {autoNote && <span className="order-last ml-auto text-[0.8125rem] text-faint" role="status">{autoNote}</span>}
           <span className="text-[0.875rem] text-ash">This document has:</span>
           {([["proposal", "Proposal"], ["plan", "Influencer plan"], ["pricing", "Price lines"]] as const).map(([k, label]) => {
             const on = parts[k];

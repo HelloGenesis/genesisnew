@@ -14,6 +14,7 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Platform } from "@/lib/generated/prisma/enums";
 import { tierFor } from "@/lib/crm/catalog";
 import { newToken, openFor, refreshTotals, sendQuote } from "@/lib/crm/quotes";
+import { termsByKey } from "@/lib/crm/quote-templates";
 import { quoteScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { RazorpayError, razorpay } from "@/lib/razorpay";
@@ -101,13 +102,25 @@ const paise = (r: number) => Math.round(r * 100);
 const rich = (html: string | null | undefined) => (html ? sanitizeHtml(html) || null : null);
 const p = (r: number | null | undefined) => (typeof r === "number" ? paise(r) : null);
 
-/** Creates or updates a quote from the builder (the form posts its state as JSON). */
-export async function saveQuote(_: ActionState, form: FormData): Promise<ActionState> {
-  const viewer = await requireStaff("sales");
-  const parsed = payload.safeParse(JSON.parse(String(form.get("payload") ?? "{}")));
-  if (!parsed.success) return fail(`Check the quote: ${parsed.error.issues[0]?.path.join(".")} ${parsed.error.issues[0]?.message}`);
+type Viewer = Awaited<ReturnType<typeof requireStaff>>;
+type Persisted = { ok: true; id: string; created: boolean; creators: number } | { ok: false; message: string };
+
+/** Writes the builder's state: a new draft, or the changes to an existing quote. */
+async function persist(viewer: Viewer, raw: string, autosave = false): Promise<Persisted> {
+  const failed = (message: string) => ({ ok: false as const, message });
+  let json: unknown;
+  try {
+    json = JSON.parse(raw || "{}");
+  } catch {
+    return failed("Couldn't read the quote.");
+  }
+  const parsed = payload.safeParse(json);
+  if (!parsed.success) return failed(`Check the quote: ${parsed.error.issues[0]?.path.join(".")} ${parsed.error.issues[0]?.message}`);
   const q = parsed.data;
-  if (q.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return fail("That email doesn't look right; fix it or leave it blank for now.");
+  if (q.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) {
+    if (!autosave) return failed("That email doesn't look right; fix it or leave it blank for now.");
+    q.contactEmail = "";
+  }
   const prisma = getPrisma();
   const data = {
     kind: q.kind,
@@ -160,8 +173,10 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
   let id = q.id;
   if (id) {
     const before = await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) } });
-    if (!before) return fail("That quote isn't yours, or no longer exists.");
-    if (before.status === "PAID") return fail("This quote is paid; duplicate it to change it.");
+    if (!before) return failed("That quote isn't yours, or no longer exists.");
+    if (before.status === "PAID") return failed("This quote is paid; duplicate it to change it.");
+    /* Automatic saving is for drafts; a sent quote changes when you press Save. */
+    if (autosave && before.status !== "DRAFT") return failed("Sent: changes save when you press Save changes.");
     await prisma.$transaction([
       prisma.quoteLine.deleteMany({ where: { quoteId: id } }),
       prisma.quoteCreator.deleteMany({ where: { quoteId: id } }),
@@ -172,9 +187,32 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     id = created.id;
   }
   await refreshTotals(id);
+  return { ok: true, id, created: !q.id, creators: q.creators.length };
+}
+
+/**
+ * SAVED AS YOU WORK (Genesis, 13 Oct 2026: "whenever you create a new plan
+ * it should automatically be saved in draft without clicking save draft").
+ * The builder calls this a moment after each change; the first call makes
+ * the draft and hands back its id.
+ */
+export async function autosaveQuote(raw: string): Promise<{ ok: boolean; id?: string; message?: string }> {
+  const viewer = await requireStaff("sales");
+  const result = await persist(viewer, raw, true);
+  if (!result.ok) return { ok: false, message: result.message };
+  revalidatePath("/admin/quotes");
+  return { ok: true, id: result.id };
+}
+
+/** Creates or updates a quote from the builder (the form posts its state as JSON). */
+export async function saveQuote(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff("sales");
+  const result = await persist(viewer, String(form.get("payload") ?? "{}"));
+  if (!result.ok) return fail(result.message);
+  const id = result.id;
   /* "Save & make Google Sheets": the internal and external sheets, right after saving (in the maker's own Drive when they can). */
   let sheets = "";
-  if (form.get("then") === "sheets" && q.creators.length > 0) {
+  if (form.get("then") === "sheets" && result.creators > 0) {
     try {
       const made = await makePlanSheets(id, viewer.email, viewer.id);
       sheets = made.own ? " Both Google Sheets are in your Drive." : ` Both Google Sheets are up to date (in ${made.account}'s Drive).`;
@@ -183,8 +221,53 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     }
   }
   revalidatePath("/admin", "layout");
-  if (!q.id) redirect(`/admin/quotes/${id}?saved=1${sheets ? `&sheets=${encodeURIComponent(sheets.trim())}` : ""}`);
+  if (result.created) redirect(`/admin/quotes/${id}?saved=1${sheets ? `&sheets=${encodeURIComponent(sheets.trim())}` : ""}`);
   return ok(`Saved.${sheets}`);
+}
+
+/**
+ * A DRAFT PLAN STRAIGHT FROM THE INFLUENCER DATABASE (Genesis, 13 Oct 2026:
+ * "add internal and external buttons on the influencer database; it should
+ * also save it to draft"). The ticked creators, their rates as our cost and
+ * +30% as the client's price; optionally with both Google Sheets made.
+ */
+export async function draftFromCreators(ids: string[], then?: "sheets") {
+  const viewer = await requireStaff("sales");
+  const prisma = getPrisma();
+  const picked = await prisma.creator.findMany({ where: { id: { in: ids.slice(0, 200) } }, orderBy: { followers: "asc" } });
+  if (picked.length === 0) return { ok: false, message: "Tick some creators first." };
+  const terms = termsByKey("influencer");
+  const up = (v: number | null) => (v === null ? null : Math.round(v * 1.3));
+  const created = await prisma.quote.create({
+    data: {
+      kind: "INFLUENCER_PLAN", title: `Influencer plan · ${picked.length} creators`, division: "INFLUENCE", contactName: "", contactEmail: "",
+      expiresAt: new Date(Date.now() + 14 * 864e5), notes: terms?.notes ?? null, terms: terms?.terms.join("\n") ?? null, addGst: true, gstPercent: 18, igst: false, discountPaise: 0,
+      proposalPlatforms: ["Instagram"], markupPercent: 30, planBudget: "As per Brand", token: newToken(), createdById: viewer.id,
+      creators: {
+        create: picked.map((c, i) => {
+          const prices = [up(c.reelRatePaise), up(c.storyRatePaise), up(c.dlRatePaise)];
+          return {
+            position: i, creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city,
+            deliverables: "1 IG Reel + Story & link in bio", engagementRate: c.engagementRate, reelCostPaise: c.reelRatePaise, storyCostPaise: c.storyRatePaise, dlCostPaise: c.dlRatePaise,
+            reelPricePaise: prices[0], storyPricePaise: prices[1], dlPricePaise: prices[2], feePaise: prices.some((x) => x !== null) ? prices.reduce<number>((s, x) => s + (x ?? 0), 0) : null,
+            contact: [c.phone, c.email, c.managedBy].filter(Boolean).join(" · ") || null,
+          };
+        }),
+      },
+    },
+  });
+  await refreshTotals(created.id);
+  let note = "";
+  if (then === "sheets") {
+    try {
+      const made = await makePlanSheets(created.id, viewer.email, viewer.id);
+      note = made.own ? "Both Google Sheets are in your Drive." : `Both Google Sheets are made (in ${made.account}'s Drive).`;
+    } catch (error) {
+      note = `The Google Sheets didn't make: ${(error as Error).message.slice(0, 160)}`;
+    }
+  }
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/quotes/${created.id}?saved=1${note ? `&sheets=${encodeURIComponent(note)}` : ""}`);
 }
 
 /** Emails the quotation (with a payment link when asked) — see lib/crm/quotes sendQuote. */
