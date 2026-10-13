@@ -1120,6 +1120,8 @@ model Quote {
   intSheetId    String?    @map("int_sheet_id")
   /// The proposal's target group (TG), as rich text.
   proposalTg    String?     @map("proposal_tg")
+  /// The parts this document holds, as ticked in the builder: "proposal", "plan", "pricing". Empty = all it has.
+  parts         String[]    @default([])
   /// Extra proposal boxes after the standard three: [{ title, html }].
   proposalSections Json     @default("[]") @map("proposal_sections")
   /// The plan grid's columns: { hidden: [key], custom: [name] }.

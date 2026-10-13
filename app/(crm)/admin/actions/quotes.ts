@@ -49,6 +49,7 @@ const payload = z.object({
   proposalInfluencers: z.string().max(60000).nullable().optional(),
   proposalTg: z.string().max(60000).nullable().optional(),
   proposalSections: z.array(z.object({ title: z.string().max(120), html: z.string().max(60000) })).max(20).optional(),
+  parts: z.array(z.enum(["proposal", "plan", "pricing"])).max(3).optional(),
   planColumns: z.object({ hidden: z.array(z.string().max(40)).max(40).optional(), custom: z.array(z.string().trim().max(60)).max(20).optional() }).optional(),
   markupPercent: z.coerce.number().min(0).max(1000).transform(Math.round).optional(),
   planBudget: z.string().max(120).nullable().optional(),
@@ -150,6 +151,7 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     planColumns: { hidden: q.planColumns?.hidden ?? [], custom: [...new Set((q.planColumns?.custom ?? []).filter(Boolean))] } as Prisma.InputJsonValue,
     markupPercent: q.markupPercent ?? 30,
     planBudget: q.planBudget || null,
+    parts: q.parts ?? [],
   };
   const lines = q.lines.filter((l) => l.title || l.unit > 0 || l.details).map((l, i) => ({ position: i, kind: l.kind, productId: l.productId ?? null, division: l.division ?? null, title: l.title || "Untitled line", subtitle: l.subtitle || null, details: l.details || null, note: l.note || null, qty: l.qty, unitPaise: paise(l.unit) }));
   /* A row added by hand and left empty isn't kept. */
@@ -341,7 +343,7 @@ export async function duplicateQuote(form: FormData) {
       contactName: q.contactName, contactEmail: q.contactEmail, contactPhone: q.contactPhone, company: q.company,
       expiresAt: new Date(Date.now() + 14 * 864e5), notes: q.notes, terms: q.terms, addGst: q.addGst, gstPercent: q.gstPercent, igst: q.igst, discountPaise: q.discountPaise,
       proposalPlatforms: q.proposalPlatforms, proposalProblems: q.proposalProblems, proposalObjectives: q.proposalObjectives, proposalInfluencers: q.proposalInfluencers, proposalTg: q.proposalTg,
-      proposalSections: (q.proposalSections ?? []) as Prisma.InputJsonValue, planColumns: (q.planColumns ?? {}) as Prisma.InputJsonValue, markupPercent: q.markupPercent, planBudget: q.planBudget,
+      proposalSections: (q.proposalSections ?? []) as Prisma.InputJsonValue, parts: q.parts, planColumns: (q.planColumns ?? {}) as Prisma.InputJsonValue, markupPercent: q.markupPercent, planBudget: q.planBudget,
       token: newToken(), createdById: viewer.id,
       lines: { create: q.lines.map((l) => omitIds(l)) },
       creators: { create: q.creators.map((c) => ({ ...omitIds(c), extra: (c.extra ?? {}) as Prisma.InputJsonValue })) },

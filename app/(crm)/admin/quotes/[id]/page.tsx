@@ -55,6 +55,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     proposalObjectives: q.proposalObjectives,
     proposalInfluencers: q.proposalInfluencers,
     proposalTg: q.proposalTg,
+    parts: q.parts as BuilderQuote["parts"],
     proposalSections: (Array.isArray(q.proposalSections) ? q.proposalSections : []) as ProposalSection[],
     planColumns: (q.planColumns ?? {}) as PlanColumnsState,
     discount: q.discountPaise / 100,

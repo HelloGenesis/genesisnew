@@ -48,12 +48,16 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   /* Proposal and pricing can go separately (Genesis, 12 Oct 2026): ?view=proposal hides every price, ?view=pricing the proposal. */
   const view = viewParam === "proposal" || viewParam === "pricing" || viewParam === "plan" || viewParam === "proposal-plan" ? viewParam : "both";
   /* Each part on its own or together (Genesis, 12 Oct 2026): proposal, pricing, influencer plan. */
-  const showPricing = view === "both" || view === "pricing";
-  const showCreators = view === "both" || view === "plan" || view === "proposal-plan";
   const showCreatorFees = view === "both" || view === "plan";
   const prisma = getPrisma();
   const q = await prisma.quote.findUnique({ where: { token }, include: { lines: { orderBy: { position: "asc" } }, creators: { orderBy: { position: "asc" } } } });
   if (!q) notFound();
+  /* The parts ticked in the builder (empty on older quotes: everything they have). */
+  const parts = q.parts;
+  const has = (part: string) => parts.length === 0 || parts.includes(part);
+  const showPricing = (view === "both" || view === "pricing") && (has("pricing") || has("plan"));
+  const showLines = has("pricing");
+  const showCreators = (view === "both" || view === "plan" || view === "proposal-plan") && has("plan");
   const staff = staffAccess(await getViewer().catch(() => null)) === "granted";
   if (!staff && q.status === "SENT") await prisma.quote.update({ where: { id: q.id }, data: { status: "VIEWED", viewedAt: new Date() } });
 
@@ -80,7 +84,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const hiddenCols = new Set(cols.hidden ?? []);
   const customCols = (cols.custom ?? []).filter(Boolean);
   const showCol = (k: string) => !hiddenCols.has(k);
-  const showProposal = (view === "both" || view === "proposal" || view === "proposal-plan") && proposal.length > 0;
+  const showProposal = (view === "both" || view === "proposal" || view === "proposal-plan") && has("proposal") && proposal.length > 0;
   const cgst = Math.round(q.taxPaise / 2);
 
   return (
@@ -198,7 +202,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
           </section>
         )}
 
-        {showPricing && (
+        {showPricing && showLines && (
         <table className="w-full border-collapse text-left text-[0.9375rem]">
           <thead className="bg-[#dbe8ff] text-[#1e293b]">
             <tr>

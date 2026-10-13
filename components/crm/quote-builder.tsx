@@ -44,6 +44,7 @@ export type BuilderQuote = {
   proposalInfluencers?: string | null;
   proposalTg?: string | null;
   proposalSections?: ProposalSection[];
+  parts?: ("proposal" | "plan" | "pricing")[];
   planColumns?: PlanColumnsState;
   markupPercent?: number;
   planBudget?: string | null;
@@ -195,7 +196,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
     return () => clearTimeout(timer);
   }, [q, retry]);
   /* Which parts this document holds (shown in the builder; the send step picks which go). */
-  const [parts, setParts] = useState({
+  const [parts, setParts] = useState(initial.parts?.length ? { proposal: initial.parts.includes("proposal"), pricing: initial.parts.includes("pricing"), plan: initial.parts.includes("plan") } : {
     proposal: Boolean(initial.proposalProblems || initial.proposalObjectives || initial.proposalInfluencers || initial.proposalTg || initial.proposalPlatforms?.length || initial.proposalSections?.length) || initial.kind === "QUOTE",
     pricing: initial.kind === "QUOTE" || initial.lines.length > 0,
     plan: initial.kind === "INFLUENCER_PLAN" || initial.creators.length > 0,
@@ -344,7 +345,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                   const next = { ...parts, [k]: !on };
                   if (!next.proposal && !next.pricing && !next.plan) return;
                   setParts(next);
-                  set("kind", next.plan && !next.pricing ? "INFLUENCER_PLAN" : "QUOTE");
+                  /* Remembered with the quote: the client view and the PDF show only these parts (Genesis, 13 Oct 2026). */
+                  setQ((x) => ({ ...x, kind: next.plan && !next.pricing ? "INFLUENCER_PLAN" : "QUOTE", parts: (["proposal", "plan", "pricing"] as const).filter((p) => next[p]) }));
                 }}
                 className={`rounded-full border px-3 py-1.5 text-[0.875rem] ${on ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}
               >
