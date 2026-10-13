@@ -29,6 +29,8 @@ const safeUrl = (u: string | null, img = false) => {
   if (!u) return null;
   const v = u.trim();
   if (/^https?:\/\//i.test(v)) return v;
+  /* Images uploaded to the CRM, on whichever domain the page is served from. */
+  if (img && /^\/api\/crm\/images\/[\w-]{10,120}$/.test(v)) return v;
   if (!img && /^mailto:/i.test(v)) return v;
   return null;
 };

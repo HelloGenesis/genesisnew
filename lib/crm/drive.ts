@@ -221,6 +221,16 @@ export async function invoiceFolderId(invoiceId: string, number: string) {
   return folder(`Invoice ${number}`, invoices, `invoice:${invoiceId}`);
 }
 
+/** Genesis CRM / Proposal images: pictures put into proposals, served by /api/crm/images. */
+export async function proposalImagesFolderId() {
+  const root = await folder(ROOT_NAME, null, "root");
+  return folder("Proposal images", root, "proposal-images");
+}
+
+/** Marks a Drive file as a proposal image (the only files /api/crm/images will serve). */
+export const markProposalImage = (id: string, mimeType: string) => setSetting(`proposal-image:${id}`, mimeType);
+export const proposalImageType = (id: string) => getSetting(`proposal-image:${id}`);
+
 /** A small file (a screenshot, a signed PDF) uploaded by the server in one request. Returns its Drive id. */
 export async function uploadSmall(input: { name: string; mimeType: string; bytes: Buffer; parentId: string }): Promise<string> {
   if (localDrive()) {
