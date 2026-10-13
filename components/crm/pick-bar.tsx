@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+
+import { draftFromCreators } from "@/app/(crm)/admin/actions/quotes";
 
 /**
  * THE TICK-BOXES' BAR (Genesis, 12 Oct 2026: "a tick to select influencers to
@@ -9,6 +11,20 @@ import { useEffect, useState } from "react";
  */
 export function PickBar({ formId, label = "Make a plan with these", excel = false }: { formId: string; label?: string; excel?: boolean }) {
   const [count, setCount] = useState(0);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [, start] = useTransition();
+  const ticked = () => [...(document.getElementById(formId)?.querySelectorAll<HTMLInputElement>('input[name="creators"]:checked') ?? [])].map((b) => b.value);
+  /* A draft plan of the ticked creators, kept in Quotes & plans; with both Google Sheets made when asked. */
+  const draft = (then?: "sheets") => {
+    setBusy(then === "sheets" ? "Making the sheets…" : "Saving…");
+    start(async () => {
+      const result = await draftFromCreators(ticked(), then);
+      if (result && !result.ok) {
+        window.alert(result.message);
+        setBusy(null);
+      }
+    });
+  };
   useEffect(() => {
     const form = document.getElementById(formId) as HTMLFormElement | null;
     if (!form) return;
@@ -35,6 +51,9 @@ export function PickBar({ formId, label = "Make a plan with these", excel = fals
           <>
             <button form={formId} formAction="/api/crm/plan-xlsx" name="which" value="ext" disabled={count === 0} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Excel · external</button>
             <button form={formId} formAction="/api/crm/plan-xlsx" name="which" value="int" disabled={count === 0} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Excel · internal</button>
+            <button type="button" onClick={() => draft("sheets")} disabled={count === 0 || busy !== null} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Google Sheets · int + ext</button>
+            <button type="button" onClick={() => draft()} disabled={count === 0 || busy !== null} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Save draft</button>
+            {busy && <span className="text-[0.8125rem] text-ash" role="status">{busy}</span>}
           </>
         )}
         <button form={formId} disabled={count === 0} className="crm-btn crm-btn-primary crm-btn-sm disabled:opacity-50">
