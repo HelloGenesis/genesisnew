@@ -70,7 +70,8 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
     ["Problems we'll solve", q.proposalProblems],
     ["Objectives", q.proposalObjectives],
     ["Influencers", q.proposalInfluencers],
-    ...sections.map((x) => [x.title ?? "", x.html ?? ""]),
+    /* Content ideas first, then any other sections, in their order. */
+    ...[...sections].sort((a, b) => Number(b.title === "Content ideas") - Number(a.title === "Content ideas")).map((x) => [x.title ?? "", x.html ?? ""]),
   ]
     .map(([label, value]) => [label ?? "", value ? sanitizeHtml(looksLikeHtml(value) ? value : textToHtml(value)) : ""] as [string, string])
     .filter(([, value]) => Boolean(value));

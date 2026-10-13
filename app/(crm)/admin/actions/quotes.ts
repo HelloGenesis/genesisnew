@@ -152,14 +152,20 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     planBudget: q.planBudget || null,
   };
   const lines = q.lines.filter((l) => l.title || l.unit > 0 || l.details).map((l, i) => ({ position: i, kind: l.kind, productId: l.productId ?? null, division: l.division ?? null, title: l.title || "Untitled line", subtitle: l.subtitle || null, details: l.details || null, note: l.note || null, qty: l.qty, unitPaise: paise(l.unit) }));
-  /* Influencers added by link (not from the database) join the influencer database too (Genesis, 12 Oct 2026). */
+  /* A row added by hand and left empty isn't kept. */
+  q.creators = q.creators.filter((c) => c.creatorId || c.name.trim() || c.handle.trim());
+  /*
+   * Influencers added by link or by hand join the influencer database too
+   * (Genesis, 12 Oct 2026) — on Save, not while saving automatically, so a
+   * half-typed handle never becomes a creator.
+   */
   for (const c of q.creators) {
-    if (c.creatorId || !c.handle) continue;
+    if (autosave || c.creatorId || !c.handle) continue;
     const platform = (["INSTAGRAM", "YOUTUBE", "LINKEDIN", "X", "FACEBOOK", "MOJ", "JOSH", "SNAPCHAT", "OTHER"].includes(c.platform) ? c.platform : "INSTAGRAM") as Platform;
     const handle = c.handle.replace(/^@/, "").toLowerCase();
     const creator = await prisma.creator.upsert({
       where: { platform_handle: { platform, handle } },
-      create: { name: c.name || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote." },
+      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote." },
       update: {},
     });
     c.creatorId = creator.id;

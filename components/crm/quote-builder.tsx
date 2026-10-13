@@ -65,6 +65,7 @@ const priced = (c: BuilderCreator) => [c.reelPrice, c.storyPrice, c.dlPrice].som
 const creatorTotal = (c: BuilderCreator) => (priced(c) ? (c.reelPrice ?? 0) + (c.storyPrice ?? 0) + (c.dlPrice ?? 0) : (c.fee ?? 0));
 const creatorCost = (c: BuilderCreator) => (c.reelCost ?? 0) + (c.storyCost ?? 0) + (c.dlCost ?? 0);
 const REACHOUT = ["", "WhatsApp", "Email", "Agency/Freelancer", "Hashfame", "Awaiting reply", "Costs received", "Confirmed", "Not relevant", "Declined"];
+const CONTENT_IDEAS = "Content ideas";
 const MONEY = ["reelCost", "storyCost", "dlCost", "reelPrice", "storyPrice", "dlPrice"] as const;
 type MoneyKey = (typeof MONEY)[number];
 const MONEY_LABEL: Record<MoneyKey, string> = { reelCost: "Cost: 1 IG Reel", storyCost: "Cost: Story + LIB", dlCost: "Cost: DL (1 month)", reelPrice: "Price: 1 IG Reel", storyPrice: "Price: Story + LIB", dlPrice: "Price: DL (1 month)" };
@@ -210,6 +211,12 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
       if (j < 0 || j >= lines.length) return x;
       [lines[i], lines[j]] = [lines[j]!, lines[i]!];
       return { ...x, lines };
+    });
+  const setContentIdeas = (html: string) =>
+    setQ((x) => {
+      const list = x.proposalSections ?? [];
+      const at = list.findIndex((s) => s.title === CONTENT_IDEAS);
+      return { ...x, proposalSections: at >= 0 ? list.map((s, j) => (j === at ? { ...s, html } : s)) : [{ title: CONTENT_IDEAS, html }, ...list] };
     });
   const moveSection = (i: number) =>
     setQ((x) => {
@@ -384,7 +391,9 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
         {proposalBox("Problems we'll solve", "One point a line", q.proposalProblems, (v) => set("proposalProblems", v), "Low awareness in Tier-2 cities. No creator content for the launch.")}
         {proposalBox("Objectives", "What success looks like", q.proposalObjectives, (v) => set("proposalObjectives", v), "10k app installs in 30 days. 2M+ views.")}
         {proposalBox("Influencers", "The mix of creators", q.proposalInfluencers, (v) => set("proposalInfluencers", v), "15 fitness & food creators, 50k–500k followers. Mumbai, Pune, Bengaluru.")}
-        {(q.proposalSections ?? []).map((s, i) => (
+        {/* CONTENT IDEAS (Genesis, 13 Oct 2026): a standard box, kept with the sections as "Content ideas". */}
+        {proposalBox("Content ideas", "Hooks, formats, reel concepts", (q.proposalSections ?? []).find((x) => x.title === CONTENT_IDEAS)?.html, setContentIdeas, "Day-in-the-life reels with the product, a 7-day glow-up challenge, before/after transitions, myth vs fact carousels.")}
+        {(q.proposalSections ?? []).map((s, i) => s.title === CONTENT_IDEAS ? null : (
           <div key={i} className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
             <div className="flex items-center gap-2">
               <input value={s.title} onChange={(e) => setSection(i, { title: e.target.value })} className="crm-input !min-h-9 flex-1" placeholder="Section title: Big idea, Content pillars, Timeline, Deliverables…" />
@@ -444,6 +453,14 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
               }}
             >
               <Plus className="size-4" /> Add by link
+            </button>
+            {/* A creator typed in by hand (Genesis, 13 Oct 2026: "add a creator line"): name, handle and followers in the row. */}
+            <button
+              type="button"
+              className="crm-btn crm-btn-secondary crm-btn-sm"
+              onClick={() => setQ((x) => ({ ...x, creators: [...x.creators, { creatorId: null, name: "", handle: "", platform: "INSTAGRAM", profileUrl: null, followers: 0, avgViews: null, niches: [], city: null, deliverables: "1 IG Reel + Story & link in bio", fee: null }] }))}
+            >
+              <Plus className="size-4" /> Add creator
             </button>
             {linkError && <span className="text-[0.8125rem] text-[#dc2626]">{linkError}</span>}
           </div>
@@ -539,11 +556,33 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                       const profit = creatorTotal(c) - creatorCost(c);
                       return (
                         <tr key={`${c.handle}-${i}`}>
-                          <td className="sticky left-0 z-10 min-w-[11rem] bg-[var(--surface-panel)] text-bone">{c.name}<span className="block text-[0.75rem] text-ash">@{c.handle}</span></td>
+                          <td className="sticky left-0 z-10 min-w-[11rem] bg-[var(--surface-panel)] text-bone">
+                            {c.creatorId ? (
+                              <>{c.name}<span className="block text-[0.75rem] text-ash">@{c.handle}</span></>
+                            ) : (
+                              <span className="flex flex-col gap-1">
+                                <input value={c.name} onChange={(e) => setCreator(i, { name: e.target.value })} className="crm-input !min-h-8 !w-40 !px-2" placeholder="Name" aria-label="Creator name" />
+                                <input
+                                  value={c.handle}
+                                  onChange={(e) => {
+                                    const handle = e.target.value.replace(/^@/, "").replace(/\s+/g, "");
+                                    setCreator(i, { handle, profileUrl: handle && c.platform === "INSTAGRAM" ? `https://www.instagram.com/${handle}` : c.profileUrl });
+                                  }}
+                                  className="crm-input !min-h-8 !w-40 !px-2"
+                                  placeholder="@handle"
+                                  aria-label="Instagram handle"
+                                />
+                              </span>
+                            )}
+                          </td>
                           {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
                           {shows("category") && <td><input value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>}
                           {shows("ig") && <td>{c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link">Profile ↗</a> : "—"}</td>}
-                          {shows("followers") && <td className="tabular-nums whitespace-nowrap">{compact(c.followers)}</td>}
+                          {shows("followers") && (
+                            <td className="tabular-nums whitespace-nowrap">
+                              {c.creatorId ? compact(c.followers) : <input type="number" step="any" min={0} value={c.followers || ""} onChange={(e) => setCreator(i, { followers: Math.max(0, Math.round(Number(e.target.value) || 0)) })} className="crm-input !min-h-8 !w-28 !px-2" placeholder="Followers" />}
+                            </td>
+                          )}
                           {shows("avgViews") && <td><input type="number" step="any" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>}
                           {shows("er") && <td><input type="number" step="any" min={0} value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>}
                           {shows("location") && <td><input value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>}
