@@ -123,6 +123,23 @@ export async function disconnectGoogle(userId: string) {
 
 /* --- Calling Google as a person ---------------------------------------------- */
 
+/**
+ * A token for making files as this person, in their own Drive (Genesis, 13 Oct
+ * 2026: "it should be connected with the user's account itself"): theirs when
+ * they connected Google with file access, otherwise the company account's.
+ */
+export async function personFileToken(userId: string | null | undefined): Promise<{ token: string; email: string; own: boolean }> {
+  const conn = userId ? await getPrisma().googleConnection.findUnique({ where: { userId } }) : null;
+  if (conn && conn.status === "ACTIVE" && conn.scopes.includes("auth/drive.file")) {
+    try {
+      return { token: await accessToken(conn.userId), email: conn.email, own: true };
+    } catch {
+      /* Falls through to the company account. */
+    }
+  }
+  return { token: await companyToken(), email: COMPANY_ACCOUNT(), own: false };
+}
+
 const tokenCache = new Map<string, { token: string; expires: number }>();
 
 export class GoogleAuthError extends Error {}

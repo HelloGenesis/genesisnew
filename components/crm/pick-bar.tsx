@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
  * add or make a customised plan"). Counts what's ticked in its form, ticks or
  * clears every row, and submits the form: a new influencer plan with them.
  */
-export function PickBar({ formId, label = "Make a plan with these" }: { formId: string; label?: string }) {
+export function PickBar({ formId, label = "Make a plan with these", excel = false }: { formId: string; label?: string; excel?: boolean }) {
   const [count, setCount] = useState(0);
   useEffect(() => {
     const form = document.getElementById(formId) as HTMLFormElement | null;
@@ -29,9 +29,18 @@ export function PickBar({ formId, label = "Make a plan with these" }: { formId: 
         <button type="button" onClick={() => setAll(true)} className="crm-link">tick all shown</button> ·{" "}
         <button type="button" onClick={() => setAll(false)} className="crm-link">clear</button>
       </span>
-      <button form={formId} disabled={count === 0} className="crm-btn crm-btn-primary crm-btn-sm disabled:opacity-50">
-        {label} →
-      </button>
+      <span className="flex flex-wrap items-center gap-2">
+        {/* The ticked creators as a plan in Excel, external or internal (Genesis, 13 Oct 2026); their rates as cost, +30% as price. */}
+        {excel && (
+          <>
+            <button form={formId} formAction="/api/crm/plan-xlsx" name="which" value="ext" disabled={count === 0} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Excel · external</button>
+            <button form={formId} formAction="/api/crm/plan-xlsx" name="which" value="int" disabled={count === 0} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Excel · internal</button>
+          </>
+        )}
+        <button form={formId} disabled={count === 0} className="crm-btn crm-btn-primary crm-btn-sm disabled:opacity-50">
+          {label} →
+        </button>
+      </span>
     </div>
   );
 }

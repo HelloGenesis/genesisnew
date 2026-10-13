@@ -1,9 +1,12 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Plus, Trash2, X } from "lucide-react";
-import { useActionState, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, Columns3, ExternalLink, FileSpreadsheet, Plus, Trash2, X } from "lucide-react";
+import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { saveQuote } from "@/app/(crm)/admin/actions/quotes";
+import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
+
+import { RichText } from "./rich-text";
 
 export type BuilderLine = { kind: string; productId?: string | null; division?: string | null; title: string; subtitle?: string | null; details?: string | null; note?: string | null; qty: number; unit: number };
 export type BuilderCreator = {
@@ -11,7 +14,11 @@ export type BuilderCreator = {
   /* The plan's columns: the creator's cost to us and the client's price, per deliverable (Genesis, 12 Oct 2026). */
   er?: number | null; reelCost?: number | null; storyCost?: number | null; dlCost?: number | null; reelPrice?: number | null; storyPrice?: number | null; dlPrice?: number | null;
   reachout?: string | null; contact?: string | null; remarks?: string | null;
+  /* Values of the columns added in the builder, by column name. */
+  extra?: Record<string, string>;
 };
+export type ProposalSection = { title: string; html: string };
+export type PlanColumnsState = { hidden?: string[]; custom?: string[] };
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -35,6 +42,9 @@ export type BuilderQuote = {
   proposalProblems?: string | null;
   proposalObjectives?: string | null;
   proposalInfluencers?: string | null;
+  proposalTg?: string | null;
+  proposalSections?: ProposalSection[];
+  planColumns?: PlanColumnsState;
   markupPercent?: number;
   planBudget?: string | null;
   lines: BuilderLine[];
@@ -43,6 +53,7 @@ export type BuilderQuote = {
 type CatalogItem = { id: string; kind: string; group: string; division: string; title: string; subtitle?: string; details: string; note?: string; price: number };
 type PoolCreator = { id: string; name: string; handle: string; platform: string; profileUrl: string | null; followers: number; avgViews: number | null; niches: string[]; city: string | null; reel: number | null; story: number | null; dl: number | null; contact: string | null };
 type Terms = { key: string; label: string; notes: string; terms: string[] };
+type Client = { key: string; kind: "client" | "agency" | "lead"; accountId: string | null; leadId: string | null; company: string; contactName: string; email: string; phone: string | null };
 
 const DIVISIONS: [string, string][] = [["AI_LAB", "AI Lab"], ["STUDIOS", "Studios"], ["BRAND_DESIGN", "Brand & Design"], ["INFLUENCE", "Influence"]];
 const inr = (r: number) => `₹${r.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -54,6 +65,9 @@ const priced = (c: BuilderCreator) => [c.reelPrice, c.storyPrice, c.dlPrice].som
 const creatorTotal = (c: BuilderCreator) => (priced(c) ? (c.reelPrice ?? 0) + (c.storyPrice ?? 0) + (c.dlPrice ?? 0) : (c.fee ?? 0));
 const creatorCost = (c: BuilderCreator) => (c.reelCost ?? 0) + (c.storyCost ?? 0) + (c.dlCost ?? 0);
 const REACHOUT = ["", "WhatsApp", "Email", "Agency/Freelancer", "Hashfame", "Awaiting reply", "Costs received", "Confirmed", "Not relevant", "Declined"];
+const MONEY = ["reelCost", "storyCost", "dlCost", "reelPrice", "storyPrice", "dlPrice"] as const;
+type MoneyKey = (typeof MONEY)[number];
+const MONEY_LABEL: Record<MoneyKey, string> = { reelCost: "Cost: 1 IG Reel", storyCost: "Cost: Story + LIB", dlCost: "Cost: DL (1 month)", reelPrice: "Price: 1 IG Reel", storyPrice: "Price: Story + LIB", dlPrice: "Price: DL (1 month)" };
 
 /** A creator from a profile link: the platform and handle it names (Genesis, 12 Oct 2026: "link + add more influencer"). */
 function fromLink(url: string): BuilderCreator | null {
@@ -67,27 +81,96 @@ function fromLink(url: string): BuilderCreator | null {
 }
 
 /**
- * THE QUOTE BUILDER — Genesis's Price Quote, assembled on screen: the
- * standard catalogue (plans, products, their add-ons) or custom lines, an
- * influencer plan's creator list from the database, notes and terms from a
- * template, and live totals. Saves as a draft; sending is a separate step.
+ * CLIENT / BRAND, WITH THE ONES ALREADY IN THE CRM (Genesis, 13 Oct 2026:
+ * "a drop-down where the already added client and brand names can be seen,
+ * and it should fill up on its own"). Type to filter; picking one fills the
+ * contact, email and phone, links the quote to that client or lead, and
+ * names the quote if it has no title yet. Any new name can still be typed.
  */
-export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: BuilderQuote; catalog: CatalogItem[]; terms: Terms[]; pool: PoolCreator[] }) {
-  const [q, setQ] = useState<BuilderQuote>(initial);
+function ClientPicker({ value, clients, onType, onPick }: { value: string; clients: Client[]; onType: (v: string) => void; onPick: (c: Client) => void }) {
+  const [open, setOpen] = useState(false);
+  const listId = useId();
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  const shown = useMemo(() => {
+    const s = value.trim().toLowerCase();
+    const list = s ? clients.filter((c) => `${c.company} ${c.contactName} ${c.email}`.toLowerCase().includes(s)) : clients;
+    return list.slice(0, 40);
+  }, [clients, value]);
+  return (
+    <div ref={box} className="relative">
+      <input
+        value={value}
+        onChange={(e) => {
+          onType(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        className="crm-input"
+        placeholder="Pick a client or type a new one"
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-autocomplete="list"
+      />
+      {open && shown.length > 0 && (
+        <ul className="absolute left-0 right-0 z-30 mt-1 max-h-80 overflow-y-auto rounded-xl border border-[var(--glass-border)] bg-[var(--surface-float)] p-1 shadow-[var(--shadow-float)]" data-lenis-prevent role="listbox" id={listId}>
+          {shown.map((c) => (
+            <li key={c.key}>
+              <button
+                type="button"
+                onClick={() => {
+                  onPick(c);
+                  setOpen(false);
+                }}
+                className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--hover-wash)]"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-[0.875rem] text-bone">{c.company}</span>
+                  <span className="block truncate text-[0.75rem] text-ash">{[c.contactName !== c.company ? c.contactName : "", c.email].filter(Boolean).join(" · ") || "No contact yet"}</span>
+                </span>
+                <span className="shrink-0 rounded-full border border-[var(--glass-border)] px-2 py-0.5 text-[0.6875rem] text-ash">{c.kind === "lead" ? "Lead" : c.kind === "agency" ? "Agency" : "Client"}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * THE QUOTE BUILDER — Genesis's Price Quote, assembled on screen. In the
+ * order the client reads it (Genesis, 13 Oct 2026: "proposal should come
+ * above costing; costing below everything"): the proposal, the influencer
+ * plan, the price lines, then notes, terms and totals. Saves as a draft with
+ * gaps; sending is a separate step.
+ */
+export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], sheets }: { initial: BuilderQuote; catalog: CatalogItem[]; terms: Terms[]; pool: PoolCreator[]; clients?: Client[]; sheets?: { ext: string | null; int: string | null } }) {
+  const [q, setQ] = useState<BuilderQuote>({ ...initial, proposalSections: initial.proposalSections ?? [], planColumns: initial.planColumns ?? {} });
   const [pick, setPick] = useState("");
   const [search, setSearch] = useState("");
   const [link, setLink] = useState("");
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [showColumns, setShowColumns] = useState(false);
+  const [newColumn, setNewColumn] = useState("");
+  const [download, setDownload] = useState<string | null>(null);
   const [state, action, pending] = useActionState(saveQuote, null);
   /* Which parts this document holds (shown in the builder; the send step picks which go). */
   const [parts, setParts] = useState({
-    proposal: Boolean(initial.proposalProblems || initial.proposalObjectives || initial.proposalInfluencers || initial.proposalPlatforms?.length) || initial.kind === "QUOTE",
+    proposal: Boolean(initial.proposalProblems || initial.proposalObjectives || initial.proposalInfluencers || initial.proposalTg || initial.proposalPlatforms?.length || initial.proposalSections?.length) || initial.kind === "QUOTE",
     pricing: initial.kind === "QUOTE" || initial.lines.length > 0,
     plan: initial.kind === "INFLUENCER_PLAN" || initial.creators.length > 0,
   });
   const set = <K extends keyof BuilderQuote>(k: K, v: BuilderQuote[K]) => setQ((x) => ({ ...x, [k]: v }));
   const setLine = (i: number, patch: Partial<BuilderLine>) => setQ((x) => ({ ...x, lines: x.lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) }));
   const setCreator = (i: number, patch: Partial<BuilderCreator>) => setQ((x) => ({ ...x, creators: x.creators.map((c, j) => (j === i ? { ...c, ...patch } : c)) }));
+  const setSection = (i: number, patch: Partial<ProposalSection>) => setQ((x) => ({ ...x, proposalSections: (x.proposalSections ?? []).map((s, j) => (j === i ? { ...s, ...patch } : s)) }));
   const move = (i: number, d: number) =>
     setQ((x) => {
       const lines = [...x.lines];
@@ -96,6 +179,31 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
       [lines[i], lines[j]] = [lines[j]!, lines[i]!];
       return { ...x, lines };
     });
+  const moveSection = (i: number) =>
+    setQ((x) => {
+      const list = [...(x.proposalSections ?? [])];
+      if (i > 0) [list[i - 1], list[i]] = [list[i]!, list[i - 1]!];
+      return { ...x, proposalSections: list };
+    });
+
+  const hidden = new Set(q.planColumns?.hidden ?? []);
+  const custom = q.planColumns?.custom ?? [];
+  const shows = (key: string) => !hidden.has(key);
+  const toggleColumn = (key: string) =>
+    setQ((x) => {
+      const now = x.planColumns?.hidden ?? [];
+      return { ...x, planColumns: { ...x.planColumns, hidden: now.includes(key) ? now.filter((k) => k !== key) : [...now, key] } };
+    });
+  const addColumn = () => {
+    const name = newColumn.trim().slice(0, 60);
+    setNewColumn("");
+    if (!name || custom.includes(name) || PLAN_COLUMNS.some(([, l]) => l.toLowerCase() === name.toLowerCase())) return;
+    setQ((x) => ({ ...x, planColumns: { ...x.planColumns, custom: [...(x.planColumns?.custom ?? []), name] } }));
+  };
+  const removeColumn = (name: string) => {
+    if (!window.confirm(`Remove the “${name}” column and what's in it?`)) return;
+    setQ((x) => ({ ...x, planColumns: { ...x.planColumns, custom: (x.planColumns?.custom ?? []).filter((c) => c !== name) }, creators: x.creators.map((c) => ({ ...c, extra: Object.fromEntries(Object.entries(c.extra ?? {}).filter(([k]) => k !== name)) })) }));
+  };
 
   const totals = useMemo(() => {
     const lines = q.lines.reduce((s, l) => s + l.qty * l.unit, 0);
@@ -130,7 +238,48 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
     if (t) setQ((x) => ({ ...x, notes: t.notes, terms: t.terms.join("\n") }));
   }
 
-  const plan = q.kind === "INFLUENCER_PLAN";
+  function pickClient(c: Client) {
+    setQ((x) => ({
+      ...x,
+      company: c.company,
+      contactName: c.contactName || x.contactName,
+      contactEmail: c.email || x.contactEmail,
+      contactPhone: c.phone || x.contactPhone,
+      accountId: c.accountId ?? x.accountId ?? null,
+      leadId: c.leadId ?? x.leadId ?? null,
+      title: x.title.trim() ? x.title : `${c.company} — ${x.kind === "INFLUENCER_PLAN" ? "Influencer plan" : "Proposal"}`,
+    }));
+  }
+
+  /* Excel, internal or external, from the plan as it is on screen (no need to save first). */
+  async function excel(which: "ext" | "int") {
+    setDownload(which);
+    try {
+      const r = await fetch(`/api/crm/plan-xlsx?which=${which}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(q) });
+      if (!r.ok) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? `Error ${r.status}`);
+      const name = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") ?? "")?.[1] ?? "Influencer plan.xlsx";
+      const url = URL.createObjectURL(await r.blob());
+      const a = Object.assign(document.createElement("a"), { href: url, download: name });
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch (e) {
+      window.alert(`Couldn't make the Excel: ${(e as Error).message}`);
+    }
+    setDownload(null);
+  }
+
+  const costTotal = q.creators.reduce((s, c) => s + creatorCost(c), 0);
+  const sum = (k: MoneyKey) => q.creators.reduce((s, c) => s + (c[k] ?? 0), 0);
+
+  const proposalBox = (label: string, hint: string, value: string | null | undefined, onChange: (v: string) => void, placeholder: string) => (
+    <div className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[0.9375rem] text-bone">{label}</span>
+        <span className="text-[0.75rem] text-faint">{hint}</span>
+      </div>
+      <RichText label={label} value={value ?? ""} onChange={onChange} placeholder={placeholder} />
+    </div>
+  );
 
   return (
     <form action={action} noValidate className="space-y-6">
@@ -144,7 +293,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
         */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[0.875rem] text-ash">This document has:</span>
-          {([["proposal", "Proposal"], ["pricing", "Price lines"], ["plan", "Influencer plan"]] as const).map(([k, label]) => {
+          {([["proposal", "Proposal"], ["plan", "Influencer plan"], ["pricing", "Price lines"]] as const).map(([k, label]) => {
             const on = parts[k];
             return (
               <button
@@ -164,67 +313,77 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
             );
           })}
         </div>
-        <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
-          <label><span className="crm-label">Title (as on the quote)</span><input value={q.title} onChange={(e) => set("title", e.target.value)} className="crm-input" placeholder="Primezen + Sensinova — Premium UGC Product Content" /></label>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.6fr_1fr_1fr]">
+          <label><span className="crm-label">Client / brand</span><ClientPicker value={q.company ?? ""} clients={clients} onType={(v) => setQ((x) => ({ ...x, company: v }))} onPick={pickClient} /></label>
+          <label><span className="crm-label">Title (as on the quote)</span><input value={q.title} onChange={(e) => set("title", e.target.value)} className="crm-input" placeholder="Fills in when you pick the client" /></label>
           <label><span className="crm-label">Division</span>
             <select value={q.division ?? ""} onChange={(e) => set("division", e.target.value || null)} className="crm-input"><option value="">—</option>{DIVISIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
           </label>
           <label><span className="crm-label">Valid until</span><input type="date" value={q.expiresAt} onChange={(e) => set("expiresAt", e.target.value)} className="crm-input" /></label>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label><span className="crm-label">Client / brand</span><input value={q.company ?? ""} onChange={(e) => set("company", e.target.value)} className="crm-input" /></label>
+        <div className="grid gap-3 sm:grid-cols-3">
           <label><span className="crm-label">Contact name</span><input value={q.contactName} onChange={(e) => set("contactName", e.target.value)} className="crm-input" /></label>
-          <label><span className="crm-label">Email</span><input type="email" value={q.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} className="crm-input" /></label>
+          <label><span className="crm-label">Email</span><input type="email" value={q.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} className="crm-input" placeholder="Needed only to send" /></label>
           <label><span className="crm-label">Phone</span><input value={q.contactPhone ?? ""} onChange={(e) => set("contactPhone", e.target.value)} className="crm-input" /></label>
         </div>
       </section>
 
-      <section className={`space-y-3 ${parts.pricing ? "" : "hidden"}`}>
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-[1.125rem] text-bone">Product or service</h2>
-          <div className="flex flex-wrap gap-2">
-            <select value={pick} onChange={(e) => addFromCatalog(e.target.value)} className="crm-input w-auto max-w-[22rem]" aria-label="Add from plans, products and add-ons">
-              <option value="">＋ Plans, products & add-ons…</option>
-              {groups.map(([g, items]) => (
-                <optgroup key={g} label={g}>
-                  {items.map((c) => <option key={c.id} value={c.id}>{c.title} · {inr(c.price)}</option>)}
-                </optgroup>
-              ))}
-            </select>
-            <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => setQ((x) => ({ ...x, lines: [...x.lines, { kind: "custom", title: "", qty: 1, unit: 0, division: x.division ?? null }] }))}>
-              <Plus className="size-4" /> Custom line
-            </button>
-          </div>
+      {/* THE PROPOSAL (Genesis, 12–13 Oct 2026): first, one box after another, each with its own formatting tools. */}
+      <section className={`crm-card crm-pad space-y-4 ${parts.proposal ? "" : "hidden"}`}>
+        <div>
+          <h2 className="text-[1.125rem] text-bone">Proposal</h2>
+          <p className="text-[0.8125rem] text-ash">Comes first on the document. When sending you can send the proposal on its own, the pricing on its own, or both.</p>
         </div>
-        {q.lines.length === 0 && <p className="rounded-xl border border-dashed border-[var(--glass-border)] px-4 py-6 text-center text-ash">Add a plan, a product or a custom line.</p>}
-        {q.lines.map((l, i) => (
-          <div key={i} className="crm-card crm-pad space-y-3">
-            <div className="grid gap-3 sm:grid-cols-[1fr_6rem_9rem_9rem_auto] sm:items-end">
-              <label><span className="crm-label">{l.kind === "custom" ? "Custom line" : l.kind === "addon" ? "Add-on" : l.kind === "plan" ? "Plan" : "Product"}</span><input value={l.title} onChange={(e) => setLine(i, { title: e.target.value })} className="crm-input font-medium" placeholder="Premium UGC Content Production | 10 Videos" /></label>
-              <label><span className="crm-label">Qty</span><input type="number" step="any" min={1} value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} className="crm-input" /></label>
-              <label><span className="crm-label">Price (₹)</span><input type="number" step="any" min={0} value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
-              <p className="pb-2.5 text-right tabular-nums text-bone"><span className="crm-label">Line total</span>{inr(l.qty * l.unit)}</p>
-              <span className="flex gap-1 pb-2">
-                <button type="button" aria-label="Move up" onClick={() => move(i, -1)} className="text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
-                <button type="button" aria-label="Move down" onClick={() => move(i, 1)} className="text-ash hover:text-bone"><ArrowDown className="size-4" /></button>
-                <button type="button" aria-label="Remove line" onClick={() => setQ((x) => ({ ...x, lines: x.lines.filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
-              </span>
+        <fieldset>
+          <legend className="crm-label">Platforms</legend>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {PLATFORMS.map((p) => {
+              const on = (q.proposalPlatforms ?? []).includes(p);
+              return (
+                <button key={p} type="button" aria-pressed={on} onClick={() => set("proposalPlatforms", on ? (q.proposalPlatforms ?? []).filter((x) => x !== p) : [...(q.proposalPlatforms ?? []), p])} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${on ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+        {proposalBox("TG (target group)", "Who the campaign speaks to", q.proposalTg, (v) => set("proposalTg", v), "Women 25–40, SEC A/B, Tier-1 & Tier-2 cities, into fitness and wellness")}
+        {proposalBox("Problems we'll solve", "One point a line", q.proposalProblems, (v) => set("proposalProblems", v), "Low awareness in Tier-2 cities. No creator content for the launch.")}
+        {proposalBox("Objectives", "What success looks like", q.proposalObjectives, (v) => set("proposalObjectives", v), "10k app installs in 30 days. 2M+ views.")}
+        {proposalBox("Influencers", "The mix of creators", q.proposalInfluencers, (v) => set("proposalInfluencers", v), "15 fitness & food creators, 50k–500k followers. Mumbai, Pune, Bengaluru.")}
+        {(q.proposalSections ?? []).map((s, i) => (
+          <div key={i} className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
+            <div className="flex items-center gap-2">
+              <input value={s.title} onChange={(e) => setSection(i, { title: e.target.value })} className="crm-input !min-h-9 flex-1" placeholder="Section title: Big idea, Content pillars, Timeline, Deliverables…" />
+              <button type="button" aria-label="Move section up" onClick={() => moveSection(i)} className="text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
+              <button type="button" aria-label="Remove section" onClick={() => window.confirm("Remove this section?") && setQ((x) => ({ ...x, proposalSections: (x.proposalSections ?? []).filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
             </div>
-            <label className="block"><span className="crm-label">Subtitle</span><input value={l.subtitle ?? ""} onChange={(e) => setLine(i, { subtitle: e.target.value })} className="crm-input" placeholder="Professional UGC Production Shoot" /></label>
-            <div className="grid gap-3 md:grid-cols-2">
-              <label><span className="crm-label">What&apos;s included (one bullet per line)</span><textarea value={l.details ?? ""} onChange={(e) => setLine(i, { details: e.target.value })} className="crm-input !min-h-28" /></label>
-              <label><span className="crm-label">Small print under it</span><textarea value={l.note ?? ""} onChange={(e) => setLine(i, { note: e.target.value })} className="crm-input !min-h-28" placeholder="Shoot location and schedule to be mutually finalised." /></label>
-            </div>
+            <RichText label={s.title || `Section ${i + 1}`} value={s.html} onChange={(v) => setSection(i, { html: v })} placeholder="Write, format, add images, links or an embedded video, reel or deck." />
           </div>
         ))}
+        <button type="button" onClick={() => set("proposalSections", [...(q.proposalSections ?? []), { title: "", html: "" }])} className="crm-btn crm-btn-secondary crm-btn-sm"><Plus className="size-4" /> Add a section</button>
       </section>
 
       <section className={`space-y-3 ${parts.plan ? "" : "hidden"}`}>
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-[1.125rem] text-bone">Creators {plan ? "on this plan" : "(optional)"}</h2>
-          <span className="text-[0.8125rem] text-ash">{q.creators.length} creators · {inr(totals.creators)} fees</span>
+          <h2 className="text-[1.125rem] text-bone">Influencer plan</h2>
+          <span className="text-[0.8125rem] text-ash">{q.creators.length} creators · {inr(totals.creators)} to the client</span>
         </div>
         <div className="crm-card crm-pad space-y-3">
+          {/*
+            THE PLAN AS SHEETS (Genesis, 13 Oct 2026: "export as Excel and Google
+            Sheet, internal and external, here"): Excel from what's on screen;
+            Google Sheets save the plan and make both in your own Drive.
+          */}
+          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[var(--hover-wash)] px-3 py-2">
+            <span className="mr-1 text-[0.8125rem] text-ash">Sheets:</span>
+            <button type="button" disabled={!q.creators.length || download !== null} onClick={() => excel("ext")} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-40"><FileSpreadsheet className="size-4" aria-hidden /> {download === "ext" ? "Making…" : "Excel · external (client)"}</button>
+            <button type="button" disabled={!q.creators.length || download !== null} onClick={() => excel("int")} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-40"><FileSpreadsheet className="size-4" aria-hidden /> {download === "int" ? "Making…" : "Excel · internal (team)"}</button>
+            <button name="then" value="sheets" disabled={!q.creators.length || pending} className="crm-btn crm-btn-primary crm-btn-sm disabled:opacity-40">{pending ? "Saving…" : sheets?.ext ? "Save & update Google Sheets" : "Save & make Google Sheets"}</button>
+            {sheets?.ext && <a href={`https://docs.google.com/spreadsheets/d/${sheets.ext}/edit`} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">External sheet <ExternalLink className="inline size-3.5" aria-hidden /></a>}
+            {sheets?.int && <a href={`https://docs.google.com/spreadsheets/d/${sheets.int}/edit`} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">Internal sheet <ExternalLink className="inline size-3.5" aria-hidden /></a>}
+            {state?.message && <span className={`text-[0.8125rem] ${state.ok ? "text-[#16a34a]" : "text-[#dc2626]"}`} role={state.ok ? "status" : "alert"}>{state.message}</span>}
+          </div>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search the influencer database: name, @handle, niche, city" className="crm-input" />
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -272,7 +431,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
               {/* MARKUP: the client's price is the creator's cost plus this, rounded (Genesis's plans: cost → price → profit). */}
               <div className="flex flex-wrap items-center gap-2 text-[0.875rem] text-ash">
                 <span>Client price = creator cost +</span>
-                <input type="number" step="any" min={0} max={500} value={q.markupPercent ?? 30} onChange={(e) => set("markupPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 !w-20" />
+                <input type="number" step="any" min={0} value={q.markupPercent ?? 30} onChange={(e) => set("markupPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 !w-20" />
                 <span>%</span>
                 <button
                   type="button"
@@ -285,42 +444,86 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
                 >
                   Apply to every price
                 </button>
+                <button type="button" aria-expanded={showColumns} onClick={() => setShowColumns((s) => !s)} className="crm-btn crm-btn-secondary crm-btn-sm"><Columns3 className="size-4" aria-hidden /> Add / remove columns</button>
                 <span className="ml-auto flex items-center gap-2">Budget line <input value={q.planBudget ?? ""} onChange={(e) => set("planBudget", e.target.value)} className="crm-input !min-h-8 !w-44" placeholder="As per Brand" /></span>
               </div>
-              {/* THE PLAN AS GENESIS'S SHEET, every column (Genesis, 12 Oct 2026: "fields are still missing"); scrolls sideways, the name stays put. */}
+              {/* ADD AND REMOVE COLUMNS (Genesis, 13 Oct 2026). Removed ones leave the client view and both sheets; added ones appear in all three. */}
+              {showColumns && (
+                <div className="space-y-2 rounded-xl border border-[var(--glass-border)] p-3">
+                  <p className="text-[0.8125rem] text-ash">Tap a column to remove it (tap again to bring it back). Removed columns are left out of the client view and both sheets.</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PLAN_COLUMNS.map(([key, label]) => (
+                      <button key={key} type="button" aria-pressed={shows(key)} onClick={() => toggleColumn(key)} className={`rounded-full border px-2.5 py-1 text-[0.75rem] ${shows(key) ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-faint line-through"}`}>{label}</button>
+                    ))}
+                    {custom.map((name) => (
+                      <span key={name} className="inline-flex items-center gap-1 rounded-full border border-[#ffc516] px-2.5 py-1 text-[0.75rem] text-bone">
+                        {name}
+                        <button type="button" aria-label={`Remove the ${name} column`} onClick={() => removeColumn(name)} className="text-ash hover:text-[#dc2626]"><X className="size-3.5" /></button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      value={newColumn}
+                      onChange={(e) => setNewColumn(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addColumn();
+                        }
+                      }}
+                      placeholder="New column: Language, Gender, Go-live date…"
+                      className="crm-input !min-h-8 max-w-xs"
+                    />
+                    <button type="button" onClick={addColumn} className="crm-btn crm-btn-secondary crm-btn-sm"><Plus className="size-4" /> Add column</button>
+                  </div>
+                </div>
+              )}
+              {/* THE PLAN AS GENESIS'S SHEET (Genesis, 12 Oct 2026: "fields are still missing"); scrolls sideways, the name stays put. */}
               <div className="-mx-1 overflow-x-auto pb-2">
-                <table className="crm-table !min-w-[2150px] text-[0.8125rem] [&_td]:!px-1.5 [&_th]:!px-1.5 [&_th]:whitespace-nowrap">
+                <table className="crm-table !min-w-max text-[0.8125rem] [&_td]:!px-1.5 [&_th]:!px-1.5 [&_th]:whitespace-nowrap">
                   <thead>
                     <tr>
                       <th className="sticky left-0 z-10 bg-[var(--surface-panel)]">Name</th>
-                      <th>Tier</th><th>Category</th><th>IG link</th><th>Followers</th><th>Avg views</th><th>ER %</th><th>Location</th><th>Reach-out</th>
-                      <th className="bg-[var(--hover-wash)]">Cost: 1 IG Reel</th><th className="bg-[var(--hover-wash)]">Cost: Story + LIB</th><th className="bg-[var(--hover-wash)]">Cost: DL (1 month)</th>
-                      <th>Price: 1 IG Reel</th><th>Price: Story + LIB</th><th>Price: DL (1 month)</th>
-                      <th>Profit</th><th>Contact</th><th>Remarks</th><th />
+                      {shows("tier") && <th>Tier</th>}
+                      {shows("category") && <th>Category</th>}
+                      {shows("ig") && <th>IG link</th>}
+                      {shows("followers") && <th>Followers</th>}
+                      {shows("avgViews") && <th>Avg views</th>}
+                      {shows("er") && <th>ER %</th>}
+                      {shows("location") && <th>Location</th>}
+                      {shows("reachout") && <th>Reach-out</th>}
+                      {MONEY.filter(shows).map((k) => <th key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}>{MONEY_LABEL[k]}</th>)}
+                      {shows("profit") && <th>Profit</th>}
+                      {shows("contact") && <th>Contact</th>}
+                      {shows("remarks") && <th>Remarks</th>}
+                      {custom.map((name) => <th key={name}>{name}</th>)}
+                      <th />
                     </tr>
                   </thead>
                   <tbody>
                     {q.creators.map((c, i) => {
-                      const money = (k: "reelCost" | "storyCost" | "dlCost" | "reelPrice" | "storyPrice" | "dlPrice", cost = false) => (
-                        <td key={k} className={cost ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
-                      );
                       const profit = creatorTotal(c) - creatorCost(c);
                       return (
                         <tr key={`${c.handle}-${i}`}>
                           <td className="sticky left-0 z-10 min-w-[11rem] bg-[var(--surface-panel)] text-bone">{c.name}<span className="block text-[0.75rem] text-ash">@{c.handle}</span></td>
-                          <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>
-                          <td><input value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>
-                          <td>{c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link">Profile ↗</a> : "—"}</td>
-                          <td className="tabular-nums whitespace-nowrap">{compact(c.followers)}</td>
-                          <td><input type="number" step="any" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>
-                          <td><input type="number" step="any" min={0} value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>
-                          <td><input value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>
-                          <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{REACHOUT.map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>
-                          {money("reelCost", true)}{money("storyCost", true)}{money("dlCost", true)}
-                          {money("reelPrice")}{money("storyPrice")}{money("dlPrice")}
-                          <td className={`whitespace-nowrap tabular-nums ${profit < 0 ? "text-[#dc2626]" : "text-bone"}`}>{inr(profit)}</td>
-                          <td><input value={c.contact ?? ""} onChange={(e) => setCreator(i, { contact: e.target.value })} className="crm-input !min-h-8 !w-44 !px-2" placeholder="+91… / email / agency" /></td>
-                          <td><input value={c.remarks ?? ""} onChange={(e) => setCreator(i, { remarks: e.target.value })} className="crm-input !min-h-8 !w-48 !px-2" /></td>
+                          {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
+                          {shows("category") && <td><input value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>}
+                          {shows("ig") && <td>{c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link">Profile ↗</a> : "—"}</td>}
+                          {shows("followers") && <td className="tabular-nums whitespace-nowrap">{compact(c.followers)}</td>}
+                          {shows("avgViews") && <td><input type="number" step="any" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>}
+                          {shows("er") && <td><input type="number" step="any" min={0} value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>}
+                          {shows("location") && <td><input value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>}
+                          {shows("reachout") && <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{REACHOUT.map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>}
+                          {MONEY.filter(shows).map((k) => (
+                            <td key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
+                          ))}
+                          {shows("profit") && <td className={`whitespace-nowrap tabular-nums ${profit < 0 ? "text-[#dc2626]" : "text-bone"}`}>{inr(profit)}</td>}
+                          {shows("contact") && <td><input value={c.contact ?? ""} onChange={(e) => setCreator(i, { contact: e.target.value })} className="crm-input !min-h-8 !w-44 !px-2" placeholder="+91… / email / agency" /></td>}
+                          {shows("remarks") && <td><input value={c.remarks ?? ""} onChange={(e) => setCreator(i, { remarks: e.target.value })} className="crm-input !min-h-8 !w-48 !px-2" /></td>}
+                          {custom.map((name) => (
+                            <td key={name}><input value={c.extra?.[name] ?? ""} onChange={(e) => setCreator(i, { extra: { ...(c.extra ?? {}), [name]: e.target.value } })} className="crm-input !min-h-8 !w-40 !px-2" /></td>
+                          ))}
                           <td><button type="button" aria-label="Remove creator" onClick={() => setQ((x) => ({ ...x, creators: x.creators.filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><X className="size-4" /></button></td>
                         </tr>
                       );
@@ -329,11 +532,13 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
                   <tfoot>
                     <tr className="text-bone">
                       <td className="sticky left-0 z-10 bg-[var(--surface-panel)]">{q.creators.length} creators</td>
-                      <td colSpan={8} />
-                      <td colSpan={3} className="whitespace-nowrap tabular-nums">Cost {inr(q.creators.reduce((s, c) => s + creatorCost(c), 0))}</td>
-                      <td colSpan={3} className="whitespace-nowrap tabular-nums">Client {inr(totals.creators)}</td>
-                      <td className="whitespace-nowrap tabular-nums">{inr(totals.creators - q.creators.reduce((s, c) => s + creatorCost(c), 0))}</td>
-                      <td colSpan={3} />
+                      {["tier", "category", "ig", "followers", "avgViews", "er", "location", "reachout"].filter(shows).map((k) => <td key={k} />)}
+                      {MONEY.filter(shows).map((k) => <td key={k} className="whitespace-nowrap tabular-nums">{inr(sum(k))}</td>)}
+                      {shows("profit") && <td className="whitespace-nowrap tabular-nums">{inr(totals.creators - costTotal)}</td>}
+                      {shows("contact") && <td />}
+                      {shows("remarks") && <td />}
+                      {custom.map((name) => <td key={name} />)}
+                      <td />
                     </tr>
                   </tfoot>
                 </table>
@@ -343,30 +548,44 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
         </div>
       </section>
 
-      {/* THE PROPOSAL (Genesis, 12 Oct 2026): what the campaign is, apart from what it costs; it can be sent on its own. */}
-      <section className={`crm-card crm-pad space-y-3 ${parts.proposal ? "" : "hidden"}`}>
-        <div>
-          <h2 className="text-[1.125rem] text-bone">Proposal</h2>
-          <p className="text-[0.8125rem] text-ash">Shown above the pricing. When sending you can send the proposal on its own, the pricing on its own, or both.</p>
-        </div>
-        <fieldset>
-          <legend className="crm-label">Platforms</legend>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {PLATFORMS.map((p) => {
-              const on = (q.proposalPlatforms ?? []).includes(p);
-              return (
-                <button key={p} type="button" aria-pressed={on} onClick={() => set("proposalPlatforms", on ? (q.proposalPlatforms ?? []).filter((x) => x !== p) : [...(q.proposalPlatforms ?? []), p])} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${on ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
-                  {p}
-                </button>
-              );
-            })}
+      <section className={`space-y-3 ${parts.pricing ? "" : "hidden"}`}>
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2 className="text-[1.125rem] text-bone">Costing: products & services</h2>
+          <div className="flex flex-wrap gap-2">
+            <select value={pick} onChange={(e) => addFromCatalog(e.target.value)} className="crm-input w-auto max-w-[22rem]" aria-label="Add from plans, products and add-ons">
+              <option value="">＋ Plans, products & add-ons…</option>
+              {groups.map(([g, items]) => (
+                <optgroup key={g} label={g}>
+                  {items.map((c) => <option key={c.id} value={c.id}>{c.title} · {inr(c.price)}</option>)}
+                </optgroup>
+              ))}
+            </select>
+            <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => setQ((x) => ({ ...x, lines: [...x.lines, { kind: "custom", title: "", qty: 1, unit: 0, division: x.division ?? null }] }))}>
+              <Plus className="size-4" /> Custom line
+            </button>
           </div>
-        </fieldset>
-        <div className="grid gap-3 md:grid-cols-3">
-          <label><span className="crm-label">Problems we&apos;ll solve</span><textarea value={q.proposalProblems ?? ""} onChange={(e) => set("proposalProblems", e.target.value)} className="crm-input !min-h-28" placeholder={"Low awareness in Tier-2 cities\nNo creator content for the launch"} /></label>
-          <label><span className="crm-label">Objectives</span><textarea value={q.proposalObjectives ?? ""} onChange={(e) => set("proposalObjectives", e.target.value)} className="crm-input !min-h-28" placeholder={"10k app installs in 30 days\n2M+ views"} /></label>
-          <label><span className="crm-label">Influencers</span><textarea value={q.proposalInfluencers ?? ""} onChange={(e) => set("proposalInfluencers", e.target.value)} className="crm-input !min-h-28" placeholder={"15 fitness & food creators, 50k–500k followers\nMumbai, Pune, Bengaluru"} /></label>
         </div>
+        {q.lines.length === 0 && <p className="rounded-xl border border-dashed border-[var(--glass-border)] px-4 py-6 text-center text-ash">Add a plan, a product or a custom line.</p>}
+        {q.lines.map((l, i) => (
+          <div key={i} className="crm-card crm-pad space-y-3">
+            <div className="grid gap-3 sm:grid-cols-[1fr_6rem_9rem_9rem_auto] sm:items-end">
+              <label><span className="crm-label">{l.kind === "custom" ? "Custom line" : l.kind === "addon" ? "Add-on" : l.kind === "plan" ? "Plan" : "Product"}</span><input value={l.title} onChange={(e) => setLine(i, { title: e.target.value })} className="crm-input font-medium" placeholder="Premium UGC Content Production | 10 Videos" /></label>
+              <label><span className="crm-label">Qty</span><input type="number" step="any" min={1} value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} className="crm-input" /></label>
+              <label><span className="crm-label">Price (₹)</span><input type="number" step="any" min={0} value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
+              <p className="pb-2.5 text-right tabular-nums text-bone"><span className="crm-label">Line total</span>{inr(l.qty * l.unit)}</p>
+              <span className="flex gap-1 pb-2">
+                <button type="button" aria-label="Move up" onClick={() => move(i, -1)} className="text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
+                <button type="button" aria-label="Move down" onClick={() => move(i, 1)} className="text-ash hover:text-bone"><ArrowDown className="size-4" /></button>
+                <button type="button" aria-label="Remove line" onClick={() => setQ((x) => ({ ...x, lines: x.lines.filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
+              </span>
+            </div>
+            <label className="block"><span className="crm-label">Subtitle</span><input value={l.subtitle ?? ""} onChange={(e) => setLine(i, { subtitle: e.target.value })} className="crm-input" placeholder="Professional UGC Production Shoot" /></label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label><span className="crm-label">What&apos;s included (one bullet per line)</span><textarea value={l.details ?? ""} onChange={(e) => setLine(i, { details: e.target.value })} className="crm-input !min-h-28" /></label>
+              <label><span className="crm-label">Small print under it</span><textarea value={l.note ?? ""} onChange={(e) => setLine(i, { note: e.target.value })} className="crm-input !min-h-28" placeholder="Shoot location and schedule to be mutually finalised." /></label>
+            </div>
+          </div>
+        ))}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -410,6 +629,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
             <button className="crm-btn crm-btn-primary" disabled={pending}>{pending ? "Saving…" : q.id ? "Save changes" : "Save draft"}</button>
             {state?.message && <span className={`text-[0.8125rem] ${state.ok ? "text-[#16a34a]" : "text-[#dc2626]"}`} role={state.ok ? "status" : "alert"}>{state.message}</span>}
           </div>
+          <p className="text-[0.75rem] text-faint">A draft saves with anything missing; the client&apos;s email is needed only to send.</p>
         </section>
       </div>
     </form>

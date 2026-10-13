@@ -157,7 +157,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
               Showing {creators.length} of {matching}. <Link href={`/admin/creators?${more}`} className="crm-link">Show 300 more</Link>
             </p>
           )}
-          <PickBar formId="pick-creators" />
+          <PickBar formId="pick-creators" excel />
         </>
       )}
     </>

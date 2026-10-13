@@ -5,9 +5,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { recordAuditLog } from "@/lib/audit";
+import { makePlanSheets } from "@/lib/crm/plan-sheets";
+import { sanitizeHtml } from "@/lib/rich-text";
 import { tidyNiches } from "@/lib/crm/niches";
 import { getPrisma } from "@/lib/db";
 import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Platform } from "@/lib/generated/prisma/enums";
 import { tierFor } from "@/lib/crm/catalog";
 import { newToken, openFor, refreshTotals, sendQuote } from "@/lib/crm/quotes";
@@ -40,9 +43,12 @@ const payload = z.object({
   gstPercent: z.coerce.number().min(0).max(28).transform(Math.round),
   igst: z.boolean().optional(),
   proposalPlatforms: z.array(z.string().max(40)).max(12).optional(),
-  proposalProblems: z.string().max(6000).nullable().optional(),
-  proposalObjectives: z.string().max(6000).nullable().optional(),
-  proposalInfluencers: z.string().max(6000).nullable().optional(),
+  proposalProblems: z.string().max(60000).nullable().optional(),
+  proposalObjectives: z.string().max(60000).nullable().optional(),
+  proposalInfluencers: z.string().max(60000).nullable().optional(),
+  proposalTg: z.string().max(60000).nullable().optional(),
+  proposalSections: z.array(z.object({ title: z.string().max(120), html: z.string().max(60000) })).max(20).optional(),
+  planColumns: z.object({ hidden: z.array(z.string().max(40)).max(40).optional(), custom: z.array(z.string().trim().max(60)).max(20).optional() }).optional(),
   markupPercent: z.coerce.number().min(0).max(1000).transform(Math.round).optional(),
   planBudget: z.string().max(120).nullable().optional(),
   discount: rupees,
@@ -85,12 +91,14 @@ const payload = z.object({
         reachout: z.string().max(120).nullable().optional(),
         contact: z.string().max(1000).nullable().optional(),
         remarks: z.string().max(1000).nullable().optional(),
+        extra: z.record(z.string().max(80), z.string().max(1000)).optional(),
       }),
     )
     .max(200),
 });
 
 const paise = (r: number) => Math.round(r * 100);
+const rich = (html: string | null | undefined) => (html ? sanitizeHtml(html) || null : null);
 const p = (r: number | null | undefined) => (typeof r === "number" ? paise(r) : null);
 
 /** Creates or updates a quote from the builder (the form posts its state as JSON). */
@@ -120,9 +128,13 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     igst: q.igst ?? false,
     discountPaise: paise(q.discount),
     proposalPlatforms: q.proposalPlatforms ?? [],
-    proposalProblems: q.proposalProblems || null,
-    proposalObjectives: q.proposalObjectives || null,
-    proposalInfluencers: q.proposalInfluencers || null,
+    /* Rich text, cleaned: only formatting, links, images and known embeds are kept. */
+    proposalProblems: rich(q.proposalProblems),
+    proposalObjectives: rich(q.proposalObjectives),
+    proposalInfluencers: rich(q.proposalInfluencers),
+    proposalTg: rich(q.proposalTg),
+    proposalSections: (q.proposalSections ?? []).map((x) => ({ title: x.title.trim(), html: sanitizeHtml(x.html) })).filter((x) => x.title || x.html) as Prisma.InputJsonValue,
+    planColumns: { hidden: q.planColumns?.hidden ?? [], custom: [...new Set((q.planColumns?.custom ?? []).filter(Boolean))] } as Prisma.InputJsonValue,
     markupPercent: q.markupPercent ?? 30,
     planBudget: q.planBudget || null,
   };
@@ -143,7 +155,7 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     /* The client's total for a creator is the sum of the priced deliverables, when they're priced one by one. */
     feePaise: [c.reelPrice, c.storyPrice, c.dlPrice].some((v) => typeof v === "number") ? paise((c.reelPrice ?? 0) + (c.storyPrice ?? 0) + (c.dlPrice ?? 0)) : c.fee === null || c.fee === undefined ? null : paise(c.fee),
     engagementRate: c.er ?? null, reelCostPaise: p(c.reelCost), storyCostPaise: p(c.storyCost), dlCostPaise: p(c.dlCost), reelPricePaise: p(c.reelPrice), storyPricePaise: p(c.storyPrice), dlPricePaise: p(c.dlPrice),
-    reachout: c.reachout || null, contact: c.contact || null, remarks: c.remarks || null }));
+    reachout: c.reachout || null, contact: c.contact || null, remarks: c.remarks || null, extra: (c.extra ?? {}) as Prisma.InputJsonValue }));
 
   let id = q.id;
   if (id) {
@@ -160,9 +172,19 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     id = created.id;
   }
   await refreshTotals(id);
+  /* "Save & make Google Sheets": the internal and external sheets, right after saving (in the maker's own Drive when they can). */
+  let sheets = "";
+  if (form.get("then") === "sheets" && q.creators.length > 0) {
+    try {
+      const made = await makePlanSheets(id, viewer.email, viewer.id);
+      sheets = made.own ? " Both Google Sheets are in your Drive." : ` Both Google Sheets are up to date (in ${made.account}'s Drive).`;
+    } catch (error) {
+      sheets = ` The Google Sheets didn't update: ${(error as Error).message.slice(0, 160)}`;
+    }
+  }
   revalidatePath("/admin", "layout");
-  if (!q.id) redirect(`/admin/quotes/${id}?saved=1`);
-  return ok("Saved.");
+  if (!q.id) redirect(`/admin/quotes/${id}?saved=1${sheets ? `&sheets=${encodeURIComponent(sheets.trim())}` : ""}`);
+  return ok(`Saved.${sheets}`);
 }
 
 /** Emails the quotation (with a payment link when asked) — see lib/crm/quotes sendQuote. */
@@ -229,10 +251,11 @@ export async function duplicateQuote(form: FormData) {
       kind: q.kind, title: q.title, division: q.division, accountId: q.accountId, leadId: q.leadId, requestId: q.requestId,
       contactName: q.contactName, contactEmail: q.contactEmail, contactPhone: q.contactPhone, company: q.company,
       expiresAt: new Date(Date.now() + 14 * 864e5), notes: q.notes, terms: q.terms, addGst: q.addGst, gstPercent: q.gstPercent, igst: q.igst, discountPaise: q.discountPaise,
-      proposalPlatforms: q.proposalPlatforms, proposalProblems: q.proposalProblems, proposalObjectives: q.proposalObjectives, proposalInfluencers: q.proposalInfluencers,
+      proposalPlatforms: q.proposalPlatforms, proposalProblems: q.proposalProblems, proposalObjectives: q.proposalObjectives, proposalInfluencers: q.proposalInfluencers, proposalTg: q.proposalTg,
+      proposalSections: (q.proposalSections ?? []) as Prisma.InputJsonValue, planColumns: (q.planColumns ?? {}) as Prisma.InputJsonValue, markupPercent: q.markupPercent, planBudget: q.planBudget,
       token: newToken(), createdById: viewer.id,
       lines: { create: q.lines.map((l) => omitIds(l)) },
-      creators: { create: q.creators.map((c) => omitIds(c)) },
+      creators: { create: q.creators.map((c) => ({ ...omitIds(c), extra: (c.extra ?? {}) as Prisma.InputJsonValue })) },
     },
   });
   await refreshTotals(copy.id);

@@ -3,7 +3,9 @@ import Link from "next/link";
 
 import { LoginPanel } from "@/components/crm/login-panel";
 import { isAuth0Configured } from "@/lib/auth0";
-import { emailLoginEnabled } from "@/lib/crm/email-login";
+import { cookies } from "next/headers";
+
+import { emailLoginEnabled, PENDING_COOKIE, readSignedEmail } from "@/lib/crm/email-login";
 import { devLoginEnabled, safeNext } from "@/lib/crm/session";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -41,7 +43,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         {isAuth0Configured() ? (
           <LoginPanel connections={connections()} next={target || "/portal"} />
         ) : emailLoginEnabled() ? (
-          <EmailCodeForm step={step === "code" ? "code" : "email"} error={error} next={target} />
+          <EmailCodeForm step={step === "code" ? "code" : "email"} error={error} next={target} sentTo={readSignedEmail((await cookies()).get(PENDING_COOKIE)?.value)} />
         ) : devLoginEnabled() ? (
           <form action="/login/dev" method="post" className="crm-card crm-pad space-y-4">
             <p className="crm-notice crm-notice-warn">Local development sign-in. Auth0 is not configured on this machine, so any email signs in without a code.</p>
@@ -70,18 +72,31 @@ const EMAIL_ERRORS: Record<string, string> = {
   slow: "Too many codes requested. Please wait a minute and try again.",
   send: "We couldn't send the code. Please try again.",
   code: "That code isn't right. Check the latest email and try again.",
-  expired: "That code has expired. Request a new one.",
+  expired: "That code has expired or was used up. Request a new one.",
+  address: "Enter the email address the code was sent to, and the code.",
   unavailable: "Sign-in isn't available right now.",
 };
 
 /** The email-code sign-in (lib/crm/email-login): plain form posts, so it works without JavaScript. */
-function EmailCodeForm({ step, error, next }: { step: "email" | "code"; error?: string; next: string }) {
+function EmailCodeForm({ step, error, next, sentTo }: { step: "email" | "code"; error?: string; next: string; sentTo: string | null }) {
   const message = error ? EMAIL_ERRORS[error] : null;
   return step === "code" ? (
     <div className="crm-card crm-pad space-y-4">
       {message && <p className="crm-notice crm-notice-warn">{message}</p>}
       <form action="/login/email/verify" method="post" className="space-y-4">
         <input type="hidden" name="next" value={next} />
+        {/* The address comes with the code, so it works even when the browser forgot it (phones, in-app browsers, another device). */}
+        {sentTo ? (
+          <>
+            <input type="hidden" name="email" value={sentTo} />
+            <p className="text-[0.875rem] text-ash">Code sent to <span className="text-bone">{sentTo}</span></p>
+          </>
+        ) : (
+          <label className="block">
+            <span className="crm-label">Email address the code was sent to</span>
+            <input name="email" type="email" autoComplete="email" required className="crm-input" placeholder="you@company.com" />
+          </label>
+        )}
         <label className="block">
           <span className="crm-label">Enter the 6-digit code we emailed you</span>
           <input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,7}" maxLength={7} required autoFocus className="crm-input tracking-[0.3em]" placeholder="000000" />
@@ -101,6 +116,9 @@ function EmailCodeForm({ step, error, next }: { step: "email" | "code"; error?: 
         <input name="email" type="email" autoComplete="email" required autoFocus className="crm-input" placeholder="you@company.com" />
       </label>
       <button className="crm-btn crm-btn-primary w-full">Email me a code</button>
+      <p className="text-center text-[0.8125rem] text-faint">
+        <Link className="crm-link" href={`/login?step=code${next ? `&next=${encodeURIComponent(next)}` : ""}`}>I already have a code</Link>
+      </p>
     </form>
   );
 }
