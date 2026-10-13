@@ -14,17 +14,31 @@ export async function POST(request: Request) {
   const tail = next ? `&next=${encodeURIComponent(next)}` : "";
   const back = (query: string) => NextResponse.redirect(new URL(`/login?${query}${tail}`, url.origin), 303);
   if (!emailLoginEnabled()) return back("error=unavailable");
-  const email = readSignedEmail((await cookies()).get(PENDING_COOKIE)?.value);
-  if (!email) return back("error=expired");
+  /*
+   * THE ADDRESS: from the short-lived cookie, or typed on the code screen.
+   * Phones lose that cookie (Genesis, 13 Oct 2026: "it shows an expired code
+   * within seconds"): a login opened in Gmail's or WhatsApp's in-app browser
+   * is closed when you go to read the email, and a code asked for on one
+   * device is often typed on another. The code itself is the proof; five
+   * tries per address still apply.
+   */
+  const jar = await cookies();
+  const typed = String(form.get("email") ?? "").trim().toLowerCase();
+  const email = readSignedEmail(jar.get(PENDING_COOKIE)?.value) ?? (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(typed) && typed.length <= 200 ? typed : null);
+  if (!email) return back("step=code&error=address");
+  /* Sent twice (a phone's code auto-fill, or a double tap): the first one already signed in. */
+  const continueTo = NextResponse.redirect(new URL(`/account/complete${next ? `?next=${encodeURIComponent(next)}` : ""}`, url.origin), 303);
+  const signedIn = readSignedEmail(jar.get(SESSION_COOKIE)?.value);
 
   const result = await checkLoginCode(email, String(form.get("code") ?? ""));
+  if (result !== "ok" && signedIn === email) return continueTo;
   if (result === "wrong") return back("step=code&error=code");
   if (result === "expired") {
     const response = back("error=expired");
     response.cookies.delete(PENDING_COOKIE);
     return response;
   }
-  const response = NextResponse.redirect(new URL(`/account/complete${next ? `?next=${encodeURIComponent(next)}` : ""}`, url.origin), 303);
+  const response = continueTo;
   response.cookies.delete(PENDING_COOKIE);
   response.cookies.set(SESSION_COOKIE, signEmail(email), sessionCookieOptions);
   return response;
