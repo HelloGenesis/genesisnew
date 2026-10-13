@@ -57,7 +57,8 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const parts = q.parts;
   const has = (part: string) => parts.length === 0 || parts.includes(part);
   const sample = !showsBrandPrices(q.planColumns as PlanColumns);
-  const showPricing = (view === "both" || view === "pricing") && (has("pricing") || (has("plan") && !sample));
+  const feesInTotal = (q.planColumns as PlanColumns | null)?.feesInTotal === true && !sample;
+  const showPricing = (view === "both" || view === "pricing") && (has("pricing") || (has("plan") && feesInTotal));
   const showLines = has("pricing");
   const showCreators = (view === "both" || view === "plan" || view === "proposal-plan") && has("plan");
   const staff = staffAccess(await getViewer().catch(() => null)) === "granted";
@@ -268,7 +269,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
                 <td className="whitespace-nowrap px-8 py-6 text-right sm:px-12">{inr(l.qty * l.unitPaise)}</td>
               </tr>
             ))}
-            {q.creators.length > 0 && !sample && (
+            {q.creators.length > 0 && feesInTotal && (
               <tr className="align-top">
                 <td className="px-8 py-6 sm:px-12">
                   <p className="font-medium">{plan ? "Creators" : "Creator fees"}</p>

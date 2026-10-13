@@ -20,7 +20,7 @@ export type BuilderCreator = {
   extra?: Record<string, string>;
 };
 export type ProposalSection = { title: string; html: string };
-export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean };
+export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean };
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -310,7 +310,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   const totals = useMemo(() => {
     const lines = q.lines.reduce((s, l) => s + l.qty * l.unit, 0);
     const creators = q.creators.reduce((s, c) => s + creatorTotal(c), 0);
-    const subtotal = lines + creators;
+    /* Creator fees count towards the total only when asked (Genesis, 13 Oct 2026), and never on a sample. */
+    const subtotal = lines + (q.planColumns?.feesInTotal && q.planColumns?.extPrices !== false ? creators : 0);
     const taxable = Math.max(0, subtotal - q.discount);
     const tax = q.addGst ? Math.round(taxable * q.gstPercent) / 100 : 0;
     return { subtotal, creators, tax, total: taxable + tax };
@@ -787,6 +788,14 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
         <section className="crm-card crm-pad space-y-3 self-start">
           <h2 className="text-[1.125rem] text-bone">Totals</h2>
           <dl className="grid grid-cols-[1fr_auto] gap-y-2 text-[0.9375rem]">
+            {q.creators.length > 0 && (
+              <dt className="col-span-2">
+                <label className="flex items-center gap-2 text-[0.875rem] text-ash">
+                  <input type="checkbox" checked={Boolean(q.planColumns?.feesInTotal)} disabled={q.planColumns?.extPrices === false} onChange={(e) => setQ((x) => ({ ...x, planColumns: { ...x.planColumns, feesInTotal: e.target.checked } }))} />
+                  Add the creators&apos; fees ({inr(totals.creators)}) to the total{q.planColumns?.extPrices === false ? " (off for a sample)" : ""}
+                </label>
+              </dt>
+            )}
             <dt className="text-ash">Subtotal</dt><dd className="tabular-nums">{inr(totals.subtotal)}</dd>
             <dt className="text-ash"><label className="flex items-center gap-2">Discount (₹)</label></dt>
             <dd><input type="number" step="any" min={0} value={q.discount} onChange={(e) => set("discount", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-32 text-right" /></dd>

@@ -30,8 +30,10 @@ export const newToken = () => randomBytes(18).toString("base64url");
 export async function totalsOf(quoteId: string) {
   const q = await getPrisma().quote.findUniqueOrThrow({ where: { id: quoteId }, include: { lines: true, creators: true } });
   /* A sample plan (no costing for the brand) adds no creator fees to the total. */
-  const sample = (q.planColumns as { extPrices?: boolean } | null)?.extPrices === false;
-  return { quote: q, ...quoteTotals({ lines: q.lines, creatorFees: sample ? [] : q.creators.map((c) => c.feePaise), discountPaise: q.discountPaise, addGst: q.addGst, gstPercent: q.gstPercent }) };
+  /* Creator fees count only when "add them to the total" is ticked, and never on a sample (Genesis, 13 Oct 2026). */
+  const cols = (q.planColumns ?? {}) as { extPrices?: boolean; feesInTotal?: boolean };
+  const withFees = cols.feesInTotal === true && cols.extPrices !== false;
+  return { quote: q, ...quoteTotals({ lines: q.lines, creatorFees: !withFees ? [] : q.creators.map((c) => c.feePaise), discountPaise: q.discountPaise, addGst: q.addGst, gstPercent: q.gstPercent }) };
 }
 
 /** Recomputes and stores the totals (after any edit). */
@@ -135,7 +137,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   }
   const link = appUrl(`/quote/${q.token}${view === "both" ? "" : `?view=${view}`}`);
   const lines = pricing ? q.lines.map((l) => `• ${l.title}${l.qty > 1 ? ` × ${l.qty}` : ""}: ${money(l.qty * l.unitPaise)}`) : [];
-  if (pricing && plan && q.creators.length) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
+  if (pricing && t.creators > 0) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
   const half = Math.round(t.tax / 2);
   await queueEmail({
     kind: "quote_sent",

@@ -10,7 +10,7 @@
  */
 
 export type Cell = string | number | null;
-export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean };
+export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean };
 
 /**
  * The brand's prices on the external sheet and the client view, or a SAMPLE
