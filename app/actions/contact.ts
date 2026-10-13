@@ -234,6 +234,7 @@ const SHEET_TAB: Record<FormKind, SheetTab> = {
   // The older creator form is on no page; if it is used it is an influencer.
   creator: "influencer",
   career: "career",
+  partner: "partner",
 };
 
 export async function submitGenesisForm(

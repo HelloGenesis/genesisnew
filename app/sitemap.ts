@@ -46,6 +46,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/case-studies"), lastModified: built, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/careers"), lastModified: built, changeFrequency: "weekly", priority: 0.6 },
     { url: absoluteUrl("/creator"), lastModified: built, changeFrequency: "monthly", priority: 0.6 },
+    { url: absoluteUrl("/resellers"), lastModified: built, changeFrequency: "monthly", priority: 0.6 },
     { url: absoluteUrl("/privacy"), lastModified: LEGAL_UPDATED, changeFrequency: "yearly", priority: 0.2 },
     { url: absoluteUrl("/terms"), lastModified: TERMS_UPDATED, changeFrequency: "yearly", priority: 0.2 },
     { url: absoluteUrl("/refund-policy"), lastModified: TERMS_UPDATED, changeFrequency: "yearly", priority: 0.2 },
