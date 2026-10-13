@@ -227,7 +227,10 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
    * always made from the saved plan, so it's current by itself.
    */
   const hasSheets = Boolean((await getPrisma().quote.findUnique({ where: { id }, select: { extSheetId: true } }))?.extSheetId);
-  if ((form.get("then") === "sheets" || hasSheets) && result.creators > 0) {
+  /* "Send Google Sheet to client" with no link of its own: Save makes the external sheet, so the quote and PDF carry its link. */
+  const cols = ((await getPrisma().quote.findUnique({ where: { id }, select: { planColumns: true } }))?.planColumns ?? {}) as { share?: string; sheetUrl?: string };
+  const wantsSheet = (cols.share === "sheet" || cols.share === "both") && !cols.sheetUrl?.trim();
+  if ((form.get("then") === "sheets" || hasSheets || wantsSheet) && result.creators > 0) {
     try {
       const made = await makePlanSheets(id, viewer.email, viewer.id);
       sheets = made.own ? " Both Google Sheets are in your Drive." : ` Both Google Sheets are up to date (in ${made.account}'s Drive).`;

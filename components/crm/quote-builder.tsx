@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Columns3, ExternalLink, FileSpreadsheet, Plus, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Columns3, ExternalLink, FileSpreadsheet, Plus, Sheet, Trash2, Upload, X } from "lucide-react";
 import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { importCreatorsForPlan, matchUploadColumns } from "@/app/(crm)/admin/actions/imports";
@@ -164,6 +164,13 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   const [showColumns, setShowColumns] = useState(false);
   const [newColumn, setNewColumn] = useState("");
   const [download, setDownload] = useState<string | null>(null);
+  const exportMenu = useRef<HTMLDetailsElement>(null);
+  const closeExport = () => exportMenu.current?.removeAttribute("open");
+  useEffect(() => {
+    const close = (e: MouseEvent) => exportMenu.current?.open && !exportMenu.current.contains(e.target as Node) && closeExport();
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
   /* IMPORT AN EXCEL OF INFLUENCERS INTO THE PLAN (Genesis, 13 Oct 2026); they're saved to the influencer database too. */
   const importPicker = useRef<HTMLInputElement>(null);
   const [sheet, setSheet] = useState<{ name: string; headers: string[]; rows: string[][]; mapping: Record<string, string> } | null>(null);
@@ -482,13 +489,20 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             Sheet, internal and external, here"): Excel from what's on screen;
             Google Sheets save the plan and make both in your own Drive.
           */}
-          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[var(--hover-wash)] px-3 py-2">
-            <span className="mr-1 text-[0.8125rem] text-ash">Sheets:</span>
-            <button type="button" disabled={!q.creators.length || download !== null} onClick={() => excel("ext")} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-40"><FileSpreadsheet className="size-4" aria-hidden /> {download === "ext" ? "Making…" : "Excel · external (client)"}</button>
-            <button type="button" disabled={!q.creators.length || download !== null} onClick={() => excel("int")} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-40"><FileSpreadsheet className="size-4" aria-hidden /> {download === "int" ? "Making…" : "Excel · internal (team)"}</button>
-            <button name="then" value="sheets" disabled={!q.creators.length || pending} className="crm-btn crm-btn-primary crm-btn-sm disabled:opacity-40">{pending ? "Saving…" : sheets?.ext ? "Save & update Google Sheets" : "Save & make Google Sheets"}</button>
-            {sheets?.ext && <a href={`https://docs.google.com/spreadsheets/d/${sheets.ext}/edit`} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">External sheet <ExternalLink className="inline size-3.5" aria-hidden /></a>}
-            {sheets?.int && <a href={`https://docs.google.com/spreadsheets/d/${sheets.int}/edit`} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">Internal sheet <ExternalLink className="inline size-3.5" aria-hidden /></a>}
+          {/* EXPORT, ONE BUTTON (Genesis, 13 Oct 2026: "merge these into an icon and export, in a drop-down"). */}
+          <div className="flex flex-wrap items-center gap-2">
+            <details className="relative" ref={exportMenu}>
+              <summary className={`crm-btn crm-btn-secondary crm-btn-sm cursor-pointer list-none [&::-webkit-details-marker]:hidden ${q.creators.length ? "" : "pointer-events-none opacity-40"}`}>
+                <FileSpreadsheet className="size-4" aria-hidden /> {download ? "Making…" : pending ? "Saving…" : "Export"} <ChevronDown className="size-4" aria-hidden />
+              </summary>
+              <div className="absolute left-0 z-30 mt-1 w-72 rounded-xl border border-[var(--glass-border)] bg-[var(--surface-float)] p-1 shadow-[var(--shadow-float)]">
+                <button type="button" disabled={download !== null} onClick={() => { closeExport(); void excel("ext"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><FileSpreadsheet className="size-4 text-ash" aria-hidden /> Excel · external (client)</button>
+                <button type="button" disabled={download !== null} onClick={() => { closeExport(); void excel("int"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><FileSpreadsheet className="size-4 text-ash" aria-hidden /> Excel · internal (team)</button>
+                <button name="then" value="sheets" disabled={pending} onClick={closeExport} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><Sheet className="size-4 text-ash" aria-hidden /> {sheets?.ext ? "Save & update Google Sheets" : "Save & make Google Sheets (internal + external)"}</button>
+                {sheets?.ext && <a href={`https://docs.google.com/spreadsheets/d/${sheets.ext}/edit`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-3 py-2 text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><ExternalLink className="size-4 text-ash" aria-hidden /> Open external sheet (client)</a>}
+                {sheets?.int && <a href={`https://docs.google.com/spreadsheets/d/${sheets.int}/edit`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-3 py-2 text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><ExternalLink className="size-4 text-ash" aria-hidden /> Open internal sheet (team)</a>}
+              </div>
+            </details>
             {state?.message && <span className={`text-[0.8125rem] ${state.ok ? "text-[#16a34a]" : "text-[#dc2626]"}`} role={state.ok ? "status" : "alert"}>{state.message}</span>}
           </div>
           {/*
@@ -498,7 +512,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           */}
           <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Send the creator list to the brand as">
             <span className="mr-1 text-[0.8125rem] text-ash">Send the creators to the brand as:</span>
-            {([["table", "List in the proposal"], ["sheet", "Google Sheet (external)"], ["both", "Both"]] as const).map(([value, label]) => {
+            {([["table", "List in the proposal"], ["sheet", "Send Google Sheet to client"], ["both", "Both"]] as const).map(([value, label]) => {
               const on = (q.planColumns?.share ?? "table") === value;
               return (
                 <button key={value} type="button" role="radio" aria-checked={on} onClick={() => setQ((x) => ({ ...x, planColumns: { ...x.planColumns, share: value } }))} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${on ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
@@ -655,8 +669,9 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                 <span className="text-[0.75rem] text-faint">{editing === "internal" ? "Everything: creator costs, profit, reach-out, contact and remarks." : `What the brand sees${q.planColumns?.extPrices === false ? " (a sample, no prices)" : ", client prices only"}; costs, profit and notes stay internal.`}</span>
               </div>
               {/* THE PLAN AS GENESIS'S SHEET (Genesis, 12 Oct 2026: "fields are still missing"); scrolls sideways, the name stays put. */}
-              <div className="-mx-1 overflow-x-auto pb-2">
-                <table className="crm-table !min-w-max text-[0.8125rem] [&_td]:!px-1.5 [&_th]:!px-1.5 [&_th]:whitespace-nowrap">
+              {/* The creators in their own scrolling box: headings stay at the top, names at the left (Genesis, 13 Oct 2026). */}
+              <div className="-mx-1 max-h-[36rem] overflow-auto rounded-xl border border-[var(--glass-border)] pb-2" data-lenis-prevent>
+                <table className="crm-table !min-w-max text-[0.8125rem] [&_td]:!px-1.5 [&_th]:!px-1.5 [&_th]:whitespace-nowrap [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-[var(--surface-panel)]">
                   <thead>
                     <tr>
                       <th className="sticky left-0 z-10 bg-[var(--surface-panel)]">Name</th>

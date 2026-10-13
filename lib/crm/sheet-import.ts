@@ -305,7 +305,7 @@ export async function importRows(kind: string, userId: string, headers: string[]
           dlRatePaise: paise(r.dlRate),
           youtubeUrl: r.youtubeUrl && /^https?:\/\//.test(r.youtubeUrl) ? r.youtubeUrl : null,
           email: email(r.email),
-          phone: r.phone ?? null,
+          phone: r.phone ? String(r.phone).replace(/(\d)\.0+(?!\d)/g, "$1").trim() : null,
           managedBy: r.managedBy ?? null,
           notes: [r.notes, sorted.other.length ? `Categories in the sheet: ${sorted.other.join(", ")}` : null].filter(Boolean).join("\n") || null,
         };

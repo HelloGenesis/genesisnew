@@ -65,8 +65,9 @@ export function OutreachPanel({ rows, template: initialTemplate, fields: initial
           <pre className="mt-1 min-h-64 whitespace-pre-wrap rounded-xl border border-[var(--glass-border)] bg-[var(--hover-wash)] p-3 font-sans text-[0.875rem] text-bone">{shown ? messageFor(shown) : ""}</pre>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="crm-table !min-w-[760px] text-[0.875rem]">
+      {/* The creators in their own scrolling box, headings pinned (Genesis, 13 Oct 2026: "end this box here and add a scroller"). */}
+      <div className="max-h-[30rem] overflow-auto rounded-xl border border-[var(--glass-border)]" data-lenis-prevent>
+        <table className="crm-table !min-w-[760px] text-[0.875rem] [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-10 [&_thead_th]:bg-[var(--surface-panel)]">
           <thead><tr><th>Creator</th><th>WhatsApp</th><th>Email</th><th>Status</th></tr></thead>
           <tbody>
             {rows.map((r) => (

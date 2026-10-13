@@ -39,8 +39,26 @@ export function fillOutreach(template: string, f: OutreachFields, creatorName: s
 }
 
 /** A WhatsApp click-to-chat link: to their number when we have one (India by default), else WhatsApp's contact picker. */
+/**
+ * One phone number from whatever a sheet held: Excel's "8888620133.0", two
+ * numbers in one cell, spaces and dashes (Genesis, 13 Oct 2026). The first
+ * number wins.
+ */
+export function firstPhone(raw: string | null | undefined): string | null {
+  const t = (raw ?? "").replace(/(\d)\.0+(?!\d)/g, "$1");
+  for (const seg of t.split(/[^\d+\s-]+/)) {
+    const digits = seg.replace(/\D/g, "");
+    if (digits.length < 10) continue;
+    /* One number (with a country code at most): as written. Longer: two numbers side by side, so the first. */
+    if (digits.length <= 13) return seg.trim().replace(/[\s-]+/g, " ");
+    const first = seg.trim().split(/\s+/).find((p) => p.replace(/\D/g, "").length >= 10);
+    if (first) return first;
+  }
+  return null;
+}
+
 export function whatsappLink(phone: string | null | undefined, text: string) {
-  let digits = (phone ?? "").replace(/\D/g, "");
+  let digits = (firstPhone(phone) ?? "").replace(/\D/g, "");
   if (digits.length === 10) digits = `91${digits}`;
   if (digits.startsWith("0") && digits.length === 11) digits = `91${digits.slice(1)}`;
   return digits.length >= 11 ? `https://wa.me/${digits}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -49,5 +67,5 @@ export function whatsappLink(phone: string | null | undefined, text: string) {
 /** The first phone number and email in free text ("Arundhati +91 73893 90602 · a@x.com"). */
 export function contactBits(text: string | null | undefined) {
   const t = text ?? "";
-  return { phone: t.match(/\+?\d[\d\s-]{8,}\d/)?.[0] ?? null, email: t.match(/[^\s@·,]+@[^\s@·,]+\.[a-z]{2,}/i)?.[0] ?? null };
+  return { phone: firstPhone(t), email: t.match(/[^\s@·,]+@[^\s@·,]+\.[a-z]{2,}/i)?.[0] ?? null };
 }
