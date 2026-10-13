@@ -25,8 +25,10 @@ const KINDS: Record<string, { label: string; tone: "good" | "warn" | "bad" | "in
   OTHER: { label: "Other", tone: "muted" },
 };
 
+const daysAgo = (days: number) => new Date(Date.now() - days * 864e5);
+
 const NOTICES: Record<string, [string, boolean]> = {
-  connected: ["Google connected. Your inbox and Drive are checked every few minutes; the first look covers the last three weeks.", false],
+  connected: ["Google connected. Your inbox and Drive are checked every few minutes; the first look covers the last three days.", false],
   failed: ["Google didn't connect. Try again, signed in with your @genesismedia.co account.", true],
   cancelled: ["Connection cancelled.", true],
   unconfigured: ["Google isn't set up for the CRM yet (an owner adds the Google OAuth client). See Integrations.", true],
@@ -37,7 +39,7 @@ const NOTICES: Record<string, [string, boolean]> = {
  * up, sorted by the AI. Briefs are already in the CRM (with a notification);
  * the rest waits here for one click. Owners and admins see everyone's.
  */
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ kind?: string; status?: string; person?: string; google?: string; item?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ kind?: string; status?: string; person?: string; google?: string; item?: string; q?: string; days?: string }> }) {
   const viewer = await requireStaff();
   const p = await searchParams;
   const prisma = getPrisma();
@@ -46,25 +48,30 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   const status = p.status === "DONE" || p.status === "DISMISSED" || p.status === "ALL" ? p.status : "NEW";
   const kind = p.kind && p.kind in KINDS ? p.kind : undefined;
   const person = seesAll ? (p.person === "me" ? viewer.id : p.person) : viewer.id;
+  /* Search and recency (Genesis, 13 Oct 2026): the last 14 days unless asked for more; a search looks at everything. */
+  const q = p.q?.trim().slice(0, 100) ?? "";
+  const days = p.days === "all" || q || p.item ? null : Math.min(Math.max(Number(p.days) || 14, 1), 365);
+  const recent = days ? { occurredAt: { gte: daysAgo(days) } } : {};
+  const search = q ? { OR: (["title", "sender", "senderEmail", "summary"] as const).map((f) => ({ [f]: { contains: q, mode: "insensitive" as const } })) } : {};
 
   const [conn, connections, items, counts, leads, accounts] = await Promise.all([
     prisma.googleConnection.findUnique({ where: { userId: viewer.id } }),
     seesAll ? prisma.googleConnection.findMany({ orderBy: { connectedAt: "asc" } }) : Promise.resolve([]),
     prisma.inboxItem.findMany({
-      where: { ...(status === "ALL" ? {} : { status }), ...(kind ? { kind: kind as never } : {}), ...(person ? { userId: person } : {}), ...(p.item ? { id: p.item } : {}) },
+      where: { ...(status === "ALL" || q ? {} : { status }), ...(kind ? { kind: kind as never } : {}), ...(person ? { userId: person } : {}), ...(p.item ? { id: p.item } : {}), ...recent, ...search },
       orderBy: { occurredAt: "desc" },
       take: 150,
     }),
-    prisma.inboxItem.groupBy({ by: ["kind"], where: { status: "NEW", ...(person ? { userId: person } : {}) }, _count: true }),
+    prisma.inboxItem.groupBy({ by: ["kind"], where: { status: "NEW", ...(person ? { userId: person } : {}), ...recent }, _count: true }),
     prisma.lead.findMany({ where: { status: { notIn: ["WON", "LOST"] } }, orderBy: { createdAt: "desc" }, take: 200, select: { id: true, name: true, company: true } }),
     prisma.account.findMany({ orderBy: { name: "asc" }, take: 400, select: { id: true, name: true, kind: true } }),
   ]);
   const people = await prisma.user.findMany({ where: { id: { in: [...new Set([...items.map((i) => i.userId), ...connections.map((c) => c.userId)].filter((x): x is string => Boolean(x)))] } }, select: { id: true, name: true, email: true } });
   const who = (id: string | null) => people.find((u) => u.id === id)?.name ?? people.find((u) => u.id === id)?.email ?? "—";
   const linkTo = (key: string, value: string) => {
-    const q = new URLSearchParams({ ...(kind ? { kind } : {}), ...(status !== "NEW" ? { status } : {}), ...(p.person ? { person: p.person } : {}), [key]: value });
-    if (!value) q.delete(key);
-    return `/admin/inbox?${q}`;
+    const qs = new URLSearchParams({ ...(kind ? { kind } : {}), ...(status !== "NEW" ? { status } : {}), ...(p.person ? { person: p.person } : {}), ...(p.days ? { days: p.days } : {}), [key]: value });
+    if (!value) qs.delete(key);
+    return `/admin/inbox?${qs}`;
   };
   const notice = p.google ? NOTICES[p.google] : undefined;
   const attachOptions = (
@@ -151,14 +158,18 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       )}
 
       <form action="/admin/inbox" className="flex flex-wrap items-end gap-2">
+        <input type="search" name="q" defaultValue={q} placeholder="Search mail & docs: subject, sender, email…" className="crm-input min-w-[16rem] flex-1 sm:max-w-[24rem]" aria-label="Search the inbox" />
+        <Select name="days" defaultValue={p.days ?? "14"} options={[["7", "Last 7 days"], ["14", "Last 14 days"], ["30", "Last 30 days"], ["all", "All time"]]} className="max-w-[10rem]" />
         <Select name="kind" defaultValue={kind} options={Object.fromEntries(Object.entries(KINDS).map(([k, v]) => [k, v.label]))} placeholder="Everything" className="max-w-[12rem]" />
         <Select name="status" required defaultValue={status} options={[["NEW", "To handle"], ["DONE", "Done"], ["DISMISSED", "Dismissed"], ["ALL", "All"]]} className="max-w-[10rem]" />
         {seesAll && <Select name="person" defaultValue={p.person} options={[["me", "Just mine"], ...people.map((u) => [u.id, u.name ?? u.email ?? "—"] as [string, string])]} placeholder="Everyone" className="max-w-[12rem]" />}
-        <button className="crm-btn crm-btn-secondary crm-btn-sm">Show</button>
+        <button className="crm-btn crm-btn-primary crm-btn-sm">Search</button>
+        {(q || p.days || kind || status !== "NEW" || p.person) && <Link href="/admin/inbox" className="crm-btn crm-btn-secondary crm-btn-sm">Clear</Link>}
       </form>
+      {q && <p className="text-[0.875rem] text-ash" role="status">{items.length === 150 ? "150+" : items.length} {items.length === 1 ? "result" : "results"} for “{q}” across everything (any status, any date).</p>}
 
       {items.length === 0 ? (
-        <Empty>{conn ? "Nothing here yet. New mail and docs are checked every few minutes." : "Connect your Google to start."}</Empty>
+        <Empty>{q ? `Nothing matches “${q}”.` : days ? `Nothing in the last ${days} days. Choose “All time” to see older items.` : conn ? "Nothing here yet. New mail and docs are checked every few minutes." : "Connect your Google to start."}</Empty>
       ) : (
         <ul className="space-y-3">
           {items.map((item) => {

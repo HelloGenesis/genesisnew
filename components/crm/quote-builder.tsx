@@ -133,7 +133,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
   const plan = q.kind === "INFLUENCER_PLAN";
 
   return (
-    <form action={action} className="space-y-6">
+    <form action={action} noValidate className="space-y-6">
       <input type="hidden" name="payload" value={JSON.stringify(q)} />
 
       <section className="crm-card crm-pad space-y-4">
@@ -165,7 +165,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
           })}
         </div>
         <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
-          <label><span className="crm-label">Title (as on the quote)</span><input value={q.title} onChange={(e) => set("title", e.target.value)} required className="crm-input" placeholder="Primezen + Sensinova — Premium UGC Product Content" /></label>
+          <label><span className="crm-label">Title (as on the quote)</span><input value={q.title} onChange={(e) => set("title", e.target.value)} className="crm-input" placeholder="Primezen + Sensinova — Premium UGC Product Content" /></label>
           <label><span className="crm-label">Division</span>
             <select value={q.division ?? ""} onChange={(e) => set("division", e.target.value || null)} className="crm-input"><option value="">—</option>{DIVISIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
           </label>
@@ -173,8 +173,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label><span className="crm-label">Client / brand</span><input value={q.company ?? ""} onChange={(e) => set("company", e.target.value)} className="crm-input" /></label>
-          <label><span className="crm-label">Contact name *</span><input value={q.contactName} onChange={(e) => set("contactName", e.target.value)} required className="crm-input" /></label>
-          <label><span className="crm-label">Email *</span><input type="email" value={q.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} required className="crm-input" /></label>
+          <label><span className="crm-label">Contact name</span><input value={q.contactName} onChange={(e) => set("contactName", e.target.value)} className="crm-input" /></label>
+          <label><span className="crm-label">Email</span><input type="email" value={q.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">Phone</span><input value={q.contactPhone ?? ""} onChange={(e) => set("contactPhone", e.target.value)} className="crm-input" /></label>
         </div>
       </section>
@@ -200,9 +200,9 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
         {q.lines.map((l, i) => (
           <div key={i} className="crm-card crm-pad space-y-3">
             <div className="grid gap-3 sm:grid-cols-[1fr_6rem_9rem_9rem_auto] sm:items-end">
-              <label><span className="crm-label">{l.kind === "custom" ? "Custom line" : l.kind === "addon" ? "Add-on" : l.kind === "plan" ? "Plan" : "Product"}</span><input value={l.title} onChange={(e) => setLine(i, { title: e.target.value })} required className="crm-input font-medium" placeholder="Premium UGC Content Production | 10 Videos" /></label>
-              <label><span className="crm-label">Qty</span><input type="number" min={1} value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} className="crm-input" /></label>
-              <label><span className="crm-label">Price (₹)</span><input type="number" min={0} step="0.01" value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
+              <label><span className="crm-label">{l.kind === "custom" ? "Custom line" : l.kind === "addon" ? "Add-on" : l.kind === "plan" ? "Plan" : "Product"}</span><input value={l.title} onChange={(e) => setLine(i, { title: e.target.value })} className="crm-input font-medium" placeholder="Premium UGC Content Production | 10 Videos" /></label>
+              <label><span className="crm-label">Qty</span><input type="number" step="any" min={1} value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} className="crm-input" /></label>
+              <label><span className="crm-label">Price (₹)</span><input type="number" step="any" min={0} value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
               <p className="pb-2.5 text-right tabular-nums text-bone"><span className="crm-label">Line total</span>{inr(l.qty * l.unit)}</p>
               <span className="flex gap-1 pb-2">
                 <button type="button" aria-label="Move up" onClick={() => move(i, -1)} className="text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
@@ -272,7 +272,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
               {/* MARKUP: the client's price is the creator's cost plus this, rounded (Genesis's plans: cost → price → profit). */}
               <div className="flex flex-wrap items-center gap-2 text-[0.875rem] text-ash">
                 <span>Client price = creator cost +</span>
-                <input type="number" min={0} max={500} value={q.markupPercent ?? 30} onChange={(e) => set("markupPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 !w-20" />
+                <input type="number" step="any" min={0} max={500} value={q.markupPercent ?? 30} onChange={(e) => set("markupPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 !w-20" />
                 <span>%</span>
                 <button
                   type="button"
@@ -302,7 +302,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
                   <tbody>
                     {q.creators.map((c, i) => {
                       const money = (k: "reelCost" | "storyCost" | "dlCost" | "reelPrice" | "storyPrice" | "dlPrice", cost = false) => (
-                        <td key={k} className={cost ? "bg-[var(--hover-wash)]" : ""}><input type="number" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
+                        <td key={k} className={cost ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
                       );
                       const profit = creatorTotal(c) - creatorCost(c);
                       return (
@@ -312,8 +312,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
                           <td><input value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>
                           <td>{c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link">Profile ↗</a> : "—"}</td>
                           <td className="tabular-nums whitespace-nowrap">{compact(c.followers)}</td>
-                          <td><input type="number" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>
-                          <td><input type="number" min={0} step="0.1" value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>
+                          <td><input type="number" step="any" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>
+                          <td><input type="number" step="any" min={0} value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>
                           <td><input value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>
                           <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{REACHOUT.map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>
                           {money("reelCost", true)}{money("storyCost", true)}{money("dlCost", true)}
@@ -386,8 +386,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool }: { initial: Build
           <dl className="grid grid-cols-[1fr_auto] gap-y-2 text-[0.9375rem]">
             <dt className="text-ash">Subtotal</dt><dd className="tabular-nums">{inr(totals.subtotal)}</dd>
             <dt className="text-ash"><label className="flex items-center gap-2">Discount (₹)</label></dt>
-            <dd><input type="number" min={0} value={q.discount} onChange={(e) => set("discount", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-32 text-right" /></dd>
-            <dt className="text-ash"><label className="flex items-center gap-2"><input type="checkbox" checked={q.addGst} onChange={(e) => set("addGst", e.target.checked)} /> Add GST at <input type="number" min={0} max={28} value={q.gstPercent} onChange={(e) => set("gstPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-16" />%</label></dt>
+            <dd><input type="number" step="any" min={0} value={q.discount} onChange={(e) => set("discount", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-32 text-right" /></dd>
+            <dt className="text-ash"><label className="flex items-center gap-2"><input type="checkbox" checked={q.addGst} onChange={(e) => set("addGst", e.target.checked)} /> Add GST at <input type="number" step="any" min={0} max={28} value={q.gstPercent} onChange={(e) => set("gstPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-16" />%</label></dt>
             <dd className="tabular-nums">{inr(totals.tax)}</dd>
             {q.addGst && (
               <>

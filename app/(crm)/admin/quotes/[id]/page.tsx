@@ -67,13 +67,14 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
   const data = await builderData();
   const plan = q.kind === "INFLUENCER_PLAN";
   /* Outreach for the plan's creators: their numbers and emails from the influencer database (or the plan's contact line). */
-  const linked = plan ? await getPrisma().creator.findMany({ where: { id: { in: q.creators.map((c) => c.creatorId).filter((x): x is string => Boolean(x)) } }, select: { id: true, phone: true, email: true } }) : [];
+  const hasCreators = q.creators.length > 0;
+  const linked = hasCreators ? await getPrisma().creator.findMany({ where: { id: { in: q.creators.map((c) => c.creatorId).filter((x): x is string => Boolean(x)) } }, select: { id: true, phone: true, email: true } }) : [];
   const outreachRows = q.creators.map((c) => {
     const d = linked.find((x) => x.id === c.creatorId);
     const bits = contactBits(c.contact);
     return { id: c.id, name: c.name, handle: c.handle, phone: d?.phone ?? bits.phone, email: d?.email ?? bits.email, reachout: c.reachout };
   });
-  const template = plan ? ((await getPrisma().appSetting.findUnique({ where: { key: "outreach-template" } }))?.value ?? DEFAULT_OUTREACH) : "";
+  const template = hasCreators ? ((await getPrisma().appSetting.findUnique({ where: { key: "outreach-template" } }))?.value ?? DEFAULT_OUTREACH) : "";
   const cities = [...new Set(q.creators.map((c) => c.city).filter(Boolean))] as string[];
   const clientLink = appUrl(`/quote/${q.token}`);
 
@@ -137,7 +138,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         </Card>
       </div>
 
-      {plan && q.creators.length > 0 && (
+      {hasCreators && (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <Card title="Get costing from the creators">
             <OutreachPanel
@@ -163,6 +164,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
                 <a className="crm-link block" href={`https://docs.google.com/spreadsheets/d/${q.extSheetId}/edit`} target="_blank" rel="noreferrer">External plan (for the client) ↗</a>
                 <a className="crm-link block" href={`https://docs.google.com/spreadsheets/d/${q.intSheetId}/edit`} target="_blank" rel="noreferrer">Internal plan (team only) ↗</a>
                 <a className="crm-link block" href={`https://docs.google.com/spreadsheets/d/${q.extSheetId}/export?format=xlsx`}>Download external as Excel</a>
+                <a className="crm-link block" href={`https://docs.google.com/spreadsheets/d/${q.intSheetId}/export?format=xlsx`}>Download internal as Excel</a>
               </div>
             )}
             <p className="mt-3 text-[0.75rem] text-faint">Save the plan first; the sheets are written from what&apos;s saved. Shared with the super admins and you; share the external one with the client from Google.</p>
