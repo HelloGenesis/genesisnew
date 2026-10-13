@@ -23,26 +23,27 @@ const rupees = z.coerce.number().min(0).max(10_000_000);
 const payload = z.object({
   id: z.string().optional(),
   kind: z.enum(["QUOTE", "INFLUENCER_PLAN"]),
-  title: z.string().trim().min(1).max(200),
+  title: z.string().trim().max(200),
   division: z.enum(DIVISIONS).nullable().optional(),
   accountId: z.string().nullable().optional(),
   leadId: z.string().nullable().optional(),
   requestId: z.string().nullable().optional(),
-  contactName: z.string().trim().min(1).max(120),
-  contactEmail: z.string().trim().email().max(200),
+  /* A draft saves with gaps (Genesis, 13 Oct 2026); the email is checked when it is sent. */
+  contactName: z.string().trim().max(120),
+  contactEmail: z.string().trim().max(200),
   contactPhone: z.string().trim().max(30).nullable().optional(),
   company: z.string().trim().max(160).nullable().optional(),
   expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   notes: z.string().max(6000).nullable().optional(),
   terms: z.string().max(12000).nullable().optional(),
   addGst: z.boolean(),
-  gstPercent: z.coerce.number().int().min(0).max(28),
+  gstPercent: z.coerce.number().min(0).max(28).transform(Math.round),
   igst: z.boolean().optional(),
   proposalPlatforms: z.array(z.string().max(40)).max(12).optional(),
   proposalProblems: z.string().max(6000).nullable().optional(),
   proposalObjectives: z.string().max(6000).nullable().optional(),
   proposalInfluencers: z.string().max(6000).nullable().optional(),
-  markupPercent: z.coerce.number().int().min(0).max(500).optional(),
+  markupPercent: z.coerce.number().min(0).max(1000).transform(Math.round).optional(),
   planBudget: z.string().max(120).nullable().optional(),
   discount: rupees,
   lines: z
@@ -51,11 +52,11 @@ const payload = z.object({
         kind: z.string().max(20),
         productId: z.string().max(120).nullable().optional(),
         division: z.enum(DIVISIONS).nullable().optional(),
-        title: z.string().trim().min(1).max(200),
+        title: z.string().trim().max(200),
         subtitle: z.string().max(300).nullable().optional(),
         details: z.string().max(4000).nullable().optional(),
         note: z.string().max(1000).nullable().optional(),
-        qty: z.coerce.number().int().min(1).max(10000),
+        qty: z.coerce.number().min(0).max(10000).transform((v) => Math.max(1, Math.round(v))),
         unit: rupees,
       }),
     )
@@ -64,25 +65,25 @@ const payload = z.object({
     .array(
       z.object({
         creatorId: z.string().nullable().optional(),
-        name: z.string().max(120),
-        handle: z.string().max(80),
+        name: z.string().max(200),
+        handle: z.string().max(120),
         platform: z.string().max(20),
-        profileUrl: z.string().max(300).nullable().optional(),
-        followers: z.coerce.number().int().min(0),
-        avgViews: z.coerce.number().int().min(0).nullable().optional(),
-        niches: z.array(z.string().max(40)).max(10),
-        city: z.string().max(80).nullable().optional(),
-        deliverables: z.string().max(300).nullable().optional(),
+        profileUrl: z.string().max(1000).nullable().optional(),
+        followers: z.coerce.number().min(0).transform(Math.round),
+        avgViews: z.coerce.number().min(0).transform(Math.round).nullable().optional(),
+        niches: z.array(z.string().max(120)).max(30),
+        city: z.string().max(200).nullable().optional(),
+        deliverables: z.string().max(1000).nullable().optional(),
         fee: rupees.nullable().optional(),
-        er: z.coerce.number().min(0).max(100).nullable().optional(),
+        er: z.coerce.number().min(0).max(1000).nullable().optional(),
         reelCost: rupees.nullable().optional(),
         storyCost: rupees.nullable().optional(),
         dlCost: rupees.nullable().optional(),
         reelPrice: rupees.nullable().optional(),
         storyPrice: rupees.nullable().optional(),
         dlPrice: rupees.nullable().optional(),
-        reachout: z.string().max(60).nullable().optional(),
-        contact: z.string().max(300).nullable().optional(),
+        reachout: z.string().max(120).nullable().optional(),
+        contact: z.string().max(1000).nullable().optional(),
         remarks: z.string().max(1000).nullable().optional(),
       }),
     )
@@ -98,11 +99,11 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
   const parsed = payload.safeParse(JSON.parse(String(form.get("payload") ?? "{}")));
   if (!parsed.success) return fail(`Check the quote: ${parsed.error.issues[0]?.path.join(".")} ${parsed.error.issues[0]?.message}`);
   const q = parsed.data;
-  if (q.lines.length === 0 && q.creators.length === 0) return fail("Add at least one line.");
+  if (q.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return fail("That email doesn't look right; fix it or leave it blank for now.");
   const prisma = getPrisma();
   const data = {
     kind: q.kind,
-    title: q.title,
+    title: q.title || `${q.company || q.contactName || "Untitled"} ${q.kind === "INFLUENCER_PLAN" ? "influencer plan" : "quote"}`,
     division: q.division ?? null,
     accountId: q.accountId || null,
     leadId: q.leadId || null,
@@ -125,7 +126,7 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
     markupPercent: q.markupPercent ?? 30,
     planBudget: q.planBudget || null,
   };
-  const lines = q.lines.map((l, i) => ({ position: i, kind: l.kind, productId: l.productId ?? null, division: l.division ?? null, title: l.title, subtitle: l.subtitle || null, details: l.details || null, note: l.note || null, qty: l.qty, unitPaise: paise(l.unit) }));
+  const lines = q.lines.filter((l) => l.title || l.unit > 0 || l.details).map((l, i) => ({ position: i, kind: l.kind, productId: l.productId ?? null, division: l.division ?? null, title: l.title || "Untitled line", subtitle: l.subtitle || null, details: l.details || null, note: l.note || null, qty: l.qty, unitPaise: paise(l.unit) }));
   /* Influencers added by link (not from the database) join the influencer database too (Genesis, 12 Oct 2026). */
   for (const c of q.creators) {
     if (c.creatorId || !c.handle) continue;
@@ -172,6 +173,7 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
   const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) } });
   if (!q) return fail("That quote isn't yours, or no longer exists.");
   if (q.status === "PAID") return fail("Already paid.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return fail("Add the client's email to the quote (and save) before sending.");
   try {
     const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";
     const { paymentUrl } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && (view === "both" || view === "pricing"), view);
