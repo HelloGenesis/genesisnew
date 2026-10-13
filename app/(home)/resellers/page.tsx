@@ -113,7 +113,8 @@ export default function ResellersPage() {
 
       <Atmosphere tone="brand" origin="top" intensity={0.2}>
         <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pb-12 pt-32 sm:pt-40">
-          <Reveal>
+          {/* The opening shows straight away (no fade): it's the first thing anyone sees, and a fade-in left it invisible. */}
+          <div>
             <SectionLabel dot tone="brand">
               Genesis CRM · for agencies & resellers
             </SectionLabel>
@@ -124,15 +125,15 @@ export default function ResellersPage() {
             <p className="mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
               The CRM behind Genesis Media: leads, influencer plans, quotes, GST invoices and an inbox that reads briefs. Use it for your agency, under your brand, or resell it and earn on every agency you bring.
             </p>
-          </Reveal>
-          <Reveal delay={0.08} className="mt-8 flex flex-wrap gap-3">
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
             <GlassButton href="#apply" variant="brand" size="lg" arrow>
               Apply to partner
             </GlassButton>
             <GlassButton href="#inside" variant="glass" size="lg" arrow>
               See what&apos;s inside
             </GlassButton>
-          </Reveal>
+          </div>
         </div>
       </Atmosphere>
 

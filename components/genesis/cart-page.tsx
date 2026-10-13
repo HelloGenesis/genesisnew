@@ -208,8 +208,9 @@ export function CartPageView() {
           </div>
         </div>
       ) : (
-        <form onSubmit={submit} className="mt-10 grid gap-6 lg:grid-cols-[1.35fr_0.9fr] lg:items-start">
-          <div className="grid gap-6">
+        <form onSubmit={submit} className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)] lg:items-start">
+          {/* minmax(0, …): a long product name or price can't widen the column past a phone's screen. */}
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
             <section aria-labelledby="cart-items" className="glass glass-lit rounded-panel px-5 py-2 sm:px-7">
               <h2 id="cart-items" className="sr-only">
                 Items

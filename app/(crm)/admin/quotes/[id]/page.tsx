@@ -16,7 +16,6 @@ import { quoteScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
-import { planSheets } from "../../actions/outreach";
 import { deleteQuote, duplicateQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
 
 const rupee = (v: number | null | undefined) => (v === null || v === undefined ? null : v / 100);
@@ -94,7 +93,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
       </PageHead>
       {saved && <Notice>Saved as a draft. Check the client view, then send it.{sheetsNote ? ` ${sheetsNote}` : ""}</Notice>}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] [&>*]:min-w-0">
         <Card title={q.status === "DRAFT" ? "Send to the client" : "Send again"}>
           <ActionForm action={sendQuoteAction} submit={q.status === "DRAFT" ? "Send quotation email" : "Re-send with the latest changes"} confirm={`Email this ${plan ? "plan" : "quote"} to ${q.contactEmail}?`}>
             <input type="hidden" name="id" value={q.id} />
@@ -142,40 +141,26 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         </Card>
       </div>
 
+      {/*
+        GET COSTING, full width. It sat in a grid beside a Google Sheets card that
+        repeated the builder's Export menu, and its table pushed a phone's page to
+        820px wide (Genesis, 13 Oct 2026: "fix the UI/UX problems").
+      */}
       {hasCreators && (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-          <Card title="Get costing from the creators">
-            <OutreachPanel
-              rows={outreachRows}
-              template={template}
-              fields={{
-                campaign: `${q.company ?? "brand"} campaign`,
-                audience: "",
-                cities: cities.length > 1 ? `${cities.slice(0, -1).join(", ")} and ${cities.at(-1)}` : (cities[0] ?? ""),
-                deliverables: DEFAULT_DELIVERABLES,
-                sender: viewer.name ?? "Genesis Media",
-                senderTitle: viewer.title ?? "",
-              }}
-            />
-          </Card>
-          <Card title="Google Sheets">
-            <p className="mb-3 text-[0.875rem] text-ash">The plan as Genesis&apos;s two sheets: <b className="text-bone">external</b> for the client (Summary + Influencer Plan, client prices only) and <b className="text-bone">internal</b> for the team (reach-out, creator costs, contact, profit).</p>
-            <ActionForm action={planSheets} submit={q.extSheetId ? "Update both sheets" : "Create internal + external sheets"}>
-              <input type="hidden" name="id" value={q.id} />
-            </ActionForm>
-            {q.extSheetId && (
-              <div className="mt-3 space-y-1.5 text-[0.875rem]">
-                <a className="crm-link block" href={`https://docs.google.com/spreadsheets/d/${q.extSheetId}/edit`} target="_blank" rel="noreferrer">External plan (for the client) ↗</a>
-                <a className="crm-link block" href={`https://docs.google.com/spreadsheets/d/${q.intSheetId}/edit`} target="_blank" rel="noreferrer">Internal plan (team only) ↗</a>
-              </div>
-            )}
-            <div className="mt-3 space-y-1.5 text-[0.875rem]">
-              <a className="crm-link block" href={`/api/crm/plan-xlsx?quote=${q.id}&which=ext`}>Download external as Excel</a>
-              <a className="crm-link block" href={`/api/crm/plan-xlsx?quote=${q.id}&which=int`}>Download internal as Excel</a>
-            </div>
-            <p className="mt-3 text-[0.75rem] text-faint">Save the plan first; the sheets are written from what&apos;s saved. Shared with the super admins and you; share the external one with the client from Google.</p>
-          </Card>
-        </div>
+        <Card title="Get costing from the creators" className="min-w-0">
+          <OutreachPanel
+            rows={outreachRows}
+            template={template}
+            fields={{
+              campaign: `${q.company ?? "brand"} campaign`,
+              audience: "",
+              cities: cities.length > 1 ? `${cities.slice(0, -1).join(", ")} and ${cities.at(-1)}` : (cities[0] ?? ""),
+              deliverables: DEFAULT_DELIVERABLES,
+              sender: viewer.name ?? "Genesis Media",
+              senderTitle: viewer.title ?? "",
+            }}
+          />
+        </Card>
       )}
 
       {q.status === "PAID" ? <Notice>This quote is paid, so it can&apos;t change. Duplicate it to quote again.</Notice> : <QuoteBuilder initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} clients={data.clients} sheets={{ ext: q.extSheetId, int: q.intSheetId }} />}
