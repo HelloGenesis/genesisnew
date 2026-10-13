@@ -67,6 +67,7 @@ export async function captureSubmission(kind: string, submissionId: string, data
             "Applied on /resellers to use or resell the Genesis CRM.",
             data.partnerType && `Applying as: ${data.partnerType}`,
             data.teamSize && `Team size: ${data.teamSize}`,
+            data.plan && `Plan: ${data.plan}${data.billing ? ` (${data.billing})` : ""}`,
             data.branding && `Branding: ${data.branding}`,
             data.website && `Website: ${data.website}`,
             data.message,

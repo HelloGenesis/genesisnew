@@ -119,6 +119,8 @@ const TABS: Record<SheetTab, { title: string; columns: [header: string, field: s
       ["Phone", "phone"],
       ["Applying as", "partnerType"],
       ["Team size", "teamSize"],
+      ["Plan", "plan"],
+      ["Billing", "billing"],
       ["Branding", "branding"],
       ["Website or social", "website"],
       ["How they'd use it", "message"],

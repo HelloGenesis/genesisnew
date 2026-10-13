@@ -31,6 +31,7 @@ export function GenesisForm({
   className,
   compact = false,
   panel = true,
+  defaults,
 }: {
   kind: FormKind;
   /** Which page or CTA the submission came from. */
@@ -54,6 +55,8 @@ export function GenesisForm({
    * already a panel — two nested glass surfaces read as a seam, not depth.
    */
   panel?: boolean;
+  /** Answers filled in already, by field name (a plan chosen on the pricing cards, say). */
+  defaults?: Record<string, string>;
 }) {
   const spec = FORMS[kind];
   const [state, formAction] = useActionState(submitGenesisForm, INITIAL);
@@ -156,6 +159,7 @@ export function GenesisForm({
             field={field}
             formId={formId}
             error={state.fieldErrors?.[field.name]}
+            initial={defaults?.[field.name]}
           />
         ))}
       </div>
@@ -169,10 +173,12 @@ function Field({
   field,
   formId,
   error,
+  initial,
 }: {
   field: FieldSpec;
   formId: string;
   error?: string;
+  initial?: string;
 }) {
   const id = `${formId}-${field.name}`;
   const errorId = `${id}-error`;
@@ -292,7 +298,7 @@ function Field({
       {field.type === "textarea" ? (
         <textarea {...shared} rows={4} />
       ) : field.type === "select" ? (
-        <select {...shared} defaultValue="">
+        <select {...shared} defaultValue={initial && field.options?.includes(initial) ? initial : ""}>
           {/* An empty first option, so a select does not silently default to
               its first real answer for someone who never opened it. */}
           <option value="" disabled={field.required}>

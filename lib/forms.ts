@@ -143,6 +143,8 @@ const PARTNER_TYPES = [
 ] as const;
 const TEAM_SIZES = ["Just me", "2 to 10", "11 to 50", "50+"] as const;
 const BRANDING = ["Under our brand (white-label)", "Co-branded with Genesis", "Not sure yet"] as const;
+/* The Genesis CRM plans (/resellers#pricing). */
+export const CRM_PLANS = ["Starter", "Growth", "Scale", "Not sure yet"] as const;
 
 export const FORMS: Record<FormKind, FormSpec> = {
   /*
@@ -165,6 +167,8 @@ export const FORMS: Record<FormKind, FormSpec> = {
       { name: "phone", label: "Phone / WhatsApp", type: "tel", required: true, half: true, autoComplete: "tel" },
       { name: "partnerType", label: "You are", type: "select", options: PARTNER_TYPES, required: true, half: true },
       { name: "teamSize", label: "Team size", type: "select", options: TEAM_SIZES, required: true, half: true },
+      { name: "plan", label: "Plan", type: "select", options: CRM_PLANS, half: true },
+      { name: "billing", label: "Billing", type: "select", options: ["Monthly", "Annual (2 months free)"], half: true },
       { name: "branding", label: "Branding", type: "select", options: BRANDING, half: true },
       { name: "website", label: "Website or Instagram", type: "url", half: true },
       { name: "message", label: "How would you use it? (agencies you'd bring, what you run today)", type: "textarea", max: 2000 },
