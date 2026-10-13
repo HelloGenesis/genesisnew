@@ -54,6 +54,9 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
     proposalProblems: null,
     proposalObjectives: brief?.objective ?? null,
     proposalInfluencers: brief?.deliverables ?? null,
+    proposalTg: null,
+    proposalSections: [],
+    planColumns: {},
     discount: 0,
     lines: [],
     markupPercent: 30,
@@ -74,7 +77,7 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
   return (
     <>
       <PageHead kicker="Sales" title={kind === "INFLUENCER_PLAN" ? "New influencer plan" : "New quote"} sub={request ? `For request: ${request.title}` : lead ? `For lead: ${lead.name}` : undefined} />
-      <QuoteBuilder initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} />
+      <QuoteBuilder initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} clients={data.clients} />
     </>
   );
 }

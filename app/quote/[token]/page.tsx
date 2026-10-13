@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 import { COMPANY, quoteRef } from "@/lib/crm/quote-templates";
+import { looksLikeHtml, sanitizeHtml, textToHtml } from "@/lib/rich-text";
 
 import { AcceptForm } from "./accept-form";
 import { PrintButton } from "./print-button";
@@ -27,7 +28,6 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
 /* Genesis Events and Media Group's own logo, when it's in /public/brand; its name set in type until then. */
 const GROUP_LOGO = ["genesis-events-media.png", "genesis-events-media.svg", "genesis-events-media.webp"].find((f) => existsSync(join(process.cwd(), "public", "brand", f)));
 
-const MARK: Record<string, string> = { AI_LAB: "ai-lab", STUDIOS: "studios", BRAND_DESIGN: "brand-design", INFLUENCE: "influence" };
 const inr = (paise: number) => `₹${(paise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const day = (d: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Kolkata" }).format(d);
 const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { notation: "compact" }).format(n) : "—");
@@ -60,15 +60,25 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const plan = q.kind === "INFLUENCER_PLAN";
   const expired = q.expiresAt < new Date() && !["ACCEPTED", "PAID"].includes(q.status);
   const creatorFees = q.creators.reduce((s, c) => s + (c.feePaise ?? 0), 0);
-  const divisions = [...new Set([q.division, ...q.lines.map((l) => l.division)].filter((d): d is NonNullable<typeof d> => Boolean(d)))];
   const notesLines = (q.notes ?? "").split("\n").filter(Boolean);
   const terms = (q.terms ?? "").split("\n").map((t) => t.replace(/^[-•]\s*/, "")).filter(Boolean);
+  /* The proposal's boxes, one after another (Genesis, 13 Oct 2026), as formatted in the builder; older plain lines become bullets. */
+  const sections = Array.isArray(q.proposalSections) ? (q.proposalSections as { title?: string; html?: string }[]) : [];
   const proposal = [
-    ["Platforms", q.proposalPlatforms.join(" · ")],
+    ["Platforms", q.proposalPlatforms.length ? `<p>${q.proposalPlatforms.join(" · ")}</p>` : ""],
+    ["TG (target group)", q.proposalTg],
     ["Problems we'll solve", q.proposalProblems],
     ["Objectives", q.proposalObjectives],
     ["Influencers", q.proposalInfluencers],
-  ].filter((row): row is [string, string] => Boolean(row[1]));
+    ...sections.map((x) => [x.title ?? "", x.html ?? ""]),
+  ]
+    .map(([label, value]) => [label ?? "", value ? sanitizeHtml(looksLikeHtml(value) ? value : textToHtml(value)) : ""] as [string, string])
+    .filter(([, value]) => Boolean(value));
+  /* The plan's columns as chosen in the builder: removed ones left out, added ones after. */
+  const cols = (q.planColumns ?? {}) as { hidden?: string[]; custom?: string[] };
+  const hiddenCols = new Set(cols.hidden ?? []);
+  const customCols = (cols.custom ?? []).filter(Boolean);
+  const showCol = (k: string) => !hiddenCols.has(k);
   const showProposal = (view === "both" || view === "proposal" || view === "proposal-plan") && proposal.length > 0;
   const cgst = Math.round(q.taxPaise / 2);
 
@@ -85,8 +95,8 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
       <article className="font-sans [&_h1]:font-sans [&_h2]:font-sans mx-auto max-w-[860px] overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_-20px_rgb(15_23_42/0.35)] print:max-w-none print:rounded-none print:shadow-none">
         <header className="flex flex-wrap items-start justify-between gap-6 px-8 pb-6 pt-10 sm:px-12">
           <div className="flex flex-wrap items-start gap-6">
-            {/* Genesis Events and Media Group above, Genesis Media under it (Genesis, 12 Oct 2026). */}
-            <div className="flex flex-col items-start gap-2.5">
+            {/* Genesis Events and Media Group above, Genesis Media under it, together in one box (Genesis, 12–13 Oct 2026). */}
+            <div className="flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4">
               {GROUP_LOGO ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={`/brand/${GROUP_LOGO}`} alt="Genesis Events and Media Group" className="h-9 w-auto" />
@@ -97,6 +107,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
                   <span className="mt-1 text-[0.5rem] font-bold tracking-[0.18em] text-[#0f172a]">EVENTS &amp; MEDIA GROUP</span>
                 </span>
               )}
+              <span className="h-px w-full bg-[#e2e8f0]" aria-hidden />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/brand/genesis-wordmark-dark.png" alt="Genesis Media" className="h-[16px] w-auto" />
             </div>
@@ -116,14 +127,6 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
 
         <section className="px-8 pb-8 sm:px-12">
           <h1 className="text-[1.0625rem] font-semibold">{q.title}</h1>
-          {divisions.length > 0 && (
-            <div className="mt-3 flex flex-wrap items-center gap-4">
-              {divisions.map((d) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={d} src={`/brand/divisions/wordmark/${MARK[d]}-dark.png`} alt={d} className="h-[14px] w-auto" />
-              ))}
-            </div>
-          )}
           <div className="mt-6 text-[0.9375rem] leading-relaxed">
             <p className="font-semibold">{q.contactName}</p>
             {q.company && q.company !== q.contactName && <p>{q.company}</p>}
@@ -135,14 +138,62 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
         {showProposal && (
           <section className="break-inside-avoid border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
             <h2 className="mb-4 text-[1.0625rem] font-semibold">Proposal</h2>
-            <dl className="grid gap-5 sm:grid-cols-2">
-              {proposal.map(([label, value]) => (
-                <div key={label} className="rounded-xl bg-[#f5f9ff] px-5 py-4">
-                  <dt className="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#64748b]">{label}</dt>
-                  <dd className="mt-2 space-y-1 text-[0.9375rem] leading-relaxed">{value.split("\n").filter(Boolean).map((line) => <p key={line}>{label === "Platforms" ? line : `• ${line.replace(/^[-•]\s*/, "")}`}</p>)}</dd>
+            <dl className="space-y-4">
+              {proposal.map(([label, value], i) => (
+                <div key={`${label}-${i}`} className="break-inside-avoid rounded-xl bg-[#f5f9ff] px-5 py-4">
+                  {label && <dt className="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#64748b]">{label}</dt>}
+                  <dd
+                    className="mt-2 space-y-2 text-[0.9375rem] leading-relaxed [&_a]:text-[#1d4ed8] [&_a]:underline [&_h3]:text-[1rem] [&_h3]:font-semibold [&_h4]:font-semibold [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:max-w-[640px] [&_iframe]:rounded-lg [&_img]:max-h-[420px] [&_img]:rounded-lg [&_li]:my-0.5 [&_mark]:rounded [&_mark]:bg-[#fff2a8] [&_mark]:px-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 print:[&_iframe]:hidden"
+                    dangerouslySetInnerHTML={{ __html: value }}
+                  />
                 </div>
               ))}
             </dl>
+          </section>
+        )}
+
+        {/* The influencer plan, then the costing below everything (Genesis, 13 Oct 2026). */}
+        {showCreators && q.creators.length > 0 && (
+          <section className="break-inside-avoid border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
+            <h2 className="mb-3 font-semibold">{plan ? "Influencer plan" : "Creators"}</h2>
+            <div className="overflow-x-auto">
+              {/* The plan's columns, as on Genesis's influencer plans: prices per deliverable only when pricing is part of what's sent. */}
+              <table className="w-full min-w-[760px] text-left text-[0.8125rem]">
+                <thead className="bg-[#fff2cc] text-[#1e293b]">
+                  <tr>
+                    {[
+                      ...(showCol("tier") ? ["Tier"] : []), "Name", ...(showCol("category") ? ["Category"] : []), ...(showCol("ig") ? ["IG Link"] : []), ...(showCol("followers") ? ["Followers"] : []), ...(showCol("avgViews") ? ["Avg Views"] : []), ...(showCol("er") ? ["ER"] : []),
+                      ...(showCreatorFees ? [...(showCol("reelPrice") ? ["1 IG Reel"] : []), ...(showCol("storyPrice") ? ["Story + LIB"] : []), ...(showCol("dlPrice") ? ["DL (1 month)"] : [])] : []),
+                      ...(showCol("location") ? ["Location"] : []), ...customCols,
+                    ].map((h) => (
+                      <th key={h} className="whitespace-nowrap px-2 py-2 font-semibold">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#f1f5f9]">
+                  {[...q.creators].sort((a, b) => a.followers - b.followers).map((c) => (
+                    <tr key={c.id} className="align-top">
+                      {showCol("tier") && <td className="whitespace-nowrap px-2 py-2 font-medium">{c.followers < 100_000 ? "Nano & Micro" : "Macro & Mega"}</td>}
+                      <td className="px-2 py-2 font-medium">{c.name}</td>
+                      {showCol("category") && <td className="px-2 py-2">{c.niches.join(" & ") || "—"}</td>}
+                      {showCol("ig") && <td className="px-2 py-2">{c.profileUrl ? <a className="underline" href={c.profileUrl} target="_blank" rel="noopener noreferrer">@{c.handle}</a> : `@${c.handle}`}</td>}
+                      {showCol("followers") && <td className="whitespace-nowrap px-2 py-2">{compact(c.followers)}</td>}
+                      {showCol("avgViews") && <td className="whitespace-nowrap px-2 py-2">{compact(c.avgViews)}</td>}
+                      {showCol("er") && <td className="whitespace-nowrap px-2 py-2">{c.engagementRate ? `${c.engagementRate}%` : "—"}</td>}
+                      {showCreatorFees && (
+                        <>
+                          {showCol("reelPrice") && <td className="whitespace-nowrap px-2 py-2">{c.reelPricePaise ? inr(c.reelPricePaise) : "—"}</td>}
+                          {showCol("storyPrice") && <td className="whitespace-nowrap px-2 py-2">{c.storyPricePaise ? inr(c.storyPricePaise) : "—"}</td>}
+                          {showCol("dlPrice") && <td className="whitespace-nowrap px-2 py-2">{c.dlPricePaise ? inr(c.dlPricePaise) : "—"}</td>}
+                        </>
+                      )}
+                      {showCol("location") && <td className="px-2 py-2">{c.city ?? "—"}</td>}
+                      {customCols.map((name) => <td key={name} className="px-2 py-2">{((c.extra ?? {}) as Record<string, string>)[name] || "—"}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         )}
 
@@ -190,45 +241,6 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
             )}
           </tbody>
         </table>
-        )}
-
-        {showCreators && q.creators.length > 0 && (
-          <section className="break-inside-avoid border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
-            <h2 className="mb-3 font-semibold">{plan ? "Influencer plan" : "Creators"}</h2>
-            <div className="overflow-x-auto">
-              {/* The plan's columns, as on Genesis's influencer plans: prices per deliverable only when pricing is part of what's sent. */}
-              <table className="w-full min-w-[760px] text-left text-[0.8125rem]">
-                <thead className="bg-[#fff2cc] text-[#1e293b]">
-                  <tr>
-                    {["Tier", "Name", "Category", "IG Link", "Followers", "Avg Views", "ER", ...(showCreatorFees ? ["1 IG Reel", "Story + LIB", "DL (1 month)"] : []), "Location"].map((h) => (
-                      <th key={h} className="whitespace-nowrap px-2 py-2 font-semibold">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f1f5f9]">
-                  {[...q.creators].sort((a, b) => a.followers - b.followers).map((c) => (
-                    <tr key={c.id} className="align-top">
-                      <td className="whitespace-nowrap px-2 py-2 font-medium">{c.followers < 100_000 ? "Nano & Micro" : "Macro & Mega"}</td>
-                      <td className="px-2 py-2 font-medium">{c.name}</td>
-                      <td className="px-2 py-2">{c.niches.join(" & ") || "—"}</td>
-                      <td className="px-2 py-2">{c.profileUrl ? <a className="underline" href={c.profileUrl} target="_blank" rel="noopener noreferrer">@{c.handle}</a> : `@${c.handle}`}</td>
-                      <td className="whitespace-nowrap px-2 py-2">{compact(c.followers)}</td>
-                      <td className="whitespace-nowrap px-2 py-2">{compact(c.avgViews)}</td>
-                      <td className="whitespace-nowrap px-2 py-2">{c.engagementRate ? `${c.engagementRate}%` : "—"}</td>
-                      {showCreatorFees && (
-                        <>
-                          <td className="whitespace-nowrap px-2 py-2">{c.reelPricePaise ? inr(c.reelPricePaise) : "—"}</td>
-                          <td className="whitespace-nowrap px-2 py-2">{c.storyPricePaise ? inr(c.storyPricePaise) : "—"}</td>
-                          <td className="whitespace-nowrap px-2 py-2">{c.dlPricePaise ? inr(c.dlPricePaise) : "—"}</td>
-                        </>
-                      )}
-                      <td className="px-2 py-2">{c.city ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
         )}
 
         {showPricing && (

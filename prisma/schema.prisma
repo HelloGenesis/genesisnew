@@ -1118,6 +1118,12 @@ model Quote {
   planBudget    String?    @map("plan_budget")
   extSheetId    String?    @map("ext_sheet_id")
   intSheetId    String?    @map("int_sheet_id")
+  /// The proposal's target group (TG), as rich text.
+  proposalTg    String?     @map("proposal_tg")
+  /// Extra proposal boxes after the standard three: [{ title, html }].
+  proposalSections Json     @default("[]") @map("proposal_sections")
+  /// The plan grid's columns: { hidden: [key], custom: [name] }.
+  planColumns   Json        @default("{}") @map("plan_columns")
   subtotalPaise Int         @default(0) @map("subtotal_paise")
   taxPaise      Int         @default(0) @map("tax_paise")
   totalPaise    Int         @default(0) @map("total_paise")
@@ -1194,6 +1200,8 @@ model QuoteCreator {
   contact      String?
   remarks      String?
 
+  /// Values of the plan's added columns, by column name.
+  extra        Json    @default("{}")
   @@map("crm_quote_creators")
 }
 

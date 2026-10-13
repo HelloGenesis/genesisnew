@@ -64,14 +64,15 @@ export async function planSheets(_: ActionState, form: FormData): Promise<Action
   const id = text(form, "id");
   const quote = id ? await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, select: { id: true } }) : null;
   if (!quote) return fail("Not your plan.");
+  let made: Awaited<ReturnType<typeof makePlanSheets>>;
   try {
-    await makePlanSheets(quote.id, viewer.email);
+    made = await makePlanSheets(quote.id, viewer.email, viewer.id);
   } catch (error) {
     return fail(`Couldn't make the sheets: ${(error as Error).message.slice(0, 200)}`);
   }
   await recordAuditLog({ action: "plan.sheets", entity: "quote", entityId: quote.id, actorId: viewer.id });
   done();
-  return ok("Done: both sheets are up to date.");
+  return ok(made.own ? `Done: both sheets are in your Google Drive (${made.account}), up to date.` : `Done: both sheets are up to date (in ${made.account}'s Drive; reconnect your Google in Inbox to have them in yours).`);
 }
 
 /** Shares a brief or a quote by email, from the CRM, replies to the sender. */
