@@ -10,7 +10,15 @@
  */
 
 export type Cell = string | number | null;
-export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both" };
+export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean };
+
+/**
+ * The brand's prices on the external sheet and the client view, or a SAMPLE
+ * with no costing at all (Genesis, 13 Oct 2026: "sometimes we give a sample
+ * sheet, so the costing part is optional"). Creator costs, profit and
+ * internal notes are never on anything the brand sees.
+ */
+export const showsBrandPrices = (c: PlanColumns | null | undefined) => c?.extPrices !== false;
 
 /** How the brand gets the creator list (Genesis, 13 Oct 2026): in the proposal, as the external Google Sheet, or both. */
 export const sharesSheet = (c: PlanColumns | null | undefined) => c?.share === "sheet" || c?.share === "both";
@@ -70,6 +78,7 @@ const cols = (xs: Col[]) => xs;
 
 export function planTables(p: PlanInput) {
   const hidden = new Set(p.columns.hidden ?? []);
+  const prices = showsBrandPrices(p.columns);
   const custom = (p.columns.custom ?? []).filter(Boolean);
   const rows: Row[] = [...p.creators]
     .sort((a, b) => a.followers - b.followers)
@@ -94,7 +103,7 @@ export function planTables(p: PlanInput) {
     { key: "storyPrice", header: "Story + LIB", width: 100, money: true, value: (r) => r.price[1]! },
     { key: "dlPrice", header: "DL (1 month)", width: 110, money: true, value: (r) => r.price[2]! },
     { key: "location", header: "Location", width: 120, value: (r) => r.city ?? "" },
-  ]).filter((c) => c.key === "name" || show(c.key));
+  ]).filter((c) => c.key === "name" || (show(c.key) && (prices || !c.money)));
   extCols.push(...extras);
 
   const intCols: Col[] = cols([
@@ -130,7 +139,9 @@ export function planTables(p: PlanInput) {
     .map((g) => ({ g, start: intCols.findIndex((c) => c.group === g), end: intCols.length - [...intCols].reverse().findIndex((c) => c.group === g) }))
     .filter((x) => x.start >= 0);
 
-  const disclaimer: Cell[][] = [[], ["Disclaimer:"], ["*These are tentative costs; final costs will be confirmed after creator confirmation."], ["*This idea breakout & rights is with Genesis Media; using this idea or reaching out to influencers without approval is strictly prohibited."], ["*The total outlay for this execution will be the creator costs above + 15% agency fee + GST."]];
+  const disclaimer: Cell[][] = prices
+    ? [[], ["Disclaimer:"], ["*These are tentative costs; final costs will be confirmed after creator confirmation."], ["*This idea breakout & rights is with Genesis Media; using this idea or reaching out to influencers without approval is strictly prohibited."], ["*The total outlay for this execution will be the creator costs above + 15% agency fee + GST."]]
+    : [[], ["Disclaimer:"], ["*A sample of creators for this brief; availability and costs are confirmed on approval."], ["*This idea breakout & rights is with Genesis Media; using this idea or reaching out to influencers without approval is strictly prohibited."]];
   const cities = [...new Set(rows.map((r) => r.city).filter(Boolean))] as string[];
   const categories = [...new Set(rows.flatMap((r) => r.niches))].filter(Boolean);
   const followers = rows.map((r) => r.followers).filter((n) => n > 0);
@@ -147,7 +158,7 @@ export function planTables(p: PlanInput) {
     [null, "Region:", null, cities.join(", ")],
     [null, "Category of Influencers:", null, categories.slice(0, 10).join(", ")],
     [null, "Budget:", null, p.planBudget ?? "As per Brand"],
-    [null, "*The total outlay for this execution will be 15% Agency fee + GST*"],
+    ...(prices ? [[null, "*The total outlay for this execution will be 15% Agency fee + GST*"] as Cell[]] : []),
     [],
     [null, "Please Note-"],
     ...(notes.length ? notes : DEFAULT_NOTES).map((n) => [null, n] as Cell[]),

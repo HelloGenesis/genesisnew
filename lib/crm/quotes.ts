@@ -29,7 +29,9 @@ export const newToken = () => randomBytes(18).toString("base64url");
 
 export async function totalsOf(quoteId: string) {
   const q = await getPrisma().quote.findUniqueOrThrow({ where: { id: quoteId }, include: { lines: true, creators: true } });
-  return { quote: q, ...quoteTotals({ lines: q.lines, creatorFees: q.creators.map((c) => c.feePaise), discountPaise: q.discountPaise, addGst: q.addGst, gstPercent: q.gstPercent }) };
+  /* A sample plan (no costing for the brand) adds no creator fees to the total. */
+  const sample = (q.planColumns as { extPrices?: boolean } | null)?.extPrices === false;
+  return { quote: q, ...quoteTotals({ lines: q.lines, creatorFees: sample ? [] : q.creators.map((c) => c.feePaise), discountPaise: q.discountPaise, addGst: q.addGst, gstPercent: q.gstPercent }) };
 }
 
 /** Recomputes and stores the totals (after any edit). */

@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 import { COMPANY, quoteRef } from "@/lib/crm/quote-templates";
-import { type PlanColumns, sharesSheet, sharesTable } from "@/lib/crm/plan-tables";
+import { type PlanColumns, sharesSheet, sharesTable, showsBrandPrices } from "@/lib/crm/plan-tables";
 import { looksLikeHtml, sanitizeHtml, textToHtml } from "@/lib/rich-text";
 
 import { AcceptForm } from "./accept-form";
@@ -56,7 +56,8 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   /* The parts ticked in the builder (empty on older quotes: everything they have). */
   const parts = q.parts;
   const has = (part: string) => parts.length === 0 || parts.includes(part);
-  const showPricing = (view === "both" || view === "pricing") && (has("pricing") || has("plan"));
+  const sample = !showsBrandPrices(q.planColumns as PlanColumns);
+  const showPricing = (view === "both" || view === "pricing") && (has("pricing") || (has("plan") && !sample));
   const showLines = has("pricing");
   const showCreators = (view === "both" || view === "plan" || view === "proposal-plan") && has("plan");
   const staff = staffAccess(await getViewer().catch(() => null)) === "granted";
@@ -84,7 +85,9 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const cols = (q.planColumns ?? {}) as PlanColumns;
   const hiddenCols = new Set(cols.hidden ?? []);
   const customCols = (cols.custom ?? []).filter(Boolean);
-  const showCol = (k: string) => !hiddenCols.has(k);
+  /* A sample plan (no costing) shows no creator prices anywhere the brand looks. */
+  const brandPrices = showsBrandPrices(cols);
+  const showCol = (k: string) => !hiddenCols.has(k) && (brandPrices || !["reelPrice", "storyPrice", "dlPrice"].includes(k));
   /* The creator list in the document, as a Google Sheet link, or both (the table stays until the sheet exists). */
   const sheetLink = sharesSheet(cols) && q.extSheetId ? `https://docs.google.com/spreadsheets/d/${q.extSheetId}/edit?usp=sharing` : null;
   const showTable = sharesTable(cols) || !sheetLink;
@@ -265,7 +268,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
                 <td className="whitespace-nowrap px-8 py-6 text-right sm:px-12">{inr(l.qty * l.unitPaise)}</td>
               </tr>
             ))}
-            {q.creators.length > 0 && (
+            {q.creators.length > 0 && !sample && (
               <tr className="align-top">
                 <td className="px-8 py-6 sm:px-12">
                   <p className="font-medium">{plan ? "Creators" : "Creator fees"}</p>

@@ -1,9 +1,11 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Columns3, ExternalLink, FileSpreadsheet, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Columns3, ExternalLink, FileSpreadsheet, Plus, Trash2, Upload, X } from "lucide-react";
 import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { importCreatorsForPlan, matchUploadColumns } from "@/app/(crm)/admin/actions/imports";
 import { autosaveQuote, saveQuote } from "@/app/(crm)/admin/actions/quotes";
+import { readSheetFile } from "@/lib/sheet-file";
 import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 
 import { RichText } from "./rich-text";
@@ -18,7 +20,7 @@ export type BuilderCreator = {
   extra?: Record<string, string>;
 };
 export type ProposalSection = { title: string; html: string };
-export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both" };
+export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean };
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -162,6 +164,57 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   const [showColumns, setShowColumns] = useState(false);
   const [newColumn, setNewColumn] = useState("");
   const [download, setDownload] = useState<string | null>(null);
+  /* IMPORT AN EXCEL OF INFLUENCERS INTO THE PLAN (Genesis, 13 Oct 2026); they're saved to the influencer database too. */
+  const importPicker = useRef<HTMLInputElement>(null);
+  const [sheet, setSheet] = useState<{ name: string; headers: string[]; rows: string[][]; mapping: Record<string, string> } | null>(null);
+  const [importNote, setImportNote] = useState<string | null>(null);
+  async function readImport(file: File | undefined) {
+    if (!file) return;
+    setImportNote("Reading the file…");
+    setSheet(null);
+    try {
+      const tabs = await readSheetFile(file);
+      const tab = tabs.find((t) => t.rows.some((r) => r.filter((c) => c.trim()).length >= 2));
+      if (!tab) throw new Error("The file looks empty.");
+      const at = tab.rows.findIndex((r) => r.filter((c) => c.trim()).length >= 2);
+      const headers = tab.rows[at]!.map((h) => h.trim());
+      const rows = tab.rows.slice(at + 1).filter((r) => r.some((c) => c.trim()));
+      setImportNote("Matching the columns…");
+      const mapping = await matchUploadColumns("influencers", headers, rows.slice(0, 5));
+      const fields = Object.values(mapping);
+      if (!fields.includes("handle") && !fields.includes("profileUrl")) throw new Error("Couldn't find a handle or profile-link column. Check the first row has headings.");
+      setSheet({ name: file.name, headers, rows, mapping });
+      setImportNote(null);
+    } catch (e) {
+      setImportNote((e as Error).message);
+    }
+  }
+  async function runImport() {
+    if (!sheet) return;
+    const m = 1 + (q.markupPercent ?? 30) / 100;
+    const up = (v: number | null) => (v === null ? null : Math.round(v * m));
+    let added = 0;
+    let updated = 0;
+    const found: BuilderCreator[] = [];
+    try {
+      for (let i = 0; i < sheet.rows.length; i += 250) {
+        setImportNote(`Saving ${Math.min(i + 250, sheet.rows.length)} of ${sheet.rows.length} to the influencer database…`);
+        const result = await importCreatorsForPlan(sheet.name, sheet.headers, sheet.rows.slice(i, i + 250), sheet.mapping);
+        added += result.added;
+        updated += result.updated;
+        for (const c of result.creators)
+          found.push({ creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, er: c.er, deliverables: "1 IG Reel + Story & link in bio", fee: null, reelCost: c.reel, storyCost: c.story, dlCost: c.dl, reelPrice: up(c.reel), storyPrice: up(c.story), dlPrice: up(c.dl), contact: c.contact });
+      }
+      const have = new Set(q.creators.map((c) => c.creatorId).filter(Boolean));
+      const fresh = found.filter((c) => !have.has(c.creatorId) && have.add(c.creatorId));
+      const onPlan = fresh.length;
+      setQ((x) => ({ ...x, creators: [...x.creators, ...fresh.filter((c) => !x.creators.some((y) => y.creatorId === c.creatorId))] }));
+      setSheet(null);
+      setImportNote(`Done: ${found.length} creators from the sheet (${added} new to the database, ${updated} updated)${onPlan < found.length ? `; ${found.length - onPlan} were already on the plan` : ""}.`);
+    } catch (e) {
+      setImportNote(`Stopped: ${(e as Error).message.slice(0, 160)}. Try again; creators already saved aren't duplicated.`);
+    }
+  }
   const [state, action, pending] = useActionState(saveQuote, null);
   /*
    * SAVED AS YOU WORK (Genesis, 13 Oct 2026): a moment after each change the
@@ -443,6 +496,15 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                 </button>
               );
             })}
+            <span className="ml-2 mr-1 text-[0.8125rem] text-ash">Brand sees:</span>
+            {([[true, "Prices"], [false, "Sample (no costing)"]] as const).map(([value, label]) => {
+              const on = (q.planColumns?.extPrices ?? true) === value;
+              return (
+                <button key={label} type="button" role="radio" aria-checked={on} onClick={() => setQ((x) => ({ ...x, planColumns: { ...x.planColumns, extPrices: value } }))} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${on ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
+                  {label}
+                </button>
+              );
+            })}
             {(q.planColumns?.share === "sheet" || q.planColumns?.share === "both") && <span className="text-[0.75rem] text-faint">The external sheet opens for anyone with the link (view only); it&apos;s made and linked when you send, or now with Save &amp; make Google Sheets.</span>}
           </div>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search the influencer database: name, @handle, niche, city" className="crm-input" />
@@ -481,9 +543,22 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             >
               <Plus className="size-4" /> Add creator
             </button>
+            <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => importPicker.current?.click()}>
+              <Upload className="size-4" /> Import Excel / CSV
+            </button>
+            <input ref={importPicker} type="file" accept=".xlsx,.csv,.tsv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => { void readImport(e.target.files?.[0]); e.target.value = ""; }} />
             {linkError && <span className="text-[0.8125rem] text-[#dc2626]">{linkError}</span>}
           </div>
-          <p className="text-[0.75rem] text-faint">Several links at once work too. New creators are added to the influencer database when you save.</p>
+          {sheet && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#ffc516] px-3 py-2 text-[0.8125rem]">
+              <span className="text-bone">{sheet.name}</span>
+              <span className="text-ash">· {sheet.rows.length} rows · columns: {Object.entries(sheet.mapping).map(([h]) => h).join(", ")}</span>
+              <button type="button" onClick={runImport} className="crm-btn crm-btn-primary crm-btn-sm">Add {sheet.rows.length} creators</button>
+              <button type="button" onClick={() => setSheet(null)} className="text-ash hover:text-bone">Cancel</button>
+            </div>
+          )}
+          {importNote && <p className="text-[0.8125rem] text-ash" role="status">{importNote}</p>}
+          <p className="text-[0.75rem] text-faint">Several links at once work too. Creators added by link, by hand or from a sheet are saved to the influencer database.</p>
           {search && (
             <ul className="divide-y divide-[var(--glass-border)]">
               {matches.length === 0 && <li className="py-2 text-ash">No match.</li>}
@@ -717,7 +792,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           </dl>
           <p className="text-[0.75rem] text-faint">The sample quote states prices exclusive of GST; untick to show the total without it.</p>
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button className="crm-btn crm-btn-primary" disabled={pending}>{pending ? "Saving…" : q.id ? "Save changes" : "Save draft"}</button>
+            <button className="crm-btn crm-btn-primary" disabled={pending}>{pending ? "Saving…" : q.id ? (sheets?.ext ? "Save changes & update sheets" : "Save changes") : "Save draft"}</button>
             {state?.message && <span className={`text-[0.8125rem] ${state.ok ? "text-[#16a34a]" : "text-[#dc2626]"}`} role={state.ok ? "status" : "alert"}>{state.message}</span>}
           </div>
           <p className="text-[0.75rem] text-faint">A draft saves with anything missing; the client&apos;s email is needed only to send.</p>
