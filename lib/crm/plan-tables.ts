@@ -10,7 +10,14 @@
  */
 
 export type Cell = string | number | null;
-export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean };
+export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string };
+
+/** The sheet link the brand gets: one pasted in the builder, else the CRM's external sheet. */
+export function brandSheetLink(c: PlanColumns | null | undefined, extSheetId: string | null | undefined): string | null {
+  const own = c?.sheetUrl?.trim();
+  if (own && /^https:\/\/[^\s]+$/i.test(own)) return own;
+  return extSheetId ? `https://docs.google.com/spreadsheets/d/${extSheetId}/edit?usp=sharing` : null;
+}
 
 /**
  * The brand's prices on the external sheet and the client view, or a SAMPLE

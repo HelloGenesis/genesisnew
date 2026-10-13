@@ -8,7 +8,7 @@ import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 import { date, money } from "./catalog";
 import { appUrl, queueEmail, queueStaffEmail } from "./notify";
 import { makePlanSheets, shareExternalSheet } from "./plan-sheets";
-import { type PlanColumns, sharesSheet } from "./plan-tables";
+import { brandSheetLink, type PlanColumns, sharesSheet } from "./plan-tables";
 import { openProject, winLead } from "./projects";
 import { quoteRef, quoteTotals } from "./quote-templates";
 import { queueSheet } from "./sheets";
@@ -126,11 +126,15 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   if (view !== "pricing" && view !== "proposal" && sharesSheet(q.planColumns as PlanColumns) && (await prisma.quoteCreator.count({ where: { quoteId: q.id } })) > 0) {
     try {
       const actor = await prisma.user.findUnique({ where: { id: actorId }, select: { email: true } });
-      const fresh = await prisma.quote.findUniqueOrThrow({ where: { id: q.id }, select: { extSheetId: true } });
-      if (!fresh.extSheetId) await makePlanSheets(q.id, actor?.email ?? null, actorId);
-      await shareExternalSheet(q.id, actorId);
-      const ext = (await prisma.quote.findUniqueOrThrow({ where: { id: q.id }, select: { extSheetId: true } })).extSheetId;
-      if (ext) sheetLink = `https://docs.google.com/spreadsheets/d/${ext}/edit?usp=sharing`;
+      const own = (q.planColumns as PlanColumns | null)?.sheetUrl?.trim();
+      if (own) sheetLink = brandSheetLink(q.planColumns as PlanColumns, null);
+      else {
+        const fresh = await prisma.quote.findUniqueOrThrow({ where: { id: q.id }, select: { extSheetId: true } });
+        if (!fresh.extSheetId) await makePlanSheets(q.id, actor?.email ?? null, actorId);
+        await shareExternalSheet(q.id, actorId);
+        const ext = (await prisma.quote.findUniqueOrThrow({ where: { id: q.id }, select: { extSheetId: true } })).extSheetId;
+        sheetLink = brandSheetLink(null, ext);
+      }
     } catch (error) {
       console.error("[crm] plan sheet for the brand failed", error);
     }

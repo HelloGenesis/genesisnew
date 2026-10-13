@@ -20,7 +20,7 @@ export type BuilderCreator = {
   extra?: Record<string, string>;
 };
 export type ProposalSection = { title: string; html: string };
-export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean };
+export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string };
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -515,7 +515,19 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                 </button>
               );
             })}
-            {(q.planColumns?.share === "sheet" || q.planColumns?.share === "both") && <span className="text-[0.75rem] text-faint">The external sheet opens for anyone with the link (view only); it&apos;s made and linked when you send, or now with Save &amp; make Google Sheets.</span>}
+            {(q.planColumns?.share === "sheet" || q.planColumns?.share === "both") && (
+              <span className="flex w-full flex-wrap items-center gap-2">
+                {/* THE SHEET LINK ON THE QUOTE AND ITS PDF (Genesis, 13 Oct 2026): any Google Sheet you paste, else the CRM's external sheet. */}
+                <input
+                  value={q.planColumns?.sheetUrl ?? ""}
+                  onChange={(e) => setQ((x) => ({ ...x, planColumns: { ...x.planColumns, sheetUrl: e.target.value } }))}
+                  placeholder="Google Sheet link for the brand (optional): paste one, or leave blank to use the external sheet"
+                  className="crm-input !min-h-8 min-w-[18rem] flex-1 text-[0.8125rem]"
+                  aria-label="Google Sheet link for the brand"
+                />
+                <span className="text-[0.75rem] text-faint">{q.planColumns?.sheetUrl?.trim() ? "This link goes on the quote, its PDF and the email. Set it to “anyone with the link can view” in Google." : sheets?.ext ? "The external sheet's link goes on the quote, its PDF and the email (view only for anyone with the link)." : "Leave blank and the external sheet is made and linked when you send, or now with Save & make Google Sheets."}</span>
+              </span>
+            )}
           </div>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search the influencer database: name, @handle, niche, city" className="crm-input" />
           <div className="flex flex-wrap items-center gap-2">
