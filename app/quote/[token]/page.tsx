@@ -115,6 +115,9 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
         .quote-doc .plan-scroll { overflow: visible !important; }
         .quote-doc .plan-table { min-width: 0 !important; font-size: 11px; }
         .quote-doc tr, .quote-doc img { break-inside: avoid; }
+        /* Long proposals and plans flow from page to page (kept whole, they left page one blank); headings stay with what follows. */
+        .quote-doc h2, .quote-doc dt { break-after: avoid; }
+        .quote-doc thead { display: table-header-group; }
       }`}</style>
       <div className="no-print mx-auto mb-4 flex max-w-[860px] flex-wrap items-center justify-between gap-2 px-4">
         <p className="text-[0.875rem] text-[#475569]">
@@ -167,11 +170,11 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
         </section>
 
         {showProposal && (
-          <section className="break-inside-avoid border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
+          <section className="border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
             <h2 className="mb-4 text-[1.0625rem] font-semibold">Proposal</h2>
             <dl className="space-y-4">
               {proposal.map(([label, value], i) => (
-                <div key={`${label}-${i}`} className="break-inside-avoid rounded-xl bg-[#f5f9ff] px-5 py-4">
+                <div key={`${label}-${i}`} className="rounded-xl bg-[#f5f9ff] px-5 py-4">
                   {label && <dt className="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#64748b]">{label}</dt>}
                   <dd
                     className="mt-2 space-y-2 text-[0.9375rem] leading-relaxed [&_a]:text-[#1d4ed8] [&_a]:underline [&_h3]:text-[1rem] [&_h3]:font-semibold [&_h4]:font-semibold [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:max-w-[640px] [&_iframe]:rounded-lg [&_img]:max-h-[420px] [&_img]:rounded-lg [&_li]:my-0.5 [&_mark]:rounded [&_mark]:bg-[#fff2a8] [&_mark]:px-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 print:[&_iframe]:hidden"
@@ -185,7 +188,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
 
         {/* The influencer plan, then the costing below everything (Genesis, 13 Oct 2026). */}
         {showCreators && q.creators.length > 0 && (
-          <section className="break-inside-avoid border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
+          <section className="border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
             <h2 className="mb-3 font-semibold">{plan ? "Influencer plan" : "Creators"}</h2>
             {/* THE PLAN AS A GOOGLE SHEET (Genesis, 13 Oct 2026), when that's how this brand gets it: the external sheet and its Excel. */}
             {sheetMode && (
