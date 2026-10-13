@@ -89,7 +89,23 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
 
   return (
     <div className="min-h-dvh bg-[#eef2f7] py-6 text-[#0f172a] print:bg-white print:py-0 [color-scheme:light]">
-      <style>{`@media print { @page { size: A4; margin: 12mm; } .no-print { display: none !important; } }`}</style>
+      {/*
+        THE PDF LOOKS LIKE THE PAGE (Genesis, 13 Oct 2026: "the downloaded PDF
+        doesn't look like the one on the mail"). Printed, the page was squeezed
+        to A4's narrower width: the quote number fell under the address and
+        the creator table ran off the edge. Now the page keeps its on-screen
+        width and is scaled to fit the paper, colours and all.
+      */}
+      <style>{`@media print {
+        @page { size: A4; margin: 10mm; }
+        html, body { background: #fff !important; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .no-print { display: none !important; }
+        .quote-doc { width: 860px !important; max-width: none !important; margin: 0 !important; zoom: 0.83; border-radius: 0 !important; box-shadow: none !important; overflow: visible !important; }
+        .quote-doc .plan-scroll { overflow: visible !important; }
+        .quote-doc .plan-table { min-width: 0 !important; font-size: 11px; }
+        .quote-doc tr, .quote-doc img { break-inside: avoid; }
+      }`}</style>
       <div className="no-print mx-auto mb-4 flex max-w-[860px] flex-wrap items-center justify-between gap-2 px-4">
         <p className="text-[0.875rem] text-[#475569]">
           {q.status === "PAID" || paid ? "Payment received. Thank you!" : q.status === "ACCEPTED" ? "Accepted. Thank you!" : expired ? "This quotation has expired. Reply to the email for a fresh one." : `Valid until ${day(q.expiresAt)}`}
@@ -97,7 +113,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
         <PrintButton />
       </div>
 
-      <article className="font-sans [&_h1]:font-sans [&_h2]:font-sans mx-auto max-w-[860px] overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_-20px_rgb(15_23_42/0.35)] print:max-w-none print:rounded-none print:shadow-none">
+      <article className="quote-doc font-sans [&_h1]:font-sans [&_h2]:font-sans mx-auto max-w-[860px] overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_-20px_rgb(15_23_42/0.35)]">
         <header className="flex flex-wrap items-start justify-between gap-6 px-8 pb-6 pt-10 sm:px-12">
           <div className="flex flex-wrap items-start gap-6">
             {/* Genesis Events and Media Group above, Genesis Media under it, together in one box (Genesis, 12–13 Oct 2026). */}
@@ -161,9 +177,9 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
         {showCreators && q.creators.length > 0 && (
           <section className="break-inside-avoid border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
             <h2 className="mb-3 font-semibold">{plan ? "Influencer plan" : "Creators"}</h2>
-            <div className="overflow-x-auto">
+            <div className="plan-scroll overflow-x-auto">
               {/* The plan's columns, as on Genesis's influencer plans: prices per deliverable only when pricing is part of what's sent. */}
-              <table className="w-full min-w-[760px] text-left text-[0.8125rem]">
+              <table className="plan-table w-full min-w-[760px] text-left text-[0.8125rem]">
                 <thead className="bg-[#fff2cc] text-[#1e293b]">
                   <tr>
                     {[
@@ -236,7 +252,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
               <tr className="align-top">
                 <td className="px-8 py-6 sm:px-12">
                   <p className="font-medium">{plan ? "Creators" : "Creator fees"}</p>
-                  <p className="text-[#64748b]">{q.creators.length} creators, as listed below</p>
+                  <p className="text-[#64748b]">{q.creators.length} creators, as listed above</p>
                 </td>
                 <td className="px-3 py-6">{q.creators.length}</td>
                 <td className="px-3 py-6" />
