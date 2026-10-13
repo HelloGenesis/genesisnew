@@ -4,7 +4,7 @@ import { ArrowDown, ArrowUp, ChevronDown, Columns3, ExternalLink, FileSpreadshee
 import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { importCreatorsForPlan, matchUploadColumns } from "@/app/(crm)/admin/actions/imports";
-import { autosaveQuote, saveQuote } from "@/app/(crm)/admin/actions/quotes";
+import { autosaveQuote, quoteVersion, saveQuote } from "@/app/(crm)/admin/actions/quotes";
 import { readSheetFile } from "@/lib/sheet-file";
 import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 
@@ -155,7 +155,7 @@ function ClientPicker({ value, clients, onType, onPick }: { value: string; clien
  * plan, the price lines, then notes, terms and totals. Saves as a draft with
  * gaps; sending is a separate step.
  */
-export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], sheets }: { initial: BuilderQuote; catalog: CatalogItem[]; terms: Terms[]; pool: PoolCreator[]; clients?: Client[]; sheets?: { ext: string | null; int: string | null } }) {
+export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], sheets, version }: { initial: BuilderQuote; catalog: CatalogItem[]; terms: Terms[]; pool: PoolCreator[]; clients?: Client[]; sheets?: { ext: string | null; int: string | null }; version?: string }) {
   const [q, setQ] = useState<BuilderQuote>({ ...initial, proposalSections: initial.proposalSections ?? [], planColumns: initial.planColumns ?? {} });
   const [pick, setPick] = useState("");
   const [search, setSearch] = useState("");
@@ -235,16 +235,59 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   const saving = useRef(false);
   const [retry, setRetry] = useState(0);
   const [autoNote, setAutoNote] = useState<string | null>(null);
+  /*
+   * TWO PEOPLE, ONE QUOTE (Genesis, 14 Oct 2026). The version this page loaded
+   * goes with every save; if someone else saved since, the save stops and says
+   * so (Get the latest / Keep mine) instead of writing an older copy over
+   * theirs. A page left open notices their save when you come back to it.
+   */
+  const [ver, setVer] = useState<string | undefined>(version);
+  const [force, setForce] = useState(false);
+  const versionRef = useRef<string | undefined>(version);
+  useEffect(() => {
+    versionRef.current = ver;
+  }, [ver]);
+  const [conflict, setConflict] = useState<string | null>(null);
+  const qRef = useRef(q);
+  useEffect(() => {
+    qRef.current = q;
+  }, [q]);
+  useEffect(() => {
+    const check = async () => {
+      if (!idRef.current || document.visibilityState !== "visible") return;
+      const v = await quoteVersion(idRef.current).catch(() => null);
+      if (!v?.by || !versionRef.current || new Date(v.version).getTime() <= new Date(versionRef.current).getTime() + 1000) return;
+      const unsaved = snapshot(qRef.current) !== lastSaved.current;
+      const typing = document.activeElement?.matches("input, textarea, select, [contenteditable=true]");
+      if (!unsaved && !typing) return window.location.reload();
+      setConflict(`${v.by} saved changes to this quote at ${new Date(v.version).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}, after you opened it.`);
+    };
+    const onVisible = () => void check();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    const timer = window.setInterval(onVisible, 20_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      window.clearInterval(timer);
+    };
+  }, []);
   useEffect(() => {
     const snap = snapshot(q);
-    if (snap === lastSaved.current) return;
+    if (snap === lastSaved.current || conflict) return;
     const timer = setTimeout(async () => {
       if (saving.current) return void setTimeout(() => setRetry((n) => n + 1), 800);
       saving.current = true;
       setAutoNote("Saving…");
-      const result = await autosaveQuote(JSON.stringify({ ...q, id: idRef.current }));
+      const result = await autosaveQuote(JSON.stringify({ ...q, id: idRef.current, version: ver, force }));
       saving.current = false;
+      if (result.conflict) {
+        setAutoNote("Not saved: someone else changed this quote");
+        return setConflict(result.message ?? "Someone else saved changes to this quote after you opened it.");
+      }
       if (!result.ok) return setAutoNote(result.message ?? "Not saved yet");
+      setForce(false);
+      if (result.version) setVer(result.version);
       lastSaved.current = snap;
       setAutoNote(`Draft saved · ${new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`);
       if (result.id && !idRef.current) {
@@ -254,7 +297,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
       }
     }, 1500);
     return () => clearTimeout(timer);
-  }, [q, retry]);
+  }, [q, retry, conflict, ver, force]);
   /* Which parts this document holds (shown in the builder; the send step picks which go). */
   const [parts, setParts] = useState(initial.parts?.length ? { proposal: initial.parts.includes("proposal"), pricing: initial.parts.includes("pricing"), plan: initial.parts.includes("plan") } : {
     proposal: Boolean(initial.proposalProblems || initial.proposalObjectives || initial.proposalInfluencers || initial.proposalTg || initial.proposalPlatforms?.length || initial.proposalSections?.length) || initial.kind === "QUOTE",
@@ -393,7 +436,26 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
 
   return (
     <form action={action} noValidate className="space-y-6">
-      <input type="hidden" name="payload" value={JSON.stringify(q)} />
+      <input type="hidden" name="payload" value={JSON.stringify({ ...q, version: ver, force })} />
+      {(conflict || state?.message?.includes("after you opened it")) && (
+        <div role="alert" className="sticky top-[4.75rem] z-40 flex flex-wrap items-center gap-3 rounded-2xl border border-[#f59e0b] bg-[var(--surface-float)] px-4 py-3 shadow-[var(--shadow-float)]">
+          <p className="min-w-0 flex-1 text-[0.875rem] text-bone">{conflict ?? state?.message} Your changes since then aren&apos;t saved yet.</p>
+          <button type="button" onClick={() => window.location.reload()} className="crm-btn crm-btn-primary crm-btn-sm">Get the latest</button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!window.confirm("Save your version over theirs? Their changes since you opened the quote will be replaced.")) return;
+              setForce(true);
+              lastSaved.current = "";
+              setConflict(null);
+              setRetry((n) => n + 1);
+            }}
+            className="crm-btn crm-btn-secondary crm-btn-sm"
+          >
+            Keep mine
+          </button>
+        </div>
+      )}
 
       <section className="crm-card crm-pad space-y-4">
         {/*

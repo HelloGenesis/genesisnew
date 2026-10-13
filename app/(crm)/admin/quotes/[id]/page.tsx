@@ -163,7 +163,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         </Card>
       )}
 
-      {q.status === "PAID" ? <Notice>This quote is paid, so it can&apos;t change. Duplicate it to quote again.</Notice> : <QuoteBuilder initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} clients={data.clients} sheets={{ ext: q.extSheetId, int: q.intSheetId }} />}
+      {q.status === "PAID" ? <Notice>This quote is paid, so it can&apos;t change. Duplicate it to quote again.</Notice> : <QuoteBuilder version={q.updatedAt.toISOString()} initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} clients={data.clients} sheets={{ ext: q.extSheetId, int: q.intSheetId }} />}
     </>
   );
 }

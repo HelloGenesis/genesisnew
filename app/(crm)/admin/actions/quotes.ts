@@ -104,7 +104,7 @@ const rich = (html: string | null | undefined) => (html ? sanitizeHtml(html) || 
 const p = (r: number | null | undefined) => (typeof r === "number" ? paise(r) : null);
 
 type Viewer = Awaited<ReturnType<typeof requireStaff>>;
-type Persisted = { ok: true; id: string; created: boolean; creators: number } | { ok: false; message: string };
+type Persisted = { ok: true; id: string; created: boolean; creators: number; version: string } | { ok: false; message: string; conflict?: boolean };
 
 /** Writes the builder's state: a new draft, or the changes to an existing quote. */
 async function persist(viewer: Viewer, raw: string, autosave = false): Promise<Persisted> {
@@ -115,6 +115,10 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
   } catch {
     return failed("Couldn't read the quote.");
   }
+  /* The version the editor loaded (the quote's last save), and whether to overwrite a newer one on purpose. */
+  const meta = (json ?? {}) as { version?: unknown; force?: unknown };
+  const version = typeof meta.version === "string" ? new Date(meta.version) : null;
+  const force = meta.force === true;
   const parsed = payload.safeParse(json);
   if (!parsed.success) return failed(`Check the quote: ${parsed.error.issues[0]?.path.join(".")} ${parsed.error.issues[0]?.message}`);
   const q = parsed.data;
@@ -185,17 +189,38 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     if (before.status === "PAID") return failed("This quote is paid; duplicate it to change it.");
     /* Automatic saving is for drafts; a sent quote changes when you press Save. */
     if (autosave && before.status !== "DRAFT") return failed("Sent: changes save when you press Save changes.");
+    /*
+     * TWO PEOPLE, ONE QUOTE (Genesis, 14 Oct 2026: "whatever the other user
+     * changed and saved isn't reflecting with me"). A page opened before
+     * someone else saved must not write its older copy over theirs: the save
+     * stops and says who changed it, unless "Keep mine" was chosen.
+     */
+    if (version && !Number.isNaN(version.getTime()) && before.updatedAt.getTime() > version.getTime() + 1000 && !force && before.updatedById !== viewer.id) {
+      const who = before.updatedById ? await prisma.user.findUnique({ where: { id: before.updatedById }, select: { name: true, email: true } }) : null;
+      const at = before.updatedAt.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
+      return { ok: false, conflict: true, message: `${who?.name ?? who?.email ?? "Someone else"} saved changes to this quote at ${at}, after you opened it.` };
+    }
     await prisma.$transaction([
       prisma.quoteLine.deleteMany({ where: { quoteId: id } }),
       prisma.quoteCreator.deleteMany({ where: { quoteId: id } }),
-      prisma.quote.update({ where: { id }, data: { ...data, lines: { create: lines }, creators: { create: creators } } }),
+      prisma.quote.update({ where: { id }, data: { ...data, updatedById: viewer.id, lines: { create: lines }, creators: { create: creators } } }),
     ]);
   } else {
-    const created = await prisma.quote.create({ data: { ...data, token: newToken(), createdById: viewer.id, lines: { create: lines }, creators: { create: creators } } });
+    const created = await prisma.quote.create({ data: { ...data, token: newToken(), createdById: viewer.id, updatedById: viewer.id, lines: { create: lines }, creators: { create: creators } } });
     id = created.id;
   }
   await refreshTotals(id);
-  return { ok: true, id, created: !q.id, creators: q.creators.length };
+  const saved = await prisma.quote.findUniqueOrThrow({ where: { id }, select: { updatedAt: true } });
+  return { ok: true, id, created: !q.id, creators: q.creators.length, version: saved.updatedAt.toISOString() };
+}
+
+/** The quote's last save, for an open editor to notice someone else's changes. */
+export async function quoteVersion(id: string): Promise<{ version: string; by: string | null } | null> {
+  const viewer = await requireStaff("sales");
+  const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, select: { updatedAt: true, updatedById: true } });
+  if (!q) return null;
+  const who = q.updatedById && q.updatedById !== viewer.id ? await getPrisma().user.findUnique({ where: { id: q.updatedById }, select: { name: true, email: true } }) : null;
+  return { version: q.updatedAt.toISOString(), by: who ? (who.name ?? who.email) : null };
 }
 
 /**
@@ -204,12 +229,11 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
  * The builder calls this a moment after each change; the first call makes
  * the draft and hands back its id.
  */
-export async function autosaveQuote(raw: string): Promise<{ ok: boolean; id?: string; message?: string }> {
+export async function autosaveQuote(raw: string): Promise<{ ok: boolean; id?: string; version?: string; message?: string; conflict?: boolean }> {
   const viewer = await requireStaff("sales");
   const result = await persist(viewer, raw, true);
-  if (!result.ok) return { ok: false, message: result.message };
-  revalidatePath("/admin/quotes");
-  return { ok: true, id: result.id };
+  if (!result.ok) return { ok: false, message: result.message, conflict: result.conflict };
+  return { ok: true, id: result.id, version: result.version };
 }
 
 /** Creates or updates a quote from the builder (the form posts its state as JSON). */
