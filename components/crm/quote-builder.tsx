@@ -469,8 +469,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           <div key={i} className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
             <div className="flex items-center gap-2">
               <input value={s.title} onChange={(e) => setSection(i, { title: e.target.value })} className="crm-input !min-h-9 flex-1" placeholder="Section title: Big idea, Content pillars, Timeline, Deliverables…" />
-              <button type="button" aria-label="Move section up" onClick={() => moveSection(i)} className="text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
-              <button type="button" aria-label="Remove section" onClick={() => window.confirm("Remove this section?") && setQ((x) => ({ ...x, proposalSections: (x.proposalSections ?? []).filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
+              <button type="button" aria-label="Move section up" onClick={() => moveSection(i)} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
+              <button type="button" aria-label="Remove section" onClick={() => window.confirm("Remove this section?") && setQ((x) => ({ ...x, proposalSections: (x.proposalSections ?? []).filter((_, j) => j !== i) }))} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
             </div>
             <RichText label={s.title || `Section ${i + 1}`} value={s.html} onChange={(v) => setSection(i, { html: v })} placeholder="Write, format, add images, links or an embedded video, reel or deck." />
           </div>
@@ -495,7 +495,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
               <summary className={`crm-btn crm-btn-secondary crm-btn-sm cursor-pointer list-none [&::-webkit-details-marker]:hidden ${q.creators.length ? "" : "pointer-events-none opacity-40"}`}>
                 <FileSpreadsheet className="size-4" aria-hidden /> {download ? "Making…" : pending ? "Saving…" : "Export"} <ChevronDown className="size-4" aria-hidden />
               </summary>
-              <div className="absolute left-0 z-30 mt-1 w-72 rounded-xl border border-[var(--glass-border)] bg-[var(--surface-float)] p-1 shadow-[var(--shadow-float)]">
+              <div className="absolute left-0 z-30 mt-1 w-72 max-w-[calc(100vw-3rem)] rounded-xl border border-[var(--glass-border)] bg-[var(--surface-float)] p-1 shadow-[var(--shadow-float)]">
                 <button type="button" disabled={download !== null} onClick={() => { closeExport(); void excel("ext"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><FileSpreadsheet className="size-4 text-ash" aria-hidden /> Excel · external (client)</button>
                 <button type="button" disabled={download !== null} onClick={() => { closeExport(); void excel("int"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><FileSpreadsheet className="size-4 text-ash" aria-hidden /> Excel · internal (team)</button>
                 <button name="then" value="sheets" disabled={pending} onClick={closeExport} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><Sheet className="size-4 text-ash" aria-hidden /> {sheets?.ext ? "Save & update Google Sheets" : "Save & make Google Sheets (internal + external)"}</button>
@@ -536,7 +536,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                   value={q.planColumns?.sheetUrl ?? ""}
                   onChange={(e) => setQ((x) => ({ ...x, planColumns: { ...x.planColumns, sheetUrl: e.target.value } }))}
                   placeholder="Google Sheet link for the brand (optional): paste one, or leave blank to use the external sheet"
-                  className="crm-input !min-h-8 min-w-[18rem] flex-1 text-[0.8125rem]"
+                  className="crm-input !min-h-8 min-w-0 flex-1 basis-72 text-[0.8125rem]"
                   aria-label="Google Sheet link for the brand"
                 />
                 <span className="text-[0.75rem] text-faint">{q.planColumns?.sheetUrl?.trim() ? "This link goes on the quote, its PDF and the email. Set it to “anyone with the link can view” in Google." : sheets?.ext ? "The external sheet's link goes on the quote, its PDF and the email (view only for anyone with the link)." : "Leave blank and the external sheet is made and linked when you send, or now with Save & make Google Sheets."}</span>
@@ -552,7 +552,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                 setLinkError(null);
               }}
               placeholder="…or paste a profile link: instagram.com/handle, youtube.com/@channel"
-              className="crm-input min-w-[16rem] flex-1"
+              className="crm-input min-w-0 flex-1 basis-56"
             />
             <button
               type="button"
@@ -596,12 +596,12 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           {importNote && <p className="text-[0.8125rem] text-ash" role="status">{importNote}</p>}
           <p className="text-[0.75rem] text-faint">Several links at once work too. Creators added by link, by hand or from a sheet are saved to the influencer database.</p>
           {search && (
-            <ul className="divide-y divide-[var(--glass-border)]">
+            <ul className="max-h-72 divide-y divide-[var(--glass-border)] overflow-y-auto rounded-xl border border-[var(--glass-border)] px-3" data-lenis-prevent>
               {matches.length === 0 && <li className="py-2 text-ash">No match.</li>}
               {matches.map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-2 py-2">
                   <span className="min-w-0 truncate"><span className="text-bone">{c.name}</span> <span className="text-[0.8125rem] text-ash">@{c.handle} · {c.platform.toLowerCase()} · {compact(c.followers)} · {c.niches.join(", ")} {c.city ? `· ${c.city}` : ""}</span></span>
-                  <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => setQ((x) => ({ ...x, creators: [...x.creators, { creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: "1 IG Reel + Story & link in bio", fee: null, reelCost: c.reel, storyCost: c.story, dlCost: c.dl, reelPrice: c.reel === null ? null : Math.round(c.reel * (1 + (x.markupPercent ?? 30) / 100)), storyPrice: c.story === null ? null : Math.round(c.story * (1 + (x.markupPercent ?? 30) / 100)), dlPrice: c.dl === null ? null : Math.round(c.dl * (1 + (x.markupPercent ?? 30) / 100)), contact: c.contact }] }))}>Add</button>
+                  <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm shrink-0" onClick={() => setQ((x) => ({ ...x, creators: [...x.creators, { creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: "1 IG Reel + Story & link in bio", fee: null, reelCost: c.reel, storyCost: c.story, dlCost: c.dl, reelPrice: c.reel === null ? null : Math.round(c.reel * (1 + (x.markupPercent ?? 30) / 100)), storyPrice: c.story === null ? null : Math.round(c.story * (1 + (x.markupPercent ?? 30) / 100)), dlPrice: c.dl === null ? null : Math.round(c.dl * (1 + (x.markupPercent ?? 30) / 100)), contact: c.contact }] }))}>Add</button>
                 </li>
               ))}
             </ul>
@@ -736,7 +736,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                           {custom.map((name) => (
                             <td key={name}><input value={c.extra?.[name] ?? ""} onChange={(e) => setCreator(i, { extra: { ...(c.extra ?? {}), [name]: e.target.value } })} className="crm-input !min-h-8 !w-40 !px-2" /></td>
                           ))}
-                          <td><button type="button" aria-label="Remove creator" onClick={() => setQ((x) => ({ ...x, creators: x.creators.filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><X className="size-4" /></button></td>
+                          <td><button type="button" aria-label="Remove creator" onClick={() => setQ((x) => ({ ...x, creators: x.creators.filter((_, j) => j !== i) }))} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-[#dc2626]"><X className="size-4" /></button></td>
                         </tr>
                       );
                     })}
@@ -785,10 +785,10 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
               <label><span className="crm-label">Qty</span><input type="number" step="any" min={1} value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} className="crm-input" /></label>
               <label><span className="crm-label">Price (₹)</span><input type="number" step="any" min={0} value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
               <p className="pb-2.5 text-right tabular-nums text-bone"><span className="crm-label">Line total</span>{inr(l.qty * l.unit)}</p>
-              <span className="flex gap-1 pb-2">
-                <button type="button" aria-label="Move up" onClick={() => move(i, -1)} className="text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
-                <button type="button" aria-label="Move down" onClick={() => move(i, 1)} className="text-ash hover:text-bone"><ArrowDown className="size-4" /></button>
-                <button type="button" aria-label="Remove line" onClick={() => setQ((x) => ({ ...x, lines: x.lines.filter((_, j) => j !== i) }))} className="text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
+              <span className="flex gap-0.5 pb-1">
+                <button type="button" aria-label="Move up" onClick={() => move(i, -1)} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
+                <button type="button" aria-label="Move down" onClick={() => move(i, 1)} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-bone"><ArrowDown className="size-4" /></button>
+                <button type="button" aria-label="Remove line" onClick={() => setQ((x) => ({ ...x, lines: x.lines.filter((_, j) => j !== i) }))} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
               </span>
             </div>
             <label className="block"><span className="crm-label">Subtitle</span><input value={l.subtitle ?? ""} onChange={(e) => setLine(i, { subtitle: e.target.value })} className="crm-input" placeholder="Professional UGC Production Shoot" /></label>
@@ -826,7 +826,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             <dt className="text-ash">Subtotal</dt><dd className="tabular-nums">{inr(totals.subtotal)}</dd>
             <dt className="text-ash"><label className="flex items-center gap-2">Discount (₹)</label></dt>
             <dd><input type="number" step="any" min={0} value={q.discount} onChange={(e) => set("discount", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-32 text-right" /></dd>
-            <dt className="text-ash"><label className="flex items-center gap-2"><input type="checkbox" checked={q.addGst} onChange={(e) => set("addGst", e.target.checked)} /> Add GST at <input type="number" step="any" min={0} max={28} value={q.gstPercent} onChange={(e) => set("gstPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-16" />%</label></dt>
+            <dt className="text-ash"><label className="flex flex-wrap items-center gap-2 whitespace-nowrap"><input type="checkbox" checked={q.addGst} onChange={(e) => set("addGst", e.target.checked)} /> Add GST at <span className="inline-flex items-center gap-1"><input type="number" step="any" min={0} max={28} value={q.gstPercent} onChange={(e) => set("gstPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 !w-16 text-right" aria-label="GST percent" />%</span></label></dt>
             <dd className="tabular-nums">{inr(totals.tax)}</dd>
             {q.addGst && (
               <>
