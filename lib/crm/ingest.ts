@@ -37,7 +37,8 @@ const isOwn = (email?: string | null) => Boolean(email && /@([a-z0-9-]+\.)*genes
 /* Addresses the CRM itself sends from, whatever their domain. */
 const crmSenders = () => [process.env.CRM_EMAIL_FROM, process.env.ORDER_EMAIL_FROM].map((f) => f?.match(/<([^>]+)>/)?.[1] ?? f).filter(Boolean).map((e) => e!.toLowerCase().trim());
 const PER_RUN = 20;
-const FIRST_LOOK_DAYS = 21;
+/* How far back a first connection looks: recent mail only (Genesis, 13 Oct 2026: "it's showing me old mails"). */
+const FIRST_LOOK_DAYS = 3;
 const SKIP_LABELS = ["SPAM", "TRASH", "DRAFT", "CATEGORY_PROMOTIONS", "CATEGORY_SOCIAL", "CATEGORY_UPDATES", "CATEGORY_FORUMS"];
 const WORTH_IT = /invoice|bill|receipt|quotation|quote|proposal|brief|estimate|purchase order|\bpo\b|gst/i;
 
@@ -195,6 +196,8 @@ async function syncDrive(userId: string, since: Date | null): Promise<{ cursor: 
   for (const file of list.files ?? []) {
     cursor = new Date(file.modifiedTime);
     if (await prisma.inboxItem.findUnique({ where: { dedupeKey: `DRIVE:${userId}:${file.id}` }, select: { id: true } })) continue;
+    /* The CRM's own live sheets and plan sheets are not news. */
+    if (/^Genesis CRM\b/i.test(file.name)) continue;
     const exportAs = DOC_TYPES[file.mimeType];
     /* A PDF is judged by its name alone (no text to read), and only when the name says it matters. */
     if (!exportAs && !WORTH_IT.test(file.name)) continue;
