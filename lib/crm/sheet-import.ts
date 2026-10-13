@@ -217,6 +217,8 @@ export async function importRows(kind: string, userId: string, headers: string[]
   });
   let added = 0;
   let updated = 0;
+  /* The influencers this import touched, new or already there (a plan adds them straight away). */
+  const ids: string[] = [];
   /* Only fills what's empty: a sheet never overwrites what the team has edited in the CRM. */
   const fill = <T extends Record<string, unknown>>(current: T, next: Partial<T>) =>
     Object.fromEntries(Object.entries(next).filter(([k, v]) => v !== null && v !== undefined && v !== "" && (current[k] === null || current[k] === undefined || current[k] === "" || (Array.isArray(current[k]) && (current[k] as unknown[]).length === 0))));
@@ -309,6 +311,7 @@ export async function importRows(kind: string, userId: string, headers: string[]
         };
         const existing = await prisma.creator.findUnique({ where: { platform_handle: { platform, handle } } });
         if (existing) {
+          ids.push(existing.id);
           const patch = fill(existing as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);
           /* Followers and rates move: the sheet's newer numbers win. */
           if (followers > 0 && followers !== existing.followers) Object.assign(patch, { followers, tier: tierFor(followers) });
@@ -317,7 +320,7 @@ export async function importRows(kind: string, userId: string, headers: string[]
             updated += 1;
           }
         } else {
-          await prisma.creator.create({ data: { ...data, handle, platform } });
+          ids.push((await prisma.creator.create({ data: { ...data, handle, platform } })).id);
           added += 1;
         }
       } else if (job.kind === "expenses") {
@@ -345,7 +348,7 @@ export async function importRows(kind: string, userId: string, headers: string[]
       console.error("[crm] sheet row skipped", (error as Error).message);
     }
   }
-  return { added, updated };
+  return { added, updated, ids };
 }
 
 /** Daily: sheets marked "keep in sync" are read again (only new rows and empty fields change). */

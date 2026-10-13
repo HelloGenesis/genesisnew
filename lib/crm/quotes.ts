@@ -7,6 +7,8 @@ import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 
 import { date, money } from "./catalog";
 import { appUrl, queueEmail, queueStaffEmail } from "./notify";
+import { makePlanSheets, shareExternalSheet } from "./plan-sheets";
+import { type PlanColumns, sharesSheet } from "./plan-tables";
 import { openProject, winLead } from "./projects";
 import { quoteRef, quoteTotals } from "./quote-templates";
 import { queueSheet } from "./sheets";
@@ -27,7 +29,11 @@ export const newToken = () => randomBytes(18).toString("base64url");
 
 export async function totalsOf(quoteId: string) {
   const q = await getPrisma().quote.findUniqueOrThrow({ where: { id: quoteId }, include: { lines: true, creators: true } });
-  return { quote: q, ...quoteTotals({ lines: q.lines, creatorFees: q.creators.map((c) => c.feePaise), discountPaise: q.discountPaise, addGst: q.addGst, gstPercent: q.gstPercent }) };
+  /* A sample plan (no costing for the brand) adds no creator fees to the total. */
+  /* Creator fees count only when "add them to the total" is ticked, and never on a sample (Genesis, 13 Oct 2026). */
+  const cols = (q.planColumns ?? {}) as { extPrices?: boolean; feesInTotal?: boolean };
+  const withFees = cols.feesInTotal === true && cols.extPrices !== false;
+  return { quote: q, ...quoteTotals({ lines: q.lines, creatorFees: !withFees ? [] : q.creators.map((c) => c.feePaise), discountPaise: q.discountPaise, addGst: q.addGst, gstPercent: q.gstPercent }) };
 }
 
 /** Recomputes and stores the totals (after any edit). */
@@ -115,9 +121,23 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
 
   const plan = q.kind === "INFLUENCER_PLAN";
   const pricing = view === "both" || view === "pricing";
+  /* The creator list as the external Google Sheet, when that's how this brand gets it: made if needed, opened to anyone with the link. */
+  let sheetLink: string | null = null;
+  if (view !== "pricing" && view !== "proposal" && sharesSheet(q.planColumns as PlanColumns) && (await prisma.quoteCreator.count({ where: { quoteId: q.id } })) > 0) {
+    try {
+      const actor = await prisma.user.findUnique({ where: { id: actorId }, select: { email: true } });
+      const fresh = await prisma.quote.findUniqueOrThrow({ where: { id: q.id }, select: { extSheetId: true } });
+      if (!fresh.extSheetId) await makePlanSheets(q.id, actor?.email ?? null, actorId);
+      await shareExternalSheet(q.id, actorId);
+      const ext = (await prisma.quote.findUniqueOrThrow({ where: { id: q.id }, select: { extSheetId: true } })).extSheetId;
+      if (ext) sheetLink = `https://docs.google.com/spreadsheets/d/${ext}/edit?usp=sharing`;
+    } catch (error) {
+      console.error("[crm] plan sheet for the brand failed", error);
+    }
+  }
   const link = appUrl(`/quote/${q.token}${view === "both" ? "" : `?view=${view}`}`);
   const lines = pricing ? q.lines.map((l) => `• ${l.title}${l.qty > 1 ? ` × ${l.qty}` : ""}: ${money(l.qty * l.unitPaise)}`) : [];
-  if (pricing && plan && q.creators.length) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
+  if (pricing && t.creators > 0) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
   const half = Math.round(t.tax / 2);
   await queueEmail({
     kind: "quote_sent",
@@ -134,6 +154,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
       pricing && q.addGst ? (q.igst ? `IGST ${q.gstPercent}%: ${money(t.tax)}` : `CGST ${q.gstPercent / 2}%: ${money(half)}\nSGST ${q.gstPercent / 2}%: ${money(t.tax - half)}`) : "",
       pricing ? `Total: ${money(t.total)}` : "",
       "",
+      sheetLink ? `Influencer plan (Google Sheet): ${sheetLink}\n` : "",
       `View the full ${view === "proposal" || view === "proposal-plan" ? "proposal" : view === "plan" || plan ? "plan" : "quotation"}${view === "pricing" ? "" : " (scope, notes and terms)"}${plan ? " and approve it" : ""}:`,
       link,
       paymentUrl ? `\nPay securely (card, UPI, net banking): ${paymentUrl}` : "",

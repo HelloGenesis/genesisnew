@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 import { COMPANY, quoteRef } from "@/lib/crm/quote-templates";
+import { type PlanColumns, sharesSheet, sharesTable, showsBrandPrices } from "@/lib/crm/plan-tables";
 import { looksLikeHtml, sanitizeHtml, textToHtml } from "@/lib/rich-text";
 
 import { AcceptForm } from "./accept-form";
@@ -55,7 +56,9 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   /* The parts ticked in the builder (empty on older quotes: everything they have). */
   const parts = q.parts;
   const has = (part: string) => parts.length === 0 || parts.includes(part);
-  const showPricing = (view === "both" || view === "pricing") && (has("pricing") || has("plan"));
+  const sample = !showsBrandPrices(q.planColumns as PlanColumns);
+  const feesInTotal = (q.planColumns as PlanColumns | null)?.feesInTotal === true && !sample;
+  const showPricing = (view === "both" || view === "pricing") && (has("pricing") || (has("plan") && feesInTotal));
   const showLines = has("pricing");
   const showCreators = (view === "both" || view === "plan" || view === "proposal-plan") && has("plan");
   const staff = staffAccess(await getViewer().catch(() => null)) === "granted";
@@ -80,10 +83,15 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
     .map(([label, value]) => [label ?? "", value ? sanitizeHtml(looksLikeHtml(value) ? value : textToHtml(value)) : ""] as [string, string])
     .filter(([, value]) => Boolean(value));
   /* The plan's columns as chosen in the builder: removed ones left out, added ones after. */
-  const cols = (q.planColumns ?? {}) as { hidden?: string[]; custom?: string[] };
+  const cols = (q.planColumns ?? {}) as PlanColumns;
   const hiddenCols = new Set(cols.hidden ?? []);
   const customCols = (cols.custom ?? []).filter(Boolean);
-  const showCol = (k: string) => !hiddenCols.has(k);
+  /* A sample plan (no costing) shows no creator prices anywhere the brand looks. */
+  const brandPrices = showsBrandPrices(cols);
+  const showCol = (k: string) => !hiddenCols.has(k) && (brandPrices || !["reelPrice", "storyPrice", "dlPrice"].includes(k));
+  /* The creator list in the document, as a Google Sheet link, or both (the table stays until the sheet exists). */
+  const sheetLink = sharesSheet(cols) && q.extSheetId ? `https://docs.google.com/spreadsheets/d/${q.extSheetId}/edit?usp=sharing` : null;
+  const showTable = sharesTable(cols) || !sheetLink;
   const showProposal = (view === "both" || view === "proposal" || view === "proposal-plan") && has("proposal") && proposal.length > 0;
   const cgst = Math.round(q.taxPaise / 2);
 
@@ -177,6 +185,18 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
         {showCreators && q.creators.length > 0 && (
           <section className="break-inside-avoid border-t border-[#e2e8f0] px-8 py-8 sm:px-12">
             <h2 className="mb-3 font-semibold">{plan ? "Influencer plan" : "Creators"}</h2>
+            {/* THE PLAN AS A GOOGLE SHEET (Genesis, 13 Oct 2026), when that's how this brand gets it: the external sheet and its Excel. */}
+            {sheetLink && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#fde68a] bg-[#fffbeb] px-5 py-4">
+                <p className="text-[0.9375rem]"><span className="font-semibold">{q.creators.length} creators</span> in the influencer plan sheet{showCreatorFees ? ", with prices" : ""}.</p>
+                <span className="flex flex-wrap gap-2">
+                  <a href={sheetLink} target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#0f172a] px-4 py-2 text-[0.875rem] font-medium text-white">Open in Google Sheets ↗</a>
+                  <a href={`/quote/${q.token}/excel`} className="no-print rounded-full border border-[#cbd5e1] bg-white px-4 py-2 text-[0.875rem] font-medium">Download Excel</a>
+                </span>
+                <span className="hidden w-full break-all text-[0.75rem] text-[#64748b] print:block">{sheetLink}</span>
+              </div>
+            )}
+            {showTable && (
             <div className="plan-scroll overflow-x-auto">
               {/* The plan's columns, as on Genesis's influencer plans: prices per deliverable only when pricing is part of what's sent. */}
               <table className="plan-table w-full min-w-[760px] text-left text-[0.8125rem]">
@@ -215,6 +235,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
                 </tbody>
               </table>
             </div>
+            )}
           </section>
         )}
 
@@ -248,7 +269,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
                 <td className="whitespace-nowrap px-8 py-6 text-right sm:px-12">{inr(l.qty * l.unitPaise)}</td>
               </tr>
             ))}
-            {q.creators.length > 0 && (
+            {q.creators.length > 0 && feesInTotal && (
               <tr className="align-top">
                 <td className="px-8 py-6 sm:px-12">
                   <p className="font-medium">{plan ? "Creators" : "Creator fees"}</p>
