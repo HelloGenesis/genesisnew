@@ -281,7 +281,16 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
 
   const hidden = new Set(q.planColumns?.hidden ?? []);
   const custom = q.planColumns?.custom ?? [];
-  const shows = (key: string) => !hidden.has(key);
+  /*
+   * INTERNAL OR EXTERNAL (Genesis, 13 Oct 2026: "give an option: what are you
+   * editing, internal or external"). External shows the plan as the brand
+   * gets it: no creator costs, profit, reach-out, contact or remarks (and no
+   * prices on a sample). Internal shows everything.
+   */
+  const [editing, setEditing] = useState<"internal" | "external">("internal");
+  const INTERNAL_ONLY = ["reachout", "reelCost", "storyCost", "dlCost", "profit", "contact", "remarks"];
+  const shows = (key: string) =>
+    !hidden.has(key) && (editing === "internal" || (!INTERNAL_ONLY.includes(key) && (q.planColumns?.extPrices !== false || !["reelPrice", "storyPrice", "dlPrice"].includes(key))));
   const toggleColumn = (key: string) =>
     setQ((x) => {
       const now = x.planColumns?.hidden ?? [];
@@ -623,6 +632,15 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                   </div>
                 </div>
               )}
+              <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Editing the internal or the external plan">
+                <span className="text-[0.8125rem] text-ash">Editing:</span>
+                {([["internal", "Internal (team)"], ["external", "External (client)"]] as const).map(([value, label]) => (
+                  <button key={value} type="button" role="radio" aria-checked={editing === value} onClick={() => setEditing(value)} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${editing === value ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
+                    {label}
+                  </button>
+                ))}
+                <span className="text-[0.75rem] text-faint">{editing === "internal" ? "Everything: creator costs, profit, reach-out, contact and remarks." : `What the brand sees${q.planColumns?.extPrices === false ? " (a sample, no prices)" : ", client prices only"}; costs, profit and notes stay internal.`}</span>
+              </div>
               {/* THE PLAN AS GENESIS'S SHEET (Genesis, 12 Oct 2026: "fields are still missing"); scrolls sideways, the name stays put. */}
               <div className="-mx-1 overflow-x-auto pb-2">
                 <table className="crm-table !min-w-max text-[0.8125rem] [&_td]:!px-1.5 [&_th]:!px-1.5 [&_th]:whitespace-nowrap">
