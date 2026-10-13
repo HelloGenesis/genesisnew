@@ -10,7 +10,11 @@
  */
 
 export type Cell = string | number | null;
-export type PlanColumns = { hidden?: string[]; custom?: string[] };
+export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both" };
+
+/** How the brand gets the creator list (Genesis, 13 Oct 2026): in the proposal, as the external Google Sheet, or both. */
+export const sharesSheet = (c: PlanColumns | null | undefined) => c?.share === "sheet" || c?.share === "both";
+export const sharesTable = (c: PlanColumns | null | undefined) => c?.share !== "sheet";
 export type PlanCreator = {
   name: string;
   handle: string;

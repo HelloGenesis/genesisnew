@@ -18,7 +18,7 @@ export type BuilderCreator = {
   extra?: Record<string, string>;
 };
 export type ProposalSection = { title: string; html: string };
-export type PlanColumnsState = { hidden?: string[]; custom?: string[] };
+export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both" };
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -427,6 +427,23 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             {sheets?.ext && <a href={`https://docs.google.com/spreadsheets/d/${sheets.ext}/edit`} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">External sheet <ExternalLink className="inline size-3.5" aria-hidden /></a>}
             {sheets?.int && <a href={`https://docs.google.com/spreadsheets/d/${sheets.int}/edit`} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">Internal sheet <ExternalLink className="inline size-3.5" aria-hidden /></a>}
             {state?.message && <span className={`text-[0.8125rem] ${state.ok ? "text-[#16a34a]" : "text-[#dc2626]"}`} role={state.ok ? "status" : "alert"}>{state.message}</span>}
+          </div>
+          {/*
+            HOW THE BRAND GETS THE CREATORS (Genesis, 13 Oct 2026): the list in the
+            proposal itself, the external Google Sheet (a view-only link in the
+            proposal and the email, plus an Excel download), or both.
+          */}
+          <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Send the creator list to the brand as">
+            <span className="mr-1 text-[0.8125rem] text-ash">Send the creators to the brand as:</span>
+            {([["table", "List in the proposal"], ["sheet", "Google Sheet (external)"], ["both", "Both"]] as const).map(([value, label]) => {
+              const on = (q.planColumns?.share ?? "table") === value;
+              return (
+                <button key={value} type="button" role="radio" aria-checked={on} onClick={() => setQ((x) => ({ ...x, planColumns: { ...x.planColumns, share: value } }))} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${on ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
+                  {label}
+                </button>
+              );
+            })}
+            {(q.planColumns?.share === "sheet" || q.planColumns?.share === "both") && <span className="text-[0.75rem] text-faint">The external sheet opens for anyone with the link (view only); it&apos;s made and linked when you send, or now with Save &amp; make Google Sheets.</span>}
           </div>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search the influencer database: name, @handle, niche, city" className="crm-input" />
           <div className="flex flex-wrap items-center gap-2">

@@ -3,7 +3,7 @@ import "server-only";
 import { getPrisma } from "@/lib/db";
 
 import { COMPANY_ACCOUNT, companyToken, personFileToken } from "./google";
-import { type Cell, type PlanColumns, type PlanInput, planTables } from "./plan-tables";
+import { type Cell, type PlanColumns, type PlanInput, planTables, sharesSheet } from "./plan-tables";
 
 /**
  * AN INFLUENCER PLAN AS GENESIS'S TWO GOOGLE SHEETS (Genesis, 12 Oct 2026,
@@ -174,5 +174,29 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
     }
   }
   await prisma.quote.update({ where: { id: quoteId }, data: { extSheetId: ext.id, intSheetId: int.id } });
-  return { ext: `https://docs.google.com/spreadsheets/d/${ext.id}/edit`, int: `https://docs.google.com/spreadsheets/d/${int.id}/edit`, own: maker.own, account: maker.email };
+  /* Sent to the brand as a link: the external sheet opens for anyone with it (view only). The internal one never does. */
+  const shared = sharesSheet(input.columns) ? await shareExternalSheet(quoteId, actorId).catch(() => false) : false;
+  return {
+    shared, ext: `https://docs.google.com/spreadsheets/d/${ext.id}/edit`, int: `https://docs.google.com/spreadsheets/d/${int.id}/edit`, own: maker.own, account: maker.email };
+}
+
+/**
+ * THE EXTERNAL SHEET, FOR THE BRAND (Genesis, 13 Oct 2026: "add the Google
+ * Sheet (external) to send it to the brand"). View-only for anyone with the
+ * link, set with whichever account owns it. True when it worked.
+ */
+export async function shareExternalSheet(quoteId: string, actorId?: string | null): Promise<boolean> {
+  const q = await getPrisma().quote.findUnique({ where: { id: quoteId }, select: { extSheetId: true } });
+  if (!q?.extSheetId) return false;
+  const tokens = [await personFileToken(actorId).then((m) => m.token).catch(() => null), await companyToken().catch(() => null)];
+  for (const token of tokens) {
+    if (!token) continue;
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${q.extSheetId}/permissions?sendNotificationEmail=false&supportsAllDrives=true`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "anyone", role: "reader", allowFileDiscovery: false }),
+    }).catch(() => null);
+    if (r?.ok) return true;
+  }
+  return false;
 }
