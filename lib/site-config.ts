@@ -623,6 +623,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
         external: Boolean(whatsappLink(siteConfig.avatarWhatsappMessage)),
       },
       { label: "I'm a Creator", href: "/creator" },
+      { label: "Resellers", href: "/resellers" },
       { label: "Careers", href: "/careers" },
       contactItem("Contact"),
     ],

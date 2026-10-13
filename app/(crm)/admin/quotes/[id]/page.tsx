@@ -93,8 +93,8 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         <Card title={q.status === "DRAFT" ? "Send to the client" : "Send again"}>
           <ActionForm action={sendQuoteAction} submit={q.status === "DRAFT" ? "Send quotation email" : "Re-send with the latest changes"} confirm={`Email this ${plan ? "plan" : "quote"} to ${q.contactEmail}?`}>
             <input type="hidden" name="id" value={q.id} />
-            <Field label="Send" hint="Proposal = platforms, problems, objectives and influencers. Pricing = the lines, totals and terms.">
-              <Select name="view" required defaultValue="both" options={[["both", "Proposal + pricing"], ["proposal", "Proposal only (no prices)"], ["pricing", "Pricing only"]]} />
+            <Field label="Send" hint="Together, or each part on its own: proposal (platforms, problems, objectives), pricing (lines, totals, terms), influencer plan (the creator list).">
+              <Select name="view" required defaultValue="both" options={[["both", "Everything together (proposal, pricing, influencer plan)"], ["proposal", "Proposal only (no prices)"], ["proposal-plan", "Proposal + influencer list (no prices)"], ["plan", "Influencer plan only (with its prices)"], ["pricing", "Pricing only"]]} />
             </Field>
             <Field label={`Message to ${q.contactName}`} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
             <label className="flex items-center gap-2 text-[0.875rem] text-ash">
@@ -102,7 +102,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
               {!razorpayKeys() && <span className="text-faint">(Razorpay keys not set)</span>}
             </label>
           </ActionForm>
-          <p className="mt-3 break-all text-[0.8125rem] text-faint">Client link: {clientLink} · <a className="crm-link" href={`${clientLink}?view=proposal`} target="_blank" rel="noreferrer">proposal only</a> · <a className="crm-link" href={`${clientLink}?view=pricing`} target="_blank" rel="noreferrer">pricing only</a></p>
+          <p className="mt-3 break-all text-[0.8125rem] text-faint">Client link: {clientLink} · <a className="crm-link" href={`${clientLink}?view=proposal`} target="_blank" rel="noreferrer">proposal only</a> · <a className="crm-link" href={`${clientLink}?view=plan`} target="_blank" rel="noreferrer">influencer plan only</a> · <a className="crm-link" href={`${clientLink}?view=pricing`} target="_blank" rel="noreferrer">pricing only</a></p>
           {q.paymentUrl && <p className="break-all text-[0.8125rem] text-faint">Payment link: {q.paymentUrl}</p>}
           <div className="mt-4 border-t border-[var(--glass-border)] pt-3">
             <p className="crm-label mb-1">Or share it on WhatsApp / email</p>

@@ -130,6 +130,15 @@ const nextConfig: NextConfig = {
     redirected at all: it is the study's page, and an old slug is redirected
     by the page itself to the study's new name.
   */
+  /*
+    CRM.GENESISMEDIA.CO (Genesis, 13 Oct 2026: "take the landing page live on
+    crm.genesismedia.co"). The CRM's own address opens the reseller page at
+    its root; every other path on it is the same site, so /admin works there
+    too.
+  */
+  async rewrites() {
+    return { beforeFiles: [{ source: "/", has: [{ type: "host", value: "crm.genesismedia.co" }], destination: "/resellers" }] };
+  },
   async redirects() {
     const slug = ":slug([a-z0-9-]+)";
     return [

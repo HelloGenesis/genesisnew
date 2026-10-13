@@ -4,6 +4,7 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import type { Division } from "@/lib/generated/prisma/enums";
 
 import { tierFor } from "./catalog";
+import { tidyNiches } from "./niches";
 import { appUrl, queueStaffEmail } from "./notify";
 import { queueSheet } from "./sheets";
 
@@ -50,6 +51,42 @@ export async function captureSubmission(kind: string, submissionId: string, data
   if (!isDatabaseConfigured()) return;
   const prisma = getPrisma();
   try {
+    if (kind === "partner") {
+      const lead = await prisma.lead.upsert({
+        where: { contactSubmissionId: submissionId },
+        create: {
+          contactSubmissionId: submissionId,
+          name: data.name ?? "Partner applicant",
+          email: data.email?.toLowerCase() ?? null,
+          phone: data.phone || null,
+          company: data.company || null,
+          interest: `Genesis CRM · ${data.partnerType ?? "partner"}`,
+          source: "PARTNER",
+          nextFollowUp: new Date(),
+          notes: [
+            "Applied on /resellers to use or resell the Genesis CRM.",
+            data.partnerType && `Applying as: ${data.partnerType}`,
+            data.teamSize && `Team size: ${data.teamSize}`,
+            data.branding && `Branding: ${data.branding}`,
+            data.website && `Website: ${data.website}`,
+            data.message,
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        },
+        update: {},
+      });
+      await queueSheet("leads", lead.id);
+      await queueStaffEmail({
+        kind: "lead_new",
+        scope: "sales",
+        subject: `CRM partner application · ${lead.name}${lead.company ? ` (${lead.company})` : ""}`,
+        text: [`${lead.name} applied to partner on the Genesis CRM.`, "", lead.notes, lead.email && `Email: ${lead.email}`, lead.phone && `Phone: ${lead.phone}`, "", `Open the lead: ${appUrl(`/admin/leads/${lead.id}`)}`].filter(Boolean).join("\n"),
+        dedupeKey: `lead-new:${lead.id}`,
+      });
+      return;
+    }
+
     if (kind === "brand" || kind === "quick") {
       const lead = await prisma.lead.upsert({
         where: { contactSubmissionId: submissionId },
@@ -115,7 +152,7 @@ export async function captureSubmission(kind: string, submissionId: string, data
           followers,
           avgViews: count(data.avgViews) || null,
           tier: tierFor(followers),
-          niches: (data.niche ?? "").split(/[,/]/).map((n) => n.trim()).filter(Boolean),
+          niches: tidyNiches([data.niche ?? ""]),
           city: data.city || null,
           email: data.email?.toLowerCase() ?? null,
           phone: data.phone || null,

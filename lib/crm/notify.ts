@@ -88,6 +88,8 @@ async function send(to: string[], bcc: string[], subject: string, text: string, 
       to,
       ...(bcc.length ? { bcc } : {}),
       reply_to: replyTo || LEGAL_EMAIL,
+      /* Marks every CRM email, so the Gmail reader never takes the CRM's own mail for a brief (the 12 Oct loop). */
+      headers: { "X-Genesis-CRM": "1" },
       subject,
       text,
     }),

@@ -8,6 +8,7 @@ import { mapColumns } from "./ai";
 import { tierFor, todayIst } from "./catalog";
 import { EXPENSE_CATEGORY } from "./company";
 import { google } from "./google";
+import { cleanNiches } from "./niches";
 
 /**
  * GOOGLE SHEETS INTO THE CRM (Genesis, 12 Oct 2026: "integrate our current
@@ -152,9 +153,13 @@ export async function planImport(userId: string, spreadsheetId: string, tab: str
   if (headerIndex < 0) throw new Error("That tab looks empty.");
   const headers = rows[headerIndex]!.map((h) => String(h ?? "").trim());
   const sample = rows.slice(headerIndex + 1, headerIndex + 6);
+  return { headers, mapping: await mapHeaders(kind, headers, sample), rowCount: Math.max(0, rows.length - headerIndex - 1), sample };
+}
+
+/** Matches a header row to the CRM's fields: the AI first, plain names as a fallback. */
+export async function mapHeaders(kind: string, headers: string[], sample: string[][]) {
   const ai = await mapColumns(IMPORT_KINDS[kind]!.label, IMPORT_KINDS[kind]!.fields, headers.filter(Boolean), sample).catch(() => ({}));
-  const mapping = Object.keys(ai).length ? ai : guessMapping(kind, headers);
-  return { headers, mapping, rowCount: Math.max(0, rows.length - headerIndex - 1), sample };
+  return Object.keys(ai).length ? ai : guessMapping(kind, headers);
 }
 
 /* --- Bringing rows in ---------------------------------------------------- */
@@ -192,8 +197,16 @@ export async function runImport(importId: string) {
   const headerIndex = rows.findIndex((r) => r.filter((c) => String(c ?? "").trim()).length >= 2);
   if (headerIndex < 0) return { added: 0, updated: 0 };
   const headers = rows[headerIndex]!.map((h) => String(h ?? "").trim());
-  const mapping = job.mapping as Record<string, string>;
-  const records = rows.slice(headerIndex + 1).map((row) => {
+  const result = await importRows(job.kind, job.userId, headers, rows.slice(headerIndex + 1), job.mapping as Record<string, string>);
+  await prisma.sheetImport.update({ where: { id: importId }, data: { lastRunAt: new Date(), lastError: null, rowsImported: { increment: result.added } } });
+  return result;
+}
+
+/** Brings rows in as leads, clients, vendors, influencers, expenses or briefs: from a Google Sheet, or an uploaded Excel / CSV file. */
+export async function importRows(kind: string, userId: string, headers: string[], body: unknown[][], mapping: Record<string, string>) {
+  const prisma = getPrisma();
+  const job = { kind, userId };
+  const records = body.map((row) => {
     const rec: Record<string, string> = {};
     headers.forEach((h, i) => {
       const field = mapping[h];
@@ -271,6 +284,8 @@ export async function runImport(importId: string) {
         if (!handle) continue;
         const platform = PLATFORM[(r.platform ?? (r.profileUrl?.includes("youtube") ? "youtube" : "instagram")).toLowerCase().trim()] ?? "INSTAGRAM";
         const followers = Math.round(num(r.followers) ?? 0);
+        /* The sheet's categories in the standard names; anything else is kept in the notes. */
+        const sorted = cleanNiches([r.niches ?? ""]);
         const data = {
           name: (r.name ?? handle).slice(0, 120),
           profileUrl: r.profileUrl ?? null,
@@ -278,7 +293,7 @@ export async function runImport(importId: string) {
           avgViews: num(r.avgViews) === null ? null : Math.round(num(r.avgViews)!),
           engagementRate: num(r.engagementRate?.replace("%", "")),
           tier: tierFor(followers),
-          niches: list(r.niches),
+          niches: sorted.niches,
           languages: list(r.languages),
           city: r.city ?? null,
           gender: r.gender ?? null,
@@ -290,7 +305,7 @@ export async function runImport(importId: string) {
           email: email(r.email),
           phone: r.phone ?? null,
           managedBy: r.managedBy ?? null,
-          notes: r.notes ?? null,
+          notes: [r.notes, sorted.other.length ? `Categories in the sheet: ${sorted.other.join(", ")}` : null].filter(Boolean).join("\n") || null,
         };
         const existing = await prisma.creator.findUnique({ where: { platform_handle: { platform, handle } } });
         if (existing) {
@@ -330,7 +345,6 @@ export async function runImport(importId: string) {
       console.error("[crm] sheet row skipped", (error as Error).message);
     }
   }
-  await prisma.sheetImport.update({ where: { id: importId }, data: { lastRunAt: new Date(), lastError: null, rowsImported: { increment: added } } });
   return { added, updated };
 }
 

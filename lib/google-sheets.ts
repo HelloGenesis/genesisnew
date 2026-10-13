@@ -44,7 +44,7 @@ const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
  * readable without setup; it is never rewritten — if someone renames a column
  * to suit how they work, that is their sheet.
  */
-export type SheetTab = "brand" | "quick" | "influencer" | "career" | "orders";
+export type SheetTab = "brand" | "quick" | "influencer" | "career" | "orders" | "partner";
 
 const TABS: Record<SheetTab, { title: string; columns: [header: string, field: string][] }> = {
   brand: {
@@ -108,6 +108,20 @@ const TABS: Record<SheetTab, { title: string; columns: [header: string, field: s
       ["Billing address", "address"],
       ["Razorpay", "razorpay"],
       ["Notes", "notes"],
+    ],
+  },
+  partner: {
+    title: "Partner Applications",
+    columns: [
+      ["Name", "name"],
+      ["Company", "company"],
+      ["Email", "email"],
+      ["Phone", "phone"],
+      ["Applying as", "partnerType"],
+      ["Team size", "teamSize"],
+      ["Branding", "branding"],
+      ["Website or social", "website"],
+      ["How they'd use it", "message"],
     ],
   },
   career: {
