@@ -11,6 +11,7 @@ import { Portfolio } from "./components/portfolio";
 import { Services } from "./components/services";
 import { Studios } from "./components/studios";
 import { JumpBar, type JumpLink } from "./components/offer/page-aids";
+import { CrmHomeSection } from "@/components/genesis/crm-home-section";
 import { FaqBlock } from "./components/offer/blocks";
 import { servicePages } from "@/lib/services";
 
@@ -23,6 +24,7 @@ const HOME_SECTIONS: JumpLink[] = [
   { id: "studios", label: "Studios" },
   { id: "brand-design", label: "Brand & Design" },
   { id: "library", label: "Work" },
+  { id: "crm", label: "CRM" },
 ];
 
 /*
@@ -153,6 +155,9 @@ export default function HomePage() {
         which only lands after a visitor knows what the four divisions are.
       */}
       <Portfolio />
+
+      {/* 10 — Genesis Media CRM, the product (Genesis, 14 Oct 2026), leading to /resellers. */}
+      <CrmHomeSection />
 
       {/*
         THE QUESTIONS PEOPLE ASK ABOUT GENESIS (Genesis, 6 Oct 2026: "add FAQs

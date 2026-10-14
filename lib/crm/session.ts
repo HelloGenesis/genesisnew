@@ -329,7 +329,7 @@ export async function requirePortal() {
   const viewer = await getViewer();
   if (!viewer) redirect("/login?next=/portal");
   const accounts = await portalAccounts(viewer);
-  if (accounts.length === 0) redirect(viewer.roles.length ? "/admin" : "/portal/welcome");
+  if (accounts.length === 0) redirect(viewer.roles.length ? "/admin" : "/account");
   const chosen = (await cookies()).get(ACCOUNT_COOKIE)?.value;
   const account = accounts.find((a) => a.id === chosen) ?? accounts[0]!;
   return { viewer, accounts, account };
