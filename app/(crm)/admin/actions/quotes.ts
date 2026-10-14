@@ -223,19 +223,6 @@ export async function quoteVersion(id: string): Promise<{ version: string; by: s
   return { version: q.updatedAt.toISOString(), by: who ? (who.name ?? who.email) : null };
 }
 
-/**
- * SAVED AS YOU WORK (Genesis, 13 Oct 2026: "whenever you create a new plan
- * it should automatically be saved in draft without clicking save draft").
- * The builder calls this a moment after each change; the first call makes
- * the draft and hands back its id.
- */
-export async function autosaveQuote(raw: string): Promise<{ ok: boolean; id?: string; version?: string; message?: string; conflict?: boolean }> {
-  const viewer = await requireStaff("sales");
-  const result = await persist(viewer, raw, true);
-  if (!result.ok) return { ok: false, message: result.message, conflict: result.conflict };
-  return { ok: true, id: result.id, version: result.version };
-}
-
 /** Creates or updates a quote from the builder (the form posts its state as JSON). */
 export async function saveQuote(_: ActionState, form: FormData): Promise<ActionState> {
   const viewer = await requireStaff("sales");
