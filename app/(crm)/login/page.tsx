@@ -41,7 +41,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div>
         {error === "authentication_failed" && <p className="crm-notice crm-notice-warn mb-4">That sign-in didn&apos;t go through. Please try again.</p>}
         {isAuth0Configured() ? (
-          <LoginPanel connections={connections()} next={target || "/portal"} />
+          <LoginPanel connections={connections()} next={target} />
         ) : emailLoginEnabled() ? (
           <EmailCodeForm step={step === "code" ? "code" : "email"} error={error} next={target} sentTo={readSignedEmail((await cookies()).get(PENDING_COOKIE)?.value)} />
         ) : devLoginEnabled() ? (

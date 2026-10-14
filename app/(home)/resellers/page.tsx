@@ -8,6 +8,7 @@ import { GlassButton } from "@/components/genesis/glass-button";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { Reveal, RevealGroup, RevealItem } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
+import { crmSoftwareJsonLd, faqJsonLd } from "@/lib/geo";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -93,7 +94,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
 
   return (
     <main>
-      <JsonLd data={breadcrumbJsonLd([{ name: "Genesis CRM", path: "/resellers" }])} />
+      <JsonLd data={[breadcrumbJsonLd([{ name: "Genesis CRM", path: "/resellers" }]), crmSoftwareJsonLd(), faqJsonLd(FAQS, "/resellers")]} />
 
       <Atmosphere tone="brand" origin="top" intensity={0.2}>
         <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pb-10 pt-32 sm:pt-40">

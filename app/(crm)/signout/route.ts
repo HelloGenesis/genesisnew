@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { emailLoginEnabled, SESSION_COOKIE } from "@/lib/crm/email-login";
 import { devCookie, devLoginEnabled, STAFF_2FA_COOKIE } from "@/lib/crm/session";
+import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
   const response = NextResponse.redirect(new URL(devLoginEnabled() || emailLoginEnabled() ? "/login" : "/auth/logout", url.origin), 303);
   response.cookies.delete(STAFF_2FA_COOKIE);
   response.cookies.delete("gm_portal_account");
+  response.cookies.delete(SIGNED_IN_HINT);
   if (devLoginEnabled()) response.cookies.delete(devCookie.name);
   response.cookies.delete(SESSION_COOKIE);
   return response;

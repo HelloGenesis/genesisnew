@@ -6,18 +6,22 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
-import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
+import { ArrowRight, ChevronDown, LogIn, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { DivisionLockup, DivisionName } from "./division-lockup";
-import { CartButton } from "./cart";
+import { CartButton, useCart } from "./cart";
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
 import { homeHref, navItems, type NavItem } from "@/lib/site-config";
+import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { cn } from "@/lib/utils";
+
+/* Signed in on this browser? Read once from the readable hint cookie (lib/signed-in-hint); false on the server. */
+const useSignedIn = () => useSyncExternalStore(() => () => {}, () => document.cookie.split("; ").includes(`${SIGNED_IN_HINT}=1`), () => false);
 
 /**
  * Floating glass navigation.
@@ -72,6 +76,14 @@ export function GlassNav() {
   const pathname = usePathname() ?? "/";
   const [condensed, setCondensed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  /*
+    THE CART ONLY ONCE SIGNED IN (Genesis, 14 Oct 2026). It still shows when
+    something is in it, so a visitor who pressed "Add to Cart" can check out.
+  */
+  const signedIn = useSignedIn();
+  const { count, ready } = useCart();
+  const showCart = signedIn || (ready && count > 0);
+  const account = signedIn ? { href: "/account/complete", label: "My account" } : { href: "/login", label: "Log in" };
   /*
     Whether the pill is currently floating over a section that pins itself
     dark. The Brain is now the first thing on the page and it is ALWAYS dark,
@@ -273,7 +285,22 @@ export function GlassNav() {
         */}
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           <ThemeToggle className="hidden xl:inline-flex" />
-          <CartButton />
+          {showCart && <CartButton />}
+          {/*
+            LOG IN (Genesis, 14 Oct 2026: "add a login button here, both phone
+            and desktop"). One sign-in for everyone: clients land in their
+            portal, the team in the CRM (the login page decides by who it is).
+          */}
+          <Link
+            href={account.href}
+            prefetch={false}
+            aria-label={account.label}
+            className="inline-flex size-9 items-center justify-center gap-1.5 rounded-full border border-[var(--glass-border)] text-[0.875rem] text-bone transition-colors hover:bg-[var(--hover-wash)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:h-10 sm:w-auto sm:px-4 xl:h-9"
+          >
+            <LogIn className="size-4 shrink-0" aria-hidden />
+            {/* Just the icon on a phone, where the bar has no room; the menu has the full button. */}
+            <span className="hidden sm:inline">{account.label}</span>
+          </Link>
 
           {/*
             "SLIGHT MOVEMENT/GLOW ON START A PROJECT", which is Genesis's
@@ -400,6 +427,9 @@ export function GlassNav() {
               className="mt-3 w-full"
             >
               Book a 15-min Call
+            </GlassButton>
+            <GlassButton href={account.href} variant="glass" size="md" className="mt-2 w-full" onClick={() => setMenuOpen(false)}>
+              <LogIn className="size-4 shrink-0" aria-hidden /> {account.label}
             </GlassButton>
           </motion.div>
         )}

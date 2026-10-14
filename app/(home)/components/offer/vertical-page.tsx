@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { Atmosphere } from "@/components/genesis/atmosphere";
 import { JsonLd } from "@/components/genesis/json-ld";
+import { verticalOffers } from "@/lib/geo";
 import { breadcrumbJsonLd, serviceJsonLd } from "@/lib/seo";
 import { serviceOffers, type ServicePage } from "@/lib/services";
 import { verticalCard } from "@/lib/pricing";
@@ -53,6 +54,7 @@ export function VerticalPage({
               description: page.seo.description,
               path: card.href,
               offers: serviceOffers(page),
+              priced: verticalOffers(current),
             }),
             breadcrumbJsonLd([{ name: card.name, path: card.href }]),
           ]}
