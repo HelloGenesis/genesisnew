@@ -8,5 +8,9 @@
 export const BENTO =
   "sm:rounded-[2rem] sm:border sm:border-[var(--glass-border)] sm:bg-[var(--glass-fill)] sm:p-8 sm:shadow-[var(--shadow-panel)] sm:backdrop-blur-[14px] lg:p-10";
 
-/** The same panel let out to the page's wider measure, for sections set in the 6xl column. */
-export const BENTO_WIDE = `${BENTO} lg:-mx-16`;
+/**
+ * The same panel let out to the page's wider measure, for sections set in the 6xl column.
+ * From xl only: at 1024px the 6xl column already fills the screen, and letting it out
+ * pushed the panel 40px past both edges (14 Oct 2026).
+ */
+export const BENTO_WIDE = `${BENTO} xl:-mx-16`;

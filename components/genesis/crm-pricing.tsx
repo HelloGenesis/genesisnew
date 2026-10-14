@@ -28,7 +28,7 @@ export function CrmPricing({ compact = false }: { compact?: boolean }) {
           </button>
         ))}
       </div>
-      <ul className={`mt-8 grid gap-4 ${compact ? "md:grid-cols-3" : "lg:grid-cols-3"}`}>
+      <ul className="mt-8 grid gap-4 lg:grid-cols-3">
         {CRM_PLAN_PRICES.map((p) => {
           const popular = "popular" in p && p.popular;
           return (
@@ -43,7 +43,8 @@ export function CrmPricing({ compact = false }: { compact?: boolean }) {
               <p className="mt-1 text-[0.8125rem] text-faint">
                 {billing === "annual" ? `${inr(crmCycleCharge(p, "annual"))} billed yearly` : `Billed monthly · ${inr(crmPerMonth(p, "annual"))}/month on annual`} · + 18% GST
               </p>
-              <ul className={`mt-6 flex-1 space-y-2.5 ${compact ? "hidden sm:block" : ""}`}>
+              {/* Phone: the features fold away on the homepage; tablet: two columns, as the cards stack full width there. */}
+              <ul className={`mt-6 flex-1 gap-x-6 space-y-2.5 sm:grid sm:grid-cols-2 sm:space-y-0 sm:gap-y-2.5 lg:block lg:space-y-2.5 ${compact ? "hidden sm:grid" : ""}`}>
                 {p.features.map((f) => (
                   <li key={f} className="flex gap-2.5 text-small text-ash">
                     <Check className="mt-0.5 size-4 shrink-0 text-[#ffc516]" aria-hidden />

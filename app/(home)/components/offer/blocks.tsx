@@ -303,7 +303,7 @@ export function ClosingBand({
   return (
     <OfferSection>
       {/* As wide as the plan box and the case-study panel (Genesis, 6 Oct 2026). */}
-      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel lg:-mx-16">
+      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel xl:-mx-16">
         <span
           aria-hidden
           className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-brand/15 blur-3xl"
