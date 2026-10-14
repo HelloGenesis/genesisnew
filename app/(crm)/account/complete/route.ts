@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { currentIdentity, safeNext, syncIdentity } from "@/lib/crm/session";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
-import { SIGNED_IN_HINT, SIGNED_IN_HINT_MAX_AGE } from "@/lib/signed-in-hint";
+import { hintValue, SIGNED_IN_HINT, SIGNED_IN_HINT_MAX_AGE } from "@/lib/signed-in-hint";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,6 @@ export async function GET(request: Request) {
   const allowed = next && !(next.startsWith("/admin") && !staff);
   const response = NextResponse.redirect(new URL(allowed ? next : home, url.origin));
   /* Tells the site's bar to show the cart and "My account" (lib/signed-in-hint). */
-  response.cookies.set(SIGNED_IN_HINT, "1", { path: "/", maxAge: SIGNED_IN_HINT_MAX_AGE, sameSite: "lax", secure: url.protocol === "https:" });
+  response.cookies.set(SIGNED_IN_HINT, hintValue(user.name), { path: "/", maxAge: SIGNED_IN_HINT_MAX_AGE, sameSite: "lax", secure: url.protocol === "https:" });
   return response;
 }

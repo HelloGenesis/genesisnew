@@ -1,6 +1,8 @@
 import { Check } from "lucide-react";
 
+import { BENTO_WIDE } from "@/lib/bento";
 import { CRM_PLAN_PRICES } from "@/lib/crm-plans";
+import { CrmPricing } from "./crm-pricing";
 import { CrmTour } from "./crm-tour";
 import { GlassButton } from "./glass-button";
 import { Reveal } from "./reveal";
@@ -11,6 +13,8 @@ import { SectionLabel } from "./section-label";
  * Media CRM simple section with a dashboard, copy and a CTA for CRM for
  * Agencies, Brands & Freelancers… Checkout CRM… you can add the reseller
  * dashboard"). The same sample-data tour as /resellers, which it leads to.
+ * In a bento panel like the divisions above it, with the three plans paid
+ * straight through Razorpay (Genesis, 14 Oct 2026), above the Work section.
  */
 
 const POINTS = [
@@ -25,6 +29,7 @@ export function CrmHomeSection() {
   return (
     <section id="crm" aria-labelledby="crm-heading" className="scroll-mt-24 py-[var(--section-pad)]">
       <div className="mx-auto w-full max-w-6xl px-6">
+        <div className={BENTO_WIDE}>
         <Reveal>
           <SectionLabel dot tone="brand">Genesis Media CRM</SectionLabel>
           <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-end">
@@ -33,7 +38,7 @@ export function CrmHomeSection() {
                 The CRM for Agencies, Brands &amp; <span className="font-serif italic text-brand-ink">Freelancers.</span>
               </h2>
               <p className="mt-5 max-w-xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-                The platform Genesis Media runs on, ready for your business: every lead, plan, quote and invoice in one place. From ₹{CRM_PLAN_PRICES[0].monthly.toLocaleString("en-IN")} a month.
+                The platform Genesis Media runs on, ready for your business: every lead, plan, quote and invoice in one place. From ₹{CRM_PLAN_PRICES[0].rate.toLocaleString("en-IN")} a month.
               </p>
               <ul className="mt-4 flex flex-wrap gap-2" aria-label="Built for">
                 {FOR.map((f) => (
@@ -54,7 +59,7 @@ export function CrmHomeSection() {
                 <GlassButton href="/resellers" variant="brand" size="lg" arrow>
                   Checkout CRM
                 </GlassButton>
-                <GlassButton href="/resellers#pricing" variant="glass" size="lg" arrow>
+                <GlassButton href="#crm-plans" variant="glass" size="lg" arrow>
                   See pricing
                 </GlassButton>
               </div>
@@ -63,6 +68,13 @@ export function CrmHomeSection() {
         </Reveal>
         <div className="mt-10">
           <CrmTour />
+        </div>
+        <div id="crm-plans" className="mt-12 scroll-mt-28">
+          <h3 className="text-lead text-bone">Plans for every size of team</h3>
+          <div className="mt-4">
+            <CrmPricing compact />
+          </div>
+        </div>
         </div>
       </div>
     </section>

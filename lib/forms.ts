@@ -168,7 +168,7 @@ export const FORMS: Record<FormKind, FormSpec> = {
       { name: "partnerType", label: "You are", type: "select", options: PARTNER_TYPES, required: true, half: true },
       { name: "teamSize", label: "Team size", type: "select", options: TEAM_SIZES, required: true, half: true },
       { name: "plan", label: "Plan", type: "select", options: CRM_PLANS, half: true },
-      { name: "billing", label: "Billing", type: "select", options: ["Monthly", "Annual (2 months free)"], half: true },
+      { name: "billing", label: "Billing", type: "select", options: ["Annual", "Monthly"], half: true },
       { name: "branding", label: "Branding", type: "select", options: BRANDING, half: true },
       { name: "website", label: "Website or Instagram", type: "url", half: true },
       { name: "message", label: "How would you use it? (agencies you'd bring, what you run today)", type: "textarea", max: 2000 },

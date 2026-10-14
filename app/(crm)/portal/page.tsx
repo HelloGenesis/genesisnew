@@ -22,7 +22,7 @@ export default async function PortalHome() {
     ]);
     return (
       <>
-        <PageHead kicker={account.name} title={`Hi${first ? ` ${first}` : ""}. Here's your work with Genesis.`} />
+        <PageHead kicker={account.name} title={`Hi${first ? ` ${first}` : ""}, welcome to Genesis.`} sub="Here's your work with Genesis." />
         <Stats items={[{ label: "New offers", value: offers.length, tone: offers.length ? "warn" : undefined, href: "/portal/work" }, { label: "Jobs in progress", value: live.length, href: "/portal/work" }, { label: "Invoices being paid", value: money((invoices._sum.amountPaise ?? 0) + (invoices._sum.taxPaise ?? 0)), href: "/portal/invoices" }]} />
         <Card title="Due next">
           {live.length === 0 ? <p className="text-ash">Nothing in progress.</p> : (
@@ -45,7 +45,7 @@ export default async function PortalHome() {
 
   return (
     <>
-      <PageHead kicker={account.name} title={`Hi${first ? ` ${first}` : ""}. Here's where everything stands.`}>
+      <PageHead kicker={account.name} title={`Hi${first ? ` ${first}` : ""}, welcome to Genesis.`} sub="Here's where everything stands.">
         <Link href="/portal/requests/new" className="crm-btn crm-btn-primary crm-btn-sm">Send a brief</Link>
       </PageHead>
       {failing && (

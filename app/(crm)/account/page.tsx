@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { saveName } from "@/app/(crm)/account/actions";
 import { switchAccount } from "@/app/(crm)/portal/actions";
 import { AccountCart } from "@/components/crm/account-cart";
 import { SignOut } from "@/components/crm/sign-out";
@@ -58,6 +59,9 @@ export default async function AccountPage() {
   /* Orders by the same person show once even when they match both ways. */
   const seen = new Set<string>();
   const purchases = orders.filter((o) => !seen.has(o.id) && seen.add(o.id));
+  /* The name to greet: theirs, or the one on their last order until they save it. */
+  const orderName = purchases[0]?.contactName.replace(/\s*\(.*\)$/, "") ?? "";
+  const first = (viewer.name ?? "").split(" ")[0];
   const subscriptions = purchases.filter((o) => o.subscription && o.subscription.status !== "CANCELLED" && o.subscription.status !== "COMPLETED");
 
   return (
@@ -65,12 +69,22 @@ export default async function AccountPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="micro-label">My account</p>
-          <h1 className="mt-2 text-balance text-[2rem] font-normal leading-tight text-bone sm:text-[2.5rem]">{viewer.name ? `Hi ${viewer.name.split(" ")[0]}` : "Welcome back"}</h1>
+          <h1 className="mt-2 text-balance text-[2rem] font-normal leading-tight text-bone sm:text-[2.5rem]">{first ? `Hi ${first}, welcome to Genesis.` : "Hi, welcome to Genesis."}</h1>
           <p className="mt-2 text-ash">Your cart, purchases and workspaces, in one place.</p>
           <p className="mt-1 break-all text-[0.875rem] text-faint">Signed in as {viewer.email ?? viewer.phone}</p>
         </div>
         <SignOut className="crm-btn crm-btn-secondary crm-btn-sm" />
       </header>
+
+      {!viewer.name && (
+        <form action={saveName} className="crm-card crm-pad flex flex-wrap items-end gap-3">
+          <label className="min-w-[14rem] flex-1">
+            <span className="crm-label">What should we call you?</span>
+            <input name="name" required maxLength={80} autoComplete="name" defaultValue={orderName} className="crm-input" placeholder="Your name" />
+          </label>
+          <button className="crm-btn crm-btn-primary">Save</button>
+        </form>
+      )}
 
       {(viewer.roles.length > 0 || accounts.length > 0) && (
         <section aria-labelledby="spaces" className="crm-card crm-pad space-y-4">

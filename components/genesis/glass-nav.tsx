@@ -21,7 +21,9 @@ import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { cn } from "@/lib/utils";
 
 /* Signed in on this browser? Read once from the readable hint cookie (lib/signed-in-hint); false on the server. */
-const useSignedIn = () => useSyncExternalStore(() => () => {}, () => document.cookie.split("; ").includes(`${SIGNED_IN_HINT}=1`), () => false);
+const readHint = () => document.cookie.split("; ").find((c) => c.startsWith(`${SIGNED_IN_HINT}=`))?.slice(SIGNED_IN_HINT.length + 1) ?? "";
+/* The first name to greet ("" when signed out, "1" when signed in without a name yet). */
+const useSignedIn = () => useSyncExternalStore(() => () => {}, readHint, () => "");
 
 /**
  * Floating glass navigation.
@@ -80,10 +82,18 @@ export function GlassNav() {
     THE CART ONLY ONCE SIGNED IN (Genesis, 14 Oct 2026). It still shows when
     something is in it, so a visitor who pressed "Add to Cart" can check out.
   */
-  const signedIn = useSignedIn();
+  const hint = useSignedIn();
+  const signedIn = hint !== "";
+  const firstName = (() => {
+    try {
+      return signedIn && hint !== "1" ? decodeURIComponent(hint) : "";
+    } catch {
+      return "";
+    }
+  })();
   const { count, ready } = useCart();
   const showCart = signedIn || (ready && count > 0);
-  const account = signedIn ? { href: "/account", label: "My account" } : { href: "/login", label: "Log in" };
+  const account = signedIn ? { href: "/account", label: firstName ? `Hi ${firstName}` : "My account" } : { href: "/login", label: "Log in" };
   /*
     Whether the pill is currently floating over a section that pins itself
     dark. The Brain is now the first thing on the page and it is ALWAYS dark,

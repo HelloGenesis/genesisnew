@@ -8,3 +8,9 @@
  */
 export const SIGNED_IN_HINT = "gm_signed_in";
 export const SIGNED_IN_HINT_MAX_AGE = 60 * 60 * 24 * 30;
+
+/** The hint's value: the first name the site's bar greets ("Hi Shivam"), or "1" when there's none yet. */
+export const hintValue = (name: string | null | undefined) => {
+  const first = (name ?? "").trim().split(/\s+/)[0]?.replace(/[^\p{L}\p{M}'-]/gu, "").slice(0, 24);
+  return first ? encodeURIComponent(first) : "1";
+};

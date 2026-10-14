@@ -149,6 +149,8 @@ enum Division {
   STUDIOS
   BRAND_DESIGN
   INFLUENCE
+  /// Genesis CRM, the software (a subscription bought on the site; no project).
+  CRM
 }
 
 /// What a staff member may do. Owner implies everything.
