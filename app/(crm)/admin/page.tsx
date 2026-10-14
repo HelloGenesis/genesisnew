@@ -71,7 +71,7 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
   return (
     <>
       {/* Hi, by name and title (Genesis, 11 Oct 2026); names and titles are set in Staff & roles. */}
-      <PageHead kicker={`Dashboard · ${longDate}`} title={`Hi ${greetingName}`} sub={viewer.title ? <span className="text-bone">{viewer.title}<span className="text-ash"> · {viewing ? `Viewing ${viewing}'s dashboard.` : superAdmin ? "Everything across the team." : "What needs attention today."}</span></span> : "What needs attention today."}>
+      <PageHead kicker={`Dashboard · ${longDate}`} title={`Hi ${greetingName}, welcome to Genesis.`} sub={viewer.title ? <span className="text-bone">{viewer.title}<span className="text-ash"> · {viewing ? `Viewing ${viewing}'s dashboard.` : superAdmin ? "Everything across the team." : "What needs attention today."}</span></span> : "What needs attention today."}>
         {superAdmin && (
           <form action="/admin" className="flex items-center gap-2">
             <select name="person" defaultValue={person ?? ""} className="crm-input w-auto !py-1.5 text-[0.875rem]" aria-label="View the dashboard as">

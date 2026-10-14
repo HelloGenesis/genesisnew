@@ -23,8 +23,8 @@ const HOME_SECTIONS: JumpLink[] = [
   { id: "ai-lab", label: "AI Lab" },
   { id: "studios", label: "Studios" },
   { id: "brand-design", label: "Brand & Design" },
-  { id: "library", label: "Work" },
   { id: "crm", label: "CRM" },
+  { id: "library", label: "Work" },
 ];
 
 /*
@@ -145,6 +145,9 @@ export default function HomePage() {
       <AiContent />
       <Studios />
       <BrandingDesign />
+      {/* Genesis Media CRM, the product, in a bento with its plans, above Work (Genesis, 14 Oct 2026). */}
+      <CrmHomeSection />
+
       {/* The portfolio above the pricing (Genesis, 4 Oct 2026: "case studies will go above membership"). */}
       {/*
         09 — THE PORTFOLIO, once every division has had its say.
@@ -155,9 +158,6 @@ export default function HomePage() {
         which only lands after a visitor knows what the four divisions are.
       */}
       <Portfolio />
-
-      {/* 10 — Genesis Media CRM, the product (Genesis, 14 Oct 2026), leading to /resellers. */}
-      <CrmHomeSection />
 
       {/*
         THE QUESTIONS PEOPLE ASK ABOUT GENESIS (Genesis, 6 Oct 2026: "add FAQs

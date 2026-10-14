@@ -34,6 +34,7 @@ export const DIVISION_LABEL: Record<Division, string> = {
   STUDIOS: "Studios",
   BRAND_DESIGN: "Brand & Design",
   INFLUENCE: "Influence",
+  CRM: "Genesis CRM",
 };
 
 const FROM_VERTICAL: Record<VerticalKey, Division> = {

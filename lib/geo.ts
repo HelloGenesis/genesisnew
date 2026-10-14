@@ -1,4 +1,4 @@
-import { CRM_PLAN_PRICES } from "@/lib/crm-plans";
+import { CRM_PLAN_PRICES, crmCycleCharge, crmPerMonth } from "@/lib/crm-plans";
 import { caseStudyPages } from "@/lib/case-study-pages";
 import { footerCta } from "@/lib/home-content";
 import { monthlyListFigure } from "@/lib/money";
@@ -142,8 +142,8 @@ export function crmSoftwareJsonLd(): JsonLdNode {
     inLanguage: "en-IN",
     featureList: [...new Set(CRM_PLAN_PRICES.flatMap((p) => p.features.filter((f) => !f.startsWith("Everything in"))))],
     offers: CRM_PLAN_PRICES.flatMap((p) => [
-      { "@type": "Offer", name: `${p.key} (monthly)`, description: p.blurb, price: p.monthly, priceCurrency: "INR", priceSpecification: { "@type": "UnitPriceSpecification", price: p.monthly, priceCurrency: "INR", unitCode: "MON", valueAddedTaxIncluded: false }, url, seller: { "@id": ORGANIZATION_ID } },
-      { "@type": "Offer", name: `${p.key} (annual)`, description: `${p.blurb} Annual billing: two months free.`, price: p.monthly * 10, priceCurrency: "INR", priceSpecification: { "@type": "UnitPriceSpecification", price: p.monthly * 10, priceCurrency: "INR", unitCode: "ANN", valueAddedTaxIncluded: false }, url, seller: { "@id": ORGANIZATION_ID } },
+      { "@type": "Offer", name: `${p.key} (annual)`, description: `${p.blurb} ${crmPerMonth(p, "annual")} rupees a month, billed yearly.`, price: crmCycleCharge(p, "annual"), priceCurrency: "INR", priceSpecification: { "@type": "UnitPriceSpecification", price: crmCycleCharge(p, "annual"), priceCurrency: "INR", unitCode: "ANN", valueAddedTaxIncluded: false }, url, seller: { "@id": ORGANIZATION_ID } },
+      { "@type": "Offer", name: `${p.key} (monthly)`, description: `${p.blurb} Billed monthly.`, price: crmPerMonth(p, "monthly"), priceCurrency: "INR", priceSpecification: { "@type": "UnitPriceSpecification", price: crmPerMonth(p, "monthly"), priceCurrency: "INR", unitCode: "MON", valueAddedTaxIncluded: false }, url, seller: { "@id": ORGANIZATION_ID } },
     ]),
   };
 }
@@ -193,7 +193,7 @@ export function llmsText(full = false): string {
 
   out.push("## Genesis CRM", "");
   out.push(`A CRM for marketing, influencer and creative agencies, the one Genesis runs on: leads and pipeline, an influencer database (Excel and Google Sheets import), proposals, quotes and influencer plans as a link, PDF, Excel or Google Sheet, GST invoices, a client portal and an AI inbox that turns briefs in Gmail and Drive into leads. Resellers earn 20% of every payment from agencies they bring, for 12 months. [Plans and demo](${absoluteUrl("/resellers")})`, "");
-  for (const p of CRM_PLAN_PRICES) out.push(`- ${p.key}: ${rupees(p.monthly)} a month, or ${rupees(p.monthly * 10)} a year (2 months free). ${p.blurb} ${p.features.join("; ")}.`);
+  for (const p of CRM_PLAN_PRICES) out.push(`- ${p.key}: ${rupees(crmPerMonth(p, "annual"))} a month billed yearly (${rupees(crmCycleCharge(p, "annual"))} a year), or ${rupees(crmPerMonth(p, "monthly"))} billed monthly. ${p.blurb} ${p.features.join("; ")}.`);
   out.push("");
 
   out.push("## Pages");

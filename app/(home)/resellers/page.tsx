@@ -77,7 +77,7 @@ const STEPS = [
 ] as const;
 
 const FAQS = [
-  ["How does billing work?", "Pick monthly or annual (annual is two months free). Prices exclude 18% GST. You pay through Razorpay by card, UPI AutoPay or netbanking, and can cancel any time."],
+  ["How does billing work?", "Pick annual (the lowest price, paid for the year upfront) or monthly (10% more, paid month by month). Prices exclude 18% GST. You pay through Razorpay by card, UPI AutoPay or netbanking; monthly plans can be cancelled any time."],
   ["How do resellers earn?", "Bring agencies to the CRM and earn 20% of every payment they make for their first 12 months, paid out monthly."],
   ["Is our data separate from everyone else's?", "Yes. Each agency works in its own workspace with its own team, brands and logins."],
   ["Can it carry our brand?", "On Growth and Scale, your logo goes on it; on Scale it can run on your own domain."],
@@ -90,7 +90,7 @@ const PLAN_KEYS = ["Starter", "Growth", "Scale"];
 export default async function ResellersPage({ searchParams }: { searchParams: Promise<{ plan?: string; billing?: string }> }) {
   const p = await searchParams;
   const plan = PLAN_KEYS.includes(p.plan ?? "") ? p.plan! : undefined;
-  const billing = p.billing === "annual" ? "Annual (2 months free)" : p.billing === "monthly" ? "Monthly" : undefined;
+  const billing = p.billing === "annual" ? "Annual" : p.billing === "monthly" ? "Monthly" : undefined;
 
   return (
     <main>

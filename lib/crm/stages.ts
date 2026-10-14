@@ -77,6 +77,8 @@ export function templateFor(division: Division, productName?: string | null, mem
       return byKey.get("design")!;
     case "INFLUENCE":
       return byKey.get(/ugc/.test(name) ? "ugc" : "influencer-campaign")!;
+    case "CRM":
+      return byKey.get("monthly-plan")!;
   }
 }
 

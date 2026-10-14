@@ -133,6 +133,76 @@ export async function recordCheckout(input: {
   }
 }
 
+/**
+ * A GENESIS CRM SUBSCRIPTION BOUGHT ON THE SITE (Genesis, 14 Oct 2026: "this
+ * will have a Razorpay payment directly"). One order with one CRM line,
+ * pending until Razorpay's webhook confirms the first charge, and a lead for
+ * the follow-up. Paid, it opens no project: the team sets up the workspace.
+ */
+export async function recordCrmCheckout(input: {
+  reference: string;
+  plan: string;
+  billing: "annual" | "monthly";
+  chargeRupees: number;
+  totalRupees: number;
+  customer: CheckoutCustomer;
+  consent: string;
+  razorpaySubscriptionId: string;
+  partnerCode?: string | null;
+}) {
+  if (!isDatabaseConfigured()) return;
+  const prisma = getPrisma();
+  const { customer } = input;
+  const partner = input.partnerCode
+    ? await prisma.account.findFirst({ where: { referralCode: input.partnerCode, isReseller: true }, select: { id: true } })
+    : null;
+  const name = `${input.plan} (${input.billing})`;
+  const created = await prisma.order.create({
+    data: {
+      reference: input.reference,
+      channel: partner ? "PARTNER" : "WEBSITE",
+      partnerId: partner?.id ?? null,
+      billing: input.billing,
+      subtotalPaise: paise(input.chargeRupees),
+      taxPaise: paise(input.totalRupees - input.chargeRupees),
+      totalPaise: paise(input.totalRupees),
+      recurringPaise: paise(input.totalRupees),
+      contactName: customer.name,
+      contactEmail: customer.email.toLowerCase(),
+      contactPhone: customer.phone,
+      company: customer.company,
+      taxId: customer.taxId || null,
+      billingAddress: customer.address,
+      notes: customer.notes || null,
+      consent: input.consent,
+      razorpaySubscriptionId: input.razorpaySubscriptionId,
+      lines: { create: [{ productId: `crm.${input.plan.toLowerCase()}.${input.billing}`, name, group: "Genesis CRM", division: "CRM", kind: "MEMBERSHIP", qty: 1, chargePaise: paise(input.chargeRupees) }] },
+    },
+  });
+  await queueSheet("orders", created.id);
+  const open = await prisma.lead.findFirst({ where: { email: customer.email.toLowerCase(), status: { notIn: ["WON", "LOST"] } } });
+  if (open) {
+    await prisma.activity.create({ data: { leadId: open.id, kind: "SYSTEM", body: `Started Genesis CRM checkout ${input.reference}: ${name} (${money(created.totalPaise)})` } });
+  } else {
+    const lead = await prisma.lead.create({
+      data: {
+        name: customer.name,
+        email: customer.email.toLowerCase(),
+        phone: customer.phone,
+        company: customer.company,
+        division: "CRM",
+        interest: `Genesis CRM ${name}`,
+        source: partner ? "PARTNER" : "CHECKOUT",
+        partnerId: partner?.id ?? null,
+        status: "NEGOTIATION",
+        valuePaise: created.totalPaise,
+        notes: `Genesis CRM checkout ${input.reference} started, awaiting payment.`,
+      },
+    });
+    await queueSheet("leads", lead.id);
+  }
+}
+
 // --- Razorpay events -----------------------------------------------------------------
 
 type Entity = Record<string, unknown>;
@@ -369,7 +439,8 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
   } else if (opened === 0) {
     /* One project per product. A plan's project is this month's; renewals add the next. */
     for (const [i, line] of order.lines.entries()) {
-      if (line.kind === "QUOTED") continue;
+      /* A quoted line waits for its quote; Genesis CRM is software, set up by the team (below), not a project. */
+      if (line.kind === "QUOTED" || line.division === "CRM") continue;
       const product = findProduct(line.productId);
       const quota = quotaFrom(product?.includes);
       await openProject({
@@ -411,6 +482,25 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
   await prisma.activity.create({ data: { accountId, kind: "SYSTEM", body: `Order ${order.reference} paid: ${money(order.totalPaise)}.` } });
   await queueSheet("orders", orderId);
 
+  /* GENESIS CRM: the buyer hears what happens next, and the team is told to set up the workspace. */
+  const crm = order.lines.find((line) => line.division === "CRM");
+  if (crm) {
+    await queueEmail({
+      kind: "order_confirmed",
+      to: [order.contactEmail],
+      subject: `Welcome to Genesis CRM · ${order.reference}`,
+      text: `Hi ${order.contactName.split(" ")[0]},\n\nThank you. Your payment of ${money(amount)} is confirmed and your Genesis CRM ${crm.name} subscription is active. Razorpay emails a receipt for every payment.\n\nWhat happens next: within one working day the team will set up your workspace and book a short onboarding call to bring in your team, brands and data.\n\nYour orders and invoices are in My account. Sign in with this email address (${order.contactEmail}):\n${appUrl("/account")}\n\nReference: ${order.reference}`,
+      dedupeKey: `order-confirmed:${orderId}`,
+    });
+    await queueStaffEmail({
+      kind: "crm_sold",
+      subject: `New Genesis CRM subscription: ${crm.name} · ${order.company ?? order.contactName}`,
+      text: `${order.contactName} (${order.contactEmail}${order.contactPhone ? `, ${order.contactPhone}` : ""}) at ${order.company ?? "—"} paid ${money(amount)} for Genesis CRM ${crm.name}.\n\nSet up their workspace and book onboarding within one working day.\n\nOrder ${order.reference}: ${appUrl("/admin/billing")}`,
+      dedupeKey: `crm-sold:${orderId}`,
+    });
+    return;
+  }
+
   /* What happens next, per product, in Genesis's own words (lib/products). */
   const nextSteps = order.lines
     .filter((line) => line.kind !== "QUOTED")
@@ -447,7 +537,7 @@ async function renew(subscriptionId: string, payment: Entity | undefined) {
   await queueSheet("payments", row.id);
   await commission(subscription.account?.referredBy ?? null, subscription.order?.partnerId ?? null, subscription.orderId, row.id, amount, null, null);
 
-  for (const line of subscription.order?.lines.filter((l) => l.kind === "MEMBERSHIP") ?? []) {
+  for (const line of subscription.order?.lines.filter((l) => l.kind === "MEMBERSHIP" && l.division !== "CRM") ?? []) {
     await openProject({
       accountId: subscription.accountId,
       name: `${line.group} ${line.name} · ${monthName(new Date())}`,
