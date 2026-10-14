@@ -27,17 +27,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { next, error, step } = await searchParams;
   const target = safeNext(next ?? null, "");
   return (
-    <main className="mx-auto grid w-full max-w-5xl gap-10 px-4 py-12 sm:px-6 sm:py-20 lg:grid-cols-[1fr_26rem] lg:items-center">
-      <div>
-        <p className="micro-label">Genesis Media · Workspace</p>
-        <h1 className="mt-3 text-balance text-[2.25rem] font-normal leading-[1.05] tracking-tight text-bone sm:text-[3rem]">
-          Your projects, files and invoices, <span className="font-serif italic text-brand-ink">in one place.</span>
-        </h1>
-        <p className="mt-4 max-w-xl text-pretty text-ash">
-          For Genesis clients, partner agencies and our creative crew. Review and approve work, send briefs, follow every project from brief to delivery, and
-          download invoices. No password: we send you a one-time code.
-        </p>
-      </div>
+    /* Just the sign-in (Genesis, 14 Oct 2026: "remove this text and only keep the login to Genesis"). */
+    <main className="mx-auto w-full max-w-md px-4 py-16 sm:px-6 sm:py-24">
+      <h1 className="mb-6 text-center text-[2rem] font-normal leading-tight tracking-tight text-bone">Log in to Genesis</h1>
       <div>
         {error === "authentication_failed" && <p className="crm-notice crm-notice-warn mb-4">That sign-in didn&apos;t go through. Please try again.</p>}
         {isAuth0Configured() ? (

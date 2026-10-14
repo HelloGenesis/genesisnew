@@ -83,7 +83,7 @@ export function GlassNav() {
   const signedIn = useSignedIn();
   const { count, ready } = useCart();
   const showCart = signedIn || (ready && count > 0);
-  const account = signedIn ? { href: "/account/complete", label: "My account" } : { href: "/login", label: "Log in" };
+  const account = signedIn ? { href: "/account", label: "My account" } : { href: "/login", label: "Log in" };
   /*
     Whether the pill is currently floating over a section that pins itself
     dark. The Brain is now the first thing on the page and it is ALWAYS dark,
