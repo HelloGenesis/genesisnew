@@ -11,6 +11,7 @@ import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { services } from "@/lib/home-content";
 import { bookingHref, enquiryHref, pricingHub, verticalCard, verticalCards } from "@/lib/pricing";
+import { pricingCatalogJsonLd } from "@/lib/geo";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { aiPlans, aiTab, aiTurnaround, aiVideoTiers } from "@/lib/verticals/ai-labs";
 import { designTab, designTurnaround } from "@/lib/verticals/brand-design";
@@ -49,7 +50,7 @@ import { Figure } from "./verticals/influence-page";
 export function PricingHubView() {
   return (
     <main>
-      <JsonLd data={[breadcrumbJsonLd([{ name: "Pricing", path: "/pricing" }])]} />
+      <JsonLd data={[breadcrumbJsonLd([{ name: "Pricing", path: "/pricing" }]), pricingCatalogJsonLd()]} />
 
       <Atmosphere tone="brand" origin="top" intensity={0.2}>
         <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pb-[var(--section-pad)] pt-32 sm:pt-40">

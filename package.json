@@ -15,7 +15,8 @@
     "db:generate": "prisma generate",
     "db:dev": "tsx scripts/dev-db.mts",
     "crm:seed": "tsx scripts/crm-seed.mts",
-    "staff:grant": "tsx scripts/grant-staff.mts"
+    "staff:grant": "tsx scripts/grant-staff.mts",
+    "indexnow": "tsx scripts/indexnow.mts"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.26.0",

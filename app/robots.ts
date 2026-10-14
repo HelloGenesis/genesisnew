@@ -81,12 +81,31 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     };
   }
 
+  /*
+    AI SEARCH IS WELCOME, BY NAME (Genesis, 14 Oct 2026, GEO). `*` already
+    lets them in, but naming each answer engine's crawler makes the choice
+    explicit and survives any later tightening of the `*` group: ChatGPT
+    (OAI-SearchBot, ChatGPT-User, GPTBot), Perplexity, Claude, Gemini and
+    AI Overviews (Google-Extended), Apple Intelligence, Copilot (Bing), Meta
+    AI, DuckDuckGo's assist, Amazon and Common Crawl, which many models read.
+  */
+  const open = { allow: ["/", "/api/media/", "/llms.txt", "/llms-full.txt"], disallow: ["/api/", "/insider", "/auth/", "/admin"] };
   return {
-    rules: {
-      userAgent: "*",
-      allow: ["/", "/api/media/"],
-      disallow: ["/api/", "/insider", "/auth/"],
-    },
+    rules: [
+      {
+        userAgent: [
+          "OAI-SearchBot", "ChatGPT-User", "GPTBot",
+          "PerplexityBot", "Perplexity-User",
+          "ClaudeBot", "Claude-User", "Claude-SearchBot", "anthropic-ai",
+          "Google-Extended", "Googlebot", "Bingbot",
+          "Applebot", "Applebot-Extended",
+          "meta-externalagent", "DuckAssistBot", "Amazonbot", "CCBot", "cohere-ai", "MistralAI-User",
+        ],
+        ...open,
+      },
+      { userAgent: "*", ...open },
+    ],
     sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

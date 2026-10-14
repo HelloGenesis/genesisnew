@@ -251,6 +251,7 @@ export function organizationJsonLd(): JsonLdNode {
       "Business automation",
       "Brand identity",
       "Brand design",
+      "CRM software for agencies",
     ],
   };
 }
@@ -292,6 +293,8 @@ export function serviceJsonLd(service: {
   path: string;
   /** The division's own service lines, verbatim from the credentials deck. */
   offers: readonly string[];
+  /** The same division's plans and products with their prices (lib/geo). */
+  priced?: JsonLdNode[];
 }): JsonLdNode {
   const url = absoluteUrl(service.path);
   return {
@@ -306,10 +309,13 @@ export function serviceJsonLd(service: {
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: service.name,
-      itemListElement: service.offers.map((offer) => ({
-        "@type": "Offer",
-        itemOffered: { "@type": "Service", name: offer },
-      })),
+      itemListElement: [
+        ...(service.priced ?? []),
+        ...service.offers.map((offer) => ({
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: offer },
+        })),
+      ],
     },
   };
 }
