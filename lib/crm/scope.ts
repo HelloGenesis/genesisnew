@@ -17,7 +17,6 @@ import type { Viewer } from "./session";
 
 export const AREAS: Record<string, string> = {
   leads: "All leads & briefs",
-  quotes: "All quotes",
   billing: "All billing & invoices",
   clients: "All clients",
   projects: "All projects",
@@ -42,8 +41,13 @@ export function briefScope(v: Viewer, person?: string | null): Prisma.BriefWhere
   return { createdById: asPerson(v, person) };
 }
 
+/*
+ * Quotes and plans are shared (Genesis, 14 Oct 2026: "once a draft is saved it
+ * should be visible to all who are allowed"): everyone who can open Quotes sees
+ * every quote and plan. Only the dashboard's "as someone" view narrows it.
+ */
 export function quoteScope(v: Viewer, person?: string | null): Prisma.QuoteWhereInput {
-  if (!person && sees(v, "quotes")) return {};
+  if (!person) return {};
   const id = asPerson(v, person);
   return { OR: [{ createdById: id }, { lead: { ownerId: id } }] };
 }
