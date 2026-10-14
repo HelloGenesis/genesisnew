@@ -213,8 +213,8 @@ export function CrmTour() {
           <span className="ml-3 truncate text-[0.75rem] text-faint">yourcrm.app/{tab === "portal" ? "portal" : "admin"}</span>
           <span className="ml-auto text-[0.6875rem] text-faint">Sample data</span>
         </div>
-        <div className="grid min-h-[22rem] md:grid-cols-[13rem_minmax(0,1fr)]">
-          <aside className="hidden border-r border-white/5 p-3 md:block">
+        <div className="grid min-h-[22rem] lg:grid-cols-[13rem_minmax(0,1fr)]">
+          <aside className="hidden border-r border-white/5 p-3 lg:block">
             <p className="px-2 pb-2 text-[0.8125rem] font-semibold tracking-wide text-bone">YOUR AGENCY</p>
             {NAV.map((n) => (
               <p key={n} className={`rounded-lg px-2 py-1.5 text-[0.75rem] ${NAV_FOR[tab] === n ? "bg-[#ffc516] text-[#141216]" : "text-ash"}`}>{n}</p>

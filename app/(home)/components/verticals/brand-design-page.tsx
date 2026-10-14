@@ -202,7 +202,7 @@ function PlanOverview() {
 function BrandBuild() {
   return (
     <OfferSection id="brand-build" labelledBy="brand-build-heading">
-      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel p-6 sm:p-10 lg:-mx-16 lg:p-12">
+      <Reveal className="glass glass-strong glass-lit relative overflow-hidden rounded-panel p-6 sm:p-10 xl:-mx-16 lg:p-12">
         <span aria-hidden className="pointer-events-none absolute -left-24 -top-24 size-96 rounded-full bg-brand/10 blur-3xl" />
         <div className="relative grid gap-10 lg:grid-cols-[1fr_0.8fr] lg:items-end">
           <div>

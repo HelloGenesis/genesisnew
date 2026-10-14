@@ -55,11 +55,12 @@ export function CrmHomeSection() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <GlassButton href="/resellers" variant="brand" size="lg" arrow>
+              {/* Two equal buttons side by side on a phone; their own width from sm. */}
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+                <GlassButton href="/resellers" variant="brand" size="lg" arrow className="w-full justify-center gap-2 px-3 text-small sm:w-auto sm:gap-3 sm:px-7 sm:text-body">
                   Checkout CRM
                 </GlassButton>
-                <GlassButton href="#crm-plans" variant="glass" size="lg" arrow>
+                <GlassButton href="#crm-plans" variant="glass" size="lg" arrow className="w-full justify-center gap-2 px-3 text-small sm:w-auto sm:gap-3 sm:px-7 sm:text-body">
                   See pricing
                 </GlassButton>
               </div>
