@@ -71,7 +71,10 @@ export function CrmHomeSection() {
           <CrmTour />
         </div>
         <div id="crm-plans" className="mt-12 scroll-mt-28">
-          <h3 className="text-lead text-bone">Plans for every size of team</h3>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-lead text-bone">Plans</h3>
+            <a href="/resellers#pricing" className="text-small text-ash underline-offset-4 hover:text-bone hover:underline">Compare everything in each plan</a>
+          </div>
           <div className="mt-4">
             <CrmPricing compact />
           </div>

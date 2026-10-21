@@ -21,7 +21,7 @@ import {
 } from "@/lib/crm/catalog";
 import { accountOptions, dateValue, inDays, staffOptions } from "@/lib/crm/options";
 import { filesFor } from "@/lib/crm/files-view";
-import { projectScope } from "@/lib/crm/scope";
+import { projectScope, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import {
@@ -67,7 +67,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const [staff, vendors, pool] = await Promise.all([
     staffOptions(),
     accountOptions(["VENDOR"]),
-    influence
+    influence && seesCreators(viewer)
       ? prisma.creator.findMany({ where: { blacklisted: false, campaigns: { none: { projectId: id } } }, orderBy: { followers: "desc" }, take: 200, select: { id: true, name: true, handle: true, platform: true, followers: true, niches: true, city: true } })
       : [],
   ]);

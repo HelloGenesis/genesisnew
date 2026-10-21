@@ -14,7 +14,7 @@ export const metadata = { title: "Quotes" };
 
 /** Every quotation and influencer plan, with what happened to it. */
 export default async function QuotesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const { status } = await searchParams;
   const prisma = getPrisma();
   const [quotes, open, won] = await Promise.all([

@@ -17,7 +17,7 @@ const MAX = 4 * 1024 * 1024;
  */
 export async function POST(request: Request) {
   const viewer = await getViewer();
-  if (staffAccess(viewer) !== "granted" || !can(viewer, "sales")) return NextResponse.json({ error: "Sign in again." }, { status: 403 });
+  if (staffAccess(viewer) !== "granted" || !can(viewer, "plans")) return NextResponse.json({ error: "Sign in again." }, { status: 403 });
   const form = await request.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) return NextResponse.json({ error: "No image." }, { status: 400 });

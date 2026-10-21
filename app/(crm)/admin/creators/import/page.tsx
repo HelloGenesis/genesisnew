@@ -1,9 +1,11 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { ActionForm } from "@/components/crm/action-form";
 import { FileImport } from "@/components/crm/file-import";
 import { Card, Field, PageHead } from "@/components/crm/ui";
 import { IMPORT_KINDS } from "@/lib/crm/sheet-import";
+import { seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { startSheetImport } from "../../actions/inbox";
@@ -19,7 +21,8 @@ export const metadata = { title: "Import influencers" };
  * in the database is updated, never duplicated.
  */
 export default async function ImportCreatorsPage() {
-  await requireStaff("delivery");
+  const viewer = await requireStaff();
+  if (!seesCreators(viewer)) redirect("/admin/forbidden");
   return (
     <>
       <PageHead kicker="Influence" title="Import influencers" sub="From an Excel / CSV file, or a Google Sheet">

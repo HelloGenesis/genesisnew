@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
 import { IMPORT_KINDS, importRows, mapHeaders } from "@/lib/crm/sheet-import";
+import { seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 /**
@@ -25,7 +26,7 @@ export async function matchUploadColumns(kind: string, headers: string[], sample
 
 export async function importUploadBatch(kind: string, fileName: string, headers: string[], rows: string[][], mapping: Record<string, string>, last: boolean) {
   const viewer = await requireStaff();
-  if (!allowed(kind)) return { added: 0, updated: 0 };
+  if (!allowed(kind) || (kind === "influencers" && !seesCreators(viewer))) return { added: 0, updated: 0 };
   const fields = IMPORT_KINDS[kind]!.fields;
   const safe = Object.fromEntries(Object.entries(mapping).filter(([, f]) => f in fields));
   const result = await importRows(kind, viewer.id, headers.map((h) => String(h ?? "").trim()), clean(rows), safe);
@@ -44,7 +45,7 @@ export async function importUploadBatch(kind: string, fileName: string, headers:
  * as plan rows with their rates.
  */
 export async function importCreatorsForPlan(fileName: string, headers: string[], rows: string[][], mapping: Record<string, string>) {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const fields = IMPORT_KINDS.influencers!.fields;
   const safe = Object.fromEntries(Object.entries(mapping).filter(([, f]) => f in fields));
   const result = await importRows("influencers", viewer.id, headers.map((h) => String(h ?? "").trim()), clean(rows), safe);

@@ -226,10 +226,12 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
 // --- Staff -------------------------------------------------------------------------
 
-export type StaffArea = "sales" | "delivery" | "finance" | "staff";
+export type StaffArea = "sales" | "plans" | "delivery" | "finance" | "staff";
 
 const AREA_ROLES: Record<StaffArea, StaffRoleKind[]> = {
   sales: ["ADMIN", "SALES"],
+  /* Quotes & influencer plans: sales, and the influencer team for influencer plans (lib/crm/scope quoteScope). */
+  plans: ["ADMIN", "SALES", "INFLUENCER"],
   delivery: ["ADMIN", "PRODUCER"],
   finance: ["ADMIN", "FINANCE"],
   staff: [],

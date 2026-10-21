@@ -25,7 +25,7 @@ async function planCreator(viewer: Viewer, id: string | null) {
 
 /** Saves the message as everyone's starting template. */
 export async function saveOutreachTemplate(template: string) {
-  await requireStaff("sales");
+  await requireStaff("plans");
   const value = template.slice(0, 4000);
   await getPrisma().appSetting.upsert({ where: { key: TEMPLATE_KEY }, create: { key: TEMPLATE_KEY, value }, update: { value } });
   return { ok: true };
@@ -33,7 +33,7 @@ export async function saveOutreachTemplate(template: string) {
 
 /** After WhatsApp opened (or an email went): the creator's reach-out status on the plan. */
 export async function markReachout(quoteCreatorId: string, status: string) {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const qc = await planCreator(viewer, quoteCreatorId);
   if (!qc) return { ok: false };
   await getPrisma().quoteCreator.update({ where: { id: qc.id }, data: { reachout: status.slice(0, 60) } });
@@ -43,7 +43,7 @@ export async function markReachout(quoteCreatorId: string, status: string) {
 
 /** Emails a creator their personalised message, from the CRM, with replies to the sender. */
 export async function emailCreator(quoteCreatorId: string, to: string, subject: string, body: string) {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const qc = await planCreator(viewer, quoteCreatorId);
   if (!qc) return { ok: false, message: "Not your plan." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { ok: false, message: "No valid email for this creator." };
@@ -60,7 +60,7 @@ export async function emailCreator(quoteCreatorId: string, to: string, subject: 
 
 /** Makes (or rewrites) the plan's external and internal Google Sheets. */
 export async function planSheets(_: ActionState, form: FormData): Promise<ActionState> {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const id = text(form, "id");
   const quote = id ? await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, select: { id: true } }) : null;
   if (!quote) return fail("Not your plan.");

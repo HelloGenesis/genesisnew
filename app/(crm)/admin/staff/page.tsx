@@ -5,7 +5,7 @@ import { STAFF_ROLE, date } from "@/lib/crm/catalog";
 import { AREAS, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
-import { inviteStaff, resetTwoFactor, revokeStaff, setGrants, setStaffProfile } from "../actions/finance";
+import { grantPortalAccess, inviteStaff, resetTwoFactor, revokeStaff, setGrants, setStaffProfile } from "../actions/finance";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Staff & roles" };
@@ -18,32 +18,61 @@ export const metadata = { title: "Staff & roles" };
 export default async function StaffPage() {
   const viewer = await requireStaff("staff");
   const prisma = getPrisma();
-  const [roles, invites] = await Promise.all([
+  const [roles, invites, clients] = await Promise.all([
     prisma.staffRole.findMany({ include: { user: { include: { staffTotp: true } } }, orderBy: { createdAt: "asc" } }),
     prisma.staffInvite.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.account.findMany({ where: { kind: { in: ["BRAND", "AGENCY"] } }, orderBy: { name: "asc" }, select: { id: true, name: true }, take: 1000 }),
   ]);
   const people = [...new Map(roles.map((r) => [r.userId, r.user])).values()];
   return (
     <>
       <PageHead kicker="Setup" title="Staff & roles" />
       <Card title="What each role can do">
-        <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+        <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {Object.entries(STAFF_ROLE).map(([k, v]) => (
             <div key={k} className="rounded-xl bg-[var(--hover-wash)] px-3 py-2"><dt className="text-bone">{v.label}</dt><dd className="text-[0.8125rem] text-ash">{v.does}</dd></div>
           ))}
         </dl>
       </Card>
       <Card title="Add someone">
-        <ActionForm action={inviteStaff} submit="Grant role" reset>
-          <div className="grid gap-3 sm:grid-cols-[1fr_12rem]">
-            <Field label="Email"><input name="email" type="email" required className="crm-input" /></Field>
-            <Field label="Role"><Select name="role" required defaultValue="PRODUCER" options={Object.entries(STAFF_ROLE).map(([k, v]) => [k, v.label] as const)} /></Field>
-          </div>
+        <ActionForm action={inviteStaff} submit="Grant access" reset>
+          <Field label="Email"><input name="email" type="email" required className="crm-input max-w-md" /></Field>
+          {/* Several roles at once (Genesis, 22 Oct 2026: "add multiple section options"). */}
+          <fieldset>
+            <legend className="crm-label">Roles (tick any)</legend>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(STAFF_ROLE).filter(([k]) => k !== "OWNER" || isSuperAdmin(viewer)).map(([k, v]) => (
+                <label key={k} className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--glass-border)] px-3 py-1.5 text-[0.875rem] text-ash has-[:checked]:border-[#ffc516] has-[:checked]:text-bone">
+                  <input type="checkbox" name="role" value={k} className="accent-[#ffc516]" /> {v.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </ActionForm>
       </Card>
+      <Card title="Portal access (their side only)">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ActionForm action={grantPortalAccess} submit="Give client access" reset>
+            <input type="hidden" name="type" value="client" />
+            <p className="text-[0.875rem] text-ash">A client sees only their own projects, approvals, briefs and invoices.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Their email"><input name="email" type="email" required className="crm-input" /></Field>
+              <Field label="Client"><Select name="accountId" options={clients.map((a) => [a.id, a.name] as const)} placeholder="Pick a client" /></Field>
+            </div>
+          </ActionForm>
+          <ActionForm action={grantPortalAccess} submit="Give influencer access" reset>
+            <input type="hidden" name="type" value="influencer" />
+            <p className="text-[0.875rem] text-ash">An influencer sees only their own profile and the campaigns they&apos;re on.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Their email"><input name="email" type="email" required className="crm-input" /></Field>
+              <Field label="Instagram handle"><input name="handle" required placeholder="@handle" className="crm-input" /></Field>
+            </div>
+          </ActionForm>
+        </div>
+      </Card>
       <p className="text-[0.875rem] text-ash">
-        <b className="text-bone">Owner = super admin</b>: sees everything, everyone&apos;s. Everyone else sees only their own leads, quotes, invoices, clients, projects and Gmail &amp; Drive finds,
-        plus anything ticked under &ldquo;Can also see&rdquo;.
+        <b className="text-bone">Owner = super admin</b>: sees everything, everyone&apos;s. Everyone else sees only their own leads, invoices, clients, projects and Gmail &amp; Drive finds,
+        plus anything ticked under &ldquo;Can also see&rdquo;. The <b className="text-bone">influencer database</b> is private: owners, the influencer team, and people ticked for it.
       </p>
       <Table head={["Person", "Roles", "Can also see", "Two-factor app", "Last sign-in"]}>
         {people.map((u) => (

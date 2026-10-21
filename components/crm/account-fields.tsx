@@ -1,5 +1,6 @@
 import { Field, Select } from "@/components/crm/ui";
-import { ACCOUNT_KIND, ACCOUNT_STATUS } from "@/lib/crm/catalog";
+import { MultiSelect } from "@/components/crm/multi-select";
+import { ACCOUNT_KIND, ACCOUNT_STATUS, VENDOR_SKILLS } from "@/lib/crm/catalog";
 
 type Account = {
   name: string;
@@ -23,6 +24,7 @@ type Account = {
   commissionPercent: number;
   vendorSkills: string[];
   vendorRateNote: string | null;
+  vendorCommissionPercent?: number | null;
 };
 
 /** The account form's fields — shared by "Add an account" and an account's own page. */
@@ -54,9 +56,10 @@ export function AccountFields({ account, staff, agencies, resellers }: { account
         </label>
         <Field label="Commission %"><input name="commissionPercent" type="number" min={0} max={50} defaultValue={account?.commissionPercent ?? 10} className="crm-input" /></Field>
       </fieldset>
-      <fieldset className="grid gap-3 rounded-xl border border-[var(--glass-border)] p-3 sm:grid-cols-2">
+      <fieldset className="grid gap-3 rounded-xl border border-[var(--glass-border)] p-3 sm:grid-cols-3">
         <legend className="px-1 text-[0.8125rem] text-ash">Vendors</legend>
-        <Field label="Skills" hint="Comma separated: editor, DOP, motion, AI artist…"><input name="vendorSkills" defaultValue={account?.vendorSkills.join(", ")} className="crm-input" /></Field>
+        <Field label="Skills" hint="Pick any, or write your own."><MultiSelect name="vendorSkills" label="Pick skills" allowCustom options={VENDOR_SKILLS.map((s) => [s, s] as const)} defaultValue={account?.vendorSkills ?? []} /></Field>
+        <Field label="Commission %" hint="If they work on commission."><input name="vendorCommissionPercent" type="number" min={0} max={100} step="0.5" defaultValue={account?.vendorCommissionPercent ?? ""} className="crm-input" placeholder="e.g. 10" /></Field>
         <Field label="Rates"><input name="vendorRateNote" defaultValue={account?.vendorRateNote ?? ""} className="crm-input" placeholder="₹8,000 per reel edit" /></Field>
       </fieldset>
       <Field label="Notes"><textarea name="notes" defaultValue={account?.notes ?? ""} className="crm-input" /></Field>

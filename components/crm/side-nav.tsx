@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 export type NavGroup = { label: string; items: { href: string; label: string; count?: number }[] };
 
 /** Sidebar on desktop, a scrollable strip on phones (as genesis-coworking's AdminNav). */
-export function SideNav({ groups, root, label }: { groups: NavGroup[]; root: string; label: string }) {
+/** `title`: the bold heading over the desktop sidebar ("GENESIS MEDIA", as the tour's "YOUR AGENCY"). */
+export function SideNav({ groups, root, label, title }: { groups: NavGroup[]; root: string; label: string; title?: string }) {
   const path = usePathname() ?? root;
   const matches = (href: string) => (href === root ? path === root : path === href || path.startsWith(`${href}/`));
   /* The most specific item wins: /admin/expenses/gst lights GST, not Expenses too. */
@@ -25,10 +26,11 @@ export function SideNav({ groups, root, label }: { groups: NavGroup[]; root: str
       </nav>
       <nav aria-label={label} className="hidden lg:block">
         <div className="sticky top-20 space-y-6">
+          {title && <p className="crm-side-title px-3.5">{title}</p>}
           {groups.map((g) => (
             <div key={g.label}>
-              <p className="micro-label mb-2 px-3">{g.label}</p>
-              <div className="flex flex-col gap-0.5">{g.items.map(link)}</div>
+              <p className="mb-1.5 px-3.5 text-[0.6875rem] uppercase tracking-[0.12em] text-faint">{g.label}</p>
+              <div className="flex flex-col gap-1">{g.items.map(link)}</div>
             </div>
           ))}
         </div>

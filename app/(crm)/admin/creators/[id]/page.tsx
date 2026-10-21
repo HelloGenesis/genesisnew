@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
 import { CreatorFields } from "@/components/crm/creator-fields";
 import { Card, PageHead, Status, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { CAMPAIGN_CREATOR_STATUS, CREATOR_TIER, date, money } from "@/lib/crm/catalog";
+import { seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { saveCreator } from "../../actions/delivery";
@@ -13,7 +14,8 @@ import { saveCreator } from "../../actions/delivery";
 export const dynamic = "force-dynamic";
 
 export default async function CreatorPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireStaff();
+  const viewer = await requireStaff();
+  if (!seesCreators(viewer)) redirect("/admin/forbidden");
   const { id } = await params;
   const creator = await getPrisma().creator.findUnique({ where: { id }, include: { campaigns: { orderBy: { createdAt: "desc" }, include: { project: { include: { account: true } } } } } });
   if (!creator) notFound();

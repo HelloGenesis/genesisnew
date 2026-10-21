@@ -28,23 +28,23 @@ export function CrmPricing({ compact = false }: { compact?: boolean }) {
           </button>
         ))}
       </div>
-      <ul className="mt-8 grid gap-4 lg:grid-cols-3">
+      <ul className={`${compact ? "mt-5 sm:grid-cols-3" : "mt-8 lg:grid-cols-3"} grid gap-4`}>
         {CRM_PLAN_PRICES.map((p) => {
           const popular = "popular" in p && p.popular;
           return (
-            <li key={p.key} className={`glass glass-lit relative flex flex-col rounded-card p-6 sm:p-7 ${popular ? "ring-2 ring-[#ffc516]" : ""}`}>
+            <li key={p.key} className={`glass glass-lit relative flex flex-col rounded-card ${compact ? "p-5" : "p-6 sm:p-7"} ${popular ? "ring-2 ring-[#ffc516]" : ""}`}>
               {popular && <span className="absolute -top-3 left-6 rounded-full bg-[#ffc516] px-3 py-1 text-[0.75rem] font-medium text-[#141216]">Most agencies pick this</span>}
-              <h3 className="text-lead font-semibold text-bone">{p.key}</h3>
-              <p className="mt-1 text-small text-ash">{p.blurb}</p>
-              <p className="mt-6 flex items-baseline gap-1">
-                <span className="text-h3 font-normal tabular-nums text-bone">{inr(crmPerMonth(p, billing))}</span>
+              <h3 className={`${compact ? "text-body" : "text-lead"} font-semibold text-bone`}>{p.key}</h3>
+              <p className="mt-1 text-small text-ash">{compact ? p.features.find((f) => /users/i.test(f)) : p.blurb}</p>
+              <p className={`${compact ? "mt-4" : "mt-6"} flex items-baseline gap-1`}>
+                <span className={`${compact ? "text-[1.75rem]" : "text-h3"} font-normal tabular-nums text-bone`}>{inr(crmPerMonth(p, billing))}</span>
                 <span className="text-small text-ash">/ month</span>
               </p>
               <p className="mt-1 text-[0.8125rem] text-faint">
                 {billing === "annual" ? `${inr(crmCycleCharge(p, "annual"))} billed yearly` : `Billed monthly · ${inr(crmPerMonth(p, "annual"))}/month on annual`} · + 18% GST
               </p>
-              {/* Phone: the features fold away on the homepage; tablet: two columns, as the cards stack full width there. */}
-              <ul className={`mt-6 flex-1 gap-x-6 space-y-2.5 sm:grid sm:grid-cols-2 sm:space-y-0 sm:gap-y-2.5 lg:block lg:space-y-2.5 ${compact ? "hidden sm:grid" : ""}`}>
+              {/* The homepage keeps the cards small, as its other plan cards (Genesis, 22 Oct 2026): the full list is on /resellers. Tablet: two columns. */}
+              <ul className={`mt-6 flex-1 gap-x-6 space-y-2.5 sm:grid sm:grid-cols-2 sm:space-y-0 sm:gap-y-2.5 lg:block lg:space-y-2.5 ${compact ? "hidden" : ""}`}>
                 {p.features.map((f) => (
                   <li key={f} className="flex gap-2.5 text-small text-ash">
                     <Check className="mt-0.5 size-4 shrink-0 text-[#ffc516]" aria-hidden />
@@ -52,14 +52,15 @@ export function CrmPricing({ compact = false }: { compact?: boolean }) {
                   </li>
                 ))}
               </ul>
-              <button type="button" onClick={() => setChosen(p)} className={`mt-7 inline-flex h-12 items-center justify-center rounded-full px-6 text-small font-medium transition-colors ${popular ? "bg-[#ffc516] text-[#141216] hover:bg-[#ffd24d]" : "border border-[var(--glass-border)] text-bone hover:bg-[var(--hover-wash)]"}`}>
+              {compact && <div className="flex-1" />}
+              <button type="button" onClick={() => setChosen(p)} className={`${compact ? "mt-5 h-10" : "mt-7 h-12"} inline-flex items-center justify-center rounded-full px-6 text-small font-medium transition-colors ${popular ? "bg-[#ffc516] text-[#141216] hover:bg-[#ffd24d]" : "border border-[var(--glass-border)] text-bone hover:bg-[var(--hover-wash)]"}`}>
                 Choose {p.key}
               </button>
             </li>
           );
         })}
       </ul>
-      <p className="mt-6 text-small text-faint">
+      <p className={`mt-6 text-small text-faint ${compact ? "hidden" : ""}`}>
         Prices exclude 18% GST. Annual is paid for the year upfront; monthly is 10% more, paid month by month. Pay by card, UPI AutoPay or netbanking through Razorpay. Resellers earn 20% of every payment from the agencies they bring, for the first 12 months.
       </p>
       {chosen && <CrmCheckout plan={chosen} billing={billing} onBilling={setBilling} onClose={() => setChosen(null)} />}
