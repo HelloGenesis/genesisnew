@@ -6,7 +6,7 @@ import { CreatorFields } from "@/components/crm/creator-fields";
 import { Card, PageHead, Status, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { CAMPAIGN_CREATOR_STATUS, CREATOR_TIER, date, money } from "@/lib/crm/catalog";
-import { seesCreators } from "@/lib/crm/scope";
+import { seesCreators, creatorScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { saveCreator } from "../../actions/delivery";
@@ -17,7 +17,7 @@ export default async function CreatorPage({ params }: { params: Promise<{ id: st
   const viewer = await requireStaff();
   if (!seesCreators(viewer)) redirect("/admin/forbidden");
   const { id } = await params;
-  const creator = await getPrisma().creator.findUnique({ where: { id }, include: { campaigns: { orderBy: { createdAt: "desc" }, include: { project: { include: { account: true } } } } } });
+  const creator = await getPrisma().creator.findFirst({ where: { id, ...creatorScope(viewer) }, include: { campaigns: { orderBy: { createdAt: "desc" }, include: { project: { include: { account: true } } } } } });
   if (!creator) notFound();
   const paid = creator.campaigns.filter((c) => c.status === "POSTED" || c.status === "PAID");
   return (

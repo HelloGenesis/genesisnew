@@ -102,6 +102,19 @@ export async function saveInvoice(_: ActionState, form: FormData): Promise<Actio
   }
   await refreshInvoice(id!);
   if (!v.id) await assignSignatory(id!);
+  /* The client's billing details, kept on the client the first time they're typed, so the next invoice and quote fill them in. */
+  if (data.accountId) {
+    const account = await prisma.account.findUnique({ where: { id: data.accountId }, select: { legalName: true, gstin: true, billingAddress: true, email: true } });
+    if (account) {
+      const fill = {
+        ...(!account.legalName && data.billToName ? { legalName: data.billToName } : {}),
+        ...(!account.gstin && data.billToGstin ? { gstin: data.billToGstin } : {}),
+        ...(!account.billingAddress && data.billToAddress ? { billingAddress: data.billToAddress } : {}),
+        ...(!account.email && data.billToEmail ? { email: data.billToEmail } : {}),
+      };
+      if (Object.keys(fill).length) await prisma.account.update({ where: { id: data.accountId }, data: fill });
+    }
+  }
   done();
   if (!v.id) redirect(`/admin/invoices/${id}?saved=1`);
   return ok("Saved.");
@@ -150,6 +163,9 @@ export async function invoiceFromQuote(form: FormData) {
   const prisma = getPrisma();
   const q = id ? await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) }, include: { lines: { orderBy: { position: "asc" } }, creators: true, account: true } }) : null;
   if (!q) return;
+  /* One invoice per quote: an existing one opens instead of a duplicate. */
+  const existing = await prisma.invoice.findFirst({ where: { quoteId: q.id, status: { not: "CANCELLED" } }, select: { id: true } });
+  if (existing) redirect(`/admin/invoices/${existing.id}`);
   const fees = q.creators.reduce((s, c) => s + (c.feePaise ?? 0), 0);
   const issueDate = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
   const gstin = q.account?.gstin ?? null;

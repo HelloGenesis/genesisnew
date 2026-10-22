@@ -42,6 +42,12 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
         <Link href="/admin/invoices" className="crm-btn crm-btn-secondary crm-btn-sm">All invoices</Link>
       </PageHead>
       {saved && <Notice>Saved as {inv.number}. Check it, then send.</Notice>}
+      {/* What prints under "To," (Genesis, 22 Oct 2026): name, address, then the customer's GST No. and PAN No. */}
+      {inv.status === "DRAFT" && (!inv.billToAddress || !inv.billToGstin) && (
+        <Notice warn>
+          Add the client&apos;s {[!inv.billToAddress && "billing address", !inv.billToGstin && "GSTIN (the PAN fills from it)"].filter(Boolean).join(" and ")} under <b>Billed to</b> below: they print under &ldquo;To,&rdquo; on the invoice. Saved once, they fill in for this client next time.
+        </Notice>
+      )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <Card title={inv.status === "DRAFT" ? "Send to the client" : "Send again"}>
           {inv.status === "CANCELLED" ? (

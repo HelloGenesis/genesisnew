@@ -90,6 +90,8 @@ export default async function InvoiceDocument({ params, searchParams }: { params
   const showSupporting = doc === "supporting" || doc === "both";
   const fileUrl = (id: string) => `/api/crm/invoices/file/${id}?t=${inv.token}`;
   const cell = "border border-[#111] px-2 py-1 align-top";
+  /* Money never breaks between the ₹ and the amount. */
+  const amount = `${cell} whitespace-nowrap text-right`;
 
   return (
     <div className="min-h-dvh bg-[#eef2f7] py-6 text-[#111] print:bg-white print:py-0 [color-scheme:light]">
@@ -121,7 +123,7 @@ export default async function InvoiceDocument({ params, searchParams }: { params
                 <td className={`${cell} py-3`}>
                   <span className="block font-bold">To,</span>
                   <span className="block font-bold uppercase">{inv.billToName}</span>
-                  {inv.billToAddress && <span className="block font-bold">{inv.billToAddress}</span>}
+                  {inv.billToAddress && <span className="block whitespace-pre-line font-bold">{inv.billToAddress}</span>}
                   <span className="mt-4 block font-bold">Customer</span>
                   {inv.billToGstin && <span className="block">GST No. {inv.billToGstin}</span>}
                   {inv.billToPan && <span className="block">PAN No. {inv.billToPan}</span>}
@@ -170,11 +172,11 @@ export default async function InvoiceDocument({ params, searchParams }: { params
                     <td className={`${cell} text-center`}>{l.sac}</td>
                     <td className={`${cell} text-center`}>{l.qty}</td>
                     <td className={`${cell} text-center`}>{l.unit}</td>
-                    <td className={`${cell} text-right`}>{inr(l.unitPaise)}</td>
-                    <td className={`${cell} text-right`}>{inr(share)}</td>
+                    <td className={amount}>{inr(l.unitPaise)}</td>
+                    <td className={amount}>{inr(share)}</td>
                     <td className={cell}>{rate}</td>
-                    <td className={`${cell} text-right`}>{inr(tax)}</td>
-                    <td className={`${cell} text-right`}>{inr(share + tax)}</td>
+                    <td className={amount}>{inr(tax)}</td>
+                    <td className={amount}>{inr(share + tax)}</td>
                   </tr>
                 );
               })}
@@ -186,11 +188,11 @@ export default async function InvoiceDocument({ params, searchParams }: { params
                 <td className={cell}>TOTAL</td>
                 <td className={`${cell} text-right`}>{inv.lines.reduce((n, l) => n + l.qty, 0)}</td>
                 <td className={cell} />
-                <td className={`${cell} text-right`}>{inr(inv.subtotalPaise)}</td>
-                <td className={`${cell} text-right`}>{inr(taxable)}</td>
+                <td className={amount}>{inr(inv.subtotalPaise)}</td>
+                <td className={amount}>{inr(taxable)}</td>
                 <td className={cell} />
-                <td className={`${cell} text-right`}>{inr(totalTax)}</td>
-                <td className={`${cell} text-right`}>{inr(inv.totalPaise)}</td>
+                <td className={amount}>{inr(totalTax)}</td>
+                <td className={amount}>{inr(inv.totalPaise)}</td>
               </tr>
               {[
                 ["PAYEE NAME", s.payee, "ASSESABLE VALUE", inr(taxable)],
@@ -212,7 +214,7 @@ export default async function InvoiceDocument({ params, searchParams }: { params
               <tr className="font-bold">
                 <td className={cell} colSpan={7}>TOTAL INVOICE VALUE IN INR (WORDS) : {inWords(inv.totalPaise)}</td>
                 <td className={cell} colSpan={2}>TOTAL INVOICE VALUE INR</td>
-                <td className={`${cell} text-right`}>{inr(inv.totalPaise)}</td>
+                <td className={amount}>{inr(inv.totalPaise)}</td>
               </tr>
               <tr>
                 <td className={`${cell} h-36 text-center`} colSpan={10}>

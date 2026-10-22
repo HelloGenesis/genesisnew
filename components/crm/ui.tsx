@@ -75,7 +75,8 @@ export function Card({ title, action, children, className = "" }: { title?: Reac
     <section className={`crm-card crm-pad ${className}`}>
       {(title || action) && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          {title && <h2 className="text-[0.9375rem] font-normal text-ash">{title}</h2>}
+          {/* Easy to read at a glance (Genesis, 22 Oct 2026: "make the font size big and user friendly"). */}
+          {title && <h2 className="font-sans text-[1.1875rem] font-semibold tracking-[-0.005em] text-bone">{title}</h2>}
           {action}
         </div>
       )}

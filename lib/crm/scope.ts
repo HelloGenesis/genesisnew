@@ -17,7 +17,6 @@ import type { Viewer } from "./session";
 
 export const AREAS: Record<string, string> = {
   leads: "All leads & briefs",
-  creators: "Influencer database",
   billing: "All billing & invoices",
   clients: "All clients",
   projects: "All projects",
@@ -29,12 +28,32 @@ export const isSuperAdmin = (v: Viewer) => v.roles.includes("OWNER");
 export const sees = (v: Viewer, area: keyof typeof AREAS | string) => isSuperAdmin(v) || v.grants.includes(area);
 
 /*
- * THE INFLUENCER DATABASE IS PRIVATE (Genesis, 22 Oct 2026: "all influencer
- * data should only be seen by the super admin / owner; other than that only a
- * particular person"). Owners, the influencer team, and anyone an owner ticks
- * "Influencer database" for in Staff & roles.
+ * THE INFLUENCER DATABASE IS PRIVATE (Genesis, 22 Oct 2026: "influencer
+ * database shouldn't be visible to all; give an option to grant access"). Set
+ * per person in Staff & roles:
+ *   all  — the whole database (owners always; grant "creators");
+ *   own  — no access to the main database, but every creator they add, import
+ *          or put on a plan is saved to it, and they see just those (grant
+ *          "creators:own"; the influencer team's default);
+ *   none — no influencer data.
  */
-export const seesCreators = (v: Viewer) => sees(v, "creators") || v.roles.includes("INFLUENCER");
+export type CreatorAccess = "all" | "own" | "none";
+export const CREATOR_ACCESS: Record<CreatorAccess, string> = {
+  none: "No influencer data",
+  own: "Only what they add (saved to the database, can't see the rest)",
+  all: "All influencer data",
+};
+export function creatorAccess(v: Viewer): CreatorAccess {
+  if (sees(v, "creators")) return "all";
+  if (v.grants.includes("creators:own")) return "own";
+  if (v.grants.includes("creators:none")) return "none";
+  /* Not set yet: the influencer team adds to the database without seeing it. */
+  return v.roles.includes("INFLUENCER") ? "own" : "none";
+}
+/** May open the influencer database at all (all of it, or their own entries). */
+export const seesCreators = (v: Viewer) => creatorAccess(v) !== "none";
+/** The creators this person may see: everyone's, or only the ones they added. */
+export const creatorScope = (v: Viewer): Prisma.CreatorWhereInput => (creatorAccess(v) === "all" ? {} : { createdById: v.id });
 
 /** Only influencer plans (the influencer team without a sales role). */
 export const plansOnly = (v: Viewer) => !isSuperAdmin(v) && !v.roles.some((r) => r === "ADMIN" || r === "SALES") && v.roles.includes("INFLUENCER");

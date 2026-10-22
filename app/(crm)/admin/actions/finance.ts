@@ -236,9 +236,11 @@ export async function setGrants(_: ActionState, form: FormData): Promise<ActionS
   if (!isSuperAdmin(viewer)) return fail("Only super admins can change this.");
   const userId = text(form, "userId");
   if (!userId) return fail("Pick someone.");
-  const grants = form.getAll("grants").map(String).filter((g) => g in AREAS);
+  /* The influencer-data choice is one of three (lib/crm/scope CREATOR_ACCESS), kept in grants as "creators" or "creators:own". */
+  const creators = text(form, "creatorAccess");
+  const grants = [...form.getAll("grants").map(String).filter((g) => g in AREAS), ...(creators === "all" ? ["creators"] : creators === "own" ? ["creators:own"] : creators === "none" ? ["creators:none"] : [])];
   await getPrisma().user.update({ where: { id: userId }, data: { grants } });
   await recordAuditLog({ action: "staff.grants", entity: "user", entityId: userId, actorId: viewer.id, metadata: { grants } });
   done();
-  return ok(grants.length ? `Now sees: ${grants.map((g) => AREAS[g]).join(", ")}.` : "Sees only their own records.");
+  return ok(grants.length ? `Now sees: ${grants.map((g) => AREAS[g] ?? (g === "creators" ? "all influencer data" : g === "creators:own" ? "influencers they add" : "no influencer data")).join(", ")}.` : "Sees only their own records.");
 }

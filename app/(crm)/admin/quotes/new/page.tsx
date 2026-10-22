@@ -4,7 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { builderData } from "@/lib/crm/quote-data";
 import { termsByKey, termsFor } from "@/lib/crm/quote-templates";
 import { daysFromNow } from "@/lib/crm/options";
-import { plansOnly, seesCreators } from "@/lib/crm/scope";
+import { plansOnly, seesCreators, creatorScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
   const accountId = p.account ?? brief?.accountId ?? request?.accountId ?? lead?.accountId ?? null;
   const account = accountId ? await prisma.account.findUnique({ where: { id: accountId }, include: { members: { include: { user: true }, take: 1 } } }) : null;
   const pickedIds = (Array.isArray(p.creators) ? p.creators : p.creators ? [p.creators] : []).slice(0, 200);
-  const picked = pickedIds.length && seesCreators(viewer) ? await prisma.creator.findMany({ where: { id: { in: pickedIds } }, orderBy: { followers: "asc" } }) : [];
+  const picked = pickedIds.length && seesCreators(viewer) ? await prisma.creator.findMany({ where: { id: { in: pickedIds }, ...creatorScope(viewer) }, orderBy: { followers: "asc" } }) : [];
   /* The influencer team only makes influencer plans (lib/crm/scope plansOnly). */
   const kind = p.kind === "INFLUENCER_PLAN" || picked.length || plansOnly(viewer) ? "INFLUENCER_PLAN" : "QUOTE";
   const division = brief?.division ?? lead?.division ?? (kind === "INFLUENCER_PLAN" ? "INFLUENCE" : null);
@@ -75,7 +75,7 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
       };
     }),
   };
-  const data = await builderData(seesCreators(viewer));
+  const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null);
   return (
     <>
       <PageHead kicker="Sales" title={kind === "INFLUENCER_PLAN" ? "New influencer plan" : "New quote"} sub={request ? `For request: ${request.title}` : lead ? `For lead: ${lead.name}` : undefined} />
