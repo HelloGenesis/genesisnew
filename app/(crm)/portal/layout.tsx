@@ -8,6 +8,8 @@ import { getViewer, portalAccountCookie, portalAccounts } from "@/lib/crm/sessio
 
 import { switchAccount } from "./actions";
 import { SignOut } from "@/components/crm/sign-out";
+import { AppTour } from "@/components/crm/app-tour";
+import { Suspense } from "react";
 
 export const metadata: Metadata = { title: { default: "Portal", template: "%s · Genesis portal" } };
 export const dynamic = "force-dynamic";
@@ -53,6 +55,8 @@ export default async function PortalLayout({ children }: { children: React.React
           ? [{ label: "Agency", items: [{ href: "/portal/brands", label: "Brands" }, ...(account.isReseller ? [{ href: "/portal/referrals", label: "Referrals & commission" }] : [])] }]
           : []),
       ];
+  groups.push({ label: "Help", items: [{ href: "/portal?tour=1", label: "Take the tour" }] });
+  const tourSeen = Boolean(await prisma.appSetting.findUnique({ where: { key: `tour:done:${viewer.id}` }, select: { key: true } }));
 
   return (
     <div className="crm-shell mx-auto w-full max-w-[1400px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[264px_minmax(0,1fr)]">
@@ -79,6 +83,9 @@ export default async function PortalLayout({ children }: { children: React.React
         </div>
       </div>
       <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-9 lg:py-8">{children}</main>
+      <Suspense fallback={null}>
+        <AppTour firstTime={!tourSeen} name={viewer.name} area="portal" />
+      </Suspense>
     </div>
   );
 }
