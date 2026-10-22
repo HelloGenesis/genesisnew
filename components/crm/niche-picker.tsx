@@ -10,7 +10,8 @@ import { NICHES } from "@/lib/crm/niches";
  * form still receives one comma-separated `niches` field, so saving is
  * unchanged.
  */
-export function NichePicker({ name = "niches", defaultValue = [] }: { name?: string; defaultValue?: string[] }) {
+/* `options` and the two labels let the same chips pick languages too (Genesis, 22 Oct 2026). */
+export function NichePicker({ name = "niches", defaultValue = [], options = NICHES, label = "Choose categories", addLabel = "Add your own category" }: { name?: string; defaultValue?: string[]; options?: readonly string[]; label?: string; addLabel?: string }) {
   const [picked, setPicked] = useState<string[]>(defaultValue);
   const [custom, setCustom] = useState("");
   const toggle = (niche: string) => setPicked((now) => (now.some((n) => n.toLowerCase() === niche.toLowerCase()) ? now.filter((n) => n.toLowerCase() !== niche.toLowerCase()) : [...now, niche]));
@@ -19,18 +20,18 @@ export function NichePicker({ name = "niches", defaultValue = [] }: { name?: str
     if (value && !picked.some((n) => n.toLowerCase() === value.toLowerCase())) setPicked((now) => [...now, value]);
     setCustom("");
   };
-  const extras = picked.filter((p) => !NICHES.some((n) => n.toLowerCase() === p.toLowerCase()));
+  const extras = picked.filter((p) => !options.some((n) => n.toLowerCase() === p.toLowerCase()));
   return (
     <div>
       <input type="hidden" name={name} value={picked.join(", ")} />
       <details className="group relative">
         <summary className="crm-input flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-          <span className={`truncate ${picked.length ? "text-bone" : "text-faint"}`}>{picked.length ? picked.join(", ") : "Choose categories"}</span>
+          <span className={`truncate ${picked.length ? "text-bone" : "text-faint"}`}>{picked.length ? picked.join(", ") : label}</span>
           <span aria-hidden className="text-faint transition-transform group-open:rotate-180">▾</span>
         </summary>
         <div className="absolute left-0 right-0 z-20 mt-1 rounded-xl border border-[var(--glass-border)] bg-[var(--surface-float)] p-3 shadow-[var(--shadow-float)] sm:min-w-[26rem]">
           <div className="flex max-h-56 flex-wrap gap-1.5 overflow-y-auto" data-lenis-prevent>
-            {[...NICHES, ...extras].map((niche) => {
+            {[...options, ...extras].map((niche) => {
               const on = picked.some((n) => n.toLowerCase() === niche.toLowerCase());
               return (
                 <button
@@ -56,7 +57,7 @@ export function NichePicker({ name = "niches", defaultValue = [] }: { name?: str
                 }
               }}
               className="crm-input flex-1"
-              placeholder="Add your own category"
+              placeholder={addLabel}
             />
             <button type="button" onClick={add} className="crm-btn crm-btn-secondary crm-btn-sm">Add</button>
           </div>
