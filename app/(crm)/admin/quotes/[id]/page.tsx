@@ -17,7 +17,9 @@ import { can, requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
 import { invoiceFromQuote } from "../../actions/invoices";
-import { deleteQuote, duplicateQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
+import { DriveCard } from "@/components/crm/drive-card";
+import { archivedPdf } from "@/lib/crm/drive";
+import { archiveQuoteNow, deleteQuote, duplicateQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
 
 const rupee = (v: number | null | undefined) => (v === null || v === undefined ? null : v / 100);
 
@@ -119,6 +121,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             />
           </div>
         </Card>
+        <DriveCard id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} what="quote" />
         <Card title="History">
           <ul className="space-y-1.5 text-[0.9375rem]">
             <li className="text-ash">Created {dateTime(q.createdAt)}</li>

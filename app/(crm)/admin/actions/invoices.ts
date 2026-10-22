@@ -6,6 +6,8 @@ import { z } from "zod";
 
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
+import { archiveInvoice, archiveLater } from "@/lib/crm/archive";
+import { DriveNotConnected } from "@/lib/crm/drive";
 import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
 import { assignSignatory, HOME_STATE, markInvoicePaid, newInvoiceToken, nextNumber, refreshInvoice, sendInvoice, stateFromGstin } from "@/lib/crm/invoices";
 import { invoiceScope, quoteScope } from "@/lib/crm/scope";
@@ -128,6 +130,7 @@ export async function sendInvoiceAction(_: ActionState, form: FormData): Promise
   if (inv.status === "CANCELLED") return fail("It's cancelled.");
   try {
     const { paymentUrl } = await sendInvoice(inv.id, text(form, "message", 2000), form.get("payment") === "on");
+    archiveLater("invoice", inv.id);
     await recordAuditLog({ action: "invoice.sent", entity: "invoice", entityId: inv.id, actorId: viewer.id });
     done();
     return ok(`Sent to ${inv.billToEmail}${paymentUrl && inv.status !== "PAID" ? " with a pay link" : ""}.`);
@@ -142,6 +145,7 @@ export async function markInvoicePaidAction(form: FormData) {
   const inv = await mine(viewer, text(form, "id"));
   if (!inv) return;
   await markInvoicePaid(inv.id);
+  archiveLater("invoice", inv.id);
   await recordAuditLog({ action: "invoice.marked_paid", entity: "invoice", entityId: inv.id, actorId: viewer.id });
   done();
 }
@@ -225,4 +229,18 @@ export async function removeInvoiceFile(form: FormData) {
   await getPrisma().invoiceFile.delete({ where: { id: file.id } });
   if (file.kind === "SIGNED") await getPrisma().invoice.update({ where: { id: file.invoiceId }, data: { signedAt: null, signedById: null } });
   done();
+}
+
+/** "Save to Google Drive now": files this invoice's PDF in the client's folder straight away. */
+export async function archiveInvoiceNow(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await staff();
+  const inv = await mine(viewer, text(form, "id"));
+  if (!inv) return fail("That invoice isn't yours.");
+  try {
+    await archiveInvoice(inv.id);
+    done();
+    return ok("Saved to Google Drive.");
+  } catch (error) {
+    return fail(error instanceof DriveNotConnected ? error.message : `Couldn't save to Drive: ${(error as Error).message.slice(0, 140)}`);
+  }
 }

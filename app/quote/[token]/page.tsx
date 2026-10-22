@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
+import { isArchiveKey } from "@/lib/crm/archive-key";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 import { COMPANY, quoteRef } from "@/lib/crm/quote-templates";
 import { brandSheetLink, type PlanColumns, sharesSheet, sharesTable, showsBrandPrices } from "@/lib/crm/plan-tables";
@@ -42,10 +43,10 @@ const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { nota
  * The link's token is the permission; opening it marks the quote viewed
  * (unless it's Genesis staff looking).
  */
-export default async function QuoteDocument({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ paid?: string; view?: string }> }) {
+export default async function QuoteDocument({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ paid?: string; view?: string; archive?: string }> }) {
   if (!isDatabaseConfigured()) notFound();
   const { token } = await params;
-  const { paid, view: viewParam } = await searchParams;
+  const { paid, view: viewParam, archive } = await searchParams;
   /* Proposal and pricing can go separately (Genesis, 12 Oct 2026): ?view=proposal hides every price, ?view=pricing the proposal. */
   const view = viewParam === "proposal" || viewParam === "pricing" || viewParam === "plan" || viewParam === "proposal-plan" ? viewParam : "both";
   /* Each part on its own or together (Genesis, 12 Oct 2026): proposal, pricing, influencer plan. */
@@ -61,7 +62,8 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const showPricing = (view === "both" || view === "pricing") && (has("pricing") || (has("plan") && feesInTotal));
   const showLines = has("pricing");
   const showCreators = (view === "both" || view === "plan" || view === "proposal-plan") && has("plan");
-  const staff = staffAccess(await getViewer().catch(() => null)) === "granted";
+  /* The Drive copy being printed (lib/crm/archive) is not the client opening it. */
+  const staff = isArchiveKey(token, archive) || staffAccess(await getViewer().catch(() => null)) === "granted";
   if (!staff && q.status === "SENT") await prisma.quote.update({ where: { id: q.id }, data: { status: "VIEWED", viewedAt: new Date() } });
 
   const plan = q.kind === "INFLUENCER_PLAN";

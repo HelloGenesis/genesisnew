@@ -6,13 +6,14 @@ import { notFound } from "next/navigation";
 
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { INVOICE_TERMS, supplierDetails } from "@/lib/crm/invoices";
+import { isArchiveKey } from "@/lib/crm/archive-key";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 
 import { PrintButton } from "../../quote/[token]/print-button";
 
 export const dynamic = "force-dynamic";
 
-type Search = { paid?: string; doc?: string; preview?: string };
+type Search = { paid?: string; doc?: string; preview?: string; archive?: string };
 
 /* Save as PDF takes the page title as the file name: "Invoice 110142 - Client", "Invoice 110142 - Supporting Document". */
 export async function generateMetadata({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<Search> }): Promise<Metadata> {
@@ -72,12 +73,13 @@ function Logo() {
 export default async function InvoiceDocument({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<Search> }) {
   if (!isDatabaseConfigured()) notFound();
   const { token } = await params;
-  const { paid, doc, preview } = await searchParams;
+  const { paid, doc, preview, archive } = await searchParams;
   const prisma = getPrisma();
   const inv = await prisma.invoice.findUnique({ where: { token }, include: { lines: { orderBy: { position: "asc" } }, files: { orderBy: { position: "asc" } } } });
   if (!inv) notFound();
   /* A draft is only for Genesis staff checking it before it goes. */
-  const staff = staffAccess(await getViewer().catch(() => null)) === "granted";
+  /* Staff, or the Drive copy being printed (lib/crm/archive). */
+  const staff = isArchiveKey(token, archive) || staffAccess(await getViewer().catch(() => null)) === "granted";
   if (inv.status === "DRAFT" && !(preview && staff)) notFound();
   const s = await supplierDetails();
   const taxable = inv.subtotalPaise - inv.discountPaise;

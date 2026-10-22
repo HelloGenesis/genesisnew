@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { recordAuditLog } from "@/lib/audit";
+import { archiveQuote, archiveLater } from "@/lib/crm/archive";
+import { DriveNotConnected } from "@/lib/crm/drive";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
 import { sanitizeHtml } from "@/lib/rich-text";
 import { tidyNiches } from "@/lib/crm/niches";
@@ -312,6 +314,7 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
   try {
     const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";
     const { paymentUrl } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && (view === "both" || view === "pricing"), view);
+    archiveLater("quote", id);
     await recordAuditLog({ action: "quote.sent", entity: "quote", entityId: id, actorId: viewer.id });
     revalidatePath("/admin", "layout");
     return ok(`Sent to ${q.contactEmail}${paymentUrl ? " with a payment link" : ""}.`);
@@ -332,6 +335,7 @@ export async function setQuoteStatus(form: FormData) {
   if (!q || q.status === "PAID") return;
   if (status === "ACCEPTED") {
     await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED", acceptedAt: new Date(), acceptedBy: `Recorded by ${viewer.name ?? viewer.email}` } });
+    archiveLater("quote", id);
     const projectId = await openFor(id);
     revalidatePath("/admin", "layout");
     redirect(`/admin/projects/${projectId}`);
@@ -386,4 +390,19 @@ export async function deleteQuote(form: FormData) {
   await getPrisma().quote.delete({ where: { id } });
   await recordAuditLog({ action: "quote.deleted", entity: "quote", entityId: id, actorId: viewer.id });
   redirect("/admin/quotes");
+}
+
+/** "Save to Google Drive now": files this quote's PDF in the client's "Quotes & plans" folder straight away. */
+export async function archiveQuoteNow(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff("plans");
+  const id = text(form, "id");
+  const q = id ? await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, select: { id: true } }) : null;
+  if (!q) return fail("That quote isn't yours.");
+  try {
+    await archiveQuote(q.id);
+    revalidatePath(`/admin/quotes/${q.id}`);
+    return ok("Saved to Google Drive.");
+  } catch (error) {
+    return fail(error instanceof DriveNotConnected ? error.message : `Couldn't save to Drive: ${(error as Error).message.slice(0, 140)}`);
+  }
 }

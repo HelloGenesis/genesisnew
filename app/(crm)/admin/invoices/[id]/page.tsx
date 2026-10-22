@@ -13,7 +13,9 @@ import { invoiceAccess } from "@/lib/crm/scope";
 import { can, requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
-import { cancelInvoice, markInvoicePaidAction, removeInvoiceFile, sendInvoiceAction, setSupportingLink } from "../../actions/invoices";
+import { DriveCard } from "@/components/crm/drive-card";
+import { archivedPdf } from "@/lib/crm/drive";
+import { archiveInvoiceNow, cancelInvoice, markInvoicePaidAction, removeInvoiceFile, sendInvoiceAction, setSupportingLink } from "../../actions/invoices";
 import { invoiceAccounts } from "../data";
 
 export const dynamic = "force-dynamic";
@@ -99,6 +101,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           </div>
           <div className="mt-3"><InvoiceUpload invoiceId={inv.id} kind="SUPPORTING" label="Add screenshots" /></div>
         </Card>
+        <DriveCard id={inv.id} saved={await archivedPdf(`invoice:${inv.id}`).catch(() => null)} save={archiveInvoiceNow} what="invoice" />
         <Card title="History">
           <ul className="space-y-1.5 text-[0.9375rem]">
             <li className="text-ash">Created {dateTime(inv.createdAt)}</li>
