@@ -37,10 +37,10 @@ export default async function PortalLayout({ children }: { children: React.React
       ]);
 
   const groups: NavGroup[] = vendor
-    ? [{ label: account.name, items: [{ href: "/portal", label: "Overview" }, { href: "/portal/work", label: "My work", count: review }, { href: "/portal/invoices", label: "Invoices & payouts" }] }]
+    ? [{ label: "Workspace", items: [{ href: "/portal", label: "Overview" }, { href: "/portal/work", label: "My work", count: review }, { href: "/portal/invoices", label: "Invoices & payouts" }] }]
     : [
         {
-          label: account.name,
+          label: "Workspace",
           items: [
             { href: "/portal", label: "Overview" },
             { href: "/portal/projects", label: "Projects", count: review },
@@ -55,8 +55,8 @@ export default async function PortalLayout({ children }: { children: React.React
       ];
 
   return (
-    <div className="mx-auto grid w-full max-w-[1280px] gap-6 px-4 pb-16 pt-6 sm:px-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
-      <div className="min-w-0 space-y-5">
+    <div className="crm-shell mx-auto w-full max-w-[1400px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[264px_minmax(0,1fr)]">
+      <div className="crm-side min-w-0 space-y-5 px-4 pt-5 sm:px-6 lg:px-4 lg:py-7">
         {accounts.length > 1 && (
           <form action={switchAccount} className="flex gap-2">
             <select name="accountId" defaultValue={account.id} className="crm-input" aria-label="Account">
@@ -69,7 +69,7 @@ export default async function PortalLayout({ children }: { children: React.React
             <button className="crm-btn crm-btn-secondary crm-btn-sm">Go</button>
           </form>
         )}
-        <SideNav groups={groups} root="/portal" label="Portal" />
+        <SideNav groups={groups} root="/portal" label="Portal" title={account.name} />
         <div className="hidden px-3 text-[0.8125rem] text-faint lg:block">
           <p className="truncate text-ash">{viewer.name ?? viewer.email ?? viewer.phone}</p>
           <div className="mt-2 flex gap-3">
@@ -78,7 +78,7 @@ export default async function PortalLayout({ children }: { children: React.React
           </div>
         </div>
       </div>
-      <main className="min-w-0 space-y-6">{children}</main>
+      <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-9 lg:py-8">{children}</main>
     </div>
   );
 }

@@ -182,8 +182,13 @@ function accountData(form: FormData) {
     managerId: text(form, "managerId"),
     isReseller: reseller,
     commissionPercent: reseller ? Math.max(0, Math.min(50, Number(form.get("commissionPercent") ?? 0) || 0)) : 0,
-    vendorSkills: (text(form, "vendorSkills", 400) ?? "").split(",").map((t) => t.trim()).filter(Boolean),
+    /* One value per ticked skill (the dropdown), or a comma-separated list; typed-in skills too. */
+    vendorSkills: [...new Set(form.getAll("vendorSkills").flatMap((v) => String(v).split(",")).map((t) => t.trim().slice(0, 60)).filter(Boolean))].slice(0, 20),
     vendorRateNote: text(form, "vendorRateNote", 400),
+    vendorCommissionPercent: (() => {
+      const n = Number(text(form, "vendorCommissionPercent", 8) ?? "");
+      return Number.isFinite(n) && n > 0 ? Math.min(100, Math.round(n * 100) / 100) : null;
+    })(),
   };
 }
 

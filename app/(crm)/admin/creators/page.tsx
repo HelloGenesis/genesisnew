@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Upload } from "lucide-react";
 import Link from "next/link";
 
@@ -8,11 +9,15 @@ import { PickBar } from "@/components/crm/pick-bar";
 import { AddPanel, Badge, Empty, PageHead, Table } from "@/components/crm/ui";
 import { NICHES } from "@/lib/crm/niches";
 import { getPrisma } from "@/lib/db";
-import { isSuperAdmin } from "@/lib/crm/scope";
+import { isSuperAdmin, seesCreators } from "@/lib/crm/scope";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { CreatorTier, Platform } from "@/lib/generated/prisma/enums";
 import { CREATOR_TIER, money } from "@/lib/crm/catalog";
 import { requireStaff } from "@/lib/crm/session";
+import { EditCell } from "@/components/crm/edit-cell";
+import { updateCreatorField } from "../actions/delivery";
+
+const edit = (id: string, field: string) => updateCreatorField.bind(null, id, field);
 
 import { saveCreator } from "../actions/delivery";
 
@@ -34,6 +39,7 @@ const usableNiche = (n: string) => /^[A-Za-z][A-Za-z &/'+.-]{1,38}$/.test(n.trim
 
 export default async function CreatorsPage({ searchParams }: { searchParams: Promise<Params> }) {
   const viewer = await requireStaff();
+  if (!seesCreators(viewer)) redirect("/admin/forbidden");
   const p = await searchParams;
   const platforms = many(p.platform).filter((x) => PLATFORMS.some(([v]) => v === x)) as Platform[];
   const tiers = many(p.tier).filter((x) => x in CREATOR_TIER) as CreatorTier[];
@@ -128,25 +134,35 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
               {creators.map((c) => (
                 <tr key={c.id} className={c.blacklisted ? "opacity-50" : ""}>
                   <td><input type="checkbox" name="creators" value={c.id} disabled={c.blacklisted} aria-label={`Select ${c.name}`} className="size-4 accent-[#ffc516]" /></td>
-                  <td className="whitespace-nowrap text-[0.8125rem]">{CREATOR_TIER[c.tier].split(" ")[0]}</td>
+                  {/* Every cell edits in place (Genesis, 22 Oct 2026); the name still opens the full profile. */}
+                  <td className="whitespace-nowrap text-[0.8125rem]"><EditCell value={c.tier} save={edit(c.id, "tier")} placeholder="Tier" options={Object.entries(CREATOR_TIER)}>{CREATOR_TIER[c.tier].split(" ")[0]}</EditCell></td>
                   <td>
-                    <Link href={`/admin/creators/${c.id}`} className="text-bone hover:underline">{c.name}</Link>
-                    <span className="block text-[0.8125rem] text-ash">@{c.handle}{c.platform !== "INSTAGRAM" ? ` · ${c.platform.toLowerCase()}` : ""}</span>
+                    <EditCell value={c.name} save={edit(c.id, "name")} placeholder="Name"><Link href={`/admin/creators/${c.id}`} className="text-bone hover:underline">{c.name}</Link></EditCell>
+                    <span className="block text-[0.8125rem] text-ash"><EditCell value={c.handle} save={edit(c.id, "handle")} placeholder="Handle">@{c.handle}{c.platform !== "INSTAGRAM" ? ` · ${c.platform.toLowerCase()}` : ""}</EditCell></span>
                     <span className="flex flex-wrap gap-1">
                       {c.tags.map((t) => <Badge key={t} tone={t.startsWith("Applied") ? "info" : "muted"}>{t}</Badge>)}
                       {c.blacklisted && <Badge tone="bad">Do not use</Badge>}
                     </span>
                   </td>
-                  <td className="max-w-[12rem] text-[0.875rem]">{c.niches.join(", ") || "—"}</td>
-                  <td>{c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">Profile ↗</a> : "—"}{c.youtubeUrl && <a href={c.youtubeUrl} target="_blank" rel="noreferrer" className="crm-link block text-[0.8125rem]">YouTube ↗</a>}</td>
-                  <td className="tabular-nums">{compact(c.followers)}</td>
-                  <td className="tabular-nums">{compact(c.avgViews)}</td>
-                  <td className="tabular-nums">{c.engagementRate ? `${c.engagementRate}%` : "—"}</td>
-                  <td className="tabular-nums">{c.reelRatePaise ? money(c.reelRatePaise) : "—"}</td>
-                  <td className="tabular-nums">{c.storyRatePaise ? money(c.storyRatePaise) : "—"}</td>
-                  <td className="tabular-nums">{c.dlRatePaise ? money(c.dlRatePaise) : "—"}</td>
-                  <td>{c.city ?? "—"}</td>
-                  <td className="max-w-[12rem] text-[0.8125rem]">{[c.phone, c.email, c.managedBy].filter(Boolean).join(" · ") || "—"}</td>
+                  <td className="max-w-[12rem] text-[0.875rem]"><EditCell value={c.niches.join(", ")} save={edit(c.id, "niches")} placeholder="Category, comma separated" wide>{c.niches.join(", ") || "—"}</EditCell></td>
+                  <td>
+                    <EditCell value={c.profileUrl ?? ""} save={edit(c.id, "profileUrl")} placeholder="Profile link" wide>
+                      {c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">Profile ↗</a> : "—"}
+                    </EditCell>
+                    {c.youtubeUrl && <a href={c.youtubeUrl} target="_blank" rel="noreferrer" className="crm-link block text-[0.8125rem]">YouTube ↗</a>}
+                  </td>
+                  <td className="tabular-nums"><EditCell value={String(c.followers)} save={edit(c.id, "followers")} placeholder="Followers">{compact(c.followers)}</EditCell></td>
+                  <td className="tabular-nums"><EditCell value={c.avgViews ? String(c.avgViews) : ""} save={edit(c.id, "avgViews")} placeholder="Avg views">{compact(c.avgViews)}</EditCell></td>
+                  <td className="tabular-nums"><EditCell value={c.engagementRate ? String(c.engagementRate) : ""} save={edit(c.id, "engagementRate")} placeholder="ER %">{c.engagementRate ? `${c.engagementRate}%` : "—"}</EditCell></td>
+                  <td className="tabular-nums"><EditCell value={c.reelRatePaise ? String(c.reelRatePaise / 100) : ""} save={edit(c.id, "reelRate")} placeholder="1 IG Reel ₹">{c.reelRatePaise ? money(c.reelRatePaise) : "—"}</EditCell></td>
+                  <td className="tabular-nums"><EditCell value={c.storyRatePaise ? String(c.storyRatePaise / 100) : ""} save={edit(c.id, "storyRate")} placeholder="Story + LIB ₹">{c.storyRatePaise ? money(c.storyRatePaise) : "—"}</EditCell></td>
+                  <td className="tabular-nums"><EditCell value={c.dlRatePaise ? String(c.dlRatePaise / 100) : ""} save={edit(c.id, "dlRate")} placeholder="DL (1 month) ₹">{c.dlRatePaise ? money(c.dlRatePaise) : "—"}</EditCell></td>
+                  <td><EditCell value={c.city ?? ""} save={edit(c.id, "city")} placeholder="City">{c.city ?? "—"}</EditCell></td>
+                  <td className="max-w-[14rem] space-y-0.5 text-[0.8125rem]">
+                    <EditCell value={c.phone ?? ""} save={edit(c.id, "phone")} placeholder="Phone">{c.phone ?? <span className="text-faint">Phone</span>}</EditCell>
+                    <EditCell value={c.email ?? ""} save={edit(c.id, "email")} placeholder="Email" wide><span className="break-all">{c.email ?? <span className="text-faint">Email</span>}</span></EditCell>
+                    <EditCell value={c.managedBy ?? ""} save={edit(c.id, "managedBy")} placeholder="Managed by" wide>{c.managedBy ?? <span className="text-faint">Managed by</span>}</EditCell>
+                  </td>
                   <td className="tabular-nums">{c._count.campaigns}</td>
                 </tr>
               ))}

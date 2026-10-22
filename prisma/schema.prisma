@@ -160,6 +160,10 @@ enum StaffRoleKind {
   SALES
   PRODUCER
   FINANCE
+  /// The influencer team: influencer plans and the influencer database.
+  INFLUENCER
+  /// A creative (graphic designer, editor…): the projects and tasks given to them.
+  CREATIVE
 }
 
 model StaffRole {
@@ -249,6 +253,8 @@ model Account {
   /// Vendor profile.
   vendorSkills   String[]      @default([]) @map("vendor_skills")
   vendorRateNote String?       @map("vendor_rate_note")
+  /// A freelancer or vendor paid on commission: their % (e.g. 10 of a campaign's fee).
+  vendorCommissionPercent Float? @map("vendor_commission_percent")
   /// How the vendor is paid (UPI id or bank note) — entered by the vendor, shown to finance only.
   payoutNote     String?       @map("payout_note")
 

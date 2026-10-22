@@ -25,7 +25,7 @@ const fileName = (s: string) => s.replace(/[^\w\s.-]+/g, " ").replace(/\s+/g, " 
 
 async function allowed() {
   const viewer = await getViewer();
-  return viewer && staffAccess(viewer) === "granted" && can(viewer, "sales") ? viewer : null;
+  return viewer && staffAccess(viewer) === "granted" && can(viewer, "plans") ? viewer : null;
 }
 
 function send(input: PlanInput, which: string) {

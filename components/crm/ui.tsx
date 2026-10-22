@@ -43,16 +43,16 @@ export function Stats({ items }: { items: { label: string; value: React.ReactNod
         const body = (
           <>
             <dt className="text-[0.8125rem] text-ash">{s.label}</dt>
-            <dd className={`mt-1 text-[1.5rem] font-semibold tabular-nums ${s.tone === "bad" ? "text-[#dc2626]" : s.tone === "warn" ? "text-brand-ink" : "text-bone"}`}>{s.value}</dd>
+            <dd className={`mt-2 text-[1.625rem] font-normal tabular-nums ${s.tone === "bad" ? "text-[#dc2626]" : s.tone === "warn" ? "text-brand-ink" : "text-bone"}`}>{s.value}</dd>
             {s.hint && <p className="mt-0.5 text-[0.75rem] text-faint">{s.hint}</p>}
           </>
         );
         return s.href ? (
-          <Link key={s.label} href={s.href} className="crm-card block px-4 py-3 transition-transform hover:-translate-y-0.5">
+          <Link key={s.label} href={s.href} className="crm-card block px-5 py-4 transition-colors hover:bg-[var(--crm-card-hover)]">
             {body}
           </Link>
         ) : (
-          <div key={s.label} className="crm-card px-4 py-3">
+          <div key={s.label} className="crm-card px-5 py-4">
             {body}
           </div>
         );
@@ -75,7 +75,7 @@ export function Card({ title, action, children, className = "" }: { title?: Reac
     <section className={`crm-card crm-pad ${className}`}>
       {(title || action) && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          {title && <h2 className="text-[1.0625rem] font-medium text-bone">{title}</h2>}
+          {title && <h2 className="text-[0.9375rem] font-normal text-ash">{title}</h2>}
           {action}
         </div>
       )}

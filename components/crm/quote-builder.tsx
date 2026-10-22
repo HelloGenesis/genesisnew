@@ -750,7 +750,10 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                         <tr key={`${c.handle}-${i}`}>
                           <td className="sticky left-0 z-10 min-w-[11rem] bg-[var(--surface-panel)] text-bone">
                             {c.creatorId ? (
-                              <>{c.name}<span className="block text-[0.75rem] text-ash">@{c.handle}</span></>
+                              <span className="flex flex-col gap-1">
+                                <input value={c.name} onChange={(e) => setCreator(i, { name: e.target.value })} className="crm-input !min-h-8 !w-40 !px-2" placeholder="Name" aria-label="Creator name" />
+                                <span className="text-[0.75rem] text-ash">@{c.handle}</span>
+                              </span>
                             ) : (
                               <span className="flex flex-col gap-1">
                                 <input value={c.name} onChange={(e) => setCreator(i, { name: e.target.value })} className="crm-input !min-h-8 !w-40 !px-2" placeholder="Name" aria-label="Creator name" />
@@ -769,10 +772,18 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                           </td>
                           {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
                           {shows("category") && <td><input value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>}
-                          {shows("ig") && <td>{c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link">Profile ↗</a> : "—"}</td>}
+                          {/* The profile link is editable on every plan (Genesis, 22 Oct 2026), with a way to open it. */}
+                          {shows("ig") && (
+                            <td>
+                              <span className="flex items-center gap-1">
+                                <input value={c.profileUrl ?? ""} onChange={(e) => setCreator(i, { profileUrl: e.target.value.trim() || null })} className="crm-input !min-h-8 !w-44 !px-2" placeholder="Profile link" aria-label="Profile link" />
+                                {c.profileUrl && <a href={/^https?:\/\//i.test(c.profileUrl) ? c.profileUrl : `https://${c.profileUrl}`} target="_blank" rel="noreferrer" className="crm-link shrink-0 text-[0.8125rem]" aria-label="Open profile">↗</a>}
+                              </span>
+                            </td>
+                          )}
                           {shows("followers") && (
                             <td className="tabular-nums whitespace-nowrap">
-                              {c.creatorId ? compact(c.followers) : <input type="number" step="any" min={0} value={c.followers || ""} onChange={(e) => setCreator(i, { followers: Math.max(0, Math.round(Number(e.target.value) || 0)) })} className="crm-input !min-h-8 !w-28 !px-2" placeholder="Followers" />}
+                              {<input type="number" step="any" min={0} value={c.followers || ""} onChange={(e) => setCreator(i, { followers: Math.max(0, Math.round(Number(e.target.value) || 0)) })} className="crm-input !min-h-8 !w-28 !px-2" placeholder="Followers" />}
                             </td>
                           )}
                           {shows("avgViews") && <td><input type="number" step="any" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>}

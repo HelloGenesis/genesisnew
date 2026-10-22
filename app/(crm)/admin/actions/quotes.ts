@@ -15,7 +15,7 @@ import type { Platform } from "@/lib/generated/prisma/enums";
 import { tierFor } from "@/lib/crm/catalog";
 import { newToken, openFor, refreshTotals, sendQuote } from "@/lib/crm/quotes";
 import { termsByKey } from "@/lib/crm/quote-templates";
-import { quoteScope } from "@/lib/crm/scope";
+import { quoteScope, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { RazorpayError, razorpay } from "@/lib/razorpay";
 
@@ -216,7 +216,7 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
 
 /** The quote's last save, for an open editor to notice someone else's changes. */
 export async function quoteVersion(id: string): Promise<{ version: string; by: string | null } | null> {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, select: { updatedAt: true, updatedById: true } });
   if (!q) return null;
   const who = q.updatedById && q.updatedById !== viewer.id ? await getPrisma().user.findUnique({ where: { id: q.updatedById }, select: { name: true, email: true } }) : null;
@@ -225,7 +225,7 @@ export async function quoteVersion(id: string): Promise<{ version: string; by: s
 
 /** Creates or updates a quote from the builder (the form posts its state as JSON). */
 export async function saveQuote(_: ActionState, form: FormData): Promise<ActionState> {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const result = await persist(viewer, String(form.get("payload") ?? "{}"));
   if (!result.ok) return fail(result.message);
   const id = result.id;
@@ -261,7 +261,8 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
  * +30% as the client's price; optionally with both Google Sheets made.
  */
 export async function draftFromCreators(ids: string[], then?: "sheets") {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
+  if (!seesCreators(viewer)) return { ok: false, message: "Only people with access to the influencer database can do this." };
   const prisma = getPrisma();
   const picked = await prisma.creator.findMany({ where: { id: { in: ids.slice(0, 200) } }, orderBy: { followers: "asc" } });
   if (picked.length === 0) return { ok: false, message: "Tick some creators first." };
@@ -301,7 +302,7 @@ export async function draftFromCreators(ids: string[], then?: "sheets") {
 
 /** Emails the quotation (with a payment link when asked) — see lib/crm/quotes sendQuote. */
 export async function sendQuoteAction(_: ActionState, form: FormData): Promise<ActionState> {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const id = text(form, "id");
   if (!id) return fail("Save the quote first.");
   const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) } });
@@ -322,7 +323,7 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
 
 /** Staff record the client's answer when it came by phone or email. */
 export async function setQuoteStatus(form: FormData) {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const id = text(form, "id");
   const status = text(form, "status");
   if (!id || !status) return;
@@ -353,7 +354,7 @@ function omitIds<T extends { id: string; quoteId: string }>(row: T): Omit<T, "id
 
 /** A copy to edit and re-send — a new number and link; the original stays as it was. */
 export async function duplicateQuote(form: FormData) {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const id = text(form, "id");
   if (!id) return;
   const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, include: { lines: true, creators: true } });
@@ -375,7 +376,7 @@ export async function duplicateQuote(form: FormData) {
 }
 
 export async function deleteQuote(form: FormData) {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const id = text(form, "id");
   if (!id) return;
   const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) } });

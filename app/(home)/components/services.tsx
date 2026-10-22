@@ -192,9 +192,11 @@ export function Services() {
           {/*
             ONE LINE FROM lg (Genesis, 3 Oct 2026: "write this in one line"):
             the sentence and the sliding service together, at a size that fits
-            the longest service on a laptop. A phone still wraps it.
+            the longest service on a laptop. A phone still wraps it. Scaled
+            with the window up to 2rem, so a 1024px screen doesn't scroll
+            sideways (14 Oct 2026).
           */}
-          <h1 className="max-lg:order-first text-balance text-h3 font-normal leading-[1.15] tracking-tight text-bone max-lg:text-[min(2.25rem,9vw)] max-lg:leading-[1.1] max-lg:text-left lg:whitespace-nowrap lg:text-[2rem] 2xl:text-[2.25rem]">
+          <h1 className="max-lg:order-first text-balance text-h3 font-normal leading-[1.15] tracking-tight text-bone max-lg:text-[min(2.25rem,9vw)] max-lg:leading-[1.1] max-lg:text-left lg:whitespace-nowrap lg:text-[min(2rem,2.6vw)] 2xl:text-[2.25rem]">
             {/*
               THE PHONE'S HERO, OVER THE ORB, LEFT-ALIGNED (Genesis, 4 Oct
               2026), set like the division pages' headline: the sentence large

@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { builderData } from "@/lib/crm/quote-data";
 import { termsByKey, termsFor } from "@/lib/crm/quote-templates";
 import { daysFromNow } from "@/lib/crm/options";
+import { plansOnly, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export const metadata = { title: "New quote" };
  * that comes in" gets its quotation or influencer plan right there.
  */
 export default async function NewQuote({ searchParams }: { searchParams: Promise<{ lead?: string; account?: string; request?: string; kind?: string; brief?: string; creators?: string | string[] }> }) {
-  await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const p = await searchParams;
   const prisma = getPrisma();
   /* From a brief (/admin/briefs): its lead or client, its title and what it asks for. */
@@ -28,8 +29,9 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
   const accountId = p.account ?? brief?.accountId ?? request?.accountId ?? lead?.accountId ?? null;
   const account = accountId ? await prisma.account.findUnique({ where: { id: accountId }, include: { members: { include: { user: true }, take: 1 } } }) : null;
   const pickedIds = (Array.isArray(p.creators) ? p.creators : p.creators ? [p.creators] : []).slice(0, 200);
-  const picked = pickedIds.length ? await prisma.creator.findMany({ where: { id: { in: pickedIds } }, orderBy: { followers: "asc" } }) : [];
-  const kind = p.kind === "INFLUENCER_PLAN" || picked.length ? "INFLUENCER_PLAN" : "QUOTE";
+  const picked = pickedIds.length && seesCreators(viewer) ? await prisma.creator.findMany({ where: { id: { in: pickedIds } }, orderBy: { followers: "asc" } }) : [];
+  /* The influencer team only makes influencer plans (lib/crm/scope plansOnly). */
+  const kind = p.kind === "INFLUENCER_PLAN" || picked.length || plansOnly(viewer) ? "INFLUENCER_PLAN" : "QUOTE";
   const division = brief?.division ?? lead?.division ?? (kind === "INFLUENCER_PLAN" ? "INFLUENCE" : null);
   const terms = kind === "INFLUENCER_PLAN" ? termsByKey("influencer")! : termsFor(division);
   const contact = account?.members[0]?.user;
@@ -73,7 +75,7 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
       };
     }),
   };
-  const data = await builderData();
+  const data = await builderData(seesCreators(viewer));
   return (
     <>
       <PageHead kicker="Sales" title={kind === "INFLUENCER_PLAN" ? "New influencer plan" : "New quote"} sub={request ? `For request: ${request.title}` : lead ? `For lead: ${lead.name}` : undefined} />

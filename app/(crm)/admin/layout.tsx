@@ -6,7 +6,7 @@ import { Notice } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
 import { emailLoginEnabled } from "@/lib/crm/email-login";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
-import { accountScope, leadScope, projectScope, sees, through } from "@/lib/crm/scope";
+import { accountScope, leadScope, plansOnly, projectScope, sees, seesCreators, through } from "@/lib/crm/scope";
 import { can, devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
 import { SignOut } from "@/components/crm/sign-out";
 
@@ -48,6 +48,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ...(can(viewer, "sales")
       ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/briefs", label: "Briefs" }, { href: "/admin/quotes", label: "Quotes & plans" }, { href: "/admin/invoices", label: "Invoices" }, { href: "/admin/accounts", label: "Clients & agencies" }] }]
       : []),
+    /* The influencer team (no sales role): their plans and the influencer database (Genesis, 22 Oct 2026). */
+    ...(plansOnly(viewer!) ? [{ label: "Influence", items: [{ href: "/admin/quotes", label: "Influencer plans" }, { href: "/admin/creators", label: "Influencer database" }] }] : []),
     ...(can(viewer, "delivery") || can(viewer, "sales")
       ? [
           {
@@ -55,12 +57,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             items: [
               { href: "/admin/projects", label: "Projects", count: review },
               { href: "/admin/requests", label: "Requests & support", count: openRequests },
-              { href: "/admin/creators", label: "Influencer database" },
+              /* Private: owners, the influencer team and people given access (lib/crm/scope seesCreators). */
+              ...(seesCreators(viewer!) && !plansOnly(viewer!) ? [{ href: "/admin/creators", label: "Influencer database" }] : []),
               { href: "/admin/vendors", label: "Vendors & crew" },
             ],
           },
         ]
-      : []),
+      : viewer!.roles.includes("CREATIVE")
+        ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }] }]
+        : []),
     ...(can(viewer, "finance")
       ? [{ label: "Money", items: [{ href: "/admin/billing", label: "Orders & subscriptions" }, ...(can(viewer, "sales") ? [] : [{ href: "/admin/invoices", label: "Invoices" }]), { href: "/admin/payouts", label: "Commissions & payouts" }, { href: "/admin/expenses", label: "Expenses & salaries" }, { href: "/admin/expenses/subscriptions", label: "Our subscriptions" }, { href: "/admin/expenses/gst", label: "GST" }] }]
       : []),
@@ -68,10 +73,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ];
 
   return (
-    <div className="mx-auto grid w-full max-w-[1440px] gap-6 px-4 pb-16 pt-6 sm:px-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
-      <div className="min-w-0">
-        <SideNav groups={groups} root="/admin" label="CRM" />
-        <div className="mt-6 hidden px-3 text-[0.8125rem] text-faint lg:block">
+    <div className="crm-shell mx-auto w-full max-w-[1560px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[264px_minmax(0,1fr)]">
+      <div className="crm-side min-w-0 px-4 pt-5 sm:px-6 lg:px-4 lg:py-7">
+        <SideNav groups={groups} root="/admin" label="CRM" title="Genesis Media" />
+        <div className="mt-8 hidden px-3.5 text-[0.8125rem] text-faint lg:block">
           <p className="truncate text-ash">{viewer!.name ?? viewer!.email}</p>
           <p>{viewer!.roles.join(", ").toLowerCase()}</p>
           <div className="mt-2 flex gap-3">
@@ -84,7 +89,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
         </div>
       </div>
-      <main className="min-w-0 space-y-6">{children}</main>
+      <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-9 lg:py-8">{children}</main>
     </div>
   );
 }

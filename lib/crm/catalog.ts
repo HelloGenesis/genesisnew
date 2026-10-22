@@ -193,12 +193,30 @@ export function tierFor(followers: number): CreatorTier {
   return "NANO";
 }
 
+/** What vendors and freelancers do — the skills dropdown (Genesis, 22 Oct 2026); anything else can be typed in. */
+export const VENDOR_SKILLS = [
+  "Video editor",
+  "DOP / cinematographer",
+  "Motion designer",
+  "Graphic designer",
+  "AI artist",
+  "Photographer",
+  "Scriptwriter / copywriter",
+  "Influencer marketing (freelancer)",
+  "Social media manager",
+  "Production house",
+  "Makeup & styling",
+  "Sound & music",
+] as const;
+
 export const STAFF_ROLE: Record<StaffRoleKind, { label: string; does: string }> = {
   OWNER: { label: "Owner", does: "Everything, including staff and money" },
   ADMIN: { label: "Admin", does: "Everything except staff roles" },
   SALES: { label: "Sales", does: "Leads, accounts, proposals" },
-  PRODUCER: { label: "Producer", does: "Projects, deliverables, vendors, creators" },
+  PRODUCER: { label: "Producer", does: "Projects, deliverables, vendors" },
   FINANCE: { label: "Finance", does: "Orders, payments, commissions, vendor invoices" },
+  INFLUENCER: { label: "Influencer team", does: "Influencer plans and the influencer database" },
+  CREATIVE: { label: "Creative (designer, editor)", does: "The projects and tasks given to them" },
 };
 
 /** Integer paise → "₹24,999" (paise shown only when there are any). */

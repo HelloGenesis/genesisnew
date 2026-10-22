@@ -90,7 +90,7 @@ export function InfluencePageView() {
       </section>
 
       <OfferSection className="pt-0">
-        <Reveal className="glass glass-lit rounded-panel p-5 sm:p-6 lg:-mx-16">
+        <Reveal className="glass glass-lit rounded-panel p-5 sm:p-6 xl:-mx-16">
           <SectionLabel dot tone="brand">
             {builtFor.label}
           </SectionLabel>
@@ -197,7 +197,7 @@ function Services() {
 function Closing() {
   return (
     <OfferSection>
-      <Reveal className="glass glass-strong glass-lit relative flex flex-col gap-8 overflow-hidden rounded-panel p-6 sm:p-10 lg:-mx-16 lg:flex-row lg:items-center lg:justify-between lg:p-12">
+      <Reveal className="glass glass-strong glass-lit relative flex flex-col gap-8 overflow-hidden rounded-panel p-6 sm:p-10 xl:-mx-16 lg:flex-row lg:items-center lg:justify-between lg:p-12">
         <span aria-hidden className="pointer-events-none absolute -bottom-24 left-1/2 size-80 rounded-full bg-brand/15 blur-3xl" />
         <div className="relative">
           <p className="micro-label">{influenceClosing.label}</p>

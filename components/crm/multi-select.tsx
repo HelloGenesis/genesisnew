@@ -9,7 +9,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
  * of tick boxes with a search, submitting one `name=value` per choice, so a
  * plain GET form sends ?niche=Dance&niche=Fitness.
  */
-export function MultiSelect({ name, label, options, defaultValue = [], className = "" }: { name: string; label: string; options: readonly (readonly [string, string])[]; defaultValue?: string[]; className?: string }) {
+/* `allowCustom`: the search box can add a value that isn't in the list ("write your own", Genesis, 22 Oct 2026). */
+export function MultiSelect({ name, label, options: given, defaultValue = [], className = "", allowCustom = false }: { name: string; label: string; options: readonly (readonly [string, string])[]; defaultValue?: string[]; className?: string; allowCustom?: boolean }) {
+  const [extra, setExtra] = useState<string[]>(() => defaultValue.filter((v) => !given.some(([o]) => o === v)));
+  const options = useMemo(() => [...given, ...extra.map((v) => [v, v] as const)], [given, extra]);
   const [picked, setPicked] = useState<string[]>(defaultValue);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -25,6 +28,13 @@ export function MultiSelect({ name, label, options, defaultValue = [], className
     return s ? options.filter(([, l]) => l.toLowerCase().includes(s)) : options;
   }, [options, q]);
   const labelOf = (v: string) => options.find(([o]) => o === v)?.[1] ?? v;
+  const addCustom = () => {
+    const v = q.trim().slice(0, 60);
+    if (!v) return;
+    if (!options.some(([o]) => o === v)) setExtra((now) => [...now, v]);
+    setPicked((now) => (now.includes(v) ? now : [...now, v]));
+    setQ("");
+  };
   const toggle = (v: string) => setPicked((now) => (now.includes(v) ? now.filter((x) => x !== v) : [...now, v]));
 
   return (
@@ -55,7 +65,7 @@ export function MultiSelect({ name, label, options, defaultValue = [], className
       </button>
       {open && (
         <div className="absolute left-0 z-30 mt-1 w-max min-w-full max-w-[20rem] rounded-xl border border-[var(--glass-border)] bg-[var(--surface-float)] p-2 shadow-[var(--shadow-float)]">
-          {options.length > 8 && <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="crm-input mb-2 !min-h-8 !py-1 text-[0.8125rem]" />}
+          {(allowCustom || options.length > 8) && <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={allowCustom ? "Search or write your own…" : "Search…"} onKeyDown={(e) => { if (e.key === "Enter" && allowCustom && q.trim()) { e.preventDefault(); addCustom(); } }} className="crm-input mb-2 !min-h-8 !py-1 text-[0.8125rem]" />}
           <ul className="max-h-72 overflow-y-auto" data-lenis-prevent>
             {shown.map(([v, l]) => {
               const on = picked.includes(v);
@@ -68,7 +78,12 @@ export function MultiSelect({ name, label, options, defaultValue = [], className
                 </li>
               );
             })}
-            {shown.length === 0 && <li className="px-2 py-1.5 text-[0.8125rem] text-faint">No match.</li>}
+            {allowCustom && q.trim() && !options.some(([, l]) => l.toLowerCase() === q.trim().toLowerCase()) && (
+              <li>
+                <button type="button" onClick={addCustom} className="w-full rounded-lg px-2 py-1.5 text-left text-[0.875rem] text-brand-ink hover:bg-[var(--hover-wash)]">+ Add &ldquo;{q.trim()}&rdquo;</button>
+              </li>
+            )}
+            {shown.length === 0 && !allowCustom && <li className="px-2 py-1.5 text-[0.8125rem] text-faint">No match.</li>}
           </ul>
           {picked.length > 0 && (
             <div className="mt-2 flex justify-between border-t border-[var(--glass-border)] pt-2 text-[0.75rem]">

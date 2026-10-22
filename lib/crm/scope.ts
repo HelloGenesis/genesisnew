@@ -17,6 +17,7 @@ import type { Viewer } from "./session";
 
 export const AREAS: Record<string, string> = {
   leads: "All leads & briefs",
+  creators: "Influencer database",
   billing: "All billing & invoices",
   clients: "All clients",
   projects: "All projects",
@@ -26,6 +27,17 @@ export const AREAS: Record<string, string> = {
 
 export const isSuperAdmin = (v: Viewer) => v.roles.includes("OWNER");
 export const sees = (v: Viewer, area: keyof typeof AREAS | string) => isSuperAdmin(v) || v.grants.includes(area);
+
+/*
+ * THE INFLUENCER DATABASE IS PRIVATE (Genesis, 22 Oct 2026: "all influencer
+ * data should only be seen by the super admin / owner; other than that only a
+ * particular person"). Owners, the influencer team, and anyone an owner ticks
+ * "Influencer database" for in Staff & roles.
+ */
+export const seesCreators = (v: Viewer) => sees(v, "creators") || v.roles.includes("INFLUENCER");
+
+/** Only influencer plans (the influencer team without a sales role). */
+export const plansOnly = (v: Viewer) => !isSuperAdmin(v) && !v.roles.some((r) => r === "ADMIN" || r === "SALES") && v.roles.includes("INFLUENCER");
 
 /** For a super admin looking at the dashboard "as" someone: their id, else the viewer's. */
 export const asPerson = (v: Viewer, person?: string | null) => (isSuperAdmin(v) && person ? person : v.id);
@@ -47,6 +59,8 @@ export function briefScope(v: Viewer, person?: string | null): Prisma.BriefWhere
  * every quote and plan. Only the dashboard's "as someone" view narrows it.
  */
 export function quoteScope(v: Viewer, person?: string | null): Prisma.QuoteWhereInput {
+  /* The influencer team sees the influencer plans, everyone's; not the other quotes. */
+  if (plansOnly(v)) return person ? { kind: "INFLUENCER_PLAN", createdById: asPerson(v, person) } : { kind: "INFLUENCER_PLAN" };
   if (!person) return {};
   const id = asPerson(v, person);
   return { OR: [{ createdById: id }, { lead: { ownerId: id } }] };

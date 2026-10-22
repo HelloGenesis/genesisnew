@@ -12,7 +12,7 @@ import { appUrl } from "@/lib/crm/notify";
 import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
 import { builderData } from "@/lib/crm/quote-data";
 import { quoteRef } from "@/lib/crm/quote-templates";
-import { quoteScope } from "@/lib/crm/scope";
+import { quoteScope, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
@@ -23,7 +23,7 @@ const rupee = (v: number | null | undefined) => (v === null || v === undefined ?
 export const dynamic = "force-dynamic";
 
 export default async function QuotePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; sheets?: string }> }) {
-  const viewer = await requireStaff("sales");
+  const viewer = await requireStaff("plans");
   const { id } = await params;
   const { saved, sheets: sheetsNote } = await searchParams;
   const q = await getPrisma().quote.findFirst({
@@ -67,7 +67,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
       reelPrice: rupee(c.reelPricePaise), storyPrice: rupee(c.storyPricePaise), dlPrice: rupee(c.dlPricePaise), reachout: c.reachout, contact: c.contact, remarks: c.remarks, extra: (c.extra ?? {}) as Record<string, string>,
     })),
   };
-  const data = await builderData();
+  const data = await builderData(seesCreators(viewer));
   const plan = q.kind === "INFLUENCER_PLAN";
   /* Outreach for the plan's creators: their numbers and emails from the influencer database (or the plan's contact line). */
   const hasCreators = q.creators.length > 0;

@@ -8,10 +8,11 @@ import { CATALOG, TERMS } from "./quote-templates";
 export type BuilderClient = { key: string; kind: "client" | "agency" | "lead"; accountId: string | null; leadId: string | null; company: string; contactName: string; email: string; phone: string | null };
 
 /** What the quote builder needs from the server: the catalogue, the terms templates, the influencer pool and the clients. */
-export async function builderData() {
+/** `withCreators`: the influencer database is private (lib/crm/scope seesCreators); without access the search is empty. */
+export async function builderData(withCreators = true) {
   const prisma = getPrisma();
   const [pool, accounts, leads] = await Promise.all([
-    prisma.creator.findMany({ where: { blacklisted: false }, orderBy: { followers: "desc" }, take: 1000 }),
+    !withCreators ? Promise.resolve([]) : prisma.creator.findMany({ where: { blacklisted: false }, orderBy: { followers: "desc" }, take: 1000 }),
     prisma.account.findMany({ where: { kind: { in: ["BRAND", "AGENCY"] } }, orderBy: { name: "asc" }, take: 1000, include: { members: { include: { user: { select: { name: true, email: true } } }, take: 1 } } }),
     prisma.lead.findMany({ where: { status: { notIn: ["LOST"] } }, orderBy: { createdAt: "desc" }, take: 1000, select: { id: true, name: true, company: true, email: true, phone: true, accountId: true } }),
   ]);

@@ -7,20 +7,74 @@
   is airy, because a control room is read for hours, not scrolled once.
 */
 
+/*
+  THE DASHBOARD LOOK (Genesis, 22 Oct 2026: "I want all the dashboard colours
+  and UI/UX to look like this", the CRM tour on the homepage): an ink app
+  window, a sidebar headed in bold capitals with a solid yellow active item,
+  and flat rounded panels a shade lighter than the window. Light theme keeps
+  the same shapes on paper.
+*/
 .crm {
+  --crm-bg: #0d0c0f;
+  --crm-panel: #141216;
+  --crm-card: rgb(255 255 255 / 0.045);
+  --crm-card-hover: rgb(255 255 255 / 0.07);
+  --crm-line: rgb(255 255 255 / 0.07);
+  --crm-field: rgb(255 255 255 / 0.05);
+  /* Every hairline in the CRM is the panel line, not the marketing glass edge. */
+  --glass-border: var(--crm-line);
   min-height: 100dvh;
-  background: var(--page-ground-compact, var(--surface-base));
+  background: var(--crm-bg);
+  color: var(--ink-strong);
+}
+:root[data-theme="light"] .crm {
+  --crm-bg: #efedea;
+  --crm-panel: #faf9f7;
+  --crm-card: #ffffff;
+  --crm-card-hover: #f6f4f1;
+  --crm-line: rgb(20 18 22 / 0.08);
+  --crm-field: rgb(20 18 22 / 0.035);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .crm {
+    --crm-bg: #efedea;
+    --crm-panel: #faf9f7;
+    --crm-card: #ffffff;
+    --crm-card-hover: #f6f4f1;
+    --crm-line: rgb(20 18 22 / 0.08);
+    --crm-field: rgb(20 18 22 / 0.035);
+  }
+}
+
+/* The app window: sidebar and page side by side, as in the tour. */
+.crm-shell {
+  background: var(--crm-panel);
+}
+@media (min-width: 1024px) {
+  .crm-shell {
+    margin: 1rem auto 2rem;
+    border: 1px solid var(--crm-line);
+    border-radius: 1.25rem;
+    overflow: clip;
+    box-shadow: 0 30px 80px -40px rgb(0 0 0 / 0.6);
+  }
+  .crm-side {
+    border-right: 1px solid var(--crm-line);
+  }
+}
+.crm-side-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--ink-strong);
 }
 
 .crm-card {
   position: relative;
   border-radius: 1rem;
-  border: 1px solid var(--glass-border);
-  background-color: var(--glass-fill);
-  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  box-shadow: var(--glass-inset, 0 1px 0 0 rgb(255 255 255 / 0.06) inset), var(--shadow-raised);
+  border: 1px solid var(--crm-line);
+  background-color: var(--crm-card);
 }
 
 .crm-pad {
@@ -44,7 +98,7 @@
   min-height: 2.5rem;
   border-radius: 0.625rem;
   border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--surface-raised) 70%, transparent);
+  background: var(--crm-field);
   padding: 0.5rem 0.75rem;
   font-size: 0.9375rem;
   color: var(--ink-strong);
@@ -96,8 +150,8 @@ select.crm-input {
 }
 .crm-btn-secondary {
   color: var(--ink-strong);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-fill);
+  border: 1px solid var(--crm-line);
+  background: var(--crm-card);
 }
 .crm-btn-secondary:hover {
   background: var(--hover-wash);
@@ -125,7 +179,7 @@ select.crm-input {
   font-size: 0.875rem;
 }
 .crm-table thead {
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--crm-line);
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -140,10 +194,10 @@ select.crm-input {
   vertical-align: top;
 }
 .crm-table tbody tr + tr {
-  border-top: 1px solid var(--glass-border);
+  border-top: 1px solid var(--crm-line);
 }
 .crm-table tbody tr:hover {
-  background: var(--hover-wash);
+  background: var(--crm-card-hover);
 }
 
 .crm-badge {
@@ -160,7 +214,7 @@ select.crm-input {
   color: #15803d;
 }
 .crm-tone-warn {
-  background: rgb(245 158 11 / 0.16);
+  background: rgb(255 197 22 / 0.16);
   color: #b45309;
 }
 .crm-tone-bad {
@@ -179,7 +233,7 @@ select.crm-input {
   color: #4ade80;
 }
 :root:not([data-theme="light"]) .crm-tone-warn {
-  color: #fcd34d;
+  color: #ffc516;
 }
 :root:not([data-theme="light"]) .crm-tone-bad {
   color: #f87171;
@@ -206,22 +260,22 @@ select.crm-input {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  min-height: 2.375rem;
+  min-height: 2.5rem;
   flex: none;
-  border-radius: 0.625rem;
-  padding: 0 0.75rem;
-  font-size: 0.875rem;
+  border-radius: 0.75rem;
+  padding: 0 0.875rem;
+  font-size: 0.9375rem;
   color: var(--ink-muted);
   transition: background-color 0.15s, color 0.15s;
 }
 .crm-nav-link:hover {
-  background: var(--hover-wash);
+  background: var(--crm-card-hover);
   color: var(--ink-strong);
 }
 .crm-nav-link[aria-current="page"] {
   color: #141216;
-  font-weight: 600;
-  background: linear-gradient(100deg, #ffd658, #ffc516);
+  font-weight: 500;
+  background: #ffc516;
 }
 
 /* The stage tracker on a project: done, current, still to come. */
@@ -239,8 +293,8 @@ select.crm-input {
 
 .crm-notice {
   border-radius: 0.75rem;
-  border: 1px solid var(--glass-border);
-  background: var(--hover-wash);
+  border: 1px solid var(--crm-line);
+  background: var(--crm-card);
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   color: var(--ink-muted);

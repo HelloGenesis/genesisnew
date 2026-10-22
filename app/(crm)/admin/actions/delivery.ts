@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { tidyNiches } from "@/lib/crm/niches";
 import type {
   AssignmentStatus,
@@ -20,7 +21,7 @@ import { CAMPAIGN_CREATOR_STATUS, DIVISIONS, PROJECT_STATUS, REQUEST_STATUS, mon
 import { type ActionState, day, fail, links, ok, text } from "@/lib/crm/form-state";
 import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
 import { queueSheet } from "@/lib/crm/sheets";
-import { isSuperAdmin } from "@/lib/crm/scope";
+import { isSuperAdmin, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { openProject } from "@/lib/crm/projects";
 import { stagesOf } from "@/lib/crm/stages";
@@ -411,7 +412,7 @@ function creatorData(form: FormData) {
 }
 
 export async function saveCreator(_: ActionState, form: FormData): Promise<ActionState> {
-  await requireStaff("delivery");
+  if (!seesCreators(await requireStaff())) return fail("Only people with access to the influencer database can change it.");
   if (!text(form, "name") || !text(form, "handle")) return fail("Add a name and a handle.");
   const id = text(form, "id");
   const data = creatorData(form);
@@ -424,6 +425,100 @@ export async function saveCreator(_: ActionState, form: FormData): Promise<Actio
     if ((error as { code?: string }).code === "P2002") return fail(`@${data.handle} on ${data.platform.toLowerCase()} is already in the database.`);
     throw error;
   }
+}
+
+/** "4.4Cr", "84K", "1.2M", "3L", "12,500" → a whole number; null when blank or unreadable. */
+function countFrom(raw: string): number | null {
+  const t = raw.replace(/[,\s]/g, "").toLowerCase();
+  if (!t) return null;
+  const m = t.match(/^(\d+(?:\.\d+)?)(cr|crore|l|lakh|lac|k|m|mn)?$/);
+  if (!m) return null;
+  const scale = { cr: 1e7, crore: 1e7, l: 1e5, lakh: 1e5, lac: 1e5, k: 1e3, m: 1e6, mn: 1e6 }[m[2] ?? ""] ?? 1;
+  return Math.round(Number(m[1]) * scale);
+}
+
+const EDITABLE = ["name", "handle", "profileUrl", "followers", "avgViews", "engagementRate", "niches", "city", "reelRate", "storyRate", "dlRate", "phone", "email", "managedBy", "tier"] as const;
+
+/**
+ * ONE CELL OF THE INFLUENCER DATABASE, EDITED WHERE IT IS (Genesis, 22 Oct
+ * 2026: "profile link should be editable here… everything should be editable
+ * in the influencer section"). The table's pencil sends the field and the
+ * typed value; it is checked and saved like the full form.
+ */
+export async function updateCreatorField(id: string, field: string, raw: string): Promise<{ ok: boolean; message?: string }> {
+  if (!seesCreators(await requireStaff())) return { ok: false, message: "No access to the influencer database." };
+  if (!EDITABLE.includes(field as (typeof EDITABLE)[number])) return { ok: false, message: "That can't be edited here." };
+  const value = String(raw ?? "").trim().slice(0, 600);
+  const blank = value === "" || value === "—";
+  let data: Prisma.CreatorUpdateInput;
+  switch (field) {
+    case "name":
+      if (blank) return { ok: false, message: "A name is needed." };
+      data = { name: value.slice(0, 120) };
+      break;
+    case "handle":
+      if (blank) return { ok: false, message: "A handle is needed." };
+      data = { handle: value.replace(/^@/, "").toLowerCase().slice(0, 80) };
+      break;
+    case "profileUrl": {
+      if (blank) { data = { profileUrl: null }; break; }
+      const url = /^https?:\/\//i.test(value) ? value : `https://${value.replace(/^@/, "instagram.com/")}`;
+      try {
+        new URL(url);
+      } catch {
+        return { ok: false, message: "That doesn't look like a link." };
+      }
+      data = { profileUrl: url.slice(0, 300) };
+      break;
+    }
+    case "followers": {
+      const n = countFrom(value);
+      if (n === null) return { ok: false, message: "Followers like 84K, 1.2M or 4.4Cr." };
+      data = { followers: n, tier: tierFor(n) };
+      break;
+    }
+    case "avgViews": {
+      const n = blank ? null : countFrom(value);
+      if (!blank && n === null) return { ok: false, message: "Views like 12K or 1.5M." };
+      data = { avgViews: n };
+      break;
+    }
+    case "engagementRate": {
+      const n = blank ? null : Number(value.replace("%", ""));
+      if (n !== null && !(Number.isFinite(n) && n >= 0 && n < 100)) return { ok: false, message: "ER as a percent, like 3.4." };
+      data = { engagementRate: n };
+      break;
+    }
+    case "niches":
+      data = { niches: tidyNiches(value.split(",").map((t) => t.trim()).filter(Boolean)) };
+      break;
+    case "reelRate":
+    case "storyRate":
+    case "dlRate": {
+      const paise = blank ? null : toPaise(value);
+      if (!blank && paise === null) return { ok: false, message: "A rate in rupees, like 18000." };
+      data = { [`${field}Paise`]: paise } as Prisma.CreatorUpdateInput;
+      break;
+    }
+    case "email":
+      data = { email: blank ? null : value.toLowerCase().slice(0, 200) };
+      break;
+    case "tier":
+      if (!TIERS.includes(value as (typeof TIERS)[number])) return { ok: false, message: "Pick a tier." };
+      data = { tier: value as CreatorTier };
+      break;
+    default:
+      data = { [field]: blank ? null : value.slice(0, field === "managedBy" ? 160 : 80) } as Prisma.CreatorUpdateInput;
+  }
+  try {
+    await getPrisma().creator.update({ where: { id }, data });
+  } catch (error) {
+    if ((error as { code?: string }).code === "P2002") return { ok: false, message: "Another creator already has that handle." };
+    throw error;
+  }
+  await queueSheet("creators", id).catch(() => undefined);
+  revalidatePath("/admin/creators");
+  return { ok: true };
 }
 
 /** Shortlist creators onto an Influence campaign. */

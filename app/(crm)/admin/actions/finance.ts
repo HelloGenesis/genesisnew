@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
 import type { CommissionStatus, StaffRoleKind, VendorInvoiceStatus } from "@/lib/generated/prisma/enums";
-import { money } from "@/lib/crm/catalog";
+import { money, STAFF_ROLE } from "@/lib/crm/catalog";
 import { type ActionState, fail, isEmail, ok, text } from "@/lib/crm/form-state";
 import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
 import { disconnectDrive } from "@/lib/crm/drive";
@@ -101,30 +101,78 @@ export async function setVendorInvoiceStatus(form: FormData) {
 
 // --- Staff (owners only) -------------------------------------------------------------
 
-const ROLES: StaffRoleKind[] = ["OWNER", "ADMIN", "SALES", "PRODUCER", "FINANCE"];
+const ROLES: StaffRoleKind[] = ["OWNER", "ADMIN", "SALES", "PRODUCER", "FINANCE", "INFLUENCER", "CREATIVE"];
 
 /** A role for an email: granted now if that person has a verified sign-in, otherwise the moment they do. */
+/** Grants one or more roles to an email (Genesis, 22 Oct 2026: "multiple section options"). */
 export async function inviteStaff(_: ActionState, form: FormData): Promise<ActionState> {
   const viewer = await requireStaff("staff");
   const email = text(form, "email")?.toLowerCase() ?? null;
-  const role = text(form, "role") as StaffRoleKind | null;
-  if (!isEmail(email) || !role || !ROLES.includes(role)) return fail("Enter an email and choose a role.");
+  const roles = [...new Set(form.getAll("role").map(String))].filter((r): r is StaffRoleKind => ROLES.includes(r as StaffRoleKind));
+  if (!isEmail(email) || roles.length === 0) return fail("Enter an email and tick at least one role.");
   const prisma = getPrisma();
   const user = await prisma.user.findFirst({ where: { email, emailVerified: true } });
-  if (user) {
-    await prisma.staffRole.upsert({ where: { userId_role: { userId: user.id, role } }, create: { userId: user.id, role, grantedById: viewer.id }, update: {} });
-  } else {
-    await prisma.staffInvite.upsert({ where: { email_role: { email, role } }, create: { email, role, invitedById: viewer.id }, update: {} });
+  for (const role of roles) {
+    if (user) await prisma.staffRole.upsert({ where: { userId_role: { userId: user.id, role } }, create: { userId: user.id, role, grantedById: viewer.id }, update: {} });
+    else await prisma.staffInvite.upsert({ where: { email_role: { email, role } }, create: { email, role, invitedById: viewer.id }, update: {} });
   }
+  const named = roles.map((r) => STAFF_ROLE[r].label).join(", ");
   await queueEmail({
     kind: "staff_invite",
     to: [email],
     subject: "You've been added to the Genesis CRM",
-    text: `${viewer.name ?? "An owner"} gave you ${role.toLowerCase()} access to the Genesis CRM.\n\nSign in with this email (Google, or a one-time code). The first time, you'll set up an authenticator app for two-factor:\n${appUrl("/login?next=/admin")}`,
+    text: `${viewer.name ?? "An owner"} gave you access to the Genesis CRM (${named}).\n\nSign in with this email (Google, or a one-time code). The first time, you'll set up an authenticator app for two-factor:\n${appUrl("/login?next=/admin")}`,
   });
-  await recordAuditLog({ action: "staff.invited", entity: "user", entityId: user?.id, actorId: viewer.id, metadata: { email, role } });
+  await recordAuditLog({ action: "staff.invited", entity: "user", entityId: user?.id, actorId: viewer.id, metadata: { email, roles } });
   done();
-  return ok(user ? `${email} is now ${role.toLowerCase()}.` : `Invite saved: ${email} gets ${role.toLowerCase()} on first sign-in.`);
+  return ok(user ? `${email} now has: ${named}.` : `Invite saved: ${email} gets ${named} on first sign-in.`);
+}
+
+/**
+ * PORTAL ACCESS FROM STAFF & ROLES (Genesis, 22 Oct 2026: "add client and
+ * influencer portal access as well, which will only have their side of the
+ * data"). A client sees their own account's projects, approvals and invoices
+ * (/portal); an influencer sees their own profile and campaigns (My account).
+ */
+export async function grantPortalAccess(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff("staff");
+  const email = text(form, "email")?.toLowerCase() ?? null;
+  const type = text(form, "type");
+  if (!isEmail(email)) return fail("Enter their email.");
+  const prisma = getPrisma();
+  if (type === "client") {
+    const accountId = text(form, "accountId");
+    const account = accountId ? await prisma.account.findUnique({ where: { id: accountId }, select: { id: true, name: true } }) : null;
+    if (!account) return fail("Pick the client.");
+    const user = await prisma.user.findFirst({ where: { email, emailVerified: true } });
+    if (user) await prisma.accountMember.upsert({ where: { accountId_userId: { accountId: account.id, userId: user.id } }, create: { accountId: account.id, userId: user.id, role: "MEMBER" }, update: {} });
+    else await prisma.accountInvite.upsert({ where: { accountId_email: { accountId: account.id, email } }, create: { accountId: account.id, email, role: "MEMBER", invitedById: viewer.id }, update: {} });
+    await queueEmail({
+      kind: "portal_invite",
+      to: [email],
+      subject: `Your Genesis portal for ${account.name}`,
+      text: `You now have access to ${account.name}'s projects, reviews and invoices on Genesis Media's portal.\n\nSign in with this email. We'll send you a one-time code, no password needed:\n${appUrl("/login")}`,
+    });
+    await recordAuditLog({ action: "portal.granted", entity: "account", entityId: account.id, actorId: viewer.id, metadata: { email } });
+    done();
+    return ok(`${email} can now see ${account.name}'s portal.`);
+  }
+  if (type === "influencer") {
+    const handle = text(form, "handle", 120)?.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/.*$/, "").toLowerCase();
+    const creator = handle ? await prisma.creator.findFirst({ where: { handle: { equals: handle, mode: "insensitive" } }, select: { id: true, name: true } }) : null;
+    if (!creator) return fail(handle ? `No @${handle} in the influencer database.` : "Enter their @handle.");
+    await prisma.creator.update({ where: { id: creator.id }, data: { email } });
+    await queueEmail({
+      kind: "portal_invite",
+      to: [email],
+      subject: "Your Genesis creator portal",
+      text: `Hi ${creator.name.split(" ")[0]},\n\nYou can now see your campaigns with Genesis Media, and keep your rates and details up to date.\n\nSign in with this email. We'll send you a one-time code, no password needed:\n${appUrl("/login")}`,
+    });
+    await recordAuditLog({ action: "portal.granted", entity: "creator", entityId: creator.id, actorId: viewer.id, metadata: { email } });
+    done();
+    return ok(`${creator.name} can sign in with ${email} to see their campaigns.`);
+  }
+  return fail("Choose client or influencer.");
 }
 
 export async function revokeStaff(form: FormData) {

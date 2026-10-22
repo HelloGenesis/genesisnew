@@ -8,6 +8,7 @@ import { SignOut } from "@/components/crm/sign-out";
 import { CartProvider } from "@/components/genesis/cart";
 import { getViewer, portalAccounts } from "@/lib/crm/session";
 import { getPrisma } from "@/lib/db";
+import { CAMPAIGN_CREATOR_STATUS } from "@/lib/crm/catalog";
 import { inr } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,13 @@ export default async function AccountPage() {
   const accountIds = viewer.memberships.map((m) => m.accountId);
   const byEmail = (field: string) => (verified ? [{ [field]: { equals: verified, mode: "insensitive" as const } }] : []);
 
+  /* An influencer with portal access (Staff & roles): the creator rows with this verified email, and only their own campaigns. */
+  const creators = verified
+    ? await prisma.creator.findMany({
+        where: { email: { equals: verified, mode: "insensitive" } },
+        select: { id: true, name: true, handle: true, followers: true, reelRatePaise: true, storyRatePaise: true, dlRatePaise: true, campaigns: { orderBy: { createdAt: "desc" }, take: 50, select: { id: true, status: true, feePaise: true, deliverables: true, postUrl: true, project: { select: { name: true } } } } },
+      })
+    : [];
   const [orders, quotes, invoices] = await Promise.all([
     prisma.order.findMany({
       where: { OR: [...byEmail("contactEmail"), ...(accountIds.length ? [{ accountId: { in: accountIds } }] : [])], status: { in: ["PAID", "PENDING", "REFUNDED"] } },
@@ -108,6 +116,32 @@ export default async function AccountPage() {
           </div>
         </section>
       )}
+
+      {creators.map((c) => (
+        <section key={c.id} aria-labelledby={`creator-${c.id}`} className="crm-card crm-pad space-y-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id={`creator-${c.id}`} className="text-[1.25rem] text-bone">Your creator profile · @{c.handle}</h2>
+            <p className="text-[0.875rem] text-ash">
+              Reel {(c.reelRatePaise ? money(c.reelRatePaise) : "—")} · Story {(c.storyRatePaise ? money(c.storyRatePaise) : "—")} · DL {(c.dlRatePaise ? money(c.dlRatePaise) : "—")}
+            </p>
+          </div>
+          {c.campaigns.length === 0 ? (
+            <p className="text-ash">No campaigns yet. When Genesis puts you on one, it shows here.</p>
+          ) : (
+            <ul className="divide-y divide-[var(--glass-border)]">
+              {c.campaigns.map((k) => (
+                <li key={k.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                  <span className="min-w-0">
+                    <span className="block text-bone">{k.project.name}</span>
+                    <span className="text-[0.8125rem] text-faint">{k.deliverables ?? "Deliverables to be confirmed"}{k.postUrl ? " · " : ""}{k.postUrl && <a href={k.postUrl} target="_blank" rel="noreferrer" className="crm-link">Your post</a>}</span>
+                  </span>
+                  <span className="text-[0.875rem] text-ash">{k.feePaise ? <span className="tabular-nums text-bone">{money(k.feePaise)} · </span> : null}{CAMPAIGN_CREATOR_STATUS[k.status].label}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ))}
 
       <section aria-labelledby="cart" className="crm-card crm-pad space-y-4">
         <h2 id="cart" className="text-[1.25rem] text-bone">Your cart</h2>
