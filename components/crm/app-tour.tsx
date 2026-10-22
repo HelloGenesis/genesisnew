@@ -1,10 +1,11 @@
 "use client";
 
-import { X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { finishTour } from "@/app/(crm)/tour-actions";
+
+import { TourOverlay, type TourStep } from "./tour-overlay";
 
 /**
  * THE TOUR (Genesis, 22 Oct 2026: "whenever someone new signs in there should
@@ -14,7 +15,7 @@ import { finishTour } from "@/app/(crm)/tour-actions";
  * person's role can open) and says what it's for in a line or two.
  */
 
-type Step = { target?: string; title: string; body: string };
+type Step = TourStep;
 
 /** What each part of the CRM and the portal does, keyed by its sidebar link. */
 const ABOUT: Record<string, Omit<Step, "target">> = {
@@ -51,20 +52,13 @@ const ABOUT: Record<string, Omit<Step, "target">> = {
   "/portal/invoices": { title: "Invoices & payouts", body: "Send your invoices and see what's been paid." },
 };
 
-/** The sidebar link (the visible copy: desktop column or the phone's strip) for a page. */
-function findTarget(selector: string): HTMLElement | null {
-  return ([...document.querySelectorAll<HTMLElement>(selector)].find((el) => el.offsetParent !== null) as HTMLElement | undefined) ?? null;
-}
-
 export function AppTour({ firstTime, name, area }: { firstTime: boolean; name: string | null; area: "admin" | "portal" }) {
   const router = useRouter();
   const path = usePathname();
   const params = useSearchParams();
   const asked = params.get("tour") === "1";
   const [open, setOpen] = useState(false);
-  const [i, setI] = useState(0);
   const [steps, setSteps] = useState<Step[]>([]);
-  const [box, setBox] = useState<DOMRect | null>(null);
 
   /* The steps: this person's own sidebar, in its order, then the top bar. */
   const build = useCallback(() => {
@@ -91,95 +85,17 @@ export function AppTour({ firstTime, name, area }: { firstTime: boolean; name: s
     /* After the page has drawn, so the sidebar is there to point at. */
     const t = window.setTimeout(() => {
       setSteps(build());
-      setI(0);
       setOpen(true);
     }, 400);
     return () => window.clearTimeout(t);
   }, [firstTime, asked, build]);
-
-  const step = steps[i];
-  const measure = useCallback(() => {
-    if (!step?.target) return setBox(null);
-    const el = findTarget(step.target);
-    if (!el) return setBox(null);
-    el.scrollIntoView({ block: "nearest", inline: "center" });
-    setBox(el.getBoundingClientRect());
-  }, [step]);
-  useLayoutEffect(() => {
-    if (!open) return;
-    /* Reads the lit item's position from the page: a measurement of the DOM, so it belongs here. */
-    const frame = window.requestAnimationFrame(measure);
-    window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, true);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure, true);
-    };
-  }, [open, measure]);
 
   const close = useCallback(() => {
     setOpen(false);
     void finishTour();
     if (asked) router.replace(path);
   }, [asked, path, router]);
-  useEffect(() => {
-    if (!open) return;
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-      if (e.key === "ArrowRight") setI((n) => Math.min(n + 1, steps.length - 1));
-      if (e.key === "ArrowLeft") setI((n) => Math.max(n - 1, 0));
-    };
-    window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
-  }, [open, close, steps.length]);
 
-  /* The card sits beside the lit item on a wide screen, under it on a phone, centred when there's nothing to point at. */
-  const card = useMemo(() => {
-    if (!box || typeof window === "undefined") return { left: "50%", top: "50%", transform: "translate(-50%, -50%)" } as const;
-    const wide = window.innerWidth >= 1024;
-    if (wide && box.right + 380 < window.innerWidth) return { left: box.right + 16, top: Math.max(16, Math.min(box.top - 8, window.innerHeight - 260)) };
-    return { left: 16, right: 16, top: Math.min(box.bottom + 12, window.innerHeight - 250) };
-  }, [box]);
-
-  if (!open || !step) return null;
-  const last = i === steps.length - 1;
-  return (
-    <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-labelledby="tour-title">
-      {box ? (
-        <div
-          aria-hidden
-          className="pointer-events-none fixed rounded-xl ring-2 ring-[#ffc516] transition-all duration-300"
-          style={{ left: box.left - 6, top: box.top - 6, width: box.width + 12, height: box.height + 12, boxShadow: "0 0 0 9999px rgb(0 0 0 / 0.62)" }}
-        />
-      ) : (
-        <div aria-hidden className="fixed inset-0 bg-black/60" />
-      )}
-      <div className="fixed max-w-sm rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-float,#1d1b1f)] p-5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)] sm:w-[22rem]" style={card}>
-        <button type="button" onClick={close} aria-label="Close the tour" className="absolute right-3 top-3 grid size-8 place-items-center rounded-full text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
-          <X className="size-4" aria-hidden />
-        </button>
-        <p className="text-[0.75rem] uppercase tracking-[0.12em] text-faint">
-          {i + 1} of {steps.length}
-        </p>
-        <h2 id="tour-title" className="mt-1.5 pr-8 font-sans text-[1.25rem] font-semibold text-bone">{step.title}</h2>
-        <p className="mt-2 text-[0.9375rem] leading-relaxed text-ash">{step.body}</p>
-        <div className="mt-5 flex items-center justify-between gap-2">
-          <button type="button" onClick={close} className="text-[0.875rem] text-ash underline-offset-4 hover:text-bone hover:underline">
-            {last ? "" : "Skip the tour"}
-          </button>
-          <div className="flex gap-2">
-            {i > 0 && (
-              <button type="button" onClick={() => setI(i - 1)} className="crm-btn crm-btn-secondary crm-btn-sm">
-                Back
-              </button>
-            )}
-            <button type="button" onClick={() => (last ? close() : setI(i + 1))} className="crm-btn crm-btn-primary crm-btn-sm">
-              {last ? "Done" : i === 0 ? "Start" : "Next"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  if (!open || steps.length === 0) return null;
+  return <TourOverlay key={steps.length} steps={steps} onClose={close} />;
 }
