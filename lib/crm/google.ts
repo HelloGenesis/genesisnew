@@ -25,6 +25,8 @@ export const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/spreadsheets.readonly",
   /* Files the CRM itself makes: project uploads and the live CRM sheets (Genesis, 12 Oct 2026). Nothing else in Drive can be changed. */
   "https://www.googleapis.com/auth/drive.file",
+  /* The CRM's influencers, clients, vendors and leads kept in Google Contacts (lib/crm/contacts, Genesis, 22 Oct 2026). */
+  "https://www.googleapis.com/auth/contacts",
 ];
 
 /** The company Google account whose Drive holds project files and the CRM sheets. */
