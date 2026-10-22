@@ -160,6 +160,7 @@ export async function captureSubmission(kind: string, submissionId: string, data
           reelRatePaise: reel ? reel * 100 : null,
           notes: [data.previousBrands && `Previous brands: ${data.previousBrands}`, data.goals && `Goals: ${data.goals}`, data.message].filter(Boolean).join("\n") || null,
           tags: ["Applied via website"],
+          source: "Website: applied as a creator",
         },
         update: {
           email: data.email?.toLowerCase() ?? undefined,

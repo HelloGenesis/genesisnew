@@ -29,7 +29,7 @@ export async function importUploadBatch(kind: string, fileName: string, headers:
   if (!allowed(kind) || (kind === "influencers" && !seesCreators(viewer))) return { added: 0, updated: 0 };
   const fields = IMPORT_KINDS[kind]!.fields;
   const safe = Object.fromEntries(Object.entries(mapping).filter(([, f]) => f in fields));
-  const result = await importRows(kind, viewer.id, headers.map((h) => String(h ?? "").trim()), clean(rows), safe);
+  const result = await importRows(kind, viewer.id, headers.map((h) => String(h ?? "").trim()), clean(rows), safe, `${/\.csv$/i.test(fileName) ? "CSV" : "Excel"} · ${fileName}`.slice(0, 160));
   if (last) {
     await recordAuditLog({ action: "file.imported", entity: kind, actorId: viewer.id, metadata: { fileName: fileName.slice(0, 200) } });
     revalidatePath("/admin", "layout");
@@ -48,7 +48,7 @@ export async function importCreatorsForPlan(fileName: string, headers: string[],
   const viewer = await requireStaff("plans");
   const fields = IMPORT_KINDS.influencers!.fields;
   const safe = Object.fromEntries(Object.entries(mapping).filter(([, f]) => f in fields));
-  const result = await importRows("influencers", viewer.id, headers.map((h) => String(h ?? "").trim()), clean(rows), safe);
+  const result = await importRows("influencers", viewer.id, headers.map((h) => String(h ?? "").trim()), clean(rows), safe, `${/\.csv$/i.test(fileName) ? "CSV" : "Excel"} · ${fileName} (from a plan)`.slice(0, 160));
   const ids = [...new Set(result.ids ?? [])];
   const creators = ids.length ? await getPrisma().creator.findMany({ where: { id: { in: ids } } }) : [];
   await recordAuditLog({ action: "plan.imported", entity: "influencers", actorId: viewer.id, metadata: { fileName: fileName.slice(0, 200), added: result.added, updated: result.updated } });

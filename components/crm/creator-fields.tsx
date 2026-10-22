@@ -9,10 +9,13 @@ export { PLATFORMS };
 type Creator = {
   name: string; handle: string; platform: string; profileUrl: string | null; followers: number; avgViews: number | null; engagementRate: number | null;
   tier: string; niches: string[]; languages: string[]; city: string | null; gender: string | null; reelRatePaise: number | null; storyRatePaise: number | null;
-  postRatePaise: number | null; dlRatePaise?: number | null; youtubeUrl?: string | null; email: string | null; phone: string | null; managedBy: string | null; notes: string | null; tags: string[]; blacklisted: boolean;
+  postRatePaise: number | null; dlRatePaise?: number | null; youtubeUrl?: string | null; email: string | null; phone: string | null; managedBy: string | null; pocName?: string | null; pocContact?: string | null; source?: string | null; notes: string | null; tags: string[]; blacklisted: boolean;
 };
 
 const r = (p: number | null | undefined) => (p ? p / 100 : "");
+
+/** The usual places influencers come from; anything else can be typed. */
+const SOURCES = ["Google Sheet", "Excel / CSV", "Instagram search", "Agency", "Referral", "Brand shared", "Website: applied as a creator", "Inbox (Gmail / Drive)", "Event", "Added on a plan", "Added by hand"];
 
 export function CreatorFields({ creator }: { creator?: Creator }) {
   return (
@@ -35,7 +38,16 @@ export function CreatorFields({ creator }: { creator?: Creator }) {
         <Field label="DL, 1 month (₹)" hint="Digital licensing: the brand's paid use for a month."><input name="dlRate" defaultValue={r(creator?.dlRatePaise)} className="crm-input" /></Field>
         <Field label="Post / video rate (₹)"><input name="postRate" defaultValue={r(creator?.postRatePaise)} className="crm-input" /></Field>
         <Field label="YouTube link"><input name="youtubeUrl" type="url" defaultValue={creator?.youtubeUrl ?? ""} className="crm-input" /></Field>
-        <Field label="Managed by"><input name="managedBy" defaultValue={creator?.managedBy ?? ""} className="crm-input" placeholder="Agency or manager" /></Field>
+        <Field label="Agency / manager" hint="If an agency represents them."><input name="managedBy" defaultValue={creator?.managedBy ?? ""} className="crm-input" placeholder="Agency or manager" /></Field>
+        <Field label="Agency POC"><input name="pocName" defaultValue={creator?.pocName ?? ""} className="crm-input" placeholder="Point of contact's name" /></Field>
+        <Field label="POC phone or email"><input name="pocContact" defaultValue={creator?.pocContact ?? ""} className="crm-input" /></Field>
+        {/* Where Genesis found them (Genesis, 22 Oct 2026). Filled in by imports; pick or type here. */}
+        <Field label="Source" hint="Where you found them. Imports fill this in.">
+          <input name="source" list="creator-sources" defaultValue={creator?.source ?? ""} className="crm-input" placeholder="Pick or type" />
+          <datalist id="creator-sources">
+            {SOURCES.map((s) => <option key={s} value={s} />)}
+          </datalist>
+        </Field>
         <Field label="Email"><input name="email" type="email" defaultValue={creator?.email ?? ""} className="crm-input" /></Field>
         <Field label="Phone"><input name="phone" defaultValue={creator?.phone ?? ""} className="crm-input" /></Field>
         <Field label="Tags"><input name="tags" defaultValue={creator?.tags.join(", ")} className="crm-input" /></Field>

@@ -21,7 +21,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const viewer = await requireStaff();
   const driveResult = (await searchParams).drive;
   const drive = await driveStatus();
-  const contacts = await contactsStatus().catch(() => "needs-access" as const);
+  const contacts = await contactsStatus(viewer.id).catch(() => "needs-access" as const);
   const prisma = getPrisma();
   const [failed, pendingEmails, sheetBacklog, sheetErrors, lastWebhook, webhookErrors] = await Promise.all([
     prisma.emailOutbox.findMany({ where: { status: "FAILED" }, orderBy: { createdAt: "desc" }, take: 20 }),
@@ -71,13 +71,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       </Card>
       <Card title="Google Contacts">
         <p className="text-ash">
-          Influencers, clients &amp; agencies, vendors and leads with a phone number or email are kept in <strong className="text-bone">hello@genesismedia.co</strong>&apos;s Google Contacts, each under a &ldquo;Genesis ·&rdquo; label, and updated when they change here (every few minutes).
+          Your contacts go into <strong className="text-bone">your own</strong> Google Contacts: the influencers you added, your leads, and the clients and vendors you look after, each under a &ldquo;Genesis ·&rdquo; label and updated when they change here (every few minutes). Super admins get everyone&apos;s.
         </p>
         {contacts === "connected" ? (
           <p className="crm-notice mt-3">On: contacts are syncing.</p>
         ) : (
           <p className="crm-notice crm-notice-warn mt-3">
-            Needs one step: sign in as hello@genesismedia.co, open <b>Inbox · Gmail &amp; Drive</b> and click <b>Connect Google</b> again, allowing Contacts. (The People API must be turned on in the Google Cloud project of the CRM&apos;s OAuth client.)
+            Off for you: open <b>Inbox · Gmail &amp; Drive</b> and click <b>Connect Google</b>, allowing Contacts. (The People API must be turned on in the Google Cloud project of the CRM&apos;s OAuth client.)
           </p>
         )}
       </Card>

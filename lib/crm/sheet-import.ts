@@ -41,7 +41,7 @@ export const IMPORT_KINDS: Record<string, { label: string; fields: Record<string
   influencers: {
     label: "Influencers",
     sync: true,
-    fields: { name: "creator name", handle: "handle / username", platform: "platform", profileUrl: "profile link", followers: "followers", avgViews: "average views", engagementRate: "engagement rate %", niches: "niche / category", city: "city / location", languages: "languages", gender: "gender", reelRate: "1 IG reel rate (₹)", storyRate: "story + link in bio rate (₹)", dlRate: "DL / digital licensing, 1 month (₹)", postRate: "post / video rate (₹)", youtubeUrl: "YouTube link", email: "email", phone: "phone", managedBy: "agency / manager", notes: "notes" },
+    fields: { name: "creator name", handle: "handle / username", platform: "platform", profileUrl: "profile link", followers: "followers", avgViews: "average views", engagementRate: "engagement rate %", niches: "niche / category", city: "city / location", languages: "languages", gender: "gender", reelRate: "1 IG reel rate (₹)", storyRate: "story + link in bio rate (₹)", dlRate: "DL / digital licensing, 1 month (₹)", postRate: "post / video rate (₹)", youtubeUrl: "YouTube link", email: "email", phone: "phone", managedBy: "agency / manager", pocName: "agency point of contact (POC)", pocContact: "POC phone or email", source: "source / where found", notes: "notes" },
   },
   expenses: {
     label: "Expenses / bills",
@@ -197,13 +197,14 @@ export async function runImport(importId: string) {
   const headerIndex = rows.findIndex((r) => r.filter((c) => String(c ?? "").trim()).length >= 2);
   if (headerIndex < 0) return { added: 0, updated: 0 };
   const headers = rows[headerIndex]!.map((h) => String(h ?? "").trim());
-  const result = await importRows(job.kind, job.userId, headers, rows.slice(headerIndex + 1), job.mapping as Record<string, string>);
+  const result = await importRows(job.kind, job.userId, headers, rows.slice(headerIndex + 1), job.mapping as Record<string, string>, `Google Sheet · ${job.title}`.slice(0, 160));
   await prisma.sheetImport.update({ where: { id: importId }, data: { lastRunAt: new Date(), lastError: null, rowsImported: { increment: result.added } } });
   return result;
 }
 
 /** Brings rows in as leads, clients, vendors, influencers, expenses or briefs: from a Google Sheet, or an uploaded Excel / CSV file. */
-export async function importRows(kind: string, userId: string, headers: string[], body: unknown[][], mapping: Record<string, string>) {
+/** `source`: where these rows came from ("Google Sheet · <title>", "Excel · <file>"), kept on new influencers. */
+export async function importRows(kind: string, userId: string, headers: string[], body: unknown[][], mapping: Record<string, string>, source?: string) {
   const prisma = getPrisma();
   const job = { kind, userId };
   const records = body.map((row) => {
@@ -307,6 +308,9 @@ export async function importRows(kind: string, userId: string, headers: string[]
           email: email(r.email),
           phone: r.phone ? String(r.phone).replace(/(\d)\.0+(?!\d)/g, "$1").trim() : null,
           managedBy: r.managedBy ?? null,
+          pocName: r.pocName ?? null,
+          pocContact: r.pocContact ?? null,
+          source: r.source ?? source ?? null,
           notes: [r.notes, sorted.other.length ? `Categories in the sheet: ${sorted.other.join(", ")}` : null].filter(Boolean).join("\n") || null,
         };
         const existing = await prisma.creator.findUnique({ where: { platform_handle: { platform, handle } } });

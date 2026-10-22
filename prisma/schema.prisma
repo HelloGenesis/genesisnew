@@ -964,6 +964,11 @@ model Creator {
   phone            String?
   /// Agency or manager who represents them.
   managedBy        String?     @map("managed_by")
+  /// The agency's point of contact for this creator, and their phone or email (Genesis, 22 Oct 2026).
+  pocName          String?     @map("poc_name")
+  pocContact       String?     @map("poc_contact")
+  /// Where Genesis found them: "Google Sheet · <title>", "Excel · <file>", Instagram, an agency, a referral… (Genesis, 22 Oct 2026).
+  source           String?
   notes            String?
   tags             String[]    @default([])
   blacklisted      Boolean     @default(false)

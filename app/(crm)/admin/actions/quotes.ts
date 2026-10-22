@@ -173,7 +173,7 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     const handle = c.handle.replace(/^@/, "").toLowerCase();
     const creator = await prisma.creator.upsert({
       where: { platform_handle: { platform, handle } },
-      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", createdById: viewer.id },
+      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", source: "Added on a plan", createdById: viewer.id },
       update: {},
     });
     c.creatorId = creator.id;
