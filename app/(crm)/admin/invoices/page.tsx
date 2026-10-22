@@ -26,7 +26,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     prisma.invoice.findMany({ where: { ...scope, ...(status && status in INVOICE_STATUS ? { status: status as InvoiceStatus } : {}) }, orderBy: [{ issueDate: "desc" }, { seq: "desc" }], take: 300 }),
     prisma.invoice.aggregate({ where: { ...scope, status: "SENT" }, _sum: { totalPaise: true }, _count: true }),
     prisma.invoice.aggregate({ where: { ...scope, status: "PAID", paidAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } }, _sum: { totalPaise: true }, _count: true }),
-    prisma.quote.findMany({ where: { ...quoteScope(viewer), status: { in: ["ACCEPTED", "PAID", "SENT", "VIEWED"] } }, orderBy: { updatedAt: "desc" }, take: 50, select: { id: true, number: true, title: true, company: true, contactName: true, totalPaise: true, status: true } }),
+    prisma.quote.findMany({ where: { ...quoteScope(viewer), status: { notIn: ["DECLINED", "EXPIRED"] } }, orderBy: { updatedAt: "desc" }, take: 100, select: { id: true, number: true, title: true, company: true, contactName: true, totalPaise: true, status: true } }),
   ]);
   const overdue = invoices.filter((i) => i.status === "SENT" && i.dueDate && i.dueDate < new Date());
   return (
@@ -47,7 +47,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           <label className="min-w-[18rem] flex-1">
             <span className="crm-label">Invoice a quote</span>
             <select name="quoteId" required className="crm-input">
-              {quotes.map((q) => <option key={q.id} value={q.id}>{quoteRef(q.number)} · {q.company ?? q.contactName} · {q.title} · {money(q.totalPaise)}</option>)}
+              {quotes.map((q) => <option key={q.id} value={q.id}>{quoteRef(q.number)} · {q.company || q.contactName || "No client yet"} · {q.title} · {money(q.totalPaise)}</option>)}
             </select>
           </label>
           <button className="crm-btn crm-btn-secondary crm-btn-sm">Make the invoice</button>

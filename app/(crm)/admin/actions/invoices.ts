@@ -150,6 +150,9 @@ export async function invoiceFromQuote(form: FormData) {
   const prisma = getPrisma();
   const q = id ? await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) }, include: { lines: { orderBy: { position: "asc" } }, creators: true, account: true } }) : null;
   if (!q) return;
+  /* One invoice per quote: an existing one opens instead of a duplicate. */
+  const existing = await prisma.invoice.findFirst({ where: { quoteId: q.id, status: { not: "CANCELLED" } }, select: { id: true } });
+  if (existing) redirect(`/admin/invoices/${existing.id}`);
   const fees = q.creators.reduce((s, c) => s + (c.feePaise ?? 0), 0);
   const issueDate = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
   const gstin = q.account?.gstin ?? null;

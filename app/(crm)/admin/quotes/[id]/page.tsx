@@ -13,9 +13,10 @@ import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/o
 import { builderData } from "@/lib/crm/quote-data";
 import { quoteRef } from "@/lib/crm/quote-templates";
 import { quoteScope, seesCreators, creatorScope } from "@/lib/crm/scope";
-import { requireStaff } from "@/lib/crm/session";
+import { can, requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
+import { invoiceFromQuote } from "../../actions/invoices";
 import { deleteQuote, duplicateQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
 
 const rupee = (v: number | null | undefined) => (v === null || v === undefined ? null : v / 100);
@@ -68,6 +69,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     })),
   };
   const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null);
+  const invoices = await getPrisma().invoice.findMany({ where: { quoteId: q.id, status: { not: "CANCELLED" } }, select: { id: true, number: true }, orderBy: { createdAt: "asc" } });
   const plan = q.kind === "INFLUENCER_PLAN";
   /* Outreach for the plan's creators: their numbers and emails from the influencer database (or the plan's contact line). */
   const hasCreators = q.creators.length > 0;
@@ -127,6 +129,12 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             {q.projects.map((p) => <li key={p.id} className="text-bone">Project <Link className="crm-link" href={`/admin/projects/${p.id}`}>{projectRef(p.number)} · {p.name}</Link></li>)}
           </ul>
           <div className="mt-4 flex flex-wrap gap-2">
+            {/* The invoice from this quote: open it, or make it with the quote's client and lines (Genesis, 22 Oct 2026). */}
+            {invoices.length > 0
+              ? invoices.map((inv) => <Link key={inv.id} href={`/admin/invoices/${inv.id}`} className="crm-btn crm-btn-primary crm-btn-sm">Invoice {inv.number} ↗</Link>)
+              : (can(viewer, "sales") || can(viewer, "finance")) && (
+                  <form action={invoiceFromQuote}><input type="hidden" name="quoteId" value={q.id} /><button className="crm-btn crm-btn-primary crm-btn-sm">Make the invoice</button></form>
+                )}
             {!["ACCEPTED", "PAID"].includes(q.status) && (
               <form action={setQuoteStatus}><input type="hidden" name="id" value={q.id} /><input type="hidden" name="status" value="ACCEPTED" /><button className="crm-btn crm-btn-secondary crm-btn-sm">Client accepted (start project)</button></form>
             )}
