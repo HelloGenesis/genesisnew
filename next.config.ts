@@ -92,7 +92,7 @@ const nextConfig: NextConfig = {
 
   // `googleapis` is a very large CJS package that should not be traced into
   // the serverless bundle; Next loads it from node_modules at runtime instead.
-  serverExternalPackages: ["googleapis"],
+  serverExternalPackages: ["googleapis", "@sparticuz/chromium", "puppeteer-core"],
 
   images: {
     /**

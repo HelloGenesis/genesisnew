@@ -4,7 +4,7 @@ import { getPrisma } from "@/lib/db";
 
 import { LEAD_STATUS, date, todayIst } from "./catalog";
 import { moneyReminders } from "./company";
-import { appUrl, deliverEmails, queueStaffEmail } from "./notify";
+import { appUrl, deliverEmails, queueEmail, queueStaffEmail } from "./notify";
 import { retryWebhookEvents } from "./orders";
 import { mirrorCreators, syncSheets } from "./sheets";
 
@@ -41,24 +41,36 @@ async function morningDigest() {
   const today = new Date(todayIst());
   const prisma = getPrisma();
   const [leads, tasks, waiting] = await Promise.all([
-    prisma.lead.findMany({ where: { status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: today } }, orderBy: { nextFollowUp: "asc" }, take: 30, include: { owner: true } }),
-    prisma.task.findMany({ where: { status: "OPEN", dueDate: { lte: today } }, orderBy: { dueDate: "asc" }, take: 30, include: { owner: true } }),
+    prisma.lead.findMany({ where: { status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: today } }, orderBy: { nextFollowUp: "asc" }, take: 200, include: { owner: true } }),
+    prisma.task.findMany({ where: { status: "OPEN", dueDate: { lte: today } }, orderBy: { dueDate: "asc" }, take: 200, include: { owner: true } }),
     prisma.deliverable.count({ where: { status: "IN_REVIEW" } }),
   ]);
   if (leads.length === 0 && tasks.length === 0 && waiting === 0) return { nothing: true };
-  const text = [
-    leads.length ? `FOLLOW-UPS DUE (${leads.length})` : "",
-    ...leads.map((l) => `• ${l.name}${l.company ? ` (${l.company})` : ""} · ${LEAD_STATUS[l.status].label} · due ${date(l.nextFollowUp)}${l.owner ? ` · ${l.owner.name ?? l.owner.email}` : ""}`),
-    leads.length ? "" : "",
-    tasks.length ? `TASKS DUE (${tasks.length})` : "",
-    ...tasks.map((t) => `• ${t.title} · due ${date(t.dueDate)}${t.owner ? ` · ${t.owner.name ?? t.owner.email}` : ""}`),
-    tasks.length ? "" : "",
-    waiting ? `${waiting} deliverable${waiting === 1 ? "" : "s"} waiting on client review.` : "",
-    "",
-    `Open the CRM: ${appUrl("/admin")}`,
-  ]
-    .filter((line, i, all) => line !== "" || (i > 0 && all[i - 1] !== ""))
-    .join("\n");
-  await queueStaffEmail({ kind: "digest", scope: "all", subject: `Today at Genesis · ${leads.length} follow-ups, ${tasks.length} tasks`, text, dedupeKey: `digest:${todayIst()}` });
-  return { leads: leads.length, tasks: tasks.length, waiting };
+  const body = (ls: typeof leads, ts: typeof tasks, showOwner: boolean) =>
+    [
+      ls.length ? `FOLLOW-UPS DUE (${ls.length})` : "",
+      ...ls.slice(0, 30).map((l) => `• ${l.name}${l.company ? ` (${l.company})` : ""} · ${LEAD_STATUS[l.status].label} · due ${date(l.nextFollowUp)}${showOwner && l.owner ? ` · ${l.owner.name ?? l.owner.email}` : ""}`),
+      ls.length ? "" : "",
+      ts.length ? `TASKS DUE (${ts.length})` : "",
+      ...ts.slice(0, 30).map((t) => `• ${t.title} · due ${date(t.dueDate)}${showOwner && t.owner ? ` · ${t.owner.name ?? t.owner.email}` : ""}`),
+      ts.length ? "" : "",
+      showOwner && waiting ? `${waiting} deliverable${waiting === 1 ? "" : "s"} waiting on client review.` : "",
+      "",
+      `Open the CRM: ${appUrl("/admin")}`,
+    ]
+      .filter((line, i, all) => line !== "" || (i > 0 && all[i - 1] !== ""))
+      .join("\n");
+  /*
+   * LEADS ARE CONFIDENTIAL (Genesis, 22 Oct 2026): the whole picture goes only
+   * to super admins; everyone else gets their own follow-ups and tasks.
+   */
+  await queueStaffEmail({ kind: "digest", scope: "owners", subject: `Today at Genesis · ${leads.length} follow-ups, ${tasks.length} tasks`, text: body(leads, tasks, true), dedupeKey: `digest:${todayIst()}` });
+  const owners = new Set((await prisma.staffRole.findMany({ where: { role: "OWNER" }, select: { userId: true } })).map((r) => r.userId));
+  const people = new Map<string, { email: string; leads: typeof leads; tasks: typeof tasks }>();
+  for (const l of leads) if (l.owner?.email && !owners.has(l.owner.id)) (people.get(l.owner.id) ?? people.set(l.owner.id, { email: l.owner.email, leads: [], tasks: [] }).get(l.owner.id)!).leads.push(l);
+  for (const t of tasks) if (t.owner?.email && !owners.has(t.owner.id)) (people.get(t.owner.id) ?? people.set(t.owner.id, { email: t.owner.email, leads: [], tasks: [] }).get(t.owner.id)!).tasks.push(t);
+  for (const [id, p] of people) {
+    await queueEmail({ kind: "digest", to: [p.email], subject: `Today · ${p.leads.length} follow-ups, ${p.tasks.length} tasks`, text: body(p.leads, p.tasks, false), dedupeKey: `digest:${todayIst()}:${id}` });
+  }
+  return { leads: leads.length, tasks: tasks.length, waiting, people: people.size };
 }

@@ -155,7 +155,8 @@ function ClientPicker({ value, clients, onType, onPick }: { value: string; clien
  * plan, the price lines, then notes, terms and totals. Saves as a draft with
  * gaps; sending is a separate step.
  */
-export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], sheets, version }: { initial: BuilderQuote; catalog: CatalogItem[]; terms: Terms[]; pool: PoolCreator[]; clients?: Client[]; sheets?: { ext: string | null; int: string | null }; version?: string }) {
+/* `contactHidden`: someone else's client: their contact name, email and phone stay private (lib/crm/scope seesQuoteContact). */
+export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], sheets, version, contactHidden = false }: { initial: BuilderQuote; catalog: CatalogItem[]; terms: Terms[]; pool: PoolCreator[]; clients?: Client[]; sheets?: { ext: string | null; int: string | null }; version?: string; contactHidden?: boolean }) {
   const [q, setQ] = useState<BuilderQuote>({ ...initial, proposalSections: initial.proposalSections ?? [], planColumns: initial.planColumns ?? {} });
   const [pick, setPick] = useState("");
   const [search, setSearch] = useState("");
@@ -485,11 +486,15 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           </label>
           <label><span className="crm-label">Valid until</span><input type="date" value={q.expiresAt} onChange={(e) => set("expiresAt", e.target.value)} className="crm-input" /></label>
         </div>
+        {contactHidden ? (
+          <p className="crm-notice">The client&apos;s contact details are private to whoever made this {q.kind === "INFLUENCER_PLAN" ? "plan" : "quote"} and the lead&apos;s owner. You can still edit and send it.</p>
+        ) : (
         <div className="grid gap-3 sm:grid-cols-3">
           <label><span className="crm-label">Contact name</span><input value={q.contactName} onChange={(e) => set("contactName", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">Email</span><input type="email" value={q.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} className="crm-input" placeholder="Needed only to send" /></label>
           <label><span className="crm-label">Phone</span><input value={q.contactPhone ?? ""} onChange={(e) => set("contactPhone", e.target.value)} className="crm-input" /></label>
         </div>
+        )}
       </section>
 
       {/* THE PROPOSAL (Genesis, 12–13 Oct 2026): first, one box after another, each with its own formatting tools. */}

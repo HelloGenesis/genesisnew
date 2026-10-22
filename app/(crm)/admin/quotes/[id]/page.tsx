@@ -10,14 +10,17 @@ import { getPrisma } from "@/lib/db";
 import { QUOTE_STATUS, dateTime, money, projectRef } from "@/lib/crm/catalog";
 import { appUrl } from "@/lib/crm/notify";
 import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
+import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { builderData } from "@/lib/crm/quote-data";
 import { quoteRef } from "@/lib/crm/quote-templates";
-import { quoteScope, seesCreators, creatorScope } from "@/lib/crm/scope";
+import { quoteScope, seesCreators, creatorScope, seesQuoteContact } from "@/lib/crm/scope";
 import { can, requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
 import { invoiceFromQuote } from "../../actions/invoices";
-import { deleteQuote, duplicateQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
+import { DriveCard } from "@/components/crm/drive-card";
+import { archivedPdf } from "@/lib/crm/drive";
+import { archiveQuoteNow, deleteQuote, duplicateQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
 
 const rupee = (v: number | null | undefined) => (v === null || v === undefined ? null : v / 100);
 
@@ -32,6 +35,10 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     include: { lines: { orderBy: { position: "asc" } }, creators: { orderBy: { position: "asc" } }, order: true, projects: true, lead: true, account: true, request: true },
   });
   if (!q) notFound();
+  /* The client's contact details are confidential: only for the quote's maker, the lead's owner and those given every lead. */
+  const showContact = seesQuoteContact(viewer, q);
+  /* Creators' numbers and emails, only where this person may see them (lib/crm/creator-privacy). */
+  const visible = await contactVisibility(viewer, q, q.creators.map((c) => c.creatorId));
   const initial: BuilderQuote = {
     id: q.id,
     kind: q.kind,
@@ -40,9 +47,9 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     accountId: q.accountId,
     leadId: q.leadId,
     requestId: q.requestId,
-    contactName: q.contactName,
-    contactEmail: q.contactEmail,
-    contactPhone: q.contactPhone,
+    contactName: showContact ? q.contactName : "",
+    contactEmail: showContact ? q.contactEmail : "",
+    contactPhone: showContact ? q.contactPhone : null,
     company: q.company,
     expiresAt: q.expiresAt.toISOString().slice(0, 10),
     notes: q.notes,
@@ -65,10 +72,10 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     creators: q.creators.map((c) => ({
       creatorId: c.creatorId, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: c.deliverables,
       fee: rupee(c.feePaise), er: c.engagementRate, reelCost: rupee(c.reelCostPaise), storyCost: rupee(c.storyCostPaise), dlCost: rupee(c.dlCostPaise),
-      reelPrice: rupee(c.reelPricePaise), storyPrice: rupee(c.storyPricePaise), dlPrice: rupee(c.dlPricePaise), reachout: c.reachout, contact: c.contact, remarks: c.remarks, extra: (c.extra ?? {}) as Record<string, string>,
+      reelPrice: rupee(c.reelPricePaise), storyPrice: rupee(c.storyPricePaise), dlPrice: rupee(c.dlPricePaise), reachout: c.reachout, contact: visible(c) ? c.contact : null, remarks: c.remarks, extra: (c.extra ?? {}) as Record<string, string>,
     })),
   };
-  const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null);
+  const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null, viewer);
   const invoices = await getPrisma().invoice.findMany({ where: { quoteId: q.id, status: { not: "CANCELLED" } }, select: { id: true, number: true }, orderBy: { createdAt: "asc" } });
   const plan = q.kind === "INFLUENCER_PLAN";
   /* Outreach for the plan's creators: their numbers and emails from the influencer database (or the plan's contact line). */
@@ -77,7 +84,8 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
   const outreachRows = q.creators.map((c) => {
     const d = linked.find((x) => x.id === c.creatorId);
     const bits = contactBits(c.contact);
-    return { id: c.id, name: c.name, handle: c.handle, phone: d?.phone ?? bits.phone, email: d?.email ?? bits.email, reachout: c.reachout };
+    const open = visible(c);
+    return { id: c.id, name: c.name, handle: c.handle, phone: open ? (d?.phone ?? bits.phone) : null, email: open ? (d?.email ?? bits.email) : null, reachout: c.reachout };
   });
   const template = hasCreators ? ((await getPrisma().appSetting.findUnique({ where: { key: "outreach-template" } }))?.value ?? DEFAULT_OUTREACH) : "";
   const cities = [...new Set(q.creators.map((c) => c.city).filter(Boolean))] as string[];
@@ -88,7 +96,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
       <PageHead
         kicker={`${plan ? "Influencer plan" : "Price quote"} ${quoteRef(q.number)}`}
         title={q.title}
-        sub={<>{q.account ? <Link href={`/admin/accounts/${q.account.id}`} className="crm-link">{q.account.name}</Link> : (q.company ?? q.contactName)} · {money(q.totalPaise)}{q.lead && <> · lead <Link href={`/admin/leads/${q.lead.id}`} className="crm-link">{q.lead.name}</Link></>}{q.request && <> · request <Link href={`/admin/requests/${q.request.id}`} className="crm-link">{q.request.title}</Link></>}</>}
+        sub={<>{q.account ? <Link href={`/admin/accounts/${q.account.id}`} className="crm-link">{q.account.name}</Link> : (q.company ?? (showContact ? q.contactName : "Client"))} · {money(q.totalPaise)}{q.lead && showContact && <> · lead <Link href={`/admin/leads/${q.lead.id}`} className="crm-link">{q.lead.name}</Link></>}{q.request && <> · request <Link href={`/admin/requests/${q.request.id}`} className="crm-link">{q.request.title}</Link></>}</>}
       >
         <Status value={QUOTE_STATUS[q.status]} />
         <a href={`/quote/${q.token}`} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Client view / PDF ↗</a>
@@ -97,12 +105,12 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] [&>*]:min-w-0">
         <Card title={q.status === "DRAFT" ? "Send to the client" : "Send again"}>
-          <ActionForm action={sendQuoteAction} submit={q.status === "DRAFT" ? "Send quotation email" : "Re-send with the latest changes"} confirm={`Email this ${plan ? "plan" : "quote"} to ${q.contactEmail}?`}>
+          <ActionForm action={sendQuoteAction} submit={q.status === "DRAFT" ? "Send quotation email" : "Re-send with the latest changes"} confirm={showContact ? `Email this ${plan ? "plan" : "quote"} to ${q.contactEmail}?` : `Email this ${plan ? "plan" : "quote"} to the client?`}>
             <input type="hidden" name="id" value={q.id} />
             <Field label="Send" hint="Together, or each part on its own: proposal (platforms, problems, objectives), pricing (lines, totals, terms), influencer plan (the creator list).">
               <Select name="view" required defaultValue="both" options={[["both", "Everything together (proposal, pricing, influencer plan)"], ["proposal", "Proposal only (no prices)"], ["proposal-plan", "Proposal + influencer list (no prices)"], ["plan", "Influencer plan only (with its prices)"], ["pricing", "Pricing only"]]} />
             </Field>
-            <Field label={`Message to ${q.contactName}`} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
+            <Field label={showContact ? `Message to ${q.contactName}` : "Message to the client"} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
             <label className="flex items-center gap-2 text-[0.875rem] text-ash">
               <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys())} disabled={!razorpayKeys()} /> Include a Razorpay payment link for {money(q.totalPaise)}
               {!razorpayKeys() && <span className="text-faint">(Razorpay keys not set)</span>}
@@ -114,11 +122,12 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             <p className="crm-label mb-1">Or share it on WhatsApp / email</p>
             <ShareBox
               subject={`${plan ? "Influencer plan" : "Quotation"} ${quoteRef(q.number)} · ${q.title}`}
-              phone={q.contactPhone}
-              text={`Hi ${q.contactName.split(" ")[0]},\n\nHere's our ${plan ? "influencer plan" : "quotation"} for ${q.title}:\n${clientLink}${q.paymentUrl ? `\n\nPay securely: ${q.paymentUrl}` : ""}\n\nBest,\n${viewer.name ?? "Genesis Media"}${viewer.title ? `\n${viewer.title}` : ""}\ngenesismedia.co`}
+              phone={showContact ? q.contactPhone : null}
+              text={`Hi${showContact && q.contactName ? ` ${q.contactName.split(" ")[0]}` : ""},\n\nHere's our ${plan ? "influencer plan" : "quotation"} for ${q.title}:\n${clientLink}${q.paymentUrl ? `\n\nPay securely: ${q.paymentUrl}` : ""}\n\nBest,\n${viewer.name ?? "Genesis Media"}${viewer.title ? `\n${viewer.title}` : ""}\ngenesismedia.co`}
             />
           </div>
         </Card>
+        <DriveCard id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} what="quote" />
         <Card title="History">
           <ul className="space-y-1.5 text-[0.9375rem]">
             <li className="text-ash">Created {dateTime(q.createdAt)}</li>
@@ -171,7 +180,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         </Card>
       )}
 
-      {q.status === "PAID" ? <Notice>This quote is paid, so it can&apos;t change. Duplicate it to quote again.</Notice> : <QuoteBuilder version={q.updatedAt.toISOString()} initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} clients={data.clients} sheets={{ ext: q.extSheetId, int: q.intSheetId }} />}
+      {q.status === "PAID" ? <Notice>This quote is paid, so it can&apos;t change. Duplicate it to quote again.</Notice> : <QuoteBuilder contactHidden={!showContact} version={q.updatedAt.toISOString()} initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} clients={data.clients} sheets={{ ext: q.extSheetId, int: q.intSheetId }} />}
     </>
   );
 }

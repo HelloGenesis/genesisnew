@@ -31,7 +31,7 @@ const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { nota
  * scouted, with reach, rates and campaign history — and every creator who
  * applies through the website's Influencer Onboarding form lands here too.
  */
-type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; min?: string; max?: string; limit?: string };
+type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; min?: string; max?: string; limit?: string };
 const many = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
 
 /* A niche worth offering: words, not a number or a stray sentence from an imported sheet. */
@@ -45,6 +45,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
   const tiers = many(p.tier).filter((x) => x in CREATOR_TIER) as CreatorTier[];
   const niches = many(p.niche);
   const cities = many(p.city);
+  const sources = many(p.source);
   const min = Number(p.min) || 0;
   const max = Number(p.max) || 0;
   const limit = Math.min(Math.max(Number(p.limit) || 300, 300), 3000);
@@ -70,15 +71,17 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
       tiers.length ? { tier: { in: tiers } } : {},
       nicheIds ? { id: { in: nicheIds } } : {},
       cities.length ? { OR: cities.map((c) => ({ city: { contains: c, mode: "insensitive" as const } })) } : {},
+      sources.length ? { source: { in: sources } } : {},
       min || max ? { followers: { ...(min ? { gte: min } : {}), ...(max ? { lte: max } : {}) } } : {},
     ],
   };
-  const [creators, total, matching, nicheRows, cityRows] = await Promise.all([
+  const [creators, total, matching, nicheRows, cityRows, sourceRows] = await Promise.all([
     prisma.creator.findMany({ where, orderBy: { followers: "desc" }, take: limit, include: { _count: { select: { campaigns: true } } } }),
     prisma.creator.count({ where: creatorScope(viewer) }),
     prisma.creator.count({ where }),
     prisma.$queryRaw<{ niche: string; n: bigint }[]>`select trim(n) as niche, count(*) as n from crm_creators c, unnest(c.niches) n where true ${mine} group by 1 order by 2 desc limit 400`,
     prisma.$queryRaw<{ city: string; n: bigint }[]>`select trim(split_part(city, '-', 1)) as city, count(*) as n from crm_creators c where city is not null and city <> '' ${mine} group by 1 order by 2 desc limit 300`,
+    prisma.$queryRaw<{ source: string; n: bigint }[]>`select source, count(*) as n from crm_creators c where source is not null and source <> '' ${mine} group by 1 order by 2 desc limit 200`,
   ]);
   const seen = new Set<string>();
   const nicheOptions = [...NICHES, ...nicheRows.map((n) => n.niche).filter(usableNiche)]
@@ -94,6 +97,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
     ...tiers.map((x) => CREATOR_TIER[x]),
     ...niches,
     ...cities,
+    ...sources,
     min && `≥ ${min.toLocaleString("en-IN")} followers`,
     max && `≤ ${max.toLocaleString("en-IN")} followers`,
   ].filter(Boolean) as string[];
@@ -111,10 +115,12 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
         <MultiSelect name="tier" label="Any tier" options={Object.entries(CREATOR_TIER)} defaultValue={tiers} className="w-[11rem]" />
         <MultiSelect name="niche" label="Any niche" options={nicheOptions} defaultValue={niches} className="w-[13rem]" />
         <MultiSelect name="city" label="Any city" options={cityOptions} defaultValue={cities} className="w-[12rem]" />
+        {/* Where they came from: a Google Sheet, an Excel file, an agency… (Genesis, 22 Oct 2026). */}
+        <MultiSelect name="source" label="Any source" options={sourceRows.map((r) => [r.source, `${r.source} (${Number(r.n).toLocaleString("en-IN")})`] as const)} defaultValue={sources} className="w-[13rem]" />
         <input name="min" defaultValue={p.min} placeholder="Min followers" inputMode="numeric" className="crm-input max-w-[8.5rem]" />
         <input name="max" defaultValue={p.max} placeholder="Max followers" inputMode="numeric" className="crm-input max-w-[8.5rem]" />
         <button className="crm-btn crm-btn-primary crm-btn-sm">Search</button>
-        {(p.q || platforms.length || tiers.length || niches.length || cities.length || min || max) ? <Link href="/admin/creators" className="crm-btn crm-btn-secondary crm-btn-sm">Clear all</Link> : null}
+        {(p.q || platforms.length || tiers.length || niches.length || cities.length || sources.length || min || max) ? <Link href="/admin/creators" className="crm-btn crm-btn-secondary crm-btn-sm">Clear all</Link> : null}
       </form>
       {/* The search's result, said plainly (Genesis, 13 Oct 2026: "show search results as well"). */}
       <p className="text-[0.9375rem] text-ash" role="status">
@@ -134,7 +140,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
           {/* IN THE PLAN'S OWN COLUMNS (Genesis, 12 Oct 2026, from the IndusInd Nippon plan), with a tick to put creators on a new plan. */}
           <form id="pick-creators" action="/admin/quotes/new" method="get">
             <input type="hidden" name="kind" value="INFLUENCER_PLAN" />
-            <Table head={["", "Tier", "Name", "Category", "IG link", "Followers", "Avg views", "ER", "1 IG Reel", "Story + LIB", "DL (1 month)", "Location", "Contact", "Campaigns"]}>
+            <Table head={["", "Tier", "Name", "Category", "IG link", "Followers", "Avg views", "ER", "1 IG Reel", "Story + LIB", "DL (1 month)", "Location", "Contact", "Agency & POC", "Source", "Campaigns"]}>
               {creators.map((c) => (
                 <tr key={c.id} className={c.blacklisted ? "opacity-50" : ""}>
                   <td><input type="checkbox" name="creators" value={c.id} disabled={c.blacklisted} aria-label={`Select ${c.name}`} className="size-4 accent-[#ffc516]" /></td>
@@ -165,8 +171,13 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
                   <td className="max-w-[14rem] space-y-0.5 text-[0.8125rem]">
                     <EditCell value={c.phone ?? ""} save={edit(c.id, "phone")} placeholder="Phone">{c.phone ?? <span className="text-faint">Phone</span>}</EditCell>
                     <EditCell value={c.email ?? ""} save={edit(c.id, "email")} placeholder="Email" wide><span className="break-all">{c.email ?? <span className="text-faint">Email</span>}</span></EditCell>
-                    <EditCell value={c.managedBy ?? ""} save={edit(c.id, "managedBy")} placeholder="Managed by" wide>{c.managedBy ?? <span className="text-faint">Managed by</span>}</EditCell>
                   </td>
+                  <td className="max-w-[14rem] space-y-0.5 text-[0.8125rem]">
+                    <EditCell value={c.managedBy ?? ""} save={edit(c.id, "managedBy")} placeholder="Agency / manager" wide>{c.managedBy ?? <span className="text-faint">Agency</span>}</EditCell>
+                    <EditCell value={c.pocName ?? ""} save={edit(c.id, "pocName")} placeholder="Agency POC" wide>{c.pocName ? <span className="text-bone">POC: {c.pocName}</span> : <span className="text-faint">POC</span>}</EditCell>
+                    <EditCell value={c.pocContact ?? ""} save={edit(c.id, "pocContact")} placeholder="POC phone or email" wide><span className="break-all">{c.pocContact ?? <span className="text-faint">POC phone / email</span>}</span></EditCell>
+                  </td>
+                  <td className="max-w-[12rem] text-[0.8125rem]"><EditCell value={c.source ?? ""} save={edit(c.id, "source")} placeholder="Source" wide>{c.source ?? "—"}</EditCell></td>
                   <td className="tabular-nums">{c._count.campaigns}</td>
                 </tr>
               ))}

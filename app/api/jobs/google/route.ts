@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
+import { syncContacts } from "@/lib/crm/contacts";
 import { syncGoogle } from "@/lib/crm/ingest";
 import { syncSheetImports } from "@/lib/crm/sheet-import";
 import { isDatabaseConfigured } from "@/lib/db";
@@ -24,6 +25,11 @@ export async function GET(request: Request) {
     report.google = await syncGoogle();
   } catch (error) {
     report.google = { error: String((error as Error).message).slice(0, 300) };
+  }
+  try {
+    report.contacts = await syncContacts();
+  } catch (error) {
+    report.contacts = { error: String((error as Error).message).slice(0, 300) };
   }
   try {
     report.sheets = await syncSheetImports();

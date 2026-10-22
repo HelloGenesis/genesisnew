@@ -405,6 +405,9 @@ function creatorData(form: FormData) {
     email: text(form, "email", 200)?.toLowerCase() ?? null,
     phone: text(form, "phone", 30),
     managedBy: text(form, "managedBy", 160),
+    pocName: text(form, "pocName", 120),
+    pocContact: text(form, "pocContact", 160),
+    source: text(form, "source", 160) ?? (text(form, "id") ? undefined : "Added by hand"),
     notes: text(form, "notes"),
     tags: list(form, "tags"),
     blacklisted: form.get("blacklisted") === "on",
@@ -440,7 +443,7 @@ function countFrom(raw: string): number | null {
   return Math.round(Number(m[1]) * scale);
 }
 
-const EDITABLE = ["name", "handle", "profileUrl", "followers", "avgViews", "engagementRate", "niches", "city", "reelRate", "storyRate", "dlRate", "phone", "email", "managedBy", "tier"] as const;
+const EDITABLE = ["name", "handle", "profileUrl", "followers", "avgViews", "engagementRate", "niches", "city", "reelRate", "storyRate", "dlRate", "phone", "email", "managedBy", "pocName", "pocContact", "source", "tier"] as const;
 
 /**
  * ONE CELL OF THE INFLUENCER DATABASE, EDITED WHERE IT IS (Genesis, 22 Oct
@@ -513,7 +516,7 @@ export async function updateCreatorField(id: string, field: string, raw: string)
       data = { tier: value as CreatorTier };
       break;
     default:
-      data = { [field]: blank ? null : value.slice(0, field === "managedBy" ? 160 : 80) } as Prisma.CreatorUpdateInput;
+      data = { [field]: blank ? null : value.slice(0, ["managedBy", "pocContact", "source"].includes(field) ? 160 : 120) } as Prisma.CreatorUpdateInput;
   }
   try {
     await getPrisma().creator.update({ where: { id }, data });

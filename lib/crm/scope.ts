@@ -55,6 +55,17 @@ export const seesCreators = (v: Viewer) => creatorAccess(v) !== "none";
 /** The creators this person may see: everyone's, or only the ones they added. */
 export const creatorScope = (v: Viewer): Prisma.CreatorWhereInput => (creatorAccess(v) === "all" ? {} : { createdById: v.id });
 
+/*
+ * A CLIENT'S CONTACT DETAILS ARE CONFIDENTIAL (Genesis, 22 Oct 2026: "the
+ * leads are confidential… numbers, emails and other data should not leak to
+ * other users"). Quotes and plans are shared with the team, but the client's
+ * contact name, email and phone show only to super admins, people given every
+ * lead, the quote's maker and the lead's owner.
+ */
+export function seesQuoteContact(v: Viewer, q: { createdById: string | null; lead?: { ownerId: string | null; createdById: string | null } | null }) {
+  return sees(v, "leads") || q.createdById === v.id || q.lead?.ownerId === v.id || q.lead?.createdById === v.id;
+}
+
 /** Only influencer plans (the influencer team without a sales role). */
 export const plansOnly = (v: Viewer) => !isSuperAdmin(v) && !v.roles.some((r) => r === "ADMIN" || r === "SALES") && v.roles.includes("INFLUENCER");
 

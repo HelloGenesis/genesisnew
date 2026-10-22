@@ -214,11 +214,59 @@ export async function projectFolderId(p: { accountId: string; accountName: strin
   return folder(p.folderLabel, project, `project:${p.projectId}:${p.folderKey}`);
 }
 
-/** Genesis CRM / Invoices / <number>: an invoice's supporting screenshots and its signed copy. */
-export async function invoiceFolderId(invoiceId: string, number: string) {
+/*
+ * ONE FOLDER PER CLIENT (Genesis, 22 Oct 2026: "an organised folder for
+ * quotes, invoices and all"):
+ *   Genesis CRM / <Client> / Quotes & plans / #0000041 - <title>.pdf
+ *   Genesis CRM / <Client> / Invoices / Invoice <no> / the PDF, the signed copy, the screenshots
+ *   Genesis CRM / <Client> / <P-0001 project> / … (projectFolderId)
+ * A client with an account uses the account's folder (shared with its
+ * projects); one without (a lead) gets a folder by name.
+ */
+export async function clientFolderId(client: { accountId: string | null; name: string }) {
   const root = await folder(ROOT_NAME, null, "root");
-  const invoices = await folder("Invoices", root, "invoices");
+  const key = client.accountId ? `account:${client.accountId}` : `client:${clean(client.name).toLowerCase()}`;
+  return folder(client.name || "No client", root, key);
+}
+
+export async function quotesFolderId(client: { accountId: string | null; name: string }) {
+  const parent = await clientFolderId(client);
+  return folder("Quotes & plans", parent, `${client.accountId ? `account:${client.accountId}` : `client:${clean(client.name).toLowerCase()}`}:quotes`);
+}
+
+/** <Client> / Invoices / Invoice <no>: the invoice's PDF, supporting screenshots and signed copy. Invoices filed before 22 Oct 2026 keep their folder. */
+export async function invoiceFolderId(invoiceId: string, number: string) {
+  const known = localDrive() ? null : await getSetting(`drive:folder:invoice:${invoiceId}`);
+  if (known) return known;
+  const inv = await getPrisma().invoice.findUnique({ where: { id: invoiceId }, select: { accountId: true, billToName: true } });
+  const account = inv?.accountId ? await getPrisma().account.findUnique({ where: { id: inv.accountId }, select: { name: true } }) : null;
+  const client = { accountId: account ? inv!.accountId : null, name: account?.name ?? inv?.billToName ?? "No client" };
+  const parent = await clientFolderId(client);
+  const invoices = await folder("Invoices", parent, `${client.accountId ? `account:${client.accountId}` : `client:${clean(client.name).toLowerCase()}`}:invoices`);
   return folder(`Invoice ${number}`, invoices, `invoice:${invoiceId}`);
+}
+
+export const driveFolderUrl = (id: string) => `https://drive.google.com/drive/folders/${id}`;
+
+/**
+ * A document's PDF in Drive, replaced when it changes: the new file goes up,
+ * then the old one goes to Drive's bin. `key` names the document ("invoice:<id>").
+ */
+export async function uploadReplacing(key: string, input: { name: string; bytes: Buffer; parentId: string }) {
+  const before = await archivedPdf(key);
+  const id = await uploadSmall({ ...input, mimeType: "application/pdf" });
+  await setSetting(`drive:pdf:${key}`, JSON.stringify({ id, folder: input.parentId, at: new Date().toISOString() }));
+  if (before && before.id !== id) await trashFile(before.id).catch(() => undefined);
+  return id;
+}
+
+export async function archivedPdf(key: string): Promise<{ id: string; folder: string; at: string } | null> {
+  const raw = await getSetting(`drive:pdf:${key}`);
+  try {
+    return raw ? (JSON.parse(raw) as { id: string; folder: string; at: string }) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Genesis CRM / Proposal images: pictures put into proposals, served by /api/crm/images. */

@@ -5,7 +5,7 @@ import { AddPanel, Badge, Empty, Field, PageHead, Table } from "@/components/crm
 import { getPrisma } from "@/lib/db";
 import { MultiSelect } from "@/components/crm/multi-select";
 import { money, VENDOR_SKILLS } from "@/lib/crm/catalog";
-import { requireStaff } from "@/lib/crm/session";
+import { can, requireStaff } from "@/lib/crm/session";
 
 import { createAccount } from "../actions/sales";
 
@@ -14,7 +14,9 @@ export const metadata = { title: "Vendors & crew" };
 
 /** The freelancers, crews and production houses Genesis hires — each with a portal for their work and invoices. */
 export default async function VendorsPage({ searchParams }: { searchParams: Promise<{ skill?: string }> }) {
-  await requireStaff();
+  const viewer = await requireStaff();
+  /* Vendors' numbers are for the people who hire them (delivery); others see names and skills. */
+  const contacts = can(viewer, "delivery");
   const { skill } = await searchParams;
   const vendors = await getPrisma().account.findMany({
     where: { kind: "VENDOR", ...(skill ? { vendorSkills: { has: skill } } : {}) },
@@ -57,7 +59,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
         <Table head={["Vendor", "Skills", "Rates", "Commission", "Live work", "Total jobs", "To pay", "Portal"]}>
           {vendors.map((v) => (
             <tr key={v.id}>
-              <td><Link href={`/admin/accounts/${v.id}`} className="text-bone hover:underline">{v.name}</Link><span className="block text-[0.8125rem] text-ash">{[v.city, v.phone].filter(Boolean).join(" · ")}</span></td>
+              <td><Link href={`/admin/accounts/${v.id}`} className="text-bone hover:underline">{v.name}</Link><span className="block text-[0.8125rem] text-ash">{[v.city, contacts ? v.phone : null].filter(Boolean).join(" · ")}</span></td>
               <td><span className="flex flex-wrap gap-1">{v.vendorSkills.map((s) => <Badge key={s}>{s}</Badge>)}</span></td>
               <td>{v.vendorRateNote ?? "—"}</td>
               <td className="tabular-nums">{v.vendorCommissionPercent ? `${v.vendorCommissionPercent}%` : "—"}</td>

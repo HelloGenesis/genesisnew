@@ -23,7 +23,7 @@ export default async function BriefsPage({ searchParams }: { searchParams: Promi
   const viewer = await requireStaff("sales");
   const p = await searchParams;
   const prisma = getPrisma();
-  const [briefs, options] = await Promise.all([prisma.brief.findMany({ where: briefScope(viewer), orderBy: { createdAt: "desc" }, take: 300 }), briefOptions()]);
+  const [briefs, options] = await Promise.all([prisma.brief.findMany({ where: briefScope(viewer), orderBy: { createdAt: "desc" }, take: 300 }), briefOptions(viewer)]);
   const leadIds = [...new Set(briefs.map((b) => b.leadId).filter((x): x is string => Boolean(x)))];
   const accountIds = [...new Set(briefs.map((b) => b.accountId).filter((x): x is string => Boolean(x)))];
   const [leads, accounts] = await Promise.all([

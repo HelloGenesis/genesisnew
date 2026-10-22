@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { recordAuditLog } from "@/lib/audit";
+import { archiveQuote, archiveLater } from "@/lib/crm/archive";
+import { contactVisibility } from "@/lib/crm/creator-privacy";
+import { DriveNotConnected } from "@/lib/crm/drive";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
 import { sanitizeHtml } from "@/lib/rich-text";
 import { tidyNiches } from "@/lib/crm/niches";
@@ -15,7 +18,7 @@ import type { Platform } from "@/lib/generated/prisma/enums";
 import { tierFor } from "@/lib/crm/catalog";
 import { newToken, openFor, refreshTotals, sendQuote } from "@/lib/crm/quotes";
 import { termsByKey } from "@/lib/crm/quote-templates";
-import { creatorScope, quoteScope, seesCreators } from "@/lib/crm/scope";
+import { creatorScope, quoteScope, seesCreators, seesQuoteContact } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { RazorpayError, razorpay } from "@/lib/razorpay";
 
@@ -171,7 +174,7 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     const handle = c.handle.replace(/^@/, "").toLowerCase();
     const creator = await prisma.creator.upsert({
       where: { platform_handle: { platform, handle } },
-      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", createdById: viewer.id },
+      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", source: "Added on a plan", createdById: viewer.id },
       update: {},
     });
     c.creatorId = creator.id;
@@ -199,6 +202,16 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
       const who = before.updatedById ? await prisma.user.findUnique({ where: { id: before.updatedById }, select: { name: true, email: true } }) : null;
       const at = before.updatedAt.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
       return { ok: false, conflict: true, message: `${who?.name ?? who?.email ?? "Someone else"} saved changes to this quote at ${at}, after you opened it.` };
+    }
+    /* Someone who can't see the client's contact details can't change them either (lib/crm/scope seesQuoteContact). */
+    const lead = before.leadId ? await prisma.lead.findUnique({ where: { id: before.leadId }, select: { ownerId: true, createdById: true } }) : null;
+    if (!seesQuoteContact(viewer, { createdById: before.createdById, lead })) Object.assign(data, { contactName: before.contactName, contactEmail: before.contactEmail, contactPhone: before.contactPhone, leadId: before.leadId, accountId: before.accountId });
+    /* Creators' contacts this person can't see came to the page blank: keep what was saved (lib/crm/creator-privacy). */
+    const visible = await contactVisibility(viewer, before, creators.map((c) => c.creatorId));
+    const saved = await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, handle: true, contact: true } });
+    for (const c of creators) {
+      if (visible(c)) continue;
+      c.contact = saved.find((s) => (c.creatorId && s.creatorId === c.creatorId) || (s.handle && s.handle === c.handle))?.contact ?? null;
     }
     await prisma.$transaction([
       prisma.quoteLine.deleteMany({ where: { quoteId: id } }),
@@ -243,7 +256,7 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
   const wantsSheet = (cols.share === "sheet" || cols.share === "both") && !cols.sheetUrl?.trim();
   if ((form.get("then") === "sheets" || hasSheets || wantsSheet) && result.creators > 0) {
     try {
-      const made = await makePlanSheets(id, viewer.email, viewer.id);
+      const made = await makePlanSheets(id, viewer.email, viewer.id, viewer);
       sheets = made.own ? " Both Google Sheets are in your Drive." : ` Both Google Sheets are up to date (in ${made.account}'s Drive).`;
     } catch (error) {
       sheets = ` The Google Sheets didn't update: ${(error as Error).message.slice(0, 160)}`;
@@ -290,7 +303,7 @@ export async function draftFromCreators(ids: string[], then?: "sheets") {
   let note = "";
   if (then === "sheets") {
     try {
-      const made = await makePlanSheets(created.id, viewer.email, viewer.id);
+      const made = await makePlanSheets(created.id, viewer.email, viewer.id, viewer);
       note = made.own ? "Both Google Sheets are in your Drive." : `Both Google Sheets are made (in ${made.account}'s Drive).`;
     } catch (error) {
       note = `The Google Sheets didn't make: ${(error as Error).message.slice(0, 160)}`;
@@ -312,6 +325,7 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
   try {
     const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";
     const { paymentUrl } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && (view === "both" || view === "pricing"), view);
+    archiveLater("quote", id);
     await recordAuditLog({ action: "quote.sent", entity: "quote", entityId: id, actorId: viewer.id });
     revalidatePath("/admin", "layout");
     return ok(`Sent to ${q.contactEmail}${paymentUrl ? " with a payment link" : ""}.`);
@@ -332,6 +346,7 @@ export async function setQuoteStatus(form: FormData) {
   if (!q || q.status === "PAID") return;
   if (status === "ACCEPTED") {
     await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED", acceptedAt: new Date(), acceptedBy: `Recorded by ${viewer.name ?? viewer.email}` } });
+    archiveLater("quote", id);
     const projectId = await openFor(id);
     revalidatePath("/admin", "layout");
     redirect(`/admin/projects/${projectId}`);
@@ -386,4 +401,19 @@ export async function deleteQuote(form: FormData) {
   await getPrisma().quote.delete({ where: { id } });
   await recordAuditLog({ action: "quote.deleted", entity: "quote", entityId: id, actorId: viewer.id });
   redirect("/admin/quotes");
+}
+
+/** "Save to Google Drive now": files this quote's PDF in the client's "Quotes & plans" folder straight away. */
+export async function archiveQuoteNow(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff("plans");
+  const id = text(form, "id");
+  const q = id ? await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, select: { id: true } }) : null;
+  if (!q) return fail("That quote isn't yours.");
+  try {
+    await archiveQuote(q.id);
+    revalidatePath(`/admin/quotes/${q.id}`);
+    return ok("Saved to Google Drive.");
+  } catch (error) {
+    return fail(error instanceof DriveNotConnected ? error.message : `Couldn't save to Drive: ${(error as Error).message.slice(0, 140)}`);
+  }
 }

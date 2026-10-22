@@ -1,6 +1,8 @@
 import { Download, ExternalLink, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 
+import { GuideButton } from "./guide-button";
+
 /** The CRM's building blocks (server components). Styles: app/(crm)/crm.css. */
 
 export type Tone = "good" | "warn" | "bad" | "info" | "muted";
@@ -14,6 +16,8 @@ export function PageHead({ kicker, title, sub, exportKind, children }: { kicker:
         {sub && <p className="mt-1 text-ash">{sub}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        {/* Every page with a walkthrough gets its "How it works" (lib/crm/guides). */}
+        <GuideButton />
         {children}
         {exportKind && (
           <>

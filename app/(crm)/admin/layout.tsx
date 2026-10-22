@@ -9,6 +9,8 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { accountScope, leadScope, plansOnly, projectScope, sees, seesCreators, through } from "@/lib/crm/scope";
 import { can, devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
 import { SignOut } from "@/components/crm/sign-out";
+import { AppTour } from "@/components/crm/app-tour";
+import { Suspense } from "react";
 
 export const metadata: Metadata = { title: { default: "CRM", template: "%s · Genesis CRM" } };
 export const dynamic = "force-dynamic";
@@ -43,6 +45,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     prisma.notification.count({ where: { userId: viewer!.id, readAt: null } }),
   ]);
 
+  /* The tour opens by itself on someone's first visit (components/crm/app-tour). */
+  const tourSeen = Boolean(await prisma.appSetting.findUnique({ where: { key: `tour:done:${viewer!.id}` }, select: { key: true } }));
   const groups: NavGroup[] = [
     { label: "Today", items: [{ href: "/admin", label: "Dashboard" }, { href: "/admin/notifications", label: "Notifications", count: unread }, { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew }, { href: "/admin/tasks", label: "Tasks", count: myTasks }, ...(sees(viewer!, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : [])] },
     ...(can(viewer, "sales")
@@ -69,7 +73,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ...(can(viewer, "finance")
       ? [{ label: "Money", items: [{ href: "/admin/billing", label: "Orders & subscriptions" }, ...(can(viewer, "sales") ? [] : [{ href: "/admin/invoices", label: "Invoices" }]), { href: "/admin/payouts", label: "Commissions & payouts" }, { href: "/admin/expenses", label: "Expenses & salaries" }, { href: "/admin/expenses/subscriptions", label: "Our subscriptions" }, { href: "/admin/expenses/gst", label: "GST" }] }]
       : []),
-    { label: "Setup", items: [...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []), { href: "/admin/settings", label: "Integrations" }] },
+    { label: "Setup", items: [...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []), { href: "/admin/settings", label: "Integrations" }, { href: "/admin?tour=1", label: "Take the tour" }] },
   ];
 
   return (
@@ -90,6 +94,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </div>
       <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-9 lg:py-8">{children}</main>
+      <Suspense fallback={null}>
+        <AppTour firstTime={!tourSeen} name={viewer!.name} area="admin" />
+      </Suspense>
     </div>
   );
 }

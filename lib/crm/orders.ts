@@ -12,6 +12,7 @@ import { markInvoicePaid } from "./invoices";
 import { accountEmails, appUrl, queueEmail, queueStaffEmail } from "./notify";
 import { openProject } from "./projects";
 import { openFor } from "./quotes";
+import { archiveLater } from "./archive";
 import { queueSheet } from "./sheets";
 
 /**
@@ -334,7 +335,7 @@ async function applySubscription(name: string, sub: Entity, payment: Entity | un
   if (name === "subscription.cancelled" && accountId) {
     await queueStaffEmail({
       kind: "subscription_cancelled",
-      scope: "all",
+      scope: "finance",
       subject: `Subscription cancelled · ${order?.company ?? razorpayId}`,
       text: `Close out the queue for this client.\n\nOpen: ${appUrl(`/admin/accounts/${accountId}`)}`,
       dedupeKey: `sub-cancelled:${razorpayId}`,
@@ -460,7 +461,10 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
       });
     }
   }
-  if (quote) await prisma.quote.update({ where: { id: quote.id }, data: { status: "PAID" } });
+  if (quote) {
+    await prisma.quote.update({ where: { id: quote.id }, data: { status: "PAID" } });
+    archiveLater("quote", quote.id);
+  }
 
   const amount = num(payment?.amount) ?? order.totalPaise;
   const paymentRow = str(payment?.id)
