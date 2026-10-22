@@ -178,13 +178,13 @@ export async function acceptQuote(token: string, acceptedBy: string) {
   if (!q || ["ACCEPTED", "PAID", "DECLINED"].includes(q.status) || q.expiresAt < new Date()) return null;
   await prisma.quote.update({ where: { id: q.id }, data: { status: "ACCEPTED", acceptedAt: new Date(), acceptedBy } });
   const projectId = q.projects[0]?.id ?? (await openFor(q.id));
-  await queueStaffEmail({
-    kind: "quote_accepted",
-    scope: "all",
-    subject: `Accepted: ${q.kind === "INFLUENCER_PLAN" ? "influencer plan" : "quote"} ${quoteRef(q.number)} · ${q.company ?? q.contactName}`,
-    text: `${acceptedBy} accepted "${q.title}" (${money(q.totalPaise)}).${q.paymentUrl ? " Payment link is with the client." : ""}\n\n${appUrl(`/admin/projects/${projectId}`)}`,
-    dedupeKey: `quote-accepted:${q.id}`,
-  });
+  /* To super admins, and the people on this deal: the quote's maker and the lead's owner (lead details are confidential). */
+  const subject = `Accepted: ${q.kind === "INFLUENCER_PLAN" ? "influencer plan" : "quote"} ${quoteRef(q.number)} · ${q.company ?? q.contactName}`;
+  const text = `${acceptedBy} accepted "${q.title}" (${money(q.totalPaise)}).${q.paymentUrl ? " Payment link is with the client." : ""}\n\n${appUrl(`/admin/projects/${projectId}`)}`;
+  await queueStaffEmail({ kind: "quote_accepted", scope: "owners", subject, text, dedupeKey: `quote-accepted:${q.id}` });
+  const lead = q.leadId ? await prisma.lead.findUnique({ where: { id: q.leadId }, select: { ownerId: true } }) : null;
+  const people = await prisma.user.findMany({ where: { id: { in: [q.createdById, lead?.ownerId].filter((x): x is string => Boolean(x)) }, email: { not: null } }, select: { email: true } });
+  if (people.length) await queueEmail({ kind: "quote_accepted", to: people.map((p) => p.email!), subject, text, dedupeKey: `quote-accepted-team:${q.id}` });
   return { projectId, paymentUrl: q.paymentUrl };
 }
 

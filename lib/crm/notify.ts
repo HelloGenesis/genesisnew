@@ -19,7 +19,8 @@ import { LEGAL_EMAIL } from "@/lib/legal";
  * verified in Resend, CRM_OPS_EMAIL (defaults to hello@genesismedia.co).
  */
 
-export type StaffScope = "all" | "sales" | "finance" | "producers";
+/* "leads": lead details are confidential (Genesis, 22 Oct 2026), so they go only to super admins and people who can see every lead; "owners": super admins. */
+export type StaffScope = "all" | "sales" | "finance" | "producers" | "leads" | "owners";
 
 export const emailConfigured = () => Boolean(process.env.RESEND_API_KEY && (process.env.CRM_EMAIL_FROM || process.env.ORDER_EMAIL_FROM));
 
@@ -67,6 +68,8 @@ const SCOPE_ROLES: Record<StaffScope, string[] | null> = {
   sales: ["OWNER", "ADMIN", "SALES"],
   finance: ["OWNER", "ADMIN", "FINANCE"],
   producers: ["OWNER", "ADMIN", "PRODUCER"],
+  leads: ["OWNER"],
+  owners: ["OWNER"],
 };
 
 async function staffRecipients(scope: StaffScope): Promise<string[]> {
@@ -75,8 +78,10 @@ async function staffRecipients(scope: StaffScope): Promise<string[]> {
     where: { ...(roles ? { role: { in: roles as never } } : {}), user: { emailVerified: true, email: { not: null } } },
     select: { user: { select: { email: true } } },
   });
+  /* Plus whoever has been given every lead (Staff & roles → Can also see). */
+  const granted = scope === "leads" ? await getPrisma().user.findMany({ where: { grants: { has: "leads" }, emailVerified: true, email: { not: null }, staffRoles: { some: {} } }, select: { email: true } }) : [];
   const ops = process.env.CRM_OPS_EMAIL || LEGAL_EMAIL;
-  return [...new Set([ops, ...rows.map((r) => r.user.email!)].map((e) => e.toLowerCase()))];
+  return [...new Set([ops, ...rows.map((r) => r.user.email!), ...granted.map((u) => u.email!)].map((e) => e.toLowerCase()))];
 }
 
 async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null) {

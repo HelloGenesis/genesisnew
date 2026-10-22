@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/db";
 import { planInputFor } from "@/lib/crm/plan-sheets";
 import { type PlanCreator, type PlanInput, planWorkbooks } from "@/lib/crm/plan-tables";
-import { quoteScope } from "@/lib/crm/scope";
+import { creatorScope, quoteScope, seesCreators } from "@/lib/crm/scope";
 import { can, getViewer, staffAccess } from "@/lib/crm/session";
 import { xlsxBook } from "@/lib/xlsx";
 
@@ -75,11 +75,13 @@ export async function GET(request: Request) {
   if (quoteId) {
     const q = await getPrisma().quote.findFirst({ where: { id: quoteId, ...quoteScope(viewer) }, select: { id: true } });
     if (!q) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return send((await planInputFor(q.id)).input, which);
+    return send((await planInputFor(q.id, viewer)).input, which);
   }
   const ids = url.searchParams.getAll("creators").slice(0, 500);
   if (!ids.length) return NextResponse.json({ error: "Tick some creators first." }, { status: 400 });
-  const rows = await getPrisma().creator.findMany({ where: { id: { in: ids } } });
+  /* Only creators this person may see (the influencer database is private). */
+  if (!seesCreators(viewer)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const rows = await getPrisma().creator.findMany({ where: { id: { in: ids }, ...creatorScope(viewer) } });
   const r = (p: number | null) => (p === null ? null : p / 100);
   const up = (p: number | null) => (p === null ? null : Math.round((p / 100) * 1.3));
   return send(

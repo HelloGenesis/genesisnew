@@ -2,6 +2,8 @@ import "server-only";
 
 import { getPrisma } from "@/lib/db";
 
+import { contactVisibility } from "./creator-privacy";
+import type { Viewer } from "./session";
 import { COMPANY_ACCOUNT, companyToken, personFileToken } from "./google";
 import { type Cell, type PlanColumns, type PlanInput, planTables, sharesSheet } from "./plan-tables";
 
@@ -35,9 +37,11 @@ async function call<T>(token: string, url: string, body?: unknown, method = "POS
 }
 
 /** The plan as saved, in the shape plan-tables reads. */
-export async function planInputFor(quoteId: string): Promise<{ input: PlanInput; extSheetId: string | null; intSheetId: string | null }> {
+/** `viewer`: whose export this is; creators' contacts they may not see are left out (lib/crm/creator-privacy). */
+export async function planInputFor(quoteId: string, viewer?: Viewer): Promise<{ input: PlanInput; extSheetId: string | null; intSheetId: string | null }> {
   const prisma = getPrisma();
   const q = await prisma.quote.findUniqueOrThrow({ where: { id: quoteId }, include: { creators: true } });
+  const visible = viewer ? await contactVisibility(viewer, q, q.creators.map((c) => c.creatorId)) : () => true;
   const ids = q.creators.map((c) => c.creatorId).filter((x): x is string => Boolean(x));
   const db = new Map((await prisma.creator.findMany({ where: { id: { in: ids } } })).map((c) => [c.id, c]));
   return {
@@ -51,22 +55,24 @@ export async function planInputFor(quoteId: string): Promise<{ input: PlanInput;
       columns: (q.planColumns ?? {}) as PlanColumns,
       creators: q.creators.map((c) => {
         const d = c.creatorId ? db.get(c.creatorId) : undefined;
+        const open = visible(c);
         return {
           name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews,
           er: c.engagementRate ?? d?.engagementRate ?? null, niches: c.niches.length ? c.niches : (d?.niches ?? []), city: c.city ?? d?.city ?? null,
           reelCost: rupees(c.reelCostPaise), storyCost: rupees(c.storyCostPaise), dlCost: rupees(c.dlCostPaise),
           reelPrice: rupees(c.reelPricePaise), storyPrice: rupees(c.storyPricePaise), dlPrice: rupees(c.dlPricePaise),
-          reachout: c.reachout, contact: c.contact ?? ([d?.phone, d?.managedBy].filter(Boolean).join(" · ") || null), remarks: c.remarks,
-          yt: d?.youtubeUrl ?? null, email: d?.email ?? null, extra: (c.extra ?? {}) as Record<string, string>,
+          reachout: c.reachout, contact: open ? (c.contact ?? ([d?.phone, d?.managedBy].filter(Boolean).join(" · ") || null)) : null, remarks: c.remarks,
+          yt: d?.youtubeUrl ?? null, email: open ? (d?.email ?? null) : null, extra: (c.extra ?? {}) as Record<string, string>,
         };
       }),
     },
   };
 }
 
-export async function makePlanSheets(quoteId: string, actorEmail: string | null, actorId?: string | null) {
+/** `viewer`: who's making them; contacts they may not see stay out of the sheets (lib/crm/creator-privacy). */
+export async function makePlanSheets(quoteId: string, actorEmail: string | null, actorId?: string | null, viewer?: Viewer) {
   const prisma = getPrisma();
-  const { input, extSheetId, intSheetId } = await planInputFor(quoteId);
+  const { input, extSheetId, intSheetId } = await planInputFor(quoteId, viewer);
   const t = planTables(input);
   const rows = t.rows;
   const maker = await personFileToken(actorId);

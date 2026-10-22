@@ -335,7 +335,7 @@ async function applySubscription(name: string, sub: Entity, payment: Entity | un
   if (name === "subscription.cancelled" && accountId) {
     await queueStaffEmail({
       kind: "subscription_cancelled",
-      scope: "all",
+      scope: "finance",
       subject: `Subscription cancelled · ${order?.company ?? razorpayId}`,
       text: `Close out the queue for this client.\n\nOpen: ${appUrl(`/admin/accounts/${accountId}`)}`,
       dedupeKey: `sub-cancelled:${razorpayId}`,

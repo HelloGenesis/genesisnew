@@ -24,7 +24,7 @@ export default async function BriefPage({ params }: { params: Promise<{ id: stri
   const [lead, account, options] = await Promise.all([
     brief.leadId ? prisma.lead.findUnique({ where: { id: brief.leadId } }) : null,
     brief.accountId ? prisma.account.findUnique({ where: { id: brief.accountId } }) : null,
-    briefOptions(),
+    briefOptions(viewer),
   ]);
   const rows: [string, React.ReactNode][] = [
     ["From", lead ? <Link href={`/admin/leads/${lead.id}`} className="crm-link">{lead.company ?? lead.name} (lead)</Link> : account ? <Link href={`/admin/accounts/${account.id}`} className="crm-link">{account.name} (client)</Link> : "—"],

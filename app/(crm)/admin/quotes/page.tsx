@@ -6,7 +6,7 @@ import type { QuoteStatus } from "@/lib/generated/prisma/enums";
 import { QUOTE_STATUS, date, money } from "@/lib/crm/catalog";
 import { quoteRef } from "@/lib/crm/quote-templates";
 import { daysFromNow } from "@/lib/crm/options";
-import { quoteScope, isSuperAdmin } from "@/lib/crm/scope";
+import { quoteScope, isSuperAdmin, seesQuoteContact } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +41,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
           {quotes.map((q) => (
             <tr key={q.id}>
               <td><Link href={`/admin/quotes/${q.id}`} className="text-bone hover:underline">{quoteRef(q.number)} · {q.title}</Link></td>
-              <td>{q.account?.name ?? q.company ?? q.contactName}<span className="block text-[0.75rem] text-faint">{q.contactEmail}</span></td>
+              <td>{q.account?.name ?? q.company ?? (seesQuoteContact(viewer, q) ? q.contactName : "Client")}{seesQuoteContact(viewer, q) && <span className="block text-[0.75rem] text-faint">{q.contactEmail}</span>}</td>
               <td>{q.kind === "INFLUENCER_PLAN" ? `Influencer plan · ${q._count.creators}` : "Quote"}</td>
               <td className="tabular-nums">{money(q.totalPaise)}</td>
               <td><Badge tone={QUOTE_STATUS[q.status].tone}>{QUOTE_STATUS[q.status].label}</Badge></td>

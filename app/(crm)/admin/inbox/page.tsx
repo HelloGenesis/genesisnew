@@ -7,7 +7,7 @@ import type { Reading } from "@/lib/crm/ai";
 import { aiConfigured } from "@/lib/crm/ai";
 import { dateTime, money } from "@/lib/crm/catalog";
 import { COMPANY_ACCOUNT, googleConfigured } from "@/lib/crm/google";
-import { sees } from "@/lib/crm/scope";
+import { sees, leadScope, accountScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { addAccountFromItem, attachItem, disconnectMyGoogle, dismissItem, expenseFromItem, importRazorpay, syncMyGoogle } from "../actions/inbox";
@@ -63,8 +63,8 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       take: 150,
     }),
     prisma.inboxItem.groupBy({ by: ["kind"], where: { status: "NEW", ...(person ? { userId: person } : {}), ...recent }, _count: true }),
-    prisma.lead.findMany({ where: { status: { notIn: ["WON", "LOST"] } }, orderBy: { createdAt: "desc" }, take: 200, select: { id: true, name: true, company: true } }),
-    prisma.account.findMany({ orderBy: { name: "asc" }, take: 400, select: { id: true, name: true, kind: true } }),
+    prisma.lead.findMany({ where: { ...leadScope(viewer), status: { notIn: ["WON", "LOST"] } }, orderBy: { createdAt: "desc" }, take: 200, select: { id: true, name: true, company: true } }),
+    prisma.account.findMany({ where: accountScope(viewer), orderBy: { name: "asc" }, take: 400, select: { id: true, name: true, kind: true } }),
   ]);
   const people = await prisma.user.findMany({ where: { id: { in: [...new Set([...items.map((i) => i.userId), ...connections.map((c) => c.userId)].filter((x): x is string => Boolean(x)))] } }, select: { id: true, name: true, email: true } });
   const who = (id: string | null) => people.find((u) => u.id === id)?.name ?? people.find((u) => u.id === id)?.email ?? "—";

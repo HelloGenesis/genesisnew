@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { recordAuditLog } from "@/lib/audit";
 import { archiveQuote, archiveLater } from "@/lib/crm/archive";
+import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { DriveNotConnected } from "@/lib/crm/drive";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
 import { sanitizeHtml } from "@/lib/rich-text";
@@ -17,7 +18,7 @@ import type { Platform } from "@/lib/generated/prisma/enums";
 import { tierFor } from "@/lib/crm/catalog";
 import { newToken, openFor, refreshTotals, sendQuote } from "@/lib/crm/quotes";
 import { termsByKey } from "@/lib/crm/quote-templates";
-import { creatorScope, quoteScope, seesCreators } from "@/lib/crm/scope";
+import { creatorScope, quoteScope, seesCreators, seesQuoteContact } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { RazorpayError, razorpay } from "@/lib/razorpay";
 
@@ -202,6 +203,16 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
       const at = before.updatedAt.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
       return { ok: false, conflict: true, message: `${who?.name ?? who?.email ?? "Someone else"} saved changes to this quote at ${at}, after you opened it.` };
     }
+    /* Someone who can't see the client's contact details can't change them either (lib/crm/scope seesQuoteContact). */
+    const lead = before.leadId ? await prisma.lead.findUnique({ where: { id: before.leadId }, select: { ownerId: true, createdById: true } }) : null;
+    if (!seesQuoteContact(viewer, { createdById: before.createdById, lead })) Object.assign(data, { contactName: before.contactName, contactEmail: before.contactEmail, contactPhone: before.contactPhone, leadId: before.leadId, accountId: before.accountId });
+    /* Creators' contacts this person can't see came to the page blank: keep what was saved (lib/crm/creator-privacy). */
+    const visible = await contactVisibility(viewer, before, creators.map((c) => c.creatorId));
+    const saved = await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, handle: true, contact: true } });
+    for (const c of creators) {
+      if (visible(c)) continue;
+      c.contact = saved.find((s) => (c.creatorId && s.creatorId === c.creatorId) || (s.handle && s.handle === c.handle))?.contact ?? null;
+    }
     await prisma.$transaction([
       prisma.quoteLine.deleteMany({ where: { quoteId: id } }),
       prisma.quoteCreator.deleteMany({ where: { quoteId: id } }),
@@ -245,7 +256,7 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
   const wantsSheet = (cols.share === "sheet" || cols.share === "both") && !cols.sheetUrl?.trim();
   if ((form.get("then") === "sheets" || hasSheets || wantsSheet) && result.creators > 0) {
     try {
-      const made = await makePlanSheets(id, viewer.email, viewer.id);
+      const made = await makePlanSheets(id, viewer.email, viewer.id, viewer);
       sheets = made.own ? " Both Google Sheets are in your Drive." : ` Both Google Sheets are up to date (in ${made.account}'s Drive).`;
     } catch (error) {
       sheets = ` The Google Sheets didn't update: ${(error as Error).message.slice(0, 160)}`;
@@ -292,7 +303,7 @@ export async function draftFromCreators(ids: string[], then?: "sheets") {
   let note = "";
   if (then === "sheets") {
     try {
-      const made = await makePlanSheets(created.id, viewer.email, viewer.id);
+      const made = await makePlanSheets(created.id, viewer.email, viewer.id, viewer);
       note = made.own ? "Both Google Sheets are in your Drive." : `Both Google Sheets are made (in ${made.account}'s Drive).`;
     } catch (error) {
       note = `The Google Sheets didn't make: ${(error as Error).message.slice(0, 160)}`;

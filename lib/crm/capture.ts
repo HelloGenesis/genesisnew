@@ -80,7 +80,8 @@ export async function captureSubmission(kind: string, submissionId: string, data
       await queueSheet("leads", lead.id);
       await queueStaffEmail({
         kind: "lead_new",
-        scope: "sales",
+        /* Lead details are confidential: super admins and whoever sees every lead. */
+        scope: "leads",
         subject: `CRM partner application · ${lead.name}${lead.company ? ` (${lead.company})` : ""}`,
         text: [`${lead.name} applied to partner on the Genesis CRM.`, "", lead.notes, lead.email && `Email: ${lead.email}`, lead.phone && `Phone: ${lead.phone}`, "", `Open the lead: ${appUrl(`/admin/leads/${lead.id}`)}`].filter(Boolean).join("\n"),
         dedupeKey: `lead-new:${lead.id}`,
@@ -116,7 +117,8 @@ export async function captureSubmission(kind: string, submissionId: string, data
       await queueSheet("leads", lead.id);
       await queueStaffEmail({
         kind: "lead_new",
-        scope: "sales",
+        /* Lead details are confidential: super admins and whoever sees every lead. */
+        scope: "leads",
         subject: `New enquiry · ${lead.name}${lead.company ? ` (${lead.company})` : ""}`,
         text: [
           `${kind === "brand" ? "Project enquiry" : "Quick contact"} from the website.`,

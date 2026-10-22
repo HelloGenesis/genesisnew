@@ -66,7 +66,7 @@ export async function planSheets(_: ActionState, form: FormData): Promise<Action
   if (!quote) return fail("Not your plan.");
   let made: Awaited<ReturnType<typeof makePlanSheets>>;
   try {
-    made = await makePlanSheets(quote.id, viewer.email, viewer.id);
+    made = await makePlanSheets(quote.id, viewer.email, viewer.id, viewer);
   } catch (error) {
     return fail(`Couldn't make the sheets: ${(error as Error).message.slice(0, 200)}`);
   }

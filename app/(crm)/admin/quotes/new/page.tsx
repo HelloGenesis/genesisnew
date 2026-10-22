@@ -75,7 +75,7 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
       };
     }),
   };
-  const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null);
+  const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null, viewer);
   return (
     <>
       <PageHead kicker="Sales" title={kind === "INFLUENCER_PLAN" ? "New influencer plan" : "New quote"} sub={request ? `For request: ${request.title}` : lead ? `For lead: ${lead.name}` : undefined} />
