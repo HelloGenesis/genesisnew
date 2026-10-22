@@ -52,6 +52,7 @@ model User {
   auditLogs AuditLog[]
 
   staffRoles      StaffRole[]       @relation("StaffRoleUser")
+  creatorsAdded   Creator[]         @relation("CreatorAddedBy")
   staffTotp       StaffTotp?
   memberships     AccountMember[]
   ownedLeads      Lead[]            @relation("LeadOwner")
@@ -966,6 +967,9 @@ model Creator {
   notes            String?
   tags             String[]    @default([])
   blacklisted      Boolean     @default(false)
+  /// Who added this creator: people with "only what they add" access see just these (lib/crm/scope creatorAccess).
+  createdById      String?     @map("created_by_id")
+  createdBy        User?       @relation("CreatorAddedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
 
@@ -974,6 +978,7 @@ model Creator {
   @@unique([platform, handle])
   @@index([tier])
   @@index([city])
+  @@index([createdById])
   @@map("crm_creators")
 }
 

@@ -320,7 +320,7 @@ export async function importRows(kind: string, userId: string, headers: string[]
             updated += 1;
           }
         } else {
-          ids.push((await prisma.creator.create({ data: { ...data, handle, platform } })).id);
+          ids.push((await prisma.creator.create({ data: { ...data, handle, platform, createdById: userId } })).id);
           added += 1;
         }
       } else if (job.kind === "expenses") {

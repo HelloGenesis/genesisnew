@@ -12,7 +12,7 @@ import { appUrl } from "@/lib/crm/notify";
 import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
 import { builderData } from "@/lib/crm/quote-data";
 import { quoteRef } from "@/lib/crm/quote-templates";
-import { quoteScope, seesCreators } from "@/lib/crm/scope";
+import { quoteScope, seesCreators, creatorScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
@@ -67,7 +67,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
       reelPrice: rupee(c.reelPricePaise), storyPrice: rupee(c.storyPricePaise), dlPrice: rupee(c.dlPricePaise), reachout: c.reachout, contact: c.contact, remarks: c.remarks, extra: (c.extra ?? {}) as Record<string, string>,
     })),
   };
-  const data = await builderData(seesCreators(viewer));
+  const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null);
   const plan = q.kind === "INFLUENCER_PLAN";
   /* Outreach for the plan's creators: their numbers and emails from the influencer database (or the plan's contact line). */
   const hasCreators = q.creators.length > 0;

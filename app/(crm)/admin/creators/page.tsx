@@ -9,8 +9,8 @@ import { PickBar } from "@/components/crm/pick-bar";
 import { AddPanel, Badge, Empty, PageHead, Table } from "@/components/crm/ui";
 import { NICHES } from "@/lib/crm/niches";
 import { getPrisma } from "@/lib/db";
-import { isSuperAdmin, seesCreators } from "@/lib/crm/scope";
-import type { Prisma } from "@/lib/generated/prisma/client";
+import { isSuperAdmin, seesCreators, creatorAccess, creatorScope } from "@/lib/crm/scope";
+import { Prisma } from "@/lib/generated/prisma/client";
 import type { CreatorTier, Platform } from "@/lib/generated/prisma/enums";
 import { CREATOR_TIER, money } from "@/lib/crm/catalog";
 import { requireStaff } from "@/lib/crm/session";
@@ -49,6 +49,9 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
   const max = Number(p.max) || 0;
   const limit = Math.min(Math.max(Number(p.limit) || 300, 300), 3000);
   const prisma = getPrisma();
+  /* "Only what they add": their own entries, never the rest of the database (lib/crm/scope creatorAccess). */
+  const own = creatorAccess(viewer) === "own";
+  const mine = own ? Prisma.sql`and c.created_by_id = ${viewer.id}` : Prisma.empty;
   /*
    * A niche matches by its words, whatever the sheet called it: "Health &
    * Wellness" finds "Health", "holistic health", "Health&fitness" and
@@ -56,11 +59,12 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
    */
   const nicheWords = [...new Set(niches.flatMap((n) => n.toLowerCase().split(/\s*(?:&|\/|,|\band\b|\+)\s*/).map((w) => w.replace(/[^a-z0-9]/g, "")).filter((w) => w.length > 1)))];
   const nicheIds = nicheWords.length
-    ? (await prisma.$queryRaw<{ id: string }[]>`select id from crm_creators c where exists (select 1 from unnest(c.niches) n where regexp_replace(lower(n), '[^a-z0-9]', '', 'g') like any (${nicheWords.map((w) => `%${w}%`)}::text[]))`).map((r) => r.id)
+    ? (await prisma.$queryRaw<{ id: string }[]>`select id from crm_creators c where exists (select 1 from unnest(c.niches) n where regexp_replace(lower(n), '[^a-z0-9]', '', 'g') like any (${nicheWords.map((w) => `%${w}%`)}::text[])) ${mine}`).map((r) => r.id)
     : null;
   /* Several values in one filter widen it (any of them); different filters narrow each other. */
   const where: Prisma.CreatorWhereInput = {
     AND: [
+      creatorScope(viewer),
       p.q ? { OR: [{ name: { contains: p.q, mode: "insensitive" } }, { handle: { contains: p.q.replace(/^@/, ""), mode: "insensitive" } }] } : {},
       platforms.length ? { platform: { in: platforms } } : {},
       tiers.length ? { tier: { in: tiers } } : {},
@@ -71,10 +75,10 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
   };
   const [creators, total, matching, nicheRows, cityRows] = await Promise.all([
     prisma.creator.findMany({ where, orderBy: { followers: "desc" }, take: limit, include: { _count: { select: { campaigns: true } } } }),
-    prisma.creator.count(),
+    prisma.creator.count({ where: creatorScope(viewer) }),
     prisma.creator.count({ where }),
-    prisma.$queryRaw<{ niche: string; n: bigint }[]>`select trim(n) as niche, count(*) as n from crm_creators, unnest(niches) n group by 1 order by 2 desc limit 400`,
-    prisma.$queryRaw<{ city: string; n: bigint }[]>`select trim(split_part(city, '-', 1)) as city, count(*) as n from crm_creators where city is not null and city <> '' group by 1 order by 2 desc limit 300`,
+    prisma.$queryRaw<{ niche: string; n: bigint }[]>`select trim(n) as niche, count(*) as n from crm_creators c, unnest(c.niches) n where true ${mine} group by 1 order by 2 desc limit 400`,
+    prisma.$queryRaw<{ city: string; n: bigint }[]>`select trim(split_part(city, '-', 1)) as city, count(*) as n from crm_creators c where city is not null and city <> '' ${mine} group by 1 order by 2 desc limit 300`,
   ]);
   const seen = new Set<string>();
   const nicheOptions = [...NICHES, ...nicheRows.map((n) => n.niche).filter(usableNiche)]
@@ -98,7 +102,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
   more.set("limit", String(limit + 300));
   return (
     <>
-      <PageHead kicker="Influence" title="Influencer database" sub={`${total.toLocaleString("en-IN")} creators in the database`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined}>
+      <PageHead kicker="Influence" title="Influencer database" sub={own ? `${total.toLocaleString("en-IN")} creators you’ve added · everything you add is saved to Genesis’s database` : `${total.toLocaleString("en-IN")} creators in the database`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined}>
         <Link href="/admin/creators/import" className="crm-btn crm-btn-secondary crm-btn-sm">Import <Upload className="size-4" aria-hidden /></Link>
       </PageHead>
       <form action="/admin/creators" className="flex flex-wrap items-start gap-2">

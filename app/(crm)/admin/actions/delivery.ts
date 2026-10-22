@@ -21,7 +21,7 @@ import { CAMPAIGN_CREATOR_STATUS, DIVISIONS, PROJECT_STATUS, REQUEST_STATUS, mon
 import { type ActionState, day, fail, links, ok, text } from "@/lib/crm/form-state";
 import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
 import { queueSheet } from "@/lib/crm/sheets";
-import { isSuperAdmin, seesCreators } from "@/lib/crm/scope";
+import { creatorScope, isSuperAdmin, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { openProject } from "@/lib/crm/projects";
 import { stagesOf } from "@/lib/crm/stages";
@@ -412,17 +412,20 @@ function creatorData(form: FormData) {
 }
 
 export async function saveCreator(_: ActionState, form: FormData): Promise<ActionState> {
-  if (!seesCreators(await requireStaff())) return fail("Only people with access to the influencer database can change it.");
+  const viewer = await requireStaff();
+  if (!seesCreators(viewer)) return fail("Only people with access to the influencer database can change it.");
   if (!text(form, "name") || !text(form, "handle")) return fail("Add a name and a handle.");
   const id = text(form, "id");
   const data = creatorData(form);
+  /* "Only what they add" may change only their own entries. */
+  if (id && !(await getPrisma().creator.findFirst({ where: { id, ...creatorScope(viewer) }, select: { id: true } }))) return fail("You can only change creators you added.");
   try {
-    const creator = id ? await getPrisma().creator.update({ where: { id }, data }) : await getPrisma().creator.create({ data });
+    const creator = id ? await getPrisma().creator.update({ where: { id }, data }) : await getPrisma().creator.create({ data: { ...data, createdById: viewer.id } });
     done();
     if (!id) redirect(`/admin/creators/${creator.id}`);
     return ok("Saved.");
   } catch (error) {
-    if ((error as { code?: string }).code === "P2002") return fail(`@${data.handle} on ${data.platform.toLowerCase()} is already in the database.`);
+    if ((error as { code?: string }).code === "P2002") return fail(`@${data.handle} on ${data.platform.toLowerCase()} is already in Genesis's database.`);
     throw error;
   }
 }
@@ -446,7 +449,9 @@ const EDITABLE = ["name", "handle", "profileUrl", "followers", "avgViews", "enga
  * typed value; it is checked and saved like the full form.
  */
 export async function updateCreatorField(id: string, field: string, raw: string): Promise<{ ok: boolean; message?: string }> {
-  if (!seesCreators(await requireStaff())) return { ok: false, message: "No access to the influencer database." };
+  const viewer = await requireStaff();
+  if (!seesCreators(viewer)) return { ok: false, message: "No access to the influencer database." };
+  if (!(await getPrisma().creator.findFirst({ where: { id, ...creatorScope(viewer) }, select: { id: true } }))) return { ok: false, message: "You can only change creators you added." };
   if (!EDITABLE.includes(field as (typeof EDITABLE)[number])) return { ok: false, message: "That can't be edited here." };
   const value = String(raw ?? "").trim().slice(0, 600);
   const blank = value === "" || value === "—";

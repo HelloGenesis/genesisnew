@@ -15,7 +15,7 @@ import type { Platform } from "@/lib/generated/prisma/enums";
 import { tierFor } from "@/lib/crm/catalog";
 import { newToken, openFor, refreshTotals, sendQuote } from "@/lib/crm/quotes";
 import { termsByKey } from "@/lib/crm/quote-templates";
-import { quoteScope, seesCreators } from "@/lib/crm/scope";
+import { creatorScope, quoteScope, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { RazorpayError, razorpay } from "@/lib/razorpay";
 
@@ -171,7 +171,7 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     const handle = c.handle.replace(/^@/, "").toLowerCase();
     const creator = await prisma.creator.upsert({
       where: { platform_handle: { platform, handle } },
-      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote." },
+      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", createdById: viewer.id },
       update: {},
     });
     c.creatorId = creator.id;
@@ -264,7 +264,7 @@ export async function draftFromCreators(ids: string[], then?: "sheets") {
   const viewer = await requireStaff("plans");
   if (!seesCreators(viewer)) return { ok: false, message: "Only people with access to the influencer database can do this." };
   const prisma = getPrisma();
-  const picked = await prisma.creator.findMany({ where: { id: { in: ids.slice(0, 200) } }, orderBy: { followers: "asc" } });
+  const picked = await prisma.creator.findMany({ where: { id: { in: ids.slice(0, 200) }, ...creatorScope(viewer) }, orderBy: { followers: "asc" } });
   if (picked.length === 0) return { ok: false, message: "Tick some creators first." };
   const terms = termsByKey("influencer");
   const up = (v: number | null) => (v === null ? null : Math.round(v * 1.3));

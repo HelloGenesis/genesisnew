@@ -2,7 +2,7 @@ import { ActionForm } from "@/components/crm/action-form";
 import { Card, Field, PageHead, Select, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { STAFF_ROLE, date } from "@/lib/crm/catalog";
-import { AREAS, isSuperAdmin } from "@/lib/crm/scope";
+import { AREAS, CREATOR_ACCESS, creatorAccess, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { grantPortalAccess, inviteStaff, resetTwoFactor, revokeStaff, setGrants, setStaffProfile } from "../actions/finance";
@@ -24,6 +24,8 @@ export default async function StaffPage() {
     prisma.account.findMany({ where: { kind: { in: ["BRAND", "AGENCY"] } }, orderBy: { name: "asc" }, select: { id: true, name: true }, take: 1000 }),
   ]);
   const people = [...new Map(roles.map((r) => [r.userId, r.user])).values()];
+  const accessOf = (u: (typeof people)[number]) => creatorAccess({ ...viewer, id: u.id, grants: u.grants, roles: roles.filter((r) => r.userId === u.id).map((r) => r.role) });
+  const seesText = (grants: string[]) => (grants.some((g) => g in AREAS) ? grants.filter((g) => g in AREAS).map((g) => AREAS[g]).join(", ") : "Only their own");
   return (
     <>
       <PageHead kicker="Setup" title="Staff & roles" />
@@ -106,16 +108,23 @@ export default async function StaffPage() {
                 <span className="text-[0.8125rem] text-ash">Everything (super admin)</span>
               ) : isSuperAdmin(viewer) ? (
                 <details>
-                  <summary className="cursor-pointer text-[0.8125rem] text-ash">{u.grants.length ? u.grants.map((g) => AREAS[g] ?? g).join(", ") : "Only their own"}</summary>
-                  <ActionForm action={setGrants} submit="Save" className="mt-2 min-w-[14rem]">
+                  <summary className="cursor-pointer text-[0.8125rem] text-ash">{seesText(u.grants)}<span className="block text-faint">Influencer data: {CREATOR_ACCESS[accessOf(u)].split(" (")[0]}</span></summary>
+                  <ActionForm action={setGrants} submit="Save" className="mt-2 min-w-[16rem]">
                     <input type="hidden" name="userId" value={u.id} />
                     {Object.entries(AREAS).map(([k, label]) => (
                       <label key={k} className="flex items-center gap-2 text-[0.8125rem] text-ash"><input type="checkbox" name="grants" value={k} defaultChecked={u.grants.includes(k)} /> {label}</label>
                     ))}
+                    {/* Influencer data: one of three (Genesis, 22 Oct 2026). */}
+                    <fieldset className="mt-2 space-y-1 border-t border-[var(--glass-border)] pt-2">
+                      <legend className="text-[0.8125rem] text-bone">Influencer data</legend>
+                      {(["none", "own", "all"] as const).map((k) => (
+                        <label key={k} className="flex items-start gap-2 text-[0.8125rem] text-ash"><input type="radio" name="creatorAccess" value={k} defaultChecked={accessOf(u) === k} className="mt-0.5" /> {CREATOR_ACCESS[k]}</label>
+                      ))}
+                    </fieldset>
                   </ActionForm>
                 </details>
               ) : (
-                <span className="text-[0.8125rem] text-ash">{u.grants.length ? u.grants.map((g) => AREAS[g] ?? g).join(", ") : "Only their own"}</span>
+                <span className="text-[0.8125rem] text-ash">{seesText(u.grants)}<span className="block text-faint">Influencer data: {CREATOR_ACCESS[accessOf(u)].split(" (")[0]}</span></span>
               )}
             </td>
             <td>
