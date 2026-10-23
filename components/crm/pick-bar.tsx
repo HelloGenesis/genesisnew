@@ -15,8 +15,8 @@ export function PickBar({ formId, label = "Make a plan with these", excel = fals
   const [, start] = useTransition();
   const ticked = () => [...(document.getElementById(formId)?.querySelectorAll<HTMLInputElement>('input[name="creators"]:checked') ?? [])].map((b) => b.value);
   /* A draft plan of the ticked creators, kept in Quotes & plans; with both Google Sheets made when asked. */
-  const draft = (then?: "sheets") => {
-    setBusy(then === "sheets" ? "Making the sheets…" : "Saving…");
+  const draft = (then?: "sheets" | "reachout") => {
+    setBusy(then === "sheets" ? "Making the sheets…" : then === "reachout" ? "Opening Reach out…" : "Saving…");
     start(async () => {
       const result = await draftFromCreators(ticked(), then);
       if (result && !result.ok) {
@@ -53,6 +53,8 @@ export function PickBar({ formId, label = "Make a plan with these", excel = fals
             <button form={formId} formAction="/api/crm/plan-xlsx" name="which" value="int" disabled={count === 0} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Excel · internal</button>
             <button type="button" onClick={() => draft("sheets")} disabled={count === 0 || busy !== null} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Google Sheets · int + ext</button>
             <button type="button" onClick={() => draft()} disabled={count === 0 || busy !== null} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Save draft</button>
+            {/* A new reach out: the ticked creators saved as a draft plan, straight into Reach out. */}
+            <button type="button" onClick={() => draft("reachout")} disabled={count === 0 || busy !== null} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-50">Reach out to these</button>
             {busy && <span className="text-[0.8125rem] text-ash" role="status">{busy}</span>}
           </>
         )}

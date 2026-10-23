@@ -6,7 +6,7 @@ import { date } from "@/lib/crm/catalog";
 import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
 import { quoteRef } from "@/lib/crm/quote-templates";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
-import { quoteScope } from "@/lib/crm/scope";
+import { quoteScope, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { getPrisma } from "@/lib/db";
 
@@ -47,7 +47,11 @@ export default async function ReachoutPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHead kicker="Influence" title="Reach out" sub="Ask creators for costing on WhatsApp or email, plan by plan." />
+      <PageHead kicker="Influence" title="Reach out" sub="Ask creators for costing on WhatsApp or email, plan by plan.">
+        {/* A new reach out picks creators from the database; without database access, it starts from a new plan. */}
+        <Link href={seesCreators(viewer) ? "/admin/creators?reachout=1" : "/admin/quotes/new?kind=INFLUENCER_PLAN"} className="crm-btn crm-btn-secondary crm-btn-sm">＋ New reach out</Link>
+        <Link href="/admin/quotes/new?kind=INFLUENCER_PLAN" className="crm-btn crm-btn-primary crm-btn-sm">＋ New influencer plan</Link>
+      </PageHead>
       {plans.length === 0 ? (
         <Empty>No influencer plans with creators yet. Make one from Quotes &amp; plans, then reach out from here.</Empty>
       ) : (
