@@ -25,6 +25,18 @@ export const AREAS: Record<string, string> = {
 };
 
 export const isSuperAdmin = (v: Viewer) => v.roles.includes("OWNER");
+
+/*
+ * EVERY SCOPE STAYS IN ONE CRM (lib/crm/workspace): the person's agency's, the
+ * agency an owner switched to, or Genesis's own. lib/db does the same for
+ * every direct query; this also covers filters through a relation
+ * ("deliverables of my projects").
+ */
+type WithWorkspace = { workspaceId?: string | null };
+function inCrm<T extends object>(v: Viewer, where: T): T {
+  const ws = { workspaceId: v.ws } as WithWorkspace;
+  return (Object.keys(where).length ? { AND: [ws, where] } : ws) as unknown as T;
+}
 export const sees = (v: Viewer, area: keyof typeof AREAS | string) => isSuperAdmin(v) || v.grants.includes(area);
 
 /*
@@ -53,7 +65,7 @@ export function creatorAccess(v: Viewer): CreatorAccess {
 /** May open the influencer database at all (all of it, or their own entries). */
 export const seesCreators = (v: Viewer) => creatorAccess(v) !== "none";
 /** The creators this person may see: everyone's, or only the ones they added. */
-export const creatorScope = (v: Viewer): Prisma.CreatorWhereInput => (creatorAccess(v) === "all" ? {} : { createdById: v.id });
+export const creatorScope = (v: Viewer): Prisma.CreatorWhereInput => inCrm(v, creatorAccess(v) === "all" ? {} : { createdById: v.id });
 
 /*
  * A CLIENT'S CONTACT DETAILS ARE CONFIDENTIAL (Genesis, 22 Oct 2026: "the
@@ -72,13 +84,13 @@ export const plansOnly = (v: Viewer) => !isSuperAdmin(v) && !v.roles.some((r) =>
 /** For a super admin looking at the dashboard "as" someone: their id, else the viewer's. */
 export const asPerson = (v: Viewer, person?: string | null) => (isSuperAdmin(v) && person ? person : v.id);
 
-export function leadScope(v: Viewer, person?: string | null): Prisma.LeadWhereInput {
+function leadScopeOwn(v: Viewer, person?: string | null): Prisma.LeadWhereInput {
   if (!person && sees(v, "leads")) return {};
   const id = asPerson(v, person);
   return { OR: [{ ownerId: id }, { createdById: id }] };
 }
 
-export function briefScope(v: Viewer, person?: string | null): Prisma.BriefWhereInput {
+function briefScopeOwn(v: Viewer, person?: string | null): Prisma.BriefWhereInput {
   if (!person && sees(v, "leads")) return {};
   return { createdById: asPerson(v, person) };
 }
@@ -88,7 +100,7 @@ export function briefScope(v: Viewer, person?: string | null): Prisma.BriefWhere
  * should be visible to all who are allowed"): everyone who can open Quotes sees
  * every quote and plan. Only the dashboard's "as someone" view narrows it.
  */
-export function quoteScope(v: Viewer, person?: string | null): Prisma.QuoteWhereInput {
+function quoteScopeOwn(v: Viewer, person?: string | null): Prisma.QuoteWhereInput {
   /* The influencer team sees the influencer plans, everyone's; not the other quotes. */
   if (plansOnly(v)) return person ? { kind: "INFLUENCER_PLAN", createdById: asPerson(v, person) } : { kind: "INFLUENCER_PLAN" };
   if (!person) return {};
@@ -96,24 +108,28 @@ export function quoteScope(v: Viewer, person?: string | null): Prisma.QuoteWhere
   return { OR: [{ createdById: id }, { lead: { ownerId: id } }] };
 }
 
+/* Orders, subscriptions and payments are Genesis's own (Razorpay): an agency CRM has none. */
+const NONE = { id: "__agency-crm-has-none__" };
+
 export function orderScope(v: Viewer, person?: string | null): Prisma.OrderWhereInput {
+  if (v.ws) return NONE;
   if (!person && sees(v, "billing")) return {};
   const id = asPerson(v, person);
   return { OR: [{ createdById: id }, { quote: { createdById: id } }, { account: { managerId: id } }] };
 }
 
-export function invoiceScope(v: Viewer, person?: string | null): Prisma.InvoiceWhereInput {
+function invoiceScopeOwn(v: Viewer, person?: string | null): Prisma.InvoiceWhereInput {
   if (!person && sees(v, "billing")) return {};
   return { createdById: asPerson(v, person) };
 }
 
-export function accountScope(v: Viewer, person?: string | null): Prisma.AccountWhereInput {
+function accountScopeOwn(v: Viewer, person?: string | null): Prisma.AccountWhereInput {
   if (!person && sees(v, "clients")) return {};
   const id = asPerson(v, person);
   return { OR: [{ managerId: id }, { leads: { some: { ownerId: id } } }, { projects: { some: { managerId: id } } }, { projects: { some: { tasks: { some: { ownerId: id } } } } }] };
 }
 
-export function projectScope(v: Viewer, person?: string | null): Prisma.ProjectWhereInput {
+function projectScopeOwn(v: Viewer, person?: string | null): Prisma.ProjectWhereInput {
   if (!person && sees(v, "projects")) return {};
   const id = asPerson(v, person);
   return { OR: [{ managerId: id }, { tasks: { some: { ownerId: id } } }, { lead: { ownerId: id } }] };
@@ -132,3 +148,15 @@ export function invoiceAccess(v: Viewer): Prisma.InvoiceWhereInput {
   const scope = invoiceScope(v);
   return Object.keys(scope).length === 0 ? {} : { OR: [scope, { signatoryId: v.id }] };
 }
+
+export const leadScope = (v: Viewer, person?: string | null): Prisma.LeadWhereInput => inCrm(v, leadScopeOwn(v, person));
+
+export const briefScope = (v: Viewer, person?: string | null): Prisma.BriefWhereInput => inCrm(v, briefScopeOwn(v, person));
+
+export const quoteScope = (v: Viewer, person?: string | null): Prisma.QuoteWhereInput => inCrm(v, quoteScopeOwn(v, person));
+
+export const invoiceScope = (v: Viewer, person?: string | null): Prisma.InvoiceWhereInput => inCrm(v, invoiceScopeOwn(v, person));
+
+export const accountScope = (v: Viewer, person?: string | null): Prisma.AccountWhereInput => inCrm(v, accountScopeOwn(v, person));
+
+export const projectScope = (v: Viewer, person?: string | null): Prisma.ProjectWhereInput => inCrm(v, projectScopeOwn(v, person));

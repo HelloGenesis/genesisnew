@@ -172,10 +172,9 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     if (autosave || c.creatorId || !c.handle) continue;
     const platform = (["INSTAGRAM", "YOUTUBE", "LINKEDIN", "X", "FACEBOOK", "MOJ", "JOSH", "SNAPCHAT", "OTHER"].includes(c.platform) ? c.platform : "INSTAGRAM") as Platform;
     const handle = c.handle.replace(/^@/, "").toLowerCase();
-    const creator = await prisma.creator.upsert({
-      where: { platform_handle: { platform, handle } },
-      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", source: "Added on a plan", createdById: viewer.id },
-      update: {},
+    /* One per handle in this CRM (Genesis's, or the agency's own list). */
+    const creator = (await prisma.creator.findFirst({ where: { platform, handle } })) ?? await prisma.creator.create({
+      data: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", source: "Added on a plan", createdById: viewer.id },
     });
     c.creatorId = creator.id;
   }

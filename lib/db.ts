@@ -4,6 +4,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "@/lib/generated/prisma/client";
+import { activeWorkspace } from "./crm/request-workspace";
 import { dbEnv, isPlaceholder } from "./env";
 
 /**
@@ -30,13 +31,55 @@ function createClient(): Client {
     ? new PrismaNeon({ connectionString: DATABASE_URL })
     : new PrismaPg({ connectionString: DATABASE_URL });
 
-  return new PrismaClient({
+  const client = new PrismaClient({
     adapter,
     log:
       process.env.NODE_ENV === "development"
         ? ["warn", "error"]
         : ["error"],
   });
+  return withWorkspaces(client);
+}
+
+/*
+ * AGENCY CRMS KEPT APART (Genesis, 22 Oct 2026: "a separate dashboard for
+ * agencies, where our data should not be merged with theirs but we can see
+ * their data"). Leads, briefs, clients, quotes, invoices, projects, tasks,
+ * creators and requests carry `workspaceId` (null = Genesis's). Inside a staff
+ * request (lib/crm/request-workspace) every read and write on those models is
+ * held to that request's CRM here, in one place, so no page can forget it.
+ * Public pages, webhooks and scheduled jobs run unfiltered.
+ */
+const TAGGED = new Set(["Lead", "Brief", "Account", "Quote", "Invoice", "Project", "Task", "Creator", "Request"]);
+const WHERE_OPS = new Set(["findMany", "findFirst", "findFirstOrThrow", "findUnique", "findUniqueOrThrow", "count", "aggregate", "groupBy", "update", "updateMany", "updateManyAndReturn", "delete", "deleteMany", "upsert"]);
+
+function withWorkspaces(client: Client): Client {
+  return client.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          if (!model || !TAGGED.has(model)) return query(args);
+          const ws = await activeWorkspace();
+          if (ws === undefined) return query(args);
+          const a = (args ?? {}) as Record<string, unknown>;
+          if (WHERE_OPS.has(operation)) {
+            const where = (a.where ?? {}) as Record<string, unknown>;
+            if (!("workspaceId" in where)) a.where = { ...where, workspaceId: ws };
+          }
+          if (operation === "create" || operation === "upsert") {
+            const key = operation === "create" ? "data" : "create";
+            const data = (a[key] ?? {}) as Record<string, unknown>;
+            if (!("workspaceId" in data)) a[key] = { ...data, workspaceId: ws };
+          }
+          if (operation === "createMany" || operation === "createManyAndReturn") {
+            const rows = Array.isArray(a.data) ? a.data : [a.data];
+            a.data = rows.map((r) => ("workspaceId" in (r as object) ? r : { ...(r as object), workspaceId: ws }));
+          }
+          return query(a as typeof args);
+        },
+      },
+    },
+  }) as unknown as Client;
 }
 
 export function getPrisma(): Client {

@@ -41,8 +41,8 @@ async function morningDigest() {
   const today = new Date(todayIst());
   const prisma = getPrisma();
   const [leads, tasks, waiting] = await Promise.all([
-    prisma.lead.findMany({ where: { status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: today } }, orderBy: { nextFollowUp: "asc" }, take: 200, include: { owner: true } }),
-    prisma.task.findMany({ where: { status: "OPEN", dueDate: { lte: today } }, orderBy: { dueDate: "asc" }, take: 200, include: { owner: true } }),
+    prisma.lead.findMany({ where: { status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: today }, workspaceId: null }, orderBy: { nextFollowUp: "asc" }, take: 200, include: { owner: true } }),
+    prisma.task.findMany({ where: { status: "OPEN", dueDate: { lte: today }, workspaceId: null }, orderBy: { dueDate: "asc" }, take: 200, include: { owner: true } }),
     prisma.deliverable.count({ where: { status: "IN_REVIEW" } }),
   ]);
   if (leads.length === 0 && tasks.length === 0 && waiting === 0) return { nothing: true };

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAuth0IfConfigured } from "./lib/auth0";
+import { PATH_HEADER } from "./lib/crm/path-header";
 import { checkRateLimit, rateLimitKey } from "./lib/rate-limit";
 
 /**
@@ -36,7 +37,7 @@ export async function proxy(request: Request): Promise<NextResponse> {
   // proxy matcher covers the whole site, so throwing here would take the
   // marketing pages down too; /insider renders a "not configured" notice.
   if (!auth0) {
-    return NextResponse.next();
+    return withPath(request);
   }
 
   /* One-time codes cost money and invite abuse: a per-IP limit on top of Auth0's own (as genesis-coworking). */
@@ -68,7 +69,25 @@ export async function proxy(request: Request): Promise<NextResponse> {
     }
   }
 
-  return authResponse;
+  return withPath(request, authResponse);
+}
+
+/**
+ * Passes the request on with its path in a header, for lib/crm/request-workspace
+ * (which CRM a form submission or download is in). Set here, so it can't be
+ * supplied by the browser; Auth0's rolled session cookies are kept.
+ */
+function withPath(request: Request, base?: NextResponse): NextResponse {
+  const headers = new Headers(request.headers);
+  headers.set(PATH_HEADER, new URL(request.url).pathname);
+  const response = NextResponse.next({ request: { headers } });
+  if (base) {
+    for (const cookie of base.headers.getSetCookie()) response.headers.append("set-cookie", cookie);
+    base.headers.forEach((value, key) => {
+      if (key !== "set-cookie" && !key.startsWith("x-middleware-")) response.headers.set(key, value);
+    });
+  }
+  return response;
 }
 
 export const config = {

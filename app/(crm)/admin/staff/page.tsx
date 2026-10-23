@@ -5,6 +5,7 @@ import { STAFF_ROLE, date } from "@/lib/crm/catalog";
 import { AREAS, CREATOR_ACCESS, creatorAccess, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
+import { grantAgencyCrm } from "../actions/workspaces";
 import { grantPortalAccess, inviteStaff, resetTwoFactor, revokeStaff, setGrants, setStaffProfile } from "../actions/finance";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +19,11 @@ export const metadata = { title: "Staff & roles" };
 export default async function StaffPage() {
   const viewer = await requireStaff("staff");
   const prisma = getPrisma();
-  const [roles, invites, clients] = await Promise.all([
+  const [roles, invites, clients, agencies] = await Promise.all([
     prisma.staffRole.findMany({ include: { user: { include: { staffTotp: true } } }, orderBy: { createdAt: "asc" } }),
     prisma.staffInvite.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.account.findMany({ where: { kind: { in: ["BRAND", "AGENCY"] } }, orderBy: { name: "asc" }, select: { id: true, name: true }, take: 1000 }),
+    prisma.account.findMany({ where: { kind: { in: ["BRAND", "AGENCY"] }, workspaceId: null }, orderBy: { name: "asc" }, select: { id: true, name: true }, take: 1000 }),
+    prisma.account.findMany({ where: { kind: "AGENCY", workspaceId: null }, orderBy: { name: "asc" }, select: { id: true, name: true, crmWorkspace: true, _count: { select: { crmTeam: true } } } }),
   ]);
   const people = [...new Map(roles.map((r) => [r.userId, r.user])).values()];
   const accessOf = (u: (typeof people)[number]) => creatorAccess({ ...viewer, id: u.id, grants: u.grants, roles: roles.filter((r) => r.userId === u.id).map((r) => r.role) });
@@ -52,6 +54,30 @@ export default async function StaffPage() {
           </fieldset>
         </ActionForm>
       </Card>
+      {/*
+        CRM ACCESS FOR AGENCIES (Genesis, 22 Oct 2026): an agency gets its own
+        CRM, its data kept apart from Genesis's; Genesis's owners can open it
+        from the Viewing switcher in the sidebar.
+      */}
+      {isSuperAdmin(viewer) && (
+        <Card title="CRM access for an agency">
+          <ActionForm action={grantAgencyCrm} submit="Give the agency its CRM" reset>
+            <p className="text-[0.875rem] text-ash">
+              The agency gets its own CRM: leads, clients, quotes and influencer plans, invoices under its own name and GST, projects, tasks and its own influencer list. Their data never mixes with Genesis&apos;s, and they never see Genesis&apos;s. You can look inside from <b>Viewing</b> in the sidebar.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Field label="Agency"><Select name="accountId" options={agencies.map((a) => [a.id, a.crmWorkspace ? `${a.name} (has a CRM)` : a.name] as const)} placeholder="Pick an agency" /></Field>
+              <Field label="…or a new agency's name"><input name="agencyName" className="crm-input" /></Field>
+              <Field label="Their admin's email"><input name="email" type="email" required className="crm-input" /></Field>
+            </div>
+          </ActionForm>
+          {agencies.some((a) => a.crmWorkspace) && (
+            <p className="mt-4 text-[0.875rem] text-ash">
+              Agencies with a CRM: {agencies.filter((a) => a.crmWorkspace).map((a) => `${a.name} (${a._count.crmTeam} ${a._count.crmTeam === 1 ? "person" : "people"})`).join(", ")}
+            </p>
+          )}
+        </Card>
+      )}
       <Card title="Portal access (their side only)">
         <div className="grid gap-6 lg:grid-cols-2">
           <ActionForm action={grantPortalAccess} submit="Give client access" reset>

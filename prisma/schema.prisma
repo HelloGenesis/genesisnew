@@ -43,6 +43,10 @@ model User {
   title       String?
   /// What a super admin has opened up to this person beyond their own records: "leads", "quotes", "billing", "clients", "projects", "inbox", "reports".
   grants      String[]  @default([])
+  /// Someone who works in an agency's CRM (lib/crm/workspace): the agency account, and ADMIN or MEMBER there.
+  workspaceId   String?  @map("workspace_id")
+  workspace     Account? @relation("CrmTeam", fields: [workspaceId], references: [id], onDelete: SetNull)
+  workspaceRole String?  @map("workspace_role")
   picture     String?
   role        UserRole  @default(VIEWER)
   lastLoginAt DateTime? @map("last_login_at")
@@ -65,6 +69,7 @@ model User {
   assignedRequests Request[]        @relation("RequestAssignee")
 
   @@index([email])
+  @@index([workspaceId])
   @@map("users")
 }
 
@@ -256,6 +261,11 @@ model Account {
   vendorRateNote String?       @map("vendor_rate_note")
   /// A freelancer or vendor paid on commission: their % (e.g. 10 of a campaign's fee).
   vendorCommissionPercent Float? @map("vendor_commission_percent")
+  /// An agency with its own CRM (Genesis, 22 Oct 2026): its records carry workspaceId = this account's id.
+  crmWorkspace   Boolean       @default(false) @map("crm_workspace")
+  /// That CRM's own details for its quotes and invoices: name, GSTIN, address, bank, invoice prefix, logo (lib/crm/workspace).
+  crmProfile     Json?         @map("crm_profile")
+  crmTeam        User[]        @relation("CrmTeam")
   /// How the vendor is paid (UPI id or bank note) — entered by the vendor, shown to finance only.
   payoutNote     String?       @map("payout_note")
 
@@ -288,6 +298,9 @@ model Account {
   @@index([kind, status])
   @@index([parentId])
   @@index([referredById])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_accounts")
 }
 
@@ -397,6 +410,9 @@ model Lead {
   @@index([nextFollowUp])
   @@index([ownerId])
   @@index([email])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_leads")
 }
 
@@ -464,6 +480,9 @@ model Task {
   completedAt DateTime?  @map("completed_at")
 
   @@index([status, dueDate])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_tasks")
 }
 
@@ -736,6 +755,9 @@ model Project {
 
   @@index([accountId, status])
   @@index([status, dueDate])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_projects")
 }
 
@@ -824,6 +846,9 @@ model Request {
 
   @@index([accountId, status])
   @@index([status, createdAt])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_requests")
 }
 
@@ -980,10 +1005,13 @@ model Creator {
 
   campaigns        CampaignCreator[]
 
-  @@unique([platform, handle])
+  /* One per platform and handle in each CRM: partial unique indexes in migration 15 (Genesis's, and each agency's). */
   @@index([tier])
   @@index([city])
   @@index([createdById])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_creators")
 }
 
@@ -1044,6 +1072,8 @@ model EmailOutbox {
   /// Recipients; empty with `toStaff` set means "every staff member in `staffScope`".
   to            String[]     @default([])
   toStaff       Boolean      @default(false) @map("to_staff")
+  /// Where replies go (an agency CRM's own email); the company address when empty.
+  replyTo       String?      @map("reply_to")
   /// "all" | "sales" | "finance" | "producers"
   staffScope    String?      @map("staff_scope")
   subject       String
@@ -1167,6 +1197,9 @@ model Quote {
   @@index([status, createdAt])
   @@index([accountId])
   @@index([leadId])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_quotes")
 }
 
@@ -1395,6 +1428,9 @@ model Brief {
 
   @@index([leadId])
   @@index([accountId])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_briefs")
 }
 
@@ -1573,10 +1609,13 @@ model Invoice {
   lines         InvoiceLine[]
   files         InvoiceFile[]
 
-  @@unique([fy, seq])
+  /* Numbered per CRM: partial unique indexes in migration 15. */
   @@index([status, issueDate])
   @@index([accountId])
   @@index([createdById])
+  /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
+  workspaceId      String?     @map("workspace_id")
+  @@index([workspaceId])
   @@map("crm_invoices")
 }
 

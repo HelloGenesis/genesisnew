@@ -4,6 +4,8 @@ import { getPrisma } from "@/lib/db";
 import type { Division, InboxKind, InboxSource } from "@/lib/generated/prisma/enums";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
+import { inWorkspace } from "./request-workspace";
+import { workspaceOfUser } from "./workspace";
 import { aiConfigured, type Reading, readItem } from "./ai";
 import { todayIst } from "./catalog";
 import { google, GoogleAuthError, googleConfigured, googleText } from "./google";
@@ -391,9 +393,11 @@ export async function syncGoogle() {
   for (const conn of due) {
     /* Inside the job's five minutes: nobody new is started after three. */
     if (Date.now() - started > 180_000) break;
-    report[conn.email] = await syncPerson(conn.userId);
+    /* What their mail and Drive find goes into their own CRM (an agency's, or Genesis's). */
+    const ws = await workspaceOfUser(conn.userId);
+    report[conn.email] = await inWorkspace(ws, () => syncPerson(conn.userId));
     /* Their Drive's influencer sheets, once a day (lib/crm/sheet-import). */
-    if (Date.now() - started < 200_000) report[`${conn.email} influencers`] = await scanInfluencerSheets(conn.userId).catch((error: Error) => ({ error: error.message.slice(0, 200) }));
+    if (Date.now() - started < 200_000) report[`${conn.email} influencers`] = await inWorkspace(ws, () => scanInfluencerSheets(conn.userId)).catch((error: Error) => ({ error: error.message.slice(0, 200) }));
   }
   return report;
 }

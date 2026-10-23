@@ -9,6 +9,9 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { accountScope, leadScope, plansOnly, projectScope, sees, seesCreators, through } from "@/lib/crm/scope";
 import { can, devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
 import { SignOut } from "@/components/crm/sign-out";
+import { requestWorkspace } from "@/lib/crm/request-workspace";
+import { workspaces } from "@/lib/crm/workspace";
+import { setViewingCrm } from "./actions/workspaces";
 import { AppTour } from "@/components/crm/app-tour";
 import { Suspense } from "react";
 
@@ -34,8 +37,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const viewer = await getViewer();
   if (staffAccess(viewer) !== "granted") return <main className="mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6">{children}</main>;
 
+  /* Everything on this page stays in this person's CRM (lib/crm/workspace). */
+  Object.assign(requestWorkspace(), { ws: viewer!.ws, known: true });
   const prisma = getPrisma();
   const seesAll = sees(viewer!, "inbox");
+  const agencyCrm = viewer!.ws ? await prisma.account.findFirst({ where: { id: viewer!.ws, workspaceId: null }, select: { name: true } }) : null;
+  const owner = viewer!.roles.includes("OWNER") && !viewer!.workspaceId;
+  const switchable = owner ? await workspaces() : [];
   const [openRequests, dueLeads, review, myTasks, inboxNew, unread] = await Promise.all([
     prisma.request.count({ where: { ...through("account", accountScope(viewer!)), status: { in: ["OPEN"] } } }),
     prisma.lead.count({ where: { ...leadScope(viewer!), status: { notIn: ["WON", "LOST"] }, nextFollowUp: { lte: new Date() } } }),
@@ -73,13 +81,34 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ...(can(viewer, "finance")
       ? [{ label: "Money", items: [{ href: "/admin/billing", label: "Orders & subscriptions" }, ...(can(viewer, "sales") ? [] : [{ href: "/admin/invoices", label: "Invoices" }]), { href: "/admin/payouts", label: "Commissions & payouts" }, { href: "/admin/expenses", label: "Expenses & salaries" }, { href: "/admin/expenses/subscriptions", label: "Our subscriptions" }, { href: "/admin/expenses/gst", label: "GST" }] }]
       : []),
-    { label: "Setup", items: [...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []), { href: "/admin/settings", label: "Integrations" }, { href: "/admin?tour=1", label: "Take the tour" }] },
+    {
+      label: "Setup",
+      items: [
+        ...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []),
+        /* An agency's own team and its details for quotes and invoices; Genesis's integrations are Genesis's. */
+        ...(viewer!.workspaceId ? (viewer!.workspaceRole === "ADMIN" ? [{ href: "/admin/team", label: "Team & company" }] : []) : [{ href: "/admin/settings", label: "Integrations" }]),
+        { href: "/admin?tour=1", label: "Take the tour" },
+      ],
+    },
   ];
 
   return (
     <div className="crm-shell mx-auto w-full max-w-[1560px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[264px_minmax(0,1fr)]">
       <div className="crm-side min-w-0 px-4 pt-5 sm:px-6 lg:px-4 lg:py-7">
-        <SideNav groups={groups} root="/admin" label="CRM" title="Genesis Media" />
+        {/* A Genesis owner can look inside any agency's CRM; Genesis's own lists never mix in theirs. */}
+        {switchable.length > 0 && (
+          <form action={setViewingCrm} className="mb-5 px-0.5">
+            <label className="block">
+              <span className="mb-1 block px-3 text-[0.6875rem] uppercase tracking-[0.12em] text-faint">Viewing</span>
+              <select name="ws" defaultValue={viewer!.ws ?? ""} className="crm-input">
+                <option value="">Genesis Media</option>
+                {switchable.map((w) => <option key={w.id} value={w.id}>{w.name} (agency CRM)</option>)}
+              </select>
+            </label>
+            <button className="crm-btn crm-btn-secondary crm-btn-sm mt-2 w-full">Switch</button>
+          </form>
+        )}
+        <SideNav groups={groups} root="/admin" label="CRM" title={agencyCrm?.name ?? "Genesis Media"} />
         <div className="mt-8 hidden px-3.5 text-[0.8125rem] text-faint lg:block">
           <p className="truncate text-ash">{viewer!.name ?? viewer!.email}</p>
           <p>{viewer!.roles.join(", ").toLowerCase()}</p>
@@ -93,7 +122,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
         </div>
       </div>
-      <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-9 lg:py-8">{children}</main>
+      <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-9 lg:py-8">
+        {/* A Genesis owner inside an agency's CRM: anything added here is the agency's. */}
+        {agencyCrm && !viewer!.workspaceId && (
+          <form action={setViewingCrm} className="crm-notice flex flex-wrap items-center justify-between gap-3">
+            <span>You&apos;re viewing <b>{agencyCrm.name}</b>&apos;s CRM. Anything you add here goes into theirs, not Genesis&apos;s.</span>
+            <input type="hidden" name="ws" value="" />
+            <button className="crm-btn crm-btn-secondary crm-btn-sm">Back to Genesis</button>
+          </form>
+        )}
+        {children}
+      </main>
       <Suspense fallback={null}>
         <AppTour firstTime={!tourSeen} name={viewer!.name} area="admin" />
       </Suspense>

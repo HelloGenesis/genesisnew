@@ -32,12 +32,13 @@ export function appUrl(path: string): string {
 const SIGN_OFF = "\n\n— Genesis Media\nhello@genesismedia.co · genesismedia.co";
 
 /** One email to named people. `dedupeKey` makes a repeat (a retried webhook) a no-op. */
-export async function queueEmail(input: { kind: string; to: (string | null | undefined)[]; subject: string; text: string; dedupeKey?: string }) {
+/** `signOff` and `replyTo`: an agency CRM's own (lib/crm/workspace); Genesis's otherwise. */
+export async function queueEmail(input: { kind: string; to: (string | null | undefined)[]; subject: string; text: string; dedupeKey?: string; signOff?: string; replyTo?: string | null }) {
   const to = [...new Set(input.to.filter((e): e is string => Boolean(e)).map((e) => e.toLowerCase()))];
   if (to.length === 0) return;
   await getPrisma().emailOutbox.upsert({
     where: { dedupeKey: input.dedupeKey ?? `${input.kind}:${crypto.randomUUID()}` },
-    create: { kind: input.kind, to, subject: input.subject, text: `${input.text}${SIGN_OFF}`, dedupeKey: input.dedupeKey ?? null },
+    create: { kind: input.kind, to, subject: input.subject, text: `${input.text}${input.signOff ?? SIGN_OFF}`, dedupeKey: input.dedupeKey ?? null, replyTo: input.replyTo ?? null },
     update: {},
   }).catch(() => undefined);
 }
@@ -133,7 +134,7 @@ export async function deliverEmails(limit = 25) {
         await prisma.emailOutbox.update({ where: { id }, data: { status: "SKIPPED", lastError: "no recipient" } });
         continue;
       }
-      await send(to, bcc, row.subject, row.text);
+      await send(to, bcc, row.subject, row.text, row.replyTo);
       await prisma.emailOutbox.update({ where: { id }, data: { status: "SENT", sentAt: new Date(), lastError: null } });
       sent++;
     } catch (error) {

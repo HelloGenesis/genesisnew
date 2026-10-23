@@ -3,6 +3,8 @@ import "server-only";
 import { getPrisma } from "@/lib/db";
 
 import { google } from "./google";
+import { inWorkspace } from "./request-workspace";
+import { workspaceOfUser } from "./workspace";
 
 /**
  * THE CRM'S PEOPLE IN GOOGLE CONTACTS (Genesis, 22 Oct 2026: "influencer
@@ -132,7 +134,8 @@ export async function syncContacts() {
   for (const conn of list) {
     if (budget <= 0) break;
     try {
-      const done = await syncPerson(conn.userId, owners.has(conn.userId), Math.min(PER_PERSON, budget));
+      /* Their own CRM's records (a super admin: all of Genesis's). */
+      const done = await inWorkspace(await workspaceOfUser(conn.userId), () => syncPerson(conn.userId, owners.has(conn.userId), Math.min(PER_PERSON, budget)));
       budget -= done.count;
       report[conn.email] = done.report;
     } catch (error) {

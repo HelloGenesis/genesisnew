@@ -111,10 +111,13 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
               <Select name="view" required defaultValue="both" options={[["both", "Everything together (proposal, pricing, influencer plan)"], ["proposal", "Proposal only (no prices)"], ["proposal-plan", "Proposal + influencer list (no prices)"], ["plan", "Influencer plan only (with its prices)"], ["pricing", "Pricing only"]]} />
             </Field>
             <Field label={showContact ? `Message to ${q.contactName}` : "Message to the client"} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
+            {/* An agency CRM's quotes have no pay link: it would collect into Genesis's Razorpay. */}
+            {!q.workspaceId && (
             <label className="flex items-center gap-2 text-[0.875rem] text-ash">
               <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys())} disabled={!razorpayKeys()} /> Include a Razorpay payment link for {money(q.totalPaise)}
               {!razorpayKeys() && <span className="text-faint">(Razorpay keys not set)</span>}
             </label>
+            )}
           </ActionForm>
           <p className="mt-3 break-all text-[0.8125rem] text-faint">Client link: {clientLink} · <a className="crm-link" href={`${clientLink}?view=proposal`} target="_blank" rel="noreferrer">proposal only</a> · <a className="crm-link" href={`${clientLink}?view=plan`} target="_blank" rel="noreferrer">influencer plan only</a> · <a className="crm-link" href={`${clientLink}?view=pricing`} target="_blank" rel="noreferrer">pricing only</a></p>
           {q.paymentUrl && <p className="break-all text-[0.8125rem] text-faint">Payment link: {q.paymentUrl}</p>}
@@ -123,11 +126,11 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             <ShareBox
               subject={`${plan ? "Influencer plan" : "Quotation"} ${quoteRef(q.number)} · ${q.title}`}
               phone={showContact ? q.contactPhone : null}
-              text={`Hi${showContact && q.contactName ? ` ${q.contactName.split(" ")[0]}` : ""},\n\nHere's our ${plan ? "influencer plan" : "quotation"} for ${q.title}:\n${clientLink}${q.paymentUrl ? `\n\nPay securely: ${q.paymentUrl}` : ""}\n\nBest,\n${viewer.name ?? "Genesis Media"}${viewer.title ? `\n${viewer.title}` : ""}\ngenesismedia.co`}
+              text={`Hi${showContact && q.contactName ? ` ${q.contactName.split(" ")[0]}` : ""},\n\nHere's our ${plan ? "influencer plan" : "quotation"} for ${q.title}:\n${clientLink}${q.paymentUrl ? `\n\nPay securely: ${q.paymentUrl}` : ""}\n\nBest,\n${viewer.name ?? "Genesis Media"}${viewer.title ? `\n${viewer.title}` : ""}${q.workspaceId ? "" : "\ngenesismedia.co"}`}
             />
           </div>
         </Card>
-        <DriveCard id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} what="quote" />
+        {!q.workspaceId && <DriveCard id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} what="quote" />}
         <Card title="History">
           <ul className="space-y-1.5 text-[0.9375rem]">
             <li className="text-ash">Created {dateTime(q.createdAt)}</li>

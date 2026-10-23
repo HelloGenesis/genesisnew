@@ -145,9 +145,19 @@ export async function captureSubmission(kind: string, submissionId: string, data
       const platform = handleFrom(data.instagram) ? "INSTAGRAM" : "YOUTUBE";
       const followers = count(data.followers);
       const reel = count(data.igReelCost);
-      const creator = await prisma.creator.upsert({
-        where: { platform_handle: { platform, handle } },
-        create: {
+      /* Website applications are Genesis's own (an agency CRM never receives them). */
+      const known = await prisma.creator.findFirst({ where: { platform, handle, workspaceId: null } });
+      const creator = known
+        ? await prisma.creator.update({
+            where: { id: known.id },
+            data: {
+              email: data.email?.toLowerCase() ?? undefined,
+              phone: data.phone || undefined,
+              ...(reel ? { reelRatePaise: reel * 100 } : {}),
+            },
+          })
+        : await prisma.creator.create({
+        data: {
           name: data.name ?? handle,
           handle,
           platform,
@@ -163,11 +173,6 @@ export async function captureSubmission(kind: string, submissionId: string, data
           notes: [data.previousBrands && `Previous brands: ${data.previousBrands}`, data.goals && `Goals: ${data.goals}`, data.message].filter(Boolean).join("\n") || null,
           tags: ["Applied via website"],
           source: "Website: applied as a creator",
-        },
-        update: {
-          email: data.email?.toLowerCase() ?? undefined,
-          phone: data.phone || undefined,
-          ...(reel ? { reelRatePaise: reel * 100 } : {}),
         },
       });
       await queueStaffEmail({

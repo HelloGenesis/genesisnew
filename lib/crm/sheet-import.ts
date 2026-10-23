@@ -4,6 +4,8 @@ import { getPrisma } from "@/lib/db";
 import { getSheets, isSheetsConfigured } from "@/lib/google-sheets";
 import type { Division, ExpenseCategory, Platform } from "@/lib/generated/prisma/enums";
 
+import { inWorkspace } from "./request-workspace";
+import { workspaceOfUser } from "./workspace";
 import { mapColumns } from "./ai";
 import { tierFor, todayIst } from "./catalog";
 import { EXPENSE_CATEGORY } from "./company";
@@ -205,6 +207,11 @@ export async function runImport(importId: string) {
 /** Brings rows in as leads, clients, vendors, influencers, expenses or briefs: from a Google Sheet, or an uploaded Excel / CSV file. */
 /** `source`: where these rows came from ("Google Sheet · <title>", "Excel · <file>"), kept on new influencers. */
 export async function importRows(kind: string, userId: string, headers: string[], body: unknown[][], mapping: Record<string, string>, source?: string) {
+  /* Into the importer's own CRM (an agency's, or Genesis's), however it was started. */
+  return inWorkspace(await workspaceOfUser(userId), () => importRowsHere(kind, userId, headers, body, mapping, source));
+}
+
+async function importRowsHere(kind: string, userId: string, headers: string[], body: unknown[][], mapping: Record<string, string>, source?: string) {
   const prisma = getPrisma();
   const job = { kind, userId };
   const records = body.map((row) => {
@@ -313,7 +320,7 @@ export async function importRows(kind: string, userId: string, headers: string[]
           source: r.source ?? source ?? null,
           notes: [r.notes, sorted.other.length ? `Categories in the sheet: ${sorted.other.join(", ")}` : null].filter(Boolean).join("\n") || null,
         };
-        const existing = await prisma.creator.findUnique({ where: { platform_handle: { platform, handle } } });
+        const existing = await prisma.creator.findFirst({ where: { platform, handle } });
         if (existing) {
           ids.push(existing.id);
           const patch = fill(existing as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>);

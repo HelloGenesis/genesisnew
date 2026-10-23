@@ -5,6 +5,7 @@ import { randomBytes } from "node:crypto";
 import { getPrisma } from "@/lib/db";
 import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 
+import { agencyEmail, workspaceProfile } from "./workspace";
 import { date, money } from "./catalog";
 import { appUrl, queueEmail, queueStaffEmail } from "./notify";
 import { makePlanSheets, shareExternalSheet } from "./plan-sheets";
@@ -56,7 +57,9 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   let paymentUrl: string | null = null;
   let linkId: string | null = null;
 
-  if (withPayment && t.total > 0 && razorpayKeys()) {
+  /* Pay links collect into Genesis's Razorpay: never on an agency CRM's quote. */
+  const agency = q.workspaceId ? await workspaceProfile(q.workspaceId) : null;
+  if (withPayment && !agency && t.total > 0 && razorpayKeys()) {
     if (q.razorpayLinkId) await razorpay(`payment_links/${q.razorpayLinkId}/cancel`, {}).catch(() => undefined);
     const reference = `GMQ${q.number}-${randomBytes(3).toString("hex")}`.toUpperCase();
     const link = await razorpay<{ id: string; short_url: string }>("payment_links", {
@@ -167,6 +170,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
     ]
       .filter((l, i, all) => l !== "" || all[i - 1] !== "")
       .join("\n"),
+    ...agencyEmail(agency),
   });
   return { paymentUrl };
 }

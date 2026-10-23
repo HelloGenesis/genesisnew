@@ -8,6 +8,7 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { isArchiveKey } from "@/lib/crm/archive-key";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 import { COMPANY, quoteRef } from "@/lib/crm/quote-templates";
+import { workspaceProfile } from "@/lib/crm/workspace";
 import { brandSheetLink, type PlanColumns, sharesSheet, sharesTable, showsBrandPrices } from "@/lib/crm/plan-tables";
 import { looksLikeHtml, sanitizeHtml, textToHtml } from "@/lib/rich-text";
 
@@ -54,6 +55,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const prisma = getPrisma();
   const q = await prisma.quote.findUnique({ where: { token }, include: { lines: { orderBy: { position: "asc" } }, creators: { orderBy: { position: "asc" } } } });
   if (!q) notFound();
+  const agency = q.workspaceId ? await workspaceProfile(q.workspaceId) : null;
   /* The parts ticked in the builder (empty on older quotes: everything they have). */
   const parts = q.parts;
   const has = (part: string) => parts.length === 0 || parts.includes(part);
@@ -131,7 +133,18 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
       <article className="quote-doc font-sans [&_h1]:font-sans [&_h2]:font-sans mx-auto max-w-[860px] overflow-hidden rounded-2xl bg-white shadow-[0_10px_40px_-20px_rgb(15_23_42/0.35)]">
         <header className="flex flex-wrap items-start justify-between gap-6 px-8 pb-6 pt-10 sm:px-12">
           <div className="flex flex-wrap items-start gap-6">
-            {/* Genesis Events and Media Group above, Genesis Media under it, together in one box (Genesis, 12–13 Oct 2026). */}
+            {/* An agency CRM's quote carries the agency's own name and logo (lib/crm/workspace). */}
+            {agency ? (
+              <div className="flex items-center justify-center rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4">
+                {agency.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={agency.logoUrl} alt={agency.name} className="h-10 w-auto" />
+                ) : (
+                  <span className="text-[1.125rem] font-bold text-[#0f172a]">{agency.name}</span>
+                )}
+              </div>
+            ) : (
+            /* Genesis Events and Media Group above, Genesis Media under it, together in one box (Genesis, 12–13 Oct 2026). */
             <div className="flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] px-5 py-4">
               {GROUP_LOGO ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -147,11 +160,12 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/brand/genesis-wordmark-dark.png" alt="Genesis Media" className="h-[16px] w-auto" />
             </div>
+            )}
             <address className="not-italic text-[0.9375rem] leading-relaxed text-[#334155]">
-              <strong className="text-[#0f172a]">{COMPANY.name}</strong>
-              {COMPANY.lines.map((l) => <span key={l} className="block">{l}</span>)}
-              <span className="block">{COMPANY.email}</span>
-              <span className="block">Phone: {COMPANY.phone}</span>
+              <strong className="text-[#0f172a]">{agency ? agency.legalName ?? agency.name : COMPANY.name}</strong>
+              {(agency ? (agency.address ?? "").split("\n").filter(Boolean) : COMPANY.lines).map((l) => <span key={l} className="block">{l}</span>)}
+              {(agency ? agency.email : COMPANY.email) && <span className="block">{agency ? agency.email : COMPANY.email}</span>}
+              {(agency ? agency.phone : COMPANY.phone) && <span className="block">Phone: {agency ? agency.phone : COMPANY.phone}</span>}
             </address>
           </div>
           <dl className="text-right text-[0.9375rem] leading-relaxed text-[#334155]">

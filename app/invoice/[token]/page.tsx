@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
-import { INVOICE_TERMS, supplierDetails } from "@/lib/crm/invoices";
+import { INVOICE_TERMS, supplierFor } from "@/lib/crm/invoices";
 import { isArchiveKey } from "@/lib/crm/archive-key";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 
@@ -79,9 +79,12 @@ export default async function InvoiceDocument({ params, searchParams }: { params
   if (!inv) notFound();
   /* A draft is only for Genesis staff checking it before it goes. */
   /* Staff, or the Drive copy being printed (lib/crm/archive). */
-  const staff = isArchiveKey(token, archive) || staffAccess(await getViewer().catch(() => null)) === "granted";
+  const viewer = await getViewer().catch(() => null);
+  /* An agency's team previews only its own CRM's drafts (lib/crm/workspace). */
+  const staff = isArchiveKey(token, archive) || (staffAccess(viewer) === "granted" && (!viewer!.workspaceId || viewer!.workspaceId === inv.workspaceId));
   if (inv.status === "DRAFT" && !(preview && staff)) notFound();
-  const s = await supplierDetails();
+  /* Genesis's details, or the agency's when the invoice is from an agency's CRM. */
+  const s = await supplierFor(inv.workspaceId);
   const taxable = inv.subtotalPaise - inv.discountPaise;
   const totalTax = inv.cgstPaise + inv.sgstPaise + inv.igstPaise;
   const rate = inv.igst ? "18.00%" : "18.00%";
@@ -112,9 +115,20 @@ export default async function InvoiceDocument({ params, searchParams }: { params
           <table className="w-full border-collapse">
             <tbody>
               <tr>
-                <td className={`${cell} w-[45%] py-4 text-center`}><Logo /></td>
+                <td className={`${cell} w-[45%] py-4 text-center`}>
+                  {s.agency ? (
+                    s.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s.logoUrl} alt={s.name} className="mx-auto h-14 w-auto" />
+                    ) : (
+                      <span className="text-[16px] font-bold uppercase">{s.name}</span>
+                    )
+                  ) : (
+                    <Logo />
+                  )}
+                </td>
                 <td className={`${cell} py-3 font-semibold`} colSpan={2}>
-                  {s.address.split(/,\s*(?=Sector|New Panvel)/).map((l) => <span key={l} className="block">{l}</span>)}
+                  {s.address.split(s.agency ? /\n/ : /,\s*(?=Sector|New Panvel)/).map((l) => <span key={l} className="block">{l}</span>)}
                   <span className="block">Contact : {s.phone}</span>
                   <span className="block">{s.email}</span>
                   <span className="block text-[#1d4ed8] underline">{s.website}</span>

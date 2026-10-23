@@ -4,6 +4,8 @@ import { after } from "next/server";
 
 import { getPrisma } from "@/lib/db";
 
+import { activeWorkspace } from "./request-workspace";
+
 import { archiveKey } from "./archive-key";
 import { invoiceFolderId, quotesFolderId, uploadReplacing } from "./drive";
 import { appUrl } from "./notify";
@@ -53,7 +55,10 @@ export async function archiveQuote(id: string) {
 
 /** Files it after the response; never throws into the caller. */
 export function archiveLater(kind: "quote" | "invoice", id: string) {
+  /* Genesis's Drive is Genesis's: an agency CRM's documents aren't filed in it. */
+  const ws = activeWorkspace();
   after(async () => {
+    if (typeof (await ws) === "string") return;
     try {
       await (kind === "quote" ? archiveQuote(id) : archiveInvoice(id));
     } catch (error) {
