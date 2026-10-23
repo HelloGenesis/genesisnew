@@ -31,7 +31,15 @@ const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { nota
  * scouted, with reach, rates and campaign history — and every creator who
  * applies through the website's Influencer Onboarding form lands here too.
  */
-type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; reachout?: string; min?: string; max?: string; limit?: string };
+const has = (field: "phone" | "email") => ({ AND: [{ [field]: { not: null } }, { NOT: { [field]: "" } }] }) as Prisma.CreatorWhereInput;
+const CONTACT_FILTER = {
+  phone: { label: "Has a phone number", where: has("phone") },
+  email: { label: "Has an email", where: has("email") },
+  "no-phone": { label: "No phone number", where: { NOT: has("phone") } as Prisma.CreatorWhereInput },
+  "no-email": { label: "No email", where: { NOT: has("email") } as Prisma.CreatorWhereInput },
+};
+
+type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; contact?: string | string[]; reachout?: string; min?: string; max?: string; limit?: string };
 const many = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
 
 /* A niche worth offering: words, not a number or a stray sentence from an imported sheet. */
@@ -46,6 +54,8 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
   const niches = many(p.niche);
   const cities = many(p.city);
   const sources = many(p.source);
+  /* Has / has no phone number or email (Genesis, 23 Oct 2026); several picked must all hold. */
+  const contacts = many(p.contact).filter((c): c is keyof typeof CONTACT_FILTER => c in CONTACT_FILTER);
   const min = Number(p.min) || 0;
   const max = Number(p.max) || 0;
   const limit = Math.min(Math.max(Number(p.limit) || 300, 300), 3000);
@@ -72,6 +82,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
       nicheIds ? { id: { in: nicheIds } } : {},
       cities.length ? { OR: cities.map((c) => ({ city: { contains: c, mode: "insensitive" as const } })) } : {},
       sources.length ? { source: { in: sources } } : {},
+      ...contacts.map((c) => CONTACT_FILTER[c].where),
       min || max ? { followers: { ...(min ? { gte: min } : {}), ...(max ? { lte: max } : {}) } } : {},
     ],
   };
@@ -98,6 +109,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
     ...niches,
     ...cities,
     ...sources,
+    ...contacts.map((c) => CONTACT_FILTER[c].label),
     min && `≥ ${min.toLocaleString("en-IN")} followers`,
     max && `≤ ${max.toLocaleString("en-IN")} followers`,
   ].filter(Boolean) as string[];
@@ -117,11 +129,12 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
         <MultiSelect name="niche" label="Any niche" options={nicheOptions} defaultValue={niches} className="w-[13rem]" />
         <MultiSelect name="city" label="Any city" options={cityOptions} defaultValue={cities} className="w-[12rem]" />
         {/* Where they came from: a Google Sheet, an Excel file, an agency… (Genesis, 22 Oct 2026). */}
+        <MultiSelect name="contact" label="Any contact" options={Object.entries(CONTACT_FILTER).map(([k, v]) => [k, v.label] as const)} defaultValue={contacts} className="w-[13rem]" />
         <MultiSelect name="source" label="Any source" options={sourceRows.map((r) => [r.source, `${r.source} (${Number(r.n).toLocaleString("en-IN")})`] as const)} defaultValue={sources} className="w-[13rem]" />
         <input name="min" defaultValue={p.min} placeholder="Min followers" inputMode="numeric" className="crm-input max-w-[8.5rem]" />
         <input name="max" defaultValue={p.max} placeholder="Max followers" inputMode="numeric" className="crm-input max-w-[8.5rem]" />
         <button className="crm-btn crm-btn-primary crm-btn-sm">Search</button>
-        {(p.q || platforms.length || tiers.length || niches.length || cities.length || sources.length || min || max) ? <Link href="/admin/creators" className="crm-btn crm-btn-secondary crm-btn-sm">Clear all</Link> : null}
+        {(p.q || platforms.length || tiers.length || niches.length || cities.length || sources.length || contacts.length || min || max) ? <Link href="/admin/creators" className="crm-btn crm-btn-secondary crm-btn-sm">Clear all</Link> : null}
       </form>
       {/* The search's result, said plainly (Genesis, 13 Oct 2026: "show search results as well"). */}
       <p className="text-[0.9375rem] text-ash" role="status">
