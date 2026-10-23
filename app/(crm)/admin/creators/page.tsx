@@ -31,7 +31,7 @@ const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { nota
  * scouted, with reach, rates and campaign history — and every creator who
  * applies through the website's Influencer Onboarding form lands here too.
  */
-type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; min?: string; max?: string; limit?: string };
+type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; reachout?: string; min?: string; max?: string; limit?: string };
 const many = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
 
 /* A niche worth offering: words, not a number or a stray sentence from an imported sheet. */
@@ -109,6 +109,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
       <PageHead kicker="Influence" title="Influencer database" sub={own ? `${total.toLocaleString("en-IN")} creators you’ve added · everything you add is saved to Genesis’s database` : `${total.toLocaleString("en-IN")} creators in the database`} exportKind={isSuperAdmin(viewer) ? "creators" : undefined}>
         <Link href="/admin/creators/import" className="crm-btn crm-btn-secondary crm-btn-sm">Import <Upload className="size-4" aria-hidden /></Link>
       </PageHead>
+      {p.reachout && <p className="crm-notice">New reach out: tick the creators below, then press <b>Reach out to these</b> at the bottom.</p>}
       <form action="/admin/creators" className="flex flex-wrap items-start gap-2">
         <input name="q" defaultValue={p.q} placeholder="Name or @handle" className="crm-input max-w-[13rem]" />
         <MultiSelect name="platform" label="Any platform" options={PLATFORMS} defaultValue={platforms} className="w-[10rem]" />

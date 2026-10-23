@@ -273,7 +273,8 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
  * also save it to draft"). The ticked creators, their rates as our cost and
  * +30% as the client's price; optionally with both Google Sheets made.
  */
-export async function draftFromCreators(ids: string[], then?: "sheets") {
+/* `then`: "sheets" makes both Google Sheets; "reachout" opens Reach out on the new plan (Genesis, 23 Oct 2026). */
+export async function draftFromCreators(ids: string[], then?: "sheets" | "reachout") {
   const viewer = await requireStaff("plans");
   if (!seesCreators(viewer)) return { ok: false, message: "Only people with access to the influencer database can do this." };
   const prisma = getPrisma();
@@ -310,6 +311,7 @@ export async function draftFromCreators(ids: string[], then?: "sheets") {
     }
   }
   revalidatePath("/admin", "layout");
+  if (then === "reachout") redirect(`/admin/reachout?plan=${created.id}`);
   redirect(`/admin/quotes/${created.id}?saved=1${note ? `&sheets=${encodeURIComponent(note)}` : ""}`);
 }
 
