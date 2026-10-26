@@ -11,6 +11,7 @@ import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 import { proposalOrder, SECTION } from "@/lib/crm/proposal-order";
 
 import { GrowText } from "./grow-text";
+import { NichePicker } from "./niche-picker";
 import { RichText } from "./rich-text";
 
 export type BuilderLine = { kind: string; productId?: string | null; division?: string | null; title: string; subtitle?: string | null; details?: string | null; note?: string | null; qty: number; unit: number };
@@ -893,7 +894,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                             )}
                           </td>
                           {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
-                          {shows("category") && <td><GrowText value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>}
+                          {/* Pick any number of categories, or add your own (components/crm/niche-picker). */}
+                          {shows("category") && <td><NichePicker compact value={c.niches} onChange={(next) => setCreator(i, { niches: next })} label="Category" /></td>}
                           {/* The profile link is editable on every plan (Genesis, 22 Oct 2026), with a way to open it. */}
                           {shows("ig") && (
                             <td>

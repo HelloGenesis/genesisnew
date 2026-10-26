@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ActionForm } from "@/components/crm/action-form";
 import { CreatorFields, PLATFORMS } from "@/components/crm/creator-fields";
 import { MultiSelect } from "@/components/crm/multi-select";
+import { NicheCell } from "@/components/crm/niche-cell";
 import { PickBar } from "@/components/crm/pick-bar";
 import { AddPanel, Badge, Empty, PageHead, Table } from "@/components/crm/ui";
 import { NICHES } from "@/lib/crm/niches";
@@ -168,7 +169,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
                       {c.blacklisted && <Badge tone="bad">Do not use</Badge>}
                     </span>
                   </td>
-                  <td className="max-w-[12rem] text-[0.875rem]"><EditCell value={c.niches.join(", ")} save={edit(c.id, "niches")} placeholder="Category, comma separated" wide>{c.niches.join(", ") || "—"}</EditCell></td>
+                  <td className="text-[0.875rem]"><NicheCell value={c.niches} save={edit(c.id, "niches")} /></td>
                   <td>
                     <EditCell value={c.profileUrl ?? ""} save={edit(c.id, "profileUrl")} placeholder="Profile link" wide>
                       {c.profileUrl ? <a href={c.profileUrl} target="_blank" rel="noreferrer" className="crm-link text-[0.8125rem]">Profile ↗</a> : "—"}
