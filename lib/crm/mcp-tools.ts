@@ -35,6 +35,14 @@ import { can, type Viewer } from "./session";
  * never delete, and never sends anything to anyone.
  */
 
+/** How to use the tools well: sent to ChatGPT / Claude on connecting, and the CRM's own assistant's brief (lib/crm/assistant). */
+export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM: its influencer database and influencer plans.
+- To build or update a plan from screenshots, an Excel/CSV, a Google Sheet or an agency roster PDF: read every row yourself, then call create_plan or update_plan with one row per creator. Keep every detail: name, handle or profile link (write links as plain URLs), followers, avg views, ER, category, city, phone, email, agency, the creator's costs (reel_cost / story_cost / dl_cost) and, separately, client prices (reel_price / story_price / dl_price), reach-out status, remarks. Anything else goes in "columns" under its own heading (e.g. "Tentative Cost", "Deliverables"). Words or ranges in a money cell ("Awaiting quote", "₹50K–75K") go in remarks or a column, never as a number.
+- Before adding a creator, search_influencers to reuse the CRM's entry; check last_reach_out so nobody is contacted twice. Record reach-outs with log_reachout.
+- Agency rosters: save_influencers with source like "Agency roster · <agency>, <month>" and the agency in "agency".
+- After changing a plan, update_plan_sheets keeps its Google Sheets in step. Always give the user the plan's link.
+- Rupee amounts are plain numbers (180000 for ₹1.8L). Nothing can be deleted through these tools.`;
+
 type Tool = { name: string; description: string; input: z.ZodType; readOnly?: boolean; run: (viewer: Viewer, args: never) => Promise<unknown> };
 
 const r = (paise: number | null | undefined) => (paise === null || paise === undefined ? null : paise / 100);

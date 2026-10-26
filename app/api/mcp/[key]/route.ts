@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { userForConnectorKey } from "@/lib/crm/mcp-keys";
-import { TOOLS } from "@/lib/crm/mcp-tools";
+import { CRM_INSTRUCTIONS as INSTRUCTIONS, TOOLS } from "@/lib/crm/mcp-tools";
 import { inWorkspace } from "@/lib/crm/request-workspace";
 import { staffAccess, viewerForUser } from "@/lib/crm/session";
 import { isDatabaseConfigured } from "@/lib/db";
@@ -19,12 +19,6 @@ export const maxDuration = 120;
  * comes straight back on the POST.
  */
 
-const INSTRUCTIONS = `You are connected to Genesis Media's CRM: its influencer database and influencer plans.
-- To build or update a plan from screenshots, an Excel/CSV, a Google Sheet or an agency roster PDF: read every row yourself, then call create_plan or update_plan with one row per creator. Keep every detail: name, handle or profile link (write links as plain URLs), followers, avg views, ER, category, city, phone, email, agency, the creator's costs (reel_cost / story_cost / dl_cost) and, separately, client prices (reel_price / story_price / dl_price), reach-out status, remarks. Anything else goes in "columns" under its own heading (e.g. "Tentative Cost", "Deliverables"). Words or ranges in a money cell ("Awaiting quote", "₹50K–75K") go in remarks or a column, never as a number.
-- Before adding a creator, search_influencers to reuse the CRM's entry; check last_reach_out so nobody is contacted twice. Record reach-outs with log_reachout.
-- Agency rosters: save_influencers with source like "Agency roster · <agency>, <month>" and the agency in "agency".
-- After changing a plan, update_plan_sheets keeps its Google Sheets in step. Always give the user the plan's link.
-- Rupee amounts are plain numbers (180000 for ₹1.8L). Nothing can be deleted through these tools.`;
 
 type RpcRequest = { jsonrpc: "2.0"; id?: string | number | null; method: string; params?: Record<string, unknown> };
 

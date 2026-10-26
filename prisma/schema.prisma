@@ -1673,3 +1673,16 @@ model Reachout {
   @@index([handle])
   @@map("crm_reachouts")
 }
+
+/// The CRM's AI assistant: each person's conversations, as sent to the model (lib/crm/assistant).
+model AiChat {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String
+  messages  Json     @default("[]")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, updatedAt])
+  @@map("crm_ai_chats")
+}
