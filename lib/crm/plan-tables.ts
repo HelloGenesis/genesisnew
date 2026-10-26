@@ -10,8 +10,11 @@
  */
 
 export type Cell = string | number | null;
-/** `boxes`: the standard proposal boxes removed from this document (tg, problems, objectives, influencers, ideas). */
-export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[] };
+/**
+ * `boxes`: the standard proposal boxes removed from this document (tg, problems, objectives, influencers, ideas).
+ * `intOnly`: added columns kept to the internal sheet, off the external sheet and the client view (Genesis, 26 Oct 2026).
+ */
+export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[]; intOnly?: string[] };
 
 /** The sheet link the brand gets: one pasted in the builder, else the CRM's external sheet. */
 export function brandSheetLink(c: PlanColumns | null | undefined, extSheetId: string | null | undefined): string | null {
@@ -112,7 +115,8 @@ export function planTables(p: PlanInput) {
     { key: "dlPrice", header: "DL (1 month)", width: 110, money: true, value: (r) => r.price[2]! },
     { key: "location", header: "Location", width: 120, value: (r) => r.city ?? "" },
   ]).filter((c) => c.key === "name" || (show(c.key) && (prices || !c.money)));
-  extCols.push(...extras);
+  const intOnly = new Set(p.columns.intOnly ?? []);
+  extCols.push(...extras.filter((c) => !intOnly.has(c.header)));
 
   const intCols: Col[] = cols([
     { key: "reachout", header: "Reachout Status", width: 130, value: (r) => r.reachout ?? "" },

@@ -4,6 +4,8 @@ import { Check, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { GrowText } from "./grow-text";
+
 /**
  * A TABLE CELL YOU CAN EDIT WHERE IT IS (Genesis, 22 Oct 2026: "everything
  * should be editable in the influencer section"). Shows the value; the pencil
@@ -72,7 +74,8 @@ export function EditCell({
             {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         ) : (
-          <input {...common} value={draft} placeholder={placeholder} onChange={(e) => setDraft(e.target.value)} onBlur={() => commit()} />
+          /* Long values wrap and the box grows (components/crm/grow-text); Enter saves. */
+          <GrowText {...common} className={common.className.replace("crm-input ", "")} value={draft} placeholder={placeholder} onChange={(e) => setDraft(e.target.value)} onBlur={() => commit()} />
         )}
         {error && <span role="alert" className="mt-1 block text-[0.75rem] text-[#dc2626]">{error}</span>}
       </span>
