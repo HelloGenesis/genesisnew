@@ -56,7 +56,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   /* The tour opens by itself on someone's first visit (components/crm/app-tour). */
   const tourSeen = Boolean(await prisma.appSetting.findUnique({ where: { key: `tour:done:${viewer!.id}` }, select: { key: true } }));
   const groups: NavGroup[] = [
-    { label: "Today", items: [{ href: "/admin", label: "Dashboard" }, { href: "/admin/notifications", label: "Notifications", count: unread }, { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew }, { href: "/admin/tasks", label: "Tasks", count: myTasks }, ...(sees(viewer!, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : [])] },
+    { label: "Today", items: [{ href: "/admin", label: "Dashboard" }, { href: "/admin/notifications", label: "Notifications", count: unread }, { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew }, { href: "/admin/tasks", label: "Tasks", count: myTasks }, { href: "/admin/assistant", label: "AI assistant" }, ...(sees(viewer!, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : [])] },
     ...(can(viewer, "sales")
       ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/briefs", label: "Briefs" }, { href: "/admin/quotes", label: "Quotes & plans" }, { href: "/admin/reachout", label: "Reach out" }, { href: "/admin/invoices", label: "Invoices" }, { href: "/admin/accounts", label: "Clients & agencies" }] }]
       : []),
