@@ -8,6 +8,7 @@ import { recordAuditLog } from "@/lib/audit";
 import { archiveQuote, archiveLater } from "@/lib/crm/archive";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { proposalOrder } from "@/lib/crm/proposal-order";
+import { SheetEditedError } from "@/lib/crm/plan-sync";
 import { DriveNotConnected } from "@/lib/crm/drive";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
 import { sanitizeHtml } from "@/lib/rich-text";
@@ -254,12 +255,14 @@ export async function saveQuote(_: ActionState, form: FormData): Promise<ActionS
   /* "Send Google Sheet to client" with no link of its own: Save makes the external sheet, so the quote and PDF carry its link. */
   const cols = ((await getPrisma().quote.findUnique({ where: { id }, select: { planColumns: true } }))?.planColumns ?? {}) as { share?: string; sheetUrl?: string };
   const wantsSheet = (cols.share === "sheet" || cols.share === "both") && !cols.sheetUrl?.trim();
-  if ((form.get("then") === "sheets" || hasSheets || wantsSheet) && result.creators > 0) {
+  /* "Overwrite the Google Sheets": replaces sheets edited in Google Sheets too (lib/crm/plan-sync). */
+  const overwrite = form.get("then") === "overwrite";
+  if ((form.get("then") === "sheets" || overwrite || hasSheets || wantsSheet) && result.creators > 0) {
     try {
-      const made = await makePlanSheets(id, viewer.email, viewer.id, viewer);
+      const made = await makePlanSheets(id, viewer.email, viewer.id, viewer, { force: overwrite });
       sheets = made.own ? " Both Google Sheets are in your Drive." : ` Both Google Sheets are up to date (in ${made.account}'s Drive).`;
     } catch (error) {
-      sheets = ` The Google Sheets didn't update: ${(error as Error).message.slice(0, 160)}`;
+      sheets = error instanceof SheetEditedError ? ` ${error.message}` : ` The Google Sheets didn't update: ${(error as Error).message.slice(0, 160)}`;
     }
   }
   revalidatePath("/admin", "layout");

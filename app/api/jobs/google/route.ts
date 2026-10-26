@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { syncContacts } from "@/lib/crm/contacts";
 import { syncGoogle } from "@/lib/crm/ingest";
+import { pullRecentPlanSheets } from "@/lib/crm/plan-sync";
 import { syncSheetImports } from "@/lib/crm/sheet-import";
 import { isDatabaseConfigured } from "@/lib/db";
 
@@ -30,6 +31,12 @@ export async function GET(request: Request) {
     report.contacts = await syncContacts();
   } catch (error) {
     report.contacts = { error: String((error as Error).message).slice(0, 300) };
+  }
+  /* Plans' Google Sheets edited in Google Sheets: their changes into the CRM (lib/crm/plan-sync). */
+  try {
+    report.planSheets = await pullRecentPlanSheets();
+  } catch (error) {
+    report.planSheets = { error: String((error as Error).message).slice(0, 300) };
   }
   try {
     report.sheets = await syncSheetImports();

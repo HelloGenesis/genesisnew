@@ -158,25 +158,26 @@ export function planTables(p: PlanInput) {
   const cities = [...new Set(rows.map((r) => r.city).filter(Boolean))] as string[];
   const categories = [...new Set(rows.flatMap((r) => r.niches))].filter(Boolean);
   const followers = rows.map((r) => r.followers).filter((n) => n > 0);
-  const tiers = [...new Set(rows.map((r) => (r.followers < 10_000 ? "Nano" : r.followers < 100_000 ? "Micro" : r.followers < 1_000_000 ? "Macro" : "Mega")))];
   const notes = (p.terms ?? "").split("\n").map((t) => t.replace(/^[-•*]\s*/, "").trim()).filter(Boolean);
-  const summary: Cell[][] = [
-    [],
-    [],
+  /*
+   * THE SUMMARY, AS GENESIS LAYS IT OUT (Genesis, 26 Oct 2026, the Sun Pharma
+   * plan): an Overview table, then "Please Note - Terms & Conditions",
+   * numbered. Label in column B, value in C; the sheet adds the logo above.
+   */
+  const overview: Cell[][] = [
     [null, "Overview"],
-    [null, "Project Name:", null, p.title],
-    [null, "Number of influencers:", null, rows.length],
-    [null, "Creator Type:", null, tiers.join(", ")],
-    [null, "Follower Range:", null, followers.length ? `${k(Math.min(...followers))} - ${k(Math.max(...followers))}` : ""],
-    [null, "Region:", null, cities.join(", ")],
-    [null, "Category of Influencers:", null, categories.slice(0, 10).join(", ")],
-    [null, "Budget:", null, p.planBudget ?? "As per Brand"],
+    [null, "Project Name:", p.title],
+    [null, "Number of influencers/Talent:", rows.length],
+    [null, "Follower Range:", followers.length ? `${k(Math.min(...followers))} - ${k(Math.max(...followers))}` : ""],
+    [null, "Region:", cities.join(", ")],
+    [null, "Category of Influencers:", categories.slice(0, 10).join(", ")],
+    [null, "Budget:", p.planBudget ?? "As per Brand"],
     ...(prices ? [[null, "*The total outlay for this execution will be 15% Agency fee + GST*"] as Cell[]] : []),
-    [],
-    [null, "Please Note-"],
-    ...(notes.length ? notes : DEFAULT_NOTES).map((n) => [null, n] as Cell[]),
   ];
-  return { rows, summary, ext: { cols: extCols, header: extHeader, rows: extRows, disclaimer }, int: { cols: intCols, header1: intHeader1, header: intHeader, rows: intRows, totals: intTotals, groups } };
+  const terms: Cell[][] = [[null, "Please Note - Terms & Conditions"], ...(notes.length ? notes : DEFAULT_NOTES).map((n, i) => [null, `${i + 1}. ${n}`] as Cell[])];
+  const summary: Cell[][] = [...overview, [], [], ...terms];
+  const summaryLayout = { overview: overview.length, termsStart: overview.length + 2, terms: terms.length };
+  return { rows, summary, summaryLayout, ext: { cols: extCols, header: extHeader, rows: extRows, disclaimer }, int: { cols: intCols, header1: intHeader1, header: intHeader, rows: intRows, totals: intTotals, groups } };
 }
 
 /** The two workbooks as sheets of rows (for the Excel downloads). */
@@ -184,7 +185,7 @@ export function planWorkbooks(p: PlanInput) {
   const t = planTables(p);
   return {
     ext: [
-      { name: "Summary", rows: [["", "Overview", "", ""], ...t.summary.slice(3)] as Cell[][] },
+      { name: "Summary", rows: [[], ...t.summary] as Cell[][] },
       { name: "Influencer Plan", rows: [t.ext.header, ...t.ext.rows, ...t.ext.disclaimer] },
     ],
     int: [

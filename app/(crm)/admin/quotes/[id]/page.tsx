@@ -11,6 +11,7 @@ import { QUOTE_STATUS, dateTime, money, projectRef } from "@/lib/crm/catalog";
 import { appUrl } from "@/lib/crm/notify";
 import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
+import { pullPlanSheets } from "@/lib/crm/plan-sync";
 import { builderData } from "@/lib/crm/quote-data";
 import { quoteRef } from "@/lib/crm/quote-templates";
 import { quoteScope, seesCreators, creatorScope, seesQuoteContact } from "@/lib/crm/scope";
@@ -30,6 +31,9 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
   const viewer = await requireStaff("plans");
   const { id } = await params;
   const { saved, sheets: sheetsNote } = await searchParams;
+  /* Edits made in the plan's Google Sheets come in first, so the builder shows them (lib/crm/plan-sync). */
+  const allowed = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, select: { id: true } });
+  if (allowed) await pullPlanSheets(id, 30_000).catch(() => undefined);
   const q = await getPrisma().quote.findFirst({
     where: { id, ...quoteScope(viewer) },
     include: { lines: { orderBy: { position: "asc" } }, creators: { orderBy: { position: "asc" } }, order: true, projects: true, lead: true, account: true, request: true },
