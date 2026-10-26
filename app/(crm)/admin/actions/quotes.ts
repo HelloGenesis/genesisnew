@@ -53,7 +53,7 @@ const payload = z.object({
   proposalTg: z.string().max(60000).nullable().optional(),
   proposalSections: z.array(z.object({ title: z.string().max(120), html: z.string().max(60000) })).max(20).optional(),
   parts: z.array(z.enum(["proposal", "plan", "pricing"])).max(3).optional(),
-  planColumns: z.object({ hidden: z.array(z.string().max(40)).max(40).optional(), custom: z.array(z.string().trim().max(60)).max(20).optional(), share: z.enum(["table", "sheet", "both"]).optional(), extPrices: z.boolean().optional(), feesInTotal: z.boolean().optional(), sheetUrl: z.string().trim().max(500).optional() }).optional(),
+  planColumns: z.object({ hidden: z.array(z.string().max(40)).max(40).optional(), custom: z.array(z.string().trim().max(60)).max(20).optional(), share: z.enum(["table", "sheet", "both"]).optional(), extPrices: z.boolean().optional(), feesInTotal: z.boolean().optional(), sheetUrl: z.string().trim().max(500).optional(), boxes: z.array(z.enum(["tg", "problems", "objectives", "influencers", "ideas"])).max(5).optional() }).optional(),
   markupPercent: z.coerce.number().min(0).max(1000).transform(Math.round).optional(),
   planBudget: z.string().max(120).nullable().optional(),
   discount: rupees,
@@ -155,7 +155,7 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     proposalInfluencers: rich(q.proposalInfluencers),
     proposalTg: rich(q.proposalTg),
     proposalSections: (q.proposalSections ?? []).map((x) => ({ title: x.title.trim(), html: sanitizeHtml(x.html) })).filter((x) => x.title || x.html) as Prisma.InputJsonValue,
-    planColumns: { hidden: q.planColumns?.hidden ?? [], custom: [...new Set((q.planColumns?.custom ?? []).filter(Boolean))], share: q.planColumns?.share ?? "table", extPrices: q.planColumns?.extPrices ?? true, feesInTotal: q.planColumns?.feesInTotal ?? false, sheetUrl: /^https:\/\/\S+$/i.test(q.planColumns?.sheetUrl ?? "") ? q.planColumns!.sheetUrl : "" } as Prisma.InputJsonValue,
+    planColumns: { hidden: q.planColumns?.hidden ?? [], custom: [...new Set((q.planColumns?.custom ?? []).filter(Boolean))], share: q.planColumns?.share ?? "table", extPrices: q.planColumns?.extPrices ?? true, feesInTotal: q.planColumns?.feesInTotal ?? false, sheetUrl: /^https:\/\/\S+$/i.test(q.planColumns?.sheetUrl ?? "") ? q.planColumns!.sheetUrl : "", boxes: [...new Set(q.planColumns?.boxes ?? [])] } as Prisma.InputJsonValue,
     markupPercent: q.markupPercent ?? 30,
     planBudget: q.planBudget || null,
     parts: q.parts ?? [],
@@ -172,10 +172,9 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     if (autosave || c.creatorId || !c.handle) continue;
     const platform = (["INSTAGRAM", "YOUTUBE", "LINKEDIN", "X", "FACEBOOK", "MOJ", "JOSH", "SNAPCHAT", "OTHER"].includes(c.platform) ? c.platform : "INSTAGRAM") as Platform;
     const handle = c.handle.replace(/^@/, "").toLowerCase();
-    const creator = await prisma.creator.upsert({
-      where: { platform_handle: { platform, handle } },
-      create: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", source: "Added on a plan", createdById: viewer.id },
-      update: {},
+    /* One per handle in this CRM (Genesis's, or the agency's own list). */
+    const creator = (await prisma.creator.findFirst({ where: { platform, handle } })) ?? await prisma.creator.create({
+      data: { name: c.name.trim() || handle, handle, platform, profileUrl: c.profileUrl ?? null, followers: c.followers || 0, tier: tierFor(c.followers || 0), niches: tidyNiches(c.niches), city: c.city ?? null, reelRatePaise: c.fee ? paise(c.fee) : null, notes: "Added from a quote.", source: "Added on a plan", createdById: viewer.id },
     });
     c.creatorId = creator.id;
   }

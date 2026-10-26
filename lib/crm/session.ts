@@ -10,6 +10,7 @@ import { getAuth0IfConfigured, isAuth0Configured } from "@/lib/auth0";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 
+import { requestWorkspace } from "./request-workspace";
 import { emailLoginEnabled, readSignedEmail, SESSION_COOKIE } from "./email-login";
 import { TEAM } from "./team";
 import type { AccountKind, MemberRole, StaffRoleKind } from "@/lib/generated/prisma/enums";
@@ -55,6 +56,11 @@ export type Viewer = {
   mfa: boolean;
   memberships: Membership[];
   dev: boolean;
+  /** The agency CRM this person works in (null: Genesis's team). */
+  workspaceId: string | null;
+  workspaceRole: "ADMIN" | "MEMBER" | null;
+  /** The CRM this person is looking at now: their agency's; an owner's pick from the switcher; otherwise Genesis's (null). */
+  ws: string | null;
 };
 
 // --- Local development sign-in -------------------------------------------------
@@ -180,6 +186,13 @@ export async function syncIdentity(identity: Identity) {
       await prisma.accountInvite.deleteMany({ where: { id: { in: accountInvites.map((i) => i.id) } } });
       await recordAuditLog({ action: "portal.invite_claimed", entity: "user", entityId: user.id, actorId: user.id, metadata: { accounts: accountInvites.map((i) => i.accountId) } });
     }
+    /* An invitation into an agency's CRM (lib/crm/workspace), waiting for this verified email. */
+    const agencyInvite = await prisma.appSetting.findUnique({ where: { key: `agency-invite:${verifiedEmail}` } });
+    if (agencyInvite && !user.workspaceId) {
+      const { ws, role } = JSON.parse(agencyInvite.value) as { ws: string; role: "ADMIN" | "MEMBER" };
+      if ((await prisma.staffRole.count({ where: { userId: user.id } })) === 0) user = await prisma.user.update({ where: { id: user.id }, data: { workspaceId: ws, workspaceRole: role } });
+      await prisma.appSetting.delete({ where: { key: agencyInvite.key } });
+    }
   }
   return user;
 }
@@ -209,6 +222,17 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   ]);
 
   const jar = await cookies();
+  /*
+   * AN AGENCY'S TEAM (lib/crm/workspace): sales, delivery and the influencer
+   * work in their own CRM, never Genesis's money pages or staff. Their admin
+   * sees everything in their CRM; a member, their own plus all influencers.
+   */
+  const agency = user.workspaceId ? await prisma.account.findFirst({ where: { id: user.workspaceId, crmWorkspace: true, workspaceId: null }, select: { id: true } }) : null;
+  const workspaceRole = agency ? (user.workspaceRole === "ADMIN" ? "ADMIN" : "MEMBER") : null;
+  const staffRoles = agency ? (workspaceRole === "ADMIN" ? (["SALES", "PRODUCER", "INFLUENCER"] as StaffRoleKind[]) : (["SALES", "PRODUCER"] as StaffRoleKind[])) : roles.map((r) => r.role);
+  const owner = !agency && staffRoles.includes("OWNER");
+  const viewing = owner ? jar.get("gm_ws")?.value ?? null : null;
+  const viewingOk = viewing ? Boolean(await prisma.account.findFirst({ where: { id: viewing, crmWorkspace: true, workspaceId: null }, select: { id: true } })) : false;
   return {
     id: user.id,
     sub: identity.sub,
@@ -216,11 +240,14 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     phone: user.phone,
     name: user.name,
     title: user.title,
-    grants: user.grants ?? [],
-    roles: roles.map((r) => r.role),
+    grants: agency ? (workspaceRole === "ADMIN" ? ["leads", "quotes", "billing", "clients", "projects", "creators"] : ["creators"]) : (user.grants ?? []),
+    roles: staffRoles,
     mfa: identity.amr.includes("mfa") || readStaffTwoFactor(jar.get(STAFF_2FA_COOKIE)?.value, user.id, identity.sub),
     memberships: memberships.map((m) => ({ accountId: m.account.id, role: m.role, name: m.account.name, kind: m.account.kind, isReseller: m.account.isReseller, parentId: m.account.parentId })),
     dev: identity.sub.startsWith("dev|"),
+    workspaceId: agency?.id ?? null,
+    workspaceRole,
+    ws: agency?.id ?? (viewingOk ? viewing : null),
   };
 });
 
@@ -263,6 +290,8 @@ export async function requireStaff(area?: StaffArea): Promise<Viewer> {
   if (access === "forbidden") redirect("/admin/forbidden");
   if (access === "mfa") redirect("/staff-verify?next=/admin");
   if (area && !can(viewer, area)) redirect("/admin/forbidden");
+  /* Every query from here on stays inside this person's CRM (lib/db). */
+  Object.assign(requestWorkspace(), { ws: viewer!.ws, known: true });
   return viewer!;
 }
 

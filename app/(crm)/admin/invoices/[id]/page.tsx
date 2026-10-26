@@ -57,8 +57,8 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           ) : (
             <ActionForm action={sendInvoiceAction} submit={inv.status === "DRAFT" ? "Send invoice email" : "Re-send"} confirm={`Email ${inv.number} to ${inv.billToEmail ?? "the client"}?`}>
               <input type="hidden" name="id" value={inv.id} />
-              <Field label="Message"><textarea name="message" className="crm-input !min-h-20" defaultValue="Please find our tax invoice below. Thank you for working with Genesis." /></Field>
-              {inv.status !== "PAID" && (
+              <Field label="Message"><textarea name="message" className="crm-input !min-h-20" defaultValue={`Please find our tax invoice below. Thank you for working with ${inv.workspaceId ? "us" : "Genesis"}.`} /></Field>
+              {inv.status !== "PAID" && !inv.workspaceId && (
                 <label className="flex items-center gap-2 text-[0.875rem] text-ash">
                   <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys())} disabled={!razorpayKeys()} /> Include a Razorpay pay link for {money(inv.totalPaise)}
                 </label>
@@ -101,7 +101,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           </div>
           <div className="mt-3"><InvoiceUpload invoiceId={inv.id} kind="SUPPORTING" label="Add screenshots" /></div>
         </Card>
-        <DriveCard id={inv.id} saved={await archivedPdf(`invoice:${inv.id}`).catch(() => null)} save={archiveInvoiceNow} what="invoice" />
+        {!inv.workspaceId && <DriveCard id={inv.id} saved={await archivedPdf(`invoice:${inv.id}`).catch(() => null)} save={archiveInvoiceNow} what="invoice" />}
         <Card title="History">
           <ul className="space-y-1.5 text-[0.9375rem]">
             <li className="text-ash">Created {dateTime(inv.createdAt)}</li>

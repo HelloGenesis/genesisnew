@@ -1,12 +1,16 @@
 import "server-only";
 
+import { activeWorkspace } from "@/lib/crm/request-workspace";
 import { getPrisma } from "@/lib/db";
 import type { AccountKind } from "@/lib/generated/prisma/enums";
 
 /** [id, label] lists for the CRM's selects. */
 
+/** The people to pick from (owners, assignees): the agency's own team inside an agency CRM, Genesis's staff otherwise. */
 export async function staffOptions(): Promise<[string, string][]> {
-  const rows = await getPrisma().user.findMany({ where: { staffRoles: { some: {} } }, select: { id: true, name: true, email: true }, orderBy: { name: "asc" } });
+  const ws = await activeWorkspace();
+  const where = typeof ws === "string" ? { workspaceId: ws } : { staffRoles: { some: {} }, workspaceId: null };
+  const rows = await getPrisma().user.findMany({ where, select: { id: true, name: true, email: true }, orderBy: { name: "asc" } });
   return rows.map((u) => [u.id, u.name ?? u.email ?? "Staff"]);
 }
 

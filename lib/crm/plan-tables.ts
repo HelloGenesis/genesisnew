@@ -10,7 +10,8 @@
  */
 
 export type Cell = string | number | null;
-export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string };
+/** `boxes`: the standard proposal boxes removed from this document (tg, problems, objectives, influencers, ideas). */
+export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[] };
 
 /** The sheet link the brand gets: one pasted in the builder, else the CRM's external sheet. */
 export function brandSheetLink(c: PlanColumns | null | undefined, extSheetId: string | null | undefined): string | null {

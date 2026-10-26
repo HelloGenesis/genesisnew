@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { parseServiceAccount } from "@/lib/google-drive";
 import { column, ensureTab, getSheets, isSheetsConfigured } from "@/lib/google-sheets";
 
+import { activeWorkspace } from "./request-workspace";
 import { companyConnection, companyToken } from "./google";
 
 import { ACCOUNT_KIND, DIVISION_LABEL, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, PROJECT_STATUS, REQUEST_KIND, REQUEST_STATUS, SUBSCRIPTION_STATUS, projectRef, requestRef } from "./catalog";
@@ -109,17 +110,19 @@ async function shareDedicated(tab: SheetTabKey, id: string) {
 async function backfill(tab: SheetTabKey) {
   const prisma = getPrisma();
   const pick = { select: { id: true }, take: 20000 } as const;
+  /* Only Genesis's own records, never an agency CRM's. */
+  const own = { ...pick, where: { workspaceId: null } } as const;
   const ids: { id: string }[] =
-    tab === "leads" ? await prisma.lead.findMany(pick)
-    : tab === "accounts" ? await prisma.account.findMany(pick)
+    tab === "leads" ? await prisma.lead.findMany(own)
+    : tab === "accounts" ? await prisma.account.findMany(own)
     : tab === "orders" ? await prisma.order.findMany(pick)
     : tab === "payments" ? await prisma.payment.findMany(pick)
-    : tab === "projects" ? await prisma.project.findMany(pick)
-    : tab === "requests" ? await prisma.request.findMany(pick)
-    : tab === "creators" ? await prisma.creator.findMany(pick)
-    : tab === "invoices" ? await prisma.invoice.findMany(pick)
-    : tab === "quotes" ? await prisma.quote.findMany(pick)
-    : tab === "briefs" ? await prisma.brief.findMany(pick)
+    : tab === "projects" ? await prisma.project.findMany(own)
+    : tab === "requests" ? await prisma.request.findMany(own)
+    : tab === "creators" ? await prisma.creator.findMany(own)
+    : tab === "invoices" ? await prisma.invoice.findMany(own)
+    : tab === "quotes" ? await prisma.quote.findMany(own)
+    : tab === "briefs" ? await prisma.brief.findMany(own)
     : await prisma.expense.findMany(pick);
   for (const { id } of ids) await queueSheet(tab, id);
 }
@@ -141,6 +144,8 @@ export const crmSheetsConfigured = () => Boolean(spreadsheetId()) && isSheetsCon
 
 /** Marks a record's row as changed; the next sync writes its current state. */
 export async function queueSheet(tab: SheetTabKey, key: string, deleted = false) {
+  /* Genesis's live sheets are Genesis's: an agency CRM's records never go into them (lib/crm/workspace). */
+  if (typeof (await activeWorkspace()) === "string") return;
   await getPrisma()
     .sheetOutbox.upsert({
       where: { tab_key: { tab, key } },

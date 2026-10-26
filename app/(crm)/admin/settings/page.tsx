@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Badge, Card, PageHead, Table } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
 import { emailLoginEnabled } from "@/lib/crm/email-login";
@@ -19,6 +20,8 @@ export const metadata = { title: "Integrations" };
 /** Is every integration connected, and is anything stuck? */
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ drive?: string }> }) {
   const viewer = await requireStaff();
+  /* Genesis's integrations and outbox: not for an agency CRM's team. */
+  if (viewer.workspaceId) redirect("/admin/forbidden");
   const driveResult = (await searchParams).drive;
   const drive = await driveStatus();
   const contacts = await contactsStatus(viewer.id).catch(() => "needs-access" as const);

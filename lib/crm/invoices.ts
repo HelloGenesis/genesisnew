@@ -5,6 +5,8 @@ import { randomBytes } from "node:crypto";
 import { getPrisma } from "@/lib/db";
 import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 
+import { activeWorkspace } from "./request-workspace";
+import { agencyEmail, workspaceProfile } from "./workspace";
 import { date, money } from "./catalog";
 import { appUrl, queueEmail, queueStaffEmail } from "./notify";
 
@@ -65,9 +67,18 @@ export const FIRST_INVOICE_NUMBER = Number(process.env.CRM_INVOICE_START || 1101
 /** The next number in the series. Retried if two are made at the same moment. */
 export async function nextNumber(issueDate: Date) {
   const fy = financialYear(issueDate);
-  const last = await getPrisma().invoice.findFirst({ orderBy: { seq: "desc" }, select: { seq: true } });
-  const seq = Math.max((last?.seq ?? 0) + 1, FIRST_INVOICE_NUMBER);
-  return { fy, seq, number: String(seq) };
+  /* In this CRM's own series (lib/db keeps the lookup inside it): Genesis's from 110141; an agency's from 1, with its prefix. */
+  const ws = await activeWorkspace();
+  const last = await getPrisma().invoice.findFirst({ where: { workspaceId: ws ?? null }, orderBy: { seq: "desc" }, select: { seq: true } });
+  if (!ws) {
+    const seq = Math.max((last?.seq ?? 0) + 1, FIRST_INVOICE_NUMBER);
+    return { fy, seq, number: String(seq) };
+  }
+  const profile = await workspaceProfile(ws);
+  const initials = (profile?.name ?? "AG").split(/\s+/).map((w) => w[0]).join("").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 4) || "AG";
+  const prefix = profile?.invoicePrefix || `${initials}-${ws.slice(-4).toUpperCase()}/`;
+  const seq = (last?.seq ?? 0) + 1;
+  return { fy, seq, number: `${prefix}${seq}` };
 }
 
 /**
@@ -108,6 +119,32 @@ export async function supplierDetails(): Promise<SupplierDetails> {
   return { ...merged, pan: merged.gstin.slice(2, 12) };
 }
 
+/**
+ * WHO IS BILLING ON AN AGENCY CRM'S INVOICE (lib/crm/workspace): the agency,
+ * from its Team & company details; its logo replaces Genesis's.
+ */
+export async function supplierFor(workspaceId: string | null): Promise<SupplierDetails & { logoUrl?: string; agency: boolean }> {
+  if (!workspaceId) return { ...(await supplierDetails()), agency: false };
+  const p = await workspaceProfile(workspaceId);
+  const gstin = p?.gstin ?? "";
+  return {
+    name: p?.legalName ?? p?.name ?? "",
+    address: p?.address ?? "",
+    phone: p?.phone ?? "",
+    email: p?.email ?? "",
+    website: p?.website ?? "",
+    gstin,
+    payee: (p?.payee ?? p?.legalName ?? p?.name ?? "").toUpperCase(),
+    bank: p?.bank ?? "",
+    account: p?.account ?? "",
+    ifsc: p?.ifsc ?? "",
+    mode: "DIRECT TRANSFER",
+    pan: gstin.slice(2, 12),
+    logoUrl: p?.logoUrl,
+    agency: true,
+  };
+}
+
 /** The standing lines at the foot of every invoice (as on 110141). */
 export const INVOICE_TERMS = ["Interest @24% pa will be charged on delayed payment beyond the due date", "TDS will be deducted under section 194C of the Income Tax Act", "Subject to Mumbai Jurisdiction"];
 
@@ -126,7 +163,9 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
   const prisma = getPrisma();
   const inv = await refreshInvoice(id);
   let paymentUrl = inv.paymentUrl;
-  if (withPayment && inv.totalPaise > 0 && razorpayKeys() && inv.status !== "PAID") {
+  /* Pay links collect into Genesis's Razorpay: never on an agency CRM's invoice. */
+  const agency = inv.workspaceId ? await workspaceProfile(inv.workspaceId) : null;
+  if (withPayment && !agency && inv.totalPaise > 0 && razorpayKeys() && inv.status !== "PAID") {
     if (inv.razorpayLinkId) await razorpay(`payment_links/${inv.razorpayLinkId}/cancel`, {}).catch(() => undefined);
     const link = await razorpay<{ id: string; short_url: string }>("payment_links", {
       amount: inv.totalPaise,
@@ -148,7 +187,7 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
     await queueEmail({
       kind: "invoice_sent",
       to: [inv.billToEmail],
-      subject: `Tax invoice ${inv.number} · Genesis Media`,
+      subject: `Tax invoice ${inv.number} · ${agency?.name ?? "Genesis Media"}`,
       text: [
         `Hello ${inv.billToName},`,
         "",
@@ -164,6 +203,7 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
       ]
         .filter((l, i, all) => l !== "" || all[i - 1] !== "")
         .join("\n"),
+      ...agencyEmail(agency),
     });
   }
   return { paymentUrl };

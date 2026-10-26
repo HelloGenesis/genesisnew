@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
+import { inWorkspace } from "@/lib/crm/request-workspace";
 import { isSuperAdmin } from "@/lib/crm/scope";
 import { dedicatedSheet, type SheetTabKey } from "@/lib/crm/sheets";
 import { xlsx } from "@/lib/xlsx";
@@ -145,7 +146,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
       { status: 409, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   }
-  const rows = await spec.build();
+  /* The CRM being looked at: Genesis's own, or the agency an owner switched to — never the two mixed. */
+  const rows = await inWorkspace(viewer!.ws, () => spec.build());
   await recordAuditLog({ action: "crm.exported", entity: kind, actorId: viewer!.id, metadata: { format: url.searchParams.get("format") ?? "csv" } });
   const stamp = new Date().toISOString().slice(0, 10);
   if (url.searchParams.get("format") === "xlsx") {

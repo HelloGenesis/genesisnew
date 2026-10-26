@@ -7,6 +7,7 @@ import { AccountCart } from "@/components/crm/account-cart";
 import { SignOut } from "@/components/crm/sign-out";
 import { CartProvider } from "@/components/genesis/cart";
 import { getViewer, portalAccounts } from "@/lib/crm/session";
+import { workspaceProfile } from "@/lib/crm/workspace";
 import { getPrisma } from "@/lib/db";
 import { CAMPAIGN_CREATOR_STATUS } from "@/lib/crm/catalog";
 import { inr } from "@/lib/money";
@@ -32,6 +33,7 @@ const SUB_STATUS: Record<string, string> = { CREATED: "Setting up", AUTHENTICATE
 
 export default async function AccountPage() {
   const viewer = await getViewer();
+  const agencyName = viewer?.workspaceId ? (await workspaceProfile(viewer.workspaceId))?.name ?? null : null;
   if (!viewer) redirect("/login?next=/account");
   const prisma = getPrisma();
   /* Purchases are matched by email only when this person proved they own it. */
@@ -100,8 +102,9 @@ export default async function AccountPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {viewer.roles.length > 0 && (
               <Link href="/admin" className="rounded-2xl border border-[var(--glass-border)] p-4 transition-colors hover:bg-[var(--hover-wash)]">
-                <span className="block text-bone">Genesis CRM</span>
-                <span className="text-[0.875rem] text-ash">Leads, quotes, plans, invoices · {viewer.roles.map((r) => r.toLowerCase()).join(", ")}</span>
+                {/* An agency's own CRM goes by the agency's name (lib/crm/workspace). */}
+                <span className="block text-bone">{agencyName ? `${agencyName} CRM` : "Genesis CRM"}</span>
+                <span className="text-[0.875rem] text-ash">Leads, quotes, plans, invoices · {viewer.workspaceId ? (viewer.workspaceRole === "ADMIN" ? "admin" : "member") : viewer.roles.map((r) => r.toLowerCase()).join(", ")}</span>
               </Link>
             )}
             {accounts.map((a) => (
