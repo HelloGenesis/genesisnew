@@ -212,6 +212,29 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const known = user.email ? TEAM[user.email] : undefined;
   if (known && (!user.name || !user.title)) user = await prisma.user.update({ where: { id: user.id }, data: { name: user.name ?? known.name, title: user.title ?? known.title } });
 
+  const jar = await cookies();
+  return buildViewer(user, {
+    sub: identity.sub,
+    mfa: identity.amr.includes("mfa") || readStaffTwoFactor(jar.get(STAFF_2FA_COOKIE)?.value, user.id, identity.sub),
+    viewing: jar.get("gm_ws")?.value ?? null,
+  });
+});
+
+/**
+ * The same person, from their user record alone: for the ChatGPT / Claude
+ * connector (lib/crm/mcp), which signs in with a secret link instead of a
+ * browser session. Two-factor counts as done (the link is the secret);
+ * Genesis owners work in Genesis's own CRM.
+ */
+export async function viewerForUser(userId: string): Promise<Viewer | null> {
+  const user = await getPrisma().user.findUnique({ where: { id: userId } });
+  return user ? buildViewer(user, { sub: user.auth0Sub, mfa: true, viewing: null }) : null;
+}
+
+type UserRow = NonNullable<Awaited<ReturnType<ReturnType<typeof getPrisma>["user"]["findUnique"]>>>;
+
+async function buildViewer(user: UserRow, s: { sub: string; mfa: boolean; viewing: string | null }): Promise<Viewer> {
+  const prisma = getPrisma();
   const [roles, memberships] = await Promise.all([
     prisma.staffRole.findMany({ where: { userId: user.id }, select: { role: true } }),
     prisma.accountMember.findMany({
@@ -221,7 +244,6 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     }),
   ]);
 
-  const jar = await cookies();
   /*
    * AN AGENCY'S TEAM (lib/crm/workspace): sales, delivery and the influencer
    * work in their own CRM, never Genesis's money pages or staff. Their admin
@@ -231,25 +253,25 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const workspaceRole = agency ? (user.workspaceRole === "ADMIN" ? "ADMIN" : "MEMBER") : null;
   const staffRoles = agency ? (workspaceRole === "ADMIN" ? (["SALES", "PRODUCER", "INFLUENCER"] as StaffRoleKind[]) : (["SALES", "PRODUCER"] as StaffRoleKind[])) : roles.map((r) => r.role);
   const owner = !agency && staffRoles.includes("OWNER");
-  const viewing = owner ? jar.get("gm_ws")?.value ?? null : null;
+  const viewing = owner ? s.viewing : null;
   const viewingOk = viewing ? Boolean(await prisma.account.findFirst({ where: { id: viewing, crmWorkspace: true, workspaceId: null }, select: { id: true } })) : false;
   return {
     id: user.id,
-    sub: identity.sub,
+    sub: s.sub,
     email: user.email,
     phone: user.phone,
     name: user.name,
     title: user.title,
     grants: agency ? (workspaceRole === "ADMIN" ? ["leads", "quotes", "billing", "clients", "projects", "creators"] : ["creators"]) : (user.grants ?? []),
     roles: staffRoles,
-    mfa: identity.amr.includes("mfa") || readStaffTwoFactor(jar.get(STAFF_2FA_COOKIE)?.value, user.id, identity.sub),
+    mfa: s.mfa,
     memberships: memberships.map((m) => ({ accountId: m.account.id, role: m.role, name: m.account.name, kind: m.account.kind, isReseller: m.account.isReseller, parentId: m.account.parentId })),
-    dev: identity.sub.startsWith("dev|"),
+    dev: s.sub.startsWith("dev|"),
     workspaceId: agency?.id ?? null,
     workspaceRole,
     ws: agency?.id ?? (viewingOk ? viewing : null),
   };
-});
+}
 
 // --- Staff -------------------------------------------------------------------------
 

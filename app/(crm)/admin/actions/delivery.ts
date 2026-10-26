@@ -24,6 +24,7 @@ import { queueSheet } from "@/lib/crm/sheets";
 import { creatorScope, isSuperAdmin, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { openProject } from "@/lib/crm/projects";
+import { recordReach, syncPlanContacts } from "@/lib/crm/reachout";
 import { stagesOf } from "@/lib/crm/stages";
 
 /** Server actions for projects, deliverables, messages, requests, tasks, vendors and creators. */
@@ -443,7 +444,7 @@ function countFrom(raw: string): number | null {
   return Math.round(Number(m[1]) * scale);
 }
 
-const EDITABLE = ["name", "handle", "profileUrl", "followers", "avgViews", "engagementRate", "niches", "city", "reelRate", "storyRate", "dlRate", "phone", "email", "managedBy", "pocName", "pocContact", "source", "tier"] as const;
+const EDITABLE = ["name", "handle", "profileUrl", "followers", "avgViews", "engagementRate", "niches", "city", "reelRate", "storyRate", "dlRate", "phone", "email", "managedBy", "pocName", "pocContact", "source", "tier", "reachStatus"] as const;
 
 /**
  * ONE CELL OF THE INFLUENCER DATABASE, EDITED WHERE IT IS (Genesis, 22 Oct
@@ -511,6 +512,17 @@ export async function updateCreatorField(id: string, field: string, raw: string)
     case "email":
       data = { email: blank ? null : value.toLowerCase().slice(0, 200) };
       break;
+    case "reachStatus": {
+      /* Set by hand in the database (lib/crm/reachout): logged, with who and when. */
+      const c = await getPrisma().creator.findUnique({ where: { id }, select: { name: true, handle: true } });
+      if (blank) {
+        data = { reachStatus: null, reachAt: null, reachById: null, reachQuoteId: null };
+        break;
+      }
+      await recordReach({ creatorId: id, name: c?.name ?? "", handle: c?.handle ?? "", status: value, byId: viewer.id });
+      revalidatePath("/admin/creators");
+      return { ok: true };
+    }
     case "tier":
       if (!TIERS.includes(value as (typeof TIERS)[number])) return { ok: false, message: "Pick a tier." };
       data = { tier: value as CreatorTier };
@@ -525,6 +537,8 @@ export async function updateCreatorField(id: string, field: string, raw: string)
     throw error;
   }
   await queueSheet("creators", id).catch(() => undefined);
+  /* A new number or email reaches every plan this creator is on. */
+  if (field === "phone" || field === "email") await syncPlanContacts(id);
   revalidatePath("/admin/creators");
   return { ok: true };
 }

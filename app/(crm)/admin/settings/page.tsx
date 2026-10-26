@@ -12,6 +12,9 @@ import { adminRequiresMfa, can, devLoginEnabled, requireStaff } from "@/lib/crm/
 import { upstashConfigured } from "@/lib/env";
 import { razorpayKeys } from "@/lib/razorpay";
 
+import { ConnectorCard } from "@/components/crm/connector-card";
+import { connectorKeys } from "@/lib/crm/mcp-keys";
+
 import { disconnectGoogleDrive, retryEmail } from "../actions/finance";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +74,10 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             )}
           </div>
         )}
+      </Card>
+      {/* The CRM in ChatGPT or Claude (app/api/mcp): each person's own link. */}
+      <Card title="ChatGPT / Claude">
+        <ConnectorCard links={await connectorKeys(viewer.id)} />
       </Card>
       <Card title="Google Contacts">
         <p className="text-ash">

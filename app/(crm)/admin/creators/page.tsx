@@ -21,6 +21,8 @@ import { updateCreatorField } from "../actions/delivery";
 const edit = (id: string, field: string) => updateCreatorField.bind(null, id, field);
 
 import { saveCreator } from "../actions/delivery";
+import { lastReaches } from "@/lib/crm/reachout";
+import { isRecent, reachLine, reachOptions, RECENT_DAYS } from "@/lib/crm/reachout-status";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Influencer database" };
@@ -34,13 +36,23 @@ const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { nota
  */
 const has = (field: "phone" | "email") => ({ AND: [{ [field]: { not: null } }, { NOT: { [field]: "" } }] }) as Prisma.CreatorWhereInput;
 const CONTACT_FILTER = {
+  /* Only creators you can reach (Genesis, 27 Oct 2026: "a contact-only filter"). */
+  any: { label: "Has a phone or email", where: { OR: [has("phone"), has("email")] } as Prisma.CreatorWhereInput },
+  both: { label: "Has phone and email", where: { AND: [has("phone"), has("email")] } as Prisma.CreatorWhereInput },
   phone: { label: "Has a phone number", where: has("phone") },
   email: { label: "Has an email", where: has("email") },
   "no-phone": { label: "No phone number", where: { NOT: has("phone") } as Prisma.CreatorWhereInput },
   "no-email": { label: "No email", where: { NOT: has("email") } as Prisma.CreatorWhereInput },
 };
 
-type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; contact?: string | string[]; reachout?: string; min?: string; max?: string; limit?: string };
+/* Reach-outs from any plan (lib/crm/reachout): who hasn't been contacted, and who was lately. */
+const REACH_FILTER = {
+  none: { label: "Not contacted yet", where: () => ({ reachAt: null }) as Prisma.CreatorWhereInput },
+  recent: { label: `Contacted in the last ${RECENT_DAYS} days`, where: () => ({ reachAt: { gte: new Date(Date.now() - RECENT_DAYS * 864e5) } }) as Prisma.CreatorWhereInput },
+  earlier: { label: `Contacted, not in ${RECENT_DAYS} days`, where: () => ({ reachAt: { lt: new Date(Date.now() - RECENT_DAYS * 864e5) } }) as Prisma.CreatorWhereInput },
+};
+
+type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; contact?: string | string[]; reach?: string | string[]; reachout?: string; min?: string; max?: string; limit?: string };
 const many = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
 
 /* A niche worth offering: words, not a number or a stray sentence from an imported sheet. */
@@ -57,6 +69,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
   const sources = many(p.source);
   /* Has / has no phone number or email (Genesis, 23 Oct 2026); several picked must all hold. */
   const contacts = many(p.contact).filter((c): c is keyof typeof CONTACT_FILTER => c in CONTACT_FILTER);
+  const reaches = many(p.reach).filter((c): c is keyof typeof REACH_FILTER => c in REACH_FILTER);
   const min = Number(p.min) || 0;
   const max = Number(p.max) || 0;
   const limit = Math.min(Math.max(Number(p.limit) || 300, 300), 3000);
@@ -84,6 +97,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
       cities.length ? { OR: cities.map((c) => ({ city: { contains: c, mode: "insensitive" as const } })) } : {},
       sources.length ? { source: { in: sources } } : {},
       ...contacts.map((c) => CONTACT_FILTER[c].where),
+      reaches.length ? { OR: reaches.map((r) => REACH_FILTER[r].where()) } : {},
       min || max ? { followers: { ...(min ? { gte: min } : {}), ...(max ? { lte: max } : {}) } } : {},
     ],
   };
@@ -95,6 +109,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
     prisma.$queryRaw<{ city: string; n: bigint }[]>`select trim(split_part(city, '-', 1)) as city, count(*) as n from crm_creators c where city is not null and city <> '' ${mine} group by 1 order by 2 desc limit 300`,
     prisma.$queryRaw<{ source: string; n: bigint }[]>`select source, count(*) as n from crm_creators c where source is not null and source <> '' ${mine} group by 1 order by 2 desc limit 200`,
   ]);
+  const lasts = await lastReaches(creators.map((c) => c.id));
   const seen = new Set<string>();
   const nicheOptions = [...NICHES, ...nicheRows.map((n) => n.niche).filter(usableNiche)]
     .filter((n) => {
@@ -111,6 +126,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
     ...cities,
     ...sources,
     ...contacts.map((c) => CONTACT_FILTER[c].label),
+    ...reaches.map((r) => REACH_FILTER[r].label),
     min && `≥ ${min.toLocaleString("en-IN")} followers`,
     max && `≤ ${max.toLocaleString("en-IN")} followers`,
   ].filter(Boolean) as string[];
@@ -131,11 +147,12 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
         <MultiSelect name="city" label="Any city" options={cityOptions} defaultValue={cities} className="w-[12rem]" />
         {/* Where they came from: a Google Sheet, an Excel file, an agency… (Genesis, 22 Oct 2026). */}
         <MultiSelect name="contact" label="Any contact" options={Object.entries(CONTACT_FILTER).map(([k, v]) => [k, v.label] as const)} defaultValue={contacts} className="w-[13rem]" />
+        <MultiSelect name="reach" label="Any reach-out" options={Object.entries(REACH_FILTER).map(([k, v]) => [k, v.label] as const)} defaultValue={reaches} className="w-[14rem]" />
         <MultiSelect name="source" label="Any source" options={sourceRows.map((r) => [r.source, `${r.source} (${Number(r.n).toLocaleString("en-IN")})`] as const)} defaultValue={sources} className="w-[13rem]" />
         <input name="min" defaultValue={p.min} placeholder="Min followers" inputMode="numeric" className="crm-input max-w-[8.5rem]" />
         <input name="max" defaultValue={p.max} placeholder="Max followers" inputMode="numeric" className="crm-input max-w-[8.5rem]" />
         <button className="crm-btn crm-btn-primary crm-btn-sm">Search</button>
-        {(p.q || platforms.length || tiers.length || niches.length || cities.length || sources.length || contacts.length || min || max) ? <Link href="/admin/creators" className="crm-btn crm-btn-secondary crm-btn-sm">Clear all</Link> : null}
+        {(p.q || platforms.length || tiers.length || niches.length || cities.length || sources.length || contacts.length || reaches.length || min || max) ? <Link href="/admin/creators" className="crm-btn crm-btn-secondary crm-btn-sm">Clear all</Link> : null}
       </form>
       {/* The search's result, said plainly (Genesis, 13 Oct 2026: "show search results as well"). */}
       <p className="text-[0.9375rem] text-ash" role="status">
@@ -155,7 +172,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
           {/* IN THE PLAN'S OWN COLUMNS (Genesis, 12 Oct 2026, from the IndusInd Nippon plan), with a tick to put creators on a new plan. */}
           <form id="pick-creators" action="/admin/quotes/new" method="get">
             <input type="hidden" name="kind" value="INFLUENCER_PLAN" />
-            <Table head={["", "Tier", "Name", "Category", "IG link", "Followers", "Avg views", "ER", "1 IG Reel", "Story + LIB", "DL (1 month)", "Location", "Contact", "Agency & POC", "Source", "Campaigns"]}>
+            <Table head={["", "Tier", "Name", "Category", "IG link", "Followers", "Avg views", "ER", "1 IG Reel", "Story + LIB", "DL (1 month)", "Location", "Contact", "Reach-out", "Agency & POC", "Source", "Campaigns"]}>
               {creators.map((c) => (
                 <tr key={c.id} className={c.blacklisted ? "opacity-50" : ""}>
                   <td><input type="checkbox" name="creators" value={c.id} disabled={c.blacklisted} aria-label={`Select ${c.name}`} className="size-4 accent-[#ffc516]" /></td>
@@ -186,6 +203,11 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
                   <td className="max-w-[14rem] space-y-0.5 text-[0.8125rem]">
                     <EditCell value={c.phone ?? ""} save={edit(c.id, "phone")} placeholder="Phone">{c.phone ?? <span className="text-faint">Phone</span>}</EditCell>
                     <EditCell value={c.email ?? ""} save={edit(c.id, "email")} placeholder="Email" wide><span className="break-all">{c.email ?? <span className="text-faint">Email</span>}</span></EditCell>
+                  </td>
+                  {/* The latest reach-out from any plan, settable here for ones done outside the CRM (lib/crm/reachout). */}
+                  <td className="min-w-[10rem] text-[0.8125rem]">
+                    <EditCell value={c.reachStatus ?? ""} save={edit(c.id, "reachStatus")} options={reachOptions(c.reachStatus).map((o) => [o, o || "Not contacted"] as const)}>{c.reachStatus ?? <span className="text-faint">Not contacted</span>}</EditCell>
+                    {lasts[c.id] && <span className={`block text-[0.6875rem] ${isRecent(lasts[c.id]) ? "text-[#f59e0b]" : "text-faint"}`}>{reachLine(lasts[c.id]).split(" · ").slice(1).join(" · ")}</span>}
                   </td>
                   <td className="max-w-[14rem] space-y-0.5 text-[0.8125rem]">
                     <EditCell value={c.managedBy ?? ""} save={edit(c.id, "managedBy")} placeholder="Agency / manager" wide>{c.managedBy ?? <span className="text-faint">Agency</span>}</EditCell>
