@@ -8,6 +8,7 @@ import { quoteVersion, saveQuote } from "@/app/(crm)/admin/actions/quotes";
 import { readSheetFile } from "@/lib/sheet-file";
 import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 
+import { planTargets, TARGET_LABEL } from "@/lib/crm/plan-import";
 import { proposalOrder, SECTION } from "@/lib/crm/proposal-order";
 
 import { GrowText } from "./grow-text";
@@ -180,7 +181,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   }, []);
   /* IMPORT AN EXCEL OF INFLUENCERS INTO THE PLAN (Genesis, 13 Oct 2026); they're saved to the influencer database too. */
   const importPicker = useRef<HTMLInputElement>(null);
-  const [sheet, setSheet] = useState<{ name: string; headers: string[]; rows: string[][]; mapping: Record<string, string> } | null>(null);
+  /* `targets`: where each column of the file goes on the plan (lib/crm/plan-import), shown and changeable before adding. */
+  const [sheet, setSheet] = useState<{ name: string; headers: string[]; rows: string[][]; mapping: Record<string, string>; targets: Record<string, string> } | null>(null);
   const [importNote, setImportNote] = useState<string | null>(null);
   async function readImport(file: File | undefined) {
     if (!file) return;
@@ -195,9 +197,10 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
       const rows = tab.rows.slice(at + 1).filter((r) => r.some((c) => c.trim()));
       setImportNote("Matching the columns…");
       const mapping = await matchUploadColumns("influencers", headers, rows.slice(0, 5));
-      const fields = Object.values(mapping);
-      if (!fields.includes("handle") && !fields.includes("profileUrl")) throw new Error("Couldn't find a handle or profile-link column. Check the first row has headings.");
-      setSheet({ name: file.name, headers, rows, mapping });
+      const targets = planTargets(headers, mapping);
+      const placed = Object.values(targets);
+      if (!placed.includes("name") && !placed.includes("handle") && !placed.includes("profileUrl")) throw new Error("Couldn't find a name, handle or profile-link column. Check the first row has headings.");
+      setSheet({ name: file.name, headers, rows, mapping, targets });
       setImportNote(null);
     } catch (e) {
       setImportNote((e as Error).message);
@@ -213,18 +216,37 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
     try {
       for (let i = 0; i < sheet.rows.length; i += 250) {
         setImportNote(`Saving ${Math.min(i + 250, sheet.rows.length)} of ${sheet.rows.length} to the influencer database…`);
-        const result = await importCreatorsForPlan(sheet.name, sheet.headers, sheet.rows.slice(i, i + 250), sheet.mapping);
+        const result = await importCreatorsForPlan(sheet.name, sheet.headers, sheet.rows.slice(i, i + 250), sheet.mapping, sheet.targets);
         added += result.added;
         updated += result.updated;
-        for (const c of result.creators)
-          found.push({ creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, er: c.er, deliverables: "1 IG Reel + Story & link in bio", fee: null, reelCost: c.reel, storyCost: c.story, dlCost: c.dl, reelPrice: up(c.reel), storyPrice: up(c.story), dlPrice: up(c.dl), contact: c.contact });
+        /* The file's own values, column for column; prices from the file, else cost + the markup. */
+        for (const c of result.rows)
+          found.push({
+            creatorId: c.creatorId, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers ?? 0, avgViews: c.avgViews, niches: c.niches ?? [], city: c.city, er: c.er,
+            deliverables: "1 IG Reel + Story & link in bio", fee: null,
+            reelCost: c.reelCost, storyCost: c.storyCost, dlCost: c.dlCost,
+            reelPrice: c.reelPrice ?? up(c.reelCost), storyPrice: c.storyPrice ?? up(c.storyCost), dlPrice: c.dlPrice ?? up(c.dlCost),
+            reachout: c.reachout, contact: c.contact, remarks: c.remarks, extra: c.extra,
+          });
       }
-      const have = new Set(q.creators.map((c) => c.creatorId).filter(Boolean));
-      const fresh = found.filter((c) => !have.has(c.creatorId) && have.add(c.creatorId));
-      const onPlan = fresh.length;
-      setQ((x) => ({ ...x, creators: [...x.creators, ...fresh.filter((c) => !x.creators.some((y) => y.creatorId === c.creatorId))] }));
+      const newCols = [...new Set(Object.values(sheet.targets).filter((t) => t.startsWith("col:")).map((t) => t.slice(4)))];
+      let refreshed = 0;
+      setQ((x) => {
+        const same = (a: BuilderCreator, b: BuilderCreator) => (a.creatorId && a.creatorId === b.creatorId) || (a.handle && a.handle.toLowerCase() === b.handle.toLowerCase() && a.platform === b.platform);
+        /* Already on the plan: the file's values replace what's there (blanks in the file leave it). */
+        const creators = x.creators.map((c) => {
+          const f = found.find((n) => same(c, n));
+          if (!f) return c;
+          refreshed += 1;
+          const keep = Object.fromEntries(Object.entries(f).filter(([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0)));
+          return { ...c, ...keep, extra: { ...(c.extra ?? {}), ...(f.extra ?? {}) } } as BuilderCreator;
+        });
+        const fresh = found.filter((n, i) => !x.creators.some((c) => same(c, n)) && found.findIndex((o) => same(o, n)) === i);
+        const custom = [...new Set([...(x.planColumns?.custom ?? []), ...newCols])];
+        return { ...x, creators: [...creators, ...fresh], planColumns: { ...(x.planColumns ?? {}), custom } };
+      });
       setSheet(null);
-      setImportNote(`Done: ${found.length} creators from the sheet (${added} new to the database, ${updated} updated)${onPlan < found.length ? `; ${found.length - onPlan} were already on the plan` : ""}.`);
+      setImportNote(`Done: ${found.length} creators from the sheet (${added} new to the database, ${updated} updated)${refreshed ? `; ${refreshed} already on the plan were updated from the file` : ""}. Press Save to keep it.`);
     } catch (e) {
       setImportNote(`Stopped: ${(e as Error).message.slice(0, 160)}. Try again; creators already saved aren't duplicated.`);
     }
@@ -757,12 +779,29 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             <input ref={importPicker} type="file" accept=".xlsx,.csv,.tsv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => { void readImport(e.target.files?.[0]); e.target.value = ""; }} />
             {linkError && <span className="text-[0.8125rem] text-[#dc2626]">{linkError}</span>}
           </div>
+          {/* WHERE EACH COLUMN GOES (Genesis, 27 Oct 2026: "make sure it adds the correct data in the correct column"): checked, and changed if need be, before adding. */}
           {sheet && (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#ffc516] px-3 py-2 text-[0.8125rem]">
-              <span className="text-bone">{sheet.name}</span>
-              <span className="text-ash">· {sheet.rows.length} rows · columns: {Object.entries(sheet.mapping).map(([h]) => h).join(", ")}</span>
-              <button type="button" onClick={runImport} className="crm-btn crm-btn-primary crm-btn-sm">Add {sheet.rows.length} creators</button>
-              <button type="button" onClick={() => setSheet(null)} className="text-ash hover:text-bone">Cancel</button>
+            <div className="space-y-3 rounded-xl border border-[#ffc516] p-3 text-[0.8125rem]">
+              <p><span className="text-bone">{sheet.name}</span> <span className="text-ash">· {sheet.rows.length} rows. Check where each column goes:</span></p>
+              <div className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                {sheet.headers.filter(Boolean).map((h) => (
+                  <label key={h} className="flex items-center justify-between gap-2">
+                    <span className="truncate text-bone" title={h}>{h}</span>
+                    <select
+                      value={sheet.targets[h] ?? "skip"}
+                      onChange={(e) => setSheet((x) => (x ? { ...x, targets: { ...x.targets, [h]: e.target.value } } : x))}
+                      className="crm-input !min-h-8 !w-48 !py-1 text-[0.8125rem]"
+                    >
+                      {Object.entries(TARGET_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      <option value={`col:${h.slice(0, 60)}`}>New column &ldquo;{h.slice(0, 30)}&rdquo;</option>
+                    </select>
+                  </label>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={runImport} className="crm-btn crm-btn-primary crm-btn-sm">Add {sheet.rows.length} creators</button>
+                <button type="button" onClick={() => setSheet(null)} className="text-ash hover:text-bone">Cancel</button>
+              </div>
             </div>
           )}
           {importNote && <p className="text-[0.8125rem] text-ash" role="status">{importNote}</p>}
@@ -913,7 +952,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                           {shows("avgViews") && <td><input type="number" step="any" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>}
                           {shows("er") && <td><input type="number" step="any" min={0} value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>}
                           {shows("location") && <td><GrowText value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>}
-                          {shows("reachout") && <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{REACHOUT.map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>}
+                          {shows("reachout") && <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{[...REACHOUT, ...(c.reachout && !REACHOUT.includes(c.reachout) ? [c.reachout] : [])].map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>}
                           {MONEY.filter(shows).map((k) => (
                             <td key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
                           ))}
