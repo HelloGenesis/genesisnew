@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/db";
 import { contactVisibility } from "./creator-privacy";
 import type { Viewer } from "./session";
 import { COMPANY_ACCOUNT, companyToken, personFileToken } from "./google";
+import { markWritten, mayOverwrite, SheetEditedError } from "./plan-sync";
 import { type Cell, type PlanColumns, type PlanInput, planTables, sharesSheet } from "./plan-tables";
 
 /**
@@ -22,6 +23,10 @@ import { type Cell, type PlanColumns, type PlanInput, planTables, sharesSheet } 
 
 const API = "https://sheets.googleapis.com/v4/spreadsheets";
 const HEADER_FILL = { red: 1, green: 0.949, blue: 0.8 }; // #FFF2CC, as in Genesis's sheets
+const DISCLAIMER_FILL = { red: 0.976, green: 0.796, blue: 0.612 }; // #F9CB9C, the "Disclaimer:" label
+const LOGO = "https://www.genesismedia.co/brand/genesis-wordmark-dark.png";
+const EXT_TABS = ["Summary", "Influencer Plan"];
+const INT_TABS = ["INT", "EXT"];
 const GROUP_FILL = { red: 0.851, green: 0.918, blue: 0.827 };
 type Meta = { sheets: { properties: { sheetId: number; title: string } }[] };
 
@@ -69,8 +74,12 @@ export async function planInputFor(quoteId: string, viewer?: Viewer): Promise<{ 
   };
 }
 
-/** `viewer`: who's making them; contacts they may not see stay out of the sheets (lib/crm/creator-privacy). */
-export async function makePlanSheets(quoteId: string, actorEmail: string | null, actorId?: string | null, viewer?: Viewer) {
+/**
+ * `viewer`: who's making them; contacts they may not see stay out of the sheets (lib/crm/creator-privacy).
+ * `force`: replace sheets edited in Google Sheets too ("Overwrite the Google Sheets"); otherwise those
+ * are left alone and SheetEditedError is thrown before anything is touched (lib/crm/plan-sync).
+ */
+export async function makePlanSheets(quoteId: string, actorEmail: string | null, actorId?: string | null, viewer?: Viewer, opts: { force?: boolean } = {}) {
   const prisma = getPrisma();
   const { input, extSheetId, intSheetId } = await planInputFor(quoteId, viewer);
   const t = planTables(input);
@@ -111,12 +120,28 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
     return { id: made.spreadsheetId, token: maker.token, fresh: true, sheets: Object.fromEntries(made.sheets.map((s) => [s.properties.title, s.properties.sheetId])) as Record<string, number> };
   };
 
+  /* Never overwrite a sheet someone has edited in Google Sheets (both checked before either is touched). */
+  if (!opts.force) {
+    for (const [existing, tabs] of [[extSheetId, EXT_TABS], [intSheetId, INT_TABS]] as const) {
+      if (!existing) continue;
+      for (const token of [maker.token, maker.own ? await companyToken().catch(() => null) : null]) {
+        if (!token) continue;
+        const meta = await call<Meta>(token, `${API}/${existing}?fields=sheets.properties`, undefined, "GET").catch(() => null);
+        if (!meta) continue;
+        if (!(await mayOverwrite(token, existing, tabs, meta.sheets.map((s) => s.properties.title)))) throw new SheetEditedError();
+        break;
+      }
+    }
+  }
+
   const ext = await ensure(extSheetId, `${brand} x Genesis Media | Influencer Plan`, ["Summary", "Influencer Plan"]);
   const int = await ensure(intSheetId, `INT - ${brand} | Influencer plan`, ["INT", "EXT"]);
   const write = (token: string, id: string, data: { range: string; values: Cell[][] }[]) =>
     call(token, `${API}/${id}/values:batchUpdate`, { valueInputOption: "USER_ENTERED", data: data.map((d) => ({ ...d, values: d.values.map((r) => r.map(safe)) })) });
   await write(ext.token, ext.id, [
-    { range: "'Summary'!A1", values: t.summary },
+    /* Genesis's logo above the Overview, as on Genesis's own plans. */
+    { range: "'Summary'!B2", values: [[`=IMAGE("${LOGO}", 1)`]] },
+    { range: "'Summary'!A8", values: t.summary },
     { range: "'Influencer Plan'!A1", values: [t.ext.header, ...t.ext.rows, ...t.ext.disclaimer] },
   ]);
   await write(int.token, int.id, [
@@ -147,6 +172,47 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
   };
   const moneyAt = (cols: { money?: boolean }[]) => cols.map((c, i) => (c.money ? i : -1)).filter((i) => i >= 0);
   const extWidths = t.ext.cols.map((c) => c.width);
+  /* GENESIS'S LOOK (Genesis, 26 Oct 2026, the Sun Pharma plan): bordered tables, the logo, the disclaimer in orange and yellow. */
+  const border = { style: "SOLID", color: { red: 0.6, green: 0.6, blue: 0.6 } };
+  const box = (sheetId: number, r0: number, r1: number, c0: number, c1: number, inner = true) => ({
+    updateBorders: { range: { sheetId, startRowIndex: r0, endRowIndex: r1, startColumnIndex: c0, endColumnIndex: c1 }, top: border, bottom: border, left: border, right: border, ...(inner ? { innerHorizontal: border, innerVertical: border } : {}) },
+  });
+  const merge = (sheetId: number, r0: number, r1: number, c0: number, c1: number) => ({ mergeCells: { range: { sheetId, startRowIndex: r0, endRowIndex: r1, startColumnIndex: c0, endColumnIndex: c1 }, mergeType: "MERGE_ALL" } });
+  const fmt = (sheetId: number, r0: number, r1: number, c0: number, c1: number, format: object, fields: string) => ({ repeatCell: { range: { sheetId, startRowIndex: r0, endRowIndex: r1, startColumnIndex: c0, endColumnIndex: c1 }, cell: { userEnteredFormat: format }, fields: `userEnteredFormat(${fields})` } });
+  const tableLook = (sheetId: number, endRow: number, cols: number) => [
+    box(sheetId, 0, endRow, 0, cols),
+    fmt(sheetId, 0, endRow, 0, cols, { horizontalAlignment: "CENTER", verticalAlignment: "MIDDLE", wrapStrategy: "WRAP" }, "horizontalAlignment,verticalAlignment,wrapStrategy"),
+  ];
+  const disclaimerLook = (sheetId: number, start: number, lines: number, cols: number) => {
+    if (lines < 2) return [];
+    const label = start + 1;
+    const span = Math.min(Math.max(cols, 2), 3);
+    return [
+      fmt(sheetId, label, label + 1, 0, 1, { backgroundColor: DISCLAIMER_FILL, textFormat: { bold: true } }, "backgroundColor,textFormat"),
+      ...Array.from({ length: lines - 2 }, (_, i) => merge(sheetId, label + 1 + i, label + 2 + i, 0, span)),
+      fmt(sheetId, label + 1, start + lines, 0, span, { backgroundColor: HEADER_FILL, wrapStrategy: "CLIP" }, "backgroundColor,wrapStrategy"),
+    ];
+  };
+  const summaryLook = (sheetId: number) => {
+    const top = 7;
+    const { overview, termsStart, terms } = t.summaryLayout;
+    const termsTop = top + termsStart;
+    return [
+      merge(sheetId, 1, 6, 1, 3),
+      { updateDimensionProperties: { range: { sheetId, dimension: "ROWS", startIndex: 1, endIndex: 6 }, properties: { pixelSize: 24 }, fields: "pixelSize" } },
+      fmt(sheetId, top, top + 1, 1, 2, { textFormat: { bold: true, fontSize: 13 } }, "textFormat"),
+      box(sheetId, top, top + overview, 1, 3),
+      fmt(sheetId, top + 1, top + overview, 1, 2, { textFormat: { bold: true } }, "textFormat"),
+      /* The outlay line spans the table. */
+      ...(overview > 7 ? [merge(sheetId, top + overview - 1, top + overview, 1, 3)] : []),
+      fmt(sheetId, top, top + overview, 1, 3, { verticalAlignment: "MIDDLE", wrapStrategy: "WRAP" }, "verticalAlignment,wrapStrategy"),
+      fmt(sheetId, termsTop, termsTop + 1, 1, 2, { textFormat: { bold: true } }, "textFormat"),
+      ...Array.from({ length: terms }, (_, i) => merge(sheetId, termsTop + i, termsTop + i + 1, 1, 3)),
+      fmt(sheetId, termsTop, termsTop + terms, 1, 3, { wrapStrategy: "WRAP", verticalAlignment: "TOP" }, "wrapStrategy,verticalAlignment"),
+      box(sheetId, termsTop, termsTop + terms, 1, 3, false),
+      ...widths(sheetId, [30, 230, 420]),
+    ];
+  };
   const sum0 = ext.sheets["Summary"]!;
   const plan = ext.sheets["Influencer Plan"]!;
   await call(ext.token, `${API}/${ext.id}:batchUpdate`, {
@@ -155,9 +221,9 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
       ...tierMerges(plan, 1),
       ...widths(plan, extWidths),
       ...money(plan, 1, rows.length + 1, moneyAt(t.ext.cols)),
-      { repeatCell: { range: { sheetId: sum0, startRowIndex: 2, endRowIndex: 3, startColumnIndex: 1, endColumnIndex: 2 }, cell: { userEnteredFormat: { textFormat: { bold: true, fontSize: 14 } } }, fields: "userEnteredFormat.textFormat" } },
-      { repeatCell: { range: { sheetId: sum0, startRowIndex: 3, endRowIndex: 10, startColumnIndex: 1, endColumnIndex: 2 }, cell: { userEnteredFormat: { textFormat: { bold: true } } }, fields: "userEnteredFormat.textFormat" } },
-      ...widths(sum0, [30, 220, 20, 520]),
+      ...summaryLook(sum0),
+      ...tableLook(plan, rows.length + 1, t.ext.header.length),
+      ...disclaimerLook(plan, rows.length + 1, t.ext.disclaimer.length, t.ext.header.length),
     ],
   });
   const intId = int.sheets["INT"]!;
@@ -173,6 +239,8 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
       ...money(intId, 2, rows.length + 3, moneyAt(t.int.cols)),
       ...widths(intId, t.int.cols.map((c) => c.width)),
       bold(extCopy, 0, 1, t.ext.header.length),
+      ...tableLook(extCopy, rows.length + 1, t.ext.header.length),
+      ...tableLook(intId, rows.length + 3, t.int.header.length),
       ...tierMerges(extCopy, 1),
       ...widths(extCopy, extWidths),
     ],
@@ -195,6 +263,9 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
   await prisma.quote.update({ where: { id: quoteId }, data: { extSheetId: ext.id, intSheetId: int.id } });
   /* Sent to the brand as a link: the external sheet opens for anyone with it (view only). The internal one never does. */
   const shared = sharesSheet(input.columns) ? await shareExternalSheet(quoteId, actorId).catch(() => false) : false;
+  /* The CRM wrote these last: remembered, so an edit in Google Sheets can be told apart (lib/crm/plan-sync). */
+  await markWritten(ext.token, ext.id).catch(() => undefined);
+  await markWritten(int.token, int.id).catch(() => undefined);
   return {
     shared, ext: `https://docs.google.com/spreadsheets/d/${ext.id}/edit`, int: `https://docs.google.com/spreadsheets/d/${int.id}/edit`, own: maker.own, account: maker.email };
 }

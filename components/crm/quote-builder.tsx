@@ -11,6 +11,7 @@ import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 import { proposalOrder, SECTION } from "@/lib/crm/proposal-order";
 
 import { GrowText } from "./grow-text";
+import { NichePicker } from "./niche-picker";
 import { RichText } from "./rich-text";
 
 export type BuilderLine = { kind: string; productId?: string | null; division?: string | null; title: string; subtitle?: string | null; details?: string | null; note?: string | null; qty: number; unit: number };
@@ -666,6 +667,10 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                 <button type="button" disabled={download !== null} onClick={() => { closeExport(); void excel("ext"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><FileSpreadsheet className="size-4 text-ash" aria-hidden /> Excel · external (client)</button>
                 <button type="button" disabled={download !== null} onClick={() => { closeExport(); void excel("int"); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><FileSpreadsheet className="size-4 text-ash" aria-hidden /> Excel · internal (team)</button>
                 <button name="then" value="sheets" disabled={pending} onClick={closeExport} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><Sheet className="size-4 text-ash" aria-hidden /> {sheets?.ext ? "Save & update Google Sheets" : "Save & make Google Sheets (internal + external)"}</button>
+                {/* Replaces sheets edited in Google Sheets too (lib/crm/plan-sync); asks first, as it can't be undone from the CRM. */}
+                {sheets?.ext && (
+                  <button name="then" value="overwrite" disabled={pending} onClick={(e) => { if (!window.confirm("Replace both Google Sheets with this version? Anything changed in Google Sheets since the CRM last wrote them is lost (it's still in the sheet's version history).")) e.preventDefault(); else closeExport(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[0.875rem] text-[#dc2626] hover:bg-[var(--hover-wash)]"><Sheet className="size-4" aria-hidden /> Overwrite the Google Sheets with this version</button>
+                )}
                 {sheets?.ext && <a href={`https://docs.google.com/spreadsheets/d/${sheets.ext}/edit`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-3 py-2 text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><ExternalLink className="size-4 text-ash" aria-hidden /> Open external sheet (client)</a>}
                 {sheets?.int && <a href={`https://docs.google.com/spreadsheets/d/${sheets.int}/edit`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-3 py-2 text-[0.875rem] text-bone hover:bg-[var(--hover-wash)]"><ExternalLink className="size-4 text-ash" aria-hidden /> Open internal sheet (team)</a>}
               </div>
@@ -889,7 +894,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                             )}
                           </td>
                           {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
-                          {shows("category") && <td><GrowText value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>}
+                          {/* Pick any number of categories, or add your own (components/crm/niche-picker). */}
+                          {shows("category") && <td><NichePicker compact value={c.niches} onChange={(next) => setCreator(i, { niches: next })} label="Category" /></td>}
                           {/* The profile link is editable on every plan (Genesis, 22 Oct 2026), with a way to open it. */}
                           {shows("ig") && (
                             <td>
