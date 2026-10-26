@@ -11,6 +11,7 @@ import { QUOTE_STATUS, dateTime, money, projectRef } from "@/lib/crm/catalog";
 import { appUrl } from "@/lib/crm/notify";
 import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
+import { lastReaches } from "@/lib/crm/reachout";
 import { pullPlanSheets } from "@/lib/crm/plan-sync";
 import { builderData } from "@/lib/crm/quote-data";
 import { quoteRef } from "@/lib/crm/quote-templates";
@@ -43,6 +44,8 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
   const showContact = seesQuoteContact(viewer, q);
   /* Creators' numbers and emails, only where this person may see them (lib/crm/creator-privacy). */
   const visible = await contactVisibility(viewer, q, q.creators.map((c) => c.creatorId));
+  /* Each creator's latest reach-out from any plan (lib/crm/reachout). */
+  const lasts = await lastReaches((q?.creators ?? []).map((c) => c.creatorId));
   const initial: BuilderQuote = {
     id: q.id,
     kind: q.kind,
@@ -76,7 +79,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     creators: q.creators.map((c) => ({
       creatorId: c.creatorId, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: c.deliverables,
       fee: rupee(c.feePaise), er: c.engagementRate, reelCost: rupee(c.reelCostPaise), storyCost: rupee(c.storyCostPaise), dlCost: rupee(c.dlCostPaise),
-      reelPrice: rupee(c.reelPricePaise), storyPrice: rupee(c.storyPricePaise), dlPrice: rupee(c.dlPricePaise), reachout: c.reachout, contact: visible(c) ? c.contact : null, remarks: c.remarks, extra: (c.extra ?? {}) as Record<string, string>,
+      reelPrice: rupee(c.reelPricePaise), storyPrice: rupee(c.storyPricePaise), dlPrice: rupee(c.dlPricePaise), reachout: c.reachout, contact: visible(c) ? c.contact : null, remarks: c.remarks, extra: (c.extra ?? {}) as Record<string, string>, last: c.creatorId ? (lasts[c.creatorId] ?? null) : null,
     })),
   };
   const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null, viewer);
@@ -89,7 +92,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     const d = linked.find((x) => x.id === c.creatorId);
     const bits = contactBits(c.contact);
     const open = visible(c);
-    return { id: c.id, name: c.name, handle: c.handle, phone: open ? (d?.phone ?? bits.phone) : null, email: open ? (d?.email ?? bits.email) : null, reachout: c.reachout };
+    return { id: c.id, name: c.name, handle: c.handle, phone: open ? (d?.phone ?? bits.phone) : null, email: open ? (d?.email ?? bits.email) : null, reachout: c.reachout, last: c.creatorId ? (lasts[c.creatorId] ?? null) : null, canEdit: open };
   });
   const template = hasCreators ? ((await getPrisma().appSetting.findUnique({ where: { key: "outreach-template" } }))?.value ?? DEFAULT_OUTREACH) : "";
   const cities = [...new Set(q.creators.map((c) => c.city).filter(Boolean))] as string[];

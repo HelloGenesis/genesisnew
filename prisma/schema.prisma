@@ -994,6 +994,11 @@ model Creator {
   pocContact       String?     @map("poc_contact")
   /// Where Genesis found them: "Google Sheet · <title>", "Excel · <file>", Instagram, an agency, a referral… (Genesis, 22 Oct 2026).
   source           String?
+  /// The latest reach-out to this creator, from any plan (Genesis, 27 Oct 2026: "make sure the same influencer is not reached out again and again").
+  reachStatus      String?     @map("reach_status")
+  reachAt          DateTime?   @map("reach_at")
+  reachById        String?     @map("reach_by_id")
+  reachQuoteId     String?     @map("reach_quote_id")
   notes            String?
   tags             String[]    @default([])
   blacklisted      Boolean     @default(false)
@@ -1651,4 +1656,20 @@ model InvoiceFile {
 
   @@index([invoiceId, kind])
   @@map("crm_invoice_files")
+}
+
+/// Every reach-out status set on a creator: by the WhatsApp/email buttons, or by hand (lib/crm/reachout).
+model Reachout {
+  id        String   @id @default(cuid())
+  creatorId String?  @map("creator_id")
+  quoteId   String?  @map("quote_id")
+  name      String
+  handle    String
+  status    String
+  byId      String?  @map("by_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([creatorId, createdAt])
+  @@index([handle])
+  @@map("crm_reachouts")
 }

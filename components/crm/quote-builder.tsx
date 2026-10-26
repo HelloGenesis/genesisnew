@@ -10,6 +10,7 @@ import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 
 import { planTargets, TARGET_LABEL } from "@/lib/crm/plan-import";
 import { proposalOrder, SECTION } from "@/lib/crm/proposal-order";
+import { isRecent, type LastReach, reachLine, reachOptions } from "@/lib/crm/reachout-status";
 
 import { GrowText } from "./grow-text";
 import { NichePicker } from "./niche-picker";
@@ -23,6 +24,8 @@ export type BuilderCreator = {
   reachout?: string | null; contact?: string | null; remarks?: string | null;
   /* Values of the columns added in the builder, by column name. */
   extra?: Record<string, string>;
+  /* The creator's latest reach-out from any plan (shown, not saved; lib/crm/reachout). */
+  last?: LastReach | null;
 };
 export type ProposalSection = { title: string; html: string };
 export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[]; intOnly?: string[]; order?: string[] };
@@ -72,7 +75,6 @@ const PLATFORMS = ["Instagram", "YouTube", "LinkedIn", "Facebook", "X", "Snapcha
 const priced = (c: BuilderCreator) => [c.reelPrice, c.storyPrice, c.dlPrice].some((v) => typeof v === "number");
 const creatorTotal = (c: BuilderCreator) => (priced(c) ? (c.reelPrice ?? 0) + (c.storyPrice ?? 0) + (c.dlPrice ?? 0) : (c.fee ?? 0));
 const creatorCost = (c: BuilderCreator) => (c.reelCost ?? 0) + (c.storyCost ?? 0) + (c.dlCost ?? 0);
-const REACHOUT = ["", "WhatsApp", "Email", "Agency/Freelancer", "Hashfame", "Awaiting reply", "Costs received", "Confirmed", "Not relevant", "Declined"];
 const CONTENT_IDEAS = "Content ideas";
 const MONEY = ["reelCost", "storyCost", "dlCost", "reelPrice", "storyPrice", "dlPrice"] as const;
 type MoneyKey = (typeof MONEY)[number];
@@ -931,6 +933,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                                 />
                               </span>
                             )}
+                            {c.last && <span className={`mt-1 block text-[0.6875rem] ${isRecent(c.last) ? "text-[#f59e0b]" : "text-faint"}`} title="Latest reach-out, from any plan">Last: {reachLine(c.last)}</span>}
                           </td>
                           {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
                           {/* Pick any number of categories, or add your own (components/crm/niche-picker). */}
@@ -952,7 +955,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                           {shows("avgViews") && <td><input type="number" step="any" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>}
                           {shows("er") && <td><input type="number" step="any" min={0} value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>}
                           {shows("location") && <td><GrowText value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>}
-                          {shows("reachout") && <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{[...REACHOUT, ...(c.reachout && !REACHOUT.includes(c.reachout) ? [c.reachout] : [])].map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>}
+                          {shows("reachout") && <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{reachOptions(c.reachout).map((r) => <option key={r} value={r}>{r || "Not contacted"}</option>)}</select></td>}
                           {MONEY.filter(shows).map((k) => (
                             <td key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
                           ))}

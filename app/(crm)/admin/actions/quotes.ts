@@ -8,6 +8,8 @@ import { recordAuditLog } from "@/lib/audit";
 import { archiveQuote, archiveLater } from "@/lib/crm/archive";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { proposalOrder } from "@/lib/crm/proposal-order";
+import { contactBits } from "@/lib/crm/outreach";
+import { recordReach, syncPlanContacts } from "@/lib/crm/reachout";
 import { SheetEditedError } from "@/lib/crm/plan-sync";
 import { DriveNotConnected } from "@/lib/crm/drive";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
@@ -187,6 +189,8 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     reachout: c.reachout || null, contact: c.contact || null, remarks: c.remarks || null, extra: (c.extra ?? {}) as Prisma.InputJsonValue }));
 
   let id = q.id;
+  /* The rows as they were, to see which reach-outs and contacts changed (lib/crm/reachout). */
+  const previous = id ? await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, handle: true, reachout: true, contact: true } }) : [];
   if (id) {
     const before = await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) } });
     if (!before) return failed("That quote isn't yours, or no longer exists.");
@@ -224,6 +228,28 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     id = created.id;
   }
   await refreshTotals(id);
+  /*
+   * REACH-OUTS AND CONTACTS FROM THE PLAN (Genesis, 27 Oct 2026): a status set
+   * here is logged on the creator, with who and which plan; a number or email
+   * changed in a row goes to the influencer database and the creator's other
+   * plans. Contacts only where this person may see them.
+   */
+  const rowsNow = await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, name: true, handle: true, reachout: true, contact: true } });
+  const quoteFor = await prisma.quote.findUniqueOrThrow({ where: { id }, select: { createdById: true } });
+  const mayContact = await contactVisibility(viewer, quoteFor, rowsNow.map((c) => c.creatorId));
+  for (const c of rowsNow) {
+    const was = previous.find((p) => (c.creatorId && p.creatorId === c.creatorId) || p.handle === c.handle);
+    if (c.reachout && c.reachout !== was?.reachout) await recordReach({ creatorId: c.creatorId, quoteId: id, name: c.name, handle: c.handle, status: c.reachout, byId: viewer.id });
+    if (c.creatorId && c.contact !== (was?.contact ?? null) && mayContact(c)) {
+      const bits = contactBits(c.contact);
+      const old = contactBits(was?.contact);
+      const data = { ...(bits.phone !== old.phone ? { phone: bits.phone } : {}), ...(bits.email !== old.email ? { email: bits.email?.toLowerCase() ?? null } : {}) };
+      if (Object.keys(data).length) {
+        await prisma.creator.updateMany({ where: { id: c.creatorId }, data });
+        await syncPlanContacts(c.creatorId);
+      }
+    }
+  }
   const saved = await prisma.quote.findUniqueOrThrow({ where: { id }, select: { updatedAt: true } });
   return { ok: true, id, created: !q.id, creators: q.creators.length, version: saved.updatedAt.toISOString() };
 }
