@@ -315,10 +315,15 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
       const at = list.findIndex((s) => s.title === CONTENT_IDEAS);
       return { ...x, proposalSections: at >= 0 ? list.map((s, j) => (j === at ? { ...s, html } : s)) : [{ title: CONTENT_IDEAS, html }, ...list] };
     });
-  const moveSection = (i: number) =>
+  /* Up or down past the next section shown (Content ideas has its own box, so it's skipped). Genesis, 26 Oct 2026. */
+  const shownSections = (q.proposalSections ?? []).map((s, i) => (s.title === CONTENT_IDEAS ? -1 : i)).filter((i) => i >= 0);
+  const moveSection = (i: number, dir: -1 | 1) =>
     setQ((x) => {
       const list = [...(x.proposalSections ?? [])];
-      if (i > 0) [list[i - 1], list[i]] = [list[i]!, list[i - 1]!];
+      let j = i + dir;
+      while (j >= 0 && j < list.length && list[j]!.title === CONTENT_IDEAS) j += dir;
+      if (j < 0 || j >= list.length) return x;
+      [list[i], list[j]] = [list[j]!, list[i]!];
       return { ...x, proposalSections: list };
     });
 
@@ -549,7 +554,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           <div key={i} className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
             <div className="flex items-center gap-2">
               <input value={s.title} onChange={(e) => setSection(i, { title: e.target.value })} className="crm-input !min-h-9 flex-1" placeholder="Section title: Big idea, Content pillars, Timeline, Deliverables…" />
-              <button type="button" aria-label="Move section up" onClick={() => moveSection(i)} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
+              <button type="button" aria-label="Move section up" title="Move up" disabled={i === shownSections[0]} onClick={() => moveSection(i, -1)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone disabled:opacity-30"><ArrowUp className="size-4" /></button>
+              <button type="button" aria-label="Move section down" title="Move down" disabled={i === shownSections.at(-1)} onClick={() => moveSection(i, 1)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone disabled:opacity-30"><ArrowDown className="size-4" /></button>
               <button type="button" aria-label="Remove section" onClick={() => window.confirm("Remove this section?") && setQ((x) => ({ ...x, proposalSections: (x.proposalSections ?? []).filter((_, j) => j !== i) }))} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
             </div>
             <RichText label={s.title || `Section ${i + 1}`} value={s.html} onChange={(v) => setSection(i, { html: v })} placeholder="Write, format, add images, links or an embedded video, reel or deck." />
