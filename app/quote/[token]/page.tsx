@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { isArchiveKey } from "@/lib/crm/archive-key";
 import { getViewer, staffAccess } from "@/lib/crm/session";
+import { proposalOrder, SECTION } from "@/lib/crm/proposal-order";
 import { COMPANY, quoteRef } from "@/lib/crm/quote-templates";
 import { workspaceProfile } from "@/lib/crm/workspace";
 import { brandSheetLink, type PlanColumns, sharesSheet, sharesTable, showsBrandPrices } from "@/lib/crm/plan-tables";
@@ -75,14 +76,24 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const terms = (q.terms ?? "").split("\n").map((t) => t.replace(/^[-•]\s*/, "")).filter(Boolean);
   /* The proposal's boxes, one after another (Genesis, 13 Oct 2026), as formatted in the builder; older plain lines become bullets. */
   const sections = Array.isArray(q.proposalSections) ? (q.proposalSections as { title?: string; html?: string }[]) : [];
+  /* In the order set in the builder (lib/crm/proposal-order); Platforms first. */
+  const ideas = sections.find((x) => x.title === "Content ideas");
+  const added = sections.filter((x) => x.title !== "Content ideas");
+  const boxes: Record<string, [string, string | null | undefined]> = {
+    tg: ["TG (target group)", q.proposalTg],
+    problems: ["Problems we'll solve", q.proposalProblems],
+    objectives: ["Objectives", q.proposalObjectives],
+    influencers: ["Influencer/Talent", q.proposalInfluencers],
+    ideas: ["Content ideas", ideas?.html],
+  };
+  let nextAdded = 0;
   const proposal = [
     ["Platforms", q.proposalPlatforms.length ? `<p>${q.proposalPlatforms.join(" · ")}</p>` : ""],
-    ["TG (target group)", q.proposalTg],
-    ["Problems we'll solve", q.proposalProblems],
-    ["Objectives", q.proposalObjectives],
-    ["Influencer/Talent", q.proposalInfluencers],
-    /* Content ideas first, then any other sections, in their order. */
-    ...[...sections].sort((a, b) => Number(b.title === "Content ideas") - Number(a.title === "Content ideas")).map((x) => [x.title ?? "", x.html ?? ""]),
+    ...proposalOrder(((q.planColumns ?? {}) as PlanColumns).order, added.length).map((t) => {
+      if (t !== SECTION) return boxes[t]!;
+      const x = added[nextAdded++];
+      return [x?.title ?? "", x?.html ?? ""];
+    }),
   ]
     .map(([label, value]) => [label ?? "", value ? sanitizeHtml(looksLikeHtml(value) ? value : textToHtml(value)) : ""] as [string, string])
     .filter(([, value]) => Boolean(value));
