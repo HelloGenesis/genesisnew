@@ -20,7 +20,7 @@ export type BuilderCreator = {
   extra?: Record<string, string>;
 };
 export type ProposalSection = { title: string; html: string };
-export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string };
+export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[] };
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -155,6 +155,8 @@ function ClientPicker({ value, clients, onType, onPick }: { value: string; clien
  * plan, the price lines, then notes, terms and totals. Saves as a draft with
  * gaps; sending is a separate step.
  */
+const BOX_LABELS: Record<string, string> = { tg: "TG (target group)", problems: "Problems we'll solve", objectives: "Objectives", influencers: "Influencer/Talent", ideas: "Content ideas" };
+
 /* `contactHidden`: someone else's client: their contact name, email and phone stay private (lib/crm/scope seesQuoteContact). */
 export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], sheets, version, contactHidden = false }: { initial: BuilderQuote; catalog: CatalogItem[]; terms: Terms[]; pool: PoolCreator[]; clients?: Client[]; sheets?: { ext: string | null; int: string | null }; version?: string; contactHidden?: boolean }) {
   const [q, setQ] = useState<BuilderQuote>({ ...initial, proposalSections: initial.proposalSections ?? [], planColumns: initial.planColumns ?? {} });
@@ -415,11 +417,32 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   const costTotal = q.creators.reduce((s, c) => s + creatorCost(c), 0);
   const sum = (k: MoneyKey) => q.creators.reduce((s, c) => s + (c[k] ?? 0), 0);
 
-  const proposalBox = (label: string, hint: string, value: string | null | undefined, onChange: (v: string) => void, placeholder: string) => (
+  /*
+   * The standard boxes can be removed too (Genesis, 26 Oct 2026): their text is
+   * cleared, so it's off the document, and "Add back" brings the box back.
+   */
+  const removed = new Set<string>(q.planColumns?.boxes ?? []);
+  const setBoxes = (next: Set<string>) => setQ((x) => ({ ...x, planColumns: { ...(x.planColumns ?? {}), boxes: [...next] } }));
+  const proposalBox = (key: string, label: string, hint: string, value: string | null | undefined, onChange: (v: string) => void, placeholder: string) => removed.has(key) ? null : (
     <div className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <span className="text-[0.9375rem] text-bone">{label}</span>
-        <span className="text-[0.75rem] text-faint">{hint}</span>
+        <span className="flex items-center gap-2">
+          <span className="text-[0.75rem] text-faint">{hint}</span>
+          <button
+            type="button"
+            aria-label={`Remove ${label}`}
+            title="Remove this box"
+            onClick={() => {
+              if (!window.confirm(`Remove "${label}" from this document?${value ? " Its text is deleted." : ""}`)) return;
+              onChange("");
+              setBoxes(new Set([...removed, key]));
+            }}
+            className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-[#dc2626]"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        </span>
       </div>
       <RichText label={label} value={value ?? ""} onChange={onChange} placeholder={placeholder} />
     </div>
@@ -516,12 +539,12 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             })}
           </div>
         </fieldset>
-        {proposalBox("TG (target group)", "Who the campaign speaks to", q.proposalTg, (v) => set("proposalTg", v), "Women 25–40, SEC A/B, Tier-1 & Tier-2 cities, into fitness and wellness")}
-        {proposalBox("Problems we'll solve", "One point a line", q.proposalProblems, (v) => set("proposalProblems", v), "Low awareness in Tier-2 cities. No creator content for the launch.")}
-        {proposalBox("Objectives", "What success looks like", q.proposalObjectives, (v) => set("proposalObjectives", v), "10k app installs in 30 days. 2M+ views.")}
-        {proposalBox("Influencers", "The mix of creators", q.proposalInfluencers, (v) => set("proposalInfluencers", v), "15 fitness & food creators, 50k–500k followers. Mumbai, Pune, Bengaluru.")}
+        {proposalBox("tg", "TG (target group)", "Who the campaign speaks to", q.proposalTg, (v) => set("proposalTg", v), "Women 25–40, SEC A/B, Tier-1 & Tier-2 cities, into fitness and wellness")}
+        {proposalBox("problems", "Problems we'll solve", "One point a line", q.proposalProblems, (v) => set("proposalProblems", v), "Low awareness in Tier-2 cities. No creator content for the launch.")}
+        {proposalBox("objectives", "Objectives", "What success looks like", q.proposalObjectives, (v) => set("proposalObjectives", v), "10k app installs in 30 days. 2M+ views.")}
+        {proposalBox("influencers", "Influencer/Talent", "The mix of creators and talent", q.proposalInfluencers, (v) => set("proposalInfluencers", v), "15 fitness & food creators, 50k–500k followers. Mumbai, Pune, Bengaluru.")}
         {/* CONTENT IDEAS (Genesis, 13 Oct 2026): a standard box, kept with the sections as "Content ideas". */}
-        {proposalBox("Content ideas", "Hooks, formats, reel concepts", (q.proposalSections ?? []).find((x) => x.title === CONTENT_IDEAS)?.html, setContentIdeas, "Day-in-the-life reels with the product, a 7-day glow-up challenge, before/after transitions, myth vs fact carousels.")}
+        {proposalBox("ideas", "Content ideas", "Hooks, formats, reel concepts", (q.proposalSections ?? []).find((x) => x.title === CONTENT_IDEAS)?.html, setContentIdeas, "Day-in-the-life reels with the product, a 7-day glow-up challenge, before/after transitions, myth vs fact carousels.")}
         {(q.proposalSections ?? []).map((s, i) => s.title === CONTENT_IDEAS ? null : (
           <div key={i} className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
             <div className="flex items-center gap-2">
@@ -532,7 +555,14 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             <RichText label={s.title || `Section ${i + 1}`} value={s.html} onChange={(v) => setSection(i, { html: v })} placeholder="Write, format, add images, links or an embedded video, reel or deck." />
           </div>
         ))}
-        <button type="button" onClick={() => set("proposalSections", [...(q.proposalSections ?? []), { title: "", html: "" }])} className="crm-btn crm-btn-secondary crm-btn-sm"><Plus className="size-4" /> Add a section</button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => set("proposalSections", [...(q.proposalSections ?? []), { title: "", html: "" }])} className="crm-btn crm-btn-secondary crm-btn-sm"><Plus className="size-4" /> Add a section</button>
+          {[...removed].map((key) => (
+            <button key={key} type="button" onClick={() => setBoxes(new Set([...removed].filter((k) => k !== key)))} className="crm-btn crm-btn-secondary crm-btn-sm">
+              <Plus className="size-4" /> Add back: {BOX_LABELS[key] ?? key}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className={`space-y-3 ${parts.plan ? "" : "hidden"}`}>

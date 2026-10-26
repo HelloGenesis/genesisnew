@@ -80,7 +80,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
     ["TG (target group)", q.proposalTg],
     ["Problems we'll solve", q.proposalProblems],
     ["Objectives", q.proposalObjectives],
-    ["Influencers", q.proposalInfluencers],
+    ["Influencer/Talent", q.proposalInfluencers],
     /* Content ideas first, then any other sections, in their order. */
     ...[...sections].sort((a, b) => Number(b.title === "Content ideas") - Number(a.title === "Content ideas")).map((x) => [x.title ?? "", x.html ?? ""]),
   ]
