@@ -8,6 +8,7 @@ import { quoteVersion, saveQuote } from "@/app/(crm)/admin/actions/quotes";
 import { readSheetFile } from "@/lib/sheet-file";
 import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 
+import { GrowText } from "./grow-text";
 import { RichText } from "./rich-text";
 
 export type BuilderLine = { kind: string; productId?: string | null; division?: string | null; title: string; subtitle?: string | null; details?: string | null; note?: string | null; qty: number; unit: number };
@@ -20,7 +21,7 @@ export type BuilderCreator = {
   extra?: Record<string, string>;
 };
 export type ProposalSection = { title: string; html: string };
-export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[] };
+export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[]; intOnly?: string[] };
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -357,6 +358,13 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
 
   const hidden = new Set(q.planColumns?.hidden ?? []);
   const custom = q.planColumns?.custom ?? [];
+  /* Added columns kept internal: on the internal sheet only, not the external sheet or the client view (Genesis, 26 Oct 2026). */
+  const intOnly = new Set(q.planColumns?.intOnly ?? []);
+  const toggleIntOnly = (name: string) =>
+    setQ((x) => {
+      const now = x.planColumns?.intOnly ?? [];
+      return { ...x, planColumns: { ...x.planColumns, intOnly: now.includes(name) ? now.filter((c) => c !== name) : [...now, name] } };
+    });
   /*
    * INTERNAL OR EXTERNAL (Genesis, 13 Oct 2026: "give an option: what are you
    * editing, internal or external"). External shows the plan as the brand
@@ -364,6 +372,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
    * prices on a sample). Internal shows everything.
    */
   const [editing, setEditing] = useState<"internal" | "external">("internal");
+  /* The added columns on screen: all of them internally, the client's ones when editing external. */
+  const customShown = custom.filter((name) => editing === "internal" || !intOnly.has(name));
   const INTERNAL_ONLY = ["reachout", "reelCost", "storyCost", "dlCost", "profit", "contact", "remarks"];
   const shows = (key: string) =>
     !hidden.has(key) && (editing === "internal" || (!INTERNAL_ONLY.includes(key) && (q.planColumns?.extPrices !== false || !["reelPrice", "storyPrice", "dlPrice"].includes(key))));
@@ -380,7 +390,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   };
   const removeColumn = (name: string) => {
     if (!window.confirm(`Remove the “${name}” column and what's in it?`)) return;
-    setQ((x) => ({ ...x, planColumns: { ...x.planColumns, custom: (x.planColumns?.custom ?? []).filter((c) => c !== name) }, creators: x.creators.map((c) => ({ ...c, extra: Object.fromEntries(Object.entries(c.extra ?? {}).filter(([k]) => k !== name)) })) }));
+    setQ((x) => ({ ...x, planColumns: { ...x.planColumns, custom: (x.planColumns?.custom ?? []).filter((c) => c !== name), intOnly: (x.planColumns?.intOnly ?? []).filter((c) => c !== name) }, creators: x.creators.map((c) => ({ ...c, extra: Object.fromEntries(Object.entries(c.extra ?? {}).filter(([k]) => k !== name)) })) }));
   };
 
   const totals = useMemo(() => {
@@ -751,14 +761,17 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
               {/* ADD AND REMOVE COLUMNS (Genesis, 13 Oct 2026). Removed ones leave the client view and both sheets; added ones appear in all three. */}
               {showColumns && (
                 <div className="space-y-2 rounded-xl border border-[var(--glass-border)] p-3">
-                  <p className="text-[0.8125rem] text-ash">Tap a column to remove it (tap again to bring it back). Removed columns are left out of the client view and both sheets.</p>
+                  <p className="text-[0.8125rem] text-ash">Tap a column to remove it (tap again to bring it back). Removed columns are left out of the client view and both sheets. Tap a column you added to keep it <b className="text-bone">internal only</b>: on the internal sheet, off the external sheet and the client view; × deletes it.</p>
                   <div className="flex flex-wrap gap-1.5">
                     {PLAN_COLUMNS.map(([key, label]) => (
                       <button key={key} type="button" aria-pressed={shows(key)} onClick={() => toggleColumn(key)} className={`rounded-full border px-2.5 py-1 text-[0.75rem] ${shows(key) ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-faint line-through"}`}>{label}</button>
                     ))}
                     {custom.map((name) => (
-                      <span key={name} className="inline-flex items-center gap-1 rounded-full border border-[#ffc516] px-2.5 py-1 text-[0.75rem] text-bone">
-                        {name}
+                      <span key={name} className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[0.75rem] ${intOnly.has(name) ? "border-dashed border-[var(--glass-border)] text-ash" : "border-[#ffc516] text-bone"}`}>
+                        <button type="button" aria-pressed={!intOnly.has(name)} title={intOnly.has(name) ? "Internal only: tap to show it to the client too" : "Tap to keep it internal (off the external sheet and client view)"} onClick={() => toggleIntOnly(name)} className="hover:underline">
+                          {name}
+                          {intOnly.has(name) && <span className="ml-1 text-faint">· internal only</span>}
+                        </button>
                         <button type="button" aria-label={`Remove the ${name} column`} onClick={() => removeColumn(name)} className="text-ash hover:text-[#dc2626]"><X className="size-3.5" /></button>
                       </span>
                     ))}
@@ -808,7 +821,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                       {shows("profit") && <th>Profit</th>}
                       {shows("contact") && <th>Contact</th>}
                       {shows("remarks") && <th>Remarks</th>}
-                      {custom.map((name) => <th key={name}>{name}</th>)}
+                      {customShown.map((name) => <th key={name}>{name}</th>)}
                       <th />
                     </tr>
                   </thead>
@@ -840,7 +853,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                             )}
                           </td>
                           {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
-                          {shows("category") && <td><input value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>}
+                          {shows("category") && <td><GrowText value={c.niches.join(", ")} onChange={(e) => setCreator(i, { niches: e.target.value.split(",").map((n) => n.trim()).filter(Boolean) })} className="crm-input !min-h-8 !w-40 !px-2" /></td>}
                           {/* The profile link is editable on every plan (Genesis, 22 Oct 2026), with a way to open it. */}
                           {shows("ig") && (
                             <td>
@@ -857,16 +870,16 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                           )}
                           {shows("avgViews") && <td><input type="number" step="any" min={0} value={c.avgViews ?? ""} onChange={(e) => setCreator(i, { avgViews: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-24 !px-2" /></td>}
                           {shows("er") && <td><input type="number" step="any" min={0} value={c.er ?? ""} onChange={(e) => setCreator(i, { er: e.target.value === "" ? null : Number(e.target.value) })} className="crm-input !min-h-8 !w-16 !px-2" /></td>}
-                          {shows("location") && <td><input value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>}
+                          {shows("location") && <td><GrowText value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>}
                           {shows("reachout") && <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{REACHOUT.map((r) => <option key={r} value={r}>{r || "—"}</option>)}</select></td>}
                           {MONEY.filter(shows).map((k) => (
                             <td key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
                           ))}
                           {shows("profit") && <td className={`whitespace-nowrap tabular-nums ${profit < 0 ? "text-[#dc2626]" : "text-bone"}`}>{inr(profit)}</td>}
-                          {shows("contact") && <td><input value={c.contact ?? ""} onChange={(e) => setCreator(i, { contact: e.target.value })} className="crm-input !min-h-8 !w-44 !px-2" placeholder="+91… / email / agency" /></td>}
-                          {shows("remarks") && <td><input value={c.remarks ?? ""} onChange={(e) => setCreator(i, { remarks: e.target.value })} className="crm-input !min-h-8 !w-48 !px-2" /></td>}
-                          {custom.map((name) => (
-                            <td key={name}><input value={c.extra?.[name] ?? ""} onChange={(e) => setCreator(i, { extra: { ...(c.extra ?? {}), [name]: e.target.value } })} className="crm-input !min-h-8 !w-40 !px-2" /></td>
+                          {shows("contact") && <td><GrowText value={c.contact ?? ""} onChange={(e) => setCreator(i, { contact: e.target.value })} className="crm-input !min-h-8 !w-44 !px-2" placeholder="+91… / email / agency" /></td>}
+                          {shows("remarks") && <td><GrowText value={c.remarks ?? ""} onChange={(e) => setCreator(i, { remarks: e.target.value })} className="crm-input !min-h-8 !w-48 !px-2" /></td>}
+                          {customShown.map((name) => (
+                            <td key={name}><GrowText value={c.extra?.[name] ?? ""} onChange={(e) => setCreator(i, { extra: { ...(c.extra ?? {}), [name]: e.target.value } })} className="crm-input !min-h-8 !w-40 !px-2" /></td>
                           ))}
                           <td><button type="button" aria-label="Remove creator" onClick={() => setQ((x) => ({ ...x, creators: x.creators.filter((_, j) => j !== i) }))} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-[#dc2626]"><X className="size-4" /></button></td>
                         </tr>
@@ -881,7 +894,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                       {shows("profit") && <td className="whitespace-nowrap tabular-nums">{inr(totals.creators - costTotal)}</td>}
                       {shows("contact") && <td />}
                       {shows("remarks") && <td />}
-                      {custom.map((name) => <td key={name} />)}
+                      {customShown.map((name) => <td key={name} />)}
                       <td />
                     </tr>
                   </tfoot>
@@ -913,7 +926,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
         {q.lines.map((l, i) => (
           <div key={i} className="crm-card crm-pad space-y-3">
             <div className="grid gap-3 sm:grid-cols-[1fr_6rem_9rem_9rem_auto] sm:items-end">
-              <label><span className="crm-label">{l.kind === "custom" ? "Custom line" : l.kind === "addon" ? "Add-on" : l.kind === "plan" ? "Plan" : "Product"}</span><input value={l.title} onChange={(e) => setLine(i, { title: e.target.value })} className="crm-input font-medium" placeholder="Premium UGC Content Production | 10 Videos" /></label>
+              <label><span className="crm-label">{l.kind === "custom" ? "Custom line" : l.kind === "addon" ? "Add-on" : l.kind === "plan" ? "Plan" : "Product"}</span><GrowText value={l.title} onChange={(e) => setLine(i, { title: e.target.value })} className="w-full font-medium" placeholder="Premium UGC Content Production | 10 Videos" /></label>
               <label><span className="crm-label">Qty</span><input type="number" step="any" min={1} value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} className="crm-input" /></label>
               <label><span className="crm-label">Price (₹)</span><input type="number" step="any" min={0} value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
               <p className="pb-2.5 text-right tabular-nums text-bone"><span className="crm-label">Line total</span>{inr(l.qty * l.unit)}</p>

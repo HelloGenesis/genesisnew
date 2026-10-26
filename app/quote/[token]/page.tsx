@@ -89,7 +89,8 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   /* The plan's columns as chosen in the builder: removed ones left out, added ones after. */
   const cols = (q.planColumns ?? {}) as PlanColumns;
   const hiddenCols = new Set(cols.hidden ?? []);
-  const customCols = (cols.custom ?? []).filter(Boolean);
+  /* Added columns, less those kept internal (lib/crm/plan-tables intOnly). */
+  const customCols = (cols.custom ?? []).filter((c) => c && !(cols.intOnly ?? []).includes(c));
   /* A sample plan (no costing) shows no creator prices anywhere the brand looks. */
   const brandPrices = showsBrandPrices(cols);
   const showCol = (k: string) => !hiddenCols.has(k) && (brandPrices || !["reelPrice", "storyPrice", "dlPrice"].includes(k));
