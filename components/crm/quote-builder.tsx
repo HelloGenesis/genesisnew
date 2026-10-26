@@ -291,6 +291,34 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [unsaved]);
+  /*
+   * THE CLIENT VIEW / PDF SHOWS WHAT'S SAVED (Genesis, 26 Oct 2026: moved
+   * sections "not reflecting on the pdf"). Opening it with unsaved changes
+   * saves first, then opens it, so it always matches the builder.
+   */
+  const openAfterSave = useRef<{ win: Window | null; href: string } | null>(null);
+  useEffect(() => {
+    const click = (e: MouseEvent) => {
+      const link = (e.target as Element | null)?.closest?.('a[href^="/quote/"]') as HTMLAnchorElement | null;
+      if (!link || !unsavedRef.current || !formRef.current) return;
+      e.preventDefault();
+      openAfterSave.current = { win: window.open("about:blank", "_blank"), href: link.href };
+      formRef.current.requestSubmit();
+    };
+    document.addEventListener("click", click, true);
+    return () => document.removeEventListener("click", click, true);
+  }, []);
+  useEffect(() => {
+    const waiting = openAfterSave.current;
+    if (pending || !waiting) return;
+    openAfterSave.current = null;
+    if (!state?.ok) {
+      waiting.win?.close();
+      return;
+    }
+    if (waiting.win) waiting.win.location.href = waiting.href;
+    else window.open(waiting.href, "_blank");
+  }, [pending, state]);
   /* Which parts this document holds (shown in the builder; the send step picks which go). */
   const [parts, setParts] = useState(initial.parts?.length ? { proposal: initial.parts.includes("proposal"), pricing: initial.parts.includes("pricing"), plan: initial.parts.includes("plan") } : {
     proposal: Boolean(initial.proposalProblems || initial.proposalObjectives || initial.proposalInfluencers || initial.proposalTg || initial.proposalPlatforms?.length || initial.proposalSections?.length) || initial.kind === "QUOTE",
