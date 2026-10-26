@@ -8,6 +8,8 @@ import { quoteVersion, saveQuote } from "@/app/(crm)/admin/actions/quotes";
 import { readSheetFile } from "@/lib/sheet-file";
 import { PLAN_COLUMNS } from "@/lib/crm/plan-tables";
 
+import { proposalOrder, SECTION } from "@/lib/crm/proposal-order";
+
 import { GrowText } from "./grow-text";
 import { RichText } from "./rich-text";
 
@@ -21,7 +23,7 @@ export type BuilderCreator = {
   extra?: Record<string, string>;
 };
 export type ProposalSection = { title: string; html: string };
-export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[]; intOnly?: string[] };
+export type PlanColumnsState = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[]; intOnly?: string[]; order?: string[] };
 export type BuilderQuote = {
   id?: string;
   kind: "QUOTE" | "INFLUENCER_PLAN";
@@ -344,17 +346,46 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
       const at = list.findIndex((s) => s.title === CONTENT_IDEAS);
       return { ...x, proposalSections: at >= 0 ? list.map((s, j) => (j === at ? { ...s, html } : s)) : [{ title: CONTENT_IDEAS, html }, ...list] };
     });
-  /* Up or down past the next section shown (Content ideas has its own box, so it's skipped). Genesis, 26 Oct 2026. */
-  const shownSections = (q.proposalSections ?? []).map((s, i) => (s.title === CONTENT_IDEAS ? -1 : i)).filter((i) => i >= 0);
-  const moveSection = (i: number, dir: -1 | 1) =>
-    setQ((x) => {
-      const list = [...(x.proposalSections ?? [])];
-      let j = i + dir;
-      while (j >= 0 && j < list.length && list[j]!.title === CONTENT_IDEAS) j += dir;
-      if (j < 0 || j >= list.length) return x;
-      [list[i], list[j]] = [list[j]!, list[i]!];
-      return { ...x, proposalSections: list };
-    });
+  /*
+   * EVERY PROPOSAL BOX MOVES (Genesis, 26 Oct 2026: "this entire section should
+   * be movable"): the standard boxes and added sections share one order
+   * (lib/crm/proposal-order); the client view and PDF follow it.
+   */
+  const customAt = (q.proposalSections ?? []).map((sec, i) => (sec.title === CONTENT_IDEAS ? -1 : i)).filter((i) => i >= 0);
+  const tokens = proposalOrder(q.planColumns?.order, customAt.length);
+  /* The places on screen (a removed standard box takes none). */
+  const shownAt = tokens.map((t, pos) => (t !== SECTION && (q.planColumns?.boxes ?? []).includes(t) ? -1 : pos)).filter((pos) => pos >= 0);
+  const sectionOf = (pos: number) => customAt[tokens.slice(0, pos).filter((t) => t === SECTION).length]!;
+  const moveBox = (pos: number, dir: -1 | 1) => {
+    const at = shownAt.indexOf(pos);
+    const other = shownAt[at + dir];
+    if (other === undefined) return;
+    if (tokens[pos] === SECTION && tokens[other] === SECTION) {
+      /* Two added sections: swap the sections themselves. */
+      const i = sectionOf(pos);
+      const j = sectionOf(other);
+      setQ((x) => {
+        const list = [...(x.proposalSections ?? [])];
+        [list[i], list[j]] = [list[j]!, list[i]!];
+        return { ...x, proposalSections: list };
+      });
+      return;
+    }
+    const next = [...tokens];
+    [next[pos], next[other]] = [next[other]!, next[pos]!];
+    setQ((x) => ({ ...x, planColumns: { ...(x.planColumns ?? {}), order: next } }));
+  };
+  const removeSection = (pos: number) => {
+    const i = sectionOf(pos);
+    const next = tokens.filter((_, k) => k !== pos);
+    setQ((x) => ({ ...x, proposalSections: (x.proposalSections ?? []).filter((_, j) => j !== i), planColumns: { ...(x.planColumns ?? {}), order: next } }));
+  };
+  const arrows = (pos: number, label: string) => (
+    <>
+      <button type="button" aria-label={`Move ${label} up`} title="Move up" disabled={pos === shownAt[0]} onClick={() => moveBox(pos, -1)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone disabled:opacity-30"><ArrowUp className="size-4" /></button>
+      <button type="button" aria-label={`Move ${label} down`} title="Move down" disabled={pos === shownAt.at(-1)} onClick={() => moveBox(pos, 1)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone disabled:opacity-30"><ArrowDown className="size-4" /></button>
+    </>
+  );
 
   const hidden = new Set(q.planColumns?.hidden ?? []);
   const custom = q.planColumns?.custom ?? [];
@@ -466,12 +497,13 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
    */
   const removed = new Set<string>(q.planColumns?.boxes ?? []);
   const setBoxes = (next: Set<string>) => setQ((x) => ({ ...x, planColumns: { ...(x.planColumns ?? {}), boxes: [...next] } }));
-  const proposalBox = (key: string, label: string, hint: string, value: string | null | undefined, onChange: (v: string) => void, placeholder: string) => removed.has(key) ? null : (
-    <div className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
+  const proposalBox = (key: string, label: string, hint: string, value: string | null | undefined, onChange: (v: string) => void, placeholder: string, controls?: React.ReactNode) => removed.has(key) ? null : (
+    <div key={key} className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[0.9375rem] text-bone">{label}</span>
         <span className="flex items-center gap-2">
           <span className="text-[0.75rem] text-faint">{hint}</span>
+          {controls}
           <button
             type="button"
             aria-label={`Remove ${label}`}
@@ -582,23 +614,27 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             })}
           </div>
         </fieldset>
-        {proposalBox("tg", "TG (target group)", "Who the campaign speaks to", q.proposalTg, (v) => set("proposalTg", v), "Women 25–40, SEC A/B, Tier-1 & Tier-2 cities, into fitness and wellness")}
-        {proposalBox("problems", "Problems we'll solve", "One point a line", q.proposalProblems, (v) => set("proposalProblems", v), "Low awareness in Tier-2 cities. No creator content for the launch.")}
-        {proposalBox("objectives", "Objectives", "What success looks like", q.proposalObjectives, (v) => set("proposalObjectives", v), "10k app installs in 30 days. 2M+ views.")}
-        {proposalBox("influencers", "Influencer/Talent", "The mix of creators and talent", q.proposalInfluencers, (v) => set("proposalInfluencers", v), "15 fitness & food creators, 50k–500k followers. Mumbai, Pune, Bengaluru.")}
-        {/* CONTENT IDEAS (Genesis, 13 Oct 2026): a standard box, kept with the sections as "Content ideas". */}
-        {proposalBox("ideas", "Content ideas", "Hooks, formats, reel concepts", (q.proposalSections ?? []).find((x) => x.title === CONTENT_IDEAS)?.html, setContentIdeas, "Day-in-the-life reels with the product, a 7-day glow-up challenge, before/after transitions, myth vs fact carousels.")}
-        {(q.proposalSections ?? []).map((s, i) => s.title === CONTENT_IDEAS ? null : (
-          <div key={i} className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
-            <div className="flex items-center gap-2">
-              <input value={s.title} onChange={(e) => setSection(i, { title: e.target.value })} className="crm-input !min-h-9 flex-1" placeholder="Section title: Big idea, Content pillars, Timeline, Deliverables…" />
-              <button type="button" aria-label="Move section up" title="Move up" disabled={i === shownSections[0]} onClick={() => moveSection(i, -1)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone disabled:opacity-30"><ArrowUp className="size-4" /></button>
-              <button type="button" aria-label="Move section down" title="Move down" disabled={i === shownSections.at(-1)} onClick={() => moveSection(i, 1)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone disabled:opacity-30"><ArrowDown className="size-4" /></button>
-              <button type="button" aria-label="Remove section" onClick={() => window.confirm("Remove this section?") && setQ((x) => ({ ...x, proposalSections: (x.proposalSections ?? []).filter((_, j) => j !== i) }))} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
+        {tokens.map((t, pos) => {
+          if (t === "tg") return proposalBox("tg", "TG (target group)", "Who the campaign speaks to", q.proposalTg, (v) => set("proposalTg", v), "Women 25–40, SEC A/B, Tier-1 & Tier-2 cities, into fitness and wellness", arrows(pos, "TG"));
+          if (t === "problems") return proposalBox("problems", "Problems we'll solve", "One point a line", q.proposalProblems, (v) => set("proposalProblems", v), "Low awareness in Tier-2 cities. No creator content for the launch.", arrows(pos, "Problems"));
+          if (t === "objectives") return proposalBox("objectives", "Objectives", "What success looks like", q.proposalObjectives, (v) => set("proposalObjectives", v), "10k app installs in 30 days. 2M+ views.", arrows(pos, "Objectives"));
+          if (t === "influencers") return proposalBox("influencers", "Influencer/Talent", "The mix of creators and talent", q.proposalInfluencers, (v) => set("proposalInfluencers", v), "15 fitness & food creators, 50k–500k followers. Mumbai, Pune, Bengaluru.", arrows(pos, "Influencer/Talent"));
+          /* CONTENT IDEAS (Genesis, 13 Oct 2026): a standard box, kept with the sections as "Content ideas". */
+          if (t === "ideas") return proposalBox("ideas", "Content ideas", "Hooks, formats, reel concepts", (q.proposalSections ?? []).find((x) => x.title === CONTENT_IDEAS)?.html, setContentIdeas, "Day-in-the-life reels with the product, a 7-day glow-up challenge, before/after transitions, myth vs fact carousels.", arrows(pos, "Content ideas"));
+          const i = sectionOf(pos);
+          const sec = (q.proposalSections ?? [])[i];
+          if (!sec) return null;
+          return (
+            <div key={`section-${i}`} className="space-y-1.5 rounded-xl border border-[var(--glass-border)] p-3">
+              <div className="flex items-center gap-2">
+                <input value={sec.title} onChange={(e) => setSection(i, { title: e.target.value })} className="crm-input !min-h-9 flex-1" placeholder="Section title: Big idea, Content pillars, Timeline, Deliverables…" />
+                {arrows(pos, sec.title || "section")}
+                <button type="button" aria-label="Remove section" onClick={() => window.confirm("Remove this section?") && removeSection(pos)} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-[#dc2626]"><Trash2 className="size-4" /></button>
+              </div>
+              <RichText label={sec.title || `Section ${i + 1}`} value={sec.html} onChange={(v) => setSection(i, { html: v })} placeholder="Write, format, add images, links or an embedded video, reel or deck." />
             </div>
-            <RichText label={s.title || `Section ${i + 1}`} value={s.html} onChange={(v) => setSection(i, { html: v })} placeholder="Write, format, add images, links or an embedded video, reel or deck." />
-          </div>
-        ))}
+          );
+        })}
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => set("proposalSections", [...(q.proposalSections ?? []), { title: "", html: "" }])} className="crm-btn crm-btn-secondary crm-btn-sm"><Plus className="size-4" /> Add a section</button>
           {[...removed].map((key) => (

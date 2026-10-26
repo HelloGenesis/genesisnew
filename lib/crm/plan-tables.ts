@@ -12,9 +12,10 @@
 export type Cell = string | number | null;
 /**
  * `boxes`: the standard proposal boxes removed from this document (tg, problems, objectives, influencers, ideas).
+ * `order`: the proposal boxes' order (lib/crm/proposal-order).
  * `intOnly`: added columns kept to the internal sheet, off the external sheet and the client view (Genesis, 26 Oct 2026).
  */
-export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[]; intOnly?: string[] };
+export type PlanColumns = { hidden?: string[]; custom?: string[]; share?: "table" | "sheet" | "both"; extPrices?: boolean; feesInTotal?: boolean; sheetUrl?: string; boxes?: string[]; intOnly?: string[]; order?: string[] };
 
 /** The sheet link the brand gets: one pasted in the builder, else the CRM's external sheet. */
 export function brandSheetLink(c: PlanColumns | null | undefined, extSheetId: string | null | undefined): string | null {
