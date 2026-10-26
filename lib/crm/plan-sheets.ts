@@ -88,7 +88,20 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
         /* Rewrite: clear values, merges and formats, keep the file (and its link and sharing). */
         await call(token, `${API}/${existing}:batchUpdate`, { requests: meta.sheets.flatMap((s) => [{ unmergeCells: { range: { sheetId: s.properties.sheetId } } }, { repeatCell: { range: { sheetId: s.properties.sheetId }, cell: { userEnteredFormat: {} }, fields: "userEnteredFormat" } }]) });
         await call(token, `${API}/${existing}/values:batchClear`, { ranges: meta.sheets.map((s) => `'${s.properties.title}'`) });
-        return { id: existing, token, fresh: false, sheets: Object.fromEntries(meta.sheets.map((s) => [s.properties.title, s.properties.sheetId])) as Record<string, number> };
+        const sheets = Object.fromEntries(meta.sheets.map((s) => [s.properties.title, s.properties.sheetId])) as Record<string, number>;
+        /*
+         * A TAB RENAMED OR DELETED IN GOOGLE SHEETS (Genesis, 26 Oct 2026: "Unable
+         * to parse range: 'Influencer Plan'!A1"): it's added back, so the update
+         * goes through; the file, its link and its sharing stay as they are.
+         */
+        const missing = tabs.filter((tab) => !(tab in sheets));
+        if (missing.length) {
+          const added = await call<{ replies: { addSheet?: { properties: { title: string; sheetId: number } } }[] }>(token, `${API}/${existing}:batchUpdate`, {
+            requests: missing.map((tab) => ({ addSheet: { properties: { title: tab, gridProperties: { frozenRowCount: tab === "Summary" ? 0 : tab === "INT" ? 2 : 1 } } } })),
+          });
+          for (const r of added.replies) if (r.addSheet) sheets[r.addSheet.properties.title] = r.addSheet.properties.sheetId;
+        }
+        return { id: existing, token, fresh: false, sheets };
       }
     }
     const made = await call<{ spreadsheetId: string } & Meta>(maker.token, API, {
