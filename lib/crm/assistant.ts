@@ -89,7 +89,11 @@ const defaultCall: ModelCall = (params) => new Anthropic().beta.messages.stream(
  * tools back and forth until it answers. Events go to `emit` as they happen;
  * the conversation is saved whenever it's in a complete state.
  */
-export async function runChat(viewer: Viewer, input: { chatId?: string | null; text: string; files: Attachment[] }, emit: (e: ChatEvent) => void, call: ModelCall = defaultCall) {
+/** How hard it thinks, from the chat box's mode (Genesis, 27 Oct 2026): a quick answer, balanced (the model's default), or deep. */
+const EFFORT = { quick: "low", balanced: "medium", deep: "high" } as const;
+export type ChatMode = keyof typeof EFFORT;
+
+export async function runChat(viewer: Viewer, input: { chatId?: string | null; text: string; files: Attachment[]; mode?: ChatMode }, emit: (e: ChatEvent) => void, call: ModelCall = defaultCall) {
   const prisma = getPrisma();
   const existing = input.chatId ? await prisma.aiChat.findFirst({ where: { id: input.chatId, userId: viewer.id } }) : null;
   const chat = existing ?? (await prisma.aiChat.create({ data: { userId: viewer.id, title: (input.text || input.files[0]?.name || "New chat").slice(0, 80), messages: [] } }));
@@ -107,8 +111,8 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
       tools: API_TOOLS,
       messages,
       stream: true,
-      /* Effort: medium is this model's default; set so it doesn't drift. */
-      output_config: { effort: "medium" },
+      /* Effort: the chosen mode; balanced (medium) is this model's default. */
+      output_config: { effort: EFFORT[input.mode ?? "balanced"] },
       /* Caches the conversation so far: later turns re-read it at a fraction of the cost. */
       cache_control: { type: "ephemeral" },
       /* A request the model declines is answered by Anthropic's recommended stand-in model instead. */

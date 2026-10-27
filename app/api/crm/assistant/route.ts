@@ -16,6 +16,7 @@ export const maxDuration = 300;
 const Body = z.object({
   chatId: z.string().max(40).nullable().optional(),
   text: z.string().max(20_000),
+  mode: z.enum(["quick", "balanced", "deep"]).optional(),
   files: z
     .array(
       z.discriminatedUnion("kind", [
