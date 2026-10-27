@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
+import { mcpForChat } from "./ai-connectors";
 import { CRM_INSTRUCTIONS, TOOLS } from "./mcp-tools";
 import type { Viewer } from "./session";
 
@@ -89,7 +90,11 @@ const defaultCall: ModelCall = (params) => new Anthropic().beta.messages.stream(
  * tools back and forth until it answers. Events go to `emit` as they happen;
  * the conversation is saved whenever it's in a complete state.
  */
-export async function runChat(viewer: Viewer, input: { chatId?: string | null; text: string; files: Attachment[] }, emit: (e: ChatEvent) => void, call: ModelCall = defaultCall) {
+/** How hard it thinks, from the chat box's mode (Genesis, 27 Oct 2026): a quick answer, balanced (the model's default), or deep. */
+const EFFORT = { quick: "low", balanced: "medium", deep: "high" } as const;
+export type ChatMode = keyof typeof EFFORT;
+
+export async function runChat(viewer: Viewer, input: { chatId?: string | null; text: string; files: Attachment[]; mode?: ChatMode }, emit: (e: ChatEvent) => void, call: ModelCall = defaultCall) {
   const prisma = getPrisma();
   const existing = input.chatId ? await prisma.aiChat.findFirst({ where: { id: input.chatId, userId: viewer.id } }) : null;
   const chat = existing ?? (await prisma.aiChat.create({ data: { userId: viewer.id, title: (input.text || input.files[0]?.name || "New chat").slice(0, 80), messages: [] } }));
@@ -98,21 +103,24 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
   const save = (list: Anthropic.Beta.BetaMessageParam[]) => prisma.aiChat.update({ where: { id: chat.id }, data: { messages: list as unknown as Prisma.InputJsonValue } });
   await save(messages);
 
+  /* The apps connected to this CRM (lib/crm/ai-connectors): their tools, run by Anthropic's MCP connector. */
+  const apps = await mcpForChat(viewer.ws ?? null);
   let retries = 0;
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const stream = call({
       model: MODEL(),
       max_tokens: 64000,
       system: system(viewer),
-      tools: API_TOOLS,
+      tools: [...API_TOOLS, ...apps.toolsets],
+      ...(apps.servers.length ? { mcp_servers: apps.servers } : {}),
       messages,
       stream: true,
-      /* Effort: medium is this model's default; set so it doesn't drift. */
-      output_config: { effort: "medium" },
+      /* Effort: the chosen mode; balanced (medium) is this model's default. */
+      output_config: { effort: EFFORT[input.mode ?? "balanced"] },
       /* Caches the conversation so far: later turns re-read it at a fraction of the cost. */
       cache_control: { type: "ephemeral" },
       /* A request the model declines is answered by Anthropic's recommended stand-in model instead. */
-      betas: ["server-side-fallback-2026-07-01"],
+      betas: ["server-side-fallback-2026-07-01", ...(apps.servers.length ? ["mcp-client-2025-11-20" as const] : [])],
       fallbacks: "default",
     });
     stream.on("text", (d) => emit({ t: "text", d }));
@@ -130,6 +138,8 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
       emit({ t: "text", d: "\n\nI can't help with that request." });
       break;
     }
+    /* A connected app's tools it used (run by Anthropic's MCP connector): "Canva: create design". */
+    for (const b of message.content) if (b.type === "mcp_tool_use") emit({ t: "tool", name: b.name, label: `${apps.names[b.server_name] ?? b.server_name}: ${b.name.replace(/[_-]+/g, " ")}` });
     messages.push({ role: "assistant", content: message.content as Anthropic.Beta.BetaContentBlockParam[] });
     if (message.stop_reason === "pause_turn") continue;
     const uses = message.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
