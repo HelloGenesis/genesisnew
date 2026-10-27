@@ -526,9 +526,16 @@ export type OrbFocus = { x: number; y: number };
 
 export function NeuralOrb({
   focus = null,
+  thinking = false,
   className,
 }: {
   focus?: OrbFocus | null;
+  /**
+   * THINKING (Genesis, 27 Oct 2026: the CRM assistant's orb, "reactive and
+   * whenever it's thinking"): it turns faster, its folds deepen, the core
+   * pulses and ripples run across it, easing in and out.
+   */
+  thinking?: boolean;
   className?: string;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -543,6 +550,11 @@ export function NeuralOrb({
   const focusRef = useRef<OrbFocus | null>(focus);
   /** The loop's own `start`, so a focus arriving while it is parked can wake it. */
   const startRef = useRef<(() => void) | null>(null);
+  const thinkRef = useRef(thinking);
+  useEffect(() => {
+    thinkRef.current = thinking;
+    startRef.current?.();
+  }, [thinking]);
 
   useEffect(() => {
     focusRef.current = focus;
@@ -698,6 +710,11 @@ export function NeuralOrb({
     const ripples: Ripple[] = [];
     /** Extra brightness in the core, kicked by a click and decaying. */
     let flare = 0;
+    /* Thinking, eased (0–1); the spin's own clock, so it can speed up without jumping. */
+    let think = 0;
+    let spinClock = 0;
+    let lastNow = 0;
+    let lastThinkRipple = 0;
 
     const resize = () => {
       const rect = host.getBoundingClientRect();
@@ -834,7 +851,18 @@ export function NeuralOrb({
       leanYaw += leanYawVel;
       leanPitch += leanPitchVel;
 
-      const spin = ((frozen ? PERIOD * 0.11 : now) / PERIOD) * Math.PI * 2 + leanYaw;
+      think += ((thinkRef.current && !frozen ? 1 : 0) - think) * 0.04;
+      /* The first frame starts the clock where the homepage orb always has (at the time), so it looks the same unthinking. */
+      spinClock = lastNow ? spinClock + Math.min(now - lastNow, 50) * (1 + 2.5 * think) : now;
+      lastNow = now;
+      if (think > 0.5 && now - lastThinkRipple > 750) {
+        lastThinkRipple = now;
+        const angle = Math.random() * Math.PI * 2;
+        const at = Math.random() * radius * 0.6;
+        if (ripples.length >= RIPPLE_MAX) ripples.shift();
+        ripples.push({ x: cx + Math.cos(angle) * at, y: cy + Math.sin(angle) * at, born: now });
+      }
+      const spin = ((frozen ? PERIOD * 0.11 : spinClock) / PERIOD) * Math.PI * 2 + leanYaw;
       const cosSpin = Math.cos(spin);
       const sinSpin = Math.sin(spin);
       const tilt = TILT + leanPitch;
@@ -869,7 +897,7 @@ export function NeuralOrb({
       const w1t = seconds * WAVES[1].w * Math.PI;
       const w2t = seconds * WAVES[2].w * Math.PI;
       const ampFactor =
-        frozen ? 0 : settle * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(now * 0.00026)));
+        frozen ? 0 : settle * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(now * 0.00026))) * (1 + 1.4 * think);
       const amplitude = CREST * ampFactor;
       const reach = radius * REACH;
       /*
@@ -1066,6 +1094,7 @@ export function NeuralOrb({
         directly behind the wordmark. A core should be a core.
       */
       flare *= 0.94;
+      flare = Math.max(flare, think * (0.3 + 0.3 * Math.sin(now * 0.005)));
       const corePulse = frozen ? 0.5 : 0.5 + 0.5 * Math.sin(now * 0.00042);
       const coreSize = scaled * (0.6 + corePulse * 0.06 + flare * 0.22);
       /*

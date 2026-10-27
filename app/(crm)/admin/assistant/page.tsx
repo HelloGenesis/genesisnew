@@ -14,9 +14,9 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
   const [chats, open] = await Promise.all([recentChats(viewer.id), chat ? chatForView(viewer.id, chat) : null]);
   return (
     <>
-      <PageHead kicker="Today" title="AI assistant" sub="Ask it to find creators, make or update influencer plans from screenshots, Excel or roster PDFs, add numbers and rates, or log reach-outs." />
+      <PageHead kicker="Today" title="AI assistant" sub="Ask it to make quotes, proposals and influencer plans, add leads, clients and tasks, find creators, or update anything in the CRM, from text, screenshots, Excel or PDFs." />
       {aiConfigured() ? (
-        <AssistantChat key={open?.id ?? "new"} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} />
+        <AssistantChat key={open?.id ?? "new"} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} />
       ) : (
         <p className="crm-notice">The AI isn&apos;t set up yet: an admin needs to add ANTHROPIC_API_KEY.</p>
       )}

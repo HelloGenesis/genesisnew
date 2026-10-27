@@ -9,6 +9,7 @@ import type { Platform } from "@/lib/generated/prisma/enums";
 
 import { tierFor } from "./catalog";
 import { contactVisibility } from "./creator-privacy";
+import { CRM_TOOLS } from "./mcp-crm-tools";
 import { tidyNiches } from "./niches";
 import { appUrl } from "./notify";
 import { amount, handleFrom } from "./plan-import";
@@ -37,12 +38,15 @@ import { can, type Viewer } from "./session";
  */
 
 /** How to use the tools well: sent to ChatGPT / Claude on connecting, and the CRM's own assistant's brief (lib/crm/assistant). */
-export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM: its influencer database and influencer plans.
+export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM: its influencer database, influencer plans, price quotes and proposals, leads, clients, agencies and vendors, notes and tasks.
 - To build or update a plan from screenshots, an Excel/CSV, a Google Sheet or an agency roster PDF: read every row yourself, then call create_plan or update_plan with one row per creator. Keep every detail: name, handle or profile link (write links as plain URLs), followers, avg views, ER, category, city, phone, email, agency, the creator's costs (reel_cost / story_cost / dl_cost) and, separately, client prices (reel_price / story_price / dl_price), reach-out status, remarks. Anything else goes in "columns" under its own heading (e.g. "Tentative Cost", "Deliverables"). Words or ranges in a money cell ("Awaiting quote", "₹50K–75K") go in remarks or a column, never as a number.
 - Before adding a creator, search_influencers to reuse the CRM's entry; check last_reach_out so nobody is contacted twice. Record reach-outs with log_reachout.
 - Agency rosters: save_influencers with source like "Agency roster · <agency>, <month>" and the agency in "agency".
-- After changing a plan, update_plan_sheets keeps its Google Sheets in step. Always give the user the plan's link.
-- Rupee amounts are plain numbers (180000 for ₹1.8L). Nothing can be deleted through these tools.`;
+- After changing a plan, update_plan_sheets keeps its Google Sheets in step.
+- Price quotes (shoots, films, production, AI content, design: anything that isn't a list of influencers) are create_quote / update_quote, with line items. From a vendor's costing with a margin ("add 50%"), give each line its cost and markup_percent; the client never sees costs. If a vendor's line items and their stated total disagree, say so. A proposal (target group, problems, objectives, concept, timeline boxes) goes in "proposal", on a quote or a plan.
+- Leads, clients/agencies/vendors, notes and tasks: search_crm first to find the record and avoid duplicates, then save_lead, save_client, log_note, save_task.
+- Always give the user the link to what you made or changed.
+- Rupee amounts are plain numbers (180000 for ₹1.8L). Nothing can be deleted through these tools, and nothing is sent to a client: quotes stay drafts until someone sends them from the CRM.`;
 
 type Tool = { name: string; description: string; input: z.ZodType; readOnly?: boolean; run: (viewer: Viewer, args: never) => Promise<unknown> };
 
@@ -308,6 +312,8 @@ async function writeRows(viewer: Viewer, quoteId: string, rows: PlanRowIn[]) {
 /* --- The tools ------------------------------------------------------------- */
 
 export const TOOLS: Tool[] = [
+  /* Quotes, proposals, leads, clients, notes and tasks (lib/crm/mcp-crm-tools). */
+  ...CRM_TOOLS,
   {
     name: "search_influencers",
     readOnly: true,
@@ -376,7 +382,7 @@ export const TOOLS: Tool[] = [
   {
     name: "list_plans",
     readOnly: true,
-    description: "Influencer plans (and quotes) you can open, newest first; filter by text (title, brand).",
+    description: "Influencer plans (and, with include_quotes, price quotes) you can open, newest first; filter by text (title, brand).",
     input: z.object({ query: z.string().optional(), include_quotes: z.boolean().optional(), limit: z.number().int().min(1).max(50).optional() }),
     run: async (viewer, a: { query?: string; include_quotes?: boolean; limit?: number }) => {
       if (!can(viewer, "plans")) throw new Error("You don't have access to plans.");
