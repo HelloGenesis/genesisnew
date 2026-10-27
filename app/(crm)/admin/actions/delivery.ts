@@ -24,6 +24,7 @@ import { queueSheet } from "@/lib/crm/sheets";
 import { creatorScope, isSuperAdmin, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { openProject } from "@/lib/crm/projects";
+import { tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { recordReach, syncPlanContacts } from "@/lib/crm/reachout";
 import { stagesOf } from "@/lib/crm/stages";
 
@@ -403,8 +404,8 @@ function creatorData(form: FormData) {
     postRatePaise: toPaise(form.get("postRate")),
     dlRatePaise: toPaise(form.get("dlRate")),
     youtubeUrl: text(form, "youtubeUrl", 300),
-    email: text(form, "email", 200)?.toLowerCase() ?? null,
-    phone: text(form, "phone", 30),
+    email: tidyEmails(text(form, "email", 1000)),
+    phone: tidyPhones(text(form, "phone", 1000)),
     managedBy: text(form, "managedBy", 160),
     pocName: text(form, "pocName", 120),
     pocContact: text(form, "pocContact", 160),
@@ -425,6 +426,8 @@ export async function saveCreator(_: ActionState, form: FormData): Promise<Actio
   if (id && !(await getPrisma().creator.findFirst({ where: { id, ...creatorScope(viewer) }, select: { id: true } }))) return fail("You can only change creators you added.");
   try {
     const creator = id ? await getPrisma().creator.update({ where: { id }, data }) : await getPrisma().creator.create({ data: { ...data, createdById: viewer.id } });
+    /* Their numbers and emails, on every plan they're on (lib/crm/reachout). */
+    if (id) await syncPlanContacts(id);
     done();
     if (!id) redirect(`/admin/creators/${creator.id}`);
     return ok("Saved.");
@@ -509,9 +512,19 @@ export async function updateCreatorField(id: string, field: string, raw: string)
       data = { [`${field}Paise`]: paise } as Prisma.CreatorUpdateInput;
       break;
     }
-    case "email":
-      data = { email: blank ? null : value.toLowerCase().slice(0, 200) };
+    /* More than one of each, comma-separated (lib/crm/contacts). */
+    case "email": {
+      const list = tidyEmails(value);
+      if (!blank && !list) return { ok: false, message: "That email doesn't look right." };
+      data = { email: list };
       break;
+    }
+    case "phone": {
+      const list = tidyPhones(value);
+      if (!blank && !list) return { ok: false, message: "A phone number, like +91 98200 12345." };
+      data = { phone: list };
+      break;
+    }
     case "reachStatus": {
       /* Set by hand in the database (lib/crm/reachout): logged, with who and when. */
       const c = await getPrisma().creator.findUnique({ where: { id }, select: { name: true, handle: true } });

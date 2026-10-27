@@ -3,8 +3,10 @@ import "server-only";
 import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
+import { sameList, tidyEmails, tidyPhones } from "./creator-contacts";
 import { companyToken, personFileToken } from "./google";
 import { refreshTotals } from "./quotes";
+import { setCreatorContacts } from "./reachout";
 
 /**
  * A PLAN'S GOOGLE SHEETS AND THE CRM, BOTH WAYS (Genesis, 26 Oct 2026: "when
@@ -105,9 +107,11 @@ const paise = (c: Cellv) => {
 const FIELD: Record<string, string> = {
   name: "name", "ig link": "ig", "instagram link": "ig", "profile link": "ig", category: "category", followers: "followers", "avg views": "avgViews", er: "er",
   location: "city", city: "city", "reachout status": "reachout", "reach out": "reachout", contact: "contact", remarks: "remarks",
+  phone: "phone", "phone number": "phone", mobile: "phone", whatsapp: "phone", email: "email", "email id": "email",
 };
 const MONEY: Record<string, "reel" | "story" | "dl"> = { "1 ig reel": "reel", "story + lib": "story", "story lib": "story", "dl 1 month": "dl" };
-const SKIP = new Set(["tier", "yt link", "youtube link", "profit", "email", "s no", "sr no"]);
+/* The tier column is the sheet's grouping (merged across rows), not something to read back. */
+const SKIP = new Set(["tier", "yt link", "youtube link", "profit", "s no", "sr no"]);
 
 type Row = { [key: string]: unknown; extra: Record<string, string> };
 
@@ -190,7 +194,15 @@ function apply(existing: QC[], parsed: NonNullable<ReturnType<typeof parse>>) {
       dlPricePaise: has("dlPrice") ? (r.dlPrice as number | null) : (was?.dlPricePaise ?? null),
       engagementRate: has("er") ? ((r.er as number | null) ?? null) : (was?.engagementRate ?? null),
       reachout: has("reachout") ? String(r.reachout ?? "") || null : (was?.reachout ?? null),
-      contact: has("contact") ? String(r.contact ?? "") || null : (was?.contact ?? null),
+      /*
+       * Numbers and emails: the sheet's, when it has them; a blank cell keeps the
+       * CRM's (a sheet made by someone who may not see them has them blank).
+       * An old sheet's single Contact column is read for both.
+       */
+      phone: tidyPhones([r.phone, r.contact].filter(Boolean).join(", ")) ?? was?.phone ?? null,
+      email: tidyEmails([r.email, r.contact].filter(Boolean).join(", ")) ?? was?.email ?? null,
+      tier: was?.tier ?? null,
+      contact: null,
       remarks: has("remarks") ? String(r.remarks ?? "") || null : (was?.remarks ?? null),
       extra: { ...((was?.extra ?? {}) as Record<string, string>), ...(r.extra ?? {}) },
     };
@@ -261,6 +273,13 @@ export async function pullPlanSheets(quoteId: string, throttle = 0): Promise<{ p
           prisma.quote.update({ where: { id: quoteId }, data: { planColumns: { ...(q.planColumns as object), custom } as Prisma.InputJsonValue } }),
         ]);
         await refreshTotals(quoteId);
+        /* Numbers and emails changed in the sheet reach the influencer database and the creator's other plans. */
+        for (const c of next) {
+          if (!c.creatorId) continue;
+          const old = existing.find((e) => e.creatorId === c.creatorId);
+          const change = { ...(!sameList(c.phone, old?.phone, "phone") ? { phone: c.phone } : {}), ...(!sameList(c.email, old?.email, "email") ? { email: c.email } : {}) };
+          if (Object.keys(change).length) await setCreatorContacts(c.creatorId, change);
+        }
         pulled.push(kind);
       }
       await store(id, { pulled: mod });

@@ -1,6 +1,7 @@
 import { PageHead } from "@/components/crm/ui";
 import { QuoteBuilder, type BuilderQuote } from "@/components/crm/quote-builder";
 import { getPrisma } from "@/lib/db";
+import { tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { builderData } from "@/lib/crm/quote-data";
 import { termsByKey, termsFor } from "@/lib/crm/quote-templates";
 import { daysFromNow } from "@/lib/crm/options";
@@ -70,7 +71,7 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
       return {
         creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city,
         deliverables: "1 IG Reel + Story & link in bio", er: c.engagementRate, reelCost: cost(c.reelRatePaise), storyCost: cost(c.storyRatePaise), dlCost: cost(c.dlRatePaise),
-        reelPrice: price(c.reelRatePaise), storyPrice: price(c.storyRatePaise), dlPrice: price(c.dlRatePaise), reachout: null, contact: [c.phone, c.email, c.managedBy].filter(Boolean).join(" · ") || null, remarks: null,
+        reelPrice: price(c.reelRatePaise), storyPrice: price(c.storyRatePaise), dlPrice: price(c.dlRatePaise), reachout: null, phone: tidyPhones(c.phone), email: tidyEmails(c.email), tier: null, remarks: c.managedBy ? `Managed by ${c.managedBy}` : null,
         fee: null,
       };
     }),

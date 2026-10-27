@@ -2,6 +2,7 @@ import "server-only";
 
 import { getPrisma } from "@/lib/db";
 
+import { tidyEmails, tidyPhones } from "./creator-contacts";
 import type { LastReach } from "./reachout-status";
 
 /**
@@ -45,34 +46,28 @@ export async function lastReaches(creatorIds: (string | null | undefined)[]): Pr
 }
 
 /*
- * A CREATOR'S NUMBER AND EMAIL, THE SAME EVERYWHERE (Genesis, 27 Oct 2026:
+ * A CREATOR'S NUMBERS AND EMAILS, THE SAME EVERYWHERE (Genesis, 27 Oct 2026:
  * "the same reflects in the database and the influencer plan when updated
- * here or there"). A plan row keeps them in its contact line, with anything
- * else there (an agency, a manager); the database keeps them in phone and
- * email. A change on either side is written to the other.
+ * here or there … multiple emails and contacts"). The database and each plan
+ * row keep them as lists (lib/crm/contacts); a change on either side is
+ * written to the other, and to the creator's other plans.
  */
-const PHONE = /(?:\+?\d[\d\s-]{7,}\d)/g;
-const EMAIL = /[^\s@·,]+@[^\s@·,]+\.[a-z]{2,}/gi;
 
-/** The contact line with this phone and email in place of the old ones; the rest kept. */
-export function mergeContact(old: string | null | undefined, phone: string | null, email: string | null) {
-  const rest = (old ?? "")
-    .replace(EMAIL, "")
-    .replace(PHONE, "")
-    .split(/\s*[·,|]\s*/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return [phone?.trim(), email?.trim().toLowerCase(), ...rest].filter(Boolean).join(" · ") || null;
+/** Saves a creator's numbers and/or emails to the database and every plan row of theirs. */
+export async function setCreatorContacts(creatorId: string, next: { phone?: string | null; email?: string | null }) {
+  const data = {
+    ...(next.phone !== undefined ? { phone: tidyPhones(next.phone) } : {}),
+    ...(next.email !== undefined ? { email: tidyEmails(next.email) } : {}),
+  };
+  if (!Object.keys(data).length) return;
+  await getPrisma().creator.updateMany({ where: { id: creatorId }, data });
+  await syncPlanContacts(creatorId);
 }
 
-/** After the database's phone or email changed: every plan row of that creator follows. */
+/** After the database's numbers or emails changed: every plan row of that creator follows. */
 export async function syncPlanContacts(creatorId: string) {
   const prisma = getPrisma();
   const c = await prisma.creator.findUnique({ where: { id: creatorId }, select: { phone: true, email: true } });
   if (!c) return;
-  const rows = await prisma.quoteCreator.findMany({ where: { creatorId }, select: { id: true, contact: true } });
-  for (const r of rows) {
-    const next = mergeContact(r.contact, c.phone, c.email);
-    if (next !== r.contact) await prisma.quoteCreator.update({ where: { id: r.id }, data: { contact: next } });
-  }
+  await prisma.quoteCreator.updateMany({ where: { creatorId }, data: { phone: tidyPhones(c.phone), email: tidyEmails(c.email) } });
 }

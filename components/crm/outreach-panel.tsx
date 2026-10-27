@@ -4,6 +4,7 @@ import { Mail, MessageCircle } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { emailCreator, markReachout, saveOutreachTemplate, saveReachContact } from "@/app/(crm)/admin/actions/outreach";
+import { MultiValue } from "@/components/crm/multi-value";
 import { fillOutreach, type OutreachFields, whatsappLink } from "@/lib/crm/outreach";
 import { isRecent, type LastReach, reachLine, reachOptions } from "@/lib/crm/reachout-status";
 
@@ -33,9 +34,9 @@ export function OutreachPanel({ rows, template: initialTemplate, fields: initial
 
   /* NOT THE SAME INFLUENCER AGAIN AND AGAIN (Genesis, 27 Oct 2026): asks first when they were reached in the last 30 days, from any plan. */
   const okToContact = (r: Row) => !isRecent(r.last) || window.confirm(`${r.name} was already contacted: ${reachLine(r.last)}. Contact again?`);
-  /* The number and email, saved to the plan and the influencer database when you leave the box. */
-  const saveContact = (r: Row) => {
-    const next = { phone: (phones[r.id] ?? "").trim(), email: (emails[r.id] ?? "").trim() };
+  /* The numbers and emails (more than one of each), saved to the plan and the influencer database when you leave the field. */
+  const saveContact = (r: Row, change: { phone?: string; email?: string }) => {
+    const next = { phone: (change.phone ?? phones[r.id] ?? "").trim(), email: (change.email ?? emails[r.id] ?? "").trim() };
     const was = saved[r.id];
     if (was && was.phone === next.phone && was.email === next.email) return;
     start(async () => {
@@ -49,16 +50,17 @@ export function OutreachPanel({ rows, template: initialTemplate, fields: initial
     setStatus((s) => ({ ...s, [r.id]: value || null }));
     start(() => void markReachout(r.id, value));
   };
-  const whatsapp = (r: Row) => {
+  /* To this number; with none, WhatsApp's own chat picker. */
+  const whatsapp = (r: Row, to: string) => {
     if (!okToContact(r)) return;
-    window.open(whatsappLink(phones[r.id]?.trim() || r.phone, messageFor(r)), "_blank", "noopener");
+    window.open(whatsappLink(to || null, messageFor(r)), "_blank", "noopener");
     setStatus((s) => ({ ...s, [r.id]: "WhatsApp" }));
     start(() => void markReachout(r.id, "WhatsApp"));
   };
-  const email = (r: Row) => {
+  const email = (r: Row, to: string) => {
     if (!okToContact(r)) return;
     start(async () => {
-      const result = await emailCreator(r.id, emails[r.id] ?? "", subject, messageFor(r));
+      const result = await emailCreator(r.id, to, subject, messageFor(r));
       setNote(result.message ?? null);
       if (result.ok) setStatus((s) => ({ ...s, [r.id]: "Email" }));
     });
@@ -93,7 +95,7 @@ export function OutreachPanel({ rows, template: initialTemplate, fields: initial
       </div>
       {/* The creators in their own scrolling box, headings pinned (Genesis, 13 Oct 2026: "end this box here and add a scroller"). */}
       <div className="max-h-[30rem] overflow-auto rounded-xl border border-[var(--glass-border)]" data-lenis-prevent>
-        <table className="crm-table !min-w-[980px] text-[0.875rem] [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-10 [&_thead_th]:bg-[var(--surface-panel)]">
+        <table className="crm-table !min-w-[1100px] text-[0.875rem] [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-10 [&_thead_th]:bg-[var(--surface-panel)]">
           <thead><tr><th>Creator</th><th>WhatsApp</th><th>Email</th><th>Status</th></tr></thead>
           <tbody>
             {rows.map((r) => (
@@ -106,21 +108,38 @@ export function OutreachPanel({ rows, template: initialTemplate, fields: initial
                   {errors[r.id] && <span role="alert" className="block text-[0.6875rem] text-[#dc2626]">{errors[r.id]}</span>}
                 </td>
                 <td>
-                  <span className="flex items-center gap-1.5">
-                    <input value={phones[r.id] ?? ""} disabled={r.canEdit === false} onChange={(e) => setPhones((m) => ({ ...m, [r.id]: e.target.value }))} onBlur={() => saveContact(r)} placeholder="Number" inputMode="tel" className="crm-input !min-h-8 w-36 !px-2 text-[0.8125rem]" aria-label={`${r.name}'s number`} />
-                    <button type="button" onClick={() => whatsapp(r)} className="crm-btn crm-btn-secondary crm-btn-sm"><MessageCircle className="size-4" aria-hidden /> Get costing</button>
-                  </span>
+                  {/* Each number with its own WhatsApp button (components/crm/multi-value). */}
+                  <MultiValue
+                    value={phones[r.id]}
+                    disabled={r.canEdit === false}
+                    onChange={(v) => setPhones((m) => ({ ...m, [r.id]: v }))}
+                    onCommit={(v) => saveContact(r, { phone: v })}
+                    placeholder="Number"
+                    addLabel="Add another number"
+                    type="tel"
+                    label={`${r.name}'s numbers`}
+                    inputClassName="crm-input !min-h-8 w-36 !px-2 text-[0.8125rem]"
+                    action={(n) => <button type="button" onClick={() => whatsapp(r, n)} className="crm-btn crm-btn-secondary crm-btn-sm shrink-0"><MessageCircle className="size-4" aria-hidden /> Get costing</button>}
+                  />
                   {!phones[r.id]?.trim() && <span className="block text-[0.6875rem] text-faint">No number: pick the chat in WhatsApp</span>}
                 </td>
                 <td>
-                  <span className="flex items-center gap-1.5">
-                    <input value={emails[r.id] ?? ""} disabled={r.canEdit === false} onChange={(e) => setEmails((m) => ({ ...m, [r.id]: e.target.value }))} onBlur={() => saveContact(r)} placeholder="Email" inputMode="email" className="crm-input !min-h-8 w-48 !px-2 text-[0.8125rem]" aria-label={`${r.name}'s email`} />
-                    <button type="button" disabled={pending || !emails[r.id]} onClick={() => email(r)} className="crm-btn crm-btn-secondary crm-btn-sm disabled:opacity-40"><Mail className="size-4" aria-hidden /> Send</button>
-                  </span>
+                  <MultiValue
+                    value={emails[r.id]}
+                    disabled={r.canEdit === false}
+                    onChange={(v) => setEmails((m) => ({ ...m, [r.id]: v }))}
+                    onCommit={(v) => saveContact(r, { email: v })}
+                    placeholder="Email"
+                    addLabel="Add another email"
+                    type="email"
+                    label={`${r.name}'s emails`}
+                    inputClassName="crm-input !min-h-8 w-48 !px-2 text-[0.8125rem]"
+                    action={(to) => <button type="button" disabled={pending || !to} onClick={() => email(r, to)} className="crm-btn crm-btn-secondary crm-btn-sm shrink-0 disabled:opacity-40"><Mail className="size-4" aria-hidden /> Send</button>}
+                  />
                 </td>
                 <td>
                   {/* One list of statuses everywhere (lib/crm/reachout-status); set by hand for reach-outs done outside the CRM. */}
-                  <select value={status[r.id] ?? ""} onChange={(e) => setStatusOf(r, e.target.value)} className="crm-input !min-h-8 w-40 !px-2 text-[0.8125rem]" aria-label={`${r.name}'s reach-out status`}>
+                  <select value={status[r.id] ?? ""} onChange={(e) => setStatusOf(r, e.target.value)} className="crm-input !min-h-8 w-44 !pl-2 !pr-8 text-[0.8125rem]" aria-label={`${r.name}'s reach-out status`}>
                     {reachOptions(status[r.id]).map((o) => <option key={o} value={o}>{o || "Not contacted"}</option>)}
                   </select>
                 </td>

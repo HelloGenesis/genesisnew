@@ -77,7 +77,11 @@ const phones = (raw: string | null | undefined) =>
     .filter((p) => p.replace(/\D/g, "").length >= 8)
     .slice(0, 3)
     .map((value) => ({ value }));
-const email = (raw: string | null | undefined) => (raw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw.trim()) ? [{ value: raw.trim().toLowerCase() }] : undefined);
+/* One or more emails, comma-separated (lib/crm/creator-contacts). */
+const email = (raw: string | null | undefined) => {
+  const list = (raw ?? "").split(/[,;\s]+/).map((e) => e.trim().toLowerCase()).filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)).slice(0, 3);
+  return list.length ? list.map((value) => ({ value })) : undefined;
+};
 
 /** The records changed since the last run, as contacts. Only those with a phone or an email. */
 /* `everyone`: a super admin's sync takes everyone's records; anyone else's, only their own. */

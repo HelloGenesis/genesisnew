@@ -1,6 +1,8 @@
 "use client";
 
 import { ArrowDown, ArrowUp, ChevronDown, Columns3, ExternalLink, FileSpreadsheet, Maximize2, Minimize2, Plus, Sheet, Trash2, Upload, X } from "lucide-react";
+import { MultiValue } from "@/components/crm/multi-value";
+import { autoTier, TIERS, tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { importCreatorsForPlan, matchUploadColumns } from "@/app/(crm)/admin/actions/imports";
@@ -21,7 +23,8 @@ export type BuilderCreator = {
   creatorId?: string | null; name: string; handle: string; platform: string; profileUrl?: string | null; followers: number; avgViews?: number | null; niches: string[]; city?: string | null; deliverables?: string | null; fee?: number | null;
   /* The plan's columns: the creator's cost to us and the client's price, per deliverable (Genesis, 12 Oct 2026). */
   er?: number | null; reelCost?: number | null; storyCost?: number | null; dlCost?: number | null; reelPrice?: number | null; storyPrice?: number | null; dlPrice?: number | null;
-  reachout?: string | null; contact?: string | null; remarks?: string | null;
+  /* Numbers and emails, more than one of each, ", "-separated (lib/crm/creator-contacts); `tier` when set by hand. */
+  reachout?: string | null; phone?: string | null; email?: string | null; tier?: string | null; remarks?: string | null;
   /* Values of the columns added in the builder, by column name. */
   extra?: Record<string, string>;
   /* The creator's latest reach-out from any plan (shown, not saved; lib/crm/reachout). */
@@ -62,7 +65,7 @@ export type BuilderQuote = {
   creators: BuilderCreator[];
 };
 type CatalogItem = { id: string; kind: string; group: string; division: string; title: string; subtitle?: string; details: string; note?: string; price: number };
-type PoolCreator = { id: string; name: string; handle: string; platform: string; profileUrl: string | null; followers: number; avgViews: number | null; niches: string[]; city: string | null; reel: number | null; story: number | null; dl: number | null; contact: string | null };
+type PoolCreator = { id: string; name: string; handle: string; platform: string; profileUrl: string | null; followers: number; avgViews: number | null; niches: string[]; city: string | null; reel: number | null; story: number | null; dl: number | null; phone: string | null; email: string | null };
 type Terms = { key: string; label: string; notes: string; terms: string[] };
 type Client = { key: string; kind: "client" | "agency" | "lead"; accountId: string | null; leadId: string | null; company: string; contactName: string; email: string; phone: string | null };
 
@@ -228,7 +231,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             deliverables: "1 IG Reel + Story & link in bio", fee: null,
             reelCost: c.reelCost, storyCost: c.storyCost, dlCost: c.dlCost,
             reelPrice: c.reelPrice ?? up(c.reelCost), storyPrice: c.storyPrice ?? up(c.storyCost), dlPrice: c.dlPrice ?? up(c.dlCost),
-            reachout: c.reachout, contact: c.contact, remarks: c.remarks, extra: c.extra,
+            reachout: c.reachout, phone: c.phone, email: c.email, tier: c.tier, remarks: c.remarks, extra: c.extra,
           });
       }
       const newCols = [...new Set(Object.values(sheet.targets).filter((t) => t.startsWith("col:")).map((t) => t.slice(4)))];
@@ -241,7 +244,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           if (!f) return c;
           refreshed += 1;
           const keep = Object.fromEntries(Object.entries(f).filter(([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0)));
-          return { ...c, ...keep, extra: { ...(c.extra ?? {}), ...(f.extra ?? {}) } } as BuilderCreator;
+          /* Numbers and emails from the file are added to the ones the plan has. */
+          return { ...c, ...keep, phone: tidyPhones([c.phone, f.phone].filter(Boolean).join(", ")), email: tidyEmails([c.email, f.email].filter(Boolean).join(", ")), extra: { ...(c.extra ?? {}), ...(f.extra ?? {}) } } as BuilderCreator;
         });
         const fresh = found.filter((n, i) => !x.creators.some((c) => same(c, n)) && found.findIndex((o) => same(o, n)) === i);
         const custom = [...new Set([...(x.planColumns?.custom ?? []), ...newCols])];
@@ -443,7 +447,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   }, [full]);
   /* The added columns on screen: all of them internally, the client's ones when editing external. */
   const customShown = custom.filter((name) => editing === "internal" || !intOnly.has(name));
-  const INTERNAL_ONLY = ["reachout", "reelCost", "storyCost", "dlCost", "profit", "contact", "remarks"];
+  const INTERNAL_ONLY = ["reachout", "reelCost", "storyCost", "dlCost", "profit", "phone", "email", "remarks"];
   const shows = (key: string) =>
     !hidden.has(key) && (editing === "internal" || (!INTERNAL_ONLY.includes(key) && (q.planColumns?.extPrices !== false || !["reelPrice", "storyPrice", "dlPrice"].includes(key))));
   const toggleColumn = (key: string) =>
@@ -827,7 +831,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
               {matches.map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-2 py-2">
                   <span className="min-w-0 truncate"><span className="text-bone">{c.name}</span> <span className="text-[0.8125rem] text-ash">@{c.handle} · {c.platform.toLowerCase()} · {compact(c.followers)} · {c.niches.join(", ")} {c.city ? `· ${c.city}` : ""}</span></span>
-                  <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm shrink-0" onClick={() => setQ((x) => ({ ...x, creators: [...x.creators, { creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: "1 IG Reel + Story & link in bio", fee: null, reelCost: c.reel, storyCost: c.story, dlCost: c.dl, reelPrice: c.reel === null ? null : Math.round(c.reel * (1 + (x.markupPercent ?? 30) / 100)), storyPrice: c.story === null ? null : Math.round(c.story * (1 + (x.markupPercent ?? 30) / 100)), dlPrice: c.dl === null ? null : Math.round(c.dl * (1 + (x.markupPercent ?? 30) / 100)), contact: c.contact }] }))}>Add</button>
+                  <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm shrink-0" onClick={() => setQ((x) => ({ ...x, creators: [...x.creators, { creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: "1 IG Reel + Story & link in bio", fee: null, reelCost: c.reel, storyCost: c.story, dlCost: c.dl, reelPrice: c.reel === null ? null : Math.round(c.reel * (1 + (x.markupPercent ?? 30) / 100)), storyPrice: c.story === null ? null : Math.round(c.story * (1 + (x.markupPercent ?? 30) / 100)), dlPrice: c.dl === null ? null : Math.round(c.dl * (1 + (x.markupPercent ?? 30) / 100)), phone: c.phone, email: c.email }] }))}>Add</button>
                 </li>
               ))}
             </ul>
@@ -898,7 +902,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                     {label}
                   </button>
                 ))}
-                <span className={`text-[0.75rem] text-faint ${full ? "max-lg:hidden" : ""}`}>{editing === "internal" ? "Everything: creator costs, profit, reach-out, contact and remarks." : `What the brand sees${q.planColumns?.extPrices === false ? " (a sample, no prices)" : ", client prices only"}; costs, profit and notes stay internal.`}</span>
+                <span className={`text-[0.75rem] text-faint ${full ? "max-lg:hidden" : ""}`}>{editing === "internal" ? "Everything: creator costs, profit, reach-out, phone, email and remarks." : `What the brand sees${q.planColumns?.extPrices === false ? " (a sample, no prices)" : ", client prices only"}; costs, profit and notes stay internal.`}</span>
               </div>
                 <button type="button" onClick={() => setFull((f) => !f)} className={`crm-btn crm-btn-secondary crm-btn-sm ${full ? "" : "ml-auto"}`} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen (Esc)" : "Full screen"}>
                   {full ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />} <span className="max-sm:hidden">{full ? "Exit full screen" : "Full screen"}</span>
@@ -921,7 +925,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                       {shows("reachout") && <th>Reach-out</th>}
                       {MONEY.filter(shows).map((k) => <th key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}>{MONEY_LABEL[k]}</th>)}
                       {shows("profit") && <th>Profit</th>}
-                      {shows("contact") && <th>Contact</th>}
+                      {shows("phone") && <th>Phone</th>}
+                      {shows("email") && <th>Email</th>}
                       {shows("remarks") && <th>Remarks</th>}
                       {customShown.map((name) => <th key={name}>{name}</th>)}
                       <th />
@@ -956,7 +961,15 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                             {/* Cut to the name's width, so one long line can't widen the frozen column over the others (Genesis, 27 Oct 2026). */}
                             {c.last && <span className={`mt-1 block max-w-[10rem] truncate text-[0.6875rem] max-sm:max-w-[8rem] ${isRecent(c.last) ? "text-[#f59e0b]" : "text-faint"}`} title={`Latest reach-out, from any plan: ${reachLine(c.last)}`}>Last: {reachLine(c.last)}</span>}
                           </td>
-                          {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
+                          {/* Editable (Genesis, 27 Oct 2026): "Auto" follows the followers; or pick one. */}
+                          {shows("tier") && (
+                            <td>
+                              <select value={c.tier ?? ""} onChange={(e) => setCreator(i, { tier: e.target.value || null })} className="crm-input !min-h-8 !w-28 !pl-2 !pr-7" aria-label={`${c.name}'s tier`}>
+                                <option value="">{`Auto · ${autoTier(c.followers)}`}</option>
+                                {[...TIERS, ...(c.tier && !(TIERS as readonly string[]).includes(c.tier) ? [c.tier] : [])].map((t) => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                            </td>
+                          )}
                           {/* Pick any number of categories, or add your own (components/crm/niche-picker). */}
                           {shows("category") && <td><NichePicker compact value={c.niches} onChange={(next) => setCreator(i, { niches: next })} label="Category" /></td>}
                           {/* The profile link is editable on every plan (Genesis, 22 Oct 2026), with a way to open it. */}
@@ -981,7 +994,9 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                             <td key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
                           ))}
                           {shows("profit") && <td className={`whitespace-nowrap tabular-nums ${profit < 0 ? "text-[#dc2626]" : "text-bone"}`}>{inr(profit)}</td>}
-                          {shows("contact") && <td><GrowText value={c.contact ?? ""} onChange={(e) => setCreator(i, { contact: e.target.value })} className="crm-input !min-h-8 !w-44 !px-2" placeholder="+91… / email / agency" /></td>}
+                          {/* Standard Phone and Email, more than one of each; saved to the database and the creator's other plans (lib/crm/reachout). */}
+                          {shows("phone") && <td><MultiValue value={c.phone} onChange={(v) => setCreator(i, { phone: v || null })} placeholder="+91…" addLabel="Add number" type="tel" label={`${c.name}'s phone numbers`} inputClassName="crm-input !min-h-8 !w-36 !px-2" /></td>}
+                          {shows("email") && <td><MultiValue value={c.email} onChange={(v) => setCreator(i, { email: v || null })} placeholder="Email" addLabel="Add email" type="email" label={`${c.name}'s emails`} inputClassName="crm-input !min-h-8 !w-52 !px-2" /></td>}
                           {shows("remarks") && <td><GrowText value={c.remarks ?? ""} onChange={(e) => setCreator(i, { remarks: e.target.value })} className="crm-input !min-h-8 !w-48 !px-2" /></td>}
                           {customShown.map((name) => (
                             <td key={name}><GrowText value={c.extra?.[name] ?? ""} onChange={(e) => setCreator(i, { extra: { ...(c.extra ?? {}), [name]: e.target.value } })} className="crm-input !min-h-8 !w-40 !px-2" /></td>
@@ -997,7 +1012,8 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                       {["tier", "category", "ig", "followers", "avgViews", "er", "location", "reachout"].filter(shows).map((k) => <td key={k} />)}
                       {MONEY.filter(shows).map((k) => <td key={k} className="whitespace-nowrap tabular-nums">{inr(sum(k))}</td>)}
                       {shows("profit") && <td className="whitespace-nowrap tabular-nums">{inr(totals.creators - costTotal)}</td>}
-                      {shows("contact") && <td />}
+                      {shows("phone") && <td />}
+                      {shows("email") && <td />}
                       {shows("remarks") && <td />}
                       {customShown.map((name) => <td key={name} />)}
                       <td />

@@ -16,7 +16,8 @@ import { makePlanSheets } from "./plan-sheets";
 import { SheetEditedError } from "./plan-sync";
 import { newToken, refreshTotals } from "./quotes";
 import { quoteRef, termsByKey } from "./quote-templates";
-import { lastReaches, mergeContact, recordReach, syncPlanContacts } from "./reachout";
+import { tidyEmails, tidyPhones } from "./creator-contacts";
+import { lastReaches, recordReach, syncPlanContacts } from "./reachout";
 import { REACH_STATUSES } from "./reachout-status";
 import { creatorAccess, creatorScope, quoteScope, seesCreators, seesQuoteContact } from "./scope";
 import { can, type Viewer } from "./session";
@@ -95,8 +96,8 @@ const influencerInput = z.object({
   languages: z.array(z.string()).optional(),
   city: z.string().optional(),
   gender: z.string().optional(),
-  phone: z.string().max(40).optional(),
-  email: z.string().max(200).optional(),
+  phone: z.string().max(300).optional().describe("Phone number(s); more than one comma-separated. Added to the ones already saved."),
+  email: z.string().max(500).optional().describe("Email(s); more than one comma-separated. Added to the ones already saved."),
   agency: z.string().max(160).optional().describe("Agency or manager who represents them."),
   poc_name: z.string().max(120).optional(),
   poc_contact: z.string().max(160).optional(),
@@ -126,9 +127,9 @@ const planRow = z.object({
   story_price: money,
   dl_price: money,
   reach_out: z.string().max(60).optional().describe(`Status: ${REACH_STATUSES.join(", ")}.`),
-  phone: z.string().max(40).optional(),
-  email: z.string().max(200).optional(),
-  contact: z.string().max(300).optional().describe("Anything else for the contact column, e.g. the agency."),
+  phone: z.string().max(300).optional().describe("Phone number(s); more than one comma-separated. Added to the ones already saved."),
+  email: z.string().max(500).optional().describe("Email(s); more than one comma-separated. Added to the ones already saved."),
+  contact: z.string().max(300).optional().describe("Anything else about reaching them, e.g. the agency; goes into the remarks."),
   remarks: z.string().max(2000).optional(),
   columns: z.record(z.string(), z.string()).optional().describe("Values for the plan's own added columns, by column name (e.g. 'Tentative Cost', 'Deliverables')."),
 });
@@ -161,8 +162,9 @@ async function saveCreator(viewer: Viewer, x: InfluencerIn | (PlanRowIn & { id?:
     ...(typeof x.er === "number" ? { engagementRate: x.er } : {}),
     ...(niches?.length ? { niches: tidyNiches(niches) } : {}),
     ...(x.city ? { city: x.city } : {}),
-    ...(x.phone ? { phone: x.phone.trim() } : {}),
-    ...(x.email ? { email: x.email.trim().toLowerCase() } : {}),
+    /* Added to the numbers and emails already saved, never replacing them (lib/crm/contacts). */
+    ...(tidyPhones(x.phone) ? { phone: tidyPhones([existing?.phone, x.phone].filter(Boolean).join(", ")) } : {}),
+    ...(tidyEmails(x.email) ? { email: tidyEmails([existing?.email, x.email].filter(Boolean).join(", ")) } : {}),
     ...(isInfluencer && inf.languages?.length ? { languages: inf.languages } : {}),
     ...(isInfluencer && inf.gender ? { gender: inf.gender } : {}),
     ...(isInfluencer && inf.agency ? { managedBy: inf.agency } : {}),
@@ -231,7 +233,7 @@ async function planOut(viewer: Viewer, id: string) {
       name: c.name, handle: c.handle, platform: c.platform, profile_url: c.profileUrl, followers: c.followers, avg_views: c.avgViews, er: c.engagementRate, category: c.niches, city: c.city,
       cost: { reel: r(c.reelCostPaise), story: r(c.storyCostPaise), dl: r(c.dlCostPaise) },
       price: { reel: r(c.reelPricePaise), story: r(c.storyPricePaise), dl: r(c.dlPricePaise) },
-      reach_out: c.reachout, contact: visible(c) ? c.contact : "private", remarks: c.remarks, columns: c.extra,
+      reach_out: c.reachout, phone: visible(c) ? c.phone : "private", email: visible(c) ? c.email : "private", tier: c.tier, remarks: c.remarks, columns: c.extra,
       in_database: Boolean(c.creatorId), last_reach_out: c.creatorId ? (lasts[c.creatorId] ?? null) : null,
     })),
   };
@@ -276,16 +278,18 @@ async function writeRows(viewer: Viewer, quoteId: string, rows: PlanRowIn[]) {
       ...(price.story !== null || cost.story !== null ? { storyPricePaise: price.story ?? up(cost.story) } : {}),
       ...(price.dl !== null || cost.dl !== null ? { dlPricePaise: price.dl ?? up(cost.dl) } : {}),
       ...(row.reach_out ? { reachout: row.reach_out.slice(0, 60) } : {}),
-      ...(row.remarks ? { remarks: row.remarks } : {}),
-      ...((row.phone || row.email || row.contact) && mayContact ? { contact: mergeContact([was?.contact, row.contact].filter(Boolean).join(" · "), row.phone ?? null, row.email ?? null) } : {}),
+      ...(row.remarks || row.contact ? { remarks: [row.remarks ?? was?.remarks, row.contact].filter(Boolean).join(" · ") } : {}),
+      /* Numbers and emails added to the row's (and so to the database's: saveCreator above), where this person may see them. */
+      ...(tidyPhones(row.phone) && mayContact ? { phone: tidyPhones([was?.phone, row.phone].filter(Boolean).join(", ")) } : {}),
+      ...(tidyEmails(row.email) && mayContact ? { email: tidyEmails([was?.email, row.email].filter(Boolean).join(", ")) } : {}),
     };
     if (was) {
       await prisma.quoteCreator.update({ where: { id: was.id }, data: { ...data, creatorId: was.creatorId ?? saved.id, extra: { ...((was.extra ?? {}) as Record<string, string>), ...(row.columns ?? {}) } } });
       updated += 1;
     } else {
       /* A creator the database already has a number or email for: those come onto the plan (where this person may see them). */
-      const known = saved.id && !("contact" in data) ? await prisma.creator.findUnique({ where: { id: saved.id }, select: { phone: true, email: true, managedBy: true } }) : null;
-      if (known && (known.phone || known.email) && (await contactVisibility(viewer, q, [saved.id]))({ creatorId: saved.id })) Object.assign(data, { contact: mergeContact(known.managedBy, known.phone, known.email) });
+      const known = saved.id ? await prisma.creator.findUnique({ where: { id: saved.id }, select: { phone: true, email: true } }) : null;
+      if (known && (known.phone || known.email) && (await contactVisibility(viewer, q, [saved.id]))({ creatorId: saved.id })) Object.assign(data, { phone: known.phone ?? ("phone" in data ? data.phone : null), email: known.email ?? ("email" in data ? data.email : null) });
       await prisma.quoteCreator.create({
         data: {
           quoteId, position: position++, creatorId: saved.id, platform: platformOf(row.platform, row.profile_url), handle: handle || row.name.toLowerCase().replace(/[^a-z0-9._]+/g, ""), followers: 0,

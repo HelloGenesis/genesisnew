@@ -1257,6 +1257,12 @@ model QuoteCreator {
   engagementRate Float?  @map("engagement_rate")
   /// Reach-out status: WhatsApp, email, agency/freelancer, confirmed, not relevant…
   reachout     String?
+  /// The creator's numbers and emails, each list ", "-separated (Genesis, 27 Oct 2026: standard Phone and Email columns, more than one allowed). The same as the influencer database's (lib/crm/creator-contacts).
+  phone        String?
+  email        String?
+  /// The tier, when set by hand; else it follows the followers (lib/crm/creator-contacts tierLabel).
+  tier         String?
+  /// Before 27 Oct 2026, one free-text contact line; now folded into phone, email and remarks. Kept for old rows only.
   contact      String?
   remarks      String?
 

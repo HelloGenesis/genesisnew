@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
+import { tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { fileRows, type PlanTarget, planTargets, TARGET_LABEL } from "@/lib/crm/plan-import";
 import { IMPORT_KINDS, importRows, mapHeaders } from "@/lib/crm/sheet-import";
 import { seesCreators } from "@/lib/crm/scope";
@@ -95,7 +96,9 @@ export async function importCreatorsForPlan(fileName: string, headers: string[],
         reelCost: row.reelCost ?? r(c?.reelRatePaise ?? null),
         storyCost: row.storyCost ?? r(c?.storyRatePaise ?? null),
         dlCost: row.dlCost ?? r(c?.dlRatePaise ?? null),
-        contact: row.contact ?? ([c?.phone, c?.email, c?.managedBy].filter(Boolean).join(" · ") || null),
+        /* The file's numbers and emails, else the database's (lib/crm/contacts). */
+        phone: row.phone ?? tidyPhones(c?.phone),
+        email: row.email ?? tidyEmails(c?.email),
       };
     }),
   };

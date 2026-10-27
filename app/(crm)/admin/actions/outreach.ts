@@ -8,7 +8,8 @@ import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
 import { sendNow } from "@/lib/crm/notify";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
-import { mergeContact, recordReach, syncPlanContacts } from "@/lib/crm/reachout";
+import { emailList, phoneList, splitList, tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
+import { recordReach, setCreatorContacts } from "@/lib/crm/reachout";
 import { quoteScope } from "@/lib/crm/scope";
 import { requireStaff, type Viewer } from "@/lib/crm/session";
 
@@ -46,9 +47,10 @@ export async function markReachout(quoteCreatorId: string, status: string) {
 }
 
 /**
- * A creator's number and email typed on the Reach out page: saved on the plan
- * row and in the influencer database, and on every other plan they're on
- * (lib/crm/reachout). Only where this person may see that creator's contact.
+ * A creator's numbers and emails typed on the Reach out page (more than one
+ * of each): saved on the plan row, in the influencer database, and on every
+ * other plan they're on (lib/crm/reachout). Only where this person may see
+ * that creator's contact.
  */
 export async function saveReachContact(quoteCreatorId: string, phone: string, email: string) {
   const viewer = await requireStaff("plans");
@@ -56,18 +58,14 @@ export async function saveReachContact(quoteCreatorId: string, phone: string, em
   if (!qc) return { ok: false, message: "Not your plan." };
   const quote = await getPrisma().quote.findUniqueOrThrow({ where: { id: qc.quoteId }, select: { createdById: true } });
   if (!(await contactVisibility(viewer, quote, [qc.creatorId]))(qc)) return { ok: false, message: "You can't change this creator's contact." };
-  const p = phone.trim().slice(0, 40) || null;
-  const e = email.trim().toLowerCase().slice(0, 200) || null;
-  if (e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return { ok: false, message: "That email doesn't look right." };
-  if (p && !/^\+?[\d\s-]{7,20}$/.test(p)) return { ok: false, message: "A phone number, digits only (with +91 if you like)." };
-  const prisma = getPrisma();
-  await prisma.quoteCreator.update({ where: { id: qc.id }, data: { contact: mergeContact(qc.contact, p, e) } });
-  if (qc.creatorId) {
-    await prisma.creator.updateMany({ where: { id: qc.creatorId }, data: { phone: p, email: e } });
-    await syncPlanContacts(qc.creatorId);
-  }
+  const p = tidyPhones(phone);
+  const e = tidyEmails(email);
+  if (splitList(email).length > emailList(email).length) return { ok: false, message: "One of those emails doesn't look right." };
+  if (splitList(phone).length > phoneList(phone).length) return { ok: false, message: "Phone numbers only: digits, with +91 if you like." };
+  await getPrisma().quoteCreator.update({ where: { id: qc.id }, data: { phone: p, email: e } });
+  if (qc.creatorId) await setCreatorContacts(qc.creatorId, { phone: p, email: e });
   done();
-  return { ok: true };
+  return { ok: true, phone: p, email: e };
 }
 
 /** Emails a creator their personalised message, from the CRM, with replies to the sender. */

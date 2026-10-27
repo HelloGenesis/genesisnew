@@ -12,28 +12,30 @@
  * empty. Pure: used by the import action and its tests.
  */
 
+import { contactRest, tidyEmails, tidyPhones } from "./creator-contacts";
+
 export type PlanTarget =
   | "name" | "handle" | "profileUrl" | "platform" | "followers" | "avgViews" | "er" | "niches" | "city"
   | "reelCost" | "storyCost" | "dlCost" | "reelPrice" | "storyPrice" | "dlPrice"
-  | "reachout" | "remarks" | "contact" | "skip" | `col:${string}`;
+  | "reachout" | "remarks" | "contact" | "tier" | "skip" | `col:${string}`;
 
 export const TARGET_LABEL: Record<string, string> = {
   name: "Name", handle: "Handle", profileUrl: "IG link", platform: "Platform", followers: "Followers", avgViews: "Avg views", er: "ER %", niches: "Category", city: "Location",
   reelCost: "Cost: 1 IG Reel", storyCost: "Cost: Story + LIB", dlCost: "Cost: DL", reelPrice: "Price: 1 IG Reel", storyPrice: "Price: Story + LIB", dlPrice: "Price: DL",
-  reachout: "Reach-out", remarks: "Remarks", contact: "Contact", skip: "Not used",
+  reachout: "Reach-out", remarks: "Remarks", contact: "Phone / email", tier: "Tier", skip: "Not used",
 };
 export const targetLabel = (t: string) => (t.startsWith("col:") ? `New column "${t.slice(4)}"` : (TARGET_LABEL[t] ?? t));
 
 /* The influencer database's fields → the plan's. */
 const FROM_DB: Record<string, PlanTarget> = {
   name: "name", handle: "handle", profileUrl: "profileUrl", platform: "platform", followers: "followers", avgViews: "avgViews", engagementRate: "er", niches: "niches", city: "city",
-  reelRate: "reelCost", storyRate: "storyCost", dlRate: "dlCost", phone: "contact", email: "contact", managedBy: "contact", pocName: "contact", pocContact: "contact", notes: "remarks",
+  reelRate: "reelCost", storyRate: "storyCost", dlRate: "dlCost", phone: "contact", email: "contact", managedBy: "remarks", pocName: "remarks", pocContact: "contact", notes: "remarks", tier: "tier",
 };
 
 const PRICE_WORDS = /\b(client|brand|price|selling|quoted|quote|sp)\b/i;
 const COST_WORDS = /\b(cost|rate|creator|payout|commercial|charges?|fees?)\b/i;
 const kindOf = (h: string): "reel" | "story" | "dl" | null => (/\breels?\b|\bpost\b|\bvideo\b/i.test(h) ? "reel" : /\bstor(y|ies)\b|\blib\b|link in bio/i.test(h) ? "story" : /\bdl\b|licen[cs]|usage|rights/i.test(h) ? "dl" : null);
-const SKIP = /^(s\.?\s*no\.?|sr\.?\s*no\.?|#|no\.?|tier|profit|total|margin)$/i;
+const SKIP = /^(s\.?\s*no\.?|sr\.?\s*no\.?|#|no\.?|profit|total|margin)$/i;
 /* The usual names for a creator's details, so a file is read right even without the AI (and the CRM's own Excel always is). */
 const BASIC: [RegExp, PlanTarget][] = [
   [/^(creator|influencer|talent|celebrity|full)?\s*name$/i, "name"],
@@ -45,6 +47,7 @@ const BASIC: [RegExp, PlanTarget][] = [
   [/^(er|engagement)(\s*rate)?\s*%?$/i, "er"],
   [/^(category|categories|niche|niches|genre|vertical)$/i, "niches"],
   [/^(location|city|region|state)$/i, "city"],
+  [/^tier$/i, "tier"],
 ];
 
 /** Where each column of the file goes on the plan. `db` is the influencer-database mapping (header → field). */
@@ -66,7 +69,9 @@ export function planTargets(headers: string[], db: Record<string, string>): Reco
     else if (db[raw] && FROM_DB[db[raw]!]) t = FROM_DB[db[raw]!];
     else if (/reach\s*-?\s*out|status/i.test(h)) t = "reachout";
     else if (/remark|comment|note/i.test(h)) t = "remarks";
-    else if (/^(contact|phone|mobile|whats\s*app|e-?mail|manager|agency|poc)/i.test(h)) t = "contact";
+    /* Numbers and emails (lib/crm/contacts finds them in the cell); anything else there goes to the remarks. */
+    else if (/^(contact|phone|mobile|whats\s*app|e-?mail|mail\b|number)/i.test(h)) t = "contact";
+    else if (/^(manager|agency|poc|managed)/i.test(h)) t = "remarks";
     else if (SKIP.test(h)) t = "skip";
     else if (kind && !db[raw]) t = `${kind}Cost` as PlanTarget;
     /* Two columns for one field (two "Contact"s): contact and remarks gather, the rest take the first. */
@@ -97,7 +102,7 @@ export type FileRow = {
   name: string; handle: string; platform: string; profileUrl: string | null;
   followers: number | null; avgViews: number | null; er: number | null; niches: string[] | null; city: string | null;
   reelCost: number | null; storyCost: number | null; dlCost: number | null; reelPrice: number | null; storyPrice: number | null; dlPrice: number | null;
-  reachout: string | null; remarks: string | null; contact: string | null; extra: Record<string, string>;
+  reachout: string | null; remarks: string | null; phone: string | null; email: string | null; tier: string | null; extra: Record<string, string>;
 };
 
 /** Each row of the file as a plan row, in the file's order. Rows with no name, handle or link are left out. */
@@ -139,8 +144,10 @@ export function fileRows(headers: string[], rows: string[][], targets: Record<st
       reelCost: money("reelCost"), storyCost: money("storyCost"), dlCost: money("dlCost"),
       reelPrice: money("reelPrice"), storyPrice: money("storyPrice"), dlPrice: money("dlPrice"),
       reachout: one("reachout"),
-      remarks: [...get("remarks"), ...notes].join(" · ") || null,
-      contact: get("contact").join(" · ") || null,
+      remarks: [...get("remarks"), ...get("contact").map(contactRest).filter((x): x is string => Boolean(x)), ...notes].join(" · ") || null,
+      phone: tidyPhones(get("contact").join(", ")),
+      email: tidyEmails(get("contact").join(", ")),
+      tier: one("tier"),
       extra,
     });
   }
