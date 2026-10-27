@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowUpRight, AudioLines, ChevronDown, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plus, Scale, Search, SendHorizontal, Sparkles, UserPlus, Users, X, Zap } from "lucide-react";
+import { AudioLines, ChevronDown, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, UserPlus, Users, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
 
+import { type Added, type BuiltIn, ConnectorsDialog } from "@/components/crm/connectors-dialog";
 import { usePref } from "@/components/crm/use-pref";
 import { NeuralOrb } from "@/components/genesis/neural-orb";
 import { readSheetFile } from "@/lib/sheet-file";
@@ -38,11 +39,11 @@ const size = (a: Attachment) => (a.kind === "sheet" ? a.text.length : a.data.len
 
 /* Shortcuts: in the sidebar, as cards under the chat box; each starts a prompt. */
 const SHORTCUTS = [
-  { label: "Make a quote", body: "From a vendor's costing, with your margin and a proposal.", icon: FileText, prompt: "Make a price quote for <client> from this vendor costing, adding 50% to each line: " },
-  { label: "Build an influencer plan", body: "From screenshots, Excel or an agency roster.", icon: Users, prompt: "Make an influencer plan for <brand> from these screenshots: " },
-  { label: "Find creators", body: "By category, city, followers and reach-out.", icon: Search, prompt: "Find wellness creators in Mumbai under 500K followers with a phone number who haven't been contacted." },
-  { label: "Add a lead", body: "With a follow-up date and a task.", icon: UserPlus, prompt: "Add a lead: " },
-  { label: "Add a task", body: "For you or a teammate, with a due date.", icon: ListChecks, prompt: "Add a task for <teammate>, due <date>: " },
+  { label: "Make a quote", at: "left-0 top-[18%] -translate-x-[70%]", body: "From a vendor's costing, with your margin and a proposal.", icon: FileText, prompt: "Make a price quote for <client> from this vendor costing, adding 50% to each line: " },
+  { label: "Build an influencer plan", at: "right-0 top-[24%] translate-x-[70%]", body: "From screenshots, Excel or an agency roster.", icon: Users, prompt: "Make an influencer plan for <brand> from these screenshots: " },
+  { label: "Find creators", at: "bottom-[16%] right-0 translate-x-[65%]", body: "By category, city, followers and reach-out.", icon: Search, prompt: "Find wellness creators in Mumbai under 500K followers with a phone number who haven't been contacted." },
+  { label: "Add a lead", at: "bottom-[22%] left-0 -translate-x-[75%]", body: "With a follow-up date and a task.", icon: UserPlus, prompt: "Add a lead: " },
+  { label: "Add a task", at: "", body: "For you or a teammate, with a due date.", icon: ListChecks, prompt: "Add a task for <teammate>, due <date>: " },
 ];
 
 /* How hard it thinks (lib/crm/assistant ChatMode). */
@@ -92,7 +93,7 @@ function Rich({ text }: { text: string }) {
  * the answer streams in as it's written, with what it's doing in the CRM
  * shown as it happens.
  */
-export function AssistantChat({ chats, open, firstName }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null }) {
+export function AssistantChat({ chats, open, firstName, connectors }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean } }) {
   const router = useRouter();
   const [chatId, setChatId] = useState<string | null>(open?.id ?? null);
   const [messages, setMessages] = useState<Msg[]>(open?.messages ?? []);
@@ -105,6 +106,8 @@ export function AssistantChat({ chats, open, firstName }: { chats: ChatItem[]; o
   const [mode, setMode] = useState<Mode>("balanced");
   const [modeMenu, setModeMenu] = useState(false);
   const [listening, setListening] = useState(false);
+  const [showConnectors, setShowConnectors] = useState(false);
+  const liveApps = connectors.builtIns.filter((b) => b.on).length + connectors.added.filter((c) => c.enabled).length;
   /* The sidebar, open or folded; remembered on this device. */
   const [listOpen, toggleList] = usePref("crm-assistant-sidebar", true);
   const picker = useRef<HTMLInputElement>(null);
@@ -248,6 +251,7 @@ export function AssistantChat({ chats, open, firstName }: { chats: ChatItem[]; o
               {menu && (
                 <ul className={MENU}>
                   <li><button type="button" onClick={() => { setMenu(false); picker.current?.click(); }} className={MENU_ITEM}><Paperclip className="size-4" aria-hidden /> Screenshots, PDFs or Excel</button></li>
+                  <li><button type="button" onClick={() => { setMenu(false); setShowConnectors(true); }} className={MENU_ITEM}><Plug className="size-4" aria-hidden /> Connectors</button></li>
                   <li><Link href="/admin/assistant" onClick={() => setMenu(false)} className={MENU_ITEM}><MessageSquarePlus className="size-4" aria-hidden /> New chat</Link></li>
                 </ul>
               )}
@@ -267,6 +271,9 @@ export function AssistantChat({ chats, open, firstName }: { chats: ChatItem[]; o
               )}
             </div>
             <input ref={picker} type="file" multiple accept="image/*,.pdf,.xlsx,.csv,.tsv" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => { void attach(e.target.files); e.target.value = ""; }} />
+            <button type="button" onClick={() => setShowConnectors(true)} className={`${CHIP} max-sm:hidden`} aria-label={`Connectors: ${liveApps} on`}>
+              <Plug className="size-3.5" aria-hidden /> Connectors <span className="rounded-full bg-[var(--hover-wash)] px-1.5 text-[0.6875rem] text-bone">{liveApps}</span>
+            </button>
             <button type="button" onClick={voice} disabled={busy || listening} className={`${CHIP} ml-auto ${listening ? "!border-[#f472b6] !text-bone" : ""}`} aria-label="Voice typing">
               <AudioLines className={`size-3.5 ${listening ? "animate-pulse" : ""}`} aria-hidden /> <span className="max-sm:hidden">{listening ? "Listening…" : "Voice"}</span>
             </button>
@@ -285,7 +292,7 @@ export function AssistantChat({ chats, open, firstName }: { chats: ChatItem[]; o
       {listOpen && (
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
-            <span aria-hidden className="size-7 shrink-0 rounded-full bg-[radial-gradient(circle_at_35%_35%,#fff7d6,#ffc516_35%,#f472b6_65%,#a78bfa_85%)]" />
+            <OrbMark thinking={thinking} />
             <span className="flex-1 text-[0.9375rem] font-semibold text-bone">Genesis AI</span>
             <button type="button" onClick={() => toggleList(false)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone" aria-label="Hide the sidebar" title="Hide the sidebar"><ChevronsLeft className="size-4" aria-hidden /></button>
           </div>
@@ -300,6 +307,9 @@ export function AssistantChat({ chats, open, firstName }: { chats: ChatItem[]; o
               </li>
             ))}
           </ul>
+          <div className="mt-1 px-3">
+            <button type="button" onClick={() => setShowConnectors(true)} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[0.875rem] text-ash hover:bg-[var(--hover-wash)] hover:text-bone"><Plug className="size-4 shrink-0" aria-hidden /> Connectors <span className="ml-auto rounded-full bg-[var(--hover-wash)] px-1.5 text-[0.6875rem] text-bone">{liveApps}</span></button>
+          </div>
           <p className="mt-5 px-5 text-[0.6875rem] uppercase tracking-[0.14em] text-faint">Your chats</p>
           <ul className="mt-1.5 min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 pb-4" data-lenis-prevent>
             {chats.map((c) => (
@@ -319,31 +329,29 @@ export function AssistantChat({ chats, open, firstName }: { chats: ChatItem[]; o
           {!listOpen && (
             <button type="button" onClick={() => toggleList(true)} className={CHIP} aria-label="Show the sidebar"><ChevronsRight className="size-3.5" aria-hidden /> Chats</button>
           )}
-          <span className={`${CHIP} pointer-events-none`}><Sparkles className="size-3.5 text-[#ffc516]" aria-hidden /> Genesis AI · {modeNow.label}</span>
           <Link href="/admin/assistant" className={`${CHIP} ml-auto`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
         </div>
 
         {!messages.length ? (
           <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-10">
-            <div className="w-[min(9rem,40vw)]"><NeuralOrb thinking={thinking} /></div>
-            <p className="mt-3 text-[0.75rem] uppercase tracking-[0.32em] text-ash">{greeting}{firstName ? `, ${firstName}` : ""}</p>
-            <h2 className="mt-2 text-balance text-center font-sans text-[1.625rem] text-bone sm:text-[2rem]">What should we do in the CRM today?</h2>
-            <div className="mt-9 w-full max-w-3xl">{composer}</div>
-            {error && <p className="mt-3 text-[0.8125rem] text-[#dc2626]" role="alert">{error}</p>}
-            <ul className="mt-9 grid w-full max-w-3xl gap-3 sm:grid-cols-3">
-              {SHORTCUTS.slice(0, 3).map((x) => (
-                <li key={x.label}>
-                  <button type="button" onClick={() => setText(x.prompt)} className="group flex h-full w-full flex-col rounded-2xl border border-[var(--glass-border)] bg-[var(--crm-card)] p-4 text-left transition-colors hover:border-[#ffc516]/60">
-                    <span className="flex items-start justify-between">
-                      <span className="grid size-9 place-items-center rounded-xl bg-[var(--hover-wash)] text-bone"><x.icon className="size-4" aria-hidden /></span>
-                      <ArrowUpRight className="size-4 text-ash transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-bone" aria-hidden />
-                    </span>
-                    <span className="mt-6 text-[0.9375rem] font-medium text-bone">{x.label}</span>
-                    <span className="mt-1 text-[0.8125rem] leading-snug text-ash">{x.body}</span>
-                  </button>
-                </li>
+            {/* Genesis's orb with what it can do round it (as before), the greeting, the chat box. */}
+            <div className="relative w-[min(14rem,58vw)]">
+              <NeuralOrb thinking={thinking} />
+              {SHORTCUTS.filter((x) => x.at).map((x) => (
+                <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone max-sm:hidden ${x.at}`}>
+                  <x.icon className="size-3.5" aria-hidden /> {x.label}
+                </button>
               ))}
-            </ul>
+            </div>
+            <p className="mt-5 bg-gradient-to-r from-[#c084fc] via-[#f472b6] to-[#ffc516] bg-clip-text text-[1rem] text-transparent">{greeting}{firstName ? `, ${firstName}` : ""}</p>
+            <h2 className="mt-1 text-balance text-center font-sans text-[1.5rem] text-bone sm:text-[1.875rem]">What should we do in the CRM?</h2>
+            <div className="mt-4 flex flex-wrap justify-center gap-2 sm:hidden">
+              {SHORTCUTS.slice(0, 4).map((x) => (
+                <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={CHIP}><x.icon className="size-3.5" aria-hidden /> {x.label}</button>
+              ))}
+            </div>
+            <div className="mt-10 w-full max-w-3xl">{composer}</div>
+            {error && <p className="mt-3 text-[0.8125rem] text-[#dc2626]" role="alert">{error}</p>}
           </div>
         ) : (
           <>
@@ -380,7 +388,23 @@ export function AssistantChat({ chats, open, firstName }: { chats: ChatItem[]; o
         )}
         <p className="pb-3 text-center text-[0.6875rem] text-faint">Works as you, with your permissions. Adds and updates, never deletes or messages anyone.</p>
       </section>
+      {showConnectors && <ConnectorsDialog {...connectors} onClose={() => setShowConnectors(false)} />}
     </div>
+  );
+}
+
+/** Genesis's orb, small, with the N (the favicon, app/icon.svg) at its centre; it thinks with the chat. */
+function OrbMark({ thinking }: { thinking: boolean }) {
+  return (
+    <span className="relative -m-1.5 grid size-10 shrink-0 place-items-center">
+      <span className="absolute inset-0"><NeuralOrb thinking={thinking} /></span>
+      <svg viewBox="0 0 306 500" className="relative h-3.5 w-auto drop-shadow-[0_0_4px_rgb(0_0_0/0.6)]" aria-hidden>
+        <g fill="#ffd400">
+          <polygon points="30,0 306,0 306,340.7" />
+          <polygon points="0,149.1 284.25,500 0,500" />
+        </g>
+      </svg>
+    </span>
   );
 }
 

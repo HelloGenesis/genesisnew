@@ -1,6 +1,8 @@
 import { AssistantChat } from "@/components/crm/assistant-chat";
 import { aiConfigured } from "@/lib/crm/ai";
+import { addedConnectors, builtInConnectors } from "@/lib/crm/ai-connectors";
 import { chatForView, recentChats } from "@/lib/crm/assistant";
+import { isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -10,12 +12,14 @@ export const metadata = { title: "AI assistant" };
 export default async function AssistantPage({ searchParams }: { searchParams: Promise<{ chat?: string }> }) {
   const viewer = await requireStaff();
   const { chat } = await searchParams;
-  const [chats, open] = await Promise.all([recentChats(viewer.id), chat ? chatForView(viewer.id, chat) : null]);
+  const [chats, open, builtIns, added] = await Promise.all([recentChats(viewer.id), chat ? chatForView(viewer.id, chat) : null, builtInConnectors(viewer), addedConnectors(viewer.ws ?? null)]);
+  /* Who may connect apps (app/(crm)/admin/actions/connectors). */
+  const canManage = viewer.workspaceId ? viewer.workspaceRole === "ADMIN" : isSuperAdmin(viewer);
   return (
     <>
       <h1 className="sr-only">AI assistant</h1>
       {aiConfigured() ? (
-        <AssistantChat key={open?.id ?? "new"} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} />
+        <AssistantChat key={open?.id ?? "new"} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} connectors={{ builtIns, added: added.map((c) => ({ id: c.id, name: c.name, url: c.url, enabled: c.enabled, hasToken: c.hasToken })), canManage }} />
       ) : (
         <p className="crm-notice">The AI isn&apos;t set up yet: an admin needs to add ANTHROPIC_API_KEY.</p>
       )}
