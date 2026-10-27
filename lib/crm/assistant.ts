@@ -25,7 +25,8 @@ import type { Viewer } from "./session";
  */
 
 const MODEL = () => process.env.CRM_CHAT_MODEL || "claude-opus-5-5";
-const MAX_TURNS = 16;
+/* Room for a whole job from one message: a lead, its quote, a project, a task… (Genesis, 28 Oct 2026). */
+const MAX_TURNS = 30;
 
 export type ChatEvent =
   | { t: "chat"; id: string }
@@ -55,6 +56,14 @@ const LABEL: Record<string, string> = {
   log_note: "Adding a note",
   save_task: "Saving the task",
   save_subscription: "Saving the subscription",
+  crm_overview: "Checking the numbers",
+  save_project: "Saving the project",
+  create_invoice: "Making the invoice",
+  add_expense: "Recording the expense",
+  save_brief: "Saving the brief",
+  update_request: "Updating the request",
+  assign_vendor: "Offering the job",
+  find_work: "Looking it up",
 };
 
 /* The tools in the shape the model takes, inputs streamed as they're written. */
