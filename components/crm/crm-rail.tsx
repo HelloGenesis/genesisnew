@@ -11,11 +11,13 @@ import {
   CircleDollarSign,
   ClipboardList,
   Compass,
+  Contact,
   FileSpreadsheet,
   FileText,
   FlaskConical,
   FolderKanban,
   Inbox,
+  Lightbulb,
   LayoutGrid,
   LifeBuoy,
   ListChecks,
@@ -33,9 +35,8 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import type { NavGroup } from "./side-nav";
@@ -53,6 +54,16 @@ import { usePref } from "./use-pref";
 /** An icon for each area, and for each page (by its address). */
 const AREA_ICON: Record<string, LucideIcon> = { Today: LayoutGrid, Sales: TrendingUp, Influence: Megaphone, Delivery: FolderKanban, "My work": FolderKanban, Money: Wallet, Setup: Settings };
 const AREA_LABEL: Record<string, string> = { Today: "Home", "My work": "Work" };
+/* What each area is for, under its name in the panel. */
+const AREA_HINT: Record<string, string> = {
+  Today: "Your day: tasks, alerts and inbox",
+  Sales: "Leads, briefs, clients and quotes",
+  Influence: "Creators, plans and reach-outs",
+  Delivery: "Projects, requests and crew",
+  "My work": "Your projects and requests",
+  Money: "Invoices, billing and spend",
+  Setup: "Your team and the CRM",
+};
 export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin": LayoutGrid,
   "/admin/notifications": Bell,
@@ -61,12 +72,14 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/assistant": Sparkles,
   "/admin/reports": TrendingUp,
   "/admin/leads": Users,
-  "/admin/briefs": ClipboardList,
+  "/admin/briefs": Lightbulb,
   "/admin/quotes": FileText,
+  "/admin/quotes?type=quotes": FileText,
+  "/admin/quotes?type=plans": ClipboardList,
   "/admin/reachout": Send,
   "/admin/invoices": Receipt,
   "/admin/accounts": Building2,
-  "/admin/creators": Megaphone,
+  "/admin/creators": Contact,
   "/admin/projects": FolderKanban,
   "/admin/requests": LifeBuoy,
   "/admin/vendors": Truck,
@@ -82,14 +95,34 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin?tour=1": Compass,
 };
 export const iconFor = (href: string) => PAGE_ICON[href] ?? BookOpen;
+/* Every rail item the same size, icon and label on one centre line. */
+const ITEM = "group flex h-[4.25rem] w-full shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
+const TILE = "relative grid size-10 place-items-center rounded-xl transition-colors";
 /* The areas set apart at the bottom of the rail, as Vitra's are. */
 const LOWER = new Set(["Money", "Setup"]);
 
 export function CrmRail({ groups, title, root = "/admin", footer }: { groups: NavGroup[]; title: string; root?: string; footer?: React.ReactNode }) {
   const path = usePathname() ?? root;
-  /* Links with a query ("Take the tour") are actions, never the page you're on. */
-  const matches = (href: string) => !href.includes("?") && (href === root ? path === root : path === href || path.startsWith(`${href}/`));
-  const best = groups.flatMap((g) => g.items.map((i) => i.href)).filter(matches).sort((a, b) => b.length - a.length)[0];
+  const search = useSearchParams();
+  /*
+   * WHICH PAGE YOU'RE ON: the longest matching address; a link with a query
+   * ("Quotes & proposals" is /admin/quotes?type=quotes) wins when its query
+   * matches too. A new plan (?kind=INFLUENCER_PLAN) counts as the plans.
+   * "Take the tour" is an action, never the page you're on.
+   */
+  const param = (k: string) => (k === "type" ? (search?.get("type") ?? (search?.get("kind") === "INFLUENCER_PLAN" ? "plans" : null)) : (search?.get(k) ?? null));
+  const score = (href: string) => {
+    const [p, qs] = href.split("?") as [string, string | undefined];
+    if (qs && new URLSearchParams(qs).has("tour")) return -1;
+    if (!(p === root ? path === root : path === p || path.startsWith(`${p}/`))) return -1;
+    const fits = qs ? [...new URLSearchParams(qs)].every(([k, v]) => param(k) === v) : true;
+    return p.length * 10 + (fits ? 5 : 0);
+  };
+  const best = groups
+    .flatMap((g) => g.items.map((i) => i.href))
+    .map((href) => [href, score(href)] as const)
+    .filter(([, n]) => n >= 0)
+    .sort((a, b) => b[1] - a[1])[0]?.[0];
   const here = groups.find((g) => g.items.some((i) => i.href === best))?.label ?? groups[0]?.label;
   /* The area whose pages are showing: the one you're in, until you pick another. */
   const [picked, setPicked] = useState<{ label: string; at: string } | null>(null);
@@ -114,13 +147,14 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         }}
         aria-pressed={lit}
         aria-label={`${AREA_LABEL[g.label] ?? g.label}${n ? `, ${n} waiting` : ""}`}
-        className="group flex w-full flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] text-white/65 transition-colors hover:text-white"
+        className={ITEM}
       >
-        <span className={`relative grid size-11 place-items-center rounded-xl transition-colors ${lit ? "bg-white text-[#141216] ring-2 ring-[#ffc516] ring-offset-2 ring-offset-[#18171b]" : inside ? "bg-white/15 text-white" : "group-hover:bg-white/10"}`}>
+        <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : inside ? "bg-white/15 text-white" : "group-hover:bg-white/10"}`}>
           <Icon className="size-5" aria-hidden />
-          {n > 0 && <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#ffc516] px-1 text-[0.625rem] font-semibold leading-4 text-[#141216]">{n > 99 ? "99+" : n}</span>}
+          {/* Something waiting in this area: a dot here, the numbers in its panel. */}
+          {n > 0 && <span aria-hidden className="absolute right-1.5 top-1.5 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
         </span>
-        <span className={lit || inside ? "font-medium text-white" : ""}>{AREA_LABEL[g.label] ?? g.label}</span>
+        <span className={`leading-none ${lit || inside ? "font-medium text-white" : ""}`}>{AREA_LABEL[g.label] ?? g.label}</span>
       </button>
     );
   };
@@ -129,18 +163,25 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     <div className="sticky top-20 flex h-[calc(100svh-6rem)] gap-3">
       {/* The rail. */}
       <nav aria-label="CRM areas" className="flex w-[4.75rem] shrink-0 flex-col items-center rounded-[1.25rem] bg-[#18171b] px-1.5 py-3 shadow-[var(--shadow-float)]">
-        <Link href={root} className="mb-3 grid size-11 place-items-center rounded-xl bg-[#ffc516]" aria-label="Dashboard" title={title}>
-          <Image src="/brand/genesis-n.png" alt="" width={18} height={30} className="h-6 w-auto invert" />
+        {/* Genesis's N, as the favicon (app/icon.svg): yellow on white. */}
+        <Link href={root} className="mb-2 grid size-11 shrink-0 place-items-center rounded-xl bg-white" aria-label="Dashboard" title={title}>
+          <svg viewBox="0 0 306 500" className="h-6 w-auto" aria-hidden>
+            <g fill="#ffd400">
+              <polygon points="30,0 306,0 306,340.7" />
+              <polygon points="0,149.1 284.25,500 0,500" />
+            </g>
+          </svg>
         </Link>
-        <div className="flex w-full flex-1 flex-col gap-0.5 overflow-y-auto [scrollbar-width:none]">
+        <span aria-hidden className="mx-auto mb-1 h-px w-10 bg-white/15" />
+        <div className="flex w-full flex-1 flex-col overflow-y-auto [scrollbar-width:none]">
           {groups.filter((g) => !LOWER.has(g.label)).map(railButton)}
-          <Link href="/admin/assistant" aria-label="AI assistant" className="group flex w-full flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[0.6875rem] text-white/65 hover:text-white">
-            <span className={`grid size-11 place-items-center rounded-xl bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216] ${path.startsWith("/admin/assistant") ? "ring-2 ring-white ring-offset-2 ring-offset-[#18171b]" : "opacity-90 group-hover:opacity-100"}`}>
+          <Link href="/admin/assistant" aria-label="AI assistant" className={ITEM}>
+            <span className={`${TILE} bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216] ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
               <Sparkles className="size-5" aria-hidden />
             </span>
-            <span className={path.startsWith("/admin/assistant") ? "font-medium text-white" : ""}>AI</span>
+            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-white" : ""}`}>AI</span>
           </Link>
-          {groups.some((g) => LOWER.has(g.label)) && <span aria-hidden className="mx-auto my-2 h-px w-10 bg-white/15" />}
+          {groups.some((g) => LOWER.has(g.label)) && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
           {groups.filter((g) => LOWER.has(g.label)).map(railButton)}
         </div>
         {footer}
@@ -152,7 +193,8 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           <div className="flex items-center justify-between gap-2 border-b border-[var(--glass-border)] px-4 py-3.5">
             <div className="min-w-0">
               <p className="truncate text-[0.6875rem] uppercase tracking-[0.14em] text-faint">{title}</p>
-              <p className="truncate text-[0.9375rem] font-semibold uppercase tracking-[0.08em] text-bone">{group.label === "Today" ? "Home" : group.label}</p>
+              <p className="truncate text-[0.9375rem] font-semibold uppercase tracking-[0.08em] text-bone">{AREA_LABEL[group.label] ?? group.label}</p>
+              {AREA_HINT[group.label] && <p className="mt-0.5 text-[0.75rem] leading-snug text-ash">{AREA_HINT[group.label]}</p>}
             </div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Fold the panel away" title="Fold away" className="grid size-8 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
               <ChevronsLeft className="size-4" aria-hidden />

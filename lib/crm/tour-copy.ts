@@ -12,6 +12,8 @@ export const ABOUT: Record<string, { title: string; body: string }> = {
   "/admin/leads": { title: "Leads & pipeline", body: "Every enquiry from the site, calls, WhatsApp and email. Drag them across stages; the count shows follow-ups due." },
   "/admin/briefs": { title: "Briefs", body: "What clients have asked for. Turn a brief into a quote or influencer plan in one click." },
   "/admin/quotes": { title: "Quotes & plans", body: "Proposals, price quotes and influencer plans. Send a link or PDF with a Razorpay pay link; export to Excel or Google Sheets. Every save is shared with the team." },
+  "/admin/quotes?type=quotes": { title: "Quotes & proposals", body: "Price quotes and proposals for shoots, films, AI content and design. Send a link or PDF with a Razorpay pay link." },
+  "/admin/quotes?type=plans": { title: "Influencer plans", body: "Creator lists with costs and client prices, shared as a proposal, a client link or Google Sheets, in step with the influencer database." },
   "/admin/reachout": { title: "Reach out", body: "Ask a plan's creators for their rates on WhatsApp or email, from your saved message, and see who's been contacted." },
   "/admin/invoices": { title: "Invoices", body: "GST tax invoices with CGST/SGST or IGST worked out. Fill one from a quote; each is filed as a PDF in the client's Google Drive folder." },
   "/admin/accounts": { title: "Clients & agencies", body: "Every client, agency and partner with their contacts, billing details, projects and history." },

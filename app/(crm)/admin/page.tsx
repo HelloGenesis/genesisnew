@@ -72,7 +72,7 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
   /* The dashboard's All features: this person's CRM pages, with what each does (lib/crm/tour-copy). */
   const features: Feature[] = [];
   for (const g of crmNav(viewer, { myTasks: myTasks.filter((t) => t.ownerId === viewer.id && t.dueDate && t.dueDate <= today).length, dueLeads: dueLeads.length, review: changes, openRequests }))
-    for (const i of g.items) if (i.href !== "/admin" && !i.href.includes("?") && !features.some((f) => f.href === i.href)) features.push({ href: i.href, label: i.label, area: g.label, body: ABOUT[i.href]?.body ?? null, count: i.count });
+    for (const i of g.items) if (i.href !== "/admin" && !i.href.includes("tour=") && !features.some((f) => f.href === i.href)) features.push({ href: i.href, label: i.label, area: g.label, body: ABOUT[i.href]?.body ?? null, count: i.count });
   const mrr = subs.reduce((sum, s) => sum + monthly(s.amountPaise, s.billing), 0);
 
   return (
