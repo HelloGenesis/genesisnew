@@ -8,8 +8,9 @@ import { Notice } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
 import { emailLoginEnabled } from "@/lib/crm/email-login";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
-import { accountScope, leadScope, projectScope, sees, through } from "@/lib/crm/scope";
-import { devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
+import { accountScope, leadScope, projectScope, quoteScope, sees, through } from "@/lib/crm/scope";
+import { quoteRef } from "@/lib/crm/quote-templates";
+import { can, devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
 import { SignOut } from "@/components/crm/sign-out";
 import { requestWorkspace } from "@/lib/crm/request-workspace";
 import { workspaces } from "@/lib/crm/workspace";
@@ -57,7 +58,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   /* The tour opens by itself on someone's first visit (components/crm/app-tour). */
   const tourSeen = Boolean(await prisma.appSetting.findUnique({ where: { key: `tour:done:${viewer!.id}` }, select: { key: true } }));
-  const groups = crmNav(viewer!, { unread, inboxNew, myTasks, dueLeads, review, openRequests });
+  /* The latest plans and quotes, for the rail's "Check existing" lists. */
+  const latest = can(viewer, "plans")
+    ? await prisma.quote.findMany({ where: quoteScope(viewer!), orderBy: { updatedAt: "desc" }, take: 30, select: { id: true, number: true, kind: true, title: true, company: true } })
+    : [];
+  const pick = (kind: "INFLUENCER_PLAN" | "QUOTE") => latest.filter((q) => q.kind === kind).slice(0, 8).map((q) => ({ href: `/admin/quotes/${q.id}`, label: q.company ? `${q.company} · ${q.title}` : q.title, hint: quoteRef(q.number) }));
+  const groups = crmNav(viewer!, { unread, inboxNew, myTasks, dueLeads, review, openRequests }, { plans: pick("INFLUENCER_PLAN"), quotes: pick("QUOTE") });
 
   /* Owners can look inside an agency's CRM: the switch sits over the page. */
   const viewingSwitch = switchable.length > 0 && (

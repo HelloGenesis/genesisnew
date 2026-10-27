@@ -6,6 +6,7 @@ import {
   BookOpen,
   Briefcase,
   Building2,
+  ChevronDown,
   ChevronsLeft,
   ChevronsRight,
   CircleDollarSign,
@@ -16,6 +17,7 @@ import {
   FileText,
   FlaskConical,
   FolderKanban,
+  History,
   Inbox,
   Lightbulb,
   LayoutGrid,
@@ -24,6 +26,7 @@ import {
   type LucideIcon,
   Megaphone,
   Plug,
+  Plus,
   Receipt,
   Repeat,
   Send,
@@ -200,7 +203,8 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
               <ChevronsLeft className="size-4" aria-hidden />
             </button>
           </div>
-          <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2.5" data-lenis-prevent>
+          <div className="flex flex-1 flex-col overflow-y-auto p-2.5" data-lenis-prevent>
+            <div className="flex flex-col gap-0.5">
             {group.items.map((item) => {
               const Icon = iconFor(item.href);
               const active = item.href === best;
@@ -212,6 +216,24 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
                 </Link>
               );
             })}
+            </div>
+            {/* Starting points: a new plan, a lead, a quote from the AI… */}
+            {!!group.create?.length && (
+              <>
+                <p className="mb-1 mt-5 px-3 text-[0.6875rem] uppercase tracking-[0.14em] text-faint">Create</p>
+                <div className="flex flex-col gap-0.5">
+                  {group.create.map((c) => (
+                    <Link key={c.href} href={c.href} className="group flex items-center gap-2.5 rounded-xl px-3 py-2 text-[0.875rem] text-ash transition-colors hover:bg-[var(--hover-wash)] hover:text-bone">
+                      <span className={`grid size-[1.125rem] shrink-0 place-items-center rounded-md ${c.href.startsWith("/admin/assistant") ? "bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216]" : "bg-[#ffc516]/15 text-[#ffc516]"}`}>
+                        {c.href.startsWith("/admin/assistant") ? <Sparkles className="size-3" aria-hidden /> : <Plus className="size-3" aria-hidden />}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{c.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+            {group.recent && <RecentList area={group.label} recent={group.recent} />}
           </div>
         </nav>
       )}
@@ -219,6 +241,31 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         <button type="button" onClick={() => setOpen(true)} aria-label="Show the panel" title="Show the pages" className="-ml-1.5 mt-3 grid h-10 w-5 place-items-center self-start rounded-r-lg border border-l-0 border-[var(--glass-border)] bg-[var(--crm-card)] text-ash hover:text-bone">
           <ChevronsRight className="size-3.5" aria-hidden />
         </button>
+      )}
+    </div>
+  );
+}
+
+/** "Check existing plans": the latest few, opened from the panel (Genesis, 27 Oct 2026: "then a list appears"). */
+function RecentList({ area, recent }: { area: string; recent: NonNullable<NavGroup["recent"]> }) {
+  const [open, setOpen] = usePref(`crm-rail-recent:${area}`, false);
+  return (
+    <div className="mt-5">
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[0.875rem] text-ash transition-colors hover:bg-[var(--hover-wash)] hover:text-bone">
+        <History className="size-[1.125rem] shrink-0" aria-hidden />
+        <span className="flex-1">{recent.label}</span>
+        <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+      </button>
+      {open && (
+        <div className="mt-1 flex flex-col gap-0.5 border-l border-[var(--glass-border)] pl-2 ml-5">
+          {recent.items.map((r) => (
+            <Link key={r.href} href={r.href} className="rounded-lg px-2.5 py-1.5 text-[0.8125rem] text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
+              <span className="block truncate">{r.label}</span>
+              {r.hint && <span className="block text-[0.6875rem] text-faint">{r.hint}</span>}
+            </Link>
+          ))}
+          <Link href={recent.all} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[0.8125rem] text-[#ffc516] hover:underline">See all <ChevronsRight className="size-3.5" aria-hidden /></Link>
+        </div>
       )}
     </div>
   );

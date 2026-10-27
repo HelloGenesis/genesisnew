@@ -93,11 +93,12 @@ function Rich({ text }: { text: string }) {
  * the answer streams in as it's written, with what it's doing in the CRM
  * shown as it happens.
  */
-export function AssistantChat({ chats, open, firstName, connectors }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean } }) {
+export function AssistantChat({ chats, open, firstName, connectors, initialText = "" }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; initialText?: string; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean } }) {
   const router = useRouter();
   const [chatId, setChatId] = useState<string | null>(open?.id ?? null);
   const [messages, setMessages] = useState<Msg[]>(open?.messages ?? []);
-  const [text, setText] = useState("");
+  /* A prompt to start from (?prompt=, from the rail's Create links). */
+  const [text, setText] = useState(initialText);
   const [files, setFiles] = useState<Attachment[]>([]);
   const [busy, setBusy] = useState(false);
   const [activity, setActivity] = useState<string | null>(null);

@@ -13,7 +13,7 @@ import { createTask, toggleTask, updateTask } from "../actions/delivery";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Tasks" };
 
-export default async function TasksPage({ searchParams }: { searchParams: Promise<{ owner?: string; done?: string }> }) {
+export default async function TasksPage({ searchParams }: { searchParams: Promise<{ owner?: string; done?: string; add?: string }> }) {
   const viewer = await requireStaff();
   const params = await searchParams;
   /* No filter chosen: two panels, what's mine and what I've given others (Genesis, 11 Oct 2026). */
@@ -82,7 +82,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         <label className="flex items-center gap-2 text-[0.875rem] text-ash"><input type="checkbox" name="done" value="1" defaultChecked={Boolean(params.done)} /> Show done</label>
         <button className="crm-btn crm-btn-secondary crm-btn-sm">Show</button>
       </form>
-      <AddPanel label="Add a task">
+      <AddPanel label="Add a task" open={params.add === "1"}>
         <ActionForm action={createTask} submit="Add task" reset>
           <div className="grid gap-3 sm:grid-cols-4">
             <Field label="Task" className="sm:col-span-2"><input name="title" required className="crm-input" /></Field>

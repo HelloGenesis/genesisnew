@@ -52,7 +52,7 @@ const REACH_FILTER = {
   earlier: { label: `Contacted, not in ${RECENT_DAYS} days`, where: () => ({ reachAt: { lt: new Date(Date.now() - RECENT_DAYS * 864e5) } }) as Prisma.CreatorWhereInput },
 };
 
-type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; contact?: string | string[]; reach?: string | string[]; reachout?: string; min?: string; max?: string; limit?: string };
+type Params = { q?: string; platform?: string | string[]; tier?: string | string[]; niche?: string | string[]; city?: string | string[]; source?: string | string[]; contact?: string | string[]; reach?: string | string[]; reachout?: string; min?: string; max?: string; limit?: string; add?: string };
 const many = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
 
 /* A niche worth offering: words, not a number or a stray sentence from an imported sheet. */
@@ -160,7 +160,7 @@ export default async function CreatorsPage({ searchParams }: { searchParams: Pro
         {filters.length > 0 && <> for {filters.map((f, i) => <span key={i} className="ml-1 inline-block rounded-full border border-[var(--glass-border)] px-2 py-0.5 text-[0.8125rem] text-bone">{f}</span>)}</>}
         {creators.length < matching && <span className="text-faint"> · showing the top {creators.length} by followers</span>}
       </p>
-      <AddPanel label="Add a creator">
+      <AddPanel label="Add a creator" open={p.add === "1"}>
         <ActionForm action={saveCreator} submit="Add creator">
           <CreatorFields />
         </ActionForm>

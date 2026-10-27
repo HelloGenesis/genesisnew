@@ -21,7 +21,7 @@ export const metadata = { title: "Leads" };
  * on one board, New → Won, with the follow-up date that drives the morning
  * digest. Lost and Nurture leave the board and stay in the list.
  */
-export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; division?: string; owner?: string; due?: string; q?: string; status?: string }> }) {
+export default async function LeadsPage({ searchParams }: { searchParams: Promise<{ view?: string; division?: string; owner?: string; due?: string; q?: string; status?: string; add?: string }> }) {
   const viewer = await requireStaff("sales");
   const params = await searchParams;
   const prisma = getPrisma();
@@ -71,7 +71,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
         <button className="crm-btn crm-btn-secondary crm-btn-sm">Filter</button>
       </form>
 
-      <AddPanel label="Add a lead">
+      <AddPanel label="Add a lead" open={params.add === "1"}>
         <ActionForm action={createLead} submit="Add lead" reset>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="Name *"><input name="name" required className="crm-input" /></Field>
