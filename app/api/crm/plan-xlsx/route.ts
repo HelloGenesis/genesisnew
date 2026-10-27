@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         name: str(c.name, 200) ?? "", handle: str(c.handle, 120) ?? "", platform: str(c.platform, 20) ?? "INSTAGRAM", profileUrl: str(c.profileUrl, 1000),
         followers: num(c.followers) ?? 0, avgViews: num(c.avgViews), er: num(c.er), niches: Array.isArray(c.niches) ? c.niches.map(String).slice(0, 30) : [], city: str(c.city, 200),
         reelCost: num(c.reelCost), storyCost: num(c.storyCost), dlCost: num(c.dlCost), reelPrice: num(c.reelPrice), storyPrice: num(c.storyPrice), dlPrice: num(c.dlPrice),
-        reachout: str(c.reachout, 120), contact: str(c.contact, 1000), remarks: str(c.remarks, 1000),
+        reachout: str(c.reachout, 120), phone: str(c.phone, 1000), email: str(c.email, 1000), tier: str(c.tier, 40), remarks: str(c.remarks, 1000),
         extra: c.extra && typeof c.extra === "object" ? Object.fromEntries(Object.entries(c.extra as Record<string, unknown>).map(([k, v]) => [k.slice(0, 80), String(v ?? "").slice(0, 1000)])) : {},
       }),
     ),
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
       creators: rows.map((c) => ({
         name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, er: c.engagementRate, niches: c.niches, city: c.city,
         reelCost: r(c.reelRatePaise), storyCost: r(c.storyRatePaise), dlCost: r(c.dlRatePaise), reelPrice: up(c.reelRatePaise), storyPrice: up(c.storyRatePaise), dlPrice: up(c.dlRatePaise),
-        contact: [c.phone, c.managedBy].filter(Boolean).join(" · ") || null, yt: c.youtubeUrl, email: c.email,
+        phone: c.phone, email: c.email, remarks: c.managedBy ? `Managed by ${c.managedBy}` : null, yt: c.youtubeUrl,
       })),
     },
     which,

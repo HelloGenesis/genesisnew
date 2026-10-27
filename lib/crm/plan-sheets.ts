@@ -66,8 +66,8 @@ export async function planInputFor(quoteId: string, viewer?: Viewer): Promise<{ 
           er: c.engagementRate ?? d?.engagementRate ?? null, niches: c.niches.length ? c.niches : (d?.niches ?? []), city: c.city ?? d?.city ?? null,
           reelCost: rupees(c.reelCostPaise), storyCost: rupees(c.storyCostPaise), dlCost: rupees(c.dlCostPaise),
           reelPrice: rupees(c.reelPricePaise), storyPrice: rupees(c.storyPricePaise), dlPrice: rupees(c.dlPricePaise),
-          reachout: c.reachout, contact: open ? (c.contact ?? ([d?.phone, d?.managedBy].filter(Boolean).join(" · ") || null)) : null, remarks: c.remarks,
-          yt: d?.youtubeUrl ?? null, email: open ? (d?.email ?? null) : null, extra: (c.extra ?? {}) as Record<string, string>,
+          reachout: c.reachout, phone: open ? (c.phone || d?.phone || null) : null, email: open ? (c.email || d?.email || null) : null, tier: c.tier, remarks: c.remarks,
+          yt: d?.youtubeUrl ?? null, extra: (c.extra ?? {}) as Record<string, string>,
         };
       }),
     },
@@ -136,11 +136,12 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
 
   const ext = await ensure(extSheetId, `${brand} x Genesis Media | Influencer Plan`, ["Summary", "Influencer Plan"]);
   const int = await ensure(intSheetId, `INT - ${brand} | Influencer plan`, ["INT", "EXT"]);
-  const write = (token: string, id: string, data: { range: string; values: Cell[][] }[]) =>
-    call(token, `${API}/${id}/values:batchUpdate`, { valueInputOption: "USER_ENTERED", data: data.map((d) => ({ ...d, values: d.values.map((r) => r.map(safe)) })) });
+  /* Plan text is never run as a formula (`safe`); only our own, marked `formula`, is. */
+  const write = (token: string, id: string, data: { range: string; values: Cell[][]; formula?: true }[]) =>
+    call(token, `${API}/${id}/values:batchUpdate`, { valueInputOption: "USER_ENTERED", data: data.map(({ formula, ...d }) => ({ ...d, values: formula ? d.values : d.values.map((r) => r.map(safe)) })) });
   await write(ext.token, ext.id, [
-    /* Genesis's logo above the Overview, as on Genesis's own plans. */
-    { range: "'Summary'!B2", values: [[`=IMAGE("${LOGO}", 1)`]] },
+    /* Genesis's logo above the Overview, as on Genesis's own plans (it went in as text, "=IMAGE(…)", until 27 Oct 2026). */
+    { range: "'Summary'!B2", values: [[`=IMAGE("${LOGO}", 1)`]], formula: true },
     { range: "'Summary'!A8", values: t.summary },
     { range: "'Influencer Plan'!A1", values: [t.ext.header, ...t.ext.rows, ...t.ext.disclaimer] },
   ]);

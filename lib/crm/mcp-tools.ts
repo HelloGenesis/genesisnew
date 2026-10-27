@@ -9,6 +9,7 @@ import type { Platform } from "@/lib/generated/prisma/enums";
 
 import { tierFor } from "./catalog";
 import { contactVisibility } from "./creator-privacy";
+import { CRM_TOOLS } from "./mcp-crm-tools";
 import { tidyNiches } from "./niches";
 import { appUrl } from "./notify";
 import { amount, handleFrom } from "./plan-import";
@@ -16,7 +17,8 @@ import { makePlanSheets } from "./plan-sheets";
 import { SheetEditedError } from "./plan-sync";
 import { newToken, refreshTotals } from "./quotes";
 import { quoteRef, termsByKey } from "./quote-templates";
-import { lastReaches, mergeContact, recordReach, syncPlanContacts } from "./reachout";
+import { tidyEmails, tidyPhones } from "./creator-contacts";
+import { lastReaches, recordReach, syncPlanContacts } from "./reachout";
 import { REACH_STATUSES } from "./reachout-status";
 import { creatorAccess, creatorScope, quoteScope, seesCreators, seesQuoteContact } from "./scope";
 import { can, type Viewer } from "./session";
@@ -36,12 +38,15 @@ import { can, type Viewer } from "./session";
  */
 
 /** How to use the tools well: sent to ChatGPT / Claude on connecting, and the CRM's own assistant's brief (lib/crm/assistant). */
-export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM: its influencer database and influencer plans.
+export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM: its influencer database, influencer plans, price quotes and proposals, leads, clients, agencies and vendors, notes and tasks.
 - To build or update a plan from screenshots, an Excel/CSV, a Google Sheet or an agency roster PDF: read every row yourself, then call create_plan or update_plan with one row per creator. Keep every detail: name, handle or profile link (write links as plain URLs), followers, avg views, ER, category, city, phone, email, agency, the creator's costs (reel_cost / story_cost / dl_cost) and, separately, client prices (reel_price / story_price / dl_price), reach-out status, remarks. Anything else goes in "columns" under its own heading (e.g. "Tentative Cost", "Deliverables"). Words or ranges in a money cell ("Awaiting quote", "₹50K–75K") go in remarks or a column, never as a number.
 - Before adding a creator, search_influencers to reuse the CRM's entry; check last_reach_out so nobody is contacted twice. Record reach-outs with log_reachout.
 - Agency rosters: save_influencers with source like "Agency roster · <agency>, <month>" and the agency in "agency".
-- After changing a plan, update_plan_sheets keeps its Google Sheets in step. Always give the user the plan's link.
-- Rupee amounts are plain numbers (180000 for ₹1.8L). Nothing can be deleted through these tools.`;
+- After changing a plan, update_plan_sheets keeps its Google Sheets in step.
+- Price quotes (shoots, films, production, AI content, design: anything that isn't a list of influencers) are create_quote / update_quote, with line items. From a vendor's costing with a margin ("add 50%"), give each line its cost and markup_percent; the client never sees costs. If a vendor's line items and their stated total disagree, say so. A proposal (target group, problems, objectives, concept, timeline boxes) goes in "proposal", on a quote or a plan.
+- Leads, clients/agencies/vendors, notes and tasks: search_crm first to find the record and avoid duplicates, then save_lead, save_client, log_note, save_task.
+- Always give the user the link to what you made or changed.
+- Rupee amounts are plain numbers (180000 for ₹1.8L). Nothing can be deleted through these tools, and nothing is sent to a client: quotes stay drafts until someone sends them from the CRM.`;
 
 type Tool = { name: string; description: string; input: z.ZodType; readOnly?: boolean; run: (viewer: Viewer, args: never) => Promise<unknown> };
 
@@ -95,8 +100,8 @@ const influencerInput = z.object({
   languages: z.array(z.string()).optional(),
   city: z.string().optional(),
   gender: z.string().optional(),
-  phone: z.string().max(40).optional(),
-  email: z.string().max(200).optional(),
+  phone: z.string().max(300).optional().describe("Phone number(s); more than one comma-separated. Added to the ones already saved."),
+  email: z.string().max(500).optional().describe("Email(s); more than one comma-separated. Added to the ones already saved."),
   agency: z.string().max(160).optional().describe("Agency or manager who represents them."),
   poc_name: z.string().max(120).optional(),
   poc_contact: z.string().max(160).optional(),
@@ -126,9 +131,9 @@ const planRow = z.object({
   story_price: money,
   dl_price: money,
   reach_out: z.string().max(60).optional().describe(`Status: ${REACH_STATUSES.join(", ")}.`),
-  phone: z.string().max(40).optional(),
-  email: z.string().max(200).optional(),
-  contact: z.string().max(300).optional().describe("Anything else for the contact column, e.g. the agency."),
+  phone: z.string().max(300).optional().describe("Phone number(s); more than one comma-separated. Added to the ones already saved."),
+  email: z.string().max(500).optional().describe("Email(s); more than one comma-separated. Added to the ones already saved."),
+  contact: z.string().max(300).optional().describe("Anything else about reaching them, e.g. the agency; goes into the remarks."),
   remarks: z.string().max(2000).optional(),
   columns: z.record(z.string(), z.string()).optional().describe("Values for the plan's own added columns, by column name (e.g. 'Tentative Cost', 'Deliverables')."),
 });
@@ -161,8 +166,9 @@ async function saveCreator(viewer: Viewer, x: InfluencerIn | (PlanRowIn & { id?:
     ...(typeof x.er === "number" ? { engagementRate: x.er } : {}),
     ...(niches?.length ? { niches: tidyNiches(niches) } : {}),
     ...(x.city ? { city: x.city } : {}),
-    ...(x.phone ? { phone: x.phone.trim() } : {}),
-    ...(x.email ? { email: x.email.trim().toLowerCase() } : {}),
+    /* Added to the numbers and emails already saved, never replacing them (lib/crm/contacts). */
+    ...(tidyPhones(x.phone) ? { phone: tidyPhones([existing?.phone, x.phone].filter(Boolean).join(", ")) } : {}),
+    ...(tidyEmails(x.email) ? { email: tidyEmails([existing?.email, x.email].filter(Boolean).join(", ")) } : {}),
     ...(isInfluencer && inf.languages?.length ? { languages: inf.languages } : {}),
     ...(isInfluencer && inf.gender ? { gender: inf.gender } : {}),
     ...(isInfluencer && inf.agency ? { managedBy: inf.agency } : {}),
@@ -231,7 +237,7 @@ async function planOut(viewer: Viewer, id: string) {
       name: c.name, handle: c.handle, platform: c.platform, profile_url: c.profileUrl, followers: c.followers, avg_views: c.avgViews, er: c.engagementRate, category: c.niches, city: c.city,
       cost: { reel: r(c.reelCostPaise), story: r(c.storyCostPaise), dl: r(c.dlCostPaise) },
       price: { reel: r(c.reelPricePaise), story: r(c.storyPricePaise), dl: r(c.dlPricePaise) },
-      reach_out: c.reachout, contact: visible(c) ? c.contact : "private", remarks: c.remarks, columns: c.extra,
+      reach_out: c.reachout, phone: visible(c) ? c.phone : "private", email: visible(c) ? c.email : "private", tier: c.tier, remarks: c.remarks, columns: c.extra,
       in_database: Boolean(c.creatorId), last_reach_out: c.creatorId ? (lasts[c.creatorId] ?? null) : null,
     })),
   };
@@ -276,16 +282,18 @@ async function writeRows(viewer: Viewer, quoteId: string, rows: PlanRowIn[]) {
       ...(price.story !== null || cost.story !== null ? { storyPricePaise: price.story ?? up(cost.story) } : {}),
       ...(price.dl !== null || cost.dl !== null ? { dlPricePaise: price.dl ?? up(cost.dl) } : {}),
       ...(row.reach_out ? { reachout: row.reach_out.slice(0, 60) } : {}),
-      ...(row.remarks ? { remarks: row.remarks } : {}),
-      ...((row.phone || row.email || row.contact) && mayContact ? { contact: mergeContact([was?.contact, row.contact].filter(Boolean).join(" · "), row.phone ?? null, row.email ?? null) } : {}),
+      ...(row.remarks || row.contact ? { remarks: [row.remarks ?? was?.remarks, row.contact].filter(Boolean).join(" · ") } : {}),
+      /* Numbers and emails added to the row's (and so to the database's: saveCreator above), where this person may see them. */
+      ...(tidyPhones(row.phone) && mayContact ? { phone: tidyPhones([was?.phone, row.phone].filter(Boolean).join(", ")) } : {}),
+      ...(tidyEmails(row.email) && mayContact ? { email: tidyEmails([was?.email, row.email].filter(Boolean).join(", ")) } : {}),
     };
     if (was) {
       await prisma.quoteCreator.update({ where: { id: was.id }, data: { ...data, creatorId: was.creatorId ?? saved.id, extra: { ...((was.extra ?? {}) as Record<string, string>), ...(row.columns ?? {}) } } });
       updated += 1;
     } else {
       /* A creator the database already has a number or email for: those come onto the plan (where this person may see them). */
-      const known = saved.id && !("contact" in data) ? await prisma.creator.findUnique({ where: { id: saved.id }, select: { phone: true, email: true, managedBy: true } }) : null;
-      if (known && (known.phone || known.email) && (await contactVisibility(viewer, q, [saved.id]))({ creatorId: saved.id })) Object.assign(data, { contact: mergeContact(known.managedBy, known.phone, known.email) });
+      const known = saved.id ? await prisma.creator.findUnique({ where: { id: saved.id }, select: { phone: true, email: true } }) : null;
+      if (known && (known.phone || known.email) && (await contactVisibility(viewer, q, [saved.id]))({ creatorId: saved.id })) Object.assign(data, { phone: known.phone ?? ("phone" in data ? data.phone : null), email: known.email ?? ("email" in data ? data.email : null) });
       await prisma.quoteCreator.create({
         data: {
           quoteId, position: position++, creatorId: saved.id, platform: platformOf(row.platform, row.profile_url), handle: handle || row.name.toLowerCase().replace(/[^a-z0-9._]+/g, ""), followers: 0,
@@ -304,6 +312,8 @@ async function writeRows(viewer: Viewer, quoteId: string, rows: PlanRowIn[]) {
 /* --- The tools ------------------------------------------------------------- */
 
 export const TOOLS: Tool[] = [
+  /* Quotes, proposals, leads, clients, notes and tasks (lib/crm/mcp-crm-tools). */
+  ...CRM_TOOLS,
   {
     name: "search_influencers",
     readOnly: true,
@@ -372,7 +382,7 @@ export const TOOLS: Tool[] = [
   {
     name: "list_plans",
     readOnly: true,
-    description: "Influencer plans (and quotes) you can open, newest first; filter by text (title, brand).",
+    description: "Influencer plans (and, with include_quotes, price quotes) you can open, newest first; filter by text (title, brand).",
     input: z.object({ query: z.string().optional(), include_quotes: z.boolean().optional(), limit: z.number().int().min(1).max(50).optional() }),
     run: async (viewer, a: { query?: string; include_quotes?: boolean; limit?: number }) => {
       if (!can(viewer, "plans")) throw new Error("You don't have access to plans.");

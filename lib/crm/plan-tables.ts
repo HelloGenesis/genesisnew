@@ -52,10 +52,13 @@ export type PlanCreator = {
   storyPrice?: number | null;
   dlPrice?: number | null;
   reachout?: string | null;
-  contact?: string | null;
+  /** Numbers and emails, each ", "-separated (lib/crm/contacts). */
+  phone?: string | null;
+  email?: string | null;
+  /** Set by hand on the plan; else by followers. */
+  tier?: string | null;
   remarks?: string | null;
   yt?: string | null;
-  email?: string | null;
   extra?: Record<string, string>;
 };
 export type PlanInput = { title: string; brand: string; terms: string | null; planBudget: string | null; columns: PlanColumns; creators: PlanCreator[] };
@@ -64,7 +67,7 @@ export type PlanInput = { title: string; brand: string; terms: string | null; pl
 export const PLAN_COLUMNS: [key: string, label: string][] = [
   ["tier", "Tier"], ["category", "Category"], ["ig", "IG link"], ["followers", "Followers"], ["avgViews", "Avg views"], ["er", "ER %"], ["location", "Location"], ["reachout", "Reach-out"],
   ["reelCost", "Cost: 1 IG Reel"], ["storyCost", "Cost: Story + LIB"], ["dlCost", "Cost: DL (1 month)"], ["reelPrice", "Price: 1 IG Reel"], ["storyPrice", "Price: Story + LIB"], ["dlPrice", "Price: DL (1 month)"],
-  ["profit", "Profit"], ["contact", "Contact"], ["remarks", "Remarks"],
+  ["profit", "Profit"], ["phone", "Phone"], ["email", "Email"], ["remarks", "Remarks"],
 ];
 
 export const DEFAULT_NOTES = [
@@ -83,7 +86,7 @@ export const tierOf = (followers: number) => (followers < 100_000 ? "Nano & Micr
 const k = (n: number) => (n >= 1e5 ? `${Math.round(n / 1e4) / 10 >= 10 ? Math.round(n / 1e5) * 100 : Math.round(n / 1e3)}k` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n));
 const sum = (xs: (number | null | undefined)[]) => xs.reduce<number>((s, v) => s + (v ?? 0), 0);
 
-type Row = PlanCreator & { tier: string; category: string; ig: string; cost: (number | null)[]; price: (number | null)[]; profit: number };
+type Row = Omit<PlanCreator, "tier"> & { tier: string; category: string; ig: string; cost: (number | null)[]; price: (number | null)[]; profit: number };
 export type Col = { key: string; header: string; width: number; money?: boolean; group?: "cost" | "price"; value: (r: Row) => Cell };
 
 const cols = (xs: Col[]) => xs;
@@ -97,7 +100,7 @@ export function planTables(p: PlanInput) {
     .map((c) => {
       const cost = [c.reelCost ?? null, c.storyCost ?? null, c.dlCost ?? null];
       const price = [c.reelPrice ?? null, c.storyPrice ?? null, c.dlPrice ?? null];
-      return { ...c, tier: tierOf(c.followers), category: c.niches.join(" & "), ig: c.profileUrl ?? (c.platform === "INSTAGRAM" ? `https://www.instagram.com/${c.handle}` : ""), cost, price, profit: sum(price) - sum(cost) };
+      return { ...c, tier: c.tier?.trim() || tierOf(c.followers), category: c.niches.join(" & "), ig: c.profileUrl ?? (c.platform === "INSTAGRAM" ? `https://www.instagram.com/${c.handle}` : ""), cost, price, profit: sum(price) - sum(cost) };
     });
   const show = (key: string) => !hidden.has(key);
   const extras: Col[] = custom.map((name) => ({ key: `x:${name}`, header: name, width: 160, value: (r) => r.extra?.[name] ?? "" }));
@@ -131,15 +134,15 @@ export function planTables(p: PlanInput) {
     { key: "reelCost", header: "1 IG Reel", width: 100, money: true, group: "cost", value: (r) => r.cost[0]! },
     { key: "storyCost", header: "Story + LIB", width: 100, money: true, group: "cost", value: (r) => r.cost[1]! },
     { key: "dlCost", header: "DL (1 month)", width: 110, money: true, group: "cost", value: (r) => r.cost[2]! },
-    { key: "contact", header: "Contact", width: 200, value: (r) => r.contact ?? "" },
+    { key: "phone", header: "Phone", width: 160, value: (r) => r.phone ?? "" },
+    { key: "email", header: "Email", width: 220, value: (r) => r.email ?? "" },
     { key: "location", header: "Location", width: 120, value: (r) => r.city ?? "" },
     { key: "profit", header: "Profit", width: 100, money: true, value: (r) => r.profit },
     { key: "reelPrice", header: "1 IG Reel", width: 100, money: true, group: "price", value: (r) => r.price[0]! },
     { key: "storyPrice", header: "Story + LIB", width: 100, money: true, group: "price", value: (r) => r.price[1]! },
     { key: "dlPrice", header: "DL (1 month)", width: 110, money: true, group: "price", value: (r) => r.price[2]! },
     { key: "remarks", header: "Remarks", width: 200, value: (r) => r.remarks ?? "" },
-    { key: "email", header: "Email", width: 200, value: (r) => r.email ?? "" },
-  ]).filter((c) => ["name", "yt", "email"].includes(c.key) || show(c.key));
+  ]).filter((c) => ["name", "yt"].includes(c.key) || show(c.key));
   intCols.push(...extras);
 
   const extHeader: Cell[] = extCols.map((c) => c.header);

@@ -24,7 +24,9 @@ import { queueSheet } from "@/lib/crm/sheets";
 import { creatorScope, isSuperAdmin, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { openProject } from "@/lib/crm/projects";
+import { tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { recordReach, syncPlanContacts } from "@/lib/crm/reachout";
+import { notifyAssignee } from "@/lib/crm/task-notify";
 import { stagesOf } from "@/lib/crm/stages";
 
 /** Server actions for projects, deliverables, messages, requests, tasks, vendors and creators. */
@@ -307,33 +309,6 @@ export async function updateTask(_: ActionState, form: FormData): Promise<Action
   return ok("Saved.");
 }
 
-/** "You've got a task": to the assignee, unless they assigned it to themselves. */
-async function notifyAssignee(taskId: string, assignerId: string) {
-  const prisma = getPrisma();
-  const t = await prisma.task.findUnique({ where: { id: taskId }, include: { owner: true, lead: true, project: true, account: true } });
-  if (!t?.owner?.email || t.ownerId === assignerId) return;
-  const assigner = await prisma.user.findUnique({ where: { id: assignerId }, select: { name: true, email: true } });
-  const about = t.project ? `Project: ${t.project.name}` : t.lead ? `Lead: ${t.lead.name}` : t.account ? `Client: ${t.account.name}` : "";
-  await queueEmail({
-    kind: "task_assigned",
-    to: [t.owner.email],
-    subject: `${t.priority === "HIGH" ? "[High] " : ""}New task: ${t.title}`,
-    text: [
-      `${assigner?.name ?? assigner?.email ?? "Someone"} assigned you a task in the Genesis CRM.`,
-      "",
-      t.title,
-      t.details ?? "",
-      about,
-      t.dueDate ? `Due: ${t.dueDate.toISOString().slice(0, 10)}` : "",
-      "",
-      `Your tasks: ${appUrl("/admin/tasks")}`,
-    ]
-      .filter((l, i, all) => l !== "" || all[i - 1] !== "")
-      .join("\n"),
-    dedupeKey: `task-assigned:${t.id}:${t.ownerId}`,
-  });
-}
-
 export async function toggleTask(form: FormData) {
   await requireStaff();
   const id = text(form, "id");
@@ -403,8 +378,8 @@ function creatorData(form: FormData) {
     postRatePaise: toPaise(form.get("postRate")),
     dlRatePaise: toPaise(form.get("dlRate")),
     youtubeUrl: text(form, "youtubeUrl", 300),
-    email: text(form, "email", 200)?.toLowerCase() ?? null,
-    phone: text(form, "phone", 30),
+    email: tidyEmails(text(form, "email", 1000)),
+    phone: tidyPhones(text(form, "phone", 1000)),
     managedBy: text(form, "managedBy", 160),
     pocName: text(form, "pocName", 120),
     pocContact: text(form, "pocContact", 160),
@@ -425,6 +400,8 @@ export async function saveCreator(_: ActionState, form: FormData): Promise<Actio
   if (id && !(await getPrisma().creator.findFirst({ where: { id, ...creatorScope(viewer) }, select: { id: true } }))) return fail("You can only change creators you added.");
   try {
     const creator = id ? await getPrisma().creator.update({ where: { id }, data }) : await getPrisma().creator.create({ data: { ...data, createdById: viewer.id } });
+    /* Their numbers and emails, on every plan they're on (lib/crm/reachout). */
+    if (id) await syncPlanContacts(id);
     done();
     if (!id) redirect(`/admin/creators/${creator.id}`);
     return ok("Saved.");
@@ -509,9 +486,19 @@ export async function updateCreatorField(id: string, field: string, raw: string)
       data = { [`${field}Paise`]: paise } as Prisma.CreatorUpdateInput;
       break;
     }
-    case "email":
-      data = { email: blank ? null : value.toLowerCase().slice(0, 200) };
+    /* More than one of each, comma-separated (lib/crm/contacts). */
+    case "email": {
+      const list = tidyEmails(value);
+      if (!blank && !list) return { ok: false, message: "That email doesn't look right." };
+      data = { email: list };
       break;
+    }
+    case "phone": {
+      const list = tidyPhones(value);
+      if (!blank && !list) return { ok: false, message: "A phone number, like +91 98200 12345." };
+      data = { phone: list };
+      break;
+    }
     case "reachStatus": {
       /* Set by hand in the database (lib/crm/reachout): logged, with who and when. */
       const c = await getPrisma().creator.findUnique({ where: { id }, select: { name: true, handle: true } });

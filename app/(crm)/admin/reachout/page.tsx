@@ -3,7 +3,7 @@ import Link from "next/link";
 import { OutreachPanel } from "@/components/crm/outreach-panel";
 import { Card, Empty, PageHead } from "@/components/crm/ui";
 import { date } from "@/lib/crm/catalog";
-import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
+import { DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
 import { quoteRef } from "@/lib/crm/quote-templates";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { lastReaches } from "@/lib/crm/reachout";
@@ -32,7 +32,7 @@ export default async function ReachoutPage({ searchParams }: { searchParams: Pro
   });
   const current = plans.find((p) => p.id === picked) ?? plans[0];
   const q = current
-    ? await prisma.quote.findUnique({ where: { id: current.id }, select: { id: true, company: true, createdById: true, creators: { orderBy: { position: "asc" }, select: { id: true, name: true, handle: true, city: true, contact: true, reachout: true, creatorId: true } } } })
+    ? await prisma.quote.findUnique({ where: { id: current.id }, select: { id: true, company: true, createdById: true, creators: { orderBy: { position: "asc" }, select: { id: true, name: true, handle: true, city: true, phone: true, email: true, reachout: true, creatorId: true } } } })
     : null;
   const linked = q ? await prisma.creator.findMany({ where: { id: { in: q.creators.map((c) => c.creatorId).filter((x): x is string => Boolean(x)) } }, select: { id: true, phone: true, email: true } }) : [];
   /* Creators' numbers and emails, only where this person may see them (lib/crm/creator-privacy). */
@@ -41,9 +41,9 @@ export default async function ReachoutPage({ searchParams }: { searchParams: Pro
   const lasts = await lastReaches((q?.creators ?? []).map((c) => c.creatorId));
   const rows = (q?.creators ?? []).map((c) => {
     const d = linked.find((x) => x.id === c.creatorId);
-    const bits = contactBits(c.contact);
     const open = visible(c);
-    return { id: c.id, name: c.name, handle: c.handle, phone: open ? (d?.phone ?? bits.phone) : null, email: open ? (d?.email ?? bits.email) : null, reachout: c.reachout, last: c.creatorId ? (lasts[c.creatorId] ?? null) : null, canEdit: open };
+    /* The plan row's numbers and emails, else the database's (lib/crm/reachout keeps them the same). */
+    return { id: c.id, name: c.name, handle: c.handle, phone: open ? (c.phone || d?.phone || null) : null, email: open ? (c.email || d?.email || null) : null, reachout: c.reachout, last: c.creatorId ? (lasts[c.creatorId] ?? null) : null, canEdit: open };
   });
   const cities = [...new Set((q?.creators ?? []).map((c) => c.city).filter((c): c is string => Boolean(c)))];
   const template = (await prisma.appSetting.findUnique({ where: { key: "outreach-template" } }))?.value ?? DEFAULT_OUTREACH;

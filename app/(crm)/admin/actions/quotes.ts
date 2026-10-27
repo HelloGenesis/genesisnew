@@ -8,8 +8,8 @@ import { recordAuditLog } from "@/lib/audit";
 import { archiveQuote, archiveLater } from "@/lib/crm/archive";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { proposalOrder } from "@/lib/crm/proposal-order";
-import { contactBits } from "@/lib/crm/outreach";
-import { recordReach, syncPlanContacts } from "@/lib/crm/reachout";
+import { recordReach, setCreatorContacts } from "@/lib/crm/reachout";
+import { sameList, tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { SheetEditedError } from "@/lib/crm/plan-sync";
 import { DriveNotConnected } from "@/lib/crm/drive";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
@@ -98,7 +98,9 @@ const payload = z.object({
         storyPrice: rupees.nullable().optional(),
         dlPrice: rupees.nullable().optional(),
         reachout: z.string().max(120).nullable().optional(),
-        contact: z.string().max(1000).nullable().optional(),
+        phone: z.string().max(1000).nullable().optional(),
+        email: z.string().max(1000).nullable().optional(),
+        tier: z.string().max(40).nullable().optional(),
         remarks: z.string().max(1000).nullable().optional(),
         extra: z.record(z.string().max(80), z.string().max(1000)).optional(),
       }),
@@ -186,11 +188,11 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     /* The client's total for a creator is the sum of the priced deliverables, when they're priced one by one. */
     feePaise: [c.reelPrice, c.storyPrice, c.dlPrice].some((v) => typeof v === "number") ? paise((c.reelPrice ?? 0) + (c.storyPrice ?? 0) + (c.dlPrice ?? 0)) : c.fee === null || c.fee === undefined ? null : paise(c.fee),
     engagementRate: c.er ?? null, reelCostPaise: p(c.reelCost), storyCostPaise: p(c.storyCost), dlCostPaise: p(c.dlCost), reelPricePaise: p(c.reelPrice), storyPricePaise: p(c.storyPrice), dlPricePaise: p(c.dlPrice),
-    reachout: c.reachout || null, contact: c.contact || null, remarks: c.remarks || null, extra: (c.extra ?? {}) as Prisma.InputJsonValue }));
+    reachout: c.reachout || null, phone: tidyPhones(c.phone), email: tidyEmails(c.email), tier: c.tier?.trim() || null, remarks: c.remarks || null, extra: (c.extra ?? {}) as Prisma.InputJsonValue }));
 
   let id = q.id;
   /* The rows as they were, to see which reach-outs and contacts changed (lib/crm/reachout). */
-  const previous = id ? await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, handle: true, reachout: true, contact: true } }) : [];
+  const previous = id ? await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, handle: true, reachout: true, phone: true, email: true } }) : [];
   if (id) {
     const before = await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) } });
     if (!before) return failed("That quote isn't yours, or no longer exists.");
@@ -213,10 +215,12 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     if (!seesQuoteContact(viewer, { createdById: before.createdById, lead })) Object.assign(data, { contactName: before.contactName, contactEmail: before.contactEmail, contactPhone: before.contactPhone, leadId: before.leadId, accountId: before.accountId });
     /* Creators' contacts this person can't see came to the page blank: keep what was saved (lib/crm/creator-privacy). */
     const visible = await contactVisibility(viewer, before, creators.map((c) => c.creatorId));
-    const saved = await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, handle: true, contact: true } });
+    const saved = await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, handle: true, phone: true, email: true } });
     for (const c of creators) {
       if (visible(c)) continue;
-      c.contact = saved.find((s) => (c.creatorId && s.creatorId === c.creatorId) || (s.handle && s.handle === c.handle))?.contact ?? null;
+      const was = saved.find((s) => (c.creatorId && s.creatorId === c.creatorId) || (s.handle && s.handle === c.handle));
+      c.phone = was?.phone ?? null;
+      c.email = was?.email ?? null;
     }
     await prisma.$transaction([
       prisma.quoteLine.deleteMany({ where: { quoteId: id } }),
@@ -234,20 +238,16 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
    * changed in a row goes to the influencer database and the creator's other
    * plans. Contacts only where this person may see them.
    */
-  const rowsNow = await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, name: true, handle: true, reachout: true, contact: true } });
+  const rowsNow = await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, name: true, handle: true, reachout: true, phone: true, email: true } });
   const quoteFor = await prisma.quote.findUniqueOrThrow({ where: { id }, select: { createdById: true } });
   const mayContact = await contactVisibility(viewer, quoteFor, rowsNow.map((c) => c.creatorId));
   for (const c of rowsNow) {
     const was = previous.find((p) => (c.creatorId && p.creatorId === c.creatorId) || p.handle === c.handle);
     if (c.reachout && c.reachout !== was?.reachout) await recordReach({ creatorId: c.creatorId, quoteId: id, name: c.name, handle: c.handle, status: c.reachout, byId: viewer.id });
-    if (c.creatorId && c.contact !== (was?.contact ?? null) && mayContact(c)) {
-      const bits = contactBits(c.contact);
-      const old = contactBits(was?.contact);
-      const data = { ...(bits.phone !== old.phone ? { phone: bits.phone } : {}), ...(bits.email !== old.email ? { email: bits.email?.toLowerCase() ?? null } : {}) };
-      if (Object.keys(data).length) {
-        await prisma.creator.updateMany({ where: { id: c.creatorId }, data });
-        await syncPlanContacts(c.creatorId);
-      }
+    /* Numbers or emails changed here: the database and the creator's other plans follow (lib/crm/reachout). */
+    if (c.creatorId && mayContact(c)) {
+      const next = { ...(!sameList(c.phone, was?.phone, "phone") ? { phone: c.phone } : {}), ...(!sameList(c.email, was?.email, "email") ? { email: c.email } : {}) };
+      if (Object.keys(next).length) await setCreatorContacts(c.creatorId, next);
     }
   }
   const saved = await prisma.quote.findUniqueOrThrow({ where: { id }, select: { updatedAt: true } });
@@ -323,7 +323,7 @@ export async function draftFromCreators(ids: string[], then?: "sheets" | "reacho
             position: i, creatorId: c.id, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city,
             deliverables: "1 IG Reel + Story & link in bio", engagementRate: c.engagementRate, reelCostPaise: c.reelRatePaise, storyCostPaise: c.storyRatePaise, dlCostPaise: c.dlRatePaise,
             reelPricePaise: prices[0], storyPricePaise: prices[1], dlPricePaise: prices[2], feePaise: prices.some((x) => x !== null) ? prices.reduce<number>((s, x) => s + (x ?? 0), 0) : null,
-            contact: [c.phone, c.email, c.managedBy].filter(Boolean).join(" · ") || null,
+            phone: tidyPhones(c.phone), email: tidyEmails(c.email), remarks: c.managedBy ? `Managed by ${c.managedBy}` : null,
           };
         }),
       },

@@ -9,7 +9,7 @@ import { Card, Field, Notice, PageHead, Select, Status } from "@/components/crm/
 import { getPrisma } from "@/lib/db";
 import { QUOTE_STATUS, dateTime, money, projectRef } from "@/lib/crm/catalog";
 import { appUrl } from "@/lib/crm/notify";
-import { contactBits, DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
+import { DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { lastReaches } from "@/lib/crm/reachout";
 import { pullPlanSheets } from "@/lib/crm/plan-sync";
@@ -79,7 +79,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     creators: q.creators.map((c) => ({
       creatorId: c.creatorId, name: c.name, handle: c.handle, platform: c.platform, profileUrl: c.profileUrl, followers: c.followers, avgViews: c.avgViews, niches: c.niches, city: c.city, deliverables: c.deliverables,
       fee: rupee(c.feePaise), er: c.engagementRate, reelCost: rupee(c.reelCostPaise), storyCost: rupee(c.storyCostPaise), dlCost: rupee(c.dlCostPaise),
-      reelPrice: rupee(c.reelPricePaise), storyPrice: rupee(c.storyPricePaise), dlPrice: rupee(c.dlPricePaise), reachout: c.reachout, contact: visible(c) ? c.contact : null, remarks: c.remarks, extra: (c.extra ?? {}) as Record<string, string>, last: c.creatorId ? (lasts[c.creatorId] ?? null) : null,
+      reelPrice: rupee(c.reelPricePaise), storyPrice: rupee(c.storyPricePaise), dlPrice: rupee(c.dlPricePaise), reachout: c.reachout, phone: visible(c) ? c.phone : null, email: visible(c) ? c.email : null, tier: c.tier, remarks: c.remarks, extra: (c.extra ?? {}) as Record<string, string>, last: c.creatorId ? (lasts[c.creatorId] ?? null) : null,
     })),
   };
   const data = await builderData(seesCreators(viewer) ? creatorScope(viewer) : null, viewer);
@@ -90,9 +90,9 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
   const linked = hasCreators ? await getPrisma().creator.findMany({ where: { id: { in: q.creators.map((c) => c.creatorId).filter((x): x is string => Boolean(x)) } }, select: { id: true, phone: true, email: true } }) : [];
   const outreachRows = q.creators.map((c) => {
     const d = linked.find((x) => x.id === c.creatorId);
-    const bits = contactBits(c.contact);
     const open = visible(c);
-    return { id: c.id, name: c.name, handle: c.handle, phone: open ? (d?.phone ?? bits.phone) : null, email: open ? (d?.email ?? bits.email) : null, reachout: c.reachout, last: c.creatorId ? (lasts[c.creatorId] ?? null) : null, canEdit: open };
+    /* The plan row's numbers and emails, else the database's (lib/crm/reachout keeps them the same). */
+    return { id: c.id, name: c.name, handle: c.handle, phone: open ? (c.phone || d?.phone || null) : null, email: open ? (c.email || d?.email || null) : null, reachout: c.reachout, last: c.creatorId ? (lasts[c.creatorId] ?? null) : null, canEdit: open };
   });
   const template = hasCreators ? ((await getPrisma().appSetting.findUnique({ where: { key: "outreach-template" } }))?.value ?? DEFAULT_OUTREACH) : "";
   const cities = [...new Set(q.creators.map((c) => c.city).filter(Boolean))] as string[];
