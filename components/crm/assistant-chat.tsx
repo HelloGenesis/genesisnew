@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, ChevronDown, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
+import { AudioLines, ChevronDown, Maximize2, Minimize2, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -110,6 +110,24 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
   const [listening, setListening] = useState(false);
   const [showConnectors, setShowConnectors] = useState(false);
   const [dragging, setDragging] = useState(false);
+  /* The assistant over the whole screen; Esc leaves. */
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (!full) return;
+    const was = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !showConnectors && setFull(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = was;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [full, showConnectors]);
+  const fullButton = (
+    <button type="button" onClick={() => setFull((f) => !f)} aria-pressed={full} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen (Esc)" : "Full screen"} className="grid size-8 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
+      {full ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />}
+    </button>
+  );
   const liveApps = connectors.builtIns.filter((b) => b.on).length + connectors.added.filter((c) => c.enabled).length;
   /* The sidebar, open or folded; remembered on this device. */
   const [listOpen, toggleList] = usePref("crm-assistant-sidebar", true);
@@ -299,12 +317,13 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
   return (
     /* ONE WINDOW (Genesis, 27 Oct 2026, after the reference): the sidebar inside it, the orb and the chat box in the middle. */
     /* A fixed window (Genesis, 27 Oct 2026: "this section stays still"): only the conversation scrolls inside it. */
-    <div className="crm-card relative flex h-[calc(100svh-16.25rem)] min-h-[28rem] overflow-hidden !p-0">
+    <div className={full ? "fixed inset-0 z-[80] flex overflow-hidden bg-[var(--crm-panel)]" : "crm-card relative flex h-[calc(100svh-16.25rem)] min-h-[28rem] overflow-hidden !p-0"}>
       {listOpen && (
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
             <OrbMark thinking={thinking} />
             <span className="flex-1 text-[0.9375rem] font-semibold text-bone">Genesis AI</span>
+            {fullButton}
             <button type="button" onClick={() => toggleList(false)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone" aria-label="Hide the sidebar" title="Hide the sidebar"><ChevronsLeft className="size-4" aria-hidden /></button>
           </div>
           <div className="px-3">
@@ -352,7 +371,8 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
           {!listOpen && (
             <button type="button" onClick={() => toggleList(true)} className={CHIP} aria-label="Show the sidebar"><ChevronsRight className="size-3.5" aria-hidden /> Chats</button>
           )}
-          <Link href="/admin/assistant" className={`${CHIP} ml-auto`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
+          {!listOpen && <span className="ml-auto">{fullButton}</span>}
+          <Link href="/admin/assistant" className={`${CHIP} ${listOpen ? "ml-auto" : ""}`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
         </div>
 
         {!messages.length ? (
@@ -445,12 +465,28 @@ function Thumb({ file }: { file: Attachment }) {
   );
 }
 
-/** Genesis's orb, small, with the N (the favicon, app/icon.svg) at its centre; it thinks with the chat. */
+/*
+ * GENESIS'S ORB, SMALL, WITH THE N (the favicon, app/icon.svg) at its centre
+ * (Genesis, 27 Oct 2026: "the orb is not on point"). The canvas orb drawn
+ * this small is all glow, a blob; this is the same dotted sphere in CSS: the
+ * orb's purple-to-amber dots, bright at the rim and dim inside, turning
+ * slowly while the assistant thinks.
+ */
+const DOTS = {
+  backgroundImage: "linear-gradient(115deg, #8b5cf6 0%, #c084fc 28%, #f472b6 55%, #ffb020 85%)",
+  WebkitMaskImage: "radial-gradient(circle, #000 0.55px, transparent 0.95px), radial-gradient(circle at 50% 50%, rgb(0 0 0 / 0.25) 0%, rgb(0 0 0 / 0.55) 45%, #000 66%, #000 70%, transparent 72%)",
+  WebkitMaskSize: "2.6px 2.6px, 100% 100%",
+  WebkitMaskComposite: "source-in",
+  maskImage: "radial-gradient(circle, #000 0.55px, transparent 0.95px), radial-gradient(circle at 50% 50%, rgb(0 0 0 / 0.25) 0%, rgb(0 0 0 / 0.55) 45%, #000 66%, #000 70%, transparent 72%)",
+  maskSize: "2.6px 2.6px, 100% 100%",
+  maskComposite: "intersect",
+} as const;
 function OrbMark({ thinking }: { thinking: boolean }) {
   return (
-    <span className="relative -m-1.5 grid size-10 shrink-0 place-items-center">
-      <span className="absolute inset-0"><NeuralOrb thinking={thinking} /></span>
-      <svg viewBox="0 0 306 500" className="relative h-3.5 w-auto drop-shadow-[0_0_4px_rgb(0_0_0/0.6)]" aria-hidden>
+    <span className="relative grid size-9 shrink-0 place-items-center">
+      <span aria-hidden className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgb(255_197_22/0.18),transparent_70%)]" />
+      <span aria-hidden className={`absolute inset-0 ${thinking ? "motion-safe:animate-[spin_5s_linear_infinite]" : "motion-safe:animate-[spin_40s_linear_infinite]"}`} style={DOTS} />
+      <svg viewBox="0 0 306 500" className="relative h-3.5 w-auto drop-shadow-[0_0_3px_rgb(0_0_0/0.8)]" aria-hidden>
         <g fill="#ffd400">
           <polygon points="30,0 306,0 306,340.7" />
           <polygon points="0,149.1 284.25,500 0,500" />
