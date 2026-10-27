@@ -10,31 +10,61 @@ import { can, type Viewer } from "./session";
  */
 export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks?: number; dueLeads?: number; review?: number; openRequests?: number } = {}): NavGroup[] {
   const { unread = 0, inboxNew = 0, myTasks = 0, dueLeads = 0, review = 0, openRequests = 0 } = c;
+  /*
+   * THE AREAS, ONE JOB EACH (Genesis, 27 Oct 2026: "make sure it's systematic;
+   * make the influencer section out as well, deliveries"). Home is your day;
+   * Sales finds and wins the client; Influence is creators and their plans;
+   * Delivery is the work; Money is billing and spend; Setup is the CRM itself.
+   */
+  const sales = can(viewer, "sales");
+  const influence = sales || plansOnly(viewer) || seesCreators(viewer);
+  const delivery = can(viewer, "delivery") || sales;
+  const finance = can(viewer, "finance");
   return [
-    { label: "Today", items: [{ href: "/admin", label: "Dashboard" }, { href: "/admin/notifications", label: "Notifications", count: unread }, { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew }, { href: "/admin/tasks", label: "Tasks", count: myTasks }, { href: "/admin/assistant", label: "AI assistant" }, ...(sees(viewer, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : [])] },
-    ...(can(viewer, "sales")
-      ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/briefs", label: "Briefs" }, { href: "/admin/quotes", label: "Quotes & plans" }, { href: "/admin/reachout", label: "Reach out" }, { href: "/admin/invoices", label: "Invoices" }, { href: "/admin/accounts", label: "Clients & agencies" }] }]
+    {
+      label: "Today",
+      items: [
+        { href: "/admin", label: "Dashboard" },
+        { href: "/admin/notifications", label: "Notifications", count: unread },
+        { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew },
+        { href: "/admin/tasks", label: "Tasks", count: myTasks },
+        { href: "/admin/assistant", label: "AI assistant" },
+        ...(sees(viewer, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : []),
+      ],
+    },
+    ...(sales
+      ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/briefs", label: "Briefs" }, { href: "/admin/accounts", label: "Clients & agencies" }, { href: "/admin/quotes?type=quotes", label: "Quotes & proposals" }] }]
       : []),
-    /* The influencer team (no sales role): their plans and the influencer database (Genesis, 22 Oct 2026). */
-    ...(plansOnly(viewer) ? [{ label: "Influence", items: [{ href: "/admin/quotes", label: "Influencer plans" }, { href: "/admin/reachout", label: "Reach out" }, { href: "/admin/creators", label: "Influencer database" }] }] : []),
-    ...(can(viewer, "delivery") || can(viewer, "sales")
+    ...(influence
       ? [
           {
-            label: "Delivery",
+            label: "Influence",
             items: [
-              { href: "/admin/projects", label: "Projects", count: review },
-              { href: "/admin/requests", label: "Requests & support", count: openRequests },
+              ...(can(viewer, "plans") ? [{ href: "/admin/quotes?type=plans", label: "Influencer plans" }] : []),
               /* Private: owners, the influencer team and people given access (lib/crm/scope seesCreators). */
-              ...(seesCreators(viewer) && !plansOnly(viewer) ? [{ href: "/admin/creators", label: "Influencer database" }] : []),
-              { href: "/admin/vendors", label: "Vendors & crew" },
+              ...(seesCreators(viewer) ? [{ href: "/admin/creators", label: "Influencer database" }] : []),
+              ...(can(viewer, "plans") ? [{ href: "/admin/reachout", label: "Reach out" }] : []),
             ],
           },
         ]
+      : []),
+    ...(delivery
+      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, { href: "/admin/vendors", label: "Vendors & crew" }] }]
       : viewer.roles.includes("CREATIVE")
         ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }] }]
         : []),
-    ...(can(viewer, "finance")
-      ? [{ label: "Money", items: [{ href: "/admin/billing", label: "Orders & subscriptions" }, ...(can(viewer, "sales") ? [] : [{ href: "/admin/invoices", label: "Invoices" }]), { href: "/admin/payouts", label: "Commissions & payouts" }, { href: "/admin/expenses", label: "Expenses & salaries" }, { href: "/admin/expenses/subscriptions", label: "Our subscriptions" }, { href: "/admin/expenses/gst", label: "GST" }] }]
+    ...(sales || finance
+      ? [
+          {
+            label: "Money",
+            items: [
+              { href: "/admin/invoices", label: "Invoices" },
+              ...(finance
+                ? [{ href: "/admin/billing", label: "Orders & subscriptions" }, { href: "/admin/payouts", label: "Commissions & payouts" }, { href: "/admin/expenses", label: "Expenses & salaries" }, { href: "/admin/expenses/subscriptions", label: "Our subscriptions" }, { href: "/admin/expenses/gst", label: "GST" }]
+                : []),
+            ],
+          },
+        ]
       : []),
     {
       label: "Setup",
@@ -45,5 +75,5 @@ export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; 
         { href: "/admin?tour=1", label: "Take the tour" },
       ],
     },
-  ];
+  ].filter((g) => g.items.length > 0);
 }

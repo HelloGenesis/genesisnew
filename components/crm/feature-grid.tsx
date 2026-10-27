@@ -17,7 +17,7 @@ export type Feature = { href: string; label: string; area: string; body: string 
  */
 
 /** The main tools, in this order, when this person has them. */
-const FEATURED = ["/admin/assistant", "/admin/quotes", "/admin/creators", "/admin/leads", "/admin/reachout", "/admin/projects", "/admin/inbox", "/admin/invoices"];
+const FEATURED = ["/admin/assistant", "/admin/quotes?type=quotes", "/admin/quotes?type=plans", "/admin/creators", "/admin/leads", "/admin/reachout", "/admin/projects", "/admin/invoices"];
 
 const bar = (w: string, tone = "bg-[var(--crm-line)]") => <span className={`block h-1.5 rounded-full ${tone}`} style={{ width: w }} />;
 
@@ -34,7 +34,7 @@ function Vignette({ href }: { href: string }) {
           <span className="mt-2 w-3/4 rounded-full border border-[var(--glass-border)] px-2 py-1 text-[0.5625rem] text-faint">Ask anything…</span>
         </div>
       );
-    case "/admin/quotes":
+    case "/admin/quotes?type=quotes":
       return (
         <div className={frame}>
           <div className="flex items-center justify-between"><span className="text-[0.625rem] font-semibold text-bone">Price Quote #0000049</span><span className="rounded-full bg-[#ffc516]/20 px-1.5 text-[0.5625rem] text-[#ffc516]">Draft</span></div>
@@ -50,6 +50,15 @@ function Vignette({ href }: { href: string }) {
               <span className="size-7 rounded-full" style={{ background: `linear-gradient(135deg, ${c}, transparent 140%)` }} />
               {bar(`${50 + ((i * 13) % 40)}%`)}
             </div>
+          ))}
+        </div>
+      );
+    case "/admin/quotes?type=plans":
+      return (
+        <div className={frame}>
+          <div className="flex items-center justify-between"><span className="text-[0.625rem] font-semibold text-bone">Influencer plan · 31</span><span className="rounded-full bg-[#16a34a]/25 px-1.5 text-[0.5625rem] text-[#4ade80]">Sheets</span></div>
+          {[["#f472b6", "Micro", "₹25K"], ["#60a5fa", "Nano", "₹8K"], ["#ffc516", "Mid", "₹60K"]].map(([c, t, p]) => (
+            <div key={t} className="flex items-center gap-2"><span className="size-4 shrink-0 rounded-full" style={{ background: c }} />{bar("45%")}<span className="ml-auto text-[0.5rem] text-ash">{t}</span><span className="w-8 text-right text-[0.5625rem] text-bone">{p}</span></div>
           ))}
         </div>
       );
