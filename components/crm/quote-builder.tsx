@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronDown, Columns3, ExternalLink, FileSpreadsheet, Plus, Sheet, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Columns3, ExternalLink, FileSpreadsheet, Maximize2, Minimize2, Plus, Sheet, Trash2, Upload, X } from "lucide-react";
 import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { importCreatorsForPlan, matchUploadColumns } from "@/app/(crm)/admin/actions/imports";
@@ -428,6 +428,19 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
    * prices on a sample). Internal shows everything.
    */
   const [editing, setEditing] = useState<"internal" | "external">("internal");
+  /* THE PLAN FULL SCREEN (Genesis, 27 Oct 2026: "a full-screen view of this … more clearly visible, across all devices"): the same table, the whole window, Esc to leave. */
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (!full) return;
+    const was = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFull(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = was;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [full]);
   /* The added columns on screen: all of them internally, the client's ones when editing external. */
   const customShown = custom.filter((name) => editing === "internal" || !intOnly.has(name));
   const INTERNAL_ONLY = ["reachout", "reelCost", "storyCost", "dlCost", "profit", "contact", "remarks"];
@@ -875,6 +888,9 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                   </div>
                 </div>
               )}
+              <div className={full ? "fixed inset-0 z-[80] flex flex-col bg-[var(--surface-panel)]" : "contents"} {...(full ? { role: "dialog", "aria-modal": true, "aria-label": "Influencer plan, full screen" } : {})}>
+              <div className={`flex flex-wrap items-center gap-2 ${full ? "border-b border-[var(--glass-border)] px-3 py-2 sm:px-5 sm:py-3" : ""}`}>
+                {full && <span className="mr-auto min-w-0 truncate text-[0.9375rem] text-bone sm:mr-3">{q.title || "Influencer plan"} <span className="text-ash">· {q.creators.length} creators</span></span>}
               <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Editing the internal or the external plan">
                 <span className="text-[0.8125rem] text-ash">Editing:</span>
                 {([["internal", "Internal (team)"], ["external", "External (client)"]] as const).map(([value, label]) => (
@@ -882,12 +898,16 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                     {label}
                   </button>
                 ))}
-                <span className="text-[0.75rem] text-faint">{editing === "internal" ? "Everything: creator costs, profit, reach-out, contact and remarks." : `What the brand sees${q.planColumns?.extPrices === false ? " (a sample, no prices)" : ", client prices only"}; costs, profit and notes stay internal.`}</span>
+                <span className={`text-[0.75rem] text-faint ${full ? "max-lg:hidden" : ""}`}>{editing === "internal" ? "Everything: creator costs, profit, reach-out, contact and remarks." : `What the brand sees${q.planColumns?.extPrices === false ? " (a sample, no prices)" : ", client prices only"}; costs, profit and notes stay internal.`}</span>
+              </div>
+                <button type="button" onClick={() => setFull((f) => !f)} className={`crm-btn crm-btn-secondary crm-btn-sm ${full ? "" : "ml-auto"}`} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen (Esc)" : "Full screen"}>
+                  {full ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />} <span className="max-sm:hidden">{full ? "Exit full screen" : "Full screen"}</span>
+                </button>
               </div>
               {/* THE PLAN AS GENESIS'S SHEET (Genesis, 12 Oct 2026: "fields are still missing"); scrolls sideways, the name stays put. */}
               {/* The creators in their own scrolling box: headings stay at the top, names at the left (Genesis, 13 Oct 2026). */}
-              <div className="-mx-1 max-h-[36rem] overflow-auto rounded-xl border border-[var(--glass-border)] pb-2" data-lenis-prevent>
-                <table className="crm-table !min-w-max text-[0.8125rem] [&_td]:!px-1.5 [&_th]:!px-1.5 [&_th]:whitespace-nowrap [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-[var(--surface-panel)]">
+              <div className={full ? "min-h-0 flex-1 overflow-auto overscroll-contain pb-2" : "-mx-1 max-h-[36rem] overflow-auto rounded-xl border border-[var(--glass-border)] pb-2"} data-lenis-prevent>
+                <table className={`crm-table !min-w-max ${full ? "text-[0.875rem] [&_td]:!py-2 sm:[&_td]:!px-2.5 sm:[&_th]:!px-2.5" : "text-[0.8125rem]"} [&_td]:!px-1.5 [&_th]:!px-1.5 [&_th]:whitespace-nowrap [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:bg-[var(--surface-panel)]`}>
                   <thead>
                     <tr>
                       <th className="sticky left-0 z-10 bg-[var(--surface-panel)]">Name</th>
@@ -912,28 +932,29 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                       const profit = creatorTotal(c) - creatorCost(c);
                       return (
                         <tr key={`${c.handle}-${i}`}>
-                          <td className="sticky left-0 z-10 min-w-[11rem] bg-[var(--surface-panel)] text-bone">
+                          <td className="sticky left-0 z-10 min-w-[11rem] bg-[var(--surface-panel)] text-bone max-sm:min-w-[8.5rem]">
                             {c.creatorId ? (
                               <span className="flex flex-col gap-1">
-                                <input value={c.name} onChange={(e) => setCreator(i, { name: e.target.value })} className="crm-input !min-h-8 !w-40 !px-2" placeholder="Name" aria-label="Creator name" />
+                                <input value={c.name} onChange={(e) => setCreator(i, { name: e.target.value })} className="crm-input !min-h-8 !w-40 !px-2 max-sm:!w-32" placeholder="Name" aria-label="Creator name" />
                                 <span className="text-[0.75rem] text-ash">@{c.handle}</span>
                               </span>
                             ) : (
                               <span className="flex flex-col gap-1">
-                                <input value={c.name} onChange={(e) => setCreator(i, { name: e.target.value })} className="crm-input !min-h-8 !w-40 !px-2" placeholder="Name" aria-label="Creator name" />
+                                <input value={c.name} onChange={(e) => setCreator(i, { name: e.target.value })} className="crm-input !min-h-8 !w-40 !px-2 max-sm:!w-32" placeholder="Name" aria-label="Creator name" />
                                 <input
                                   value={c.handle}
                                   onChange={(e) => {
                                     const handle = e.target.value.replace(/^@/, "").replace(/\s+/g, "");
                                     setCreator(i, { handle, profileUrl: handle && c.platform === "INSTAGRAM" ? `https://www.instagram.com/${handle}` : c.profileUrl });
                                   }}
-                                  className="crm-input !min-h-8 !w-40 !px-2"
+                                  className="crm-input !min-h-8 !w-40 !px-2 max-sm:!w-32"
                                   placeholder="@handle"
                                   aria-label="Instagram handle"
                                 />
                               </span>
                             )}
-                            {c.last && <span className={`mt-1 block text-[0.6875rem] ${isRecent(c.last) ? "text-[#f59e0b]" : "text-faint"}`} title="Latest reach-out, from any plan">Last: {reachLine(c.last)}</span>}
+                            {/* Cut to the name's width, so one long line can't widen the frozen column over the others (Genesis, 27 Oct 2026). */}
+                            {c.last && <span className={`mt-1 block max-w-[10rem] truncate text-[0.6875rem] max-sm:max-w-[8rem] ${isRecent(c.last) ? "text-[#f59e0b]" : "text-faint"}`} title={`Latest reach-out, from any plan: ${reachLine(c.last)}`}>Last: {reachLine(c.last)}</span>}
                           </td>
                           {shows("tier") && <td className="whitespace-nowrap">{c.followers < 10_000 ? "Nano" : c.followers < 100_000 ? "Micro" : c.followers < 500_000 ? "Mid" : c.followers < 1_000_000 ? "Macro" : "Mega"}</td>}
                           {/* Pick any number of categories, or add your own (components/crm/niche-picker). */}
@@ -983,6 +1004,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                     </tr>
                   </tfoot>
                 </table>
+              </div>
               </div>
             </>
           )}
