@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { SideNav, type NavGroup } from "@/components/crm/side-nav";
+import { CrmRail, RailUser } from "@/components/crm/crm-rail";
+import { SideNav } from "@/components/crm/side-nav";
+import { crmNav } from "@/lib/crm/nav";
 import { Notice } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
 import { emailLoginEnabled } from "@/lib/crm/email-login";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
-import { accountScope, leadScope, plansOnly, projectScope, sees, seesCreators, through } from "@/lib/crm/scope";
-import { can, devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
+import { accountScope, leadScope, projectScope, sees, through } from "@/lib/crm/scope";
+import { devLoginEnabled, getViewer, staffAccess } from "@/lib/crm/session";
 import { SignOut } from "@/components/crm/sign-out";
 import { requestWorkspace } from "@/lib/crm/request-workspace";
 import { workspaces } from "@/lib/crm/workspace";
@@ -55,74 +57,43 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   /* The tour opens by itself on someone's first visit (components/crm/app-tour). */
   const tourSeen = Boolean(await prisma.appSetting.findUnique({ where: { key: `tour:done:${viewer!.id}` }, select: { key: true } }));
-  const groups: NavGroup[] = [
-    { label: "Today", items: [{ href: "/admin", label: "Dashboard" }, { href: "/admin/notifications", label: "Notifications", count: unread }, { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew }, { href: "/admin/tasks", label: "Tasks", count: myTasks }, { href: "/admin/assistant", label: "AI assistant" }, ...(sees(viewer!, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : [])] },
-    ...(can(viewer, "sales")
-      ? [{ label: "Sales", items: [{ href: "/admin/leads", label: "Leads & pipeline", count: dueLeads }, { href: "/admin/briefs", label: "Briefs" }, { href: "/admin/quotes", label: "Quotes & plans" }, { href: "/admin/reachout", label: "Reach out" }, { href: "/admin/invoices", label: "Invoices" }, { href: "/admin/accounts", label: "Clients & agencies" }] }]
-      : []),
-    /* The influencer team (no sales role): their plans and the influencer database (Genesis, 22 Oct 2026). */
-    ...(plansOnly(viewer!) ? [{ label: "Influence", items: [{ href: "/admin/quotes", label: "Influencer plans" }, { href: "/admin/reachout", label: "Reach out" }, { href: "/admin/creators", label: "Influencer database" }] }] : []),
-    ...(can(viewer, "delivery") || can(viewer, "sales")
-      ? [
-          {
-            label: "Delivery",
-            items: [
-              { href: "/admin/projects", label: "Projects", count: review },
-              { href: "/admin/requests", label: "Requests & support", count: openRequests },
-              /* Private: owners, the influencer team and people given access (lib/crm/scope seesCreators). */
-              ...(seesCreators(viewer!) && !plansOnly(viewer!) ? [{ href: "/admin/creators", label: "Influencer database" }] : []),
-              { href: "/admin/vendors", label: "Vendors & crew" },
-            ],
-          },
-        ]
-      : viewer!.roles.includes("CREATIVE")
-        ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }] }]
-        : []),
-    ...(can(viewer, "finance")
-      ? [{ label: "Money", items: [{ href: "/admin/billing", label: "Orders & subscriptions" }, ...(can(viewer, "sales") ? [] : [{ href: "/admin/invoices", label: "Invoices" }]), { href: "/admin/payouts", label: "Commissions & payouts" }, { href: "/admin/expenses", label: "Expenses & salaries" }, { href: "/admin/expenses/subscriptions", label: "Our subscriptions" }, { href: "/admin/expenses/gst", label: "GST" }] }]
-      : []),
-    {
-      label: "Setup",
-      items: [
-        ...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []),
-        /* An agency's own team and its details for quotes and invoices; Genesis's integrations are Genesis's. */
-        ...(viewer!.workspaceId ? (viewer!.workspaceRole === "ADMIN" ? [{ href: "/admin/team", label: "Team & company" }] : []) : [{ href: "/admin/settings", label: "Integrations" }]),
-        { href: "/admin?tour=1", label: "Take the tour" },
-      ],
-    },
-  ];
+  const groups = crmNav(viewer!, { unread, inboxNew, myTasks, dueLeads, review, openRequests });
+
+  /* Owners can look inside an agency's CRM: the switch sits over the page. */
+  const viewingSwitch = switchable.length > 0 && (
+    <form action={setViewingCrm} className="flex flex-wrap items-center gap-2">
+      <label className="flex items-center gap-2">
+        <span className="text-[0.6875rem] uppercase tracking-[0.12em] text-faint">Viewing</span>
+        <select name="ws" defaultValue={viewer!.ws ?? ""} className="crm-input !min-h-9 w-auto !py-1 text-[0.875rem]">
+          <option value="">Genesis Media</option>
+          {switchable.map((w) => <option key={w.id} value={w.id}>{w.name} (agency CRM)</option>)}
+        </select>
+      </label>
+      <button className="crm-btn crm-btn-secondary crm-btn-sm">Switch</button>
+    </form>
+  );
 
   return (
-    <div className="crm-shell mx-auto w-full max-w-[1560px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[264px_minmax(0,1fr)]">
-      <div className="crm-side min-w-0 px-4 pt-5 sm:px-6 lg:px-4 lg:py-7">
-        {/* A Genesis owner can look inside any agency's CRM; Genesis's own lists never mix in theirs. */}
-        {switchable.length > 0 && (
-          <form action={setViewingCrm} className="mb-5 px-0.5">
-            <label className="block">
-              <span className="mb-1 block px-3 text-[0.6875rem] uppercase tracking-[0.12em] text-faint">Viewing</span>
-              <select name="ws" defaultValue={viewer!.ws ?? ""} className="crm-input">
-                <option value="">Genesis Media</option>
-                {switchable.map((w) => <option key={w.id} value={w.id}>{w.name} (agency CRM)</option>)}
-              </select>
-            </label>
-            <button className="crm-btn crm-btn-secondary crm-btn-sm mt-2 w-full">Switch</button>
-          </form>
-        )}
-        <SideNav groups={groups} root="/admin" label="CRM" title={agencyCrm?.name ?? "Genesis Media"} />
-        <div className="mt-8 hidden px-3.5 text-[0.8125rem] text-faint lg:block">
-          <p className="truncate text-ash">{viewer!.name ?? viewer!.email}</p>
-          <p>{viewer!.roles.join(", ").toLowerCase()}</p>
-          <div className="mt-2 flex gap-3">
-            {viewer!.memberships.length > 0 && (
-              <Link href="/portal" className="crm-link">
-                Portal
-              </Link>
-            )}
+    /*
+      THE RAIL AND ITS PANEL on a desktop (Genesis, 27 Oct 2026: components/crm/crm-rail), the page
+      beside it; on a phone, the strip of pages over the page as before.
+    */
+    <div className="crm-shell mx-auto w-full max-w-[1680px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[auto_minmax(0,1fr)]">
+      <div className="crm-side min-w-0 px-4 pt-5 sm:px-6 lg:border-r-0 lg:p-3 lg:pr-0">
+        <div className="lg:hidden">
+          <SideNav groups={groups} root="/admin" label="CRM" title={agencyCrm?.name ?? "Genesis Media"} phoneOnly />
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] text-faint">
+            <span className="truncate text-ash">{viewer!.name ?? viewer!.email}</span>
+            {viewer!.memberships.length > 0 && <Link href="/portal" className="crm-link">Portal</Link>}
             <SignOut className="crm-link" />
           </div>
         </div>
+        <div className="hidden lg:block">
+          <CrmRail groups={groups} title={agencyCrm?.name ?? "Genesis Media"} footer={<RailUser name={viewer!.name} email={viewer!.email} roles={viewer!.roles.join(", ").toLowerCase()} portal={viewer!.memberships.length > 0} />} />
+        </div>
       </div>
-      <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-9 lg:py-8">
+      <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:py-7">
+        {viewingSwitch && <div className="flex justify-end">{viewingSwitch}</div>}
         {/* A Genesis owner inside an agency's CRM: anything added here is the agency's. */}
         {agencyCrm && !viewer!.workspaceId && (
           <form action={setViewingCrm} className="crm-notice flex flex-wrap items-center justify-between gap-3">

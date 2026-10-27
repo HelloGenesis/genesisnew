@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { type Feature, FeatureGrid } from "@/components/crm/feature-grid";
 import { Badge, Card, PageHead, Stats, Status, StageBar } from "@/components/crm/ui";
+import { crmNav } from "@/lib/crm/nav";
+import { ABOUT } from "@/lib/crm/tour-copy";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, DIVISIONS, LEAD_STATUS, ORDER_STATUS, REQUEST_KIND, REQUEST_STATUS, date, money, projectRef, requestRef, todayIst } from "@/lib/crm/catalog";
 import { staffOptions } from "@/lib/crm/options";
@@ -66,6 +69,10 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
   const todayStr = todayIst();
   const greetingName = viewer.name?.split(" ")[0] ?? viewer.email?.split("@")[0] ?? "there";
   const longDate = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(new Date());
+  /* The dashboard's All features: this person's CRM pages, with what each does (lib/crm/tour-copy). */
+  const features: Feature[] = [];
+  for (const g of crmNav(viewer, { myTasks: myTasks.filter((t) => t.ownerId === viewer.id && t.dueDate && t.dueDate <= today).length, dueLeads: dueLeads.length, review: changes, openRequests }))
+    for (const i of g.items) if (i.href !== "/admin" && !i.href.includes("?") && !features.some((f) => f.href === i.href)) features.push({ href: i.href, label: i.label, area: g.label, body: ABOUT[i.href]?.body ?? null, count: i.count });
   const mrr = subs.reduce((sum, s) => sum + monthly(s.amountPaise, s.billing), 0);
 
   return (
@@ -82,6 +89,11 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
           </form>
         )}
       </PageHead>
+
+      {/* ALL FEATURES (Genesis, 27 Oct 2026): every tool this person can open, as cards; folds away like every card. */}
+      <Card title="All features">
+        <FeatureGrid features={features} />
+      </Card>
 
       {/* TASKS FIRST, BESIDE THE CALENDAR (Genesis, 11 Oct 2026: "move the task section above and add a calendar"). */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">

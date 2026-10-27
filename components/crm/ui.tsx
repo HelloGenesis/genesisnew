@@ -1,6 +1,7 @@
 import { Download, ExternalLink, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 
+import { FoldCard } from "./fold-card";
 import { GuideButton } from "./guide-button";
 
 /** The CRM's building blocks (server components). Styles: app/(crm)/crm.css. */
@@ -74,19 +75,23 @@ export function Status({ value }: { value: { label: string; tone: Tone } }) {
   return <Badge tone={value.tone}>{value.label}</Badge>;
 }
 
-export function Card({ title, action, children, className = "" }: { title?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
+/** A panel; with a title, it folds away (components/crm/fold-card). `fold={false}` keeps it always open. */
+export function Card({ title, action, children, className = "", fold = true }: { title?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode; className?: string; fold?: boolean }) {
+  if (title) return <FoldCard title={title} action={action} className={className} foldKey={fold ? (typeof title === "string" ? title : textOf(title)) : null}>{children}</FoldCard>;
   return (
     <section className={`crm-card crm-pad ${className}`}>
-      {(title || action) && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          {/* Easy to read at a glance (Genesis, 22 Oct 2026: "make the font size big and user friendly"). */}
-          {title && <h2 className="font-sans text-[1.1875rem] font-semibold tracking-[-0.005em] text-bone">{title}</h2>}
-          {action}
-        </div>
-      )}
+      {action && <div className="mb-4 flex flex-wrap items-center justify-end gap-2">{action}</div>}
       {children}
     </section>
   );
+}
+
+/** A title's words, for remembering a folded card whose title has links or counts in it. */
+function textOf(node: React.ReactNode): string | null {
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(textOf).filter(Boolean).join(" ").replace(/\d+/g, "#").trim() || null;
+  if (node && typeof node === "object" && "props" in node) return textOf((node as { props: { children?: React.ReactNode } }).props.children);
+  return null;
 }
 
 /** Collapsible "＋ Add …" panel for create forms. */
