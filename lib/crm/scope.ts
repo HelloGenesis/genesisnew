@@ -46,7 +46,7 @@ export const sees = (v: Viewer, area: keyof typeof AREAS | string) => isSuperAdm
  *   all  — the whole database (owners always; grant "creators");
  *   own  — no access to the main database, but every creator they add, import
  *          or put on a plan is saved to it, and they see just those (grant
- *          "creators:own"; the influencer team's default);
+ *          "creators:own"; everyone's default);
  *   none — no influencer data.
  */
 export type CreatorAccess = "all" | "own" | "none";
@@ -59,8 +59,14 @@ export function creatorAccess(v: Viewer): CreatorAccess {
   if (sees(v, "creators")) return "all";
   if (v.grants.includes("creators:own")) return "own";
   if (v.grants.includes("creators:none")) return "none";
-  /* Not set yet: the influencer team adds to the database without seeing it. */
-  return v.roles.includes("INFLUENCER") ? "own" : "none";
+  /*
+   * Not set yet: everyone on the team has the influencer database, but only
+   * the creators they added themselves (Genesis, 27 Oct 2026: "add the
+   * influencer database for other accounts too; just the database shouldn't
+   * be visible to others"). The whole database stays with owners and those
+   * given it; "No influencer data" in Staff & roles takes it away.
+   */
+  return "own";
 }
 /** May open the influencer database at all (all of it, or their own entries). */
 export const seesCreators = (v: Viewer) => creatorAccess(v) !== "none";

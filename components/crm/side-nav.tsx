@@ -3,7 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export type NavGroup = { label: string; items: { href: string; label: string; count?: number }[] };
+/**
+ * `create`: quick ways to start something in the area (the rail's panel, components/crm/crm-rail);
+ * `recent`: a list that opens there (the latest plans or quotes).
+ */
+export type NavGroup = {
+  label: string;
+  items: { href: string; label: string; count?: number }[];
+  create?: { href: string; label: string; hint?: string }[];
+  recent?: { label: string; all: string; items: { href: string; label: string; hint?: string }[] };
+};
 
 /** Sidebar on desktop, a scrollable strip on phones (as genesis-coworking's AdminNav). */
 /** `title`: the bold heading over the desktop sidebar ("GENESIS MEDIA", as the tour's "YOUR AGENCY"). */

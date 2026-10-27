@@ -25,7 +25,8 @@ import type { Viewer } from "./session";
  */
 
 const MODEL = () => process.env.CRM_CHAT_MODEL || "claude-opus-5-5";
-const MAX_TURNS = 16;
+/* Room for a whole job from one message: a lead, its quote, a project, a task… (Genesis, 28 Oct 2026). */
+const MAX_TURNS = 30;
 
 export type ChatEvent =
   | { t: "chat"; id: string }
@@ -46,6 +47,23 @@ const LABEL: Record<string, string> = {
   update_plan: "Updating the plan",
   update_plan_sheets: "Updating the Google Sheets",
   log_reachout: "Logging the reach-out",
+  search_crm: "Searching the CRM",
+  get_quote: "Reading the quote",
+  create_quote: "Making the quote",
+  update_quote: "Updating the quote",
+  save_lead: "Saving the lead",
+  save_client: "Saving the client",
+  log_note: "Adding a note",
+  save_task: "Saving the task",
+  save_subscription: "Saving the subscription",
+  crm_overview: "Checking the numbers",
+  save_project: "Saving the project",
+  create_invoice: "Making the invoice",
+  add_expense: "Recording the expense",
+  save_brief: "Saving the brief",
+  update_request: "Updating the request",
+  assign_vendor: "Offering the job",
+  find_work: "Looking it up",
 };
 
 /* The tools in the shape the model takes, inputs streamed as they're written. */
@@ -59,7 +77,9 @@ const API_TOOLS: Anthropic.Beta.BetaTool[] = TOOLS.map((t) => ({
 function system(viewer: Viewer) {
   return `You are Genesis Media's CRM assistant, chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
 
-${CRM_INSTRUCTIONS}`;
+${CRM_INSTRUCTIONS}
+
+Today is ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" })} (India time); work out dates like "a week ago" or "next Friday" from it.`;
 }
 
 export type Attachment = { kind: "image"; media_type: string; data: string; name: string } | { kind: "pdf"; data: string; name: string } | { kind: "sheet"; text: string; name: string };

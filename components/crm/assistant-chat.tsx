@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, ChevronDown, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, UserPlus, Users, X, Zap } from "lucide-react";
+import { AudioLines, ChevronDown, Maximize2, Minimize2, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -11,7 +11,8 @@ import { NeuralOrb } from "@/components/genesis/neural-orb";
 import { readSheetFile } from "@/lib/sheet-file";
 
 type ChatItem = { id: string; title: string; updatedAt: string };
-type Msg = { role: "user" | "assistant"; text: string; files?: string[]; tools?: string[] };
+/* `previews`: the pictures sent in this visit, shown in the message (saved chats keep the names). */
+type Msg = { role: "user" | "assistant"; text: string; files?: string[]; previews?: (string | null)[]; tools?: string[] };
 type Attachment = { kind: "image"; media_type: string; data: string; name: string } | { kind: "pdf"; data: string; name: string } | { kind: "sheet"; text: string; name: string };
 
 /* The request stays under the host's limit: about 4 MB of attachments a message. */
@@ -93,11 +94,12 @@ function Rich({ text }: { text: string }) {
  * the answer streams in as it's written, with what it's doing in the CRM
  * shown as it happens.
  */
-export function AssistantChat({ chats, open, firstName, connectors }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean } }) {
+export function AssistantChat({ chats, open, firstName, connectors, initialText = "" }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; initialText?: string; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean } }) {
   const router = useRouter();
   const [chatId, setChatId] = useState<string | null>(open?.id ?? null);
   const [messages, setMessages] = useState<Msg[]>(open?.messages ?? []);
-  const [text, setText] = useState("");
+  /* A prompt to start from (?prompt=, from the rail's Create links). */
+  const [text, setText] = useState(initialText);
   const [files, setFiles] = useState<Attachment[]>([]);
   const [busy, setBusy] = useState(false);
   const [activity, setActivity] = useState<string | null>(null);
@@ -107,13 +109,35 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
   const [modeMenu, setModeMenu] = useState(false);
   const [listening, setListening] = useState(false);
   const [showConnectors, setShowConnectors] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  /* The assistant over the whole screen; Esc leaves. */
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (!full) return;
+    const was = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !showConnectors && setFull(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = was;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [full, showConnectors]);
+  const fullButton = (
+    <button type="button" onClick={() => setFull((f) => !f)} aria-pressed={full} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen (Esc)" : "Full screen"} className="grid size-8 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
+      {full ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />}
+    </button>
+  );
   const liveApps = connectors.builtIns.filter((b) => b.on).length + connectors.added.filter((c) => c.enabled).length;
   /* The sidebar, open or folded; remembered on this device. */
   const [listOpen, toggleList] = usePref("crm-assistant-sidebar", true);
   const picker = useRef<HTMLInputElement>(null);
-  const end = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end" });
+    /* The newest message in view, inside the window; the page itself doesn't move. */
+    const el = scroller.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages, activity]);
 
   const attach = async (list: FileList | null) => {
@@ -136,6 +160,8 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
     const next = [...files, ...added];
     if (next.reduce((s, a) => s + size(a), 0) > MAX_BYTES) return setError("Those files are too large for one message (about 3 MB). Send fewer at a time, or split the PDF.");
     setFiles(next);
+    /* The chat box, taller now, kept in view. */
+    requestAnimationFrame(() => box.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
   };
 
   const hour = new Date().getHours();
@@ -148,7 +174,7 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
     const sent = { text: text.trim(), files, mode };
     let madeId: string | null = null;
     let failed = false;
-    setMessages((m) => [...m, { role: "user", text: sent.text, files: sent.files.map((f: Attachment) => f.name) }, { role: "assistant", text: "", tools: [] }]);
+    setMessages((m) => [...m, { role: "user", text: sent.text, files: sent.files.map((f: Attachment) => f.name), previews: sent.files.map((f: Attachment) => (f.kind === "image" ? `data:${f.media_type};base64,${f.data}` : null)) }, { role: "assistant", text: "", tools: [] }]);
     setText("");
     setFiles([]);
     try {
@@ -223,17 +249,19 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
       <span aria-hidden className="pointer-events-none absolute -right-4 top-1/2 h-24 w-40 -translate-y-1/2 rounded-full bg-[#a78bfa]/40 blur-3xl" />
       <div className={`relative rounded-[1.25rem] bg-gradient-to-r from-[#ffc516] via-[#f472b6] to-[#a78bfa] p-px shadow-[0_20px_60px_-25px_rgb(244_114_182/0.6)] ${thinking ? "animate-pulse" : ""}`}>
         <div className="rounded-[calc(1.25rem-1px)] bg-[var(--crm-panel)] p-3">
+          {/* What's attached (Genesis, 27 Oct 2026: as in the reference): a picture of each, × to take it off. */}
           {!!files.length && (
-            <div className="mb-2 flex flex-wrap gap-1.5">
+            <div className="mb-3 flex flex-wrap gap-3 px-1 pt-2">
               {files.map((f, i) => (
-                <span key={i} className="inline-flex items-center gap-1 rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.75rem] text-bone">
-                  {f.name}
-                  <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))} className="text-ash hover:text-[#dc2626]"><X className="size-3.5" /></button>
+                <span key={i} className="group relative">
+                  <Thumb file={f} />
+                  <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))} className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] text-ash shadow-[var(--shadow-float)] hover:text-bone"><X className="size-3.5" aria-hidden /></button>
                 </span>
               ))}
             </div>
           )}
           <textarea
+            ref={box}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onPaste={(e) => { if (e.clipboardData.files.length) { e.preventDefault(); void attach(e.clipboardData.files); } }}
@@ -288,12 +316,14 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
 
   return (
     /* ONE WINDOW (Genesis, 27 Oct 2026, after the reference): the sidebar inside it, the orb and the chat box in the middle. */
-    <div className="crm-card relative flex min-h-[calc(100svh-8.5rem)] overflow-hidden !p-0">
+    /* A fixed window (Genesis, 27 Oct 2026: "this section stays still"): only the conversation scrolls inside it. */
+    <div className={full ? "fixed inset-0 z-[80] flex overflow-hidden bg-[var(--crm-panel)]" : "crm-card relative flex h-[calc(100svh-16.25rem)] min-h-[28rem] overflow-hidden !p-0"}>
       {listOpen && (
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
             <OrbMark thinking={thinking} />
             <span className="flex-1 text-[0.9375rem] font-semibold text-bone">Genesis AI</span>
+            {fullButton}
             <button type="button" onClick={() => toggleList(false)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone" aria-label="Hide the sidebar" title="Hide the sidebar"><ChevronsLeft className="size-4" aria-hidden /></button>
           </div>
           <div className="px-3">
@@ -324,16 +354,29 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
         </aside>
       )}
 
-      <section className="relative flex min-w-0 flex-1 flex-col">
+      {/* Drop screenshots, PDFs or sheets anywhere here to attach them. */}
+      <section
+        className="relative flex min-h-0 min-w-0 flex-1 flex-col"
+        onDragEnter={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDragging(true); } }}
+        onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) e.preventDefault(); }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false); }}
+        onDrop={(e) => { if (!e.dataTransfer.files.length) return; e.preventDefault(); setDragging(false); void attach(e.dataTransfer.files); }}
+      >
+        {dragging && (
+          <div aria-hidden className="pointer-events-none absolute inset-3 z-30 grid place-items-center rounded-[1.25rem] border-2 border-dashed border-[#f472b6] bg-[var(--crm-panel)]/85 backdrop-blur-sm">
+            <span className="flex items-center gap-2 text-[1rem] text-bone"><Paperclip className="size-5 text-[#ffc516]" aria-hidden /> Drop to attach: pictures, PDFs or Excel</span>
+          </div>
+        )}
         <div className="flex items-center gap-2 px-4 pt-4 sm:px-6">
           {!listOpen && (
             <button type="button" onClick={() => toggleList(true)} className={CHIP} aria-label="Show the sidebar"><ChevronsRight className="size-3.5" aria-hidden /> Chats</button>
           )}
-          <Link href="/admin/assistant" className={`${CHIP} ml-auto`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
+          {!listOpen && <span className="ml-auto">{fullButton}</span>}
+          <Link href="/admin/assistant" className={`${CHIP} ${listOpen ? "ml-auto" : ""}`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
         </div>
 
         {!messages.length ? (
-          <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-10">
+          <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-10 [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto" data-lenis-prevent>
             {/* Genesis's orb with what it can do round it (as before), the greeting, the chat box. */}
             <div className="relative w-[min(14rem,58vw)]">
               <NeuralOrb thinking={thinking} />
@@ -355,12 +398,27 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
           </div>
         ) : (
           <>
-            <div className="mx-auto w-full max-w-3xl flex-1 space-y-5 overflow-y-auto px-4 py-6 sm:px-6" data-lenis-prevent>
+            <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
+            <div className="mx-auto w-full max-w-3xl space-y-5 px-4 py-6 sm:px-6">
               {messages.map((m, i) => {
                 const live = m.role === "assistant" && i === messages.length - 1;
                 return m.role === "user" ? (
                   <div key={i} className="ml-auto max-w-[85%] rounded-2xl bg-[var(--hover-wash)] px-4 py-2.5">
-                    {!!m.files?.length && <p className="mb-1 text-[0.75rem] text-ash">📎 {m.files.join(", ")}</p>}
+                    {!!m.files?.length &&
+                      (m.previews?.some(Boolean) ? (
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {m.files.map((name, j) =>
+                            m.previews?.[j] ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img key={j} src={m.previews[j]!} alt={name} className="size-20 rounded-xl border border-[var(--glass-border)] object-cover" />
+                            ) : (
+                              <span key={j} className="grid h-20 w-24 place-items-center rounded-xl border border-[var(--glass-border)] px-2 text-center text-[0.6875rem] text-ash"><FileText className="mx-auto size-5" aria-hidden /><span className="line-clamp-2">{name}</span></span>
+                            ),
+                          )}
+                        </div>
+                      ) : (
+                        <p className="mb-1 text-[0.75rem] text-ash">📎 {m.files.join(", ")}</p>
+                      ))}
                     <div className="text-[0.9375rem] leading-relaxed text-bone"><Rich text={m.text} /></div>
                   </div>
                 ) : (
@@ -381,7 +439,7 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
                 );
               })}
               {error && <p className="text-[0.8125rem] text-[#dc2626]" role="alert">{error}</p>}
-              <div ref={end} />
+            </div>
             </div>
             <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-2 sm:px-6">{composer}</div>
           </>
@@ -393,12 +451,42 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
   );
 }
 
-/** Genesis's orb, small, with the N (the favicon, app/icon.svg) at its centre; it thinks with the chat. */
+/** An attachment as the chat box shows it: the picture itself, or a tile for a PDF or a sheet. */
+function Thumb({ file }: { file: Attachment }) {
+  if (file.kind === "image")
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={`data:${file.media_type};base64,${file.data}`} alt={file.name} title={file.name} className="size-24 rounded-2xl border-2 border-[#a78bfa]/70 object-cover shadow-[0_0_0_4px_rgb(167_139_250/0.15)]" />;
+  const pdf = file.kind === "pdf";
+  return (
+    <span title={file.name} className="flex size-24 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-[#a78bfa]/70 bg-[var(--hover-wash)] px-2 text-center shadow-[0_0_0_4px_rgb(167_139_250/0.15)]">
+      {pdf ? <FileText className="size-6 text-[#f472b6]" aria-hidden /> : <Sheet className="size-6 text-[#22c55e]" aria-hidden />}
+      <span className="line-clamp-2 break-all text-[0.625rem] leading-tight text-ash">{file.name}</span>
+    </span>
+  );
+}
+
+/*
+ * GENESIS'S ORB, SMALL, WITH THE N (the favicon, app/icon.svg) at its centre
+ * (Genesis, 27 Oct 2026: "the orb is not on point"). The canvas orb drawn
+ * this small is all glow, a blob; this is the same dotted sphere in CSS: the
+ * orb's purple-to-amber dots, bright at the rim and dim inside, turning
+ * slowly while the assistant thinks.
+ */
+const DOTS = {
+  backgroundImage: "linear-gradient(115deg, #8b5cf6 0%, #c084fc 28%, #f472b6 55%, #ffb020 85%)",
+  WebkitMaskImage: "radial-gradient(circle, #000 0.55px, transparent 0.95px), radial-gradient(circle at 50% 50%, rgb(0 0 0 / 0.25) 0%, rgb(0 0 0 / 0.55) 45%, #000 66%, #000 70%, transparent 72%)",
+  WebkitMaskSize: "2.6px 2.6px, 100% 100%",
+  WebkitMaskComposite: "source-in",
+  maskImage: "radial-gradient(circle, #000 0.55px, transparent 0.95px), radial-gradient(circle at 50% 50%, rgb(0 0 0 / 0.25) 0%, rgb(0 0 0 / 0.55) 45%, #000 66%, #000 70%, transparent 72%)",
+  maskSize: "2.6px 2.6px, 100% 100%",
+  maskComposite: "intersect",
+} as const;
 function OrbMark({ thinking }: { thinking: boolean }) {
   return (
-    <span className="relative -m-1.5 grid size-10 shrink-0 place-items-center">
-      <span className="absolute inset-0"><NeuralOrb thinking={thinking} /></span>
-      <svg viewBox="0 0 306 500" className="relative h-3.5 w-auto drop-shadow-[0_0_4px_rgb(0_0_0/0.6)]" aria-hidden>
+    <span className="relative grid size-9 shrink-0 place-items-center">
+      <span aria-hidden className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgb(255_197_22/0.18),transparent_70%)]" />
+      <span aria-hidden className={`absolute inset-0 ${thinking ? "motion-safe:animate-[spin_5s_linear_infinite]" : "motion-safe:animate-[spin_40s_linear_infinite]"}`} style={DOTS} />
+      <svg viewBox="0 0 306 500" className="relative h-3.5 w-auto drop-shadow-[0_0_3px_rgb(0_0_0/0.8)]" aria-hidden>
         <g fill="#ffd400">
           <polygon points="30,0 306,0 306,340.7" />
           <polygon points="0,149.1 284.25,500 0,500" />

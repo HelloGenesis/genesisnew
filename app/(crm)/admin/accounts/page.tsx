@@ -17,9 +17,9 @@ export const metadata = { title: "Clients & agencies" };
 
 const TABS: [string, string][] = [["", "All"], ["BRAND", "Brands"], ["AGENCY", "Agencies"], ["resellers", "Resellers"], ["VENDOR", "Vendors & crew"]];
 
-export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ kind?: string; q?: string }> }) {
+export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ kind?: string; q?: string; add?: string }> }) {
   const viewer = await requireStaff("sales");
-  const { kind, q } = await searchParams;
+  const { kind, q, add } = await searchParams;
   const prisma = getPrisma();
   const accounts = await prisma.account.findMany({
     where: {
@@ -53,7 +53,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         </form>
       </nav>
 
-      <AddPanel label="Add an account">
+      <AddPanel label="Add an account" open={add === "1"}>
         <ActionForm action={createAccount} submit="Create account">
           <AccountFields staff={staff} agencies={agencies} resellers={resellers} />
           <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">

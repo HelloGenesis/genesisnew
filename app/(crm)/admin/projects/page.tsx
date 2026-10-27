@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { Badge, Empty, PageHead, Select, StageBar, Status } from "@/components/crm/ui";
+import { ProjectTimeline } from "@/components/crm/project-timeline";
+import { Badge, Card, Empty, PageHead, Select, StageBar, Status } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Division, ProjectStatus } from "@/lib/generated/prisma/enums";
@@ -14,7 +15,7 @@ import { advanceStage } from "../actions/delivery";
 import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Projects" };
+export const metadata = { title: "Project timeline" };
 
 /**
  * EVERY PIECE OF WORK, BY DIVISION. Each card is a project at its stage —
@@ -62,7 +63,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHead kicker="Delivery" title="Projects" sub={`${projects.length} shown`} exportKind={isSuperAdmin(viewer) ? "projects" : undefined} />
+      <PageHead kicker="Delivery" title="Track project timeline" sub={`${projects.length} shown`} exportKind={isSuperAdmin(viewer) ? "projects" : undefined} />
       <form action="/admin/projects" className="flex flex-wrap items-end gap-2">
         <input name="q" defaultValue={params.q} placeholder="Search project or client" className="crm-input max-w-xs" />
         <Select name="division" placeholder="All divisions" defaultValue={params.division} options={DIVISIONS.map((d) => [d, DIVISION_LABEL[d]] as const)} className="max-w-[12rem]" />
@@ -90,6 +91,16 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             ))}
           </div>
         </section>
+      )}
+
+      {/* THE TIMELINE, in the main box (Genesis, 27 Oct 2026). */}
+      {projects.length > 0 && (
+        <Card title="Timeline">
+          <ProjectTimeline
+            today={new Date(`${today}T00:00:00+05:30`)}
+            projects={projects.slice(0, 60).map((p) => ({ id: p.id, number: p.number, name: p.name, client: p.account.name, start: p.startDate ?? p.createdAt, due: p.dueDate, stages: stagesOf(p), stage: p.stage, active: p.status === "ACTIVE" }))}
+          />
+        </Card>
       )}
 
       {projects.length === 0 ? (

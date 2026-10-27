@@ -17,7 +17,7 @@ export const ABOUT: Record<string, { title: string; body: string }> = {
   "/admin/reachout": { title: "Reach out", body: "Ask a plan's creators for their rates on WhatsApp or email, from your saved message, and see who's been contacted." },
   "/admin/invoices": { title: "Invoices", body: "GST tax invoices with CGST/SGST or IGST worked out. Fill one from a quote; each is filed as a PDF in the client's Google Drive folder." },
   "/admin/accounts": { title: "Clients & agencies", body: "Every client, agency and partner with their contacts, billing details, projects and history." },
-  "/admin/projects": { title: "Projects", body: "The work once a client says yes: stages, deliverables for approval, files and the team on it." },
+  "/admin/projects": { title: "Project timeline", body: "Every project on a timeline from start to due date, by stage, with deliverables for approval, files and the team on it." },
   "/admin/requests": { title: "Requests & support", body: "Briefs and questions clients send from their portal, and the replies." },
   "/admin/creators": { title: "Influencer database", body: "Creators with followers, rates and contacts. Filter, tick and make a plan; tap the pencil to edit any cell." },
   "/admin/vendors": { title: "Vendors & crew", body: "Freelancers, crews and production houses, with skills, rates and commission." },
