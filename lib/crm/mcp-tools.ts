@@ -44,7 +44,7 @@ export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM: its i
 - Agency rosters: save_influencers with source like "Agency roster · <agency>, <month>" and the agency in "agency".
 - After changing a plan, update_plan_sheets keeps its Google Sheets in step.
 - Price quotes (shoots, films, production, AI content, design: anything that isn't a list of influencers) are create_quote / update_quote, with line items. From a vendor's costing with a margin ("add 50%"), give each line its cost and markup_percent; the client never sees costs. If a vendor's line items and their stated total disagree, say so. A proposal (target group, problems, objectives, concept, timeline boxes) goes in "proposal", on a quote or a plan.
-- Leads, clients/agencies/vendors, notes and tasks: search_crm first to find the record and avoid duplicates, then save_lead, save_client, log_note, save_task.
+- Leads, clients/agencies/vendors, notes and tasks: search_crm first to find the record and avoid duplicates, then save_lead, save_client, log_note, save_task. The company's own tool subscriptions (ChatGPT, Canva…): save_subscription; a free trial is amount 0 with the date it ends.
 - Always give the user the link to what you made or changed.
 - Rupee amounts are plain numbers (180000 for ₹1.8L). Nothing can be deleted through these tools, and nothing is sent to a client: quotes stay drafts until someone sends them from the CRM.`;
 

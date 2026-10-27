@@ -452,4 +452,41 @@ export const CRM_TOOLS: Tool[] = [
       return { id: t.id, title: t.title, status: t.status, link: appUrl("/admin/tasks") };
     },
   },
+  {
+    name: "save_subscription",
+    description:
+      "Add one of the company's own subscriptions (a tool Genesis pays for: ChatGPT, Canva, Adobe…) to Our subscriptions, or change one (give its id): name, vendor, category, amount in rupees per cycle (0 for a free trial), cycle (MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY), next due date (YYYY-MM-DD: when it renews or a free trial ends), auto-renew, payment method, notes, active. Finance gets a reminder before it renews. Finance access only.",
+    input: z.object({
+      id: z.string().optional(),
+      name: z.string().max(120).optional(),
+      vendor: z.string().max(120).optional(),
+      category: z.string().max(60).optional(),
+      amount: money,
+      cycle: z.enum(["MONTHLY", "QUARTERLY", "HALF_YEARLY", "YEARLY"]).optional(),
+      next_due_date: z.string().optional(),
+      auto_renew: z.boolean().optional(),
+      payment_method: z.string().max(80).optional(),
+      notes: z.string().max(1000).optional(),
+      active: z.boolean().optional(),
+    }),
+    run: async (viewer, a: { id?: string; name?: string; vendor?: string; category?: string; amount?: number | string; cycle?: "MONTHLY" | "QUARTERLY" | "HALF_YEARLY" | "YEARLY"; next_due_date?: string; auto_renew?: boolean; payment_method?: string; notes?: string; active?: boolean }) => {
+      if (!can(viewer, "finance") || viewer.workspaceId) throw new Error("Only Genesis's finance team can change the company's subscriptions.");
+      const prisma = getPrisma();
+      const due = day(a.next_due_date);
+      const data = {
+        ...(a.name ? { name: a.name } : {}), ...(a.vendor !== undefined ? { vendor: a.vendor } : {}), ...(a.category !== undefined ? { category: a.category } : {}),
+        ...(a.amount !== undefined ? { amountPaise: toPaise(a.amount) ?? 0 } : {}), ...(a.cycle ? { cycle: a.cycle } : {}), ...(due ? { nextDueDate: due } : {}),
+        ...(a.auto_renew !== undefined ? { autoRenew: a.auto_renew } : {}), ...(a.payment_method !== undefined ? { paymentMethod: a.payment_method } : {}),
+        ...(a.notes !== undefined ? { notes: a.notes } : {}), ...(a.active !== undefined ? { active: a.active } : {}),
+      };
+      const saved = a.id
+        ? await prisma.companySubscription.update({ where: { id: a.id }, data })
+        : await (async () => {
+            if (!a.name || !due) throw new Error("A new subscription needs a name and its next due date (when it renews or the trial ends).");
+            return prisma.companySubscription.create({ data: { name: a.name, amountPaise: toPaise(a.amount) ?? 0, nextDueDate: due, ownerId: viewer.id, ...data } });
+          })();
+      await recordAuditLog({ action: a.id ? "ai.update_subscription" : "ai.create_subscription", entity: "company_subscription", entityId: saved.id, actorId: viewer.id });
+      return { id: saved.id, name: saved.name, amount: rupees(saved.amountPaise), cycle: saved.cycle, next_due: saved.nextDueDate.toISOString().slice(0, 10), active: saved.active, link: appUrl("/admin/expenses/subscriptions") };
+    },
+  },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, ChevronDown, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, UserPlus, Users, X, Zap } from "lucide-react";
+import { AudioLines, ChevronDown, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -11,7 +11,8 @@ import { NeuralOrb } from "@/components/genesis/neural-orb";
 import { readSheetFile } from "@/lib/sheet-file";
 
 type ChatItem = { id: string; title: string; updatedAt: string };
-type Msg = { role: "user" | "assistant"; text: string; files?: string[]; tools?: string[] };
+/* `previews`: the pictures sent in this visit, shown in the message (saved chats keep the names). */
+type Msg = { role: "user" | "assistant"; text: string; files?: string[]; previews?: (string | null)[]; tools?: string[] };
 type Attachment = { kind: "image"; media_type: string; data: string; name: string } | { kind: "pdf"; data: string; name: string } | { kind: "sheet"; text: string; name: string };
 
 /* The request stays under the host's limit: about 4 MB of attachments a message. */
@@ -108,11 +109,13 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
   const [modeMenu, setModeMenu] = useState(false);
   const [listening, setListening] = useState(false);
   const [showConnectors, setShowConnectors] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const liveApps = connectors.builtIns.filter((b) => b.on).length + connectors.added.filter((c) => c.enabled).length;
   /* The sidebar, open or folded; remembered on this device. */
   const [listOpen, toggleList] = usePref("crm-assistant-sidebar", true);
   const picker = useRef<HTMLInputElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     /* The newest message in view, inside the window; the page itself doesn't move. */
     const el = scroller.current;
@@ -139,6 +142,8 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
     const next = [...files, ...added];
     if (next.reduce((s, a) => s + size(a), 0) > MAX_BYTES) return setError("Those files are too large for one message (about 3 MB). Send fewer at a time, or split the PDF.");
     setFiles(next);
+    /* The chat box, taller now, kept in view. */
+    requestAnimationFrame(() => box.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
   };
 
   const hour = new Date().getHours();
@@ -151,7 +156,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
     const sent = { text: text.trim(), files, mode };
     let madeId: string | null = null;
     let failed = false;
-    setMessages((m) => [...m, { role: "user", text: sent.text, files: sent.files.map((f: Attachment) => f.name) }, { role: "assistant", text: "", tools: [] }]);
+    setMessages((m) => [...m, { role: "user", text: sent.text, files: sent.files.map((f: Attachment) => f.name), previews: sent.files.map((f: Attachment) => (f.kind === "image" ? `data:${f.media_type};base64,${f.data}` : null)) }, { role: "assistant", text: "", tools: [] }]);
     setText("");
     setFiles([]);
     try {
@@ -226,17 +231,19 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
       <span aria-hidden className="pointer-events-none absolute -right-4 top-1/2 h-24 w-40 -translate-y-1/2 rounded-full bg-[#a78bfa]/40 blur-3xl" />
       <div className={`relative rounded-[1.25rem] bg-gradient-to-r from-[#ffc516] via-[#f472b6] to-[#a78bfa] p-px shadow-[0_20px_60px_-25px_rgb(244_114_182/0.6)] ${thinking ? "animate-pulse" : ""}`}>
         <div className="rounded-[calc(1.25rem-1px)] bg-[var(--crm-panel)] p-3">
+          {/* What's attached (Genesis, 27 Oct 2026: as in the reference): a picture of each, × to take it off. */}
           {!!files.length && (
-            <div className="mb-2 flex flex-wrap gap-1.5">
+            <div className="mb-3 flex flex-wrap gap-3 px-1 pt-2">
               {files.map((f, i) => (
-                <span key={i} className="inline-flex items-center gap-1 rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.75rem] text-bone">
-                  {f.name}
-                  <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))} className="text-ash hover:text-[#dc2626]"><X className="size-3.5" /></button>
+                <span key={i} className="group relative">
+                  <Thumb file={f} />
+                  <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))} className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] text-ash shadow-[var(--shadow-float)] hover:text-bone"><X className="size-3.5" aria-hidden /></button>
                 </span>
               ))}
             </div>
           )}
           <textarea
+            ref={box}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onPaste={(e) => { if (e.clipboardData.files.length) { e.preventDefault(); void attach(e.clipboardData.files); } }}
@@ -328,7 +335,19 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
         </aside>
       )}
 
-      <section className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+      {/* Drop screenshots, PDFs or sheets anywhere here to attach them. */}
+      <section
+        className="relative flex min-h-0 min-w-0 flex-1 flex-col"
+        onDragEnter={(e) => { if (e.dataTransfer.types.includes("Files")) { e.preventDefault(); setDragging(true); } }}
+        onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) e.preventDefault(); }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false); }}
+        onDrop={(e) => { if (!e.dataTransfer.files.length) return; e.preventDefault(); setDragging(false); void attach(e.dataTransfer.files); }}
+      >
+        {dragging && (
+          <div aria-hidden className="pointer-events-none absolute inset-3 z-30 grid place-items-center rounded-[1.25rem] border-2 border-dashed border-[#f472b6] bg-[var(--crm-panel)]/85 backdrop-blur-sm">
+            <span className="flex items-center gap-2 text-[1rem] text-bone"><Paperclip className="size-5 text-[#ffc516]" aria-hidden /> Drop to attach: pictures, PDFs or Excel</span>
+          </div>
+        )}
         <div className="flex items-center gap-2 px-4 pt-4 sm:px-6">
           {!listOpen && (
             <button type="button" onClick={() => toggleList(true)} className={CHIP} aria-label="Show the sidebar"><ChevronsRight className="size-3.5" aria-hidden /> Chats</button>
@@ -365,7 +384,21 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
                 const live = m.role === "assistant" && i === messages.length - 1;
                 return m.role === "user" ? (
                   <div key={i} className="ml-auto max-w-[85%] rounded-2xl bg-[var(--hover-wash)] px-4 py-2.5">
-                    {!!m.files?.length && <p className="mb-1 text-[0.75rem] text-ash">📎 {m.files.join(", ")}</p>}
+                    {!!m.files?.length &&
+                      (m.previews?.some(Boolean) ? (
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {m.files.map((name, j) =>
+                            m.previews?.[j] ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img key={j} src={m.previews[j]!} alt={name} className="size-20 rounded-xl border border-[var(--glass-border)] object-cover" />
+                            ) : (
+                              <span key={j} className="grid h-20 w-24 place-items-center rounded-xl border border-[var(--glass-border)] px-2 text-center text-[0.6875rem] text-ash"><FileText className="mx-auto size-5" aria-hidden /><span className="line-clamp-2">{name}</span></span>
+                            ),
+                          )}
+                        </div>
+                      ) : (
+                        <p className="mb-1 text-[0.75rem] text-ash">📎 {m.files.join(", ")}</p>
+                      ))}
                     <div className="text-[0.9375rem] leading-relaxed text-bone"><Rich text={m.text} /></div>
                   </div>
                 ) : (
@@ -395,6 +428,20 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
       </section>
       {showConnectors && <ConnectorsDialog {...connectors} onClose={() => setShowConnectors(false)} />}
     </div>
+  );
+}
+
+/** An attachment as the chat box shows it: the picture itself, or a tile for a PDF or a sheet. */
+function Thumb({ file }: { file: Attachment }) {
+  if (file.kind === "image")
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={`data:${file.media_type};base64,${file.data}`} alt={file.name} title={file.name} className="size-24 rounded-2xl border-2 border-[#a78bfa]/70 object-cover shadow-[0_0_0_4px_rgb(167_139_250/0.15)]" />;
+  const pdf = file.kind === "pdf";
+  return (
+    <span title={file.name} className="flex size-24 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-[#a78bfa]/70 bg-[var(--hover-wash)] px-2 text-center shadow-[0_0_0_4px_rgb(167_139_250/0.15)]">
+      {pdf ? <FileText className="size-6 text-[#f472b6]" aria-hidden /> : <Sheet className="size-6 text-[#22c55e]" aria-hidden />}
+      <span className="line-clamp-2 break-all text-[0.625rem] leading-tight text-ash">{file.name}</span>
+    </span>
   );
 }
 
