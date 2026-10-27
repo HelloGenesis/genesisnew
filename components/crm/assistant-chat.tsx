@@ -111,9 +111,11 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
   /* The sidebar, open or folded; remembered on this device. */
   const [listOpen, toggleList] = usePref("crm-assistant-sidebar", true);
   const picker = useRef<HTMLInputElement>(null);
-  const end = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end" });
+    /* The newest message in view, inside the window; the page itself doesn't move. */
+    const el = scroller.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages, activity]);
 
   const attach = async (list: FileList | null) => {
@@ -288,7 +290,8 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
 
   return (
     /* ONE WINDOW (Genesis, 27 Oct 2026, after the reference): the sidebar inside it, the orb and the chat box in the middle. */
-    <div className="crm-card relative flex min-h-[calc(100svh-8.5rem)] overflow-hidden !p-0">
+    /* A fixed window (Genesis, 27 Oct 2026: "this section stays still"): only the conversation scrolls inside it. */
+    <div className="crm-card relative flex h-[calc(100svh-16.25rem)] min-h-[28rem] overflow-hidden !p-0">
       {listOpen && (
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
@@ -324,7 +327,7 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
         </aside>
       )}
 
-      <section className="relative flex min-w-0 flex-1 flex-col">
+      <section className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-2 px-4 pt-4 sm:px-6">
           {!listOpen && (
             <button type="button" onClick={() => toggleList(true)} className={CHIP} aria-label="Show the sidebar"><ChevronsRight className="size-3.5" aria-hidden /> Chats</button>
@@ -333,7 +336,7 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
         </div>
 
         {!messages.length ? (
-          <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-10">
+          <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-10 [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto" data-lenis-prevent>
             {/* Genesis's orb with what it can do round it (as before), the greeting, the chat box. */}
             <div className="relative w-[min(14rem,58vw)]">
               <NeuralOrb thinking={thinking} />
@@ -355,7 +358,8 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
           </div>
         ) : (
           <>
-            <div className="mx-auto w-full max-w-3xl flex-1 space-y-5 overflow-y-auto px-4 py-6 sm:px-6" data-lenis-prevent>
+            <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
+            <div className="mx-auto w-full max-w-3xl space-y-5 px-4 py-6 sm:px-6">
               {messages.map((m, i) => {
                 const live = m.role === "assistant" && i === messages.length - 1;
                 return m.role === "user" ? (
@@ -381,7 +385,7 @@ export function AssistantChat({ chats, open, firstName, connectors }: { chats: C
                 );
               })}
               {error && <p className="text-[0.8125rem] text-[#dc2626]" role="alert">{error}</p>}
-              <div ref={end} />
+            </div>
             </div>
             <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-2 sm:px-6">{composer}</div>
           </>

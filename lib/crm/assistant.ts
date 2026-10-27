@@ -46,6 +46,14 @@ const LABEL: Record<string, string> = {
   update_plan: "Updating the plan",
   update_plan_sheets: "Updating the Google Sheets",
   log_reachout: "Logging the reach-out",
+  search_crm: "Searching the CRM",
+  get_quote: "Reading the quote",
+  create_quote: "Making the quote",
+  update_quote: "Updating the quote",
+  save_lead: "Saving the lead",
+  save_client: "Saving the client",
+  log_note: "Adding a note",
+  save_task: "Saving the task",
 };
 
 /* The tools in the shape the model takes, inputs streamed as they're written. */
