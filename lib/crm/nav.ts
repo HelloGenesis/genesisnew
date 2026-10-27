@@ -71,7 +71,7 @@ export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; 
         ]
       : []),
     ...(delivery
-      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, { href: "/admin/vendors", label: "Vendors & crew" }] }]
+      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Project timeline", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, { href: "/admin/vendors", label: "Vendors & crew" }] }]
       : viewer.roles.includes("CREATIVE")
         ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }] }]
         : []),
