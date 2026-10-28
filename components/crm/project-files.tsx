@@ -6,6 +6,8 @@ import { useMemo, useRef, useState } from "react";
 
 import { deleteProjectFile, setFileAudience } from "@/app/(crm)/files-actions";
 
+import { uploadToProject } from "./upload-to-drive";
+
 export type FileItem = {
   id: string;
   name: string;
@@ -52,36 +54,7 @@ export function ProjectFiles({ projectId, role, folders, files }: { projectId: s
       setProgress((p) => [...p, { name: file.name, pct: 0 }]);
       const set = (pct: number) => setProgress((p) => p.map((x) => (x.name === file.name ? { ...x, pct } : x)));
       try {
-        const start = await fetch("/api/crm/files/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectId, folder: folder.key, audience: audience || undefined, name: file.name, mimeType: file.type || "application/octet-stream", size: file.size }),
-        });
-        const started = (await start.json()) as { uploadUrl?: string; ticket?: string; error?: string };
-        if (!start.ok || !started.uploadUrl) throw new Error(started.error ?? "Upload couldn't start.");
-        const driveId = await new Promise<string>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("PUT", started.uploadUrl!);
-          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-          xhr.upload.onprogress = (e) => e.lengthComputable && set(Math.round((e.loaded / e.total) * 100));
-          xhr.onload = () => {
-            try {
-              const id = (JSON.parse(xhr.responseText) as { id?: string }).id;
-              if (xhr.status < 300 && id) resolve(id);
-              else reject(new Error("Upload failed."));
-            } catch {
-              reject(new Error("Upload failed."));
-            }
-          };
-          xhr.onerror = () => reject(new Error("Network error during upload."));
-          xhr.send(file);
-        });
-        const done = await fetch("/api/crm/files/finish", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ticket: started.ticket, driveId, review: review && CUTS.has(folder.key) }),
-        });
-        if (!done.ok) throw new Error(((await done.json()) as { error?: string }).error ?? "Couldn't save the file.");
+        await uploadToProject(file, { projectId, folder: folder.key, audience, review: review && CUTS.has(folder.key) }, set);
       } catch (e) {
         setError(`${file.name}: ${(e as Error).message}`);
       } finally {

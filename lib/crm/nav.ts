@@ -21,6 +21,8 @@ export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; 
   const influence = sales || plansOnly(viewer) || seesCreators(viewer);
   const delivery = can(viewer, "delivery") || sales;
   const finance = can(viewer, "finance");
+  /* Every project's files, and its images and videos as a gallery (lib/crm/library). */
+  const LIBRARY = [{ href: "/admin/files", label: "Files" }, { href: "/admin/creatives", label: "Creative library" }];
   return [
     {
       label: "Today",
@@ -71,9 +73,9 @@ export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; 
         ]
       : []),
     ...(delivery
-      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Project timeline", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, { href: "/admin/vendors", label: "Vendors & crew" }] }]
+      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Project timeline", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, { href: "/admin/vendors", label: "Vendors & crew" }, ...LIBRARY] }]
       : viewer.roles.includes("CREATIVE")
-        ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }] }]
+        ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }, ...LIBRARY] }]
         : []),
     ...(sales || finance
       ? [

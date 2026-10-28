@@ -94,6 +94,13 @@ const nextConfig: NextConfig = {
   // the serverless bundle; Next loads it from node_modules at runtime instead.
   serverExternalPackages: ["googleapis", "@sparticuz/chromium", "puppeteer-core"],
 
+  // Chromium's compressed browser (lib/crm/pdf) is read from disk, never
+  // imported, so tracing misses it ("…@sparticuz/chromium/bin does not
+  // exist" on Vercel). PDFs are made from the CRM's quote and invoice pages.
+  outputFileTracingIncludes: {
+    "/admin/**": ["./node_modules/@sparticuz/chromium/bin/**"],
+  },
+
   images: {
     /**
      * YouTube still frames for the journal's video-linked articles. Scoped to
