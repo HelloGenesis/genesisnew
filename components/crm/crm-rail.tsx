@@ -4,6 +4,7 @@ import {
   BadgeIndianRupee,
   Bell,
   BookOpen,
+  ChartColumn,
   Briefcase,
   Building2,
   ChevronDown,
@@ -16,7 +17,9 @@ import {
   FileSpreadsheet,
   FileText,
   FlaskConical,
+  Film,
   FolderKanban,
+  FolderUp,
   History,
   Inbox,
   Lightbulb,
@@ -29,6 +32,7 @@ import {
   Plus,
   Receipt,
   Repeat,
+  ScanFace,
   Send,
   Settings,
   Sparkles,
@@ -73,7 +77,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/inbox": Inbox,
   "/admin/tasks": ListChecks,
   "/admin/assistant": Sparkles,
-  "/admin/reports": TrendingUp,
+  "/admin/reports": ChartColumn,
   "/admin/leads": Users,
   "/admin/briefs": Lightbulb,
   "/admin/quotes": FileText,
@@ -86,6 +90,8 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/projects": FolderKanban,
   "/admin/requests": LifeBuoy,
   "/admin/vendors": Truck,
+  "/admin/files": FolderUp,
+  "/admin/creatives": Film,
   "/admin/billing": CircleDollarSign,
   "/admin/payouts": BadgeIndianRupee,
   "/admin/expenses": Wallet,
@@ -93,16 +99,32 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/expenses/gst": FileSpreadsheet,
   "/admin/staff": UserCog,
   "/admin/lab": FlaskConical,
+  "/admin/lab/avatars": ScanFace,
   "/admin/team": Briefcase,
   "/admin/settings": Plug,
   "/admin?tour=1": Compass,
 };
 export const iconFor = (href: string) => PAGE_ICON[href] ?? BookOpen;
 /* Every rail item the same size, icon and label on one centre line. */
-const ITEM = "group flex h-[4.25rem] w-full shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
-const TILE = "relative grid size-10 place-items-center rounded-xl transition-colors";
+/* Items share the rail's height: full size on a tall screen, closer together on a laptop, never hidden. */
+const ITEM = "group flex min-h-[2.875rem] max-h-[3.75rem] w-full flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
+const TILE = "relative grid size-8 shrink-0 place-items-center rounded-xl transition-colors";
 /* The areas set apart at the bottom of the rail, as Vitra's are. */
 const LOWER = new Set(["Money", "Setup"]);
+/*
+ * PAGES STRAIGHT ON THE RAIL (Genesis, 28 Oct 2026: "Files, Tasks, Inbox,
+ * Notifications, Creative Library, Reports … all I want here"): one click,
+ * between the areas and Money/Setup, when this person has them. Notifications
+ * is the bell at the foot.
+ */
+const SHORTCUTS: { href: string; label: string }[] = [
+  { href: "/admin/inbox", label: "Inbox" },
+  { href: "/admin/tasks", label: "Tasks" },
+  { href: "/admin/files", label: "Files" },
+  { href: "/admin/creatives", label: "Creatives" },
+  { href: "/admin/lab/avatars", label: "Avatars" },
+  { href: "/admin/reports", label: "Reports" },
+];
 
 export function CrmRail({ groups, title, root = "/admin", footer }: { groups: NavGroup[]; title: string; root?: string; footer?: React.ReactNode }) {
   const path = usePathname() ?? root;
@@ -133,6 +155,13 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
   const [open, setOpen] = usePref("crm-rail-panel", true);
   const group = groups.find((g) => g.label === area) ?? groups[0];
   const counts = (g: NavGroup) => g.items.reduce((s, i) => s + (i.count ?? 0), 0);
+  /* The rail's own links, only for pages this person's areas include. */
+  const pages = groups.flatMap((g) => g.items);
+  const shortcuts = SHORTCUTS.flatMap((sc) => {
+    const item = pages.find((i) => i.href === sc.href);
+    return item ? [{ ...sc, count: item.count }] : [];
+  });
+  const bell = pages.find((i) => i.href === "/admin/notifications");
 
   const railButton = (g: NavGroup) => {
     const Icon = AREA_ICON[g.label] ?? LayoutGrid;
@@ -153,7 +182,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         className={ITEM}
       >
         <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : inside ? "bg-white/15 text-white" : "group-hover:bg-white/10"}`}>
-          <Icon className="size-5" aria-hidden />
+          <Icon className="size-[1.125rem]" aria-hidden />
           {/* Something waiting in this area: a dot here, the numbers in its panel. */}
           {n > 0 && <span aria-hidden className="absolute right-1.5 top-1.5 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
         </span>
@@ -180,13 +209,33 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           {groups.filter((g) => !LOWER.has(g.label)).map(railButton)}
           <Link href="/admin/assistant" aria-label="AI assistant" className={ITEM}>
             <span className={`${TILE} bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216] ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
-              <Sparkles className="size-5" aria-hidden />
+              <Sparkles className="size-[1.125rem]" aria-hidden />
             </span>
             <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-white" : ""}`}>AI</span>
           </Link>
+          {shortcuts.length > 0 && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
+          {shortcuts.map((sc) => {
+            const Icon = iconFor(sc.href);
+            const lit = sc.href === best;
+            return (
+              <Link key={sc.href} href={sc.href} aria-current={lit ? "page" : undefined} aria-label={`${sc.label}${sc.count ? `, ${sc.count} waiting` : ""}`} className={ITEM}>
+                <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-white/10"}`}>
+                  <Icon className="size-[1.125rem]" aria-hidden />
+                  {!!sc.count && <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
+                </span>
+                <span className={`leading-none ${lit ? "font-medium text-white" : ""}`}>{sc.label}</span>
+              </Link>
+            );
+          })}
           {groups.some((g) => LOWER.has(g.label)) && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
           {groups.filter((g) => LOWER.has(g.label)).map(railButton)}
         </div>
+        {bell && (
+          <Link href={bell.href} aria-current={bell.href === best ? "page" : undefined} aria-label={`Notifications${bell.count ? `, ${bell.count} unread` : ""}`} title="Notifications" className={`relative mt-1 grid size-10 shrink-0 place-items-center rounded-xl transition-colors ${bell.href === best ? "bg-white text-[#141216]" : "text-white/65 hover:bg-white/10 hover:text-white"}`}>
+            <Bell className="size-5" aria-hidden />
+            {!!bell.count && <span aria-hidden className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-[#ffc516] px-1 text-center text-[0.625rem] font-semibold leading-4 text-[#141216] ring-2 ring-[#18171b]">{bell.count > 99 ? "99+" : bell.count}</span>}
+          </Link>
+        )}
         {footer}
       </nav>
 
