@@ -192,7 +192,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
   };
 
   return (
-    <div className="sticky top-20 flex h-[calc(100svh-6rem)] gap-3">
+    <div className="flex h-full gap-3">
       {/* The rail. */}
       <nav aria-label="CRM areas" className="flex w-[4.75rem] shrink-0 flex-col items-center rounded-[1.25rem] bg-[#18171b] px-1.5 py-3 shadow-[var(--shadow-float)]">
         {/* Genesis's N, as the favicon (app/icon.svg): yellow on white. */}

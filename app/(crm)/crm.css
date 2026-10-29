@@ -61,6 +61,14 @@
   .crm-side {
     border-right: 1px solid var(--crm-line);
   }
+  /* One window-high frame: the menu stays, the page scrolls inside it (components/crm/scroll-main). */
+  .crm-frame {
+    height: calc(100svh - 3.5rem - 1px - 2rem);
+    margin: 1rem auto;
+  }
+  .crm-frame > .crm-side {
+    overflow-y: auto;
+  }
 }
 .crm-side-title {
   font-size: 0.875rem;

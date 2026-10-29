@@ -16,6 +16,7 @@ import { requestWorkspace } from "@/lib/crm/request-workspace";
 import { workspaces } from "@/lib/crm/workspace";
 import { setViewingCrm } from "./actions/workspaces";
 import { AppTour } from "@/components/crm/app-tour";
+import { ScrollMain } from "@/components/crm/scroll-main";
 import { Suspense } from "react";
 
 export const metadata: Metadata = { title: { default: "CRM", template: "%s · Genesis CRM" } };
@@ -84,8 +85,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       THE RAIL AND ITS PANEL on a desktop (Genesis, 27 Oct 2026: components/crm/crm-rail), the page
       beside it; on a phone, the strip of pages over the page as before.
     */
-    <div className="crm-shell mx-auto w-full max-w-[1680px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[auto_minmax(0,1fr)]">
-      <div className="crm-side min-w-0 px-4 pt-5 sm:px-6 lg:border-r-0 lg:p-3 lg:pr-0">
+    <div className="crm-shell crm-frame mx-auto w-full max-w-[1680px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[auto_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
+      <div className="crm-side min-w-0 px-4 pt-5 sm:px-6 lg:h-full lg:border-r-0 lg:p-3 lg:pr-0">
         <div className="lg:hidden">
           <SideNav groups={groups} root="/admin" label="CRM" title={agencyCrm?.name ?? "Genesis Media"} phoneOnly />
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] text-faint">
@@ -94,11 +95,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <SignOut className="crm-link" />
           </div>
         </div>
-        <div className="hidden lg:block">
+        <div className="hidden lg:block lg:h-full">
           <CrmRail groups={groups} title={agencyCrm?.name ?? "Genesis Media"} footer={<RailUser name={viewer!.name} email={viewer!.email} roles={viewer!.roles.join(", ").toLowerCase()} portal={viewer!.memberships.length > 0} />} />
         </div>
       </div>
-      <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:py-7">
+      <ScrollMain className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:h-full lg:overflow-y-auto lg:px-8 lg:py-7">
         {viewingSwitch && <div className="flex justify-end">{viewingSwitch}</div>}
         {/* A Genesis owner inside an agency's CRM: anything added here is the agency's. */}
         {agencyCrm && !viewer!.workspaceId && (
@@ -109,7 +110,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </form>
         )}
         {children}
-      </main>
+      </ScrollMain>
       <Suspense fallback={null}>
         <AppTour firstTime={!tourSeen} name={viewer!.name} area="admin" />
       </Suspense>

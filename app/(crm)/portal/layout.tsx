@@ -10,6 +10,7 @@ import { switchAccount } from "./actions";
 import { SignOut } from "@/components/crm/sign-out";
 import { AppTour } from "@/components/crm/app-tour";
 import { Suspense } from "react";
+import { ScrollMain } from "@/components/crm/scroll-main";
 
 export const metadata: Metadata = { title: { default: "Portal", template: "%s · Genesis portal" } };
 export const dynamic = "force-dynamic";
@@ -59,7 +60,7 @@ export default async function PortalLayout({ children }: { children: React.React
   const tourSeen = Boolean(await prisma.appSetting.findUnique({ where: { key: `tour:done:${viewer.id}` }, select: { key: true } }));
 
   return (
-    <div className="crm-shell mx-auto w-full max-w-[1400px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[264px_minmax(0,1fr)]">
+    <div className="crm-shell crm-frame mx-auto w-full max-w-[1400px] lg:grid lg:w-[calc(100%-2rem)] lg:grid-cols-[264px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
       <div className="crm-side min-w-0 space-y-5 px-4 pt-5 sm:px-6 lg:px-4 lg:py-7">
         {accounts.length > 1 && (
           <form action={switchAccount} className="flex gap-2">
@@ -82,7 +83,7 @@ export default async function PortalLayout({ children }: { children: React.React
           </div>
         </div>
       </div>
-      <main className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:px-9 lg:py-8">{children}</main>
+      <ScrollMain className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:h-full lg:overflow-y-auto lg:px-9 lg:py-8">{children}</ScrollMain>
       <Suspense fallback={null}>
         <AppTour firstTime={!tourSeen} name={viewer.name} area="portal" />
       </Suspense>

@@ -600,7 +600,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
     <form ref={formRef} action={action} noValidate className="space-y-6">
       <input type="hidden" name="payload" value={JSON.stringify({ ...q, version: ver, force })} />
       {(conflict || state?.message?.includes("after you opened it")) && (
-        <div role="alert" className="sticky top-[4.75rem] z-40 flex flex-wrap items-center gap-3 rounded-2xl border border-[#f59e0b] bg-[var(--surface-float)] px-4 py-3 shadow-[var(--shadow-float)]">
+        <div role="alert" className="sticky top-[4.75rem] z-40 flex lg:top-3 flex-wrap items-center gap-3 rounded-2xl border border-[#f59e0b] bg-[var(--surface-float)] px-4 py-3 shadow-[var(--shadow-float)]">
           <p className="min-w-0 flex-1 text-[0.875rem] text-bone">{conflict ?? state?.message} Your changes since then aren&apos;t saved yet.</p>
           <button type="button" onClick={() => window.location.reload()} className="crm-btn crm-btn-primary crm-btn-sm">Get the latest</button>
           <button
