@@ -2,7 +2,7 @@ import { AssistantChat } from "@/components/crm/assistant-chat";
 import { aiConfigured } from "@/lib/crm/ai";
 import { addedConnectors, builtInConnectors } from "@/lib/crm/ai-connectors";
 import { chatForView, recentChats } from "@/lib/crm/assistant";
-import { isSuperAdmin } from "@/lib/crm/scope";
+import { isSuperAdmin, usesAi } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,7 @@ export const metadata = { title: "AI assistant" };
 /** The CRM's AI assistant (lib/crm/assistant): chat, attach screenshots, sheets and PDFs, and it works in the CRM. */
 export default async function AssistantPage({ searchParams }: { searchParams: Promise<{ chat?: string; prompt?: string }> }) {
   const viewer = await requireStaff();
+  if (!usesAi(viewer)) return <p className="crm-notice">Genesis AI is open to the owners only. Ask Shivam or Tanvi if you need something done with it.</p>;
   const { chat, prompt } = await searchParams;
   const [chats, open, builtIns, added] = await Promise.all([recentChats(viewer.id), chat ? chatForView(viewer.id, chat) : null, builtInConnectors(viewer), addedConnectors(viewer.ws ?? null)]);
   /* Who may connect apps (app/(crm)/admin/actions/connectors). */

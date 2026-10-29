@@ -24,7 +24,8 @@ import type { Viewer } from "./session";
  * Env: ANTHROPIC_API_KEY; CRM_CHAT_MODEL to change the model.
  */
 
-const MODEL = () => process.env.CRM_CHAT_MODEL || "claude-opus-5-5";
+/* The model that uses the fewest credits (Genesis, 29 Oct 2026): Claude Haiku 5.5. */
+const MODEL = () => process.env.CRM_CHAT_MODEL || "claude-haiku-5-5";
 /* Room for a whole job from one message: a lead, its quote, a project, a task… (Genesis, 28 Oct 2026). */
 const MAX_TURNS = 30;
 
@@ -127,6 +128,7 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
   /* The apps connected to this CRM (lib/crm/ai-connectors): their tools, run by Anthropic's MCP connector. */
   const apps = await mcpForChat(viewer.ws ?? null);
   let retries = 0;
+  const haiku = MODEL().includes("haiku");
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const stream = call({
       model: MODEL(),
@@ -140,9 +142,9 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
       output_config: { effort: EFFORT[input.mode ?? "balanced"] },
       /* Caches the conversation so far: later turns re-read it at a fraction of the cost. */
       cache_control: { type: "ephemeral" },
-      /* A request the model declines is answered by Anthropic's recommended stand-in model instead. */
-      betas: ["server-side-fallback-2026-07-01", ...(apps.servers.length ? ["mcp-client-2025-11-20" as const] : [])],
-      fallbacks: "default",
+      /* A request the model declines is answered by Anthropic's recommended stand-in model instead (Haiku has no stand-in). */
+      betas: [...(haiku ? [] : ["server-side-fallback-2026-07-01" as const]), ...(apps.servers.length ? ["mcp-client-2025-11-20" as const] : [])],
+      ...(haiku ? {} : { fallbacks: "default" as const }),
     });
     stream.on("text", (d) => emit({ t: "text", d }));
     let message: Anthropic.Beta.BetaMessage;

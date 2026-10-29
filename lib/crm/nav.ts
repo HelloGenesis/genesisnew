@@ -1,6 +1,6 @@
 import type { NavGroup } from "@/components/crm/side-nav";
 
-import { plansOnly, sees, seesCreators } from "./scope";
+import { plansOnly, sees, seesCreators, usesAi } from "./scope";
 import { can, type Viewer } from "./session";
 
 /**
@@ -9,7 +9,15 @@ import { can, type Viewer } from "./session";
  * features show the same list. Counts are what's waiting on each.
  */
 type Recent = { href: string; label: string; hint?: string }[];
-export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks?: number; dueLeads?: number; review?: number; openRequests?: number } = {}, recent: { plans?: Recent; quotes?: Recent } = {}): NavGroup[] {
+export function crmNav(viewer: Viewer, ...rest: Parameters<typeof allNav> extends [Viewer, ...infer R] ? R : never): NavGroup[] {
+  const groups = allNav(viewer, ...rest);
+  if (usesAi(viewer)) return groups;
+  /* Genesis AI is for the owners only (lib/crm/scope usesAi): its links go for everyone else. */
+  const keep = <T extends { href: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant"));
+  return groups.map((g) => ({ ...g, items: keep(g.items)!, ...(g.create ? { create: keep(g.create) } : {}) }));
+}
+
+function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks?: number; dueLeads?: number; review?: number; openRequests?: number } = {}, recent: { plans?: Recent; quotes?: Recent } = {}): NavGroup[] {
   const { unread = 0, inboxNew = 0, myTasks = 0, dueLeads = 0, review = 0, openRequests = 0 } = c;
   /*
    * THE AREAS, ONE JOB EACH (Genesis, 27 Oct 2026: "make sure it's systematic;

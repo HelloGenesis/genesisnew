@@ -5,6 +5,7 @@ import { z } from "zod";
 import { aiConfigured } from "@/lib/crm/ai";
 import { type ChatEvent, runChat } from "@/lib/crm/assistant";
 import { inWorkspace } from "@/lib/crm/request-workspace";
+import { usesAi } from "@/lib/crm/scope";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 
 export const runtime = "nodejs";
@@ -32,6 +33,7 @@ const Body = z.object({
 export async function POST(request: Request) {
   const viewer = await getViewer();
   if (staffAccess(viewer) !== "granted") return NextResponse.json({ error: "Sign in to the CRM first." }, { status: 401 });
+  if (!usesAi(viewer!)) return NextResponse.json({ error: "Genesis AI is open to the owners only." }, { status: 403 });
   if (!aiConfigured()) return NextResponse.json({ error: "The AI isn't set up yet (ANTHROPIC_API_KEY)." }, { status: 503 });
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "That message or its files are too large, or not a supported type." }, { status: 400 });

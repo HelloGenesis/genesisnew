@@ -14,6 +14,7 @@ import { razorpayKeys } from "@/lib/razorpay";
 
 import { ConnectorCard } from "@/components/crm/connector-card";
 import { connectorKeys } from "@/lib/crm/mcp-keys";
+import { usesAi } from "@/lib/crm/scope";
 
 import { disconnectGoogleDrive, retryEmail } from "../actions/finance";
 
@@ -75,10 +76,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </div>
         )}
       </Card>
-      {/* The CRM in ChatGPT or Claude (app/api/mcp): each person's own link. */}
-      <Card title="ChatGPT / Claude">
-        <ConnectorCard links={await connectorKeys(viewer.id)} />
-      </Card>
+      {/* The CRM in ChatGPT or Claude (app/api/mcp): each owner's own link (Genesis AI is for the owners only). */}
+      {usesAi(viewer) && (
+        <Card title="ChatGPT / Claude">
+          <ConnectorCard links={await connectorKeys(viewer.id)} />
+        </Card>
+      )}
       <Card title="Google Contacts">
         <p className="text-ash">
           Your contacts go into <strong className="text-bone">your own</strong> Google Contacts: the influencers you added, your leads, and the clients and vendors you look after, each under a &ldquo;Genesis ·&rdquo; label and updated when they change here (every few minutes). Super admins get everyone&apos;s.
