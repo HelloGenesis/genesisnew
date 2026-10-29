@@ -38,6 +38,7 @@ export type ChatEvent =
 
 /* What the person sees while a tool runs. */
 const LABEL: Record<string, string> = {
+  today: "Checking today's date",
   search_influencers: "Searching the influencer database",
   get_influencer: "Looking up the influencer",
   save_influencers: "Saving to the influencer database",
@@ -79,7 +80,7 @@ function system(viewer: Viewer) {
 
 ${CRM_INSTRUCTIONS}
 
-Today is ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" })} (India time); work out dates like "a week ago" or "next Friday" from it.`;
+Right now it is ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" })}, ${new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })} (India time); work out dates like "a week ago" or "next Friday" from it, or call today for the exact dates.`;
 }
 
 export type Attachment = { kind: "image"; media_type: string; data: string; name: string } | { kind: "pdf"; data: string; name: string } | { kind: "sheet"; text: string; name: string };

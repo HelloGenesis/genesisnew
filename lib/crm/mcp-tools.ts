@@ -43,6 +43,7 @@ export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM, all o
 - Do the whole job from one message. When a request takes several steps (say a lead, a quote for it, a follow-up task and a note), do every step in order with the tools, carrying ids and numbers from one to the next, then report once. If a detail is optional, make a sensible choice and say what you chose.
 - Ask first, before changing anything, when you're unsure or the decision matters: two or more records could be meant; something essential is missing (who the client is, the price, the date); it would change money already agreed (a sent quote's price, an invoice); or it would undo someone else's work. Ask one short question with numbered options (1., 2., 3.) the person can answer in a word, and do the steps that don't depend on the answer.
 - Lead the person to the end of the process. Finish every answer with "Next:" and the step or two that completes the job, with links (for example: send the quote to the client from its page; when they accept, ask me to open the project and make the invoice; follow up on the task date), or offer to do the next step yourself.
+- Check the date first (Genesis, 29 Oct 2026). Before making a quote, assigning a task, adding a lead or changing anything with a date (valid until, due date, follow-up, project dates, invoice dates), call today, and work every date out from it in India time ("tomorrow", "next Friday", "end of the month", "in 2 weeks"). Never use a date from memory, and never set a date in the past unless the person asked for it. Say the dates you set as a day and date ("Fri 31 Oct").
 - Find before you make: search_crm (leads, clients, vendors, projects, tasks, quotes), find_work (projects, invoices, requests) or search_influencers, so nothing is duplicated. crm_overview gives the numbers.
 - Influencer plans from screenshots, Excel/CSV, Google Sheets or roster PDFs: read every row yourself, then create_plan / update_plan with one row per creator, keeping every detail (name, handle or link as a plain URL, followers, avg views, ER, category, city, phone, email, agency, creator costs reel_cost / story_cost / dl_cost and, separately, client prices, reach-out, remarks; anything else under "columns"). Words or ranges in a money cell go in remarks, never as a number. Reuse database entries (search_influencers) and check last_reach_out so nobody is contacted twice; log_reachout records one. Agency rosters: save_influencers with source "Agency roster · <agency>, <month>". After changing a plan, update_plan_sheets.
 - Price quotes (shoots, films, production, AI content, design) are create_quote / update_quote with line items; from a vendor's costing with a margin, give each line its cost and markup_percent (the client never sees costs). Flag a vendor total that doesn't match its lines. Proposals (target group, problems, objectives, concept, timeline) go in "proposal".
@@ -71,6 +72,31 @@ const platformOf = (p: string | null | undefined, url: string | null | undefined
   return url && /youtube/i.test(url) ? "YOUTUBE" : "INSTAGRAM";
 };
 const planLink = (id: string) => appUrl(`/admin/quotes/${id}`);
+
+/** The date in India, as the AI should use it (YYYY-MM-DD dates, IST). */
+function today(now = new Date()) {
+  const ist = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const label = (d: Date) => d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+  const day = 864e5;
+  const iso = ist(now);
+  const base = new Date(`${iso}T12:00:00+05:30`);
+  const dow = base.getUTCDay();
+  const add = (n: number) => new Date(base.getTime() + n * day);
+  const [y, m] = iso.split("-").map(Number);
+  const monthEnd = new Date(Date.UTC(y, m, 0, 6, 30));
+  return {
+    today: iso,
+    weekday: now.toLocaleDateString("en-IN", { weekday: "long", timeZone: "Asia/Kolkata" }),
+    time_now: now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" }),
+    timezone: "Asia/Kolkata (IST, UTC+5:30)",
+    readable: label(now),
+    tomorrow: ist(add(1)),
+    this_friday: ist(add((5 - dow + 7) % 7)),
+    next_monday: ist(add(((1 - dow + 7) % 7) || 7)),
+    end_of_month: ist(monthEnd),
+    in_14_days: ist(add(14)),
+  };
+}
 
 /* --- Shapes the AI reads ---------------------------------------------------- */
 
@@ -315,6 +341,13 @@ async function writeRows(viewer: Viewer, quoteId: string, rows: PlanRowIn[]) {
 /* --- The tools ------------------------------------------------------------- */
 
 export const TOOLS: Tool[] = [
+  {
+    name: "today",
+    readOnly: true,
+    description: "Today's date and the time now, in India (IST), with tomorrow, this week and month ends. Call it before making a quote, a task, a lead or changing anything with a date, and work dates out from it.",
+    input: z.object({}),
+    run: async () => today(),
+  },
   /* Quotes, proposals, leads, clients, notes and tasks (lib/crm/mcp-crm-tools). */
   ...CRM_TOOLS,
   /* Projects, invoices, expenses, briefs, requests, vendors and the numbers (lib/crm/mcp-work-tools). */
