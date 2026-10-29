@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronDown, Columns3, ExternalLink, FileSpreadsheet, Maximize2, Minimize2, Plus, Sheet, Trash2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Redo2, Undo2, Columns3, ExternalLink, FileSpreadsheet, Maximize2, Minimize2, Plus, Sheet, Trash2, Upload, X } from "lucide-react";
 import { MultiValue } from "@/components/crm/multi-value";
 import { autoTier, TIERS, tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
-import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type SetStateAction, useActionState, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { importCreatorsForPlan, matchUploadColumns } from "@/app/(crm)/admin/actions/imports";
 import { quoteVersion, saveQuote } from "@/app/(crm)/admin/actions/quotes";
@@ -169,7 +169,38 @@ const BOX_LABELS: Record<string, string> = { tg: "TG (target group)", problems: 
 
 /* `contactHidden`: someone else's client: their contact name, email and phone stay private (lib/crm/scope seesQuoteContact). */
 export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], sheets, version, contactHidden = false }: { initial: BuilderQuote; catalog: CatalogItem[]; terms: Terms[]; pool: PoolCreator[]; clients?: Client[]; sheets?: { ext: string | null; int: string | null }; version?: string; contactHidden?: boolean }) {
-  const [q, setQ] = useState<BuilderQuote>({ ...initial, proposalSections: initial.proposalSections ?? [], planColumns: initial.planColumns ?? {} });
+  /*
+   * UNDO AND REDO (Genesis, 29 Oct 2026). Every change to the quote goes
+   * through setQ, which keeps the earlier states; typing in one go (changes
+   * under a second apart) is one step, not one per letter. Up to 100 steps.
+   */
+  type Steps = { q: BuilderQuote; past: BuilderQuote[]; future: BuilderQuote[]; at: number };
+  const [steps, setSteps] = useState<Steps>(() => ({ q: { ...initial, proposalSections: initial.proposalSections ?? [], planColumns: initial.planColumns ?? {} }, past: [], future: [], at: 0 }));
+  const q = steps.q;
+  const setQ = useCallback((next: SetStateAction<BuilderQuote>) => {
+    setSteps((h) => {
+      const now = typeof next === "function" ? next(h.q) : next;
+      if (now === h.q) return h;
+      const t = Date.now();
+      return { q: now, past: t - h.at > 1000 ? [...h.past.slice(-99), h.q] : h.past, future: [], at: t };
+    });
+  }, []);
+  const undo = useCallback(() => setSteps((h) => (h.past.length ? { q: h.past[h.past.length - 1], past: h.past.slice(0, -1), future: [h.q, ...h.future], at: 0 } : h)), []);
+  const redo = useCallback(() => setSteps((h) => (h.future.length ? { q: h.future[0], past: [...h.past, h.q], future: h.future.slice(1), at: 0 } : h)), []);
+  /* ⌘Z / Ctrl+Z and ⇧⌘Z / Ctrl+Y, outside a text box (a box undoes its own typing). */
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      if ((e.target as Element | null)?.closest?.("input, textarea, select, [contenteditable=true], [contenteditable='']")) return;
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) undo();
+      else if ((k === "z" && e.shiftKey) || k === "y") redo();
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [undo, redo]);
   const [pick, setPick] = useState("");
   const [search, setSearch] = useState("");
   const [link, setLink] = useState("");
@@ -857,9 +888,27 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                 <button type="button" aria-expanded={showColumns} onClick={() => setShowColumns((s) => !s)} className="crm-btn crm-btn-secondary crm-btn-sm"><Columns3 className="size-4" aria-hidden /> Add / remove columns</button>
                 <span className="ml-auto flex items-center gap-2">Budget line <input value={q.planBudget ?? ""} onChange={(e) => set("planBudget", e.target.value)} className="crm-input !min-h-8 !w-44" placeholder="As per Brand" /></span>
               </div>
+              <div className={full ? "fixed inset-0 z-[80] flex flex-col bg-[var(--surface-panel)]" : "contents"} {...(full ? { role: "dialog", "aria-modal": true, "aria-label": "Influencer plan, full screen" } : {})}>
+              <div className={`flex flex-wrap items-center gap-2 ${full ? "border-b border-[var(--glass-border)] px-3 py-2 sm:px-5 sm:py-3" : ""}`}>
+                {full && <span className="mr-auto min-w-0 truncate text-[0.9375rem] text-bone sm:mr-3">{q.title || "Influencer plan"} <span className="text-ash">· {q.creators.length} creators</span></span>}
+              <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Editing the internal or the external plan">
+                <span className="text-[0.8125rem] text-ash">Editing:</span>
+                {([["internal", "Internal (team)"], ["external", "External (client)"]] as const).map(([value, label]) => (
+                  <button key={value} type="button" role="radio" aria-checked={editing === value} onClick={() => setEditing(value)} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${editing === value ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
+                    {label}
+                  </button>
+                ))}
+                <span className={`text-[0.75rem] text-faint ${full ? "max-lg:hidden" : ""}`}>{editing === "internal" ? "Everything: creator costs, profit, reach-out, phone, email and remarks." : `What the brand sees${q.planColumns?.extPrices === false ? " (a sample, no prices)" : ", client prices only"}; costs, profit and notes stay internal.`}</span>
+              </div>
+                {/* The columns in full screen too (Genesis, 29 Oct 2026). */}
+                {full && <button type="button" aria-expanded={showColumns} onClick={() => setShowColumns((x) => !x)} className="crm-btn crm-btn-secondary crm-btn-sm"><Columns3 className="size-4" aria-hidden /> <span className="max-sm:hidden">Add / remove columns</span></button>}
+                <button type="button" onClick={() => setFull((f) => !f)} className={`crm-btn crm-btn-secondary crm-btn-sm ${full ? "" : "ml-auto"}`} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen (Esc)" : "Full screen"}>
+                  {full ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />} <span className="max-sm:hidden">{full ? "Exit full screen" : "Full screen"}</span>
+                </button>
+              </div>
               {/* ADD AND REMOVE COLUMNS (Genesis, 13 Oct 2026). Removed ones leave the client view and both sheets; added ones appear in all three. */}
               {showColumns && (
-                <div className="space-y-2 rounded-xl border border-[var(--glass-border)] p-3">
+                <div className={`space-y-2 rounded-xl border border-[var(--glass-border)] p-3 ${full ? "mx-3 my-2 max-h-[40vh] overflow-auto sm:mx-5" : ""}`}>
                   <p className="text-[0.8125rem] text-ash">Tap a column to remove it (tap again to bring it back). Removed columns are left out of the client view and both sheets. Tap a column you added to keep it <b className="text-bone">internal only</b>: on the internal sheet, off the external sheet and the client view; × deletes it.</p>
                   <div className="flex flex-wrap gap-1.5">
                     {PLAN_COLUMNS.map(([key, label]) => (
@@ -892,22 +941,6 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                   </div>
                 </div>
               )}
-              <div className={full ? "fixed inset-0 z-[80] flex flex-col bg-[var(--surface-panel)]" : "contents"} {...(full ? { role: "dialog", "aria-modal": true, "aria-label": "Influencer plan, full screen" } : {})}>
-              <div className={`flex flex-wrap items-center gap-2 ${full ? "border-b border-[var(--glass-border)] px-3 py-2 sm:px-5 sm:py-3" : ""}`}>
-                {full && <span className="mr-auto min-w-0 truncate text-[0.9375rem] text-bone sm:mr-3">{q.title || "Influencer plan"} <span className="text-ash">· {q.creators.length} creators</span></span>}
-              <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Editing the internal or the external plan">
-                <span className="text-[0.8125rem] text-ash">Editing:</span>
-                {([["internal", "Internal (team)"], ["external", "External (client)"]] as const).map(([value, label]) => (
-                  <button key={value} type="button" role="radio" aria-checked={editing === value} onClick={() => setEditing(value)} className={`rounded-full border px-3 py-1 text-[0.8125rem] ${editing === value ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
-                    {label}
-                  </button>
-                ))}
-                <span className={`text-[0.75rem] text-faint ${full ? "max-lg:hidden" : ""}`}>{editing === "internal" ? "Everything: creator costs, profit, reach-out, phone, email and remarks." : `What the brand sees${q.planColumns?.extPrices === false ? " (a sample, no prices)" : ", client prices only"}; costs, profit and notes stay internal.`}</span>
-              </div>
-                <button type="button" onClick={() => setFull((f) => !f)} className={`crm-btn crm-btn-secondary crm-btn-sm ${full ? "" : "ml-auto"}`} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen (Esc)" : "Full screen"}>
-                  {full ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />} <span className="max-sm:hidden">{full ? "Exit full screen" : "Full screen"}</span>
-                </button>
-              </div>
               {/* THE PLAN AS GENESIS'S SHEET (Genesis, 12 Oct 2026: "fields are still missing"); scrolls sideways, the name stays put. */}
               {/* The creators in their own scrolling box: headings stay at the top, names at the left (Genesis, 13 Oct 2026). */}
               <div className={full ? "min-h-0 flex-1 overflow-auto overscroll-contain pb-2" : "-mx-1 max-h-[36rem] overflow-auto rounded-xl border border-[var(--glass-border)] pb-2"} data-lenis-prevent>
@@ -1119,6 +1152,14 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           <p className="text-[0.75rem] text-faint">A draft saves with anything missing; the client&apos;s email is needed only to send.</p>
         </section>
       </div>
+      {/* Undo / Redo, floating while there's something to step through. */}
+      {(steps.past.length > 0 || steps.future.length > 0) && (
+        <div className="fixed bottom-5 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-1 rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] p-1 shadow-[var(--shadow-float)]">
+          <button type="button" onClick={undo} disabled={!steps.past.length} title="Undo (⌘Z)" className="crm-btn crm-btn-secondary crm-btn-sm !rounded-full disabled:opacity-40"><Undo2 className="size-4" aria-hidden /> Undo</button>
+          <button type="button" onClick={redo} disabled={!steps.future.length} title="Redo (⇧⌘Z)" className="crm-btn crm-btn-secondary crm-btn-sm !rounded-full disabled:opacity-40"><Redo2 className="size-4" aria-hidden /> Redo</button>
+          {unsaved && <button type="submit" disabled={pending} className="crm-btn crm-btn-primary crm-btn-sm !rounded-full">{pending ? "Saving…" : "Save"}</button>}
+        </div>
+      )}
     </form>
   );
 }

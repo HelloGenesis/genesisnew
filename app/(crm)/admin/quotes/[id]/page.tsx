@@ -14,7 +14,7 @@ import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { lastReaches } from "@/lib/crm/reachout";
 import { pullPlanSheets } from "@/lib/crm/plan-sync";
 import { builderData } from "@/lib/crm/quote-data";
-import { quoteRef } from "@/lib/crm/quote-templates";
+import { docRef } from "@/lib/crm/quote-templates";
 import { quoteScope, seesCreators, creatorScope, seesQuoteContact } from "@/lib/crm/scope";
 import { can, requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
@@ -22,7 +22,7 @@ import { razorpayKeys } from "@/lib/razorpay";
 import { invoiceFromQuote } from "../../actions/invoices";
 import { DriveCard } from "@/components/crm/drive-card";
 import { archivedPdf } from "@/lib/crm/drive";
-import { archiveQuoteNow, deleteQuote, duplicateQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
+import { archiveQuoteNow, deleteQuote, duplicateQuote, reviseQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
 
 const rupee = (v: number | null | undefined) => (v === null || v === undefined ? null : v / 100);
 
@@ -58,7 +58,8 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     contactEmail: showContact ? q.contactEmail : "",
     contactPhone: showContact ? q.contactPhone : null,
     company: q.company,
-    expiresAt: q.expiresAt.toISOString().slice(0, 10),
+    /* The day in India: a UTC date moved "valid until" back a day on save for quotes made early in the morning. */
+    expiresAt: q.expiresAt.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }),
     notes: q.notes,
     terms: q.terms,
     addGst: q.addGst,
@@ -97,15 +98,19 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
   const template = hasCreators ? ((await getPrisma().appSetting.findUnique({ where: { key: "outreach-template" } }))?.value ?? DEFAULT_OUTREACH) : "";
   const cities = [...new Set(q.creators.map((c) => c.city).filter(Boolean))] as string[];
   const clientLink = appUrl(`/quote/${q.token}`);
+  /* Every version of this quote: the first, and its revisions R1, R2… */
+  const rootId = q.revisionOfId ?? q.id;
+  const versions = await getPrisma().quote.findMany({ where: { OR: [{ id: rootId }, { revisionOfId: rootId }], ...quoteScope(viewer) }, orderBy: { revision: "asc" }, select: { id: true, number: true, baseNumber: true, revision: true, status: true, totalPaise: true, createdAt: true } });
 
   return (
     <>
       <PageHead
-        kicker={`${plan ? "Influencer plan" : "Price quote"} ${quoteRef(q.number)}`}
+        kicker={`${plan ? "Influencer plan" : "Price quote"} ${docRef(q)}`}
         title={q.title}
         sub={<>{q.account ? <Link href={`/admin/accounts/${q.account.id}`} className="crm-link">{q.account.name}</Link> : (q.company ?? (showContact ? q.contactName : "Client"))} · {money(q.totalPaise)}{q.lead && showContact && <> · lead <Link href={`/admin/leads/${q.lead.id}`} className="crm-link">{q.lead.name}</Link></>}{q.request && <> · request <Link href={`/admin/requests/${q.request.id}`} className="crm-link">{q.request.title}</Link></>}</>}
       >
         <Status value={QUOTE_STATUS[q.status]} />
+        <Link href={`/admin/quotes/${q.id}/history`} className="crm-btn crm-btn-secondary crm-btn-sm">Change history</Link>
         <a href={`/quote/${q.token}`} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Client view / PDF ↗</a>
       </PageHead>
       {saved && <Notice>Saved as a draft. Check the client view, then send it.{sheetsNote ? ` ${sheetsNote}` : ""}</Notice>}
@@ -131,13 +136,26 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
           <div className="mt-4 border-t border-[var(--glass-border)] pt-3">
             <p className="crm-label mb-1">Or share it on WhatsApp / email</p>
             <ShareBox
-              subject={`${plan ? "Influencer plan" : "Quotation"} ${quoteRef(q.number)} · ${q.title}`}
+              subject={`${plan ? "Influencer plan" : "Quotation"} ${docRef(q)} · ${q.title}`}
               phone={showContact ? q.contactPhone : null}
               text={`Hi${showContact && q.contactName ? ` ${q.contactName.split(" ")[0]}` : ""},\n\nHere's our ${plan ? "influencer plan" : "quotation"} for ${q.title}:\n${clientLink}${q.paymentUrl ? `\n\nPay securely: ${q.paymentUrl}` : ""}\n\nBest,\n${viewer.name ?? "Genesis Media"}${viewer.title ? `\n${viewer.title}` : ""}${q.workspaceId ? "" : "\ngenesismedia.co"}`}
             />
           </div>
         </Card>
         {!q.workspaceId && <DriveCard id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} what="quote" />}
+        {versions.length > 1 && (
+          <Card title="Versions">
+            <ul className="space-y-1.5 text-[0.9375rem]">
+              {versions.map((v) => (
+                <li key={v.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  {v.id === q.id ? <span className="font-medium text-bone">{docRef(v)} · this one</span> : <Link href={`/admin/quotes/${v.id}`} className="crm-link">{docRef(v)}</Link>}
+                  <span className="text-ash">{v.revision ? `Revision ${v.revision}` : "First version"} · {money(v.totalPaise)} · {dateTime(v.createdAt)}</span>
+                  <Status value={QUOTE_STATUS[v.status]} />
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
         <Card title="History">
           <ul className="space-y-1.5 text-[0.9375rem]">
             <li className="text-ash">Created {dateTime(q.createdAt)}</li>
@@ -160,6 +178,8 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             {!["DECLINED", "PAID", "ACCEPTED"].includes(q.status) && (
               <form action={setQuoteStatus}><input type="hidden" name="id" value={q.id} /><input type="hidden" name="status" value="DECLINED" /><button className="crm-btn crm-btn-secondary crm-btn-sm">Declined</button></form>
             )}
+            {/* A revised copy (R1, R2…), saved apart; this version stays as it is. */}
+            <form action={reviseQuote}><input type="hidden" name="id" value={q.id} /><button className="crm-btn crm-btn-secondary crm-btn-sm">{plan ? "Revise plan" : "Revise quote"} (R{(versions.at(-1)?.revision ?? 0) + 1})</button></form>
             <form action={duplicateQuote}><input type="hidden" name="id" value={q.id} /><button className="crm-btn crm-btn-secondary crm-btn-sm">Duplicate</button></form>
             {!["ACCEPTED", "PAID"].includes(q.status) && (
               <form action={deleteQuote}><input type="hidden" name="id" value={q.id} /><button className="crm-btn crm-btn-secondary crm-btn-sm text-[#dc2626]">Delete</button></form>

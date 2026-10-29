@@ -8,7 +8,7 @@ import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { isArchiveKey } from "@/lib/crm/archive-key";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 import { proposalOrder, SECTION } from "@/lib/crm/proposal-order";
-import { COMPANY, quoteRef } from "@/lib/crm/quote-templates";
+import { COMPANY, docRef } from "@/lib/crm/quote-templates";
 import { workspaceProfile } from "@/lib/crm/workspace";
 import { brandSheetLink, type PlanColumns, sharesSheet, sharesTable, showsBrandPrices } from "@/lib/crm/plan-tables";
 import { looksLikeHtml, sanitizeHtml, textToHtml } from "@/lib/rich-text";
@@ -24,8 +24,8 @@ export const dynamic = "force-dynamic";
 */
 export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
   const { token } = await params;
-  const q = isDatabaseConfigured() ? await getPrisma().quote.findUnique({ where: { token }, select: { number: true, company: true, contactName: true, kind: true } }).catch(() => null) : null;
-  const name = q ? `${q.kind === "INFLUENCER_PLAN" ? "Influencer Plan" : "Quotation"} ${String(q.number).padStart(7, "0")} - ${q.company ?? q.contactName}` : "Quotation";
+  const q = isDatabaseConfigured() ? await getPrisma().quote.findUnique({ where: { token }, select: { number: true, baseNumber: true, revision: true, company: true, contactName: true, kind: true } }).catch(() => null) : null;
+  const name = q ? `${q.kind === "INFLUENCER_PLAN" ? "Influencer Plan" : "Quotation"} ${docRef(q).slice(1)} - ${q.company ?? q.contactName}` : "Quotation";
   return { title: { absolute: name }, robots: { index: false, follow: false } };
 }
 
@@ -181,7 +181,7 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
             </address>
           </div>
           <dl className="text-right text-[0.9375rem] leading-relaxed text-[#334155]">
-            <div><dt className="inline">{view === "proposal" || view === "proposal-plan" ? "Proposal" : view === "plan" || plan ? "Influencer Plan" : "Price Quote"}: </dt><dd className="inline font-medium text-[#0f172a]">{quoteRef(q.number)}</dd></div>
+            <div><dt className="inline">{view === "proposal" || view === "proposal-plan" ? "Proposal" : view === "plan" || plan ? "Influencer Plan" : "Price Quote"}: </dt><dd className="inline font-medium text-[#0f172a]">{docRef(q)}</dd></div>
             <div><dt className="inline">Issued on: </dt><dd className="inline">{day(q.issuedAt)}</dd></div>
             <div><dt className="inline">Expiry Date: </dt><dd className="inline">{day(q.expiresAt)}</dd></div>
           </dl>

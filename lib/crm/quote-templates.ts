@@ -235,3 +235,6 @@ export function quoteTotals(q: QuoteMath) {
 }
 
 export const quoteRef = (number: number) => `#${String(number).padStart(7, "0")}`;
+
+/** A quote's reference with its revision: "#0000052", then "#0000052 R1", "#0000052 R2" for the revised copies. */
+export const docRef = (q: { number: number; baseNumber?: number | null; revision?: number }) => (q.revision ? `${quoteRef(q.baseNumber ?? q.number)} R${q.revision}` : quoteRef(q.number));

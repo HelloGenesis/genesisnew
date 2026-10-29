@@ -1175,6 +1175,10 @@ model Quote {
   proposalTg    String?     @map("proposal_tg")
   /// Who saved it last (two people editing one quote are warned, never overwritten).
   updatedById   String?     @map("updated_by_id")
+  /// Revised plans (Genesis, 29 Oct 2026): a revision is a copy saved on its own, R1, R2…; the first version's id and number, and which revision this is (0 = the original).
+  revisionOfId  String?     @map("revision_of_id")
+  baseNumber    Int?        @map("base_number")
+  revision      Int         @default(0)
   /// The parts this document holds, as ticked in the builder: "proposal", "plan", "pricing". Empty = all it has.
   parts         String[]    @default([])
   /// Extra proposal boxes after the standard three: [{ title, html }].
@@ -1202,6 +1206,7 @@ model Quote {
   @@index([status, createdAt])
   @@index([accountId])
   @@index([leadId])
+  @@index([revisionOfId])
   /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
   workspaceId      String?     @map("workspace_id")
   @@index([workspaceId])

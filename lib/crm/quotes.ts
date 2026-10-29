@@ -11,7 +11,7 @@ import { appUrl, queueEmail, queueStaffEmail } from "./notify";
 import { makePlanSheets, shareExternalSheet } from "./plan-sheets";
 import { brandSheetLink, type PlanColumns, sharesSheet } from "./plan-tables";
 import { openProject, winLead } from "./projects";
-import { quoteRef, quoteTotals } from "./quote-templates";
+import { docRef, quoteTotals } from "./quote-templates";
 import { queueSheet } from "./sheets";
 
 /**
@@ -53,7 +53,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   const prisma = getPrisma();
   const t = await refreshTotals(quoteId);
   const q = t.quote;
-  const ref = quoteRef(q.number);
+  const ref = docRef(q);
   let paymentUrl: string | null = null;
   let linkId: string | null = null;
 
@@ -183,7 +183,7 @@ export async function acceptQuote(token: string, acceptedBy: string) {
   await prisma.quote.update({ where: { id: q.id }, data: { status: "ACCEPTED", acceptedAt: new Date(), acceptedBy } });
   const projectId = q.projects[0]?.id ?? (await openFor(q.id));
   /* To super admins, and the people on this deal: the quote's maker and the lead's owner (lead details are confidential). */
-  const subject = `Accepted: ${q.kind === "INFLUENCER_PLAN" ? "influencer plan" : "quote"} ${quoteRef(q.number)} · ${q.company ?? q.contactName}`;
+  const subject = `Accepted: ${q.kind === "INFLUENCER_PLAN" ? "influencer plan" : "quote"} ${docRef(q)} · ${q.company ?? q.contactName}`;
   const text = `${acceptedBy} accepted "${q.title}" (${money(q.totalPaise)}).${q.paymentUrl ? " Payment link is with the client." : ""}\n\n${appUrl(`/admin/projects/${projectId}`)}`;
   await queueStaffEmail({ kind: "quote_accepted", scope: "owners", subject, text, dedupeKey: `quote-accepted:${q.id}` });
   const lead = q.leadId ? await prisma.lead.findUnique({ where: { id: q.leadId }, select: { ownerId: true } }) : null;
@@ -204,7 +204,7 @@ export async function openFor(quoteId: string): Promise<string> {
   const leadId = q.leadId ?? (await prisma.lead.findFirst({ where: { email: q.contactEmail, status: { notIn: ["WON", "LOST"] } }, select: { id: true } }))?.id ?? null;
   if (leadId && !q.leadId) await prisma.quote.update({ where: { id: quoteId }, data: { leadId } });
   if (leadId) {
-    const won = await winLead(leadId, q.createdById, `Won on quote ${quoteRef(q.number)}.`);
+    const won = await winLead(leadId, q.createdById, `Won on quote ${docRef(q)}.`);
     accountId = accountId ?? won?.accountId ?? null;
     /* winLead opens a generic project only when the lead had none; take it over for this quote instead of opening a second. */
     if (won?.projectId) {
@@ -227,7 +227,7 @@ export async function openFor(quoteId: string): Promise<string> {
     leadId,
     managerId: q.createdById,
     brief: q.notes,
-    why: `Opened from quote ${quoteRef(q.number)}.`,
+    why: `Opened from quote ${docRef(q)}.`,
   });
   await attachCreators(project.id, q.creators);
   return project.id;
