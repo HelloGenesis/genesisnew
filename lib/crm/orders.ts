@@ -177,13 +177,13 @@ export async function recordCrmCheckout(input: {
       notes: customer.notes || null,
       consent: input.consent,
       razorpaySubscriptionId: input.razorpaySubscriptionId,
-      lines: { create: [{ productId: `crm.${input.plan.toLowerCase()}.${input.billing}`, name, group: "Genesis CRM", division: "CRM", kind: "MEMBERSHIP", qty: 1, chargePaise: paise(input.chargeRupees) }] },
+      lines: { create: [{ productId: `crm.${input.plan.toLowerCase()}.${input.billing}`, name, group: "Nova by Genesis", division: "CRM", kind: "MEMBERSHIP", qty: 1, chargePaise: paise(input.chargeRupees) }] },
     },
   });
   await queueSheet("orders", created.id);
   const open = await prisma.lead.findFirst({ where: { email: customer.email.toLowerCase(), status: { notIn: ["WON", "LOST"] } } });
   if (open) {
-    await prisma.activity.create({ data: { leadId: open.id, kind: "SYSTEM", body: `Started Genesis CRM checkout ${input.reference}: ${name} (${money(created.totalPaise)})` } });
+    await prisma.activity.create({ data: { leadId: open.id, kind: "SYSTEM", body: `Started Nova by Genesis checkout ${input.reference}: ${name} (${money(created.totalPaise)})` } });
   } else {
     const lead = await prisma.lead.create({
       data: {
@@ -192,12 +192,12 @@ export async function recordCrmCheckout(input: {
         phone: customer.phone,
         company: customer.company,
         division: "CRM",
-        interest: `Genesis CRM ${name}`,
+        interest: `Nova by Genesis ${name}`,
         source: partner ? "PARTNER" : "CHECKOUT",
         partnerId: partner?.id ?? null,
         status: "NEGOTIATION",
         valuePaise: created.totalPaise,
-        notes: `Genesis CRM checkout ${input.reference} started, awaiting payment.`,
+        notes: `Nova by Genesis checkout ${input.reference} started, awaiting payment.`,
       },
     });
     await queueSheet("leads", lead.id);
@@ -440,7 +440,7 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
   } else if (opened === 0) {
     /* One project per product. A plan's project is this month's; renewals add the next. */
     for (const [i, line] of order.lines.entries()) {
-      /* A quoted line waits for its quote; Genesis CRM is software, set up by the team (below), not a project. */
+      /* A quoted line waits for its quote; Nova by Genesis is software, set up by the team (below), not a project. */
       if (line.kind === "QUOTED" || line.division === "CRM") continue;
       const product = findProduct(line.productId);
       const quota = quotaFrom(product?.includes);
@@ -492,14 +492,14 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
     await queueEmail({
       kind: "order_confirmed",
       to: [order.contactEmail],
-      subject: `Welcome to Genesis CRM · ${order.reference}`,
-      text: `Hi ${order.contactName.split(" ")[0]},\n\nThank you. Your payment of ${money(amount)} is confirmed and your Genesis CRM ${crm.name} subscription is active. Razorpay emails a receipt for every payment.\n\nWhat happens next: within one working day the team will set up your workspace and book a short onboarding call to bring in your team, brands and data.\n\nYour orders and invoices are in My account. Sign in with this email address (${order.contactEmail}):\n${appUrl("/account")}\n\nReference: ${order.reference}`,
+      subject: `Welcome to Nova by Genesis · ${order.reference}`,
+      text: `Hi ${order.contactName.split(" ")[0]},\n\nThank you. Your payment of ${money(amount)} is confirmed and your Nova by Genesis ${crm.name} subscription is active. Razorpay emails a receipt for every payment.\n\nWhat happens next: within one working day the team will set up your workspace and book a short onboarding call to bring in your team, brands and data.\n\nYour orders and invoices are in My account. Sign in with this email address (${order.contactEmail}):\n${appUrl("/account")}\n\nReference: ${order.reference}`,
       dedupeKey: `order-confirmed:${orderId}`,
     });
     await queueStaffEmail({
       kind: "crm_sold",
-      subject: `New Genesis CRM subscription: ${crm.name} · ${order.company ?? order.contactName}`,
-      text: `${order.contactName} (${order.contactEmail}${order.contactPhone ? `, ${order.contactPhone}` : ""}) at ${order.company ?? "—"} paid ${money(amount)} for Genesis CRM ${crm.name}.\n\nSet up their workspace and book onboarding within one working day.\n\nOrder ${order.reference}: ${appUrl("/admin/billing")}`,
+      subject: `New Nova by Genesis subscription: ${crm.name} · ${order.company ?? order.contactName}`,
+      text: `${order.contactName} (${order.contactEmail}${order.contactPhone ? `, ${order.contactPhone}` : ""}) at ${order.company ?? "—"} paid ${money(amount)} for Nova by Genesis ${crm.name}.\n\nSet up their workspace and book onboarding within one working day.\n\nOrder ${order.reference}: ${appUrl("/admin/billing")}`,
       dedupeKey: `crm-sold:${orderId}`,
     });
     return;

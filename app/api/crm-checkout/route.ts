@@ -61,13 +61,13 @@ export async function POST(request: Request) {
   const reference = `GM-CRM-${Date.now().toString(36)}-${randomBytes(2).toString("hex")}`.toUpperCase();
   const consent = `Accepted Terms & Conditions and Cancellation & Refund Policy (version ${TERMS_VERSION}) on ${new Date().toISOString()}`;
   const contact = customer.phone.replace(/[\s-]/g, "");
-  const describe = `Genesis CRM ${plan.key} · ${annual ? `${inr(crmPerMonth(plan, "annual"))} a month, billed yearly` : "billed monthly"}`;
+  const describe = `Nova by Genesis ${plan.key} · ${annual ? `${inr(crmPerMonth(plan, "annual"))} a month, billed yearly` : "billed monthly"}`;
 
   try {
     const made = await razorpay<{ id: string }>("plans", {
       period: annual ? "yearly" : "monthly",
       interval: 1,
-      item: { name: `Genesis CRM ${plan.key} (${billing})`, amount: total * 100, currency: "INR", description: `${describe}, GST 18% included` },
+      item: { name: `Nova by Genesis ${plan.key} (${billing})`, amount: total * 100, currency: "INR", description: `${describe}, GST 18% included` },
       notes: { reference },
     });
     const subscription = await razorpay<{ id: string; short_url?: string }>("subscriptions", {
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       customer_notify: 1,
       notes: notes({
         reference,
-        product: `Genesis CRM ${plan.key}`,
+        product: `Nova by Genesis ${plan.key}`,
         billing: `${billing}: ${inr(total)} ${annual ? "a year" : "a month"} (${inr(charge)} + GST ${inr(total - charge)})`,
         company: customer.company,
         tax_id: customer.gstin && `GSTIN ${customer.gstin}`,

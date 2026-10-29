@@ -60,11 +60,11 @@ export async function captureSubmission(kind: string, submissionId: string, data
           email: data.email?.toLowerCase() ?? null,
           phone: data.phone || null,
           company: data.company || null,
-          interest: `Genesis CRM · ${data.partnerType ?? "partner"}`,
+          interest: `Nova by Genesis · ${data.partnerType ?? "partner"}`,
           source: "PARTNER",
           nextFollowUp: new Date(),
           notes: [
-            "Applied on /resellers to use or resell the Genesis CRM.",
+            "Applied on /resellers to use or resell Nova by Genesis.",
             data.partnerType && `Applying as: ${data.partnerType}`,
             data.teamSize && `Team size: ${data.teamSize}`,
             data.plan && `Plan: ${data.plan}${data.billing ? ` (${data.billing})` : ""}`,
@@ -83,7 +83,7 @@ export async function captureSubmission(kind: string, submissionId: string, data
         /* Lead details are confidential: super admins and whoever sees every lead. */
         scope: "leads",
         subject: `CRM partner application · ${lead.name}${lead.company ? ` (${lead.company})` : ""}`,
-        text: [`${lead.name} applied to partner on the Genesis CRM.`, "", lead.notes, lead.email && `Email: ${lead.email}`, lead.phone && `Phone: ${lead.phone}`, "", `Open the lead: ${appUrl(`/admin/leads/${lead.id}`)}`].filter(Boolean).join("\n"),
+        text: [`${lead.name} applied to partner on Nova by Genesis.`, "", lead.notes, lead.email && `Email: ${lead.email}`, lead.phone && `Phone: ${lead.phone}`, "", `Open the lead: ${appUrl(`/admin/leads/${lead.id}`)}`].filter(Boolean).join("\n"),
         dedupeKey: `lead-new:${lead.id}`,
       });
       return;

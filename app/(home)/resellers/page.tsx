@@ -12,7 +12,7 @@ import { crmSoftwareJsonLd, faqJsonLd } from "@/lib/geo";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Genesis CRM: one platform for your agency, brands and partners",
+  title: "Nova by Genesis: one platform for your agency, brands and partners",
   description:
     "The CRM Genesis Media runs on: leads, influencer plans, quotes, GST invoices, client portal and an AI inbox, for your team, your brands and your partner agencies. From ₹4,999 a month.",
   path: "/resellers",
@@ -94,20 +94,20 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
 
   return (
     <main>
-      <JsonLd data={[breadcrumbJsonLd([{ name: "Genesis CRM", path: "/resellers" }]), crmSoftwareJsonLd(), faqJsonLd(FAQS, "/resellers")]} />
+      <JsonLd data={[breadcrumbJsonLd([{ name: "Nova by Genesis", path: "/resellers" }]), crmSoftwareJsonLd(), faqJsonLd(FAQS, "/resellers")]} />
 
       <Atmosphere tone="brand" origin="top" intensity={0.2}>
         <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pb-10 pt-32 sm:pt-40">
           {/* The opening shows straight away (no fade): it's the first thing anyone sees. */}
           <SectionLabel dot tone="brand">
-            Genesis CRM · one platform
+            Nova by Genesis · one platform
           </SectionLabel>
           <h1 className="mt-6 max-w-4xl text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
             Your agency, your brands and your partners,{" "}
             <span className="font-serif font-normal italic text-brand-ink">in one place.</span>
           </h1>
           <p className="mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-            The CRM Genesis Media runs on, ready for yours: leads and briefs, influencer plans, quotes, GST invoices and a client portal, so your team stops living in spreadsheets and WhatsApp. From ₹4,999 a month.
+            Nova by Genesis is the CRM Genesis Media runs on, ready for yours: leads and briefs, influencer plans, quotes, GST invoices and a client portal, so your team stops living in spreadsheets and WhatsApp. From ₹4,999 a month.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <GlassButton href="#pricing" variant="brand" size="lg" arrow>
@@ -156,7 +156,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           <div className="mt-8 overflow-hidden rounded-card border border-[var(--glass-border)]">
             <div className="hidden grid-cols-2 bg-[var(--hover-wash)] px-6 py-3 text-[0.75rem] uppercase tracking-[0.16em] text-faint sm:grid">
               <span>Without it</span>
-              <span>With Genesis CRM</span>
+              <span>With Nova</span>
             </div>
             <ul className="divide-y divide-[var(--glass-border)]">
               {BEFORE_AFTER.map(([before, after]) => (

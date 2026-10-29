@@ -46,7 +46,7 @@ export default async function CartCompletePage({ searchParams }: { searchParams:
         : status === "paid" && signatureMatches(`${linkId}|${reference}|${status}|${paymentId}`, signature, secret)),
   );
   const orderName = reference ? `Order ${reference}` : "Your order";
-  /* A Genesis CRM subscription (components/genesis/crm-pricing): the cart is someone else's business. */
+  /* A Nova by Genesis subscription (components/genesis/crm-pricing): the cart is someone else's business. */
   const crm = get("crm") === "1";
 
   return (
@@ -66,7 +66,7 @@ export default async function CartCompletePage({ searchParams }: { searchParams:
       </h1>
       <p className="mx-auto mt-5 max-w-lg text-pretty text-body leading-relaxed text-ash">
         {paid && crm
-          ? `${orderName} is confirmed and your Genesis CRM subscription is active; Razorpay emails a receipt for every payment. Within one working day the team will set up your workspace and book a short onboarding call. Your order is in My account.`
+          ? `${orderName} is confirmed and your Nova by Genesis subscription is active; Razorpay emails a receipt for every payment. Within one working day the team will set up your workspace and book a short onboarding call. Your order is in My account.`
           : paid
           ? membership
             ? `${orderName} is confirmed and your subscription is active. It renews automatically until you cancel; Razorpay emails a receipt for every payment. The team will reach out within one working day to book your onboarding call.`
