@@ -77,7 +77,7 @@ const API_TOOLS: Anthropic.Beta.BetaTool[] = TOOLS.map((t) => ({
 }));
 
 function system(viewer: Viewer) {
-  return `You are Genesis Media's CRM assistant, chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
+  return `You are Genesis Copilot, Genesis Media's CRM assistant, chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
 
 ${CRM_INSTRUCTIONS}
 

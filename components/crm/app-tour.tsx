@@ -43,7 +43,7 @@ export function AppTour({ firstTime, name, area }: { firstTime: boolean; name: s
     const first = name ? name.split(" ")[0] : null;
     return [
       { title: `Welcome to Genesis${first ? `, ${first}` : ""}`, body: area === "admin" ? "A quick tour of the CRM: what each part does, in about a minute. You can leave any time and take it again from “Take the tour”." : "A quick tour of your portal: where your work, approvals and invoices are. You can take it again from “Take the tour”." },
-      ...(document.querySelector('nav[aria-label="CRM areas"]')?.getClientRects().length ? [{ target: 'nav[aria-label="CRM areas"]', title: "The CRM's areas", body: "Home, Sales, Influence, Delivery, Money and Setup. Each icon opens that area's pages in the panel beside it; « folds the panel away for more room. The colourful one is the AI assistant." }] : []),
+      ...(document.querySelector('nav[aria-label="CRM areas"]')?.getClientRects().length ? [{ target: 'nav[aria-label="CRM areas"]', title: "The CRM's areas", body: "Home, Sales, Influence, Delivery, Money and Setup. Each icon opens that area's pages in the panel beside it; « folds the panel away for more room. The colourful one is Genesis Copilot, the AI that works in the CRM with you." }] : []),
       ...fromNav,
       { target: 'nav[aria-label="Page history"]', title: "Back, forward, refresh", body: "Move between pages, and refresh to see a teammate's latest changes without losing what you've typed." },
       { title: "You're all set", body: "That's the tour. Find it again any time under “Take the tour” in the sidebar." },

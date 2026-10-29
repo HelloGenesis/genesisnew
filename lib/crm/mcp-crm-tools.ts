@@ -344,7 +344,7 @@ export const CRM_TOOLS: Tool[] = [
       await prisma.lead.update({ where: { id: a.id }, data: { ...fields, status, ...(status === "WON" || status === "LOST" ? { nextFollowUp: null } : {}), ...(status === "LOST" && a.lost_reason ? { lostReason: a.lost_reason } : {}) } });
       if (status !== before.status) {
         await prisma.activity.create({ data: { leadId: a.id, kind: "STATUS", actorId: viewer.id, body: `${LEAD_STATUS[before.status].label} → ${LEAD_STATUS[status].label}` } });
-        if (status === "WON") await winLead(a.id, viewer.id, "Lead won (AI assistant).");
+        if (status === "WON") await winLead(a.id, viewer.id, "Lead won (Genesis Copilot).");
       }
       await queueSheet("leads", a.id).catch(() => undefined);
       await recordAuditLog({ action: "ai.update_lead", entity: "lead", entityId: a.id, actorId: viewer.id });

@@ -207,13 +207,13 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         <span aria-hidden className="mx-auto mb-1 h-px w-10 bg-white/15" />
         <div className="flex w-full flex-1 flex-col overflow-y-auto [scrollbar-width:none]">
           {groups.filter((g) => !LOWER.has(g.label)).map(railButton)}
-          {/* Only for those Genesis AI is open to (lib/crm/scope usesAi; the nav keeps its links for them only). */}
+          {/* Only for those Genesis Copilot is open to (lib/crm/scope usesAi; the nav keeps its links for them only). */}
           {groups.some((g) => g.items.some((i) => i.href === "/admin/assistant")) && (
-          <Link href="/admin/assistant" aria-label="AI assistant" className={ITEM}>
+          <Link href="/admin/assistant" aria-label="Genesis Copilot" className={ITEM}>
             <span className={`${TILE} bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216] ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
               <Sparkles className="size-[1.125rem]" aria-hidden />
             </span>
-            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-white" : ""}`}>AI</span>
+            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-white" : ""}`}>Copilot</span>
           </Link>
           )}
           {shortcuts.length > 0 && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}

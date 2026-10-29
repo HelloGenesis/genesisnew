@@ -76,7 +76,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </div>
         )}
       </Card>
-      {/* The CRM in ChatGPT or Claude (app/api/mcp): each owner's own link (Genesis AI is for the owners only). */}
+      {/* The CRM in ChatGPT or Claude (app/api/mcp): each owner's own link (Genesis Copilot is for the owners only). */}
       {usesAi(viewer) && (
         <Card title="ChatGPT / Claude">
           <ConnectorCard links={await connectorKeys(viewer.id)} />

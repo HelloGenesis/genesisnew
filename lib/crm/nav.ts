@@ -12,7 +12,7 @@ type Recent = { href: string; label: string; hint?: string }[];
 export function crmNav(viewer: Viewer, ...rest: Parameters<typeof allNav> extends [Viewer, ...infer R] ? R : never): NavGroup[] {
   const groups = allNav(viewer, ...rest);
   if (usesAi(viewer)) return groups;
-  /* Genesis AI is for the owners only (lib/crm/scope usesAi): its links go for everyone else. */
+  /* Genesis Copilot is for the owners only (lib/crm/scope usesAi): its links go for everyone else. */
   const keep = <T extends { href: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant"));
   return groups.map((g) => ({ ...g, items: keep(g.items)!, ...(g.create ? { create: keep(g.create) } : {}) }));
 }
@@ -39,12 +39,12 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
         { href: "/admin/notifications", label: "Notifications", count: unread },
         { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew },
         { href: "/admin/tasks", label: "Tasks", count: myTasks },
-        { href: "/admin/assistant", label: "AI assistant" },
+        { href: "/admin/assistant", label: "Genesis Copilot" },
         ...(sees(viewer, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : []),
       ],
       create: [
         { href: "/admin/tasks?add=1", label: "Add a task" },
-        { href: "/admin/assistant", label: "Ask the AI assistant" },
+        { href: "/admin/assistant", label: "Ask Genesis Copilot" },
       ],
     },
     ...(sales
@@ -53,7 +53,7 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
             { href: "/admin/leads?add=1", label: "New lead" },
             { href: "/admin/quotes/new", label: "New quote or proposal" },
             { href: "/admin/accounts?add=1", label: "New client or agency" },
-            { href: `/admin/assistant?prompt=${encodeURIComponent("Make a price quote for <client> from this vendor costing, adding 50% to each line: ")}`, label: "Quote from a vendor costing (AI)" },
+            { href: `/admin/assistant?prompt=${encodeURIComponent("Make a price quote for <client> from this vendor costing, adding 50% to each line: ")}`, label: "Quote from a vendor costing (Copilot)" },
           ],
           ...(recent.quotes?.length ? { recent: { label: "Check existing quotes", all: "/admin/quotes?type=quotes", items: recent.quotes } } : {}),
         }]
@@ -71,9 +71,9 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
             /* Starting points (Genesis, 27 Oct 2026: "add more features here, like make an influencer plan"). */
             create: [
               ...(can(viewer, "plans") ? [{ href: "/admin/quotes/new?kind=INFLUENCER_PLAN", label: "New influencer plan" }] : []),
-              { href: `/admin/assistant?prompt=${encodeURIComponent("Make an influencer plan for <brand> from these screenshots / this Excel: ")}`, label: "Plan from screenshots or Excel (AI)" },
+              { href: `/admin/assistant?prompt=${encodeURIComponent("Make an influencer plan for <brand> from these screenshots / this Excel: ")}`, label: "Plan from screenshots or Excel (Copilot)" },
               ...(seesCreators(viewer) ? [{ href: "/admin/creators?reachout=1", label: "New reach out" }, { href: "/admin/creators?add=1", label: "Add an influencer" }, { href: "/admin/creators/import", label: "Import a roster or sheet" }] : []),
-              { href: `/admin/assistant?prompt=${encodeURIComponent("Find creators for <brand>: <category>, <city>, <followers range>, with a phone number, not contacted in the last 30 days.")}`, label: "Find creators (AI)" },
+              { href: `/admin/assistant?prompt=${encodeURIComponent("Find creators for <brand>: <category>, <city>, <followers range>, with a phone number, not contacted in the last 30 days.")}`, label: "Find creators (Copilot)" },
             ],
             /* "Check existing plans, then a list appears" (Genesis, 27 Oct 2026). */
             ...(recent.plans?.length ? { recent: { label: "Check existing plans", all: "/admin/quotes?type=plans", items: recent.plans } } : {}),

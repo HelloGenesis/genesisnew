@@ -27,7 +27,7 @@ export const AREAS: Record<string, string> = {
 export const isSuperAdmin = (v: Viewer) => v.roles.includes("OWNER");
 
 /*
- * GENESIS AI IS FOR THE OWNERS ONLY (Genesis, 29 Oct 2026: "limit the API to
+ * GENESIS COPILOT IS FOR THE OWNERS ONLY (Genesis, 29 Oct 2026: "limit the API to
  * Tanvi and me only"): the AI assistant and the ChatGPT / Claude connector,
  * for Genesis's own owners. Not the rest of the team, not an agency's CRM.
  */
