@@ -8,6 +8,7 @@ import { recordAuditLog } from "@/lib/audit";
 import { archiveQuote, archiveLater } from "@/lib/crm/archive";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { proposalOrder } from "@/lib/crm/proposal-order";
+import { describeChanges, quoteSnap } from "@/lib/crm/quote-history";
 import { recordReach, setCreatorContacts } from "@/lib/crm/reachout";
 import { sameList, tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { SheetEditedError } from "@/lib/crm/plan-sync";
@@ -191,6 +192,8 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     reachout: c.reachout || null, phone: tidyPhones(c.phone), email: tidyEmails(c.email), tier: c.tier?.trim() || null, remarks: c.remarks || null, extra: (c.extra ?? {}) as Prisma.InputJsonValue }));
 
   let id = q.id;
+  /* The quote as it was, for its change history (lib/crm/quote-history). */
+  const beforeSnap = id ? await quoteSnap(id) : null;
   /* The rows as they were, to see which reach-outs and contacts changed (lib/crm/reachout). */
   const previous = id ? await prisma.quoteCreator.findMany({ where: { quoteId: id }, select: { creatorId: true, handle: true, reachout: true, phone: true, email: true } }) : [];
   if (id) {
@@ -232,6 +235,9 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     id = created.id;
   }
   await refreshTotals(id);
+  const afterSnap = await quoteSnap(id);
+  const changes = beforeSnap && afterSnap ? describeChanges(beforeSnap, afterSnap) : [];
+  if (!beforeSnap || changes.length) await recordAuditLog({ action: beforeSnap ? "quote.saved" : "quote.created", entity: "quote", entityId: id, actorId: viewer.id, metadata: { changes } });
   /*
    * REACH-OUTS AND CONTACTS FROM THE PLAN (Genesis, 27 Oct 2026): a status set
    * here is logged on the creator, with who and which plan; a number or email
@@ -375,6 +381,7 @@ export async function setQuoteStatus(form: FormData) {
   const prisma = getPrisma();
   const q = await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) } });
   if (!q || q.status === "PAID") return;
+  if (status === "ACCEPTED" || status === "DECLINED") await recordAuditLog({ action: "quote.status", entity: "quote", entityId: id, actorId: viewer.id, metadata: { status } });
   if (status === "ACCEPTED") {
     await prisma.quote.update({ where: { id }, data: { status: "ACCEPTED", acceptedAt: new Date(), acceptedBy: `Recorded by ${viewer.name ?? viewer.email}` } });
     archiveLater("quote", id);
@@ -405,20 +412,46 @@ export async function duplicateQuote(form: FormData) {
   if (!id) return;
   const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, include: { lines: true, creators: true } });
   if (!q) return;
+  const copy = await copyQuote(q, viewer.id, {});
+  redirect(`/admin/quotes/${copy.id}`);
+}
+
+/**
+ * A REVISED PLAN (Genesis, 29 Oct 2026: "a revised copy of the existing plan
+ * which will be saved differently"): a copy to change and send again, as
+ * many times as it takes, numbered R1, R2… after the first version. Every
+ * version stays as it was, with its own client link.
+ */
+export async function reviseQuote(form: FormData) {
+  const viewer = await requireStaff("plans");
+  const id = text(form, "id");
+  if (!id) return;
+  const prisma = getPrisma();
+  const q = await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) }, include: { lines: true, creators: true } });
+  if (!q) return;
+  const rootId = q.revisionOfId ?? q.id;
+  const last = await prisma.quote.aggregate({ where: { OR: [{ id: rootId }, { revisionOfId: rootId }] }, _max: { revision: true } });
+  const copy = await copyQuote(q, viewer.id, { revisionOfId: rootId, baseNumber: q.baseNumber ?? q.number, revision: (last._max.revision ?? 0) + 1 });
+  await recordAuditLog({ action: "quote.revised", entity: "quote", entityId: copy.id, actorId: viewer.id, metadata: { from: q.id, revision: copy.revision } });
+  redirect(`/admin/quotes/${copy.id}`);
+}
+
+async function copyQuote(q: Prisma.QuoteGetPayload<{ include: { lines: true; creators: true } }>, actorId: string, revision: { revisionOfId?: string; baseNumber?: number; revision?: number }) {
   const copy = await getPrisma().quote.create({
     data: {
+      ...revision,
       kind: q.kind, title: q.title, division: q.division, accountId: q.accountId, leadId: q.leadId, requestId: q.requestId,
       contactName: q.contactName, contactEmail: q.contactEmail, contactPhone: q.contactPhone, company: q.company,
       expiresAt: new Date(Date.now() + 14 * 864e5), notes: q.notes, terms: q.terms, addGst: q.addGst, gstPercent: q.gstPercent, igst: q.igst, discountPaise: q.discountPaise,
       proposalPlatforms: q.proposalPlatforms, proposalProblems: q.proposalProblems, proposalObjectives: q.proposalObjectives, proposalInfluencers: q.proposalInfluencers, proposalTg: q.proposalTg,
       proposalSections: (q.proposalSections ?? []) as Prisma.InputJsonValue, parts: q.parts, planColumns: (q.planColumns ?? {}) as Prisma.InputJsonValue, markupPercent: q.markupPercent, planBudget: q.planBudget,
-      token: newToken(), createdById: viewer.id,
+      token: newToken(), createdById: actorId,
       lines: { create: q.lines.map((l) => omitIds(l)) },
       creators: { create: q.creators.map((c) => ({ ...omitIds(c), extra: (c.extra ?? {}) as Prisma.InputJsonValue })) },
     },
   });
   await refreshTotals(copy.id);
-  redirect(`/admin/quotes/${copy.id}`);
+  return copy;
 }
 
 export async function deleteQuote(form: FormData) {

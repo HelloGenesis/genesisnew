@@ -10,7 +10,7 @@ import { archiveKey } from "./archive-key";
 import { invoiceFolderId, quotesFolderId, uploadReplacing } from "./drive";
 import { appUrl } from "./notify";
 import { renderPdf } from "./pdf";
-import { quoteRef } from "./quote-templates";
+import { docRef } from "./quote-templates";
 
 /**
  * EVERY QUOTE AND INVOICE, FILED IN GOOGLE DRIVE (Genesis, 22 Oct 2026). The
@@ -45,11 +45,11 @@ export async function archiveInvoice(id: string) {
 }
 
 export async function archiveQuote(id: string) {
-  const q = await getPrisma().quote.findUnique({ where: { id }, select: { id: true, token: true, number: true, title: true, company: true, contactName: true, accountId: true, account: { select: { name: true } } } });
+  const q = await getPrisma().quote.findUnique({ where: { id }, select: { id: true, token: true, number: true, baseNumber: true, revision: true, title: true, company: true, contactName: true, accountId: true, account: { select: { name: true } } } });
   if (!q) return null;
   const bytes = await renderPdf(printUrl("quote", q.token));
   const parentId = await quotesFolderId({ accountId: q.account ? q.accountId : null, name: q.account?.name ?? (q.company || q.contactName || "No client") });
-  await uploadReplacing(`quote:${q.id}`, { name: `${quoteRef(q.number)} - ${q.title}.pdf`, bytes, parentId });
+  await uploadReplacing(`quote:${q.id}`, { name: `${docRef(q)} - ${q.title}.pdf`, bytes, parentId });
   return parentId;
 }
 
