@@ -47,6 +47,7 @@ const LABEL: Record<string, string> = {
   get_plan: "Reading the plan",
   create_plan: "Making the plan",
   update_plan: "Updating the plan",
+  revise_plan: "Making a revised version",
   update_plan_sheets: "Updating the Google Sheets",
   log_reachout: "Logging the reach-out",
   search_crm: "Searching the CRM",

@@ -17,7 +17,8 @@ import { amount, handleFrom } from "./plan-import";
 import { makePlanSheets } from "./plan-sheets";
 import { SheetEditedError } from "./plan-sync";
 import { newToken, refreshTotals } from "./quotes";
-import { quoteRef, termsByKey } from "./quote-templates";
+import { docRef, termsByKey } from "./quote-templates";
+import { makeRevision, refWhere, versionsOf } from "./quote-revise";
 import { tidyEmails, tidyPhones } from "./creator-contacts";
 import { lastReaches, recordReach, syncPlanContacts } from "./reachout";
 import { REACH_STATUSES } from "./reachout-status";
@@ -44,6 +45,7 @@ export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM, all o
 - Ask first, before changing anything, when you're unsure or the decision matters: two or more records could be meant; something essential is missing (who the client is, the price, the date); it would change money already agreed (a sent quote's price, an invoice); or it would undo someone else's work. Ask one short question with numbered options (1., 2., 3.) the person can answer in a word, and do the steps that don't depend on the answer.
 - Lead the person to the end of the process. Finish every answer with "Next:" and the step or two that completes the job, with links (for example: send the quote to the client from its page; when they accept, ask me to open the project and make the invoice; follow up on the task date), or offer to do the next step yourself.
 - Check the date first (Genesis, 29 Oct 2026). Before making a quote, assigning a task, adding a lead or changing anything with a date (valid until, due date, follow-up, project dates, invoice dates), call today, and work every date out from it in India time ("tomorrow", "next Friday", "end of the month", "in 2 weeks"). Never use a date from memory, and never set a date in the past unless the person asked for it. Say the dates you set as a day and date ("Fri 31 Oct").
+- Revisions (Genesis, 29 Oct 2026): a "revised plan", "2nd draft", "R2", "new version" or "updated plan" for a client who already has a plan or quote is revise_plan on the latest version (list_plans or search_crm with the brand finds it; get_plan lists its versions), never a new create_plan / create_quote. If it's unclear whether they want a revision, a change to the same version (update_plan) or a separate new plan, ask with numbered options. Revisions are named like "#0000048 R2".
 - Find before you make: search_crm (leads, clients, vendors, projects, tasks, quotes), find_work (projects, invoices, requests) or search_influencers, so nothing is duplicated. crm_overview gives the numbers.
 - Influencer plans from screenshots, Excel/CSV, Google Sheets or roster PDFs: read every row yourself, then create_plan / update_plan with one row per creator, keeping every detail (name, handle or link as a plain URL, followers, avg views, ER, category, city, phone, email, agency, creator costs reel_cost / story_cost / dl_cost and, separately, client prices, reach-out, remarks; anything else under "columns"). Words or ranges in a money cell go in remarks, never as a number. Reuse database entries (search_influencers) and check last_reach_out so nobody is contacted twice; log_reachout records one. Agency rosters: save_influencers with source "Agency roster · <agency>, <month>". After changing a plan, update_plan_sheets.
 - Price quotes (shoots, films, production, AI content, design) are create_quote / update_quote with line items; from a vendor's costing with a margin, give each line its cost and markup_percent (the client never sees costs). Flag a vendor total that doesn't match its lines. Proposals (target group, problems, objectives, concept, timeline) go in "proposal".
@@ -242,8 +244,7 @@ async function saveCreator(viewer: Viewer, x: InfluencerIn | (PlanRowIn & { id?:
 
 async function planFor(viewer: Viewer, ref: string) {
   if (!can(viewer, "plans")) throw new Error("You don't have access to plans.");
-  const n = Number(ref.replace(/^#?0*/, ""));
-  const q = await getPrisma().quote.findFirst({ where: { AND: [quoteScope(viewer), Number.isInteger(n) && n > 0 && /^#?\d+$/.test(ref) ? { number: n } : { id: ref }] }, include: { creators: { orderBy: { position: "asc" } } } });
+  const q = await getPrisma().quote.findFirst({ where: { AND: [quoteScope(viewer), refWhere(ref)] }, include: { creators: { orderBy: { position: "asc" } } } });
   if (!q) throw new Error("No plan with that id or number that you can open.");
   return q;
 }
@@ -256,7 +257,8 @@ async function planOut(viewer: Viewer, id: string) {
   const cols = (q.planColumns ?? {}) as { custom?: string[]; intOnly?: string[] };
   const lasts = await lastReaches(q.creators.map((c) => c.creatorId));
   return {
-    id: q.id, number: quoteRef(q.number), kind: q.kind, title: q.title, status: q.status, company: q.company,
+    id: q.id, number: docRef(q), kind: q.kind, title: q.title, status: q.status, company: q.company,
+    versions: await versionsOf(q),
     client_contact: showClient ? { name: q.contactName, email: q.contactEmail, phone: q.contactPhone } : "private",
     markup_percent: q.markupPercent, budget_line: q.planBudget, added_columns: cols.custom ?? [], internal_only_columns: cols.intOnly ?? [],
     link: planLink(q.id), client_view: appUrl(`/quote/${q.token}`),
@@ -399,11 +401,11 @@ export const TOOLS: Tool[] = [
       const c = await prisma.creator.findFirst({ where: { AND: [creatorScope(viewer), a.id ? { id: a.id } : { handle: (a.handle ?? "").replace(/^@/, "").toLowerCase() }] } });
       if (!c) throw new Error("Not found, or not one you can see.");
       const [plans, history, lasts] = await Promise.all([
-        prisma.quoteCreator.findMany({ where: { creatorId: c.id, quote: quoteScope(viewer) }, select: { reachout: true, quote: { select: { id: true, number: true, title: true, company: true } } } }),
+        prisma.quoteCreator.findMany({ where: { creatorId: c.id, quote: quoteScope(viewer) }, select: { reachout: true, quote: { select: { id: true, number: true, baseNumber: true, revision: true, title: true, company: true } } } }),
         prisma.reachout.findMany({ where: { creatorId: c.id }, orderBy: { createdAt: "desc" }, take: 15, select: { status: true, createdAt: true, quoteId: true } }),
         lastReaches([c.id]),
       ]);
-      return { ...creatorOut(c, true, lasts[c.id]), plans: plans.map((p) => ({ plan: `${quoteRef(p.quote.number)} ${p.quote.company ?? p.quote.title}`, reach_out: p.reachout, link: planLink(p.quote.id) })), reach_out_history: history };
+      return { ...creatorOut(c, true, lasts[c.id]), plans: plans.map((p) => ({ plan: `${docRef(p.quote)} ${p.quote.company ?? p.quote.title}`, reach_out: p.reachout, link: planLink(p.quote.id) })), reach_out_history: history };
     },
   },
   {
@@ -428,9 +430,9 @@ export const TOOLS: Tool[] = [
         where: { AND: [quoteScope(viewer), a.include_quotes ? {} : { kind: "INFLUENCER_PLAN" }, a.query ? { OR: [{ title: { contains: a.query, mode: "insensitive" } }, { company: { contains: a.query, mode: "insensitive" } }] } : {}] },
         orderBy: { updatedAt: "desc" },
         take: a.limit ?? 20,
-        select: { id: true, number: true, title: true, company: true, status: true, updatedAt: true, _count: { select: { creators: true } } },
+        select: { id: true, number: true, baseNumber: true, revision: true, title: true, company: true, status: true, updatedAt: true, _count: { select: { creators: true } } },
       });
-      return rows.map((q) => ({ id: q.id, number: quoteRef(q.number), title: q.title, brand: q.company, status: q.status, creators: q._count.creators, updated: q.updatedAt, link: planLink(q.id) }));
+      return rows.map((q) => ({ id: q.id, number: docRef(q), title: q.title, brand: q.company, status: q.status, creators: q._count.creators, updated: q.updatedAt, link: planLink(q.id) }));
     },
   },
   {
@@ -486,6 +488,26 @@ export const TOOLS: Tool[] = [
       const result = a.creators?.length ? await writeRows(viewer, q.id, a.creators) : { added: 0, updated: 0, notes: [] };
       await recordAuditLog({ action: "mcp.update_plan", entity: "quote", entityId: q.id, actorId: viewer.id, metadata: { rows: a.creators?.length ?? 0 } });
       return { ...result, plan: await planOut(viewer, q.id) };
+    },
+  },
+  {
+    name: "revise_plan",
+    description: "Make the next revision (R1, R2…) of an existing influencer plan or price quote: a copy with the same client, terms and rows, filed under the original's number (e.g. #0000048 R2), which keeps its own client link while every earlier version stays as it was. Use it for a \"revised plan\", \"2nd draft\", \"new version\" of something already in the CRM, instead of create_plan / create_quote. Give creators to add or update rows on the revision (matched as in update_plan); keep_creators false starts the revision without the earlier rows (they stay on the earlier version). Returns the revision with its link.",
+    input: z.object({
+      plan: z.string().describe("The plan or quote to revise: id, number like #0000048, or a version like #0000048 R1."),
+      title: z.string().max(200).optional(),
+      keep_creators: z.boolean().optional(),
+      markup_percent: z.number().min(0).max(500).optional(),
+      budget_line: z.string().max(120).optional(),
+      creators: z.array(planRow).max(300).optional(),
+    }),
+    run: async (viewer, a: { plan: string; title?: string; keep_creators?: boolean; markup_percent?: number; budget_line?: string; creators?: PlanRowIn[] }) => {
+      const q = await planFor(viewer, a.plan);
+      const copy = await makeRevision(q.id, viewer.id, { creators: a.keep_creators !== false });
+      await getPrisma().quote.update({ where: { id: copy.id }, data: { ...(a.title ? { title: a.title } : {}), ...(a.markup_percent !== undefined ? { markupPercent: a.markup_percent } : {}), ...(a.budget_line ? { planBudget: a.budget_line } : {}), updatedById: viewer.id } });
+      const result = a.creators?.length ? await writeRows(viewer, copy.id, a.creators) : { added: 0, updated: 0, notes: [] };
+      await recordAuditLog({ action: "mcp.revise_plan", entity: "quote", entityId: copy.id, actorId: viewer.id, metadata: { from: q.id, rows: a.creators?.length ?? 0 } });
+      return { ...result, revised_from: docRef(q), plan: await planOut(viewer, copy.id) };
     },
   },
   {

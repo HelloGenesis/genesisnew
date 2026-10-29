@@ -14,6 +14,7 @@ import { sameList, tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { SheetEditedError } from "@/lib/crm/plan-sync";
 import { DriveNotConnected } from "@/lib/crm/drive";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
+import { copyQuote, makeRevision } from "@/lib/crm/quote-revise";
 import { sanitizeHtml } from "@/lib/rich-text";
 import { tidyNiches } from "@/lib/crm/niches";
 import { getPrisma } from "@/lib/db";
@@ -397,14 +398,6 @@ export async function setQuoteStatus(form: FormData) {
   revalidatePath("/admin", "layout");
 }
 
-/** A row without its own id and parent quote, to copy onto another quote. */
-function omitIds<T extends { id: string; quoteId: string }>(row: T): Omit<T, "id" | "quoteId"> {
-  const copy: Partial<T> = { ...row };
-  delete copy.id;
-  delete copy.quoteId;
-  return copy as Omit<T, "id" | "quoteId">;
-}
-
 /** A copy to edit and re-send — a new number and link; the original stays as it was. */
 export async function duplicateQuote(form: FormData) {
   const viewer = await requireStaff("plans");
@@ -426,32 +419,10 @@ export async function reviseQuote(form: FormData) {
   const viewer = await requireStaff("plans");
   const id = text(form, "id");
   if (!id) return;
-  const prisma = getPrisma();
-  const q = await prisma.quote.findFirst({ where: { id, ...quoteScope(viewer) }, include: { lines: true, creators: true } });
+  const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) }, select: { id: true } });
   if (!q) return;
-  const rootId = q.revisionOfId ?? q.id;
-  const last = await prisma.quote.aggregate({ where: { OR: [{ id: rootId }, { revisionOfId: rootId }] }, _max: { revision: true } });
-  const copy = await copyQuote(q, viewer.id, { revisionOfId: rootId, baseNumber: q.baseNumber ?? q.number, revision: (last._max.revision ?? 0) + 1 });
-  await recordAuditLog({ action: "quote.revised", entity: "quote", entityId: copy.id, actorId: viewer.id, metadata: { from: q.id, revision: copy.revision } });
+  const copy = await makeRevision(q.id, viewer.id);
   redirect(`/admin/quotes/${copy.id}`);
-}
-
-async function copyQuote(q: Prisma.QuoteGetPayload<{ include: { lines: true; creators: true } }>, actorId: string, revision: { revisionOfId?: string; baseNumber?: number; revision?: number }) {
-  const copy = await getPrisma().quote.create({
-    data: {
-      ...revision,
-      kind: q.kind, title: q.title, division: q.division, accountId: q.accountId, leadId: q.leadId, requestId: q.requestId,
-      contactName: q.contactName, contactEmail: q.contactEmail, contactPhone: q.contactPhone, company: q.company,
-      expiresAt: new Date(Date.now() + 14 * 864e5), notes: q.notes, terms: q.terms, addGst: q.addGst, gstPercent: q.gstPercent, igst: q.igst, discountPaise: q.discountPaise,
-      proposalPlatforms: q.proposalPlatforms, proposalProblems: q.proposalProblems, proposalObjectives: q.proposalObjectives, proposalInfluencers: q.proposalInfluencers, proposalTg: q.proposalTg,
-      proposalSections: (q.proposalSections ?? []) as Prisma.InputJsonValue, parts: q.parts, planColumns: (q.planColumns ?? {}) as Prisma.InputJsonValue, markupPercent: q.markupPercent, planBudget: q.planBudget,
-      token: newToken(), createdById: actorId,
-      lines: { create: q.lines.map((l) => omitIds(l)) },
-      creators: { create: q.creators.map((c) => ({ ...omitIds(c), extra: (c.extra ?? {}) as Prisma.InputJsonValue })) },
-    },
-  });
-  await refreshTotals(copy.id);
-  return copy;
 }
 
 export async function deleteQuote(form: FormData) {

@@ -13,7 +13,8 @@ import { appUrl } from "./notify";
 import { amount } from "./plan-import";
 import { winLead } from "./projects";
 import { newToken, refreshTotals } from "./quotes";
-import { quoteRef, termsByKey, termsFor } from "./quote-templates";
+import { docRef, termsByKey, termsFor } from "./quote-templates";
+import { refWhere, versionsOf } from "./quote-revise";
 import { accountScope, isSuperAdmin, leadScope, projectScope, quoteScope, seesQuoteContact } from "./scope";
 import { can, type Viewer } from "./session";
 import { queueSheet } from "./sheets";
@@ -146,8 +147,7 @@ async function clientOf(viewer: Viewer, name: string | null | undefined) {
 
 async function quoteFor(viewer: Viewer, ref: string) {
   if (!can(viewer, "plans")) throw new Error("You don't have access to quotes.");
-  const n = Number(ref.replace(/^#?0*/, ""));
-  const q = await getPrisma().quote.findFirst({ where: { AND: [quoteScope(viewer), Number.isInteger(n) && n > 0 && /^#?\d+$/.test(ref) ? { number: n } : { id: ref }] } });
+  const q = await getPrisma().quote.findFirst({ where: { AND: [quoteScope(viewer), refWhere(ref)] } });
   if (!q) throw new Error("No quote with that id or number that you can open.");
   return q;
 }
@@ -157,7 +157,8 @@ async function quoteOut(viewer: Viewer, id: string) {
   const showClient = seesQuoteContact(viewer, q);
   const sections = (Array.isArray(q.proposalSections) ? q.proposalSections : []) as { title: string; html: string }[];
   return {
-    id: q.id, number: quoteRef(q.number), kind: q.kind === "INFLUENCER_PLAN" ? "influencer plan" : "price quote", status: q.status, title: q.title, client: q.company,
+    id: q.id, number: docRef(q), kind: q.kind === "INFLUENCER_PLAN" ? "influencer plan" : "price quote", status: q.status, title: q.title, client: q.company,
+    versions: await versionsOf(q),
     contact: showClient ? { name: q.contactName, email: q.contactEmail, phone: q.contactPhone } : "private",
     division: q.division, valid_until: q.expiresAt.toISOString().slice(0, 10),
     lines: q.lines.map((l) => ({ title: l.title, subtitle: l.subtitle, details: l.details?.split("\n") ?? [], note: l.note, qty: l.qty, unit_price: rupees(l.unitPaise), amount: rupees(l.unitPaise * l.qty) })),
@@ -218,7 +219,7 @@ export const CRM_TOOLS: Tool[] = [
       }
       if (want("projects")) out.projects = (await prisma.project.findMany({ where: { AND: [projectScope(viewer), text(["name"])] }, orderBy: { updatedAt: "desc" }, take, select: { id: true, name: true, status: true, dueDate: true } })).map((p) => ({ ...p, link: appUrl(`/admin/projects/${p.id}`) }));
       if (want("tasks")) out.tasks = (await prisma.task.findMany({ where: { AND: [isSuperAdmin(viewer) ? {} : { OR: [{ ownerId: viewer.id }, { createdById: viewer.id }] }, text(["title", "details"])] }, orderBy: [{ status: "asc" }, { dueDate: "asc" }], take, include: { owner: { select: { name: true, email: true } } } })).map((t) => ({ id: t.id, title: t.title, status: t.status, priority: t.priority, due: t.dueDate?.toISOString().slice(0, 10) ?? null, owner: t.owner?.name ?? t.owner?.email ?? null, link: appUrl("/admin/tasks") }));
-      if (want("quotes") && can(viewer, "plans")) out.quotes = (await prisma.quote.findMany({ where: { AND: [quoteScope(viewer), text(["title", "company"])] }, orderBy: { updatedAt: "desc" }, take, select: { id: true, number: true, kind: true, title: true, company: true, status: true, totalPaise: true } })).map((x) => ({ id: x.id, number: quoteRef(x.number), kind: x.kind === "INFLUENCER_PLAN" ? "influencer plan" : "price quote", title: x.title, client: x.company, status: x.status, total: rupees(x.totalPaise), link: quoteLink(x.id) }));
+      if (want("quotes") && can(viewer, "plans")) out.quotes = (await prisma.quote.findMany({ where: { AND: [quoteScope(viewer), text(["title", "company"])] }, orderBy: { updatedAt: "desc" }, take, select: { id: true, number: true, baseNumber: true, revision: true, kind: true, title: true, company: true, status: true, totalPaise: true } })).map((x) => ({ id: x.id, number: docRef(x), kind: x.kind === "INFLUENCER_PLAN" ? "influencer plan" : "price quote", title: x.title, client: x.company, status: x.status, total: rupees(x.totalPaise), link: quoteLink(x.id) }));
       return out;
     },
   },
