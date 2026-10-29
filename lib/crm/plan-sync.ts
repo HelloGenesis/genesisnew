@@ -27,7 +27,7 @@ import { setCreatorContacts } from "./reachout";
  */
 
 const API = "https://sheets.googleapis.com/v4/spreadsheets";
-type Rec = { written?: string; pulled?: string; checked?: number };
+type Rec = { written?: string; pulled?: string; checked?: number; logo?: boolean };
 const KEY = (id: string) => `plan-sheet:${id}`;
 
 async function rec(id: string): Promise<Rec> {
@@ -55,6 +55,10 @@ export async function markWritten(token: string, id: string) {
   const t = await modifiedTime(token, id);
   await store(id, { written: t, pulled: t });
 }
+
+/** Whether the sheet has the logo as a picture (lib/crm/plan-sheets), so it's put in once. */
+export const hasLogo = async (id: string) => Boolean((await rec(id)).logo);
+export const markLogo = (id: string) => store(id, { logo: true });
 
 export class SheetEditedError extends Error {
   constructor() {

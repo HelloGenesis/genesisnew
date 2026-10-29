@@ -52,13 +52,13 @@ const crc32 = (buf: Buffer) => {
   return (c ^ 0xffffffff) >>> 0;
 };
 
-function zip(files: { name: string; data: string }[]) {
+function zip(files: { name: string; data: string | Buffer }[]) {
   const locals: Buffer[] = [];
   const centrals: Buffer[] = [];
   let offset = 0;
   for (const f of files) {
     const name = Buffer.from(f.name);
-    const data = Buffer.from(f.data, "utf8");
+    const data = typeof f.data === "string" ? Buffer.from(f.data, "utf8") : f.data;
     const crc = crc32(data);
     const local = Buffer.alloc(30);
     local.writeUInt32LE(0x04034b50, 0);
@@ -109,5 +109,36 @@ export function xlsxBook(sheets: { name: string; rows: Cell[][] }[]): Buffer {
     { name: "xl/_rels/workbook.xml.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${n.map((i) => `<Relationship Id="rId${i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i}.xml"/>`).join("")}<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
     { name: "xl/styles.xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>` },
     ...sheets.map((s, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: sheetXml(s.rows) })),
+  ]);
+}
+
+/**
+ * EMPTY TABS WITH A PICTURE ON THE FIRST (Genesis, 29 Oct 2026: the logo on
+ * influencer plans showed #REF! once Google started asking before IMAGE()
+ * loads anything). Uploaded to Drive as a Google Sheet, the picture stays a
+ * picture over the cells, which needs no "Allow access" (lib/crm/plan-sheets).
+ * Placed in pixels from the top-left of a cell (0-based column and row); the
+ * first tab's column widths and row heights (px) are set so it lands where meant.
+ */
+export function xlsxWithPicture(tabs: string[], pic: { png: Buffer; col: number; row: number; x: number; y: number; width: number; height: number }, layout: { colsPx?: number[]; rowsPx?: [number, number][] } = {}): Buffer {
+  const EMU = 9525;
+  const names = tabs.map((t, i) => esc(t.replace(/[\\/?*[\]:]/g, " ").slice(0, 31) || `Sheet${i + 1}`));
+  const n = tabs.map((_, i) => i + 1);
+  const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  /* Excel widths are in characters (px ≈ 7 × chars + 5) and heights in points (px × 0.75). */
+  const cols = layout.colsPx?.length ? `<cols>${layout.colsPx.map((px, c) => `<col min="${c + 1}" max="${c + 1}" width="${((px - 5) / 7).toFixed(2)}" customWidth="1"/>`).join("")}</cols>` : "";
+  const rows = (layout.rowsPx ?? []).map(([r, px]) => `<row r="${r + 1}" ht="${px * 0.75}" customHeight="1"/>`).join("");
+  const first = `${cols}<sheetData>${rows}</sheetData><drawing r:id="rId1"/>`;
+  return zip([
+    { name: "[Content_Types].xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${n.map((i) => `<Override PartName="/xl/worksheets/sheet${i}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>` },
+    { name: "_rels/.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+    { name: "xl/workbook.xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook ${NS}><sheets>${n.map((i) => `<sheet name="${names[i - 1]}" sheetId="${i}" r:id="rId${i}"/>`).join("")}</sheets></workbook>` },
+    { name: "xl/_rels/workbook.xml.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${n.map((i) => `<Relationship Id="rId${i}" Type="${REL}/worksheet" Target="worksheets/sheet${i}.xml"/>`).join("")}</Relationships>` },
+    ...n.map((i) => ({ name: `xl/worksheets/sheet${i}.xml`, data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet ${NS}>${i === 1 ? first : "<sheetData/>"}</worksheet>` })),
+    { name: "xl/worksheets/_rels/sheet1.xml.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/drawing" Target="../drawings/drawing1.xml"/></Relationships>` },
+    { name: "xl/drawings/drawing1.xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${REL}"><xdr:oneCellAnchor><xdr:from><xdr:col>${pic.col}</xdr:col><xdr:colOff>${pic.x * EMU}</xdr:colOff><xdr:row>${pic.row}</xdr:row><xdr:rowOff>${pic.y * EMU}</xdr:rowOff></xdr:from><xdr:ext cx="${pic.width * EMU}" cy="${pic.height * EMU}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="Logo"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${pic.width * EMU}" cy="${pic.height * EMU}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` },
+    { name: "xl/drawings/_rels/drawing1.xml.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/image" Target="../media/logo.png"/></Relationships>` },
+    { name: "xl/media/logo.png", data: pic.png },
   ]);
 }
