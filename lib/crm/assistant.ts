@@ -24,7 +24,8 @@ import type { Viewer } from "./session";
  * Env: ANTHROPIC_API_KEY; CRM_CHAT_MODEL to change the model.
  */
 
-const MODEL = () => process.env.CRM_CHAT_MODEL || "claude-opus-5-5";
+/* The model that uses the fewest credits (Genesis, 29 Oct 2026): Claude Haiku 5.5. */
+const MODEL = () => process.env.CRM_CHAT_MODEL || "claude-haiku-5-5";
 /* Room for a whole job from one message: a lead, its quote, a project, a task… (Genesis, 28 Oct 2026). */
 const MAX_TURNS = 30;
 
@@ -38,6 +39,7 @@ export type ChatEvent =
 
 /* What the person sees while a tool runs. */
 const LABEL: Record<string, string> = {
+  today: "Checking today's date",
   search_influencers: "Searching the influencer database",
   get_influencer: "Looking up the influencer",
   save_influencers: "Saving to the influencer database",
@@ -45,6 +47,7 @@ const LABEL: Record<string, string> = {
   get_plan: "Reading the plan",
   create_plan: "Making the plan",
   update_plan: "Updating the plan",
+  revise_plan: "Making a revised version",
   update_plan_sheets: "Updating the Google Sheets",
   log_reachout: "Logging the reach-out",
   search_crm: "Searching the CRM",
@@ -75,11 +78,11 @@ const API_TOOLS: Anthropic.Beta.BetaTool[] = TOOLS.map((t) => ({
 }));
 
 function system(viewer: Viewer) {
-  return `You are Genesis Media's CRM assistant, chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
+  return `You are Genesis Copilot, Genesis Media's CRM assistant, chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
 
 ${CRM_INSTRUCTIONS}
 
-Today is ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" })} (India time); work out dates like "a week ago" or "next Friday" from it.`;
+Right now it is ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" })}, ${new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })} (India time); work out dates like "a week ago" or "next Friday" from it, or call today for the exact dates.`;
 }
 
 export type Attachment = { kind: "image"; media_type: string; data: string; name: string } | { kind: "pdf"; data: string; name: string } | { kind: "sheet"; text: string; name: string };
@@ -126,6 +129,7 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
   /* The apps connected to this CRM (lib/crm/ai-connectors): their tools, run by Anthropic's MCP connector. */
   const apps = await mcpForChat(viewer.ws ?? null);
   let retries = 0;
+  const haiku = MODEL().includes("haiku");
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const stream = call({
       model: MODEL(),
@@ -139,9 +143,9 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
       output_config: { effort: EFFORT[input.mode ?? "balanced"] },
       /* Caches the conversation so far: later turns re-read it at a fraction of the cost. */
       cache_control: { type: "ephemeral" },
-      /* A request the model declines is answered by Anthropic's recommended stand-in model instead. */
-      betas: ["server-side-fallback-2026-07-01", ...(apps.servers.length ? ["mcp-client-2025-11-20" as const] : [])],
-      fallbacks: "default",
+      /* A request the model declines is answered by Anthropic's recommended stand-in model instead (Haiku has no stand-in). */
+      betas: [...(haiku ? [] : ["server-side-fallback-2026-07-01" as const]), ...(apps.servers.length ? ["mcp-client-2025-11-20" as const] : [])],
+      ...(haiku ? {} : { fallbacks: "default" as const }),
     });
     stream.on("text", (d) => emit({ t: "text", d }));
     let message: Anthropic.Beta.BetaMessage;

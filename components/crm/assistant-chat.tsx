@@ -179,7 +179,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
     setFiles([]);
     try {
       const r = await fetch("/api/crm/assistant", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chatId, ...sent }) });
-      if (!r.ok || !r.body) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "Couldn't reach the assistant.");
+      if (!r.ok || !r.body) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "Couldn't reach Genesis Copilot.");
       const reader = r.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -322,7 +322,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
             <OrbMark thinking={thinking} />
-            <span className="flex-1 text-[0.9375rem] font-semibold text-bone">Genesis AI</span>
+            <span className="flex-1 text-[0.9375rem] font-semibold text-bone">Genesis Copilot</span>
             {fullButton}
             <button type="button" onClick={() => toggleList(false)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone" aria-label="Hide the sidebar" title="Hide the sidebar"><ChevronsLeft className="size-4" aria-hidden /></button>
           </div>

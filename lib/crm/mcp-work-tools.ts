@@ -135,7 +135,7 @@ export const WORK_TOOLS: Tool[] = [
         if (!a.client || !a.name || !a.division) throw new Error("A new project needs the client, a name and the division.");
         const client = await accountFor(viewer, a.client, ["BRAND", "AGENCY"]);
         const quote = a.quote ? await prisma.quote.findFirst({ where: { AND: [quoteScope(viewer), { number: Number(a.quote.replace(/^#?0*/, "")) || -1 }] }, select: { id: true } }) : null;
-        const made = await openProject({ accountId: client.id, name: a.name, division: a.division, quoteId: quote?.id ?? null, managerId: producer?.id ?? viewer.id, brief: a.brief ?? null, dueDate: day(a.due_date), why: "Opened by the AI assistant.", actorId: viewer.id });
+        const made = await openProject({ accountId: client.id, name: a.name, division: a.division, quoteId: quote?.id ?? null, managerId: producer?.id ?? viewer.id, brief: a.brief ?? null, dueDate: day(a.due_date), why: "Opened by Genesis Copilot.", actorId: viewer.id });
         await recordAuditLog({ action: "ai.create_project", entity: "project", entityId: made.id, actorId: viewer.id });
         return projectOut(await projectFor(viewer, made.id));
       }
@@ -152,7 +152,7 @@ export const WORK_TOOLS: Tool[] = [
         where: { id: p.id },
         data: { ...(a.name ? { name: a.name } : {}), ...(day(a.start_date) ? { startDate: day(a.start_date) } : {}), ...(day(a.due_date) ? { dueDate: day(a.due_date) } : {}), ...(producer ? { managerId: producer.id } : {}), ...(a.brief !== undefined ? { brief: a.brief } : {}), stage, status },
       });
-      if (stage !== p.stage || status !== p.status) await prisma.activity.create({ data: { projectId: p.id, kind: "STATUS", actorId: viewer.id, body: `${stages[p.stage]} → ${stages[stage]}${status !== p.status ? ` · ${status.toLowerCase()}` : ""} (AI assistant)` } });
+      if (stage !== p.stage || status !== p.status) await prisma.activity.create({ data: { projectId: p.id, kind: "STATUS", actorId: viewer.id, body: `${stages[p.stage]} → ${stages[stage]}${status !== p.status ? ` · ${status.toLowerCase()}` : ""} (Genesis Copilot)` } });
       await queueSheet("projects", p.id).catch(() => undefined);
       await recordAuditLog({ action: "ai.update_project", entity: "project", entityId: p.id, actorId: viewer.id });
       return projectOut(await projectFor(viewer, p.id));
@@ -308,7 +308,7 @@ export const WORK_TOOLS: Tool[] = [
       const project = await projectFor(viewer, a.project);
       const vendor = await accountFor(viewer, a.vendor, ["VENDOR"]);
       const job = await getPrisma().vendorAssignment.create({ data: { projectId: project.id, vendorId: vendor.id, role: a.role, brief: a.brief ?? null, feePaise: toPaise(a.fee) ?? 0, dueDate: day(a.due_date), createdById: viewer.id } });
-      await getPrisma().activity.create({ data: { projectId: project.id, kind: "SYSTEM", actorId: viewer.id, body: `${a.role} offered to ${vendor.name}${a.fee ? ` for ₹${rupees(toPaise(a.fee))}` : ""} (AI assistant).` } });
+      await getPrisma().activity.create({ data: { projectId: project.id, kind: "SYSTEM", actorId: viewer.id, body: `${a.role} offered to ${vendor.name}${a.fee ? ` for ₹${rupees(toPaise(a.fee))}` : ""} (Genesis Copilot).` } });
       await recordAuditLog({ action: "ai.assign_vendor", entity: "vendor_assignment", entityId: job.id, actorId: viewer.id });
       return { id: job.id, project: project.name, vendor: vendor.name, role: job.role, fee: rupees(job.feePaise), status: job.status, link: appUrl(`/admin/projects/${project.id}`) };
     },

@@ -107,7 +107,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
 export const iconFor = (href: string) => PAGE_ICON[href] ?? BookOpen;
 /* Every rail item the same size, icon and label on one centre line. */
 /* Items share the rail's height: full size on a tall screen, closer together on a laptop, never hidden. */
-const ITEM = "group flex min-h-[2.875rem] max-h-[3.75rem] w-full flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
+const ITEM = "group flex min-h-[3.375rem] max-h-[3.75rem] w-full flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
 const TILE = "relative grid size-8 shrink-0 place-items-center rounded-xl transition-colors";
 /* The areas set apart at the bottom of the rail, as Vitra's are. */
 const LOWER = new Set(["Money", "Setup"]);
@@ -205,14 +205,18 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           </svg>
         </Link>
         <span aria-hidden className="mx-auto mb-1 h-px w-10 bg-white/15" />
-        <div className="flex w-full flex-1 flex-col overflow-y-auto [scrollbar-width:none]">
+        {/* Scrolls when the window is too short for every icon (Genesis, 29 Oct 2026: "add a scroller here"); icons never squash into each other. */}
+        <div className="-mr-1 flex min-h-0 w-[calc(100%+0.25rem)] flex-1 flex-col overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.25)_transparent] [scrollbar-gutter:stable] [scrollbar-width:thin]" data-lenis-prevent>
           {groups.filter((g) => !LOWER.has(g.label)).map(railButton)}
-          <Link href="/admin/assistant" aria-label="AI assistant" className={ITEM}>
+          {/* Only for those Genesis Copilot is open to (lib/crm/scope usesAi; the nav keeps its links for them only). */}
+          {groups.some((g) => g.items.some((i) => i.href === "/admin/assistant")) && (
+          <Link href="/admin/assistant" aria-label="Genesis Copilot" className={ITEM}>
             <span className={`${TILE} bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216] ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
               <Sparkles className="size-[1.125rem]" aria-hidden />
             </span>
-            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-white" : ""}`}>AI</span>
+            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-white" : ""}`}>Copilot</span>
           </Link>
+          )}
           {shortcuts.length > 0 && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
           {shortcuts.map((sc) => {
             const Icon = iconFor(sc.href);

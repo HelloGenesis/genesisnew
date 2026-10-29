@@ -27,6 +27,13 @@ export const AREAS: Record<string, string> = {
 export const isSuperAdmin = (v: Viewer) => v.roles.includes("OWNER");
 
 /*
+ * GENESIS COPILOT IS FOR THE OWNERS ONLY (Genesis, 29 Oct 2026: "limit the API to
+ * Tanvi and me only"): the AI assistant and the ChatGPT / Claude connector,
+ * for Genesis's own owners. Not the rest of the team, not an agency's CRM.
+ */
+export const usesAi = (v: Viewer) => isSuperAdmin(v) && !v.workspaceId;
+
+/*
  * EVERY SCOPE STAYS IN ONE CRM (lib/crm/workspace): the person's agency's, the
  * agency an owner switched to, or Genesis's own. lib/db does the same for
  * every direct query; this also covers filters through a relation

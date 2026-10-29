@@ -1,14 +1,13 @@
-import Link from "next/link";
-
 import { ActionForm } from "@/components/crm/action-form";
-import { AddPanel, Badge, Empty, Field, PageHead, Select } from "@/components/crm/ui";
+import { AddPanel, Field, PageHead, Select } from "@/components/crm/ui";
+import { TaskSheet } from "@/components/crm/task-sheet";
 import { getPrisma } from "@/lib/db";
-import { date, todayIst } from "@/lib/crm/catalog";
+import { todayIst } from "@/lib/crm/catalog";
 import { inDays, staffOptions } from "@/lib/crm/options";
 import { isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
-import { createTask, toggleTask, updateTask } from "../actions/delivery";
+import { createTask } from "../actions/delivery";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Tasks" };
@@ -37,43 +36,21 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const today = todayIst();
   const mine = tasks.filter((t) => t.ownerId === viewer.id);
   const given = tasks.filter((t) => t.ownerId !== viewer.id && t.createdById === viewer.id);
-  const rows = (list: typeof tasks) => list.map((t) => {
-            const late = t.status === "OPEN" && t.dueDate && t.dueDate.toISOString().slice(0, 10) < today;
-            const about = t.lead ? { href: `/admin/leads/${t.lead.id}`, label: t.lead.name } : t.project ? { href: `/admin/projects/${t.project.id}`, label: t.project.name } : t.account ? { href: `/admin/accounts/${t.account.id}`, label: t.account.name } : null;
-            return (
-              <li key={t.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <form action={toggleTask}>
-                  <input type="hidden" name="id" value={t.id} />
-                  <button aria-label={t.status === "OPEN" ? "Mark done" : "Reopen"} className={`grid size-5 place-items-center rounded border border-[var(--glass-border)] ${t.status === "DONE" ? "bg-[#16a34a] text-white" : ""}`}>{t.status === "DONE" ? "✓" : ""}</button>
-                </form>
-                <span className="min-w-0 flex-1">
-                  <span className={t.status === "DONE" ? "text-faint line-through" : "text-bone"}>{t.title}</span>
-                  {t.details && <span className="block text-[0.8125rem] text-ash">{t.details}</span>}
-                  {t.links.length > 0 && (
-                    <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.8125rem]">
-                      {t.links.map((l) => <a key={l} href={l} target="_blank" rel="noreferrer" className="crm-link max-w-[18rem] truncate">{/drive\.google|docs\.google/.test(l) ? "📁 " : ""}{l.replace(/^https?:\/\/(www\.)?/, "")}</a>)}
-                    </span>
-                  )}
-                </span>
-                {about && <Link href={about.href} className="text-[0.8125rem] text-ash hover:text-bone">{about.label} ↗</Link>}
-                {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}
-                <span className="text-[0.8125rem] text-ash">{t.owner?.name ?? t.owner?.email ?? "Unassigned"}{t.by && t.createdById !== t.ownerId ? <span className="text-faint"> · from {t.by.name ?? t.by.email}</span> : null}</span>
-                <span className={`text-[0.8125rem] ${late ? "font-semibold text-[#dc2626]" : "text-faint"}`}>{date(t.dueDate)}</span>
-                <details className="w-full">
-                  <summary className="cursor-pointer text-[0.75rem] text-faint">Edit · reassign</summary>
-                  <ActionForm action={updateTask} submit="Save" inline className="mt-2">
-                    <input type="hidden" name="id" value={t.id} />
-                    <input name="title" defaultValue={t.title} className="crm-input min-w-[12rem] flex-1" />
-                    <Select name="ownerId" defaultValue={t.ownerId} options={staff} className="w-auto" placeholder="Unassigned" />
-                    <input name="dueDate" type="date" defaultValue={t.dueDate ? t.dueDate.toISOString().slice(0, 10) : ""} className="crm-input w-auto" />
-                    <Select name="priority" required defaultValue={t.priority} options={[["LOW", "Low"], ["NORMAL", "Normal"], ["HIGH", "High"]]} className="w-auto" />
-                    <input type="hidden" name="details" value={t.details ?? ""} />
-                    <input name="links" defaultValue={t.links.join(", ")} placeholder="Links (comma separated)" className="crm-input min-w-[14rem] flex-1" />
-                  </ActionForm>
-                </details>
-              </li>
-            );
-  });
+  /* The sheet's rows (components/crm/task-sheet): every cell edited in place. */
+  const rows = (list: typeof tasks) =>
+    list.map((t) => ({
+      id: t.id,
+      title: t.title,
+      details: t.details ?? "",
+      links: t.links.join(", "),
+      ownerId: t.ownerId,
+      dueDate: t.dueDate ? t.dueDate.toISOString().slice(0, 10) : null,
+      priority: t.priority,
+      done: t.status === "DONE",
+      about: t.lead ? { href: `/admin/leads/${t.lead.id}`, label: t.lead.name } : t.project ? { href: `/admin/projects/${t.project.id}`, label: t.project.name } : t.account ? { href: `/admin/accounts/${t.account.id}`, label: t.account.name } : null,
+      from: t.by && t.createdById !== t.ownerId ? (t.by.name ?? t.by.email) : null,
+    }));
+  const sheet = (list: typeof tasks, owner: string | null) => <TaskSheet rows={rows(list)} staff={staff} today={today} defaultOwner={owner} newDue={inDays(1)} />;
   return (
     <>
       <PageHead kicker="Today" title="Tasks" sub={params.done ? "Done" : "Open, by due date"} />
@@ -95,18 +72,16 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         </ActionForm>
       </AddPanel>
       {split && !params.done ? (
-        <div className="grid gap-6 xl:grid-cols-2">
-          {([["My tasks", mine, "Nothing assigned to you."], ["Assigned by me", given, "You haven't given anyone a task."]] as const).map(([heading, list, empty]) => (
-            <section key={heading} className="crm-card overflow-hidden">
-              <h2 className="flex items-center justify-between border-b border-[var(--glass-border)] px-4 py-3 text-bone">{heading}<span className="text-[0.8125rem] text-ash">{list.length}</span></h2>
-              {list.length === 0 ? <p className="px-4 py-6 text-ash">{empty}</p> : <ul className="divide-y divide-[var(--glass-border)]">{rows(list)}</ul>}
+        <div className="space-y-6">
+          {([["My tasks", mine, null], ["Assigned by me", given, ""]] as const).map(([heading, list, owner]) => (
+            <section key={heading} className="crm-card overflow-hidden p-3 sm:p-4">
+              <h2 className="mb-2 flex items-center justify-between px-1 text-bone">{heading}<span className="text-[0.8125rem] text-ash">{list.length}</span></h2>
+              {sheet(list, owner)}
             </section>
           ))}
         </div>
-      ) : tasks.length === 0 ? (
-        <Empty>No tasks here.</Empty>
       ) : (
-        <ul className="crm-card divide-y divide-[var(--glass-border)]">{rows(tasks)}</ul>
+        <section className="crm-card overflow-hidden p-3 sm:p-4">{sheet(tasks, null)}</section>
       )}
     </>
   );

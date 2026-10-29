@@ -4,6 +4,7 @@ import { z } from "zod";
 import { userForConnectorKey } from "@/lib/crm/mcp-keys";
 import { CRM_INSTRUCTIONS as INSTRUCTIONS, TOOLS } from "@/lib/crm/mcp-tools";
 import { inWorkspace } from "@/lib/crm/request-workspace";
+import { usesAi } from "@/lib/crm/scope";
 import { staffAccess, viewerForUser } from "@/lib/crm/session";
 import { isDatabaseConfigured } from "@/lib/db";
 
@@ -35,7 +36,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ key
   const { key } = await params;
   const userId = await userForConnectorKey(key);
   const viewer = userId ? await viewerForUser(userId) : null;
-  if (!viewer || staffAccess(viewer) === "forbidden" || staffAccess(viewer) === "signin") {
+  /* Genesis Copilot is for the owners only (lib/crm/scope usesAi): anyone else's link stops working. */
+  if (!viewer || staffAccess(viewer) === "forbidden" || staffAccess(viewer) === "signin" || !usesAi(viewer)) {
     return NextResponse.json(failure(null, -32001, "This connector link isn't valid any more. Make a new one in the CRM: Setup → Integrations → ChatGPT / Claude."), { status: 401 });
   }
   let body: RpcRequest | RpcRequest[];
@@ -61,7 +63,7 @@ async function handle(msg: RpcRequest, viewer: NonNullable<Awaited<ReturnType<ty
       return result(msg.id, {
         protocolVersion: typeof msg.params?.protocolVersion === "string" ? msg.params.protocolVersion : "2025-06-18",
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "genesis-crm", title: "Genesis Media CRM", version: "1.0.0" },
+        serverInfo: { name: "genesis-crm", title: "Genesis Copilot · Genesis Media CRM", version: "1.0.0" },
         instructions: INSTRUCTIONS,
       });
     case "ping":

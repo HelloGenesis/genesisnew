@@ -1,6 +1,6 @@
 import type { NavGroup } from "@/components/crm/side-nav";
 
-import { plansOnly, sees, seesCreators } from "./scope";
+import { plansOnly, sees, seesCreators, usesAi } from "./scope";
 import { can, type Viewer } from "./session";
 
 /**
@@ -9,7 +9,15 @@ import { can, type Viewer } from "./session";
  * features show the same list. Counts are what's waiting on each.
  */
 type Recent = { href: string; label: string; hint?: string }[];
-export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks?: number; dueLeads?: number; review?: number; openRequests?: number } = {}, recent: { plans?: Recent; quotes?: Recent } = {}): NavGroup[] {
+export function crmNav(viewer: Viewer, ...rest: Parameters<typeof allNav> extends [Viewer, ...infer R] ? R : never): NavGroup[] {
+  const groups = allNav(viewer, ...rest);
+  if (usesAi(viewer)) return groups;
+  /* Genesis Copilot is for the owners only (lib/crm/scope usesAi): its links go for everyone else. */
+  const keep = <T extends { href: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant"));
+  return groups.map((g) => ({ ...g, items: keep(g.items)!, ...(g.create ? { create: keep(g.create) } : {}) }));
+}
+
+function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks?: number; dueLeads?: number; review?: number; openRequests?: number } = {}, recent: { plans?: Recent; quotes?: Recent } = {}): NavGroup[] {
   const { unread = 0, inboxNew = 0, myTasks = 0, dueLeads = 0, review = 0, openRequests = 0 } = c;
   /*
    * THE AREAS, ONE JOB EACH (Genesis, 27 Oct 2026: "make sure it's systematic;
@@ -31,12 +39,12 @@ export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; 
         { href: "/admin/notifications", label: "Notifications", count: unread },
         { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew },
         { href: "/admin/tasks", label: "Tasks", count: myTasks },
-        { href: "/admin/assistant", label: "AI assistant" },
+        { href: "/admin/assistant", label: "Genesis Copilot" },
         ...(sees(viewer, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : []),
       ],
       create: [
         { href: "/admin/tasks?add=1", label: "Add a task" },
-        { href: "/admin/assistant", label: "Ask the AI assistant" },
+        { href: "/admin/assistant", label: "Ask Genesis Copilot" },
       ],
     },
     ...(sales
@@ -45,7 +53,7 @@ export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; 
             { href: "/admin/leads?add=1", label: "New lead" },
             { href: "/admin/quotes/new", label: "New quote or proposal" },
             { href: "/admin/accounts?add=1", label: "New client or agency" },
-            { href: `/admin/assistant?prompt=${encodeURIComponent("Make a price quote for <client> from this vendor costing, adding 50% to each line: ")}`, label: "Quote from a vendor costing (AI)" },
+            { href: `/admin/assistant?prompt=${encodeURIComponent("Make a price quote for <client> from this vendor costing, adding 50% to each line: ")}`, label: "Quote from a vendor costing (Copilot)" },
           ],
           ...(recent.quotes?.length ? { recent: { label: "Check existing quotes", all: "/admin/quotes?type=quotes", items: recent.quotes } } : {}),
         }]
@@ -63,9 +71,9 @@ export function crmNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; 
             /* Starting points (Genesis, 27 Oct 2026: "add more features here, like make an influencer plan"). */
             create: [
               ...(can(viewer, "plans") ? [{ href: "/admin/quotes/new?kind=INFLUENCER_PLAN", label: "New influencer plan" }] : []),
-              { href: `/admin/assistant?prompt=${encodeURIComponent("Make an influencer plan for <brand> from these screenshots / this Excel: ")}`, label: "Plan from screenshots or Excel (AI)" },
+              { href: `/admin/assistant?prompt=${encodeURIComponent("Make an influencer plan for <brand> from these screenshots / this Excel: ")}`, label: "Plan from screenshots or Excel (Copilot)" },
               ...(seesCreators(viewer) ? [{ href: "/admin/creators?reachout=1", label: "New reach out" }, { href: "/admin/creators?add=1", label: "Add an influencer" }, { href: "/admin/creators/import", label: "Import a roster or sheet" }] : []),
-              { href: `/admin/assistant?prompt=${encodeURIComponent("Find creators for <brand>: <category>, <city>, <followers range>, with a phone number, not contacted in the last 30 days.")}`, label: "Find creators (AI)" },
+              { href: `/admin/assistant?prompt=${encodeURIComponent("Find creators for <brand>: <category>, <city>, <followers range>, with a phone number, not contacted in the last 30 days.")}`, label: "Find creators (Copilot)" },
             ],
             /* "Check existing plans, then a list appears" (Genesis, 27 Oct 2026). */
             ...(recent.plans?.length ? { recent: { label: "Check existing plans", all: "/admin/quotes?type=plans", items: recent.plans } } : {}),
