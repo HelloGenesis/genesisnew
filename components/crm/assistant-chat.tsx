@@ -110,8 +110,8 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
   const [listening, setListening] = useState(false);
   const [showConnectors, setShowConnectors] = useState(false);
   const [dragging, setDragging] = useState(false);
-  /* The assistant over the whole screen; Esc leaves. */
-  const [full, setFull] = useState(false);
+  /* The assistant over the whole screen; Esc leaves. Remembered, so a new chat (a new page) stays full screen (Genesis, 29 Oct 2026). */
+  const [full, setFull] = usePref("crm-assistant-full", false);
   useEffect(() => {
     if (!full) return;
     const was = document.body.style.overflow;
@@ -122,9 +122,27 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
       document.body.style.overflow = was;
       window.removeEventListener("keydown", onKey);
     };
-  }, [full, showConnectors]);
+  }, [full, setFull, showConnectors]);
+  /* Out of full screen, the window fits what's left of the screen below it, each time (Genesis, 29 Oct 2026: "fit it every time"). */
+  const frame = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState<number | null>(null);
+  useEffect(() => {
+    if (full) return;
+    const measure = () => {
+      const el = frame.current;
+      if (!el) return;
+      const scroller = el.closest("main");
+      const top = el.getBoundingClientRect().top + (scroller && getComputedStyle(scroller).overflowY === "auto" ? scroller.scrollTop : window.scrollY);
+      const bottom = scroller ? parseFloat(getComputedStyle(scroller).paddingBottom) : 0;
+      const frameBottom = scroller ? window.innerHeight - scroller.getBoundingClientRect().bottom : 0;
+      setFit(Math.max(448, Math.floor(window.innerHeight - top - Math.min(bottom, 32) - Math.max(frameBottom, 0))));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [full]);
   const fullButton = (
-    <button type="button" onClick={() => setFull((f) => !f)} aria-pressed={full} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen (Esc)" : "Full screen"} className="grid size-8 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
+    <button type="button" onClick={() => setFull(!full)} aria-pressed={full} aria-label={full ? "Leave full screen" : "Full screen"} title={full ? "Leave full screen (Esc)" : "Full screen"} className="grid size-8 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
       {full ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />}
     </button>
   );
@@ -317,7 +335,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
   return (
     /* ONE WINDOW (Genesis, 27 Oct 2026, after the reference): the sidebar inside it, the orb and the chat box in the middle. */
     /* A fixed window (Genesis, 27 Oct 2026: "this section stays still"): only the conversation scrolls inside it. */
-    <div className={full ? "fixed inset-0 z-[80] flex overflow-hidden bg-[var(--crm-panel)]" : "crm-card relative flex h-[calc(100svh-16.25rem)] min-h-[28rem] overflow-hidden !p-0"}>
+    <div ref={frame} style={full || fit === null ? undefined : { height: fit }} className={full ? "fixed inset-0 z-[80] flex overflow-hidden bg-[var(--crm-panel)]" : "crm-card relative flex h-[calc(100svh-16.25rem)] min-h-[28rem] overflow-hidden !p-0"}>
       {listOpen && (
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
@@ -376,12 +394,12 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
         </div>
 
         {!messages.length ? (
-          <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:px-10 [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto" data-lenis-prevent>
-            {/* Genesis's orb with what it can do round it (as before), the greeting, the chat box. */}
-            <div className="relative w-[min(14rem,58vw)]">
+          <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 [container-type:size] sm:px-10 [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto" data-lenis-prevent>
+            {/* Genesis's orb with what it can do round it (as before), the greeting, the chat box; the orb shrinks on a short window so the chat box always shows. */}
+            <div className="relative w-[max(5rem,min(14rem,58vw,calc(100cqh-23rem)))]">
               <NeuralOrb thinking={thinking} />
               {SHORTCUTS.filter((x) => x.at).map((x) => (
-                <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone max-sm:hidden ${x.at}`}>
+                <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone sm:[@container(min-height:36rem)]:flex ${x.at}`}>
                   <x.icon className="size-3.5" aria-hidden /> {x.label}
                 </button>
               ))}
@@ -393,7 +411,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
                 <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={CHIP}><x.icon className="size-3.5" aria-hidden /> {x.label}</button>
               ))}
             </div>
-            <div className="mt-10 w-full max-w-3xl">{composer}</div>
+            <div className="mt-6 w-full max-w-3xl">{composer}</div>
             {error && <p className="mt-3 text-[0.8125rem] text-[#dc2626]" role="alert">{error}</p>}
           </div>
         ) : (
@@ -465,28 +483,11 @@ function Thumb({ file }: { file: Attachment }) {
   );
 }
 
-/*
- * GENESIS'S ORB, SMALL, WITH THE N (the favicon, app/icon.svg) at its centre
- * (Genesis, 27 Oct 2026: "the orb is not on point"). The canvas orb drawn
- * this small is all glow, a blob; this is the same dotted sphere in CSS: the
- * orb's purple-to-amber dots, bright at the rim and dim inside, turning
- * slowly while the assistant thinks.
- */
-const DOTS = {
-  backgroundImage: "linear-gradient(115deg, #8b5cf6 0%, #c084fc 28%, #f472b6 55%, #ffb020 85%)",
-  WebkitMaskImage: "radial-gradient(circle, #000 0.55px, transparent 0.95px), radial-gradient(circle at 50% 50%, rgb(0 0 0 / 0.25) 0%, rgb(0 0 0 / 0.55) 45%, #000 66%, #000 70%, transparent 72%)",
-  WebkitMaskSize: "2.6px 2.6px, 100% 100%",
-  WebkitMaskComposite: "source-in",
-  maskImage: "radial-gradient(circle, #000 0.55px, transparent 0.95px), radial-gradient(circle at 50% 50%, rgb(0 0 0 / 0.25) 0%, rgb(0 0 0 / 0.55) 45%, #000 66%, #000 70%, transparent 72%)",
-  maskSize: "2.6px 2.6px, 100% 100%",
-  maskComposite: "intersect",
-} as const;
+/* Genesis's logo, as at the top of the side menu (Genesis, 29 Oct 2026: "this should be like our logo"); a yellow ring pulses while it works. */
 function OrbMark({ thinking }: { thinking: boolean }) {
   return (
-    <span className="relative grid size-9 shrink-0 place-items-center">
-      <span aria-hidden className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgb(255_197_22/0.18),transparent_70%)]" />
-      <span aria-hidden className={`absolute inset-0 ${thinking ? "motion-safe:animate-[spin_5s_linear_infinite]" : "motion-safe:animate-[spin_40s_linear_infinite]"}`} style={DOTS} />
-      <svg viewBox="0 0 306 500" className="relative h-3.5 w-auto drop-shadow-[0_0_3px_rgb(0_0_0/0.8)]" aria-hidden>
+    <span className={`grid size-8 shrink-0 place-items-center rounded-lg bg-white ${thinking ? "shadow-[0_0_0_2px_#ffc516] motion-safe:animate-pulse" : ""}`}>
+      <svg viewBox="0 0 306 500" className="h-[1.125rem] w-auto" aria-hidden>
         <g fill="#ffd400">
           <polygon points="30,0 306,0 306,340.7" />
           <polygon points="0,149.1 284.25,500 0,500" />

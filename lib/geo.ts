@@ -124,13 +124,13 @@ export function pricingCatalogJsonLd(): JsonLdNode {
   };
 }
 
-/** Genesis CRM, the product on /resellers, with its three plans monthly and annual. */
+/** Nova by Genesis, the product on /resellers, with its three plans monthly and annual. */
 export function crmSoftwareJsonLd(): JsonLdNode {
   const url = absoluteUrl("/resellers");
   return {
     "@type": "SoftwareApplication",
     "@id": `${url}#software`,
-    name: "Genesis CRM",
+    name: "Nova by Genesis",
     applicationCategory: "BusinessApplication",
     applicationSubCategory: "CRM for marketing, influencer and creative agencies",
     operatingSystem: "Web browser",
@@ -169,7 +169,7 @@ export function llmsText(full = false): string {
   out.push(`# ${siteConfig.name}`, "");
   out.push(`> ${siteConfig.description} Based in ${siteConfig.address.locality}, India; working with brands across India. Legal name: ${siteConfig.legalName}.`, "");
   out.push(`Contact: ${footerCta.email} · WhatsApp ${siteConfig.whatsapp} · ${SITE_URL}`, "");
-  out.push("Genesis Media has four divisions (verticals) and a software product, Genesis CRM. Prices are in Indian rupees and exclude 18% GST.", "");
+  out.push("Genesis Media has four divisions (verticals) and a software product, Nova by Genesis. Prices are in Indian rupees and exclude 18% GST.", "");
 
   out.push("## Divisions");
   for (const card of verticalCards) {
@@ -191,7 +191,7 @@ export function llmsText(full = false): string {
     }
   }
 
-  out.push("## Genesis CRM", "");
+  out.push("## Nova by Genesis", "");
   out.push(`A CRM for marketing, influencer and creative agencies, the one Genesis runs on: leads and pipeline, an influencer database (Excel and Google Sheets import), proposals, quotes and influencer plans as a link, PDF, Excel or Google Sheet, GST invoices, a client portal and an AI inbox that turns briefs in Gmail and Drive into leads. Resellers earn 20% of every payment from agencies they bring, for 12 months. [Plans and demo](${absoluteUrl("/resellers")})`, "");
   for (const p of CRM_PLAN_PRICES) out.push(`- ${p.key}: ${rupees(crmPerMonth(p, "annual"))} a month billed yearly (${rupees(crmCycleCharge(p, "annual"))} a year), or ${rupees(crmPerMonth(p, "monthly"))} billed monthly. ${p.blurb} ${p.features.join("; ")}.`);
   out.push("");
@@ -200,7 +200,7 @@ export function llmsText(full = false): string {
   out.push(`- [Home](${absoluteUrl("/")})`);
   out.push(`- [Pricing & subscriptions](${absoluteUrl("/pricing")}): every plan and one-time product.`);
   out.push(`- [Case studies](${absoluteUrl("/case-studies")}): campaigns and films for Indian brands.`);
-  out.push(`- [Genesis CRM for agencies & resellers](${absoluteUrl("/resellers")})`);
+  out.push(`- [Nova by Genesis for agencies & resellers](${absoluteUrl("/resellers")})`);
   out.push(`- [For creators](${absoluteUrl("/creator")}): creators who want brand work with Genesis.`);
   out.push(`- [Careers](${absoluteUrl("/careers")})`);
   out.push(`- [Terms](${absoluteUrl("/terms")}) · [Privacy](${absoluteUrl("/privacy")}) · [Refunds](${absoluteUrl("/refund-policy")})`, "");

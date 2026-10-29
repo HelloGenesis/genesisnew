@@ -135,7 +135,7 @@ const PLATFORMS = [
 
 const CREATOR_GOALS = ["Access to Brand Campaigns", "Guidance for growth"] as const;
 
-/* Who is applying to use or resell the Genesis CRM (/resellers). */
+/* Who is applying to use or resell Nova by Genesis (/resellers). */
 const PARTNER_TYPES = [
   "Reseller: sell it to agencies",
   "Agency: use it for our clients",
@@ -143,12 +143,12 @@ const PARTNER_TYPES = [
 ] as const;
 const TEAM_SIZES = ["Just me", "2 to 10", "11 to 50", "50+"] as const;
 const BRANDING = ["Under our brand (white-label)", "Co-branded with Genesis", "Not sure yet"] as const;
-/* The Genesis CRM plans (/resellers#pricing). */
+/* The Nova by Genesis plans (/resellers#pricing). */
 export const CRM_PLANS = ["Starter", "Growth", "Scale", "Not sure yet"] as const;
 
 export const FORMS: Record<FormKind, FormSpec> = {
   /*
-   * E — the Genesis CRM for agencies (Genesis, 13 Oct 2026: "sell this entire
+   * E — Nova by Genesis for agencies (Genesis, 13 Oct 2026: "sell this entire
    * backend to clients at a cost and a commission … even brands can give this
    * to their agencies"). An application, not a sign-up: it lands as a lead
    * and the team sets each partner up.

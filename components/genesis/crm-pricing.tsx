@@ -105,7 +105,7 @@ function CrmCheckout({ plan, billing, onBilling, onClose }: { plan: CrmPlan; bil
           <X className="size-4" aria-hidden />
         </button>
         <div>
-          <p className="micro-label">Genesis CRM</p>
+          <p className="micro-label">Nova by Genesis</p>
           <h3 id="crm-checkout-title" className="mt-2 text-h3 font-normal text-bone">{plan.key}</h3>
         </div>
         <div role="radiogroup" aria-label="Billing" className="grid grid-cols-2 gap-2">

@@ -2,10 +2,12 @@ import "server-only";
 
 import { getPrisma } from "@/lib/db";
 
+import { xlsxWithPicture } from "@/lib/xlsx";
+
 import { contactVisibility } from "./creator-privacy";
 import type { Viewer } from "./session";
 import { COMPANY_ACCOUNT, companyToken, personFileToken } from "./google";
-import { markWritten, mayOverwrite, SheetEditedError } from "./plan-sync";
+import { hasLogo, markLogo, markWritten, mayOverwrite, SheetEditedError } from "./plan-sync";
 import { type Cell, type PlanColumns, type PlanInput, planTables, sharesSheet } from "./plan-tables";
 
 /**
@@ -39,6 +41,58 @@ async function call<T>(token: string, url: string, body?: unknown, method = "POS
   const json = (await r.json().catch(() => ({}))) as T & { error?: { message?: string } };
   if (!r.ok) throw new Error(json.error?.message ?? `Google ${r.status}`);
   return json;
+}
+
+/**
+ * THE LOGO AS A PICTURE (Genesis, 29 Oct 2026: "logo isn't reflecting on
+ * existing and new plans"). Google now shows #REF! for =IMAGE() until someone
+ * clicks "Allow access", so the logo goes in as a picture over the cells
+ * instead: a small Excel file with the logo in it, uploaded to Drive as a
+ * Google Sheet. 1760×200, centred in the merged B2:C6 (650 × 120 px).
+ */
+const LOGO_AT = { col: 1, row: 1, x: 105, y: 35, width: 440, height: 50 };
+async function logoStarter(tabs: string[]) {
+  const r = await fetch(LOGO);
+  if (!r.ok) throw new Error(`Logo ${r.status}`);
+  /* The Summary's widths and the logo rows' heights, as summaryLook sets them, so the picture lands centred. */
+  return xlsxWithPicture(tabs, { png: Buffer.from(await r.arrayBuffer()), ...LOGO_AT }, { colsPx: [30, 230, 420], rowsPx: [1, 2, 3, 4, 5].map((r) => [r, 24] as [number, number]) });
+}
+
+/** A Google Sheet made from an Excel file (the logo starter), in the token's Drive. */
+async function uploadAsSheet(token: string, name: string, file: Buffer): Promise<string> {
+  const boundary = `genesis${Date.now()}`;
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name, mimeType: "application/vnd.google-apps.spreadsheet" })}\r\n--${boundary}\r\nContent-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n`),
+    file,
+    Buffer.from(`\r\n--${boundary}--`),
+  ]);
+  const r = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` }, body });
+  const json = (await r.json().catch(() => ({}))) as { id?: string; error?: { message?: string } };
+  if (!r.ok || !json.id) throw new Error(json.error?.message ?? `Google ${r.status}`);
+  return json.id;
+}
+
+/**
+ * An existing external sheet without the picture (made before 29 Oct 2026):
+ * its Summary tab is swapped for a fresh one with the logo (copied from a
+ * throwaway starter, which is then deleted). The rest of the file, its link
+ * and sharing stay. The new tab's id, or null when it couldn't be done.
+ */
+async function swapInLogoSummary(token: string, id: string, oldSummary: number | undefined): Promise<number | null> {
+  const temp = await uploadAsSheet(token, "Genesis logo (temporary)", await logoStarter(["Summary"]));
+  try {
+    const meta = await call<Meta>(token, `${API}/${temp}?fields=sheets.properties`, undefined, "GET");
+    const copied = await call<{ sheetId: number }>(token, `${API}/${temp}/sheets/${meta.sheets[0]!.properties.sheetId}:copyTo`, { destinationSpreadsheetId: id });
+    await call(token, `${API}/${id}:batchUpdate`, {
+      requests: [
+        ...(oldSummary !== undefined ? [{ deleteSheet: { sheetId: oldSummary } }] : []),
+        { updateSheetProperties: { properties: { sheetId: copied.sheetId, title: "Summary", index: 0, gridProperties: { rowCount: 1000, columnCount: 26, frozenRowCount: 0 } }, fields: "title,index,gridProperties(rowCount,columnCount,frozenRowCount)" } },
+      ],
+    });
+    return copied.sheetId;
+  } finally {
+    await fetch(`https://www.googleapis.com/drive/v3/files/${temp}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }).catch(() => undefined);
+  }
 }
 
 /** The plan as saved, in the shape plan-tables reads. */
@@ -113,6 +167,20 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
         return { id: existing, token, fresh: false, sheets };
       }
     }
+    /* The external sheet starts from the logo starter (the logo as a picture); if that fails, a plain new sheet. */
+    if (tabs.includes("Summary")) {
+      try {
+        const id = await uploadAsSheet(maker.token, title, await logoStarter(tabs));
+        const meta = await call<Meta>(maker.token, `${API}/${id}?fields=sheets.properties`, undefined, "GET");
+        await call(maker.token, `${API}/${id}:batchUpdate`, {
+          requests: meta.sheets.map((s) => ({ updateSheetProperties: { properties: { sheetId: s.properties.sheetId, gridProperties: { rowCount: 1000, columnCount: 26, frozenRowCount: s.properties.title === "Summary" ? 0 : 1 } }, fields: "gridProperties(rowCount,columnCount,frozenRowCount)" } })),
+        });
+        await markLogo(id);
+        return { id, token: maker.token, fresh: true, sheets: Object.fromEntries(meta.sheets.map((s) => [s.properties.title, s.properties.sheetId])) as Record<string, number> };
+      } catch (error) {
+        console.error("plan sheet logo starter", error);
+      }
+    }
     const made = await call<{ spreadsheetId: string } & Meta>(maker.token, API, {
       properties: { title },
       sheets: tabs.map((tab) => ({ properties: { title: tab, gridProperties: { frozenRowCount: tab === "Summary" ? 0 : tab === "INT" ? 2 : 1 } } })),
@@ -136,12 +204,19 @@ export async function makePlanSheets(quoteId: string, actorEmail: string | null,
 
   const ext = await ensure(extSheetId, `${brand} x Genesis Media | Influencer Plan`, ["Summary", "Influencer Plan"]);
   const int = await ensure(intSheetId, `INT - ${brand} | Influencer plan`, ["INT", "EXT"]);
+  /* An external sheet from before the logo was a picture: its Summary is swapped for one with the logo, once. */
+  if (!ext.fresh && !(await hasLogo(ext.id))) {
+    const tab = await swapInLogoSummary(ext.token, ext.id, ext.sheets["Summary"]).catch((error) => (console.error("plan sheet logo swap", error), null));
+    if (tab !== null) {
+      ext.sheets["Summary"] = tab;
+      await markLogo(ext.id);
+    }
+  }
   /* Plan text is never run as a formula (`safe`); only our own, marked `formula`, is. */
   const write = (token: string, id: string, data: { range: string; values: Cell[][]; formula?: true }[]) =>
     call(token, `${API}/${id}/values:batchUpdate`, { valueInputOption: "USER_ENTERED", data: data.map(({ formula, ...d }) => ({ ...d, values: formula ? d.values : d.values.map((r) => r.map(safe)) })) });
   await write(ext.token, ext.id, [
-    /* Genesis's logo above the Overview, as on Genesis's own plans (it went in as text, "=IMAGE(…)", until 27 Oct 2026). */
-    { range: "'Summary'!B2", values: [[`=IMAGE("${LOGO}", 1)`]], formula: true },
+    /* Genesis's logo above the Overview is a picture over B2:C6 (logoStarter); =IMAGE() showed #REF! until 29 Oct 2026. */
     { range: "'Summary'!A8", values: t.summary },
     { range: "'Influencer Plan'!A1", values: [t.ext.header, ...t.ext.rows, ...t.ext.disclaimer] },
   ]);
