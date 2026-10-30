@@ -49,11 +49,17 @@ export async function sendLoginCode(email: string): Promise<boolean> {
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const value = JSON.stringify({ h: hashCode(email, code), exp: Date.now() + CODE_TTL_MS, tries: 0, sentAt: Date.now() } satisfies Pending);
   await prisma.appSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
-  await sendNow(
-    [email],
-    `${code} is your Genesis Media sign-in code`,
-    `Your sign-in code is ${code}\n\nIt works for 10 minutes. If you didn't ask for it, you can ignore this email.`,
-  );
+  try {
+    await sendNow(
+      [email],
+      `${code} is your Genesis Media sign-in code`,
+      `Your sign-in code is ${code}\n\nIt works for 10 minutes. If you didn't ask for it, you can ignore this email.`,
+    );
+  } catch (error) {
+    /* Not sent: forget it, so trying again sends a fresh code straight away. */
+    await prisma.appSetting.delete({ where: { key } }).catch(() => undefined);
+    throw error;
+  }
   return true;
 }
 

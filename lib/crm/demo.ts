@@ -1,8 +1,10 @@
 import "server-only";
 
 import { AsyncLocalStorage } from "node:async_hooks";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { cache } from "react";
+
+import { PATH_HEADER } from "./path-header";
 
 /**
  * NOVA'S LIVE DEMO (Genesis, 31 Oct 2026: "our real dashboard interface,
@@ -42,8 +44,21 @@ export async function hasDemoCookie() {
   }
 }
 
-const demoRequest = cache(async () => {
+/* The demo is the CRM only: the website, sign-in and checkout are never the demo, whatever the cookie (the proxy stamps each request's path). */
+const DEMO_AREA = /^\/(admin|portal|lab|demo|api\/(crm|mcp|lab))(\/|$)/;
+
+/** This request is in the CRM (where the demo lives), with the demo's cookie. */
+export async function inDemoArea() {
   if (!(await hasDemoCookie())) return false;
+  try {
+    return DEMO_AREA.test((await headers()).get(PATH_HEADER) ?? "");
+  } catch {
+    return false;
+  }
+}
+
+const demoRequest = cache(async () => {
+  if (!(await inDemoArea())) return false;
   const { currentIdentity } = await import("./session");
   return (await currentIdentity())?.sub === DEMO_SUB;
 });

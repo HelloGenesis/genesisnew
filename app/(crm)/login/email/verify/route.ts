@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+import { DEMO_COOKIE } from "@/lib/crm/demo";
 import { cookies } from "next/headers";
 
 import { checkLoginCode, emailLoginEnabled, PENDING_COOKIE, readSignedEmail, SESSION_COOKIE, sessionCookieOptions, signEmail } from "@/lib/crm/email-login";
@@ -28,6 +30,8 @@ export async function POST(request: Request) {
   if (!email) return back("step=code&error=address");
   /* Sent twice (a phone's code auto-fill, or a double tap): the first one already signed in. */
   const continueTo = NextResponse.redirect(new URL(`/account/complete${next ? `?next=${encodeURIComponent(next)}` : ""}`, url.origin), 303);
+  /* Signed in: no longer Nova's demo visitor in this browser (lib/crm/demo). */
+  continueTo.cookies.delete(DEMO_COOKIE);
   const signedIn = readSignedEmail(jar.get(SESSION_COOKIE)?.value);
 
   const result = await checkLoginCode(email, String(form.get("code") ?? ""));

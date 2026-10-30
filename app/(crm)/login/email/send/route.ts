@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { DEMO_COOKIE, withDemoWrites } from "@/lib/crm/demo";
 import { emailLoginEnabled, PENDING_COOKIE, pendingCookieOptions, sendLoginCode, signEmail } from "@/lib/crm/email-login";
 import { safeNext } from "@/lib/crm/session";
 import { checkRateLimit, rateLimitKey } from "@/lib/rate-limit";
@@ -12,7 +13,12 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: Request) {
   const url = new URL(request.url);
-  const back = (query: string) => NextResponse.redirect(new URL(`/login?${query}`, url.origin), 303);
+  /* Signing in ends Nova's live demo in this browser (lib/crm/demo): from here on it's this person, never the demo visitor. */
+  const back = (query: string) => {
+    const r = NextResponse.redirect(new URL(`/login?${query}`, url.origin), 303);
+    r.cookies.delete(DEMO_COOKIE);
+    return r;
+  };
   if (!emailLoginEnabled()) return back("error=unavailable");
   const form = await request.formData();
   const next = safeNext(String(form.get("next") ?? ""), "");
@@ -21,7 +27,8 @@ export async function POST(request: Request) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200) return back(`error=email${tail}`);
   if (!(await checkRateLimit(rateLimitKey(request, "otp"))).success) return back(`error=slow${tail}`);
   try {
-    await sendLoginCode(email);
+    /* Sent even if this browser opened the demo before (the demo refuses to send email). */
+    await withDemoWrites(() => sendLoginCode(email));
   } catch (error) {
     console.error("[crm] sign-in code not sent", error);
     return back(`error=send${tail}`);
