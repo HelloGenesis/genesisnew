@@ -89,10 +89,12 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
         ]
       : []),
     ...(delivery
-      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Project timeline", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, { href: "/admin/vendors", label: "Vendors & crew" }, ...LIBRARY] }]
+      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Project timeline", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, ...LIBRARY] }]
       : viewer.roles.includes("CREATIVE")
         ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }, ...LIBRARY] }]
         : []),
+    /* PORTAL (Genesis, 31 Oct 2026: "add a portal icon and add this in that"): the vendors and crew who work through their portal. */
+    ...(delivery ? [{ label: "Portal", items: [{ href: "/admin/vendors", label: "Vendors & crew" }] }] : []),
     ...(sales || finance
       ? [
           {

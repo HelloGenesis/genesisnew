@@ -73,6 +73,10 @@ export const JOURNEY: Record<string, { title: string; body: string }> = {
     title: "Your work",
     body: "The projects and client requests you're on, with what's due and what's waiting for approval.",
   },
+  Portal: {
+    title: "Portal: your vendors and crew",
+    body: "Freelancers, crews and production houses, with their skills, rates and commission. Offer one a job on a project and they accept it, deliver and send their invoice from their own portal.",
+  },
   Money: {
     title: "Money: getting paid",
     body: "Make the invoice from the accepted quote in one click: GST worked out (CGST and SGST in your state, IGST outside), numbered in a series per financial year, emailed with a Razorpay pay link and saved as a PDF in the client's Drive folder. Payments mark it paid by themselves.",

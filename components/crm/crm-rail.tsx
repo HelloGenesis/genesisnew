@@ -11,6 +11,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   CreditCard,
+  DoorOpen,
   CircleDollarSign,
   ClipboardList,
   Compass,
@@ -63,7 +64,7 @@ import { usePref } from "./use-pref";
  */
 
 /** An icon for each area, and for each page (by its address). */
-const AREA_ICON: Record<string, LucideIcon> = { Today: LayoutGrid, Sales: TrendingUp, Influence: Megaphone, Delivery: FolderKanban, "My work": FolderKanban, Money: Wallet, Setup: Settings };
+const AREA_ICON: Record<string, LucideIcon> = { Today: LayoutGrid, Sales: TrendingUp, Influence: Megaphone, Delivery: FolderKanban, "My work": FolderKanban, Portal: DoorOpen, Money: Wallet, Setup: Settings };
 const AREA_LABEL: Record<string, string> = { Today: "Home", "My work": "Work" };
 /* What each area is for, under its name in the panel. */
 const AREA_HINT: Record<string, string> = {
@@ -73,6 +74,7 @@ const AREA_HINT: Record<string, string> = {
   Delivery: "Projects, requests and crew",
   "My work": "Your projects and requests",
   Money: "Invoices, billing and spend",
+  Portal: "Your vendors and crew",
   Setup: "Your team and the CRM",
 };
 export const PAGE_ICON: Record<string, LucideIcon> = {
@@ -117,7 +119,7 @@ export const iconFor = (href: string) => PAGE_ICON[href] ?? BookOpen;
 const ITEM = "group flex min-h-[3.375rem] max-h-[3.75rem] w-full flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
 const TILE = "relative grid size-8 shrink-0 place-items-center rounded-xl transition-colors";
 /* The areas set apart at the bottom of the rail, as Vitra's are. */
-const LOWER = new Set(["Money", "Setup"]);
+const LOWER = new Set(["Portal", "Money", "Setup"]);
 /*
  * PAGES STRAIGHT ON THE RAIL (Genesis, 28 Oct 2026: "Files, Tasks, Inbox,
  * Notifications, Creative Library, Reports … all I want here"): one click,

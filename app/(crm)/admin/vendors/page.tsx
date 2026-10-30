@@ -30,7 +30,7 @@ export default async function VendorsPage({ searchParams }: { searchParams: Prom
   const skills = [...new Set(vendors.flatMap((v) => v.vendorSkills))].sort();
   return (
     <>
-      <PageHead kicker="Delivery" title="Vendors & crew" sub="Editors, DOPs, AI artists, designers and production partners." />
+      <PageHead kicker="Portal" title="Vendors & crew" sub="Editors, DOPs, AI artists, designers and production partners." />
       {skills.length > 0 && (
         <nav className="flex flex-wrap gap-1.5">
           <Link href="/admin/vendors" aria-current={!skill ? "page" : undefined} className="crm-nav-link !min-h-8">All</Link>
