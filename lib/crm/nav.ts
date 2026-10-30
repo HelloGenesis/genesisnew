@@ -40,6 +40,7 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
         { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew },
         { href: "/admin/tasks", label: "Tasks", count: myTasks },
         { href: "/admin/assistant", label: "Genesis Copilot" },
+        { href: "/admin/assistant/usage", label: "AI usage" },
         ...(sees(viewer, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : []),
       ],
       create: [

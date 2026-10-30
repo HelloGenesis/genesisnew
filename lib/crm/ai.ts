@@ -1,5 +1,7 @@
 import "server-only";
 
+import { recordCall, type Usage } from "./ai-usage";
+
 /**
  * THE AI THAT READS THE INBOX (Genesis, 12 Oct 2026: "AI reads it"). Claude
  * sorts an email or a document into what Genesis cares about and pulls out
@@ -115,7 +117,8 @@ export async function readItem(input: { source: string; from?: string; to?: stri
     console.error("[crm] AI read failed", response.status, (await response.text()).slice(0, 300));
     return null;
   }
-  const body = (await response.json()) as { content?: { type: string; input?: unknown }[] };
+  const body = (await response.json()) as { content?: { type: string; input?: unknown }[]; usage?: Usage };
+  await recordCall("inbox", MODEL(), body.usage);
   const call = body.content?.find((c) => c.type === "tool_use");
   return (call?.input as Reading | undefined) ?? null;
 }
@@ -147,7 +150,8 @@ export async function mapColumns(kind: string, fields: Record<string, string>, h
     signal: AbortSignal.timeout(60_000),
   });
   if (!response.ok) return {};
-  const body = (await response.json()) as { content?: { type: string; input?: { mapping?: { column: string; field: string }[] } }[] };
+  const body = (await response.json()) as { content?: { type: string; input?: { mapping?: { column: string; field: string }[] } }[]; usage?: Usage };
+  await recordCall("import", MODEL(), body.usage);
   const pairs = body.content?.find((c) => c.type === "tool_use")?.input?.mapping ?? [];
   return Object.fromEntries(pairs.filter((p) => headers.includes(p.column) && p.field in fields).map((p) => [p.column, p.field]));
 }

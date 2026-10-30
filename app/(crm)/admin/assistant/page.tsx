@@ -1,6 +1,9 @@
 import { AssistantChat } from "@/components/crm/assistant-chat";
 import { aiConfigured } from "@/lib/crm/ai";
 import { addedConnectors, builtInConnectors } from "@/lib/crm/ai-connectors";
+import { dollars } from "@/lib/crm/ai-usage";
+import { todayIst } from "@/lib/crm/catalog";
+import { getPrisma } from "@/lib/db";
 import { chatForView, recentChats } from "@/lib/crm/assistant";
 import { isSuperAdmin, usesAi } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
@@ -13,14 +16,15 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
   const viewer = await requireStaff();
   if (!usesAi(viewer)) return <p className="crm-notice">Genesis Copilot is open to the owners only. Ask Shivam or Tanvi if you need something done with it.</p>;
   const { chat, prompt } = await searchParams;
-  const [chats, open, builtIns, added] = await Promise.all([recentChats(viewer.id), chat ? chatForView(viewer.id, chat) : null, builtInConnectors(viewer), addedConnectors(viewer.ws ?? null)]);
+  const monthStart = new Date(`${todayIst().slice(0, 7)}-01T00:00:00+05:30`);
+  const [chats, open, builtIns, added, used] = await Promise.all([recentChats(viewer.id), chat ? chatForView(viewer.id, chat) : null, builtInConnectors(viewer), addedConnectors(viewer.ws ?? null), getPrisma().aiUsage.aggregate({ where: { userId: viewer.id, createdAt: { gte: monthStart } }, _sum: { costMicros: true } })]);
   /* Who may connect apps (app/(crm)/admin/actions/connectors). */
   const canManage = viewer.workspaceId ? viewer.workspaceRole === "ADMIN" : isSuperAdmin(viewer);
   return (
     <>
       <h1 className="sr-only">Genesis Copilot</h1>
       {aiConfigured() ? (
-        <AssistantChat key={open?.id ?? "new"} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} initialText={prompt?.slice(0, 2000) ?? ""} connectors={{ builtIns, added: added.map((c) => ({ id: c.id, name: c.name, url: c.url, enabled: c.enabled, hasToken: c.hasToken })), canManage }} />
+        <AssistantChat key={open?.id ?? "new"} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} initialText={prompt?.slice(0, 2000) ?? ""} connectors={{ builtIns, added: added.map((c) => ({ id: c.id, name: c.name, url: c.url, enabled: c.enabled, hasToken: c.hasToken })), canManage }} monthCost={dollars(used._sum.costMicros ?? 0)} />
       ) : (
         <p className="crm-notice">Genesis Copilot isn&apos;t set up yet: an admin needs to add ANTHROPIC_API_KEY.</p>
       )}

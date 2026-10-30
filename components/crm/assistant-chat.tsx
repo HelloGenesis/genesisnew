@@ -95,7 +95,7 @@ function Rich({ text }: { text: string }) {
  * the answer streams in as it's written, with what it's doing in the CRM
  * shown as it happens.
  */
-export function AssistantChat({ chats, open, firstName, connectors, initialText = "" }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; initialText?: string; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean } }) {
+export function AssistantChat({ chats, open, firstName, connectors, initialText = "", monthCost }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; initialText?: string; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean }; monthCost?: string }) {
   const router = useRouter();
   const [chatId, setChatId] = useState<string | null>(open?.id ?? null);
   const [messages, setMessages] = useState<Msg[]>(open?.messages ?? []);
@@ -370,6 +370,13 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             ))}
             {!chats.length && <li className="px-3 text-[0.8125rem] text-faint">Your chats will show here.</li>}
           </ul>
+          {/* What you've used this month (Genesis, 30 Oct 2026: "show usage to each user"); the detail is on /admin/assistant/usage. */}
+          {monthCost && (
+            <Link href="/admin/assistant/usage" className="mx-3 mb-3 flex items-center justify-between rounded-xl border border-[var(--glass-border)] px-3 py-2 text-[0.75rem] text-ash hover:border-[#ffc516]/60 hover:text-bone">
+              <span>Your usage this month</span>
+              <span className="tabular-nums text-bone">{monthCost} →</span>
+            </Link>
+          )}
         </aside>
       )}
 
@@ -399,8 +406,8 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             {/* Genesis's orb with what it can do round it (as before), the greeting, the chat box; the orb shrinks on a short window so the chat box always shows. */}
             <div className="relative w-[max(5rem,min(14rem,58vw,calc(100cqh-23rem)))]">
               <NeuralOrb thinking={thinking} />
-              {/* Genesis's logo in the orb's middle (Genesis, 30 Oct 2026: "the logo should appear here in the center as well"). */}
-              <span className="pointer-events-none absolute inset-0 grid place-items-center"><OrbMark thinking={thinking} className="size-[22%] rounded-[22%] shadow-[0_8px_30px_-6px_rgba(0,0,0,0.6)]" /></span>
+              {/* The GENESIS COPILOT wordmark in the orb's middle, as GENESIS MEDIA sits in the homepage's (Genesis, 30 Oct 2026: "the logo should appear here in the center as well"). */}
+              <span className={`pointer-events-none absolute inset-0 grid place-items-center ${thinking ? "motion-safe:animate-pulse" : ""}`}><ProductWordmark product="copilot" className="h-auto w-[80%] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]" /></span>
               {SHORTCUTS.filter((x) => x.at).map((x) => (
                 <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone sm:[@container(min-height:36rem)]:flex ${x.at}`}>
                   <x.icon className="size-3.5" aria-hidden /> {x.label}
@@ -482,20 +489,6 @@ function Thumb({ file }: { file: Attachment }) {
     <span title={file.name} className="flex size-24 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-[#a78bfa]/70 bg-[var(--hover-wash)] px-2 text-center shadow-[0_0_0_4px_rgb(167_139_250/0.15)]">
       {pdf ? <FileText className="size-6 text-[#f472b6]" aria-hidden /> : <Sheet className="size-6 text-[#22c55e]" aria-hidden />}
       <span className="line-clamp-2 break-all text-[0.625rem] leading-tight text-ash">{file.name}</span>
-    </span>
-  );
-}
-
-/* Genesis's logo, as at the top of the side menu (Genesis, 29 Oct 2026: "this should be like our logo"); a yellow ring pulses while it works. */
-function OrbMark({ thinking, className = "size-8 rounded-lg" }: { thinking: boolean; className?: string }) {
-  return (
-    <span className={`grid shrink-0 place-items-center bg-white ${className} ${thinking ? "!shadow-[0_0_0_2px_#ffc516] motion-safe:animate-pulse" : ""}`}>
-      <svg viewBox="0 0 306 500" className="h-[56%] w-auto" aria-hidden>
-        <g fill="#ffd400">
-          <polygon points="30,0 306,0 306,340.7" />
-          <polygon points="0,149.1 284.25,500 0,500" />
-        </g>
-      </svg>
     </span>
   );
 }
