@@ -231,7 +231,7 @@ export function GlassNav() {
           */}
           <span className="nova-page-hide contents"><GenesisMarkMotion /></span>
           {/* On the Nova by Genesis page, its logo instead (Genesis, 31 Oct 2026); swapped in CSS (globals.css) as that page is also nova.genesismedia.co's "/". */}
-          <span className="nova-page-show hidden"><ProductWordmark product="nova-small" className="h-[34px]" /></span>
+          <span className="nova-page-show hidden"><ProductWordmark product="nova" className="h-[22px]" /></span>
         </Link>
 
         {/*

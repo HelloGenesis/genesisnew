@@ -9,14 +9,11 @@ import { cn } from "@/lib/utils";
  * --logo-invert like the site's own wordmark (components/genesis/genesis-mark).
  * Nova is a lockup instead (Genesis, 31 Oct 2026): Nova's thin drawn
  * capitals in one colour (components/genesis/nova-glyphs), the Brain's orb in
- * its own gradient as the O (scripts/nova-lockup.mjs). "nova-small" is the
- * same with a brighter orb and "by GENESIS MEDIA" under it, for small places
- * (the site header, the CRM's top bar).
+ * its own gradient as the O (scripts/nova-lockup.mjs).
  */
 export const PRODUCTS = {
   copilot: { name: "Genesis Copilot", ratio: 1978 / 200 },
   nova: { name: "Nova by Genesis", ratio: 1150 / 290, file: "nova-by-genesis" },
-  "nova-small": { name: "Nova by Genesis Media", ratio: 1150 / 391 },
   "elite-ai": { name: "Genesis Elite AI", ratio: 1837 / 200 },
   "ai-lab": { name: "Genesis AI Lab", ratio: 1737 / 200 },
 } as const;
