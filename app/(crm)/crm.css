@@ -46,6 +46,52 @@
   }
 }
 
+/*
+ * THE RAIL AND ITS HOVER MENUS, FROSTED GLASS in both themes (Genesis, 31 Oct
+ * 2026: "make this glassmorphic both on dark and light mode", and the rail
+ * changing with the theme as the page does). On :root, as the menus are drawn
+ * on the page's body, outside .crm.
+ */
+:root {
+  --rail-bg: rgb(24 23 27 / 0.62);
+  --rail-fg: #ffffff;
+  --rail-soft: rgb(255 255 255 / 0.7);
+  --rail-faint: rgb(255 255 255 / 0.42);
+  --rail-hover: rgb(255 255 255 / 0.1);
+  --rail-line: rgb(255 255 255 / 0.12);
+  --rail-ring: #1c1b20;
+  --rail-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+:root[data-theme="light"] {
+  --rail-bg: rgb(255 255 255 / 0.55);
+  --rail-fg: #141216;
+  --rail-soft: rgb(20 18 22 / 0.7);
+  --rail-faint: rgb(20 18 22 / 0.45);
+  --rail-hover: rgb(20 18 22 / 0.06);
+  --rail-line: rgb(255 255 255 / 0.7);
+  --rail-ring: #f4f2ef;
+  --rail-shadow: 0 24px 60px -24px rgb(20 18 22 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --rail-bg: rgb(255 255 255 / 0.55);
+    --rail-fg: #141216;
+    --rail-soft: rgb(20 18 22 / 0.7);
+    --rail-faint: rgb(20 18 22 / 0.45);
+    --rail-hover: rgb(20 18 22 / 0.06);
+    --rail-line: rgb(255 255 255 / 0.7);
+    --rail-ring: #f4f2ef;
+    --rail-shadow: 0 24px 60px -24px rgb(20 18 22 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  }
+}
+.rail-glass {
+  background: var(--rail-bg);
+  border: 1px solid var(--rail-line);
+  box-shadow: var(--rail-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+}
+
 /* The app window: sidebar and page side by side, as in the tour. */
 .crm-shell {
   background: var(--crm-panel);
