@@ -8,6 +8,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { type Added, type BuiltIn, ConnectorsDialog } from "@/components/crm/connectors-dialog";
 import { usePref } from "@/components/crm/use-pref";
 import { NeuralOrb } from "@/components/genesis/neural-orb";
+import { ProductWordmark } from "@/components/genesis/product-wordmark";
 import { readSheetFile } from "@/lib/sheet-file";
 
 type ChatItem = { id: string; title: string; updatedAt: string };
@@ -339,8 +340,8 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
       {listOpen && (
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
-            <OrbMark thinking={thinking} />
-            <span className="flex-1 text-[0.9375rem] font-semibold text-bone">Genesis Copilot</span>
+            {/* The GENESIS COPILOT wordmark (Genesis, 30 Oct 2026), its N standing in for the logo tile. */}
+            <span className="flex-1"><ProductWordmark product="copilot" className="h-[13px]" /></span>
             {fullButton}
             <button type="button" onClick={() => toggleList(false)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone" aria-label="Hide the sidebar" title="Hide the sidebar"><ChevronsLeft className="size-4" aria-hidden /></button>
           </div>
@@ -398,6 +399,8 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             {/* Genesis's orb with what it can do round it (as before), the greeting, the chat box; the orb shrinks on a short window so the chat box always shows. */}
             <div className="relative w-[max(5rem,min(14rem,58vw,calc(100cqh-23rem)))]">
               <NeuralOrb thinking={thinking} />
+              {/* Genesis's logo in the orb's middle (Genesis, 30 Oct 2026: "the logo should appear here in the center as well"). */}
+              <span className="pointer-events-none absolute inset-0 grid place-items-center"><OrbMark thinking={thinking} className="size-[22%] rounded-[22%] shadow-[0_8px_30px_-6px_rgba(0,0,0,0.6)]" /></span>
               {SHORTCUTS.filter((x) => x.at).map((x) => (
                 <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone sm:[@container(min-height:36rem)]:flex ${x.at}`}>
                   <x.icon className="size-3.5" aria-hidden /> {x.label}
@@ -484,10 +487,10 @@ function Thumb({ file }: { file: Attachment }) {
 }
 
 /* Genesis's logo, as at the top of the side menu (Genesis, 29 Oct 2026: "this should be like our logo"); a yellow ring pulses while it works. */
-function OrbMark({ thinking }: { thinking: boolean }) {
+function OrbMark({ thinking, className = "size-8 rounded-lg" }: { thinking: boolean; className?: string }) {
   return (
-    <span className={`grid size-8 shrink-0 place-items-center rounded-lg bg-white ${thinking ? "shadow-[0_0_0_2px_#ffc516] motion-safe:animate-pulse" : ""}`}>
-      <svg viewBox="0 0 306 500" className="h-[1.125rem] w-auto" aria-hidden>
+    <span className={`grid shrink-0 place-items-center bg-white ${className} ${thinking ? "!shadow-[0_0_0_2px_#ffc516] motion-safe:animate-pulse" : ""}`}>
+      <svg viewBox="0 0 306 500" className="h-[56%] w-auto" aria-hidden>
         <g fill="#ffd400">
           <polygon points="30,0 306,0 306,340.7" />
           <polygon points="0,149.1 284.25,500 0,500" />

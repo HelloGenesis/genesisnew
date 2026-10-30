@@ -69,6 +69,10 @@
   .crm-frame > .crm-side {
     overflow-y: auto;
   }
+  /* The admin rail scrolls itself; the side mustn't clip its account menu. */
+  .crm-frame > .crm-side:has(> .crm-rail-wrap) {
+    overflow: visible;
+  }
 }
 .crm-side-title {
   font-size: 0.875rem;

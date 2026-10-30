@@ -95,7 +95,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <SignOut className="crm-link" />
           </div>
         </div>
-        <div className="hidden lg:block lg:h-full">
+        <div className="crm-rail-wrap hidden lg:block lg:h-full">
           <CrmRail groups={groups} title={agencyCrm?.name ?? "Genesis Media"} footer={<RailUser name={viewer!.name} email={viewer!.email} roles={viewer!.roles.join(", ").toLowerCase()} portal={viewer!.memberships.length > 0} />} />
         </div>
       </div>
