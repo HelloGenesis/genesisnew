@@ -36,19 +36,23 @@ export const metadata: Metadata = pageMetadata({
 const ROLES = [
   {
     title: "Your team",
-    body: "Leads, briefs, quotes, influencer plans, invoices, tasks and money, in one admin. Everyone sees their own work; owners see everything.",
+    icon: "team",
+    body: "One admin for leads, briefs, quotes, influencer plans, invoices and tasks. Everyone sees their own work; owners see it all.",
   },
   {
     title: "Your brands",
-    body: "A client portal: they approve work, send briefs, follow every project and download invoices, instead of chasing you on email.",
+    icon: "approve",
+    body: "Their own portal to approve work, send briefs, track every project and download invoices. No more chasing on email.",
   },
   {
     title: "Partner agencies & resellers",
-    body: "Agencies run their own clients on it under their own logo. Resellers bring agencies and earn on every payment.",
+    icon: "link",
+    body: "Partner agencies run their clients under their own logo. Resellers refer agencies and earn 20% of every payment for a year.",
   },
   {
     title: "Creators & vendors",
-    body: "Creators get costing requests on WhatsApp or email from a template; vendors get briefs and send invoices back into the same place.",
+    icon: "creative",
+    body: "Creators send their rates from one WhatsApp or email request. Vendors get the brief and send their invoice back to the same place.",
   },
 ] as const;
 
@@ -73,11 +77,17 @@ const FEATURES = [
 ] as const;
 
 const STEPS = [
-  ["Pick a plan", "Monthly or annual; tell us about your team."],
-  ["Walkthrough", "A short call on your real work, and your workspace set up."],
-  ["Bring your data", "Your sheets imported, your team and brands invited, your logo on it."],
-  ["Go live", "Billed by Razorpay; resellers start earning with their first agency."],
+  ["Start free", "14 days of everything, no card needed. Tell us a little about your team.", "plan"],
+  ["Walkthrough", "A short call on your real work, and we set up your workspace with you.", "call"],
+  ["Bring your data", "We import your sheets, invite your team and brands, and put your logo on it.", "import"],
+  ["Go live", "Pick a plan by day 3 and pay ₹0 then. Billing starts on day 14 through Razorpay; cancel any time.", "rocket"],
 ] as const;
+
+/* Nova's 3D icons (Genesis, 31 Oct 2026), on the who's-in-it and four-step cards. */
+const NovaIcon = ({ name }: { name: string }) => (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img src={`/brand/nova/icons/${name}.webp`} alt="" aria-hidden width={256} height={256} loading="lazy" className="mb-4 size-16 object-contain drop-shadow-[0_10px_18px_rgb(236_72_153/0.25)]" />
+);
 
 const FAQS = [
   ["How does the free trial work?", "Start with no card and use everything for 14 days. From day 3 you choose a plan and add a card, and pay ₹0 that day: the card is first charged on day 14, when the trial ends, then monthly. Cancel any time before day 14 and you aren't charged. We email you before every step."],
@@ -124,12 +134,13 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
               Everyone you work with, on one platform
             </h2>
             <p className="mt-5 max-w-3xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              One login for each person, and each sees only what&apos;s theirs: your team, the brands you serve, the agencies you partner with, and the creators and vendors who deliver.
+              Everyone gets their own login and sees only what&apos;s theirs: your team, your brands, partner agencies, and the creators and vendors who deliver.
             </p>
           </Reveal>
           <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {ROLES.map((r) => (
               <RevealItem key={r.title} className="glass glass-lit rounded-card p-6">
+                <NovaIcon name={r.icon} />
                 <h3 className="text-body font-semibold leading-snug text-bone">{r.title}</h3>
                 <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{r.body}</p>
               </RevealItem>
@@ -211,8 +222,9 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
             </h2>
           </Reveal>
           <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map(([title, body], i) => (
+            {STEPS.map(([title, body, icon], i) => (
               <RevealItem key={title} className="glass glass-lit rounded-card p-6">
+                <NovaIcon name={icon} />
                 <p className="micro-label">Step {i + 1}</p>
                 <h3 className="mt-3 text-body font-semibold leading-snug text-bone">{title}</h3>
                 <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{body}</p>
