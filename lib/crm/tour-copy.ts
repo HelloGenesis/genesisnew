@@ -41,3 +41,42 @@ export const ABOUT: Record<string, { title: string; body: string }> = {
   "/portal/work": { title: "My work", body: "Jobs offered to you, what you're working on, and what to deliver." },
   "/portal/invoices": { title: "Invoices & payouts", body: "Send your invoices and see what's been paid." },
 };
+
+/*
+ * THE TOUR, START TO END (Genesis, 31 Oct 2026: "explain all features from
+ * start to end, the entire end to end process, without missing anything").
+ * One chapter per area of the CRM, in the order the work happens: a lead
+ * comes in, becomes a brief and a quote or plan, the work is delivered and
+ * approved, the invoice is paid. The tour lists each area's own pages under
+ * its chapter (from ABOUT), so everyone sees exactly what they can open.
+ */
+export const JOURNEY: Record<string, { title: string; body: string }> = {
+  Today: {
+    title: "Home: your day",
+    body: "Start here. The dashboard gathers what needs you: tasks due, leads to follow up, briefs found in Gmail and Drive, requests waiting on you and work due this week. The bell has every alert; Tasks has your to-dos and the ones you've given others.",
+  },
+  Sales: {
+    title: "Sales: from enquiry to yes",
+    body: "Every client starts as a lead: from your website, a call, WhatsApp, email, a referral, or found by the Inbox in Gmail. Move it across the pipeline until it's won or lost. What the client asks for becomes a brief, and a brief becomes a quote or proposal you send as a link or PDF, with a Razorpay pay link if you like. The client accepts it from the link.",
+  },
+  Influence: {
+    title: "Influence: creators and plans",
+    body: "Your own influencer database: import any Excel or Google Sheet, filter by niche, city, followers and rates, and edit any cell in place. Tick creators to make an influencer plan with their costs and your client prices, share it as a link, PDF or Google Sheet, and ask creators for their rates on WhatsApp or email.",
+  },
+  Delivery: {
+    title: "Delivery: doing the work",
+    body: "When a quote is accepted it becomes a project with stages and a due date. Upload each deliverable: the client approves it or asks for changes from their portal, and you see which. Files are filed in the client's Google Drive folder, client requests come in here, and freelancers and crews are offered jobs here.",
+  },
+  "My work": {
+    title: "Your work",
+    body: "The projects and client requests you're on, with what's due and what's waiting for approval.",
+  },
+  Money: {
+    title: "Money: getting paid",
+    body: "Make the invoice from the accepted quote in one click: GST worked out (CGST and SGST in your state, IGST outside), numbered in a series per financial year, emailed with a Razorpay pay link and saved as a PDF in the client's Drive folder. Payments mark it paid by themselves.",
+  },
+  Setup: {
+    title: "Setup: your team and company",
+    body: "Add your team and choose what each person can open: sales, delivery, finance, the influencer database. Your company details, GSTIN, bank and logo go on every quote and invoice.",
+  },
+};

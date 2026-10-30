@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, ChevronDown, Maximize2, Minimize2, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
+import { AudioLines, ChevronDown, CircleHelp, Maximize2, Minimize2, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -398,7 +398,9 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             <button type="button" onClick={() => toggleList(true)} className={CHIP} aria-label="Show the sidebar"><ChevronsRight className="size-3.5" aria-hidden /> Chats</button>
           )}
           {!listOpen && <span className="ml-auto">{fullButton}</span>}
-          <Link href="/admin/assistant" className={`${CHIP} ${listOpen ? "ml-auto" : ""}`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
+          {/* Copilot's own tour (components/crm/copilot-tour). */}
+          <button type="button" data-copilot-tour className={`${CHIP} ${listOpen ? "ml-auto" : ""}`}><CircleHelp className="size-3.5" aria-hidden /> <span className="max-sm:hidden">How it works</span></button>
+          <Link href="/admin/assistant" className={CHIP} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
         </div>
 
         {!messages.length ? (

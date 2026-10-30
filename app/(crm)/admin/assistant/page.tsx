@@ -1,4 +1,5 @@
 import { AssistantChat } from "@/components/crm/assistant-chat";
+import { CopilotTour } from "@/components/crm/copilot-tour";
 import { aiConfigured } from "@/lib/crm/ai";
 import { addedConnectors, builtInConnectors } from "@/lib/crm/ai-connectors";
 import { dollars } from "@/lib/crm/ai-usage";
@@ -20,14 +21,16 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
   const [chats, open, builtIns, added, used] = await Promise.all([recentChats(viewer.id), chat ? chatForView(viewer.id, chat) : null, builtInConnectors(viewer), addedConnectors(viewer.ws ?? null), getPrisma().aiUsage.aggregate({ where: { userId: viewer.id, createdAt: { gte: monthStart } }, _sum: { costMicros: true } })]);
   /* Who may connect apps (app/(crm)/admin/actions/connectors). */
   const canManage = viewer.workspaceId ? viewer.workspaceRole === "ADMIN" : isSuperAdmin(viewer);
+  const copilotTourSeen = Boolean(await getPrisma().appSetting.findUnique({ where: { key: `tour:copilot:done:${viewer.id}` }, select: { key: true } }));
   return (
     <>
       <h1 className="sr-only">Genesis Copilot</h1>
       {aiConfigured() ? (
-        <AssistantChat key={open?.id ?? "new"} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} initialText={prompt?.slice(0, 2000) ?? ""} connectors={{ builtIns, added: added.map((c) => ({ id: c.id, name: c.name, url: c.url, enabled: c.enabled, hasToken: c.hasToken })), canManage }} monthCost={dollars(used._sum.costMicros ?? 0)} />
+        <AssistantChat key={`${open?.id ?? "new"}:${prompt ?? ""}`} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} initialText={prompt?.slice(0, 2000) ?? ""} connectors={{ builtIns, added: added.map((c) => ({ id: c.id, name: c.name, url: c.url, enabled: c.enabled, hasToken: c.hasToken })), canManage }} monthCost={dollars(used._sum.costMicros ?? 0)} />
       ) : (
         <p className="crm-notice">Genesis Copilot isn&apos;t set up yet: an admin needs to add ANTHROPIC_API_KEY.</p>
       )}
+      {aiConfigured() && <CopilotTour firstTime={!copilotTourSeen} />}
     </>
   );
 }

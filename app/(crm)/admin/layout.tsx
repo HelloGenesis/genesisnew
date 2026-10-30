@@ -113,8 +113,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {children}
       </ScrollMain>
       <Suspense fallback={null}>
-        {/* The demo can't remember the tour was seen, so it doesn't open by itself there ("Take the tour" still does). */}
-        <AppTour firstTime={!tourSeen && !viewer!.demo} name={viewer!.name} area="admin" />
+        {/* An agency's CRM (and Nova's live demo, which remembers the tour in the browser) is Nova by Genesis. */}
+        <AppTour firstTime={!tourSeen} name={viewer!.name} area="admin" groups={groups} demo={viewer!.demo} product={viewer!.workspaceId ? "Nova" : "Genesis"} />
       </Suspense>
       {viewer!.demo && <DemoGuard />}
     </div>
