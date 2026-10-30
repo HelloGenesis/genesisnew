@@ -28,7 +28,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
         <div className="mx-auto flex h-14 w-full max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-3 sm:gap-5">
             <Link href={nova ? "/admin" : "/"} aria-label={nova ? "Nova by Genesis" : "Genesis Media home"} className="flex items-center">
-              {nova ? <ProductWordmark product="nova" className="h-[20px]" /> : <GenesisMark className="h-[16px] w-[8.5rem]" />}
+              {nova ? <ProductWordmark product="nova-small" className="h-[32px]" /> : <GenesisMark className="h-[16px] w-[8.5rem]" />}
             </Link>
             <HistoryNav />
           </div>
