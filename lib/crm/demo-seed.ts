@@ -16,8 +16,8 @@ import { templateFor } from "./stages";
  * and tasks. Every name, email (.example) and number is invented, so the live
  * demo shows the real CRM without one real client. Made once, the first time
  * anyone opens /demo (and by scripts/nova-demo-seed.mts locally). Every
- * record names its CRM itself: inWorkspace alone doesn't reach the database
- * client's hooks, so it would leave them in Genesis's.
+ * record names its CRM itself too, on top of inWorkspace: a demo record left
+ * in Genesis's CRM would show to Genesis's team.
  */
 const BRAND_EMAIL = "aditi@bloomfield.example";
 const MEMBER_EMAIL = "kabir@northstar.example";

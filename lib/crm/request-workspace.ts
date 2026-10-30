@@ -20,32 +20,28 @@ import { PATH_HEADER } from "./path-header";
  * get the same answer. Background work for one person (a sheet sync, their
  * Gmail) runs inside `inWorkspace`.
  */
-export const requestWorkspace = cache((): { ws: string | null | undefined; known: boolean } => ({ ws: undefined, known: false }));
+export const requestWorkspace = cache(() => resolve());
 
-const scoped = new AsyncLocalStorage<{ ws: string | null }>();
+const scoped = new AsyncLocalStorage<{ ws: string | null | undefined }>();
 
-/** Runs `fn` with every query held to this CRM. */
-export function inWorkspace<T>(ws: string | null, fn: () => Promise<T>): Promise<T> {
-  return scoped.run({ ws }, fn);
+/**
+ * Runs `fn` held to this CRM: `db` is a client bound to it (lib/db
+ * getPrisma(ws)), and plain `getPrisma()` anywhere inside answers the same.
+ * Awaited in here, not handed back: a Prisma query runs on its first
+ * `.then()`, and one awaited by the caller would run outside this CRM.
+ */
+export async function inWorkspace<T>(ws: string | null, fn: (db: ReturnType<typeof import("@/lib/db").getPrisma>) => Promise<T>): Promise<T> {
+  const { getPrisma } = await import("@/lib/db");
+  return scoped.run({ ws }, async () => await fn(getPrisma(ws)));
 }
 
 const CRM_PATHS = /^\/(admin|api\/crm)(\/|$)/;
 
-let resolving = 0;
-
 export async function activeWorkspace(): Promise<string | null | undefined> {
   const explicit = scoped.getStore();
   if (explicit) return explicit.ws;
-  let memo: ReturnType<typeof requestWorkspace> | null = null;
-  try {
-    memo = requestWorkspace();
-  } catch {
-    memo = null;
-  }
-  if (memo?.known) return memo.ws;
-  const ws = await resolve();
-  if (memo) Object.assign(memo, { ws, known: true });
-  return ws;
+  /* One lookup per request, shared while it's in flight: a page's first burst of queries all wait on it. */
+  return requestWorkspace();
 }
 
 async function resolve(): Promise<string | null | undefined> {
@@ -57,10 +53,12 @@ async function resolve(): Promise<string | null | undefined> {
     return undefined;
   }
   if (!CRM_PATHS.test(path)) return undefined;
-  /* Its own lookups are users and roles, never CRM records; the guard is belt and braces. */
-  if (resolving > 50) return undefined;
-  resolving++;
-  try {
+  /*
+   * Its own lookups run unfiltered, so they never wait on this lookup. (A cap
+   * on lookups in flight used to answer "no CRM" past 50: one agency request
+   * with 60 queries at once saw every CRM's leads, 30 Oct 2026.)
+   */
+  return scoped.run({ ws: undefined }, async () => {
     const [{ currentIdentity }, { getPrisma }] = await Promise.all([import("./session"), import("@/lib/db")]);
     const identity = await currentIdentity();
     if (!identity) return undefined;
@@ -72,7 +70,5 @@ async function resolve(): Promise<string | null | undefined> {
     if (user.workspaceId) return user.workspaceId;
     const owner = (await prisma.staffRole.count({ where: { userId: user.id, role: "OWNER" } })) > 0;
     return (owner ? (await cookies()).get("gm_ws")?.value : null) || null;
-  } finally {
-    resolving--;
-  }
+  });
 }
