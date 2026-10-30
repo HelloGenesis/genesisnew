@@ -93,7 +93,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
   const billing = p.billing === "annual" ? "Annual" : p.billing === "monthly" ? "Monthly" : undefined;
 
   return (
-    <main>
+    <main data-nova-page>
       <JsonLd data={[breadcrumbJsonLd([{ name: "Nova by Genesis", path: "/resellers" }]), crmSoftwareJsonLd(), faqJsonLd(FAQS, "/resellers")]} />
 
       <Atmosphere tone="brand" origin="top" intensity={0.2}>
