@@ -266,6 +266,14 @@ model Account {
   /// That CRM's own details for its quotes and invoices: name, GSTIN, address, bank, invoice prefix, logo (lib/crm/workspace).
   crmProfile     Json?         @map("crm_profile")
   crmTeam        User[]        @relation("CrmTeam")
+  /// Nova by Genesis's 14-day free trial (lib/crm/nova-trial): started; the card is asked for from cardDue; the plan starts (first charge) at trialEnds.
+  trialStartedAt DateTime?     @map("trial_started_at")
+  trialCardDueAt DateTime?     @map("trial_card_due_at")
+  trialEndsAt    DateTime?     @map("trial_ends_at")
+  /// TRIAL (no card yet), CARD_ADDED, ACTIVE (paying), CANCELLED, ENDED (ran out without a card).
+  trialState     String?       @map("trial_state")
+  trialPlan      String?       @map("trial_plan")
+  trialSubscriptionId String?  @unique @map("trial_subscription_id")
   /// How the vendor is paid (UPI id or bank note) — entered by the vendor, shown to finance only.
   payoutNote     String?       @map("payout_note")
 
@@ -301,6 +309,7 @@ model Account {
   /// The agency CRM it belongs to (lib/crm/workspace); null = Genesis's own.
   workspaceId      String?     @map("workspace_id")
   @@index([workspaceId])
+  @@index([trialState])
   @@map("crm_accounts")
 }
 

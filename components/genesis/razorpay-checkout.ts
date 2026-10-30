@@ -33,7 +33,10 @@ function loadRazorpay(): Promise<RazorpayCheckout | undefined> {
  * Razorpay's signature. If the script cannot load — a blocker, a flaky
  * network — Razorpay's own page for the same subscription is the fallback.
  */
-export async function openSubscriptionCheckout(result: SubscriptionStart, onDismiss: () => void, extra: Record<string, string> = {}) {
+export type CheckoutReply = { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string };
+
+/** `onPaid` instead of /cart/complete: Nova's trial card step checks the reply itself (components/crm/trial-plans). */
+export async function openSubscriptionCheckout(result: SubscriptionStart, onDismiss: () => void, extra: Record<string, string> = {}, onPaid?: (reply: CheckoutReply) => void) {
   const Razorpay = await loadRazorpay();
   if (!Razorpay) {
     if (result.url) window.location.assign(result.url);
@@ -48,7 +51,8 @@ export async function openSubscriptionCheckout(result: SubscriptionStart, onDism
     prefill: result.prefill,
     notes: { reference: result.reference },
     theme: { color: "#ffc516" },
-    handler: (response: { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string }) => {
+    handler: (response: CheckoutReply) => {
+      if (onPaid) return onPaid(response);
       const query = new URLSearchParams({ ...response, reference: result.reference ?? "", ...extra });
       /* A full load, not a client push: the page verifies the signature on the server. */
       window.location.assign(new URL(`/cart/complete?${query.toString()}`, window.location.origin).href);

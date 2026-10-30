@@ -1,11 +1,14 @@
+import { Check, X } from "lucide-react";
 import type { Metadata } from "next";
 
+import { Accordion } from "@/components/genesis/accordion";
 import { Atmosphere } from "@/components/genesis/atmosphere";
 import { CrmPricing, SavingsCalculator } from "@/components/genesis/crm-pricing";
 import { GenesisForm } from "@/components/genesis/genesis-form";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { NovaHero } from "@/components/genesis/nova-hero";
 import { NovaLive } from "@/components/genesis/nova-live";
+import { NovaTrialForm } from "@/components/genesis/nova-trial-form";
 import { Reveal, RevealGroup, RevealItem } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { crmSoftwareJsonLd, faqJsonLd } from "@/lib/geo";
@@ -77,7 +80,8 @@ const STEPS = [
 ] as const;
 
 const FAQS = [
-  ["How does billing work?", "Pick annual (the lowest price, paid for the year upfront) or monthly (10% more, paid month by month). Prices exclude 18% GST. You pay through Razorpay by card, UPI AutoPay or netbanking; monthly plans can be cancelled any time."],
+  ["How does the free trial work?", "Start with no card and use everything for 14 days. From day 3 you choose a plan and add a card, and pay ₹0 that day: the card is first charged on day 14, when the trial ends, then monthly. Cancel any time before day 14 and you aren't charged. We email you before every step."],
+  ["How does billing work?", "Pick annual (the lowest price, paid for the year upfront) or monthly (10% more, paid month by month). Prices exclude 18% GST. You pay through Razorpay by card, UPI AutoPay or netbanking; monthly plans can be cancelled any time. The free trial continues on a monthly plan."],
   ["How do resellers earn?", "Bring agencies to the CRM and earn 20% of every payment they make for their first 12 months, paid out monthly."],
   ["Is our data separate from everyone else's?", "Yes. Each agency works in its own workspace with its own team, brands and logins."],
   ["Can it carry our brand?", "On Growth and Scale, your logo goes on it; on Scale it can run on your own domain."],
@@ -108,6 +112,11 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           <NovaLive />
         </section>
 
+        {/* The 14-day free trial (components/genesis/nova-trial-form, lib/crm/nova-trial). */}
+        <section id="trial" aria-labelledby="trial-heading" className="scroll-mt-28">
+          <NovaTrialForm />
+        </section>
+
         <section aria-labelledby="who-heading">
           <Reveal>
             <SectionLabel dot tone="brand">Who&apos;s in it</SectionLabel>
@@ -135,16 +144,29 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
               Where the hours go today, and where they stop going
             </h2>
           </Reveal>
-          <div className="mt-8 overflow-hidden rounded-card border border-[var(--glass-border)]">
-            <div className="hidden grid-cols-2 bg-[var(--hover-wash)] px-6 py-3 text-[0.75rem] uppercase tracking-[0.16em] text-faint sm:grid">
-              <span>Without it</span>
-              <span>With Nova</span>
+          {/* A window, like the demo's (Genesis, 31 Oct 2026: "fill in colours in the window like a real one"): red for today, green for Nova. */}
+          <div className="mt-8 overflow-hidden rounded-[1.25rem] border border-[var(--glass-border)] bg-[#141216] shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] [color-scheme:dark]">
+            <div className="flex items-center gap-1.5 border-b border-white/5 px-4 py-2.5">
+              <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+              <span className="size-2.5 rounded-full bg-[#febc2e]" />
+              <span className="size-2.5 rounded-full bg-[#28c840]" />
+              <span className="ml-3 text-[0.75rem] text-white/45">your week, before and after</span>
             </div>
-            <ul className="divide-y divide-[var(--glass-border)]">
+            <div className="hidden grid-cols-2 text-[0.75rem] uppercase tracking-[0.16em] sm:grid">
+              <span className="bg-[#ff5f57]/[0.08] px-6 py-3 text-[#ff8a80]">Without it</span>
+              <span className="bg-[#28c840]/[0.08] px-6 py-3 text-[#6ee787]">With Nova</span>
+            </div>
+            <ul className="divide-y divide-white/5">
               {BEFORE_AFTER.map(([before, after]) => (
-                <li key={before} className="grid gap-2 px-6 py-4 sm:grid-cols-2 sm:gap-6">
-                  <p className="text-small text-faint line-through decoration-white/20">{before}</p>
-                  <p className="text-small text-bone">{after}</p>
+                <li key={before} className="grid sm:grid-cols-2">
+                  <p className="flex gap-3 bg-[#ff5f57]/[0.05] px-6 py-4 text-small text-white/45">
+                    <X className="mt-0.5 size-4 shrink-0 text-[#ff5f57]" aria-hidden />
+                    <span className="line-through decoration-white/20">{before}</span>
+                  </p>
+                  <p className="flex gap-3 bg-[#28c840]/[0.05] px-6 py-4 text-small text-white/90">
+                    <Check className="mt-0.5 size-4 shrink-0 text-[#28c840]" aria-hidden />
+                    <span>{after}</span>
+                  </p>
                 </li>
               ))}
             </ul>
@@ -166,14 +188,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
               Built for Genesis&apos;s own team first, and used every day on real campaigns.
             </p>
           </Reveal>
-          <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map(([title, body]) => (
-              <RevealItem key={title} className="glass glass-lit rounded-card p-6">
-                <h3 className="text-body font-semibold leading-snug text-bone">{title}</h3>
-                <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{body}</p>
-              </RevealItem>
-            ))}
-          </RevealGroup>
+          <Accordion items={FEATURES} name="nova-features" openFirst className="mt-8" />
         </section>
 
         <section id="pricing" aria-labelledby="pricing-heading" className="scroll-mt-24">
@@ -212,14 +227,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
               Questions we get asked
             </h2>
           </Reveal>
-          <dl className="mt-10 grid gap-x-12 gap-y-8 md:grid-cols-2">
-            {FAQS.map(([q, a]) => (
-              <div key={q}>
-                <dt className="text-body font-semibold leading-snug text-bone">{q}</dt>
-                <dd className="mt-2 text-pretty text-body leading-relaxed text-ash">{a}</dd>
-              </div>
-            ))}
-          </dl>
+          <Accordion items={FAQS} name="nova-faq" openFirst className="mt-10" />
         </section>
 
         <section id="apply" aria-labelledby="apply-heading" className="mx-auto w-full max-w-2xl scroll-mt-24">

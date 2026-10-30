@@ -304,6 +304,9 @@ async function applySubscription(name: string, sub: Entity, payment: Entity | un
       : {},
   });
 
+  /* A Nova trial's subscription (lib/crm/nova-trial): its own emails and state. */
+  await (await import("./nova-trial")).trialSubscriptionEvent(name, razorpayId);
+
   if (name === "subscription.charged") {
     /* The first charge opens the work (once, whichever delivery wins); every later one is a renewal. */
     const first = order ? await claimPaid(order.id, paidCount <= 1 ? payment : undefined) : false;
@@ -488,6 +491,8 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
 
   /* GENESIS CRM: the buyer hears what happens next, and the team is told to set up the workspace. */
   const crm = order.lines.find((line) => line.division === "CRM");
+  /* A Nova trial's first charge: it already has its CRM, and lib/crm/nova-trial sends its own emails. */
+  if (crm && order.accountId && (await prisma.account.findFirst({ where: { id: order.accountId, workspaceId: null, trialStartedAt: { not: null } }, select: { id: true } }))) return;
   if (crm) {
     await queueEmail({
       kind: "order_confirmed",

@@ -106,6 +106,8 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
         ...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []),
         /* An agency's own team and its details for quotes and invoices; Genesis's integrations are Genesis's. */
         ...(viewer.workspaceId ? (viewer.workspaceRole === "ADMIN" ? [{ href: "/admin/team", label: "Team & company" }] : []) : [{ href: "/admin/settings", label: "Integrations" }]),
+        /* An agency's Nova plan: its trial, card and cancelling (lib/crm/nova-trial). */
+        ...(viewer.workspaceId && viewer.workspaceRole === "ADMIN" ? [{ href: "/admin/plan", label: "Plan & billing" }] : []),
         { href: "/admin?tour=1", label: "Take the tour" },
       ],
     },

@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/db";
 import { LEAD_STATUS, date, todayIst } from "./catalog";
 import { moneyReminders } from "./company";
 import { appUrl, deliverEmails, queueEmail, queueStaffEmail } from "./notify";
+import { trialReminders } from "./nova-trial";
 import { retryWebhookEvents } from "./orders";
 import { mirrorCreators, syncSheets } from "./sheets";
 
@@ -25,6 +26,7 @@ export async function runAllJobs() {
   await step("webhooks", () => retryWebhookEvents());
   await step("digest", morningDigest);
   await step("money", moneyReminders);
+  await step("trials", () => trialReminders());
   await step("emails", () => deliverEmails());
   await step("creators", () => mirrorCreators());
   await step("sheets", () => syncSheets());
