@@ -10,6 +10,7 @@ import { getAuth0IfConfigured, isAuth0Configured } from "@/lib/auth0";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 
+import { DEMO_AGENCY, DEMO_EMAIL, DEMO_SUB, hasDemoCookie } from "./demo";
 import { requestWorkspace } from "./request-workspace";
 import { emailLoginEnabled, readSignedEmail, SESSION_COOKIE } from "./email-login";
 import { TEAM } from "./team";
@@ -56,6 +57,8 @@ export type Viewer = {
   mfa: boolean;
   memberships: Membership[];
   dev: boolean;
+  /** Nova's live demo visitor (lib/crm/demo): everything shows, nothing saves. */
+  demo: boolean;
   /** The agency CRM this person works in (null: Genesis's team). */
   workspaceId: string | null;
   workspaceRole: "ADMIN" | "MEMBER" | null;
@@ -95,6 +98,35 @@ export const devCookie = { name: DEV_COOKIE, options: { httpOnly: true, sameSite
 // --- The identity behind this request --------------------------------------------
 
 export async function currentIdentity(): Promise<Identity | null> {
+  const signedIn = await signedInIdentity();
+  if (signedIn) return signedIn;
+  /* No one signed in, and this browser opened Nova's live demo (lib/crm/demo). */
+  return (await hasDemoCookie()) ? demoIdentity() : null;
+}
+
+/*
+ * The demo agency's admin, only while that user is exactly what the demo
+ * made: in an agency workspace, on no one's staff. Anything else and there is
+ * no demo, so a mistake can never sign a visitor in as someone real.
+ */
+const demoIdentity = cache(async (): Promise<Identity | null> => {
+  if (!isDatabaseConfigured()) return null;
+  /*
+   * The agency is read through the user (a nested read), never as its own
+   * Account query: that would ask which CRM this request is in, which asks
+   * who is signed in, which is this, waiting on itself.
+   */
+  const user = await getPrisma().user.findUnique({
+    where: { auth0Sub: DEMO_SUB },
+    select: { email: true, workspace: { select: { name: true, crmWorkspace: true, workspaceId: true } }, staffRoles: { select: { role: true }, take: 1 } },
+  });
+  const w = user?.workspace;
+  if (user?.email !== DEMO_EMAIL || !w || w.name !== DEMO_AGENCY || !w.crmWorkspace || w.workspaceId !== null || user.staffRoles.length) return null;
+  return { sub: DEMO_SUB, email: DEMO_EMAIL, emailVerified: true, phone: null, phoneVerified: false, name: null, picture: null, amr: ["mfa"] };
+});
+
+/** Whoever is really signed in (never the demo). */
+export async function signedInIdentity(): Promise<Identity | null> {
   if (devLoginEnabled()) return readDevIdentity((await cookies()).get(DEV_COOKIE)?.value);
   if (emailLoginEnabled()) {
     const email = readSignedEmail((await cookies()).get(SESSION_COOKIE)?.value);
@@ -267,6 +299,7 @@ async function buildViewer(user: UserRow, s: { sub: string; mfa: boolean; viewin
     mfa: s.mfa,
     memberships: memberships.map((m) => ({ accountId: m.account.id, role: m.role, name: m.account.name, kind: m.account.kind, isReseller: m.account.isReseller, parentId: m.account.parentId })),
     dev: s.sub.startsWith("dev|"),
+    demo: s.sub === DEMO_SUB,
     workspaceId: agency?.id ?? null,
     workspaceRole,
     ws: agency?.id ?? (viewingOk ? viewing : null),

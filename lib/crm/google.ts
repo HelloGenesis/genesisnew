@@ -1,5 +1,6 @@
 import "server-only";
 
+import { assertNotDemo } from "./demo";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 import { getPrisma } from "@/lib/db";
@@ -40,6 +41,7 @@ export async function companyConnection() {
 
 /** An access token for the company account (project files, the CRM sheets). */
 export async function companyToken(): Promise<string> {
+  await assertNotDemo();
   const conn = await companyConnection();
   if (!conn) throw new GoogleAuthError(`${COMPANY_ACCOUNT()} hasn't connected Google with file access yet (Inbox → Connect Google).`);
   return accessToken(conn.userId);
@@ -147,6 +149,7 @@ const tokenCache = new Map<string, { token: string; expires: number }>();
 export class GoogleAuthError extends Error {}
 
 async function accessToken(userId: string): Promise<string> {
+  await assertNotDemo();
   const hit = tokenCache.get(userId);
   if (hit && hit.expires > Date.now()) return hit.token;
   const conn = await getPrisma().googleConnection.findUnique({ where: { userId } });

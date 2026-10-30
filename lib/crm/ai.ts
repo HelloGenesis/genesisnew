@@ -1,6 +1,7 @@
 import "server-only";
 
 import { recordCall, type Usage } from "./ai-usage";
+import { assertNotDemo } from "./demo";
 
 /**
  * THE AI THAT READS THE INBOX (Genesis, 12 Oct 2026: "AI reads it"). Claude
@@ -87,6 +88,7 @@ Sort what you're given into one kind and pull out every detail that's actually t
 /** Reads one email or document. Null when the AI isn't configured or the call fails (the item is retried next run). */
 export async function readItem(input: { source: string; from?: string; to?: string; subject: string; date?: string; text: string; links: string[]; attachments?: string[] }): Promise<Reading | null> {
   if (!aiConfigured()) return null;
+  await assertNotDemo();
   const content = [
     `Source: ${input.source}`,
     input.from ? `From: ${input.from}` : "",
@@ -126,6 +128,7 @@ export async function readItem(input: { source: string; from?: string; to?: stri
 /** Matches a sheet's columns to CRM fields: returns { column header: field }. */
 export async function mapColumns(kind: string, fields: Record<string, string>, headers: string[], sample: string[][]): Promise<Record<string, string>> {
   if (!aiConfigured()) return {};
+  await assertNotDemo();
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": process.env.ANTHROPIC_API_KEY!, "anthropic-version": "2023-06-01", "content-type": "application/json" },

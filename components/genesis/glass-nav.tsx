@@ -230,8 +230,8 @@ export function GlassNav() {
             two blend modes and the Reduce Motion still.
           */}
           <span className="nova-page-hide contents"><GenesisMarkMotion /></span>
-          {/* On the Nova by Genesis page, its logo instead (Genesis, 31 Oct 2026); swapped in CSS (globals.css) as that page is also crm.genesismedia.co's "/". */}
-          <span className="nova-page-show hidden"><ProductWordmark product="nova" className="h-[25px]" /></span>
+          {/* On the Nova by Genesis page, its logo instead (Genesis, 31 Oct 2026); swapped in CSS (globals.css) as that page is also nova.genesismedia.co's "/". */}
+          <span className="nova-page-show hidden"><ProductWordmark product="nova" className="h-[22px]" /></span>
         </Link>
 
         {/*

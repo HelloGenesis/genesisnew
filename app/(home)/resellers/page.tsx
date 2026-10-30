@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 
 import { Atmosphere } from "@/components/genesis/atmosphere";
 import { CrmPricing, SavingsCalculator } from "@/components/genesis/crm-pricing";
-import { CrmTour } from "@/components/genesis/crm-tour";
 import { GenesisForm } from "@/components/genesis/genesis-form";
-import { GlassButton } from "@/components/genesis/glass-button";
 import { JsonLd } from "@/components/genesis/json-ld";
+import { NovaHero } from "@/components/genesis/nova-hero";
+import { NovaLive } from "@/components/genesis/nova-live";
 import { Reveal, RevealGroup, RevealItem } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { crmSoftwareJsonLd, faqJsonLd } from "@/lib/geo";
@@ -96,34 +96,16 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
     <main data-nova-page>
       <JsonLd data={[breadcrumbJsonLd([{ name: "Nova by Genesis", path: "/resellers" }]), crmSoftwareJsonLd(), faqJsonLd(FAQS, "/resellers")]} />
 
-      <Atmosphere tone="brand" origin="top" intensity={0.2}>
-        <div className="relative z-[2] mx-auto w-full max-w-6xl px-6 pb-10 pt-32 sm:pt-40">
-          {/* The opening shows straight away (no fade): it's the first thing anyone sees. */}
-          <SectionLabel dot tone="brand">
-            Nova by Genesis · one platform
-          </SectionLabel>
-          <h1 className="mt-6 max-w-4xl text-balance text-h2 font-normal leading-[1.05] tracking-tight text-bone sm:text-h1">
-            Your agency, your brands and your partners,{" "}
-            <span className="font-serif font-normal italic text-brand-ink">in one place.</span>
-          </h1>
-          <p className="mt-6 max-w-2xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-            Nova by Genesis is the CRM Genesis Media runs on, ready for yours: leads and briefs, influencer plans, quotes, GST invoices and a client portal, so your team stops living in spreadsheets and WhatsApp. From ₹4,999 a month.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <GlassButton href="#pricing" variant="brand" size="lg" arrow>
-              See plans & pricing
-            </GlassButton>
-            <GlassButton href="#apply" variant="glass" size="lg" arrow>
-              Book a walkthrough
-            </GlassButton>
-          </div>
-        </div>
+      {/* THE OPENING (Genesis, 31 Oct 2026): centred, the orb with Nova at its core and who it connects round it (components/genesis/nova-hero). */}
+      <Atmosphere tone="brand" origin="top" intensity={0.28}>
+        <NovaHero />
       </Atmosphere>
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-6 pb-[var(--section-pad)] sm:gap-28">
+        {/* Straight after NOVA, the real dashboard, live and usable (components/genesis/nova-live; Genesis, 31 Oct 2026). */}
         <section aria-labelledby="tour-heading">
-          <h2 id="tour-heading" className="sr-only">See it working</h2>
-          <CrmTour />
+          <h2 id="tour-heading" className="sr-only">The Nova dashboard, live</h2>
+          <NovaLive />
         </section>
 
         <section aria-labelledby="who-heading">

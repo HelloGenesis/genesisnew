@@ -144,7 +144,8 @@ const nextConfig: NextConfig = {
     too.
   */
   async rewrites() {
-    return { beforeFiles: [{ source: "/", has: [{ type: "host", value: "crm.genesismedia.co" }], destination: "/resellers" }] };
+    /* NOVA.GENESISMEDIA.CO (Genesis, 31 Oct 2026: "domain now would be nova.genesismedia.co"): Nova by Genesis's own address, the same way. */
+    return { beforeFiles: ["crm.genesismedia.co", "nova.genesismedia.co"].map((value) => ({ source: "/", has: [{ type: "host" as const, value }], destination: "/resellers" })) };
   },
   async redirects() {
     const slug = ":slug([a-z0-9-]+)";

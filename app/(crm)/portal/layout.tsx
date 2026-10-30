@@ -11,6 +11,7 @@ import { SignOut } from "@/components/crm/sign-out";
 import { AppTour } from "@/components/crm/app-tour";
 import { Suspense } from "react";
 import { ScrollMain } from "@/components/crm/scroll-main";
+import { DemoGuard } from "@/components/crm/demo-guard";
 
 export const metadata: Metadata = { title: { default: "Portal", template: "%s · Genesis portal" } };
 export const dynamic = "force-dynamic";
@@ -84,6 +85,7 @@ export default async function PortalLayout({ children }: { children: React.React
         </div>
       </div>
       <ScrollMain className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:h-full lg:overflow-y-auto lg:px-9 lg:py-8">{children}</ScrollMain>
+      {viewer?.demo && <DemoGuard />}
       <Suspense fallback={null}>
         <AppTour firstTime={!tourSeen} name={viewer.name} area="portal" />
       </Suspense>

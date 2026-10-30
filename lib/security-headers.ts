@@ -24,7 +24,8 @@ function contentSecurityPolicy(): string {
     "default-src": ["'self'"],
     "base-uri": ["'self'"],
     "object-src": ["'none'"],
-    "frame-ancestors": ["'none'"],
+    /* Only this site may frame its pages: the Nova page shows the live CRM demo in a frame (components/genesis/nova-live). */
+    "frame-ancestors": ["'self'"],
     "form-action": ["'self'"],
     "script-src": [
       "'self'",
@@ -102,7 +103,7 @@ export const securityHeaders = [
   {
     // Redundant with `frame-ancestors` above, kept for older browsers.
     key: "X-Frame-Options",
-    value: "DENY",
+    value: "SAMEORIGIN",
   },
   {
     key: "X-Content-Type-Options",

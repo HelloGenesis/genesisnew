@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { DEMO_COOKIE } from "@/lib/crm/demo";
 import { emailLoginEnabled, SESSION_COOKIE } from "@/lib/crm/email-login";
 import { devCookie, devLoginEnabled, STAFF_2FA_COOKIE } from "@/lib/crm/session";
 import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
   response.cookies.delete(SIGNED_IN_HINT);
   if (devLoginEnabled()) response.cookies.delete(devCookie.name);
   response.cookies.delete(SESSION_COOKIE);
+  response.cookies.delete(DEMO_COOKIE);
   return response;
 }
 

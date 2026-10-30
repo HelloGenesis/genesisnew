@@ -1,5 +1,6 @@
 import "server-only";
 
+import { assertNotDemo } from "./demo";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -154,6 +155,7 @@ export class DriveNotConnected extends Error {
 }
 
 async function accessToken(): Promise<string> {
+  await assertNotDemo();
   if (cached && cached.expires > Date.now()) return cached.token;
   const refresh = driveOAuthConfigured() ? await getSetting("drive:refresh", true) : null;
   /*
