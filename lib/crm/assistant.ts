@@ -9,6 +9,7 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 import { mcpForChat } from "./ai-connectors";
 import { addUsage, emptyUsage, recordUsage } from "./ai-usage";
 import { CRM_INSTRUCTIONS, TOOLS } from "./mcp-tools";
+import { usesAi } from "./scope";
 import type { Viewer } from "./session";
 
 /**
@@ -68,18 +69,24 @@ const LABEL: Record<string, string> = {
   update_request: "Updating the request",
   assign_vendor: "Offering the job",
   find_work: "Looking it up",
+  all_crms: "Looking across every CRM",
+  crm_details: "Opening that agency's CRM",
+  search_all_crms: "Searching every CRM",
 };
 
 /* The tools in the shape the model takes, inputs streamed as they're written. */
-const API_TOOLS: Anthropic.Beta.BetaTool[] = TOOLS.map((t) => ({
+const API_TOOLS: (Anthropic.Beta.BetaTool & { ownerOnly?: boolean })[] = TOOLS.map((t) => ({
   name: t.name,
   description: t.description,
   input_schema: z.toJSONSchema(t.input) as Anthropic.Beta.BetaTool["input_schema"],
   eager_input_streaming: true,
+  ownerOnly: t.ownerOnly,
 }));
+/* Nova Copilot (Genesis's owners) gets every tool; NOVA AI in an agency's CRM never the ones across every CRM. */
+const toolsFor = (viewer: Viewer): Anthropic.Beta.BetaTool[] => API_TOOLS.filter((t) => usesAi(viewer) || !t.ownerOnly).map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema, eager_input_streaming: t.eager_input_streaming }));
 
 function system(viewer: Viewer) {
-  return `You are Genesis Copilot, Genesis Media's CRM assistant, chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
+  return `${usesAi(viewer) ? "You are Nova Copilot, Genesis Media's own CRM assistant for its owners: besides Genesis's CRM you can see every agency's CRM on Nova (all_crms, crm_details, search_all_crms)." : "You are NOVA AI, the assistant in this agency's CRM."} You're chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
 
 ${CRM_INSTRUCTIONS}
 
@@ -139,7 +146,7 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
         model: MODEL(),
         max_tokens: 64000,
         system: system(viewer),
-        tools: [...API_TOOLS, ...apps.toolsets],
+        tools: [...toolsFor(viewer), ...apps.toolsets],
         ...(apps.servers.length ? { mcp_servers: apps.servers } : {}),
         messages,
         stream: true,
@@ -185,7 +192,7 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
 
       const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
       for (const use of uses) {
-        const tool = TOOLS.find((t) => t.name === use.name);
+        const tool = TOOLS.find((t) => t.name === use.name && (usesAi(viewer) || !t.ownerOnly));
         emit({ t: "tool", name: use.name, label: LABEL[use.name] ?? use.name });
         if (!tool) {
           results.push({ type: "tool_result", tool_use_id: use.id, is_error: true, content: `Unknown tool ${use.name}` });

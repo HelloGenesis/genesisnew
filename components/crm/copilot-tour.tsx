@@ -8,13 +8,13 @@ import { TourInvite, TryItCard } from "./app-tour";
 import { findTarget, TourOverlay, type TourStep } from "./tour-overlay";
 
 /*
- * GENESIS COPILOT'S TOUR (Genesis, 31 Oct 2026: "tours for … copilot; after
+ * NOVA COPILOT'S TOUR (Genesis, 31 Oct 2026: "tours for … copilot; after
  * it, ask them to try it themselves"). Offered the first time someone opens
  * Copilot, and from "How it works": every control in the chat, then example
  * requests to try, each opening Copilot with it typed in.
  */
 const STEPS: TourStep[] = [
-  { title: "Genesis Copilot", body: "The AI that works inside the CRM with you. Ask in plain words and it does the work: makes quotes and influencer plans, adds leads, clients and tasks, finds creators, answers questions about your data. It works with your own permissions, and adds and updates but never deletes anything or messages anyone." },
+  { title: "Nova Copilot", body: "The AI that works inside the CRM with you. Ask in plain words and it does the work: makes quotes and influencer plans, adds leads, clients and tasks, finds creators, answers questions about your data. It works with your own permissions, and adds and updates but never deletes anything or messages anyone." },
   { target: 'textarea[aria-label="Message"]', title: "Ask it anything", body: "Type what you need, as you'd ask a colleague: “Make an influencer plan for Bloom Foods, 10 food creators in Mumbai under ₹50,000 each”. Paste screenshots straight in. Enter sends; Shift+Enter starts a new line." },
   { target: 'button[aria-label="Attach or start over"]', title: "Attach files", body: "Screenshots of creator profiles, a vendor's costing in Excel, a brief as a PDF: it reads them and fills the quote, plan or records. The same menu opens Connectors and starts a new chat." },
   { target: 'button[aria-label^="Mode:"]', title: "How hard it thinks", body: "Quick answer for simple questions and lookups, Balanced for most work, Deep think for long plans, big sheets or tricky pricing. Deeper is slower and costs more." },
@@ -56,7 +56,7 @@ export function CopilotTour({ firstTime }: { firstTime: boolean }) {
     setStage(then);
   };
 
-  if (stage === "invite") return <TourInvite product="Genesis Copilot" what="Two minutes: what it can do for you, every button in the chat, and a few things to try." onStart={start} onSkip={() => end("idle")} />;
+  if (stage === "invite") return <TourInvite product="Nova Copilot" what="Two minutes: what it can do for you, every button in the chat, and a few things to try." onStart={start} onSkip={() => end("idle")} />;
   if (stage === "tour" && steps.length) return <TourOverlay steps={steps} onClose={() => end("idle")} onDone={() => end("try")} startLabel="Show me" />;
   if (stage === "try")
     return (

@@ -352,7 +352,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
             {/* The GENESIS COPILOT wordmark (Genesis, 30 Oct 2026), its N standing in for the logo tile. */}
-            <span className="flex flex-1 items-center gap-1.5">{nova ? <><ProductWordmark product="nova" className="h-[14px]" /><span className="text-[0.75rem] font-medium tracking-[0.2em] text-ash">AI</span></> : <ProductWordmark product="copilot" className="h-[13px]" />}</span>
+            <span className="flex flex-1 items-center gap-1.5">{nova ? <><ProductWordmark product="nova" className="h-[14px]" /><span className="text-[0.75rem] font-medium tracking-[0.2em] text-ash">AI</span></> : <ProductWordmark product="copilot" className="h-[18px]" />}</span>
             {fullButton}
             <button type="button" onClick={() => toggleList(false)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone" aria-label="Hide the sidebar" title="Hide the sidebar"><ChevronsLeft className="size-4" aria-hidden /></button>
           </div>

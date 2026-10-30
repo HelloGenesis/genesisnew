@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   const viewer = await getViewer();
   if (staffAccess(viewer) !== "granted") return NextResponse.json({ error: "Sign in to the CRM first." }, { status: 401 });
   const nova = !usesAi(viewer!) && usesNovaAi(viewer!);
-  if (!usesAi(viewer!) && !nova) return NextResponse.json({ error: "Genesis Copilot is open to the owners only." }, { status: 403 });
+  if (!usesAi(viewer!) && !nova) return NextResponse.json({ error: "Nova Copilot is open to the owners only." }, { status: 403 });
   if (viewer!.demo) return NextResponse.json({ error: "NOVA AI isn't part of the demo. Start your free trial to get 5 free requests." }, { status: 403 });
   if (!aiConfigured()) return NextResponse.json({ error: "The AI isn't set up yet (ANTHROPIC_API_KEY)." }, { status: 503 });
   const parsed = Body.safeParse(await request.json().catch(() => null));

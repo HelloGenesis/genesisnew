@@ -17,7 +17,7 @@ export default async function PortalProjects() {
   const projects = await getPrisma().project.findMany({
     where: { accountId: account.id },
     orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
-    include: { deliverables: { where: { status: { not: "DRAFT" } }, select: { status: true } } },
+    include: { deliverables: { where: { status: { notIn: ["DRAFT", "INTERNAL_REVIEW"] } }, select: { status: true } } },
   });
   return (
     <>

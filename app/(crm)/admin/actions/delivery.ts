@@ -27,6 +27,7 @@ import { openProject } from "@/lib/crm/projects";
 import { tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { recordReach, syncPlanContacts } from "@/lib/crm/reachout";
 import { notifyAssignee } from "@/lib/crm/task-notify";
+import { notifyProjectTeam } from "@/lib/crm/project-team";
 import { stagesOf } from "@/lib/crm/stages";
 
 /** Server actions for projects, deliverables, messages, requests, tasks, vendors and creators. */
@@ -140,7 +141,9 @@ export async function addDeliverable(_: ActionState, form: FormData): Promise<Ac
   if (!projectId || !title || !url || !/^https?:\/\//i.test(url)) return fail("Add a title and a link (Drive, Frame.io, YouTube…).");
   const prisma = getPrisma();
   const previous = await prisma.deliverable.findFirst({ where: { projectId, title }, orderBy: { version: "desc" } });
-  const send = form.get("send") === "on";
+  /* Straight to the client, to the producer first (internal review), or a draft. "send" is the old checkbox. */
+  const review = form.has("review") ? text(form, "review") : form.get("send") === "on" ? "client" : null;
+  const send = review === "client";
   await prisma.deliverable.create({
     data: {
       projectId,
@@ -148,13 +151,14 @@ export async function addDeliverable(_: ActionState, form: FormData): Promise<Ac
       url,
       kind: (oneOf(text(form, "kind"), DELIVERABLE_KINDS) ?? "VIDEO") as DeliverableKind,
       version: (previous?.version ?? 0) + 1,
-      status: send ? "IN_REVIEW" : "DRAFT",
+      status: send ? "IN_REVIEW" : review === "internal" ? "INTERNAL_REVIEW" : "DRAFT",
       submittedById: viewer.id,
     },
   });
   if (send) await askForReview(projectId, title);
+  if (review === "internal") await notifyProjectTeam(projectId, viewer.id, { vendorsToo: true, subject: `For internal review: ${title}`, text: `"${title}" is ready for the producer's review, before the client sees it.\n\n${appUrl(`/admin/projects/${projectId}#deliverables`)}` });
   done();
-  return ok(send ? "Shared with the client for review." : "Saved as an internal draft.");
+  return ok(send ? "Shared with the client for review." : review === "internal" ? "Sent for internal review." : "Saved as an internal draft.");
 }
 
 async function askForReview(projectId: string, title: string) {
@@ -170,10 +174,11 @@ async function askForReview(projectId: string, title: string) {
 export async function setDeliverableStatus(form: FormData) {
   await requireStaff("delivery");
   const id = text(form, "id");
-  const status = oneOf(text(form, "status"), ["DRAFT", "IN_REVIEW", "CHANGES_REQUESTED", "APPROVED"] as const) as DeliverableStatus | null;
+  const status = oneOf(text(form, "status"), ["DRAFT", "INTERNAL_REVIEW", "IN_REVIEW", "CHANGES_REQUESTED", "APPROVED"] as const) as DeliverableStatus | null;
   if (!id || !status) return;
   const d = await getPrisma().deliverable.update({ where: { id }, data: { status } });
   if (status === "IN_REVIEW") await askForReview(d.projectId, d.title);
+  if (status === "INTERNAL_REVIEW" || status === "CHANGES_REQUESTED") await notifyProjectTeam(d.projectId, null, { vendorsToo: true, subject: `${status === "INTERNAL_REVIEW" ? "For internal review" : "Changes asked for"}: ${d.title}`, text: appUrl(`/admin/projects/${d.projectId}#deliverables`) });
   done();
 }
 

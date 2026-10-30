@@ -11,7 +11,7 @@ import { getPrisma } from "@/lib/db";
  */
 
 export type UsageSource = "copilot" | "inbox" | "import";
-export const SOURCE_LABEL: Record<UsageSource, string> = { copilot: "Genesis Copilot", inbox: "Reading the inbox", import: "Sheet imports" };
+export const SOURCE_LABEL: Record<UsageSource, string> = { copilot: "Nova Copilot", inbox: "Reading the inbox", import: "Sheet imports" };
 
 /** The parts of a response's `usage` this keeps. */
 export type Usage = { input_tokens?: number | null; output_tokens?: number | null; cache_read_input_tokens?: number | null; cache_creation_input_tokens?: number | null };

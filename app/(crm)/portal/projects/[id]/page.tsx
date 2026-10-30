@@ -33,7 +33,7 @@ export default async function PortalProject({ params }: { params: Promise<{ id: 
     include: {
       account: true,
       manager: true,
-      deliverables: { where: { status: { not: "DRAFT" } }, orderBy: [{ createdAt: "desc" }] },
+      deliverables: { where: { status: { notIn: ["DRAFT", "INTERNAL_REVIEW"] } }, orderBy: [{ createdAt: "desc" }] },
       messages: { where: { internal: false }, orderBy: { createdAt: "asc" }, include: { author: true } },
       creators: { where: { clientVisible: true, status: { in: VISIBLE_CREATOR as never } }, include: { creator: true } },
       requests: { orderBy: { createdAt: "desc" } },
@@ -60,7 +60,7 @@ export default async function PortalProject({ params }: { params: Promise<{ id: 
         {project.quota ? <p className="mt-3 text-[0.875rem] text-ash">{approved} of {project.quota} pieces delivered and approved.</p> : null}
       </Card>
 
-      <Card title="Files" action={<span className="text-[0.8125rem] text-ash">Upload your brief, logos and product photos to Brief &amp; assets</span>}>
+      <Card title="Files" action={<span className="text-[0.8125rem] text-ash">Upload your logos, guidelines and product photos to Assets</span>}>
         <ProjectFiles projectId={project.id} role="client" folders={files.folders} files={files.files} />
       </Card>
 

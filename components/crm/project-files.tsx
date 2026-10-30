@@ -1,10 +1,10 @@
 "use client";
 
-import { Download, FileText, Play, Trash2, Upload, X } from "lucide-react";
+import { Check, Download, FileText, Play, Trash2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
-import { deleteProjectFile, setFileAudience } from "@/app/(crm)/files-actions";
+import { deleteProjectFile, saveProjectBrief, setFileAudience } from "@/app/(crm)/files-actions";
 
 import { uploadToProject } from "./upload-to-drive";
 
@@ -23,7 +23,29 @@ export type FileItem = {
 type Folder = { key: string; label: string; hint: string; audience: string; canUpload: boolean };
 
 const AUDIENCE: Record<string, string> = { TEAM: "Genesis only", TEAM_VENDOR: "Genesis + vendors", TEAM_CLIENT: "Genesis + client", EVERYONE: "Everyone" };
-const CUTS = new Set(["first-cut", "second-cut", "final"]);
+const BRIEF = "__brief";
+
+/*
+ * WHO SEES IT, AT A GLANCE (Genesis, 31 Oct 2026: "all files or folders should
+ * show who it's shared with and who it's not, for the employee to easily
+ * understand"): Genesis, the client and the vendors, each ticked or crossed.
+ */
+const SEES: Record<string, { client: boolean; vendors: boolean }> = {
+  TEAM: { client: false, vendors: false },
+  TEAM_VENDOR: { client: false, vendors: true },
+  TEAM_CLIENT: { client: true, vendors: false },
+  EVERYONE: { client: true, vendors: true },
+};
+export function SharedWith({ audience, small = false }: { audience: string; small?: boolean }) {
+  const s = SEES[audience] ?? SEES.TEAM!;
+  const chip = (label: string, on: boolean) => (
+    <span key={label} className={`inline-flex items-center gap-1 rounded-full px-2 ${small ? "py-0 text-[0.625rem]" : "py-0.5 text-[0.75rem]"} ${on ? "bg-[#22c55e]/15 text-[#22c55e]" : "bg-[var(--hover-wash)] text-faint line-through decoration-1"}`} title={on ? `${label} can see this` : `${label} can't see this`}>
+      {on ? <Check className={small ? "size-2.5" : "size-3"} aria-hidden /> : <X className={small ? "size-2.5" : "size-3"} aria-hidden />}
+      {label}
+    </span>
+  );
+  return <span className="inline-flex flex-wrap items-center gap-1" aria-label={`Shared with Genesis${s.client ? ", the client" : ""}${s.vendors ? ", vendors" : ""}`}>{[chip("Genesis", true), chip("Client", s.client), chip("Vendors", s.vendors)]}</span>;
+}
 
 const size = (n: number | null) => (n === null ? "" : n > 1e9 ? `${(n / 1e9).toFixed(1)} GB` : n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`);
 const kind = (m: string | null) => (m?.startsWith("image/") ? "image" : m?.startsWith("video/") ? "video" : m === "application/pdf" ? "pdf" : "file");
@@ -34,15 +56,19 @@ const kind = (m: string | null) => (m?.startsWith("image/") ? "image" : m?.start
  * (the server filters; this only draws). Images and videos play in place,
  * streamed from Genesis's Drive through /api/crm/files.
  */
-export function ProjectFiles({ projectId, role, folders, files }: { projectId: string; role: "staff" | "client" | "vendor"; folders: Folder[]; files: FileItem[] }) {
+export function ProjectFiles({ projectId, role, folders, files, brief, canDelete = false }: { projectId: string; role: "staff" | "client" | "vendor"; folders: Folder[]; files: FileItem[]; brief?: string | null; canDelete?: boolean }) {
   const router = useRouter();
-  const firstWithFiles = folders.find((f) => files.some((x) => x.folder === f.key))?.key ?? folders[0]?.key ?? "brief";
+  const hasBrief = brief !== undefined;
+  const firstWithFiles = hasBrief ? BRIEF : (folders.find((f) => files.some((x) => x.folder === f.key))?.key ?? folders[0]?.key ?? "brief");
   const [active, setActive] = useState(firstWithFiles);
   const [open, setOpen] = useState<FileItem | null>(null);
   const [progress, setProgress] = useState<{ name: string; pct: number }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [audience, setAudience] = useState<string>("");
-  const [review, setReview] = useState(false);
+  /* Every folder can go for review (Genesis, 31 Oct 2026): to the producer first, or to the client when they can see it. */
+  const [review, setReview] = useState<"" | "internal" | "client">("");
+  const [briefText, setBriefText] = useState(brief ?? "");
+  const [savingBrief, setSavingBrief] = useState<"idle" | "saving" | "saved">("idle");
   const input = useRef<HTMLInputElement>(null);
   const folder = folders.find((f) => f.key === active);
   const shown = useMemo(() => files.filter((f) => f.folder === active), [files, active]);
@@ -54,7 +80,7 @@ export function ProjectFiles({ projectId, role, folders, files }: { projectId: s
       setProgress((p) => [...p, { name: file.name, pct: 0 }]);
       const set = (pct: number) => setProgress((p) => p.map((x) => (x.name === file.name ? { ...x, pct } : x)));
       try {
-        await uploadToProject(file, { projectId, folder: folder.key, audience, review: review && CUTS.has(folder.key) }, set);
+        await uploadToProject(file, { projectId, folder: folder.key, audience, review: review || undefined }, set);
       } catch (e) {
         setError(`${file.name}: ${(e as Error).message}`);
       } finally {
@@ -67,7 +93,35 @@ export function ProjectFiles({ projectId, role, folders, files }: { projectId: s
 
   return (
     <div id="files" className="space-y-4">
+      {/* The upload first, at the top (Genesis, 31 Oct 2026: "this should come on top"), then the folders. */}
+      {folder?.canUpload && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {role === "staff" && (
+            <>
+              <select value={audience} onChange={(e) => setAudience(e.target.value)} className="crm-input !min-h-9 !w-auto text-[0.8125rem]" aria-label="Who can see new files">
+                <option value="">Folder default</option>
+                {Object.entries(AUDIENCE).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+              <select value={review} onChange={(e) => setReview(e.target.value as typeof review)} className="crm-input !min-h-9 !w-auto text-[0.8125rem]" aria-label="Send for approval">
+                <option value="">No approval</option>
+                <option value="internal">Internal review (producer)</option>
+                {SEES[audience || folder.audience]?.client && <option value="client">Send to client for review</option>}
+              </select>
+            </>
+          )}
+          <input ref={input} type="file" multiple hidden onChange={(e) => void upload(e.target.files)} />
+          <button type="button" onClick={() => input.current?.click()} className="crm-btn crm-btn-primary crm-btn-sm" disabled={progress.length > 0}>
+            <Upload className="size-4" aria-hidden /> Upload to {folder.label}
+          </button>
+        </div>
+      )}
+
       <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+        {hasBrief && (
+          <button type="button" onClick={() => setActive(BRIEF)} aria-current={active === BRIEF ? "page" : undefined} className="crm-nav-link !min-h-9 shrink-0">Brief</button>
+        )}
         {folders.map((f) => {
           const n = files.filter((x) => x.folder === f.key).length;
           return (
@@ -80,33 +134,51 @@ export function ProjectFiles({ projectId, role, folders, files }: { projectId: s
       </nav>
 
       {folder && (
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <p className="text-[0.8125rem] text-ash">
-            {folder.hint}
-            {role === "staff" && <> · new files: <strong className="text-bone">{AUDIENCE[audience || folder.audience]}</strong></>}
-          </p>
-          {folder.canUpload && (
-            <div className="flex flex-wrap items-center gap-2">
-              {role === "staff" && (
-                <>
-                  <select value={audience} onChange={(e) => setAudience(e.target.value)} className="crm-input !min-h-9 w-auto text-[0.8125rem]" aria-label="Who can see new files">
-                    <option value="">Folder default</option>
-                    {Object.entries(AUDIENCE).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
-                  </select>
-                  {CUTS.has(folder.key) && (
-                    <label className="flex items-center gap-1.5 text-[0.8125rem] text-ash">
-                      <input type="checkbox" checked={review} onChange={(e) => setReview(e.target.checked)} /> Send to client for review
-                    </label>
-                  )}
-                </>
-              )}
-              <input ref={input} type="file" multiple hidden onChange={(e) => void upload(e.target.files)} />
-              <button type="button" onClick={() => input.current?.click()} className="crm-btn crm-btn-primary crm-btn-sm" disabled={progress.length > 0}>
-                <Upload className="size-4" aria-hidden /> Upload to {folder.label}
-              </button>
-            </div>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-ash">
+          <span>{folder.hint}</span>
+          <span className="text-faint">·</span>
+          <span>{role === "staff" ? "New files:" : "Shared with:"}</span>
+          <SharedWith audience={audience || folder.audience} />
+        </p>
+      )}
+
+      {active === BRIEF && (
+        <div className="space-y-2">
+          {role === "staff" ? (
+            <>
+              <textarea
+                value={briefText}
+                onChange={(e) => {
+                  setBriefText(e.target.value);
+                  setSavingBrief("idle");
+                }}
+                rows={8}
+                className="crm-input w-full"
+                placeholder="What the client wants: the idea, the audience, the deliverables, the dos and don'ts."
+                aria-label="The brief"
+              />
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={savingBrief === "saving" || briefText === (brief ?? "")}
+                  onClick={async () => {
+                    setSavingBrief("saving");
+                    await saveProjectBrief(projectId, briefText);
+                    setSavingBrief("saved");
+                    router.refresh();
+                  }}
+                  className="crm-btn crm-btn-primary crm-btn-sm"
+                >
+                  {savingBrief === "saving" ? "Saving…" : "Save the brief"}
+                </button>
+                {savingBrief === "saved" && <span className="text-[0.8125rem] text-ash">Saved.</span>}
+                <span className="ml-auto"><SharedWith audience="EVERYONE" /></span>
+              </div>
+            </>
+          ) : brief ? (
+            <p className="whitespace-pre-wrap rounded-xl bg-[var(--hover-wash)] px-4 py-3 text-bone">{brief}</p>
+          ) : (
+            <p className="rounded-xl border border-dashed border-[var(--glass-border)] px-4 py-8 text-center text-ash">No brief written yet.</p>
           )}
         </div>
       )}
@@ -119,7 +191,7 @@ export function ProjectFiles({ projectId, role, folders, files }: { projectId: s
       ))}
       {error && <p role="alert" className="crm-notice crm-notice-warn">{error}</p>}
 
-      {shown.length === 0 ? (
+      {active === BRIEF ? null : shown.length === 0 ? (
         <p className="rounded-xl border border-dashed border-[var(--glass-border)] px-4 py-8 text-center text-ash">Nothing in {folder?.label ?? "this folder"} yet.</p>
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
@@ -145,6 +217,7 @@ export function ProjectFiles({ projectId, role, folders, files }: { projectId: s
                   <p className="truncate text-[0.6875rem] text-faint">
                     {size(f.size)} · {f.uploader ?? f.uploadedAs} · {new Date(f.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </p>
+                  <SharedWith audience={f.audience} small />
                   <div className="flex items-center justify-between gap-1">
                     {role === "staff" ? (
                       <select
@@ -158,12 +231,10 @@ export function ProjectFiles({ projectId, role, folders, files }: { projectId: s
                       >
                         {Object.entries(AUDIENCE).map(([k2, v]) => <option key={k2} value={k2}>{v}</option>)}
                       </select>
-                    ) : (
-                      <span className="text-[0.6875rem] text-faint">{AUDIENCE[f.audience]}</span>
-                    )}
+                    ) : null}
                     <span className="flex shrink-0 items-center gap-1.5">
                       <a href={`/api/crm/files/${f.id}?download=1`} aria-label={`Download ${f.name}`} className="text-ash hover:text-bone"><Download className="size-4" /></a>
-                      {role === "staff" && (
+                      {role === "staff" && canDelete && (
                         <button
                           type="button"
                           aria-label={`Delete ${f.name}`}

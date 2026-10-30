@@ -48,7 +48,7 @@ export default async function BriefsPage({ searchParams }: { searchParams: Promi
       {briefs.length === 0 ? (
         <Empty>No briefs yet. Add one from a call, a lead or an existing client.</Empty>
       ) : (
-        <Table head={["Brief", "From", "Division", "Budget", "Needed by", "Status"]}>
+        <Table head={["Brief", "From", "Division", "Budget", "Duration", "Needed by", "Status"]}>
           {briefs.map((b) => {
             const f = from(b);
             return (
@@ -57,6 +57,7 @@ export default async function BriefsPage({ searchParams }: { searchParams: Promi
                 <td>{f ? <Link href={f.href} className="hover:text-bone">{f.label} <span className="text-faint">· {f.kind}</span></Link> : "—"}</td>
                 <td>{b.division ? DIVISION_LABEL[b.division] : "—"}</td>
                 <td>{b.budgetPaise ? money(b.budgetPaise) : "—"}</td>
+                <td>{b.duration || "—"}</td>
                 <td>{date(b.deadline)}</td>
                 <td><Badge tone={b.status === "WON" ? "good" : b.status === "LOST" ? "bad" : b.status === "NEW" ? "info" : "muted"}>{BRIEF_STATUS[b.status] ?? b.status}</Badge></td>
               </tr>

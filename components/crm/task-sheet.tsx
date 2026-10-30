@@ -84,7 +84,7 @@ export function TaskSheet({ rows: initial, staff, today, defaultOwner, newDue }:
   );
 
   return (
-    <div data-sheet className="-mx-1 overflow-x-auto" data-lenis-prevent>
+    <div data-sheet className="relative -mx-1 overflow-x-auto" data-lenis-prevent>
       <table className="w-full min-w-[68rem] table-fixed border-separate border-spacing-0 text-left">
         <colgroup>
           <col className="w-10" />

@@ -78,6 +78,39 @@ export function DashboardGrid({ layout: initial, nodes, demo }: { layout: Widget
     });
   };
 
+  /* Full-width sections alone, the half-width ones between them together. */
+  const runs: { wide: boolean; slots: WidgetSlot[] }[] = [];
+  for (const slot of shown) {
+    const last = runs.at(-1);
+    if (!slot.wide && last && !last.wide) last.slots.push(slot);
+    else runs.push({ wide: slot.wide, slots: [slot] });
+  }
+  const section = (s: WidgetSlot) => {
+    const i = shown.indexOf(s);
+    return (
+      <div
+        key={s.id}
+        draggable={editing}
+        onDragStart={() => setDragging(s.id)}
+        onDragEnd={() => setDragging(null)}
+        onDragOver={(e) => editing && e.preventDefault()}
+        onDrop={() => dropBefore(s.id)}
+        className={`relative min-w-0 ${editing ? "rounded-[1.25rem] outline-dashed outline-2 outline-offset-4 outline-[#ffc516]/40" : ""} ${dragging === s.id ? "opacity-40" : ""}`}
+      >
+        {editing && (
+          <div className="absolute right-3 top-3 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--glass-border)] bg-[var(--surface-float,#1d1b1f)] p-1 shadow-lg">
+            <span className={`${TOOL} cursor-grab`} title="Drag to move"><GripVertical className="size-4" aria-hidden /></span>
+            <button type="button" onClick={() => move(s.id, -1)} disabled={i === 0} className={TOOL} aria-label={`Move ${WIDGETS[s.id].title} up`}><ArrowUp className="size-4" aria-hidden /></button>
+            <button type="button" onClick={() => move(s.id, 1)} disabled={i === shown.length - 1} className={TOOL} aria-label={`Move ${WIDGETS[s.id].title} down`}><ArrowDown className="size-4" aria-hidden /></button>
+            <button type="button" onClick={() => patch(s.id, { wide: !s.wide })} className={TOOL} aria-label={s.wide ? "Half width" : "Full width"} title={s.wide ? "Half width" : "Full width"}>{s.wide ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />}</button>
+            <button type="button" onClick={() => patch(s.id, { hidden: true })} className={TOOL} aria-label={`Hide ${WIDGETS[s.id].title}`} title="Hide"><EyeOff className="size-4" aria-hidden /></button>
+          </div>
+        )}
+        <div className={editing ? "pointer-events-none select-none" : ""}>{nodes[s.id]}</div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className={`flex flex-wrap items-center gap-2 ${editing ? "crm-card px-4 py-3" : "justify-end"}`}>
@@ -92,29 +125,26 @@ export function DashboardGrid({ layout: initial, nodes, demo }: { layout: Widget
         )}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        {shown.map((s, i) => (
-          <div
-            key={s.id}
-            draggable={editing}
-            onDragStart={() => setDragging(s.id)}
-            onDragEnd={() => setDragging(null)}
-            onDragOver={(e) => editing && e.preventDefault()}
-            onDrop={() => dropBefore(s.id)}
-            className={`relative min-w-0 ${s.wide ? "xl:col-span-2" : ""} ${editing ? "rounded-[1.25rem] outline-dashed outline-2 outline-offset-4 outline-[#ffc516]/40" : ""} ${dragging === s.id ? "opacity-40" : ""}`}
-          >
-            {editing && (
-              <div className="absolute right-3 top-3 z-20 flex items-center gap-0.5 rounded-xl border border-[var(--glass-border)] bg-[var(--surface-float,#1d1b1f)] p-1 shadow-lg">
-                <span className={`${TOOL} cursor-grab`} title="Drag to move"><GripVertical className="size-4" aria-hidden /></span>
-                <button type="button" onClick={() => move(s.id, -1)} disabled={i === 0} className={TOOL} aria-label={`Move ${WIDGETS[s.id].title} up`}><ArrowUp className="size-4" aria-hidden /></button>
-                <button type="button" onClick={() => move(s.id, 1)} disabled={i === shown.length - 1} className={TOOL} aria-label={`Move ${WIDGETS[s.id].title} down`}><ArrowDown className="size-4" aria-hidden /></button>
-                <button type="button" onClick={() => patch(s.id, { wide: !s.wide })} className={TOOL} aria-label={s.wide ? "Half width" : "Full width"} title={s.wide ? "Half width" : "Full width"}>{s.wide ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />}</button>
-                <button type="button" onClick={() => patch(s.id, { hidden: true })} className={TOOL} aria-label={`Hide ${WIDGETS[s.id].title}`} title="Hide"><EyeOff className="size-4" aria-hidden /></button>
-              </div>
-            )}
-            <div className={editing ? "pointer-events-none select-none" : ""}>{nodes[s.id]}</div>
-          </div>
-        ))}
+      {/*
+        NO GAPS (Genesis, 31 Oct 2026: "there should be no gaps in between,
+        everything properly resized and aligned for all devices"): a full-width
+        section takes its own row; the half-width ones between two of them
+        pack into two columns, each card straight under the one above, however
+        tall its neighbour. One column below a wide screen.
+      */}
+      <div className="flex flex-col gap-6">
+        {runs.map((run) =>
+          run.wide ? (
+            section(run.slots[0]!)
+          ) : (
+            /* Spaced with padding, not margin: a column drops the margin at its foot. */
+            <div key={run.slots[0]!.id} className="-mb-6 gap-6 xl:columns-2">
+              {run.slots.map((slot) => (
+                <div key={slot.id} className="break-inside-avoid pb-6">{section(slot)}</div>
+              ))}
+            </div>
+          ),
+        )}
       </div>
 
       {editing && hidden.length > 0 && (

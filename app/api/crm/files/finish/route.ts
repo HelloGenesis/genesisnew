@@ -6,17 +6,21 @@ import { projectRef } from "@/lib/crm/catalog";
 import { fileMeta } from "@/lib/crm/drive";
 import { folderOf, readTicket } from "@/lib/crm/files";
 import { accountEmails, appUrl, queueEmail, queueStaffEmail } from "@/lib/crm/notify";
+import { notifyProjectTeam } from "@/lib/crm/project-team";
 import { getViewer } from "@/lib/crm/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const body = z.object({ ticket: z.string().max(2000), driveId: z.string().min(5).max(200), note: z.string().max(500).optional(), review: z.boolean().optional() });
+const body = z.object({ ticket: z.string().max(2000), driveId: z.string().min(5).max(200), note: z.string().max(500).optional(), review: z.union([z.boolean(), z.enum(["client", "internal"])]).optional() });
 
 /**
  * Records an uploaded file — after checking the ticket is this person's and
  * the file really is in the folder the ticket named. A cut uploaded by staff
- * with "send for review" also becomes a deliverable the client approves.
+ * with "send for review" also becomes a deliverable: for the client to approve,
+ * or (Genesis, 31 Oct 2026: "internal approvals with editors … reflected only
+ * to those, and to the brand later") for the producer first, seen only by
+ * Genesis and the vendors on the project until the producer sends it on.
  */
 export async function POST(request: Request) {
   if (!isDatabaseConfigured()) return NextResponse.json({ error: "Not configured" }, { status: 503 });
@@ -53,7 +57,18 @@ export async function POST(request: Request) {
 
   const ref = `${projectRef(project.number)} · ${project.name}`;
   const clientSees = file.audience === "TEAM_CLIENT" || file.audience === "EVERYONE";
-  if (ticket.as === "staff" && parsed.data.review && clientSees) {
+  const review = parsed.data.review === true ? "client" : parsed.data.review || null;
+  if (ticket.as === "staff" && (review === "internal" || (review === "client" && !clientSees))) {
+    const previous = await prisma.deliverable.findFirst({ where: { projectId: project.id, title: `${folder.label}: ${meta.name}` }, orderBy: { version: "desc" } });
+    await prisma.deliverable.create({
+      data: { projectId: project.id, title: `${folder.label}: ${meta.name}`, url: `/api/crm/files/${file.id}`, fileId: file.id, kind: meta.mimeType?.startsWith("image/") ? "IMAGE" : "VIDEO", status: "INTERNAL_REVIEW", version: (previous?.version ?? 0) + 1, submittedById: viewer.id },
+    });
+    await notifyProjectTeam(project.id, viewer.id, {
+      vendorsToo: file.audience === "TEAM_VENDOR" || file.audience === "EVERYONE",
+      subject: `For internal review: ${meta.name} · ${ref}`,
+      text: `${folder.label}: "${meta.name}" is ready for the producer's review, before the client sees it.\n\n${appUrl(`/admin/projects/${project.id}#deliverables`)}`,
+    });
+  } else if (ticket.as === "staff" && review === "client" && clientSees) {
     const previous = await prisma.deliverable.findFirst({ where: { projectId: project.id, title: meta.name }, orderBy: { version: "desc" } });
     await prisma.deliverable.create({
       data: { projectId: project.id, title: `${folder.label}: ${meta.name}`, url: `/api/crm/files/${file.id}`, fileId: file.id, kind: meta.mimeType?.startsWith("image/") ? "IMAGE" : "VIDEO", status: "IN_REVIEW", version: (previous?.version ?? 0) + 1, submittedById: viewer.id },
@@ -67,5 +82,7 @@ export async function POST(request: Request) {
   } else if (ticket.as !== "staff") {
     await queueStaffEmail({ kind: "file_uploaded", scope: "producers", subject: `New file from the ${ticket.as}: ${meta.name} · ${ref}`, text: `${folder.label} · ${appUrl(`/admin/projects/${project.id}#files`)}` });
   }
+  /* Everyone working on the project hears about a vendor's or client's upload (Genesis, 31 Oct 2026). */
+  if (ticket.as !== "staff") await notifyProjectTeam(project.id, viewer.id, { vendorsToo: false, subject: `${meta.name} uploaded to ${folder.label} · ${ref}`, text: `${appUrl(`/admin/projects/${project.id}#files`)}` });
   return NextResponse.json({ ok: true, id: file.id });
 }

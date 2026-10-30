@@ -40,7 +40,7 @@ export async function copyQuote(q: Full, actorId: string, revision: { revisionOf
  * A REVISED PLAN (Genesis, 29 Oct 2026: "a revised copy of the existing plan
  * which will be saved differently"): the next revision, R1, R2…, of a quote
  * or plan (whichever version it's made from); every version stays as it was.
- * Used by the Revise button and by Genesis Copilot / ChatGPT (revise_plan).
+ * Used by the Revise button and by Nova Copilot / ChatGPT (revise_plan).
  */
 export async function makeRevision(id: string, actorId: string, opts: { creators?: boolean } = {}) {
   const prisma = getPrisma();

@@ -32,6 +32,7 @@ export default async function BriefPage({ params }: { params: Promise<{ id: stri
     ["Services", brief.services.join(", ") || "—"],
     ["Platforms", brief.platforms.join(", ") || "—"],
     ["Budget", brief.budgetPaise ? money(brief.budgetPaise) : "—"],
+    ["Duration", brief.duration || "—"],
     ["Needed by", date(brief.deadline)],
   ];
   return (
@@ -66,6 +67,7 @@ export default async function BriefPage({ params }: { params: Promise<{ id: stri
                 brief.audience ? `Audience: ${brief.audience}` : "",
                 brief.deliverables ? `Deliverables: ${brief.deliverables}` : "",
                 brief.platforms.length ? `Platforms: ${brief.platforms.join(", ")}` : "",
+                brief.duration ? `Duration: ${brief.duration}` : "",
                 brief.deadline ? `Needed by: ${date(brief.deadline)}` : "",
                 brief.references.length ? `\nReferences:\n${brief.references.join("\n")}` : "",
                 "\n— Genesis Media",

@@ -327,7 +327,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         <div className="-mr-1 flex min-h-0 w-[calc(100%+0.25rem)] flex-1 flex-col overflow-y-auto pr-1" data-lenis-prevent>
           {/* Tasks sits at the top, under Home (Genesis, 31 Oct 2026: "move this on top"). */}
           {groups.filter((g) => !LOWER.has(g.label)).flatMap((g, i) => (i === 0 ? [railButton(g), ...shortcuts.filter((sc) => sc.href === TOP_SHORTCUT).map(shortcutLink)] : [railButton(g)]))}
-          {/* Genesis Copilot for its owners, NOVA AI in an agency's CRM (lib/crm/scope; the nav keeps the link only for them). */}
+          {/* Nova Copilot for its owners, NOVA AI in an agency's CRM (lib/crm/scope; the nav keeps the link only for them). */}
           {aiLink && (
           aiLink.label === "NOVA AI" ? (
             /* NOVA AI's logo, the orb as its O (Genesis, 31 Oct 2026: "add this logo over here"). */
