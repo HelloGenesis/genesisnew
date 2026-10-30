@@ -50,7 +50,7 @@ import Link from "next/link";
 
 import { ProBadge } from "./pro-badge";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { NavGroup } from "./side-nav";
 import { usePref } from "./use-pref";
@@ -182,6 +182,26 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
   const onShortcut = shortcuts.some((sc) => sc.href === best) && !(picked && picked.at === path);
   const panelOpen = open && !onShortcut;
 
+  /*
+   * HOVER MENUS (Genesis, 31 Oct 2026: "make the expandables like this on
+   * hover", after Wix): hovering an area's icon shows its pages beside the
+   * rail, one click to any of them; clicking the icon still opens the panel.
+   * Fixed to the page, as the rail scrolls and would clip it.
+   */
+  const [fly, setFly] = useState<{ label: string; top: number; left: number } | null>(null);
+  const closing = useRef<number | undefined>(undefined);
+  const keep = () => window.clearTimeout(closing.current);
+  const leave = () => {
+    keep();
+    closing.current = window.setTimeout(() => setFly(null), 160);
+  };
+  const hover = (label: string, el: HTMLElement) => {
+    keep();
+    const r = el.getBoundingClientRect();
+    setFly({ label, top: Math.max(8, Math.min(r.top, window.innerHeight - 320)), left: r.right + 8 });
+  };
+  const flyGroup = fly ? groups.find((g) => g.label === fly.label) : null;
+
   const railButton = (g: NavGroup) => {
     const Icon = AREA_ICON[g.label] ?? LayoutGrid;
     const lit = g.label === area && panelOpen;
@@ -190,8 +210,11 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     return (
       <button
         key={g.label}
+        onPointerEnter={(e) => e.pointerType === "mouse" && hover(g.label, e.currentTarget)}
+        onPointerLeave={leave}
         type="button"
         onClick={() => {
+          setFly(null);
           if (g.label === area && panelOpen) return setOpen(false);
           setPicked({ label: g.label, at: path });
           setOpen(true);
@@ -227,6 +250,25 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
 
   return (
     <div className="flex h-full gap-3">
+      {flyGroup && fly && (
+        <div
+          role="menu"
+          aria-label={AREA_LABEL[flyGroup.label] ?? flyGroup.label}
+          onPointerEnter={keep}
+          onPointerLeave={leave}
+          style={{ top: fly.top, left: fly.left }}
+          className="fixed z-[70] min-w-52 rounded-xl border border-white/10 bg-[#18171b] p-1.5 shadow-[0_18px_40px_-12px_rgb(0_0_0/0.7)] motion-safe:animate-[tour-in_0.15s_ease-out]"
+        >
+          <span aria-hidden className="absolute -left-1.5 top-4 size-3 rotate-45 border-b border-l border-white/10 bg-[#18171b]" />
+          <p className="px-3 pb-1 pt-1.5 text-[0.6875rem] uppercase tracking-[0.14em] text-white/40">{AREA_LABEL[flyGroup.label] ?? flyGroup.label}</p>
+          {flyGroup.items.filter((i) => !i.href.includes("tour=")).map((i) => (
+            <Link key={i.href} href={i.href} role="menuitem" onClick={() => setFly(null)} className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[0.875rem] transition-colors ${i.href === best ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/10 hover:text-white"}`}>
+              <span className="flex items-center gap-1.5">{i.label}{i.pro && <ProBadge />}</span>
+              {i.count ? <span className="rounded-full bg-[#ffc516] px-1.5 text-[0.6875rem] font-semibold leading-5 text-[#141216]">{i.count}</span> : null}
+            </Link>
+          ))}
+        </div>
+      )}
       {/* The rail. */}
       <nav aria-label="CRM areas" className="flex w-[4.75rem] shrink-0 flex-col items-center rounded-[1.25rem] bg-[#18171b] px-1.5 py-3 shadow-[var(--shadow-float)]">
         {/* Genesis's N, as the favicon (app/icon.svg): yellow on white. */}
