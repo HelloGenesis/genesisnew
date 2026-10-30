@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
+import { canDeleteFiles } from "@/app/(crm)/files-actions";
 import { ProjectFiles } from "@/components/crm/project-files";
 import { Badge, Card, Field, PageHead, Select, StageBar, Status, Thread } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
@@ -107,12 +108,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       </Card>
 
       <Card title="Files" action={<span className="text-[0.8125rem] text-ash">Stored in Genesis&apos;s Google Drive · clients and vendors see only their folders</span>}>
-        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} />
+        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} brief={project.brief ?? null} canDelete={await canDeleteFiles(project.id)} />
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="space-y-6">
-          <Card title="Deliverables" action={<span className="text-[0.8125rem] text-ash">Clients see everything except drafts</span>}>
+          <Card title="Deliverables" action={<span className="text-[0.8125rem] text-ash">Clients see everything except drafts and internal reviews</span>}>
             {project.deliverables.length === 0 ? (
               <p className="text-ash">Nothing shared yet.</p>
             ) : (
@@ -127,13 +128,16 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                     </div>
                     {d.feedback && <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-[#ef4444]/10 px-3 py-2 text-[0.875rem] text-bone">Client: {d.feedback}</p>}
                     <div className="mt-2 flex flex-wrap gap-3 text-[0.75rem]">
-                      {(["IN_REVIEW", "APPROVED", "DRAFT"] as const)
+                      {/* The approval steps (Genesis, 31 Oct 2026): internal review with the producer, then the client. */}
+                      {(d.status === "INTERNAL_REVIEW" ? (["IN_REVIEW", "CHANGES_REQUESTED", "DRAFT"] as const) : (["INTERNAL_REVIEW", "IN_REVIEW", "APPROVED", "DRAFT"] as const))
                         .filter((s) => s !== d.status)
                         .map((s) => (
                           <form key={s} action={setDeliverableStatus}>
                             <input type="hidden" name="id" value={d.id} />
                             <input type="hidden" name="status" value={s} />
-                            <button className="text-ash hover:text-bone">{s === "IN_REVIEW" ? "Send to client" : s === "APPROVED" ? "Mark approved" : "Back to draft"}</button>
+                            <button className={s === "IN_REVIEW" && d.status === "INTERNAL_REVIEW" ? "font-medium text-[#ffc516] hover:underline" : "text-ash hover:text-bone"}>
+                              {s === "IN_REVIEW" ? (d.status === "INTERNAL_REVIEW" ? "Approve & send to client" : "Send to client") : s === "INTERNAL_REVIEW" ? "Internal review" : s === "CHANGES_REQUESTED" ? "Ask the editor for changes" : s === "APPROVED" ? "Mark approved" : "Back to draft"}
+                            </button>
                           </form>
                         ))}
                       <span className="text-faint">{dateTime(d.createdAt)}</span>
@@ -151,9 +155,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                   <Field label="Link"><input name="url" type="url" required className="crm-input" placeholder="https://drive.google.com/…" /></Field>
                   <Field label="Type"><Select name="kind" required options={[["VIDEO", "Video"], ["IMAGE", "Image"], ["DESIGN", "Design"], ["DOCUMENT", "Document"], ["LINK", "Link"]]} /></Field>
                 </div>
-                <label className="flex items-center gap-2 text-[0.875rem] text-ash">
-                  <input type="checkbox" name="send" defaultChecked /> Send to the client for review now (emails them)
-                </label>
+                <Field label="Approval">
+                  <select name="review" defaultValue="client" className="crm-input sm:max-w-sm">
+                    <option value="client">Send to the client for review now (emails them)</option>
+                    <option value="internal">Internal review first (producer and editors)</option>
+                    <option value="">Save as a draft</option>
+                  </select>
+                </Field>
               </ActionForm>
             </details>
           </Card>

@@ -22,7 +22,8 @@ export type FolderKey = "brief" | "scripts" | "avatar" | "raw" | "edited" | "fir
 export type FileRole = "staff" | "client" | "vendor";
 
 export const FOLDERS: readonly { key: FolderKey; label: string; audience: FileAudience; hint: string; upload: FileRole[] }[] = [
-  { key: "brief", label: "Brief & assets", audience: "EVERYONE", hint: "Brand guidelines, logos, product photos, references", upload: ["staff", "client"] },
+  /* The brief itself is the first tab of a project's Files (components/crm/project-files); this folder holds the assets (Genesis, 31 Oct 2026). */
+  { key: "brief", label: "Assets", audience: "EVERYONE", hint: "Brand guidelines, logos, product photos, references", upload: ["staff", "client"] },
   { key: "scripts", label: "Ideation & scripts", audience: "EVERYONE", hint: "Concepts, hooks, scripts, storyboards", upload: ["staff"] },
   { key: "avatar", label: "Avatar & voice", audience: "TEAM_CLIENT", hint: "Reference photos, voice recordings, avatar tests", upload: ["staff", "client"] },
   { key: "raw", label: "Raw footage", audience: "TEAM_VENDOR", hint: "Camera files, creator drafts, AI renders", upload: ["staff", "vendor"] },

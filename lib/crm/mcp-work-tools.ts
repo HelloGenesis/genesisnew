@@ -255,11 +255,12 @@ export const WORK_TOOLS: Tool[] = [
       platforms: z.array(z.string().max(40)).max(12).optional(),
       budget: money,
       deadline: z.string().optional(),
+      duration: z.string().max(120).optional(),
       references: z.array(z.string().max(500)).max(20).optional(),
       notes: z.string().max(6000).optional(),
       status: z.string().max(30).optional(),
     }),
-    run: async (viewer, a: { id?: string; title?: string; lead_id?: string; client?: string; division?: Division; services?: string[]; objective?: string; audience?: string; deliverables?: string; platforms?: string[]; budget?: number | string; deadline?: string; references?: string[]; notes?: string; status?: string }) => {
+    run: async (viewer, a: { id?: string; title?: string; lead_id?: string; client?: string; division?: Division; services?: string[]; objective?: string; audience?: string; deliverables?: string; platforms?: string[]; budget?: number | string; deadline?: string; duration?: string; references?: string[]; notes?: string; status?: string }) => {
       if (!can(viewer, "sales")) throw new Error("You don't have access to briefs.");
       const prisma = getPrisma();
       const client = a.client ? await accountFor(viewer, a.client, ["BRAND", "AGENCY"]) : null;
@@ -267,7 +268,7 @@ export const WORK_TOOLS: Tool[] = [
         ...(a.title ? { title: a.title } : {}), ...(a.lead_id ? { leadId: a.lead_id } : {}), ...(client ? { accountId: client.id } : {}), ...(a.division ? { division: a.division } : {}),
         ...(a.services ? { services: a.services } : {}), ...(a.objective !== undefined ? { objective: a.objective } : {}), ...(a.audience !== undefined ? { audience: a.audience } : {}),
         ...(a.deliverables !== undefined ? { deliverables: a.deliverables } : {}), ...(a.platforms ? { platforms: a.platforms } : {}), ...(a.budget !== undefined ? { budgetPaise: toPaise(a.budget) } : {}),
-        ...(day(a.deadline) ? { deadline: day(a.deadline) } : {}), ...(a.references ? { references: a.references } : {}), ...(a.notes !== undefined ? { notes: a.notes } : {}), ...(a.status ? { status: a.status.toUpperCase() } : {}),
+        ...(day(a.deadline) ? { deadline: day(a.deadline) } : {}), ...(a.duration !== undefined ? { duration: a.duration || null } : {}), ...(a.references ? { references: a.references } : {}), ...(a.notes !== undefined ? { notes: a.notes } : {}), ...(a.status ? { status: a.status.toUpperCase() } : {}),
       };
       const b = a.id
         ? await (async () => {

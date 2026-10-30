@@ -780,6 +780,8 @@ enum DeliverableKind {
 
 enum DeliverableStatus {
   DRAFT
+  /// With the producer (and the editors on it) before the client sees it.
+  INTERNAL_REVIEW
   IN_REVIEW
   CHANGES_REQUESTED
   APPROVED
@@ -1444,6 +1446,8 @@ model Brief {
   platforms    String[]   @default([])
   budgetPaise  Int?       @map("budget_paise")
   deadline     DateTime?  @db.Date
+  /// How long it runs, as the client put it ("6 weeks", "1 Nov to 15 Dec").
+  duration     String?
   references   String[]   @default([])
   notes        String?
   status       String     @default("NEW")
@@ -1743,3 +1747,132 @@ model AiUsage {
   @@index([createdAt])
   @@map("crm_ai_usage")
 }
+
+/* ---------------------------------------------------------------------------
+ * GENESIS AI LAB (Genesis, 27 Oct 2026): the influencer & brand content
+ * platform at /lab. Influencers make an AI avatar of themselves; brands (and
+ * influencers) spend credits on image and video models. See lib/lab.
+ * ------------------------------------------------------------------------- */
+
+/// Someone on the Lab: an influencer (with an avatar) or a brand.
+model LabProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique @map("user_id")
+  /// INFLUENCER or BRAND.
+  kind            String
+  name            String
+  handle          String?
+  instagramUrl    String?   @map("instagram_url")
+  followers       Int?
+  niches          String[]  @default([])
+  city            String?
+  bio             String?
+  /// Influencers' rates for a product integration, in rupees: { post, reel, story, carousel }.
+  rates           Json      @default("{}")
+  /// Their entry in the CRM's influencer database, when matched.
+  creatorId       String?   @map("creator_id")
+  /// Consent to an AI avatar of their likeness: when, which wording (version and text).
+  consentAt       DateTime? @map("consent_at")
+  consentVersion  String?   @map("consent_version")
+  consentText     String?   @map("consent_text")
+  /// Free avatar images used (the allowance is in the Lab's pricing).
+  freeImagesUsed  Int       @default(0) @map("free_images_used")
+  /// Shown to brands on the AI Lab page (/ai-content-automation), by the influencer's own choice, with the photo they pick.
+  listed          Boolean   @default(false)
+  coverPhotoId    String?   @map("cover_photo_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("lab_profiles")
+}
+
+/// A photo an influencer gave for their avatar, kept in Genesis's Drive.
+model LabPhoto {
+  id        String   @id @default(cuid())
+  profileId String   @map("profile_id")
+  driveId   String   @map("drive_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([profileId])
+  @@map("lab_photos")
+}
+
+/// An influencer's AI avatar with one provider: being made, ready, or failed.
+model LabAvatar {
+  id          String    @id @default(cuid())
+  profileId   String    @map("profile_id")
+  provider    String
+  /// WAITING (no engine yet), TRAINING, READY, FAILED.
+  status      String
+  providerRef String?   @map("provider_ref")
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  readyAt     DateTime? @map("ready_at")
+
+  @@index([profileId])
+  @@map("lab_avatars")
+}
+
+/// One image or video request to a model, and what it made (copied into Drive).
+model LabGeneration {
+  id                String    @id @default(cuid())
+  userId            String    @map("user_id")
+  profileId         String?   @map("profile_id")
+  avatarId          String?   @map("avatar_id")
+  /// IMAGE or VIDEO.
+  kind              String
+  model             String
+  prompt            String
+  params            Json      @default("{}")
+  /// QUEUED, RUNNING, DONE, FAILED.
+  status            String
+  providerRequestId String?   @map("provider_request_id")
+  /// [{ driveId, mimeType }]
+  outputs           Json      @default("[]")
+  credits           Int       @default(0)
+  free              Boolean   @default(false)
+  error             String?
+  createdAt         DateTime  @default(now()) @map("created_at")
+  finishedAt        DateTime? @map("finished_at")
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("lab_generations")
+}
+
+/// Every change to someone's credits: bought, spent, refunded, granted. The balance is the sum.
+model LabLedger {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  delta        Int
+  /// PURCHASE, GENERATION, REFUND, GRANT, ADJUST.
+  reason       String
+  generationId String?  @map("generation_id")
+  orderId      String?  @map("order_id")
+  note         String?
+  byId         String?  @map("by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("lab_ledger")
+}
+
+/// A credit pack being bought: a Razorpay payment link, credited once paid.
+model LabOrder {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  packId      String    @map("pack_id")
+  credits     Int
+  amountPaise Int       @map("amount_paise")
+  linkId      String?   @unique @map("link_id")
+  linkUrl     String?   @map("link_url")
+  /// CREATED, PAID, FAILED.
+  status      String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  paidAt      DateTime? @map("paid_at")
+
+  @@index([userId, createdAt])
+  @@map("lab_orders")
+}
+

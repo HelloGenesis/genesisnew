@@ -184,6 +184,7 @@ export async function saveBrief(_: ActionState, form: FormData): Promise<ActionS
     platforms: form.getAll("platforms").map(String).slice(0, 12),
     budgetPaise: toPaise(form.get("budget")),
     deadline: day(form, "deadline"),
+    duration: text(form, "duration", 120),
     references: links(form, "references"),
     notes: text(form, "notes"),
   };

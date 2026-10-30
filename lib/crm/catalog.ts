@@ -142,6 +142,7 @@ export const PROJECT_STATUS: Record<ProjectStatus, { label: string; tone: Tone }
 
 export const DELIVERABLE_STATUS: Record<DeliverableStatus, { label: string; tone: Tone }> = {
   DRAFT: { label: "Draft (internal)", tone: "muted" },
+  INTERNAL_REVIEW: { label: "Internal review", tone: "info" },
   IN_REVIEW: { label: "Waiting for your review", tone: "warn" },
   CHANGES_REQUESTED: { label: "Changes requested", tone: "bad" },
   APPROVED: { label: "Approved", tone: "good" },
