@@ -342,10 +342,20 @@ export function GlassNav() {
             href="/#book-a-call"
             variant="brand"
             size="sm"
-            className="hidden transition-[transform,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-px motion-safe:hover:shadow-[0_6px_20px_-6px_rgb(255_197_22/0.55)] sm:inline-flex"
+            className="site-cta hidden transition-[transform,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-px motion-safe:hover:shadow-[0_6px_20px_-6px_rgb(255_197_22/0.55)] sm:inline-flex"
             arrow
           >
             Book a 15-min Call
+          </GlassButton>
+          {/* On the Nova by Genesis page, its free trial instead (Genesis, 31 Oct 2026); swapped in CSS (globals.css). */}
+          <GlassButton
+            href="#trial"
+            variant="brand"
+            size="sm"
+            className="nova-cta transition-[transform,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-px motion-safe:hover:shadow-[0_6px_20px_-6px_rgb(255_197_22/0.55)]"
+            arrow
+          >
+            Start free trial
           </GlassButton>
 
           <button
@@ -510,9 +520,12 @@ export function GlassNav() {
               variant="brand"
               size="md"
               arrow
-              className="mt-3 w-full"
+              className="site-cta mt-3 w-full"
             >
               Book a 15-min Call
+            </GlassButton>
+            <GlassButton href="#trial" variant="brand" size="md" arrow className="nova-cta-menu mt-3 w-full" onClick={() => setMenuOpen(false)}>
+              Start free trial
             </GlassButton>
             <GlassButton href={account.href} variant="glass" size="md" className="mt-2 w-full" onClick={() => setMenuOpen(false)}>
               <LogIn className="size-4 shrink-0" aria-hidden /> {account.label}

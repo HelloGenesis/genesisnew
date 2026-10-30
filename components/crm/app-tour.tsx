@@ -88,7 +88,7 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
     return [
       { title: `Welcome to ${product}${first ? `, ${first}` : ""}`, body: `A tour of everything, start to end: your dashboard, then each part of ${product} in the order the work happens, from a new lead to a paid invoice. Use the arrow keys or Next; leave any time and take it again from “Take the tour”.` },
       ...(home ? DASHBOARD : []),
-      { target: rail, title: "The areas", body: "Home, Sales, Influence, Delivery, Money and Setup down the side. Click one and its pages open in the panel beside it; « folds the panel away for more room. A yellow dot means something's waiting there." },
+      { target: rail, title: "The areas", body: "Home, Sales, Influence, Delivery, Money and Setup down the side. Point at one and everything in it shows beside the rail: its pages, what you can create and the latest few; click it to open its first page. A yellow dot means something's waiting there." },
       ...chapters,
       { target: `${rail} a[href="/admin/notifications"]`, title: "Notifications", body: "A client opened your quote, accepted it or paid; a deliverable was approved or needs changes; a task was given to you. All here, and by email for the important ones." },
       ...(copilot

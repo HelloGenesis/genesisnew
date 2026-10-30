@@ -187,7 +187,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
               )}
               {account.vendorInvoices.length > 0 && (
                 <>
-                  <h3 className="mt-5 text-[0.9375rem] text-bone">Invoices</h3>
+                  <h3 className="mt-5 font-sans font-semibold text-[1.0625rem] text-bone">Invoices</h3>
                   <ul className="divide-y divide-[var(--glass-border)]">
                     {account.vendorInvoices.map((inv) => (
                       <li key={inv.id} className="flex justify-between py-2 text-[0.9375rem]">

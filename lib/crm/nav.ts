@@ -94,8 +94,8 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
       : viewer.roles.includes("CREATIVE")
         ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }, ...LIBRARY] }]
         : []),
-    /* PORTAL (Genesis, 31 Oct 2026: "add a portal icon and add this in that"): the vendors and crew who work through their portal. */
-    ...(delivery ? [{ label: "Portal", items: [{ href: "/admin/vendors", label: "Vendors & crew" }] }] : []),
+    /* PORTAL (Genesis, 31 Oct 2026: "add a portal icon and add this in that", then "add Brand/Client"): who works with us through a portal, the brands and clients and the vendors and crew. */
+    ...(delivery || sales ? [{ label: "Portal", items: [...(sales ? [{ href: "/admin/accounts?kind=BRAND", label: "Brands & clients" }] : []), ...(delivery ? [{ href: "/admin/vendors", label: "Vendors & crew" }] : [])] }] : []),
     ...(sales || finance
       ? [
           {
@@ -116,6 +116,9 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
         /* Each person's own: their Google for the Inbox (app/(crm)/admin/me). */
         { href: "/admin/me", label: "My settings" },
         ...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []),
+        /* Genesis AI Lab's prices, credits and usage (super admins). */
+        ...(viewer.roles.includes("OWNER") && !viewer.workspaceId ? [{ href: "/admin/lab", label: "AI Lab" }] : []),
+        ...(viewer.roles.includes("OWNER") && !viewer.workspaceId ? [{ href: "/admin/lab/avatars", label: "AI avatars" }] : []),
         /* An agency's own team and its details for quotes and invoices; Genesis's integrations are Genesis's. */
         ...(viewer.workspaceId ? (viewer.workspaceRole === "ADMIN" ? [{ href: "/admin/team", label: "Team & company" }] : []) : [{ href: "/admin/settings", label: "Integrations" }]),
         /* An agency's Nova plan: its trial, card and cancelling (lib/crm/nova-trial). */

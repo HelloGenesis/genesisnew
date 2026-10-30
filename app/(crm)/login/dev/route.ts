@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { DEMO_COOKIE } from "@/lib/crm/demo";
+
 import { devCookie, devLoginEnabled, safeNext, signDevIdentity } from "@/lib/crm/session";
 
 export const dynamic = "force-dynamic";
@@ -18,5 +20,6 @@ export async function POST(request: Request) {
   const next = safeNext(String(form.get("next") ?? ""), "");
   const response = NextResponse.redirect(new URL(`/account/complete${next ? `?next=${encodeURIComponent(next)}` : ""}`, url.origin), 303);
   response.cookies.set(devCookie.name, signDevIdentity(email), devCookie.options);
+  response.cookies.delete(DEMO_COOKIE);
   return response;
 }

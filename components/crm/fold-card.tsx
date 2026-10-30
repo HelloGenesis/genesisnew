@@ -27,7 +27,7 @@ export function FoldCard({ title, foldKey, action, className = "", children }: {
             </button>
           )}
           {/* Easy to read at a glance (Genesis, 22 Oct 2026: "make the font size big and user friendly"). */}
-          <h2 className="font-sans text-[1.1875rem] font-semibold tracking-[-0.005em] text-bone">{title}</h2>
+          <h2 className="font-sans text-[1.25rem] font-semibold tracking-[-0.005em] text-bone">{title}</h2>
         </div>
         {shown && action}
       </div>

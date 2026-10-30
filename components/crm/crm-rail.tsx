@@ -8,8 +8,6 @@ import {
   ChartColumn,
   Briefcase,
   Building2,
-  ChevronDown,
-  ChevronsLeft,
   ChevronsRight,
   CreditCard,
   DoorOpen,
@@ -40,6 +38,7 @@ import {
   Send,
   Settings,
   Sparkles,
+  Store,
   TrendingUp,
   Truck,
   UserCog,
@@ -48,12 +47,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { NeuralOrb } from "@/components/genesis/neural-orb";
+
 import { ProBadge } from "./pro-badge";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type { NavGroup } from "./side-nav";
-import { usePref } from "./use-pref";
 
 /*
  * THE CRM'S RAIL (Genesis, 27 Oct 2026, after Vitra's: "I want the CRM
@@ -67,7 +68,7 @@ import { usePref } from "./use-pref";
 /** An icon for each area, and for each page (by its address). */
 const AREA_ICON: Record<string, LucideIcon> = { Today: LayoutGrid, Sales: TrendingUp, Influence: Megaphone, Delivery: FolderKanban, "My work": FolderKanban, Portal: DoorOpen, Money: Wallet, Setup: Settings };
 const AREA_LABEL: Record<string, string> = { Today: "Home", "My work": "Work" };
-/* What each area is for, under its name in the panel. */
+/* What each area is for, under its name in its menu. */
 const AREA_HINT: Record<string, string> = {
   Today: "Your day: tasks, alerts and inbox",
   Sales: "Leads, briefs, clients and quotes",
@@ -75,7 +76,7 @@ const AREA_HINT: Record<string, string> = {
   Delivery: "Projects, requests and crew",
   "My work": "Your projects and requests",
   Money: "Invoices, billing and spend",
-  Portal: "Your vendors and crew",
+  Portal: "Your brands, clients, vendors and crew",
   Setup: "Your team and the CRM",
 };
 export const PAGE_ICON: Record<string, LucideIcon> = {
@@ -95,6 +96,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/reachout": Send,
   "/admin/invoices": Receipt,
   "/admin/accounts": Building2,
+  "/admin/accounts?kind=BRAND": Store,
   "/admin/creators": Contact,
   "/admin/projects": FolderKanban,
   "/admin/requests": LifeBuoy,
@@ -119,7 +121,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
 export const iconFor = (href: string) => PAGE_ICON[href] ?? BookOpen;
 /* Every rail item the same size, icon and label on one centre line. */
 /* Items share the rail's height: full size on a tall screen, closer together on a laptop, never hidden. */
-const ITEM = "group flex min-h-[3.375rem] max-h-[3.75rem] w-full flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
+const ITEM = "group flex min-h-[3.375rem] max-h-[3.75rem] w-full flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[0.6875rem] text-[var(--rail-soft)] transition-colors hover:text-[var(--rail-fg)]";
 const TILE = "relative grid size-8 shrink-0 place-items-center rounded-xl transition-colors";
 /* The areas set apart at the bottom of the rail, as Vitra's are. */
 const TOP_SHORTCUT = "/admin/tasks";
@@ -143,6 +145,7 @@ const SHORTCUTS: { href: string; label: string }[] = [
 
 export function CrmRail({ groups, title, root = "/admin", footer }: { groups: NavGroup[]; title: string; root?: string; footer?: React.ReactNode }) {
   const path = usePathname() ?? root;
+  const router = useRouter();
   const aiLink = groups.flatMap((g) => g.items).find((i) => i.href === "/admin/assistant");
   const search = useSearchParams();
   /*
@@ -165,11 +168,6 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     .filter(([, n]) => n >= 0)
     .sort((a, b) => b[1] - a[1])[0]?.[0];
   const here = groups.find((g) => g.items.some((i) => i.href === best))?.label ?? groups[0]?.label;
-  /* The area whose pages are showing: the one you're in, until you pick another. */
-  const [picked, setPicked] = useState<{ label: string; at: string } | null>(null);
-  const area = picked && picked.at === path ? picked.label : here;
-  const [open, setOpen] = usePref("crm-rail-panel", true);
-  const group = groups.find((g) => g.label === area) ?? groups[0];
   const counts = (g: NavGroup) => g.items.reduce((s, i) => s + (i.count ?? 0), 0);
   /* The rail's own links, only for pages this person's areas include. */
   const pages = groups.flatMap((g) => g.items);
@@ -178,15 +176,15 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     return item ? [{ ...sc, count: item.count }] : [];
   });
   const bell = pages.find((i) => i.href === "/admin/notifications");
-  /* A page opened from the rail's own links (Files, Creatives…) shows on its own, no panel beside it (Genesis, 31 Oct 2026), until an area is picked. */
-  const onShortcut = shortcuts.some((sc) => sc.href === best) && !(picked && picked.at === path);
-  const panelOpen = open && !onShortcut;
 
   /*
    * HOVER MENUS (Genesis, 31 Oct 2026: "make the expandables like this on
    * hover", after Wix): hovering an area's icon shows its pages beside the
-   * rail, one click to any of them; clicking the icon still opens the panel.
-   * Fixed to the page, as the rail scrolls and would clip it.
+   * rail, one click to any of them. It holds all the area has, its pages,
+   * what to create and the latest few (Genesis, 31 Oct 2026: "all the details
+   * in the hover, everywhere, and remove the panel"). Clicking the icon opens
+   * the area's first page; on a touch screen it opens the menu instead. Fixed
+   * to the page, as the rail scrolls and would clip it.
    */
   const [fly, setFly] = useState<{ label: string; top: number; left: number } | null>(null);
   const closing = useRef<number | undefined>(undefined);
@@ -198,14 +196,15 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
   const hover = (label: string, el: HTMLElement) => {
     keep();
     const r = el.getBoundingClientRect();
-    setFly({ label, top: Math.max(8, Math.min(r.top, window.innerHeight - 320)), left: r.right + 8 });
+    setFly({ label, top: Math.max(8, Math.min(r.top - 12, window.innerHeight - 520)), left: r.right + 8 });
   };
   const flyGroup = fly ? groups.find((g) => g.label === fly.label) : null;
+  const touch = useRef(false);
 
   const railButton = (g: NavGroup) => {
     const Icon = AREA_ICON[g.label] ?? LayoutGrid;
-    const lit = g.label === area && panelOpen;
-    const inside = g.label === here;
+    /* A page with its own rail icon (Inbox, Tasks…) lights that one, not its area too. */
+    const lit = g.label === here && !shortcuts.some((sc) => sc.href === best);
     const n = counts(g);
     return (
       <button
@@ -213,22 +212,25 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         onPointerEnter={(e) => e.pointerType === "mouse" && hover(g.label, e.currentTarget)}
         onPointerLeave={leave}
         type="button"
-        onClick={() => {
+        onPointerDown={(e) => (touch.current = e.pointerType !== "mouse")}
+        onClick={(e) => {
+          if (touch.current) return fly?.label === g.label ? setFly(null) : hover(g.label, e.currentTarget);
           setFly(null);
-          if (g.label === area && panelOpen) return setOpen(false);
-          setPicked({ label: g.label, at: path });
-          setOpen(true);
+          /* Home goes to the dashboard (Genesis, 31 Oct 2026); every area to its first page. */
+          const first = g.items.find((i) => !i.href.includes("tour="));
+          if (first) router.push(first.href);
         }}
-        aria-pressed={lit}
+        aria-current={lit ? "page" : undefined}
+        aria-haspopup="menu"
         aria-label={`${AREA_LABEL[g.label] ?? g.label}${n ? `, ${n} waiting` : ""}`}
         className={ITEM}
       >
-        <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : inside ? "bg-white/15 text-white" : "group-hover:bg-white/10"}`}>
+        <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-[var(--rail-hover)]"}`}>
           <Icon className="size-[1.125rem]" aria-hidden />
-          {/* Something waiting in this area: a dot here, the numbers in its panel. */}
-          {n > 0 && <span aria-hidden className="absolute right-1.5 top-1.5 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
+          {/* Something waiting in this area: a dot here, the numbers in its menu. */}
+          {n > 0 && <span aria-hidden className="absolute right-1.5 top-1.5 size-2 rounded-full bg-[#ffc516] ring-2 ring-[var(--rail-ring)]" />}
         </span>
-        <span className={`leading-none ${lit || inside ? "font-medium text-white" : ""}`}>{AREA_LABEL[g.label] ?? g.label}</span>
+        <span className={`leading-none ${lit ? "font-medium text-[var(--rail-fg)]" : ""}`}>{AREA_LABEL[g.label] ?? g.label}</span>
       </button>
     );
   };
@@ -239,38 +241,78 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     const lit = sc.href === best;
     return (
       <Link key={sc.href} href={sc.href} aria-current={lit ? "page" : undefined} aria-label={`${sc.label}${sc.count ? `, ${sc.count} waiting` : ""}`} className={ITEM}>
-        <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-white/10"}`}>
+        <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-[var(--rail-hover)]"}`}>
           <Icon className="size-[1.125rem]" aria-hidden />
-          {!!sc.count && <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
+          {!!sc.count && <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-[#ffc516] ring-2 ring-[var(--rail-ring)]" />}
         </span>
-        <span className={`leading-none ${lit ? "font-medium text-white" : ""}`}>{sc.label}</span>
+        <span className={`leading-none ${lit ? "font-medium text-[var(--rail-fg)]" : ""}`}>{sc.label}</span>
       </Link>
     );
   };
 
   return (
     <div className="flex h-full gap-3">
-      {flyGroup && fly && (
+      {/* On the page itself, above the content beside the rail. */}
+      {flyGroup && fly && createPortal(
         <div
           role="menu"
           aria-label={AREA_LABEL[flyGroup.label] ?? flyGroup.label}
           onPointerEnter={keep}
           onPointerLeave={leave}
-          style={{ top: fly.top, left: fly.left }}
-          className="fixed z-[70] min-w-52 rounded-xl border border-white/10 bg-[#18171b] p-1.5 shadow-[0_18px_40px_-12px_rgb(0_0_0/0.7)] motion-safe:animate-[tour-in_0.15s_ease-out]"
+          style={{ top: fly.top, left: fly.left, maxHeight: `calc(100vh - ${fly.top + 8}px)` }}
+          className="rail-glass fixed z-[70] flex w-72 flex-col rounded-2xl motion-safe:animate-[tour-in_0.15s_ease-out]"
         >
-          <span aria-hidden className="absolute -left-1.5 top-4 size-3 rotate-45 border-b border-l border-white/10 bg-[#18171b]" />
-          <p className="px-3 pb-1 pt-1.5 text-[0.6875rem] uppercase tracking-[0.14em] text-white/40">{AREA_LABEL[flyGroup.label] ?? flyGroup.label}</p>
-          {flyGroup.items.filter((i) => !i.href.includes("tour=")).map((i) => (
-            <Link key={i.href} href={i.href} role="menuitem" onClick={() => setFly(null)} className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[0.875rem] transition-colors ${i.href === best ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/10 hover:text-white"}`}>
-              <span className="flex items-center gap-1.5">{i.label}{i.pro && <ProBadge />}</span>
-              {i.count ? <span className="rounded-full bg-[#ffc516] px-1.5 text-[0.6875rem] font-semibold leading-5 text-[#141216]">{i.count}</span> : null}
-            </Link>
-          ))}
-        </div>
+          <div className="border-b border-[var(--rail-line)] px-4 pb-3 pt-3.5">
+            <p className="truncate text-[0.6875rem] uppercase tracking-[0.14em] text-[var(--rail-faint)]">{title}</p>
+            <p className="text-[0.9375rem] font-semibold uppercase tracking-[0.08em] text-[var(--rail-fg)]">{AREA_LABEL[flyGroup.label] ?? flyGroup.label}</p>
+            {AREA_HINT[flyGroup.label] && <p className="mt-0.5 text-[0.75rem] leading-snug text-[var(--rail-soft)]">{AREA_HINT[flyGroup.label]}</p>}
+          </div>
+          <div className="min-h-0 overflow-y-auto p-2" data-lenis-prevent>
+            {flyGroup.items.filter((i) => !i.href.includes("tour=")).map((i) => {
+              const Icon = iconFor(i.href);
+              const active = i.href === best;
+              return (
+                <Link key={i.href} href={i.href} role="menuitem" onClick={() => setFly(null)} aria-current={active ? "page" : undefined} className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-[0.875rem] transition-colors ${active ? "bg-[#ffc516]/15 font-medium text-[var(--rail-fg)]" : "text-[var(--rail-soft)] hover:bg-[var(--rail-hover)] hover:text-[var(--rail-fg)]"}`}>
+                  <Icon className={`size-4 shrink-0 ${active ? "text-[#ffc516]" : ""}`} aria-hidden />
+                  <span className="min-w-0 flex-1 truncate">{i.label}</span>
+                  {i.pro && <ProBadge />}
+                  {i.count ? <span className="rounded-full bg-[#ffc516] px-1.5 text-[0.6875rem] font-semibold leading-5 text-[#141216]">{i.count}</span> : null}
+                </Link>
+              );
+            })}
+            {/* Starting points: a new plan, a lead, a quote from the AI… */}
+            {!!flyGroup.create?.length && (
+              <>
+                <p className="mb-1 mt-3 px-3 text-[0.6875rem] uppercase tracking-[0.14em] text-[var(--rail-faint)]">Create</p>
+                {flyGroup.create.map((c) => (
+                  <Link key={c.href} href={c.href} role="menuitem" onClick={() => setFly(null)} className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-[0.8125rem] text-[var(--rail-soft)] transition-colors hover:bg-[var(--rail-hover)] hover:text-[var(--rail-fg)]">
+                    <span className={`grid size-4 shrink-0 place-items-center rounded-md ${c.href.startsWith("/admin/assistant") ? "bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216]" : "bg-[#ffc516]/15 text-[#ffc516]"}`}>
+                      {c.href.startsWith("/admin/assistant") ? <Sparkles className="size-2.5" aria-hidden /> : <Plus className="size-2.5" aria-hidden />}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{c.label}</span>
+                  </Link>
+                ))}
+              </>
+            )}
+            {/* The latest few ("Check existing quotes"), listed straight out. */}
+            {flyGroup.recent && (
+              <>
+                <p className="mb-1 mt-3 flex items-center gap-1.5 px-3 text-[0.6875rem] uppercase tracking-[0.14em] text-[var(--rail-faint)]"><History className="size-3" aria-hidden /> {flyGroup.recent.label}</p>
+                {flyGroup.recent.items.map((r) => (
+                  <Link key={r.href} href={r.href} role="menuitem" onClick={() => setFly(null)} className="block rounded-xl px-3 py-1.5 text-[0.8125rem] text-[var(--rail-soft)] transition-colors hover:bg-[var(--rail-hover)] hover:text-[var(--rail-fg)]">
+                    <span className="block truncate">{r.label}</span>
+                    {r.hint && <span className="block text-[0.6875rem] text-[var(--rail-faint)]">{r.hint}</span>}
+                  </Link>
+                ))}
+                <Link href={flyGroup.recent.all} role="menuitem" onClick={() => setFly(null)} className="flex items-center gap-1 rounded-xl px-3 py-1.5 text-[0.8125rem] text-[#ffc516] hover:underline">See all <ChevronsRight className="size-3.5" aria-hidden /></Link>
+              </>
+            )}
+          </div>
+        </div>,
+        document.body,
       )}
       {/* The rail. */}
-      <nav aria-label="CRM areas" className="flex w-[4.75rem] shrink-0 flex-col items-center rounded-[1.25rem] bg-[#18171b] px-1.5 py-3 shadow-[var(--shadow-float)]">
+      <nav aria-label="CRM areas" className="rail-glass flex w-[4.75rem] shrink-0 flex-col items-center rounded-[1.25rem] px-1.5 py-3">
         {/* Genesis's N, as the favicon (app/icon.svg): yellow on white. */}
         <Link href={root} className="mb-2 grid size-11 shrink-0 place-items-center rounded-xl bg-white" aria-label="Dashboard" title={title}>
           <svg viewBox="0 0 306 500" className="h-6 w-auto" aria-hidden>
@@ -280,7 +322,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
             </g>
           </svg>
         </Link>
-        <span aria-hidden className="mx-auto mb-1 h-px w-10 bg-white/15" />
+        <span aria-hidden className="mx-auto mb-1 h-px w-10 bg-[var(--rail-line)]" />
         {/* Scrolls when the window is too short for every icon (Genesis, 29 Oct 2026: "add a scroller here"); icons never squash into each other. */}
         <div className="-mr-1 flex min-h-0 w-[calc(100%+0.25rem)] flex-1 flex-col overflow-y-auto pr-1" data-lenis-prevent>
           {/* Tasks sits at the top, under Home (Genesis, 31 Oct 2026: "move this on top"). */}
@@ -288,104 +330,27 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           {/* Genesis Copilot for its owners, NOVA AI in an agency's CRM (lib/crm/scope; the nav keeps the link only for them). */}
           {aiLink && (
           <Link href="/admin/assistant" aria-label={aiLink.label} className={ITEM}>
-            <span className={`${TILE} bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216] ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
-              <Sparkles className="size-[1.125rem]" aria-hidden />
+            {/* NOVA AI's own logo, the orb (Genesis, 31 Oct 2026); Genesis Copilot keeps its tile. */}
+            <span className={`${TILE} ${aiLink.label === "NOVA AI" ? "" : "bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216]"} ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
+              {aiLink.label === "NOVA AI" ? <span className="size-full"><NeuralOrb /></span> : <Sparkles className="size-[1.125rem]" aria-hidden />}
             </span>
-            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-white" : ""}`}>{aiLink.label === "NOVA AI" ? "NOVA AI" : "Copilot"}</span>
+            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-[var(--rail-fg)]" : ""}`}>{aiLink.label === "NOVA AI" ? "NOVA AI" : "Copilot"}</span>
           </Link>
           )}
-          {shortcuts.length > 0 && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
+          {shortcuts.length > 0 && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-[var(--rail-line)]" />}
           {shortcuts.filter((sc) => sc.href !== TOP_SHORTCUT).map(shortcutLink)}
-          {groups.some((g) => LOWER.has(g.label)) && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
+          {groups.some((g) => LOWER.has(g.label)) && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-[var(--rail-line)]" />}
           {groups.filter((g) => LOWER.has(g.label)).map(railButton)}
         </div>
         {bell && (
-          <Link href={bell.href} aria-current={bell.href === best ? "page" : undefined} aria-label={`Notifications${bell.count ? `, ${bell.count} unread` : ""}`} title="Notifications" className={`relative mt-1 grid size-10 shrink-0 place-items-center rounded-xl transition-colors ${bell.href === best ? "bg-white text-[#141216]" : "text-white/65 hover:bg-white/10 hover:text-white"}`}>
+          <Link href={bell.href} aria-current={bell.href === best ? "page" : undefined} aria-label={`Notifications${bell.count ? `, ${bell.count} unread` : ""}`} title="Notifications" className={`relative mt-1 grid size-10 shrink-0 place-items-center rounded-xl transition-colors ${bell.href === best ? "bg-white text-[#141216]" : "text-[var(--rail-soft)] hover:bg-[var(--rail-hover)] hover:text-[var(--rail-fg)]"}`}>
             <Bell className="size-5" aria-hidden />
-            {!!bell.count && <span aria-hidden className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-[#ffc516] px-1 text-center text-[0.625rem] font-semibold leading-4 text-[#141216] ring-2 ring-[#18171b]">{bell.count > 99 ? "99+" : bell.count}</span>}
+            {!!bell.count && <span aria-hidden className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-[#ffc516] px-1 text-center text-[0.625rem] font-semibold leading-4 text-[#141216] ring-2 ring-[var(--rail-ring)]">{bell.count > 99 ? "99+" : bell.count}</span>}
           </Link>
         )}
         {footer}
       </nav>
 
-      {/* The area's pages, in a panel that folds away. */}
-      {panelOpen && group && (
-        <nav aria-label="CRM" className="crm-card flex w-[15rem] shrink-0 flex-col overflow-hidden">
-          <div className="flex items-center justify-between gap-2 border-b border-[var(--glass-border)] px-4 py-3.5">
-            <div className="min-w-0">
-              <p className="truncate text-[0.6875rem] uppercase tracking-[0.14em] text-faint">{title}</p>
-              <p className="truncate text-[0.9375rem] font-semibold uppercase tracking-[0.08em] text-bone">{AREA_LABEL[group.label] ?? group.label}</p>
-              {AREA_HINT[group.label] && <p className="mt-0.5 text-[0.75rem] leading-snug text-ash">{AREA_HINT[group.label]}</p>}
-            </div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Fold the panel away" title="Fold away" className="grid size-8 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
-              <ChevronsLeft className="size-4" aria-hidden />
-            </button>
-          </div>
-          <div className="flex flex-1 flex-col overflow-y-auto p-2.5" data-lenis-prevent>
-            <div className="flex flex-col gap-0.5">
-            {group.items.map((item) => {
-              const Icon = iconFor(item.href);
-              const active = item.href === best;
-              return (
-                <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[0.9375rem] transition-colors ${active ? "bg-[#ffc516]/15 font-medium text-bone" : "text-ash hover:bg-[var(--hover-wash)] hover:text-bone"}`}>
-                  <Icon className={`size-[1.125rem] shrink-0 ${active ? "text-[#ffc516]" : ""}`} aria-hidden />
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                  {item.pro && <ProBadge />}
-                  {item.count ? <span className="rounded-full bg-[#ffc516] px-1.5 text-[0.6875rem] font-semibold leading-5 text-[#141216]">{item.count}</span> : null}
-                </Link>
-              );
-            })}
-            </div>
-            {/* Starting points: a new plan, a lead, a quote from the AI… */}
-            {!!group.create?.length && (
-              <>
-                <p className="mb-1 mt-5 px-3 text-[0.6875rem] uppercase tracking-[0.14em] text-faint">Create</p>
-                <div className="flex flex-col gap-0.5">
-                  {group.create.map((c) => (
-                    <Link key={c.href} href={c.href} className="group flex items-center gap-2.5 rounded-xl px-3 py-2 text-[0.875rem] text-ash transition-colors hover:bg-[var(--hover-wash)] hover:text-bone">
-                      <span className={`grid size-[1.125rem] shrink-0 place-items-center rounded-md ${c.href.startsWith("/admin/assistant") ? "bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216]" : "bg-[#ffc516]/15 text-[#ffc516]"}`}>
-                        {c.href.startsWith("/admin/assistant") ? <Sparkles className="size-3" aria-hidden /> : <Plus className="size-3" aria-hidden />}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate">{c.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </>
-            )}
-            {group.recent && <RecentList area={group.label} recent={group.recent} />}
-          </div>
-        </nav>
-      )}
-      {!open && !onShortcut && (
-        <button type="button" onClick={() => setOpen(true)} aria-label="Show the panel" title="Show the pages" className="-ml-1.5 mt-3 grid h-10 w-5 place-items-center self-start rounded-r-lg border border-l-0 border-[var(--glass-border)] bg-[var(--crm-card)] text-ash hover:text-bone">
-          <ChevronsRight className="size-3.5" aria-hidden />
-        </button>
-      )}
-    </div>
-  );
-}
-
-/** "Check existing plans": the latest few, opened from the panel (Genesis, 27 Oct 2026: "then a list appears"). */
-function RecentList({ area, recent }: { area: string; recent: NonNullable<NavGroup["recent"]> }) {
-  const [open, setOpen] = usePref(`crm-rail-recent:${area}`, false);
-  return (
-    <div className="mt-5">
-      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[0.875rem] text-ash transition-colors hover:bg-[var(--hover-wash)] hover:text-bone">
-        <History className="size-[1.125rem] shrink-0" aria-hidden />
-        <span className="flex-1">{recent.label}</span>
-        <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
-      </button>
-      {open && (
-        <div className="mt-1 flex flex-col gap-0.5 border-l border-[var(--glass-border)] pl-2 ml-5">
-          {recent.items.map((r) => (
-            <Link key={r.href} href={r.href} className="rounded-lg px-2.5 py-1.5 text-[0.8125rem] text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
-              <span className="block truncate">{r.label}</span>
-              {r.hint && <span className="block text-[0.6875rem] text-faint">{r.hint}</span>}
-            </Link>
-          ))}
-          <Link href={recent.all} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[0.8125rem] text-[#ffc516] hover:underline">See all <ChevronsRight className="size-3.5" aria-hidden /></Link>
-        </div>
-      )}
     </div>
   );
 }

@@ -77,7 +77,7 @@ export function LoginPanel({ connections, next, linking = false }: { connections
     return (
       <form className="crm-card crm-pad space-y-5" onSubmit={(e) => { e.preventDefault(); void verify(mode.connection, mode.destination); }} noValidate>
         <div>
-          <h2 className="text-[1.25rem] text-bone">Check your {mode.connection === "email" ? "email" : "phone"}</h2>
+          <h2 className="font-sans font-semibold text-[1.375rem] text-bone">Check your {mode.connection === "email" ? "email" : "phone"}</h2>
           <p className="mt-1 text-ash">Enter the code we sent to {mask(mode.destination)}.</p>
         </div>
         <div className="space-y-1.5">

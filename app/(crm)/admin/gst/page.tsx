@@ -36,7 +36,7 @@ export default async function AgencyGstPage() {
         <Card>
           <div className="flex flex-col items-start gap-4 py-2">
             <ProBadge className="!text-[0.75rem]" />
-            <h2 className="font-sans text-[1.5rem] text-bone">GST comes with a plan</h2>
+            <h2 className="font-sans text-[1.5rem] font-semibold text-bone">GST comes with a plan</h2>
             <p className="max-w-xl text-ash">Your free trial already makes GST tax invoices, with CGST and SGST or IGST worked out. Choose a plan to see your GST in one place:</p>
             <ul className="space-y-2">
               {["Each month's taxable value, CGST, SGST and IGST, from your invoices", "GSTR-1 and GSTR-3B due dates, month by month", "What's outstanding, so filing day has no surprises"].map((x) => (

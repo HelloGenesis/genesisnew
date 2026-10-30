@@ -47,7 +47,7 @@ export default async function PortalBilling() {
         </Card>
       )}
       <section className="space-y-3">
-        <h2 className="text-[1.125rem] text-bone">Orders</h2>
+        <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Orders</h2>
         {orders.length === 0 ? <Empty>No orders yet.</Empty> : (
           <Table head={["Order", "Items", "Total", "Status", "Date"]}>
             {orders.map((o) => (
@@ -63,7 +63,7 @@ export default async function PortalBilling() {
         )}
       </section>
       <section className="space-y-3">
-        <h2 className="text-[1.125rem] text-bone">Payments</h2>
+        <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Payments</h2>
         {payments.length === 0 ? <Empty>No payments yet.</Empty> : (
           <Table head={["Paid", "For", "Amount", "Method", "Reference", "Invoice"]}>
             {payments.map((p) => (

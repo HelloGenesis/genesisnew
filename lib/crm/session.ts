@@ -10,7 +10,7 @@ import { getAuth0IfConfigured, isAuth0Configured } from "@/lib/auth0";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 
-import { DEMO_AGENCY, DEMO_EMAIL, DEMO_SUB, hasDemoCookie } from "./demo";
+import { DEMO_AGENCY, DEMO_EMAIL, DEMO_SUB, inDemoArea } from "./demo";
 import { requestWorkspace } from "./request-workspace";
 import { emailLoginEnabled, readSignedEmail, SESSION_COOKIE } from "./email-login";
 import { TEAM } from "./team";
@@ -101,7 +101,7 @@ export async function currentIdentity(): Promise<Identity | null> {
   const signedIn = await signedInIdentity();
   if (signedIn) return signedIn;
   /* No one signed in, and this browser opened Nova's live demo (lib/crm/demo). */
-  return (await hasDemoCookie()) ? demoIdentity() : null;
+  return (await inDemoArea()) ? demoIdentity() : null;
 }
 
 /*

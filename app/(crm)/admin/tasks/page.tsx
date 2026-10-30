@@ -75,7 +75,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         <div className="space-y-6">
           {([["My tasks", mine, null], ["Assigned by me", given, ""]] as const).map(([heading, list, owner]) => (
             <section key={heading} className="crm-card overflow-hidden p-3 sm:p-4">
-              <h2 className="mb-2 flex items-center justify-between px-1 text-bone">{heading}<span className="text-[0.8125rem] text-ash">{list.length}</span></h2>
+              <h2 className="mb-2 flex items-center justify-between px-1 font-sans text-[1.25rem] font-semibold text-bone">{heading}<span className="text-[0.8125rem] text-ash">{list.length}</span></h2>
               {sheet(list, owner)}
             </section>
           ))}

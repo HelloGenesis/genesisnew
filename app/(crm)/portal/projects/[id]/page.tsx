@@ -66,7 +66,7 @@ export default async function PortalProject({ params }: { params: Promise<{ id: 
 
       {toReview.length > 0 && (
         <section id="review" className="space-y-3">
-          <h2 className="text-[1.125rem] text-bone">Ready for your review</h2>
+          <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Ready for your review</h2>
           {toReview.map((d) => (
             <div key={d.id} className="crm-card crm-pad space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">

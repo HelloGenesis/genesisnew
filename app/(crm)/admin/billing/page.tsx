@@ -44,7 +44,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       />
 
       <section className="space-y-3">
-        <h2 className="text-[1.125rem] text-bone">Subscriptions</h2>
+        <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Subscriptions</h2>
         {subscriptions.length === 0 ? (
           <Empty>No plans yet. A membership bought at checkout appears here when Razorpay authorises it.</Empty>
         ) : (
@@ -68,7 +68,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-[1.125rem] text-bone">Orders</h2>
+          <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Orders</h2>
           <nav className="flex gap-1">
             {[["", "All"], ["PENDING", "Awaiting payment"], ["PAID", "Paid"], ["CANCELLED", "Cancelled"]].map(([value, label]) => (
               <Link key={label} href={value ? `/admin/billing?status=${value}` : "/admin/billing"} aria-current={(status ?? "") === value ? "page" : undefined} className="crm-nav-link !min-h-8">{label}</Link>
@@ -94,7 +94,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-[1.125rem] text-bone">Latest payments</h2>
+        <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Latest payments</h2>
         {payments.length === 0 ? (
           <Empty>No payments yet.</Empty>
         ) : (
