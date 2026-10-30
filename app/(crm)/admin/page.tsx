@@ -9,6 +9,7 @@ import { DIVISION_LABEL, DIVISIONS, LEAD_STATUS, ORDER_STATUS, REQUEST_KIND, REQ
 import { inDays, staffOptions } from "@/lib/crm/options";
 import { accountScope, creatorScope, inboxScope, invoiceScope, isSuperAdmin, leadScope, orderScope, projectScope, quoteScope, seesCreators, through } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
+import { TaskTabs } from "@/components/crm/task-tabs";
 import { DEFAULT_LAYOUT, normaliseLayout, type WidgetId } from "@/lib/crm/dashboard-layout";
 import { quoteRef } from "@/lib/crm/quote-templates";
 import { stagesOf } from "@/lib/crm/stages";
@@ -100,6 +101,16 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
   const layout = savedLayout ? normaliseLayout(JSON.parse(savedLayout.value)) : DEFAULT_LAYOUT;
   const more = (href: string, label: string) => <Link href={href} className="crm-link text-[0.875rem]">{label} ↗</Link>;
 
+  /* One list of tasks as the Tasks page's sheet; a new row goes to `owner` (null: the sheet asks). */
+  const taskSheet = (list: typeof mine, owner: string | null) => (
+    <TaskSheet
+      rows={list.map((t) => ({ id: t.id, title: t.title, details: t.details ?? "", links: t.links.join(", "), ownerId: t.ownerId, dueDate: t.dueDate ? t.dueDate.toISOString().slice(0, 10) : null, priority: t.priority, done: false }))}
+      staff={taskStaff}
+      today={todayStr}
+      defaultOwner={owner}
+      newDue={inDays(1)}
+    />
+  );
   const nodes: Partial<Record<WidgetId, React.ReactNode>> = {
     numbers: (
         <Stats
@@ -118,20 +129,7 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
     tasks: (
       /* The Tasks page's own sheet (Genesis, 31 Oct 2026: "keep the same thing as on Tasks, with a slider inside"): every cell edited in place, a new task on the last row; scrolls inside the card. */
       <Card title="Tasks" action={more("/admin/tasks", "All tasks")}>
-        <div className="max-h-[30rem] space-y-6 overflow-y-auto pr-1" data-lenis-prevent>
-          {([["Mine", mine, taskOwner], ["Assigned by me", given, null]] as const).map(([heading, list, owner]) => (
-            <section key={heading}>
-              <p className="micro-label mb-1">{heading} · {list.length}</p>
-              <TaskSheet
-                rows={list.map((t) => ({ id: t.id, title: t.title, details: t.details ?? "", links: t.links.join(", "), ownerId: t.ownerId, dueDate: t.dueDate ? t.dueDate.toISOString().slice(0, 10) : null, priority: t.priority, done: false }))}
-                staff={taskStaff}
-                today={todayStr}
-                defaultOwner={owner}
-                newDue={inDays(1)}
-              />
-            </section>
-          ))}
-        </div>
+        <TaskTabs mine={{ count: mine.length, node: taskSheet(mine, taskOwner) }} given={{ count: given.length, node: taskSheet(given, null) }} />
       </Card>
     ),
     calendar: (
