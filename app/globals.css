@@ -1640,6 +1640,35 @@ body:has(main.scene-dark) header {
     }
 }
 
+/* Scrollbars everywhere (Genesis, 30 Oct 2026: "a very 0.1 line", grey, "all
+   across"): a 2px hairline in the ink colour at low strength, so it matches
+   either theme. In the base layer, so .no-scrollbar still hides one. Chrome
+   and Safari drop the ::-webkit-scrollbar sizes once scrollbar-width is set,
+   so that is for Firefox only (its thinnest). */
+@layer base {
+    @supports not selector(::-webkit-scrollbar) {
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: color-mix(in srgb, var(--ink-strong) 16%, transparent) transparent;
+        }
+    }
+
+    ::-webkit-scrollbar {
+        width: 2px;
+        height: 2px;
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--ink-strong) 16%, transparent);
+    }
+}
+
 /* The Studios reel wall. Transform only, so it composites without touching
    layout; the row is doubled in the markup so -50% lands the second copy
    exactly where the first began. */

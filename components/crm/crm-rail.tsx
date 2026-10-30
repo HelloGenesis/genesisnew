@@ -206,7 +206,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         </Link>
         <span aria-hidden className="mx-auto mb-1 h-px w-10 bg-white/15" />
         {/* Scrolls when the window is too short for every icon (Genesis, 29 Oct 2026: "add a scroller here"); icons never squash into each other. */}
-        <div className="-mr-1 flex min-h-0 w-[calc(100%+0.25rem)] flex-1 flex-col overflow-y-auto pr-1 [scrollbar-color:rgba(255,255,255,0.25)_transparent] [scrollbar-gutter:stable] [scrollbar-width:thin]" data-lenis-prevent>
+        <div className="-mr-1 flex min-h-0 w-[calc(100%+0.25rem)] flex-1 flex-col overflow-y-auto pr-1" data-lenis-prevent>
           {groups.filter((g) => !LOWER.has(g.label)).map(railButton)}
           {/* Only for those Genesis Copilot is open to (lib/crm/scope usesAi; the nav keeps its links for them only). */}
           {groups.some((g) => g.items.some((i) => i.href === "/admin/assistant")) && (
