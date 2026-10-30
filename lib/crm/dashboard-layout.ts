@@ -32,7 +32,8 @@ export type WidgetSlot = { id: WidgetId; wide: boolean; hidden?: boolean };
 /* The starting layout: the numbers first, then today's work, then the rest; Gmail & Drive lower down. */
 export const DEFAULT_LAYOUT: WidgetSlot[] = [
   { id: "numbers", wide: true },
-  { id: "tasks", wide: false },
+  /* The task sheet needs the room (components/crm/task-sheet). */
+  { id: "tasks", wide: true },
   { id: "calendar", wide: false },
   { id: "views", wide: false },
   { id: "projects", wide: false },

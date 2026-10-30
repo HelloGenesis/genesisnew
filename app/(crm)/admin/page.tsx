@@ -2,11 +2,11 @@ import { Mail } from "lucide-react";
 import Link from "next/link";
 
 import { DashboardGrid } from "@/components/crm/dashboard-grid";
-import { DashboardTask } from "@/components/crm/dashboard-task";
+import { TaskSheet } from "@/components/crm/task-sheet";
 import { Badge, Card, PageHead, Stats, Status, StageBar } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, DIVISIONS, LEAD_STATUS, ORDER_STATUS, REQUEST_KIND, REQUEST_STATUS, date, money, projectRef, requestRef, todayIst } from "@/lib/crm/catalog";
-import { staffOptions } from "@/lib/crm/options";
+import { inDays, staffOptions } from "@/lib/crm/options";
 import { accountScope, creatorScope, inboxScope, invoiceScope, isSuperAdmin, leadScope, orderScope, projectScope, quoteScope, seesCreators, through } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { DEFAULT_LAYOUT, normaliseLayout, type WidgetId } from "@/lib/crm/dashboard-layout";
@@ -66,7 +66,8 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
   const finders = await prisma.user.findMany({ where: { id: { in: [...new Set(found.map((f) => f.userId).filter((x): x is string => Boolean(x)))] } }, select: { id: true, name: true, email: true } });
   const mine = myTasks.filter((t) => t.ownerId === taskOwner).slice(0, 8);
   const given = myTasks.filter((t) => t.ownerId !== taskOwner).slice(0, 8);
-  const team = superAdmin ? await staffOptions() : [];
+  const taskStaff = await staffOptions();
+  const team = superAdmin ? taskStaff : [];
   const viewing = person ? team.find(([id]) => id === person)?.[1] : null;
   const todayStr = todayIst();
   const greetingName = viewer.name?.split(" ")[0] ?? viewer.email?.split("@")[0] ?? "there";
@@ -115,24 +116,23 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
         />
     ),
     tasks: (
-          <Card title="Tasks" action={<Link href="/admin/tasks" className="crm-link text-[0.875rem]">All tasks ↗</Link>}>
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              {([["Mine", mine, "Nothing assigned to you."], ["Assigned by me", given, "Nothing you've given anyone."]] as const).map(([heading, list, empty]) => (
-                <div key={heading}>
-                  <p className="micro-label">{heading} · {list.length}</p>
-                  {list.length === 0 ? (
-                    <p className="mt-2 text-[0.875rem] text-ash">{empty}</p>
-                  ) : (
-                    <ul className="mt-1 divide-y divide-[var(--glass-border)]">
-                      {list.map((t) => (
-                        <DashboardTask key={t.id} today={todayStr} demo={viewer.demo} task={{ id: t.id, title: t.title, dueDate: t.dueDate ? t.dueDate.toISOString().slice(0, 10) : null, priority: t.priority, to: t.ownerId !== taskOwner ? (t.owner?.name ?? t.owner?.email ?? "unassigned") : null }} />
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
+      /* The Tasks page's own sheet (Genesis, 31 Oct 2026: "keep the same thing as on Tasks, with a slider inside"): every cell edited in place, a new task on the last row; scrolls inside the card. */
+      <Card title="Tasks" action={more("/admin/tasks", "All tasks")}>
+        <div className="max-h-[30rem] space-y-6 overflow-y-auto pr-1" data-lenis-prevent>
+          {([["Mine", mine, taskOwner], ["Assigned by me", given, null]] as const).map(([heading, list, owner]) => (
+            <section key={heading}>
+              <p className="micro-label mb-1">{heading} · {list.length}</p>
+              <TaskSheet
+                rows={list.map((t) => ({ id: t.id, title: t.title, details: t.details ?? "", links: t.links.join(", "), ownerId: t.ownerId, dueDate: t.dueDate ? t.dueDate.toISOString().slice(0, 10) : null, priority: t.priority, done: false }))}
+                staff={taskStaff}
+                today={todayStr}
+                defaultOwner={owner}
+                newDue={inDays(1)}
+              />
+            </section>
+          ))}
+        </div>
+      </Card>
     ),
     calendar: (
           <Card
