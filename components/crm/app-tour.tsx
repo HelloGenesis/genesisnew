@@ -8,6 +8,7 @@ import { finishTour } from "@/app/(crm)/tour-actions";
 
 import { ABOUT, JOURNEY } from "@/lib/crm/tour-copy";
 
+import { ProductLogo } from "./product-logo";
 import { findTarget, TourOverlay, type TourStep } from "./tour-overlay";
 
 /**
@@ -139,7 +140,7 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
         onSkip={() => end("idle")}
       />
     );
-  if (stage === "tour" && steps.length) return <TourOverlay key={steps.length} steps={steps} onClose={() => end("idle")} onDone={() => end("try")} />;
+  if (stage === "tour" && steps.length) return <TourOverlay key={steps.length} steps={steps} onClose={() => end("idle")} onDone={() => end("try")} logo={<ProductLogo product={product} />} />;
   if (stage === "try") return <TryIt area={area} groups={groups} demo={demo} product={product} onClose={() => setStage("idle")} />;
   return null;
 }
@@ -147,7 +148,8 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
 /** The small "take the tour?" card, bottom right. */
 export function TourInvite({ product, portal = false, what, onStart, onSkip }: { product: string; portal?: boolean; what?: string; onStart: () => void; onSkip: () => void }) {
   return (
-    <div role="dialog" aria-labelledby="tour-invite-title" className="fixed bottom-5 right-5 z-[85] w-[min(calc(100vw-2.5rem),22rem)] rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-float,#1d1b1f)] p-5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)] motion-safe:animate-[tour-in_0.35s_ease-out]">
+    <div role="dialog" aria-labelledby="tour-invite-title" className="tour-glass fixed bottom-5 right-5 z-[85] w-[min(calc(100vw-2.5rem),22rem)] rounded-[1.375rem] p-5 motion-safe:animate-[tour-in_0.35s_ease-out]">
+      <ProductLogo product={product} className="mb-3" />
       <p className="text-[0.75rem] uppercase tracking-[0.12em] text-[#ffc516]">New here?</p>
       <h2 id="tour-invite-title" className="mt-1.5 font-sans text-[1.125rem] font-semibold text-bone">Take a quick tour of {product}</h2>
       <p className="mt-1.5 text-[0.875rem] leading-relaxed text-ash">{what ?? (portal ? "Two minutes: where your work, approvals, briefs and invoices are." : "A few minutes, start to end: how a lead becomes a quote, a project and a paid invoice, and where everything lives.")}</p>
@@ -182,8 +184,8 @@ function TryIt({ area, groups, demo, product, onClose }: { area: "admin" | "port
 
 export function TryItCard({ title, body, actions, demo = false, onClose }: { title: string; body: string; actions: { href: string; label: string }[]; demo?: boolean; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-center bg-black/55 p-4" role="dialog" aria-modal="true" aria-labelledby="try-title" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-float,#1d1b1f)] p-6 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)]" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[90] grid place-items-center bg-[var(--tour-dim)] p-4 backdrop-blur-[3px]" role="dialog" aria-modal="true" aria-labelledby="try-title" onClick={onClose}>
+      <div className="tour-glass relative w-full max-w-md rounded-[1.375rem] p-6" onClick={(e) => e.stopPropagation()}>
         <p className="text-[0.75rem] uppercase tracking-[0.12em] text-[#ffc516]">Tour done</p>
         <h2 id="try-title" className="mt-1.5 font-sans text-[1.375rem] font-semibold text-bone">{title}</h2>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-ash">{body}</p>

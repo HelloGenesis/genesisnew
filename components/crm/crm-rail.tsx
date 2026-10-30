@@ -47,7 +47,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { NeuralOrb } from "@/components/genesis/neural-orb";
+import { NovaGlyph } from "@/components/genesis/nova-glyphs";
 
 import { ProBadge } from "./pro-badge";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -329,13 +329,24 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           {groups.filter((g) => !LOWER.has(g.label)).flatMap((g, i) => (i === 0 ? [railButton(g), ...shortcuts.filter((sc) => sc.href === TOP_SHORTCUT).map(shortcutLink)] : [railButton(g)]))}
           {/* Genesis Copilot for its owners, NOVA AI in an agency's CRM (lib/crm/scope; the nav keeps the link only for them). */}
           {aiLink && (
+          aiLink.label === "NOVA AI" ? (
+            /* NOVA AI's logo, the orb as its O (Genesis, 31 Oct 2026: "add this logo over here"). */
+            <Link href="/admin/assistant" aria-label="NOVA AI" className={`${ITEM} !flex-row !gap-0 ${path.startsWith("/admin/assistant") ? "bg-[var(--rail-hover)] text-[var(--rail-fg)]" : "text-[var(--rail-soft)] hover:bg-[var(--rail-hover)] hover:text-[var(--rail-fg)]"}`}>
+              <NovaGlyph letter="N" className="h-[0.625rem] shrink-0" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/genesis-orb.png" alt="" aria-hidden className="mx-[0.125rem] size-[0.8125rem] shrink-0 scale-[1.35] object-contain" />
+              <NovaGlyph letter="V" className="h-[0.625rem] shrink-0" />
+              <NovaGlyph letter="A" className="h-[0.625rem] shrink-0" />
+              <span className="ml-[0.25rem] text-[0.8125rem] leading-[0.625rem] tracking-[0.02em]">AI</span>
+            </Link>
+          ) : (
           <Link href="/admin/assistant" aria-label={aiLink.label} className={ITEM}>
-            {/* NOVA AI's own logo, the orb (Genesis, 31 Oct 2026); Genesis Copilot keeps its tile. */}
-            <span className={`${TILE} ${aiLink.label === "NOVA AI" ? "" : "bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216]"} ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
-              {aiLink.label === "NOVA AI" ? <span className="size-full"><NeuralOrb /></span> : <Sparkles className="size-[1.125rem]" aria-hidden />}
+            <span className={`${TILE} bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216] ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
+              <Sparkles className="size-[1.125rem]" aria-hidden />
             </span>
-            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-[var(--rail-fg)]" : ""}`}>{aiLink.label === "NOVA AI" ? "NOVA AI" : "Copilot"}</span>
+            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-[var(--rail-fg)]" : ""}`}>Copilot</span>
           </Link>
+          )
           )}
           {shortcuts.length > 0 && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-[var(--rail-line)]" />}
           {shortcuts.filter((sc) => sc.href !== TOP_SHORTCUT).map(shortcutLink)}
