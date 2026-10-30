@@ -43,6 +43,7 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
       label: "Today",
       items: [
         { href: "/admin", label: "Dashboard" },
+        { href: "/admin/features", label: "All features" },
         { href: "/admin/notifications", label: "Notifications", count: unread },
         { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew },
         { href: "/admin/tasks", label: "Tasks", count: myTasks },

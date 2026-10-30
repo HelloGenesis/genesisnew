@@ -3,6 +3,7 @@
 import {
   BadgeIndianRupee,
   Bell,
+  Blocks,
   BookOpen,
   ChartColumn,
   Briefcase,
@@ -82,6 +83,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/notifications": Bell,
   "/admin/inbox": Inbox,
   "/admin/tasks": ListChecks,
+  "/admin/features": Blocks,
   "/admin/assistant": Sparkles,
   "/admin/assistant/usage": Gauge,
   "/admin/reports": ChartColumn,
@@ -128,6 +130,8 @@ const LOWER = new Set(["Portal", "Money", "Setup"]);
  * is the bell at the foot.
  */
 const SHORTCUTS: { href: string; label: string }[] = [
+  /* All features, off the dashboard (Genesis, 31 Oct 2026). */
+  { href: "/admin/features", label: "Features" },
   { href: "/admin/inbox", label: "Inbox" },
   { href: "/admin/tasks", label: "Tasks" },
   { href: "/admin/files", label: "Files" },
