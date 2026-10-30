@@ -1,14 +1,16 @@
+import { Mail } from "lucide-react";
 import Link from "next/link";
 
-import { type Feature, FeatureGrid } from "@/components/crm/feature-grid";
+import { DashboardGrid } from "@/components/crm/dashboard-grid";
+import { DashboardTask } from "@/components/crm/dashboard-task";
 import { Badge, Card, PageHead, Stats, Status, StageBar } from "@/components/crm/ui";
-import { crmNav } from "@/lib/crm/nav";
-import { ABOUT } from "@/lib/crm/tour-copy";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, DIVISIONS, LEAD_STATUS, ORDER_STATUS, REQUEST_KIND, REQUEST_STATUS, date, money, projectRef, requestRef, todayIst } from "@/lib/crm/catalog";
 import { staffOptions } from "@/lib/crm/options";
-import { accountScope, inboxScope, isSuperAdmin, leadScope, orderScope, projectScope, through } from "@/lib/crm/scope";
+import { accountScope, creatorScope, inboxScope, invoiceScope, isSuperAdmin, leadScope, orderScope, projectScope, quoteScope, seesCreators, through } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
+import { DEFAULT_LAYOUT, normaliseLayout, type WidgetId } from "@/lib/crm/dashboard-layout";
+import { quoteRef } from "@/lib/crm/quote-templates";
 import { stagesOf } from "@/lib/crm/stages";
 
 export const dynamic = "force-dynamic";
@@ -69,92 +71,315 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
   const todayStr = todayIst();
   const greetingName = viewer.name?.split(" ")[0] ?? viewer.email?.split("@")[0] ?? "there";
   const longDate = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(new Date());
-  /* The dashboard's All features: this person's CRM pages, with what each does (lib/crm/tour-copy). */
-  const features: Feature[] = [];
-  for (const g of crmNav(viewer, { myTasks: myTasks.filter((t) => t.ownerId === viewer.id && t.dueDate && t.dueDate <= today).length, dueLeads: dueLeads.length, review: changes, openRequests }))
-    for (const i of g.items) if (i.href !== "/admin" && !i.href.includes("tour=") && !features.some((f) => f.href === i.href)) features.push({ href: i.href, label: i.label, area: g.label, body: ABOUT[i.href]?.body ?? null, count: i.count });
+  /* All features is its own page now, with a rail icon (app/(crm)/admin/features). */
   const mrr = subs.reduce((sum, s) => sum + monthly(s.amountPaise, s.billing), 0);
 
-  return (
-    <>
-      {/* Hi, by name and title (Genesis, 11 Oct 2026); names and titles are set in Staff & roles. */}
-      <PageHead kicker={`Dashboard · ${longDate}`} title={`Hi ${greetingName}, welcome${viewer.workspaceId ? " back" : " to Genesis"}.`} sub={viewer.title ? <span className="text-bone">{viewer.title}<span className="text-ash"> · {viewing ? `Viewing ${viewing}'s dashboard.` : superAdmin ? "Everything across the team." : "What needs attention today."}</span></span> : "What needs attention today."}>
-        {superAdmin && (
-          <form action="/admin" className="flex items-center gap-2">
-            <select name="person" defaultValue={person ?? ""} className="crm-input w-auto !py-1.5 text-[0.875rem]" aria-label="View the dashboard as">
-              <option value="">Everyone (all data)</option>
-              {team.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-            </select>
-            <button className="crm-btn crm-btn-secondary crm-btn-sm">View</button>
-          </form>
-        )}
-      </PageHead>
+  /* The newer sections (Genesis, 31 Oct 2026: views delivered, ongoing projects, leads heating up, and more). */
+  const quoteWhere = { ...quoteScope(viewer, person), status: { in: ["SENT", "VIEWED"] as ("SENT" | "VIEWED")[] } };
+  const [posts, viewsByProject, ongoing, hotLeads, quotesOut, quotesSum, unpaid, creatorCount, newCreators, savedLayout] = await Promise.all([
+    prisma.campaignCreator.aggregate({ where: { project: projects }, _sum: { views: true, reach: true }, _count: { postUrl: true } }),
+    prisma.campaignCreator.groupBy({ by: ["projectId"], where: { project: projects, views: { not: null } }, _sum: { views: true } }),
+    prisma.project.findMany({ where: { ...projects, status: "ACTIVE" }, orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }], take: 8, include: { account: true } }),
+    prisma.lead.findMany({ where: { ...leads, status: { in: ["QUALIFIED", "CALL_BOOKED", "PROPOSAL_SENT", "NEGOTIATION"] } }, orderBy: [{ updatedAt: "desc" }], take: 8 }),
+    prisma.quote.findMany({ where: quoteWhere, orderBy: { sentAt: "desc" }, take: 6 }),
+    prisma.quote.aggregate({ where: quoteWhere, _sum: { totalPaise: true }, _count: true }),
+    prisma.invoice.findMany({ where: { ...invoiceScope(viewer, person), status: "SENT" }, orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }], take: 8 }),
+    seesCreators(viewer) ? prisma.creator.count({ where: creatorScope(viewer) }) : Promise.resolve(0),
+    seesCreators(viewer) ? prisma.creator.findMany({ where: creatorScope(viewer), orderBy: { createdAt: "desc" }, take: 5 }) : Promise.resolve([]),
+    prisma.appSetting.findUnique({ where: { key: `dashboard:${viewer.id}` } }),
+  ]);
+  const viewProjects = await prisma.project.findMany({ where: { id: { in: viewsByProject.map((v) => v.projectId) } }, select: { id: true, account: { select: { name: true } } } });
+  const byClient = new Map<string, number>();
+  for (const v of viewsByProject) {
+    const name = viewProjects.find((p) => p.id === v.projectId)?.account.name ?? "Other";
+    byClient.set(name, (byClient.get(name) ?? 0) + (v._sum.views ?? 0));
+  }
+  const topClients = [...byClient].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const compact = (n: number) => new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  const layout = savedLayout ? normaliseLayout(JSON.parse(savedLayout.value)) : DEFAULT_LAYOUT;
+  const more = (href: string, label: string) => <Link href={href} className="crm-link text-[0.875rem]">{label} ↗</Link>;
 
-      {/* ALL FEATURES (Genesis, 27 Oct 2026): every tool this person can open, as cards; folds away like every card. */}
-      <Card title="All features">
-        <FeatureGrid features={features} />
-      </Card>
-
-      {/* TASKS FIRST, BESIDE THE CALENDAR (Genesis, 11 Oct 2026: "move the task section above and add a calendar"). */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-        <Card title="Tasks" action={<Link href="/admin/tasks" className="crm-link text-[0.875rem]">All tasks ↗</Link>}>
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-            {([["Mine", mine, "Nothing assigned to you."], ["Assigned by me", given, "Nothing you've given anyone."]] as const).map(([heading, list, empty]) => (
-              <div key={heading}>
-                <p className="micro-label">{heading} · {list.length}</p>
-                {list.length === 0 ? (
-                  <p className="mt-2 text-[0.875rem] text-ash">{empty}</p>
-                ) : (
-                  <ul className="mt-1 divide-y divide-[var(--glass-border)]">
-                    {list.map((t) => {
-                      const late = t.dueDate && t.dueDate.toISOString().slice(0, 10) < todayStr;
-                      return (
-                        <li key={t.id} className="flex items-center justify-between gap-3 py-2">
-                          <span className="min-w-0">
-                            <span className="block truncate text-bone">{t.title}</span>
-                            {t.ownerId !== taskOwner && <span className="block truncate text-[0.75rem] text-ash">to {t.owner?.name ?? t.owner?.email ?? "unassigned"}</span>}
-                          </span>
-                          <span className="flex shrink-0 items-center gap-2">
-                            {t.priority === "HIGH" && <Badge tone="bad">High</Badge>}
-                            <span className={`text-[0.8125rem] ${late ? "font-semibold text-[#dc2626]" : "text-ash"}`}>{date(t.dueDate)}</span>
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+  const nodes: Partial<Record<WidgetId, React.ReactNode>> = {
+    numbers: (
+        <Stats
+          items={[
+            { label: "Open pipeline", value: money(pipeline._sum.valuePaise ?? 0), hint: `${pipeline._count} live leads`, href: "/admin/leads" },
+            { label: "Follow-ups due", value: dueLeads.length, tone: dueLeads.length ? "warn" : undefined, href: "/admin/leads?due=1" },
+            { label: "Recurring revenue (monthly)", value: money(mrr), hint: `${subs.length} active plans`, href: "/admin/billing" },
+            { label: "Collected this month", value: money(revenue._sum.amountPaise ?? 0), href: "/admin/billing" },
+            { label: "Active projects", value: activeProjects, href: "/admin/projects" },
+            { label: "Waiting on client review", value: inReview, href: "/admin/projects?filter=review" },
+            { label: "Changes requested", value: changes, tone: changes ? "warn" : undefined, href: "/admin/projects?filter=changes" },
+            { label: failing ? "Renewals failing" : "Open requests", value: failing || openRequests, tone: failing ? "bad" : openRequests ? "warn" : undefined, href: failing ? "/admin/billing" : "/admin/requests" },
+          ]}
+        />
+    ),
+    tasks: (
+          <Card title="Tasks" action={<Link href="/admin/tasks" className="crm-link text-[0.875rem]">All tasks ↗</Link>}>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              {([["Mine", mine, "Nothing assigned to you."], ["Assigned by me", given, "Nothing you've given anyone."]] as const).map(([heading, list, empty]) => (
+                <div key={heading}>
+                  <p className="micro-label">{heading} · {list.length}</p>
+                  {list.length === 0 ? (
+                    <p className="mt-2 text-[0.875rem] text-ash">{empty}</p>
+                  ) : (
+                    <ul className="mt-1 divide-y divide-[var(--glass-border)]">
+                      {list.map((t) => (
+                        <DashboardTask key={t.id} today={todayStr} demo={viewer.demo} task={{ id: t.id, title: t.title, dueDate: t.dueDate ? t.dueDate.toISOString().slice(0, 10) : null, priority: t.priority, to: t.ownerId !== taskOwner ? (t.owner?.name ?? t.owner?.email ?? "unassigned") : null }} />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
+    ),
+    calendar: (
+          <Card
+            title="Calendar"
+            action={<a href="https://calendar.google.com/calendar/r/week" target="_blank" rel="noreferrer" className="crm-link text-[0.875rem]">Open Google Calendar ↗</a>}
+          >
+            {viewer.email ? (
+              <>
+                {/*
+                  THEIR OWN GOOGLE CALENDAR, EMBEDDED. Google shows it to whoever
+                  is signed in to that Google account in this browser (Workspace
+                  calendars are private to the domain), so nothing is stored here.
+                */}
+                <iframe
+                  title="Your Google Calendar"
+                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(viewer.email)}&ctz=Asia%2FKolkata&mode=WEEK&showTitle=0&showPrint=0&showCalendars=0&showTz=0&wkst=2`}
+                  className="h-[26rem] w-full rounded-xl border border-[var(--glass-border)] bg-white"
+                  loading="lazy"
+                />
+                <p className="mt-2 text-[0.75rem] text-faint">Showing {viewer.email}. Blank? Sign in to Google in this browser as {viewer.email}.</p>
+              </>
+            ) : (
+              <p className="text-ash">Sign in with an email to see your calendar.</p>
+            )}
+          </Card>
+    ),
+    views: (
+      <Card title="Views delivered" action={more("/admin/projects?division=INFLUENCE", "Campaigns")}>
+        <div className="grid grid-cols-3 gap-3">
+          {[["Views", compact(posts._sum.views ?? 0)], ["Reach", compact(posts._sum.reach ?? 0)], ["Posts live", String(posts._count.postUrl)]].map(([k, v]) => (
+            <div key={k} className="rounded-xl bg-[var(--hover-wash)] px-4 py-3">
+              <span className="block text-[0.8125rem] text-ash">{k}</span>
+              <span className="text-[1.5rem] font-semibold tabular-nums text-bone">{v}</span>
+            </div>
+          ))}
+        </div>
+        {topClients.length > 0 ? (
+          <ul className="mt-4 divide-y divide-[var(--glass-border)]">
+            {topClients.map(([name, n]) => (
+              <li key={name} className="flex justify-between gap-3 py-2 text-[0.9375rem]"><span className="truncate text-bone">{name}</span><span className="tabular-nums text-ash">{compact(n)} views</span></li>
             ))}
-          </div>
-        </Card>
-        <Card
-          title="Calendar"
-          action={<a href="https://calendar.google.com/calendar/r/week" target="_blank" rel="noreferrer" className="crm-link text-[0.875rem]">Open Google Calendar ↗</a>}
-        >
-          {viewer.email ? (
-            <>
-              {/*
-                THEIR OWN GOOGLE CALENDAR, EMBEDDED. Google shows it to whoever
-                is signed in to that Google account in this browser (Workspace
-                calendars are private to the domain), so nothing is stored here.
-              */}
-              <iframe
-                title="Your Google Calendar"
-                src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(viewer.email)}&ctz=Asia%2FKolkata&mode=WEEK&showTitle=0&showPrint=0&showCalendars=0&showTz=0&wkst=2`}
-                className="h-[26rem] w-full rounded-xl border border-[var(--glass-border)] bg-white"
-                loading="lazy"
-              />
-              <p className="mt-2 text-[0.75rem] text-faint">Showing {viewer.email}. Blank? Sign in to Google in this browser as {viewer.email}.</p>
-            </>
-          ) : (
-            <p className="text-ash">Sign in with an email to see your calendar.</p>
-          )}
-        </Card>
-      </div>
-
+          </ul>
+        ) : (
+          <p className="mt-3 text-[0.875rem] text-ash">Views show here as creators&apos; posts go live and their numbers are added on a campaign.</p>
+        )}
+      </Card>
+    ),
+    projects: (
+      <Card title={`Ongoing projects · ${activeProjects}`} action={more("/admin/projects", "Projects")}>
+        {ongoing.length === 0 ? (
+          <p className="text-ash">No active projects.</p>
+        ) : (
+          <ul className="divide-y divide-[var(--glass-border)]">
+            {ongoing.map((p) => (
+              <li key={p.id}>
+                <Link href={`/admin/projects/${p.id}`} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="min-w-0">
+                    <span className="block truncate text-bone">{projectRef(p.number)} · {p.name}</span>
+                    <span className="block truncate text-[0.8125rem] text-ash">{p.account.name} · {stagesOf(p)[p.stage] ?? "—"}</span>
+                  </span>
+                  <span className="shrink-0 text-[0.8125rem] text-ash">{p.dueDate ? date(p.dueDate) : "No date"}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    ),
+    hotLeads: (
+      <Card title={`Leads heating up · ${hotLeads.length}`} action={more("/admin/leads", "Pipeline")}>
+        {hotLeads.length === 0 ? (
+          <p className="text-ash">No leads past first contact yet.</p>
+        ) : (
+          <ul className="divide-y divide-[var(--glass-border)]">
+            {hotLeads.map((lead) => (
+              <li key={lead.id}>
+                <Link href={`/admin/leads/${lead.id}`} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="min-w-0">
+                    <span className="block truncate text-bone">{lead.name}{lead.company ? ` · ${lead.company}` : ""}</span>
+                    <span className="block truncate text-[0.8125rem] text-ash">{money(lead.valuePaise)} · moved {date(lead.updatedAt)}</span>
+                  </span>
+                  <Status value={LEAD_STATUS[lead.status]} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    ),
+    followUps: (
+          <Card title="Follow up today" action={<Link href="/admin/leads" className="crm-link text-[0.875rem]">Pipeline ↗</Link>}>
+            {dueLeads.length === 0 ? (
+              <p className="text-ash">Nothing due. Nice.</p>
+            ) : (
+              <ul className="divide-y divide-[var(--glass-border)]">
+                {dueLeads.map((lead) => (
+                  <li key={lead.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <Link href={`/admin/leads/${lead.id}`} className="min-w-0">
+                      <span className="block truncate text-bone">{lead.name}{lead.company ? ` · ${lead.company}` : ""}</span>
+                      <span className="block truncate text-[0.8125rem] text-ash">{lead.interest ?? "—"} · due {date(lead.nextFollowUp)}</span>
+                    </Link>
+                    <Status value={LEAD_STATUS[lead.status]} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+    ),
+    requests: (
+          <Card title="Requests waiting on us" action={<Link href="/admin/requests" className="crm-link text-[0.875rem]">Inbox ↗</Link>}>
+            {requests.length === 0 ? (
+              <p className="text-ash">Inbox zero.</p>
+            ) : (
+              <ul className="divide-y divide-[var(--glass-border)]">
+                {requests.map((r) => (
+                  <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <Link href={`/admin/requests/${r.id}`} className="min-w-0">
+                      <span className="block truncate text-bone">{requestRef(r.number)} · {r.title}</span>
+                      <span className="block truncate text-[0.8125rem] text-ash">{r.account.name} · {REQUEST_KIND[r.kind]} · {date(r.createdAt)}</span>
+                    </Link>
+                    <Status value={REQUEST_STATUS[r.status]} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+    ),
+    due: (
+          <Card title="Due in the next 7 days" action={<Link href="/admin/projects" className="crm-link text-[0.875rem]">Projects ↗</Link>}>
+            {dueProjects.length === 0 ? (
+              <p className="text-ash">No deadlines this week.</p>
+            ) : (
+              <ul className="space-y-4">
+                {dueProjects.map((p) => (
+                  <li key={p.id}>
+                    <Link href={`/admin/projects/${p.id}`} className="block">
+                      <span className="flex justify-between gap-3 text-bone">
+                        <span className="truncate">{projectRef(p.number)} · {p.name}</span>
+                        <span className="shrink-0 text-[0.8125rem] text-ash">{date(p.dueDate)}</span>
+                      </span>
+                      <span className="mb-1.5 block text-[0.8125rem] text-ash">{p.account.name} · {DIVISION_LABEL[p.division]}</span>
+                      <StageBar stages={stagesOf(p)} stage={p.stage} compact />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+    ),
+    quotes: (
+      <Card title={`Quotes awaiting a reply · ${quotesSum._count}`} action={more("/admin/quotes", "Quotes")}>
+        <p className="mb-2 text-[0.875rem] text-ash">{money(quotesSum._sum.totalPaise ?? 0)} out with clients.</p>
+        {quotesOut.length === 0 ? (
+          <p className="text-ash">Nothing waiting on a reply.</p>
+        ) : (
+          <ul className="divide-y divide-[var(--glass-border)]">
+            {quotesOut.map((q) => (
+              <li key={q.id}>
+                <Link href={`/admin/quotes/${q.id}`} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="min-w-0">
+                    <span className="block truncate text-bone">{quoteRef(q.number)} · {q.company ?? q.contactName}</span>
+                    <span className="block truncate text-[0.8125rem] text-ash">{money(q.totalPaise)} · sent {date(q.sentAt)}</span>
+                  </span>
+                  <Badge tone={q.viewedAt ? "good" : "muted"}>{q.viewedAt ? "Opened" : "Not opened"}</Badge>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    ),
+    invoices: (
+      <Card title={`Unpaid invoices · ${unpaid.length}`} action={more("/admin/invoices", "Invoices")}>
+        {unpaid.length === 0 ? (
+          <p className="text-ash">Everything sent has been paid.</p>
+        ) : (
+          <ul className="divide-y divide-[var(--glass-border)]">
+            {unpaid.map((inv) => {
+              const late = inv.dueDate && inv.dueDate.toISOString().slice(0, 10) < todayStr;
+              return (
+                <li key={inv.id}>
+                  <Link href={`/admin/invoices/${inv.id}`} className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="min-w-0">
+                      <span className="block truncate text-bone">{inv.number} · {inv.billToName}</span>
+                      <span className="block truncate text-[0.8125rem] text-ash">{money(inv.totalPaise)}</span>
+                    </span>
+                    <span className={`shrink-0 text-[0.8125rem] ${late ? "font-semibold text-[#dc2626]" : "text-ash"}`}>{inv.dueDate ? `due ${date(inv.dueDate)}` : "No due date"}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+    ),
+    ...(seesCreators(viewer) ? { creators: (
+      <Card title={`Influencer database · ${creatorCount}`} action={more("/admin/creators", "Database")}>
+        {newCreators.length === 0 ? (
+          <p className="text-ash">No creators yet. Import a sheet in the influencer database.</p>
+        ) : (
+          <ul className="divide-y divide-[var(--glass-border)]">
+            {newCreators.map((c) => (
+              <li key={c.id} className="flex justify-between gap-3 py-2 text-[0.9375rem]"><span className="truncate text-bone">{c.name} <span className="text-ash">@{c.handle}</span></span><span className="tabular-nums text-ash">{compact(c.followers)}</span></li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    ) } : {}),
+    divisions: (
+          <Card title="Active work by division">
+            <ul className="grid grid-cols-2 gap-3">
+              {DIVISIONS.map((d) => (
+                <li key={d} className="rounded-xl bg-[var(--hover-wash)] px-4 py-3">
+                  <Link href={`/admin/projects?division=${d}`}>
+                    <span className="block text-[0.8125rem] text-ash">{DIVISION_LABEL[d]}</span>
+                    <span className="text-[1.5rem] font-semibold text-bone">{byDivision.find((b) => b.division === d)?._count ?? 0}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
+    ),
+    /* Website orders are Genesis's own. */
+    ...(viewer.workspaceId ? {} : { orders: (
+          <Card title="Latest orders" action={<Link href="/admin/billing" className="crm-link text-[0.875rem]">Billing ↗</Link>}>
+            {latestOrders.length === 0 ? (
+              <p className="text-ash">No orders yet. They arrive here from checkout.</p>
+            ) : (
+              <ul className="divide-y divide-[var(--glass-border)]">
+                {latestOrders.map((o) => (
+                  <li key={o.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <Link href={`/admin/billing/${o.id}`} className="min-w-0">
+                      <span className="block truncate text-bone">{o.account?.name ?? o.company ?? o.contactName}</span>
+                      <span className="block text-[0.8125rem] text-ash">{o.reference} · {money(o.totalPaise)} · {date(o.createdAt)}</span>
+                    </Link>
+                    <Status value={ORDER_STATUS[o.status]} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+    ) }),
+    gmail: (
+      /* Gmail & Drive, its mail icon on the box (Genesis, 31 Oct 2026), lower down by default. */
       <Card
-        title="From Gmail & Drive"
-        action={<Link href="/admin/inbox" className="crm-link text-[0.875rem]">Inbox ↗</Link>}
+        title={<span className="flex items-center gap-2.5"><span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-[#ea4335] via-[#fbbc05] to-[#34a853] text-white"><Mail className="size-4" aria-hidden /></span>From Gmail &amp; Drive</span>}
+        action={more("/admin/inbox", "Inbox")}
       >
         {found.length === 0 ? (
           <p className="text-ash">
@@ -187,109 +412,26 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
           </div>
         )}
       </Card>
+    ),
+  };
 
-      <Stats
-        items={[
-          { label: "Open pipeline", value: money(pipeline._sum.valuePaise ?? 0), hint: `${pipeline._count} live leads`, href: "/admin/leads" },
-          { label: "Follow-ups due", value: dueLeads.length, tone: dueLeads.length ? "warn" : undefined, href: "/admin/leads?due=1" },
-          { label: "Recurring revenue (monthly)", value: money(mrr), hint: `${subs.length} active plans`, href: "/admin/billing" },
-          { label: "Collected this month", value: money(revenue._sum.amountPaise ?? 0), href: "/admin/billing" },
-          { label: "Active projects", value: activeProjects, href: "/admin/projects" },
-          { label: "Waiting on client review", value: inReview, href: "/admin/projects?filter=review" },
-          { label: "Changes requested", value: changes, tone: changes ? "warn" : undefined, href: "/admin/projects?filter=changes" },
-          { label: failing ? "Renewals failing" : "Open requests", value: failing || openRequests, tone: failing ? "bad" : openRequests ? "warn" : undefined, href: failing ? "/admin/billing" : "/admin/requests" },
-        ]}
-      />
+  return (
+    <>
+      {/* Hi, by name and title (Genesis, 11 Oct 2026); names and titles are set in Staff & roles. */}
+      <PageHead kicker={`Dashboard · ${longDate}`} title={`Hi ${greetingName}, welcome${viewer.workspaceId ? " back" : " to Genesis"}.`} sub={viewer.title ? <span className="text-bone">{viewer.title}<span className="text-ash"> · {viewing ? `Viewing ${viewing}'s dashboard.` : superAdmin ? "Everything across the team." : "What needs attention today."}</span></span> : "What needs attention today."}>
+        {superAdmin && (
+          <form action="/admin" className="flex items-center gap-2">
+            <select name="person" defaultValue={person ?? ""} className="crm-input w-auto !py-1.5 text-[0.875rem]" aria-label="View the dashboard as">
+              <option value="">Everyone (all data)</option>
+              {team.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            </select>
+            <button className="crm-btn crm-btn-secondary crm-btn-sm">View</button>
+          </form>
+        )}
+      </PageHead>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Card title="Follow up today" action={<Link href="/admin/leads" className="crm-link text-[0.875rem]">Pipeline ↗</Link>}>
-          {dueLeads.length === 0 ? (
-            <p className="text-ash">Nothing due. Nice.</p>
-          ) : (
-            <ul className="divide-y divide-[var(--glass-border)]">
-              {dueLeads.map((lead) => (
-                <li key={lead.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <Link href={`/admin/leads/${lead.id}`} className="min-w-0">
-                    <span className="block truncate text-bone">{lead.name}{lead.company ? ` · ${lead.company}` : ""}</span>
-                    <span className="block truncate text-[0.8125rem] text-ash">{lead.interest ?? "—"} · due {date(lead.nextFollowUp)}</span>
-                  </Link>
-                  <Status value={LEAD_STATUS[lead.status]} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card title="Requests waiting on us" action={<Link href="/admin/requests" className="crm-link text-[0.875rem]">Inbox ↗</Link>}>
-          {requests.length === 0 ? (
-            <p className="text-ash">Inbox zero.</p>
-          ) : (
-            <ul className="divide-y divide-[var(--glass-border)]">
-              {requests.map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <Link href={`/admin/requests/${r.id}`} className="min-w-0">
-                    <span className="block truncate text-bone">{requestRef(r.number)} · {r.title}</span>
-                    <span className="block truncate text-[0.8125rem] text-ash">{r.account.name} · {REQUEST_KIND[r.kind]} · {date(r.createdAt)}</span>
-                  </Link>
-                  <Status value={REQUEST_STATUS[r.status]} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card title="Due in the next 7 days" action={<Link href="/admin/projects" className="crm-link text-[0.875rem]">Projects ↗</Link>}>
-          {dueProjects.length === 0 ? (
-            <p className="text-ash">No deadlines this week.</p>
-          ) : (
-            <ul className="space-y-4">
-              {dueProjects.map((p) => (
-                <li key={p.id}>
-                  <Link href={`/admin/projects/${p.id}`} className="block">
-                    <span className="flex justify-between gap-3 text-bone">
-                      <span className="truncate">{projectRef(p.number)} · {p.name}</span>
-                      <span className="shrink-0 text-[0.8125rem] text-ash">{date(p.dueDate)}</span>
-                    </span>
-                    <span className="mb-1.5 block text-[0.8125rem] text-ash">{p.account.name} · {DIVISION_LABEL[p.division]}</span>
-                    <StageBar stages={stagesOf(p)} stage={p.stage} compact />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card title="Latest orders" action={<Link href="/admin/billing" className="crm-link text-[0.875rem]">Billing ↗</Link>}>
-          {latestOrders.length === 0 ? (
-            <p className="text-ash">No orders yet. They arrive here from checkout.</p>
-          ) : (
-            <ul className="divide-y divide-[var(--glass-border)]">
-              {latestOrders.map((o) => (
-                <li key={o.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <Link href={`/admin/billing/${o.id}`} className="min-w-0">
-                    <span className="block truncate text-bone">{o.account?.name ?? o.company ?? o.contactName}</span>
-                    <span className="block text-[0.8125rem] text-ash">{o.reference} · {money(o.totalPaise)} · {date(o.createdAt)}</span>
-                  </Link>
-                  <Status value={ORDER_STATUS[o.status]} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card title="Active work by division">
-          <ul className="grid grid-cols-2 gap-3">
-            {DIVISIONS.map((d) => (
-              <li key={d} className="rounded-xl bg-[var(--hover-wash)] px-4 py-3">
-                <Link href={`/admin/projects?division=${d}`}>
-                  <span className="block text-[0.8125rem] text-ash">{DIVISION_LABEL[d]}</span>
-                  <span className="text-[1.5rem] font-semibold text-bone">{byDivision.find((b) => b.division === d)?._count ?? 0}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
+      {/* Arranged by each person (lib/crm/dashboard-layout; Genesis, 31 Oct 2026). */}
+      <DashboardGrid layout={layout} nodes={nodes} demo={viewer.demo} />
     </>
   );
 }

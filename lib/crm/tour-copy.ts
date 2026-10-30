@@ -29,6 +29,7 @@ export const ABOUT: Record<string, { title: string; body: string }> = {
   "/admin/expenses/gst": { title: "GST", body: "GST due dates and filings." },
   "/admin/staff": { title: "Staff & roles", body: "Who works in the CRM, what each person can open, influencer-data access, and client or influencer portal access." },
   "/admin/lab": { title: "AI Lab", body: "Genesis AI Lab's credit prices, grants and usage." },
+  "/admin/me": { title: "My settings", body: "Your own Google: connect Gmail and Drive once, and briefs, client details and invoices in them come into the Inbox." },
   "/admin/gst": { title: "GST", body: "Your GST month by month from your own invoices: taxable value, CGST, SGST and IGST, with the GSTR-1 and GSTR-3B due dates. Comes with a plan." },
   "/admin/plan": { title: "Plan & billing", body: "Your Nova plan: the free trial's days left, choosing a plan and adding your card (₹0 until the trial ends), and cancelling any time." },
   "/admin/team": { title: "Team & company", body: "Your agency's team in the CRM, and your company details for quotes and invoices." },
@@ -72,6 +73,10 @@ export const JOURNEY: Record<string, { title: string; body: string }> = {
   "My work": {
     title: "Your work",
     body: "The projects and client requests you're on, with what's due and what's waiting for approval.",
+  },
+  Portal: {
+    title: "Portal: your vendors and crew",
+    body: "Freelancers, crews and production houses, with their skills, rates and commission. Offer one a job on a project and they accept it, deliver and send their invoice from their own portal.",
   },
   Money: {
     title: "Money: getting paid",

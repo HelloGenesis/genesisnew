@@ -44,11 +44,11 @@ const markDemoSeen = () => {
 
 /* The dashboard's cards, explained (only those on screen are shown). */
 const DASHBOARD: TourStep[] = [
-  { target: "text:All features", title: "Everything in one place", body: "Every part of the CRM as a card with what it does. Search it, or pick an area, and open any of them from here." },
-  { target: "text:Tasks", title: "Tasks", body: "What's due today and soon: yours, and what you've given teammates. Tick one off when it's done; overdue ones turn red." },
+  { target: "main dl", title: "Your numbers", body: "Open pipeline, follow-ups due, money collected this month, active projects, work waiting on the client and changes asked for. Click any number to see what's behind it." },
+  { target: "text:Tasks", title: "Tasks", body: "What's due today and soon: yours, and what you've given teammates. Tick one off, click a title to rename it, change its date or priority, right here. Overdue dates turn red." },
   { target: "text:Calendar", title: "Calendar", body: "Your Google Calendar for the week, once you've connected Google in the Inbox." },
   { target: "text:From Gmail & Drive", title: "Found in Gmail & Drive", body: "Briefs, client and vendor details, invoices and links the AI found in connected Gmail and Drive. Open one to keep it as a lead or record." },
-  { target: "main dl", title: "Your numbers", body: "Open pipeline, follow-ups due, money collected this month, active projects, work waiting on the client and changes asked for. Click any number to see what's behind it." },
+  { target: 'nav[aria-label="CRM areas"] a[href="/admin/features"]', title: "All features", body: "Every part of the CRM as a card with what it does, in one place. Search it, or pick an area, and open any of them." },
   { target: "text:Follow up today", title: "Follow up today", body: "Leads whose next follow-up is today or overdue, so nobody is forgotten." },
   { target: "text:Requests waiting on us", title: "Requests waiting on us", body: "Briefs and questions clients sent from their portal that still need a reply." },
   { target: "text:Due in the next 7 days", title: "Due this week", body: "Projects and deliverables due in the next seven days." },

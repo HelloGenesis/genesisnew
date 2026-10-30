@@ -3,6 +3,7 @@
 import {
   BadgeIndianRupee,
   Bell,
+  Blocks,
   BookOpen,
   ChartColumn,
   Briefcase,
@@ -11,6 +12,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   CreditCard,
+  DoorOpen,
   CircleDollarSign,
   ClipboardList,
   Compass,
@@ -48,7 +50,7 @@ import Link from "next/link";
 
 import { ProBadge } from "./pro-badge";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { NavGroup } from "./side-nav";
 import { usePref } from "./use-pref";
@@ -63,7 +65,7 @@ import { usePref } from "./use-pref";
  */
 
 /** An icon for each area, and for each page (by its address). */
-const AREA_ICON: Record<string, LucideIcon> = { Today: LayoutGrid, Sales: TrendingUp, Influence: Megaphone, Delivery: FolderKanban, "My work": FolderKanban, Money: Wallet, Setup: Settings };
+const AREA_ICON: Record<string, LucideIcon> = { Today: LayoutGrid, Sales: TrendingUp, Influence: Megaphone, Delivery: FolderKanban, "My work": FolderKanban, Portal: DoorOpen, Money: Wallet, Setup: Settings };
 const AREA_LABEL: Record<string, string> = { Today: "Home", "My work": "Work" };
 /* What each area is for, under its name in the panel. */
 const AREA_HINT: Record<string, string> = {
@@ -73,6 +75,7 @@ const AREA_HINT: Record<string, string> = {
   Delivery: "Projects, requests and crew",
   "My work": "Your projects and requests",
   Money: "Invoices, billing and spend",
+  Portal: "Your vendors and crew",
   Setup: "Your team and the CRM",
 };
 export const PAGE_ICON: Record<string, LucideIcon> = {
@@ -80,6 +83,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/notifications": Bell,
   "/admin/inbox": Inbox,
   "/admin/tasks": ListChecks,
+  "/admin/features": Blocks,
   "/admin/assistant": Sparkles,
   "/admin/assistant/usage": Gauge,
   "/admin/reports": ChartColumn,
@@ -105,6 +109,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/gst": FileSpreadsheet,
   "/admin/staff": UserCog,
   "/admin/plan": CreditCard,
+  "/admin/me": UserCog,
   "/admin/lab": FlaskConical,
   "/admin/lab/avatars": ScanFace,
   "/admin/team": Briefcase,
@@ -117,7 +122,8 @@ export const iconFor = (href: string) => PAGE_ICON[href] ?? BookOpen;
 const ITEM = "group flex min-h-[3.375rem] max-h-[3.75rem] w-full flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
 const TILE = "relative grid size-8 shrink-0 place-items-center rounded-xl transition-colors";
 /* The areas set apart at the bottom of the rail, as Vitra's are. */
-const LOWER = new Set(["Money", "Setup"]);
+const TOP_SHORTCUT = "/admin/tasks";
+const LOWER = new Set(["Portal", "Money", "Setup"]);
 /*
  * PAGES STRAIGHT ON THE RAIL (Genesis, 28 Oct 2026: "Files, Tasks, Inbox,
  * Notifications, Creative Library, Reports … all I want here"): one click,
@@ -125,6 +131,8 @@ const LOWER = new Set(["Money", "Setup"]);
  * is the bell at the foot.
  */
 const SHORTCUTS: { href: string; label: string }[] = [
+  /* All features, off the dashboard (Genesis, 31 Oct 2026). */
+  { href: "/admin/features", label: "Features" },
   { href: "/admin/inbox", label: "Inbox" },
   { href: "/admin/tasks", label: "Tasks" },
   { href: "/admin/files", label: "Files" },
@@ -170,18 +178,44 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     return item ? [{ ...sc, count: item.count }] : [];
   });
   const bell = pages.find((i) => i.href === "/admin/notifications");
+  /* A page opened from the rail's own links (Files, Creatives…) shows on its own, no panel beside it (Genesis, 31 Oct 2026), until an area is picked. */
+  const onShortcut = shortcuts.some((sc) => sc.href === best) && !(picked && picked.at === path);
+  const panelOpen = open && !onShortcut;
+
+  /*
+   * HOVER MENUS (Genesis, 31 Oct 2026: "make the expandables like this on
+   * hover", after Wix): hovering an area's icon shows its pages beside the
+   * rail, one click to any of them; clicking the icon still opens the panel.
+   * Fixed to the page, as the rail scrolls and would clip it.
+   */
+  const [fly, setFly] = useState<{ label: string; top: number; left: number } | null>(null);
+  const closing = useRef<number | undefined>(undefined);
+  const keep = () => window.clearTimeout(closing.current);
+  const leave = () => {
+    keep();
+    closing.current = window.setTimeout(() => setFly(null), 160);
+  };
+  const hover = (label: string, el: HTMLElement) => {
+    keep();
+    const r = el.getBoundingClientRect();
+    setFly({ label, top: Math.max(8, Math.min(r.top, window.innerHeight - 320)), left: r.right + 8 });
+  };
+  const flyGroup = fly ? groups.find((g) => g.label === fly.label) : null;
 
   const railButton = (g: NavGroup) => {
     const Icon = AREA_ICON[g.label] ?? LayoutGrid;
-    const lit = g.label === area && open;
+    const lit = g.label === area && panelOpen;
     const inside = g.label === here;
     const n = counts(g);
     return (
       <button
         key={g.label}
+        onPointerEnter={(e) => e.pointerType === "mouse" && hover(g.label, e.currentTarget)}
+        onPointerLeave={leave}
         type="button"
         onClick={() => {
-          if (g.label === area && open) return setOpen(false);
+          setFly(null);
+          if (g.label === area && panelOpen) return setOpen(false);
           setPicked({ label: g.label, at: path });
           setOpen(true);
         }}
@@ -199,8 +233,42 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     );
   };
 
+  /* One quick link (Inbox, Tasks, Files…). */
+  const shortcutLink = (sc: (typeof shortcuts)[number]) => {
+    const Icon = iconFor(sc.href);
+    const lit = sc.href === best;
+    return (
+      <Link key={sc.href} href={sc.href} aria-current={lit ? "page" : undefined} aria-label={`${sc.label}${sc.count ? `, ${sc.count} waiting` : ""}`} className={ITEM}>
+        <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-white/10"}`}>
+          <Icon className="size-[1.125rem]" aria-hidden />
+          {!!sc.count && <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
+        </span>
+        <span className={`leading-none ${lit ? "font-medium text-white" : ""}`}>{sc.label}</span>
+      </Link>
+    );
+  };
+
   return (
     <div className="flex h-full gap-3">
+      {flyGroup && fly && (
+        <div
+          role="menu"
+          aria-label={AREA_LABEL[flyGroup.label] ?? flyGroup.label}
+          onPointerEnter={keep}
+          onPointerLeave={leave}
+          style={{ top: fly.top, left: fly.left }}
+          className="fixed z-[70] min-w-52 rounded-xl border border-white/10 bg-[#18171b] p-1.5 shadow-[0_18px_40px_-12px_rgb(0_0_0/0.7)] motion-safe:animate-[tour-in_0.15s_ease-out]"
+        >
+          <span aria-hidden className="absolute -left-1.5 top-4 size-3 rotate-45 border-b border-l border-white/10 bg-[#18171b]" />
+          <p className="px-3 pb-1 pt-1.5 text-[0.6875rem] uppercase tracking-[0.14em] text-white/40">{AREA_LABEL[flyGroup.label] ?? flyGroup.label}</p>
+          {flyGroup.items.filter((i) => !i.href.includes("tour=")).map((i) => (
+            <Link key={i.href} href={i.href} role="menuitem" onClick={() => setFly(null)} className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[0.875rem] transition-colors ${i.href === best ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/10 hover:text-white"}`}>
+              <span className="flex items-center gap-1.5">{i.label}{i.pro && <ProBadge />}</span>
+              {i.count ? <span className="rounded-full bg-[#ffc516] px-1.5 text-[0.6875rem] font-semibold leading-5 text-[#141216]">{i.count}</span> : null}
+            </Link>
+          ))}
+        </div>
+      )}
       {/* The rail. */}
       <nav aria-label="CRM areas" className="flex w-[4.75rem] shrink-0 flex-col items-center rounded-[1.25rem] bg-[#18171b] px-1.5 py-3 shadow-[var(--shadow-float)]">
         {/* Genesis's N, as the favicon (app/icon.svg): yellow on white. */}
@@ -215,7 +283,8 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         <span aria-hidden className="mx-auto mb-1 h-px w-10 bg-white/15" />
         {/* Scrolls when the window is too short for every icon (Genesis, 29 Oct 2026: "add a scroller here"); icons never squash into each other. */}
         <div className="-mr-1 flex min-h-0 w-[calc(100%+0.25rem)] flex-1 flex-col overflow-y-auto pr-1" data-lenis-prevent>
-          {groups.filter((g) => !LOWER.has(g.label)).map(railButton)}
+          {/* Tasks sits at the top, under Home (Genesis, 31 Oct 2026: "move this on top"). */}
+          {groups.filter((g) => !LOWER.has(g.label)).flatMap((g, i) => (i === 0 ? [railButton(g), ...shortcuts.filter((sc) => sc.href === TOP_SHORTCUT).map(shortcutLink)] : [railButton(g)]))}
           {/* Genesis Copilot for its owners, NOVA AI in an agency's CRM (lib/crm/scope; the nav keeps the link only for them). */}
           {aiLink && (
           <Link href="/admin/assistant" aria-label={aiLink.label} className={ITEM}>
@@ -226,19 +295,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           </Link>
           )}
           {shortcuts.length > 0 && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
-          {shortcuts.map((sc) => {
-            const Icon = iconFor(sc.href);
-            const lit = sc.href === best;
-            return (
-              <Link key={sc.href} href={sc.href} aria-current={lit ? "page" : undefined} aria-label={`${sc.label}${sc.count ? `, ${sc.count} waiting` : ""}`} className={ITEM}>
-                <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-white/10"}`}>
-                  <Icon className="size-[1.125rem]" aria-hidden />
-                  {!!sc.count && <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
-                </span>
-                <span className={`leading-none ${lit ? "font-medium text-white" : ""}`}>{sc.label}</span>
-              </Link>
-            );
-          })}
+          {shortcuts.filter((sc) => sc.href !== TOP_SHORTCUT).map(shortcutLink)}
           {groups.some((g) => LOWER.has(g.label)) && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
           {groups.filter((g) => LOWER.has(g.label)).map(railButton)}
         </div>
@@ -252,7 +309,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
       </nav>
 
       {/* The area's pages, in a panel that folds away. */}
-      {open && group && (
+      {panelOpen && group && (
         <nav aria-label="CRM" className="crm-card flex w-[15rem] shrink-0 flex-col overflow-hidden">
           <div className="flex items-center justify-between gap-2 border-b border-[var(--glass-border)] px-4 py-3.5">
             <div className="min-w-0">
@@ -299,7 +356,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           </div>
         </nav>
       )}
-      {!open && (
+      {!open && !onShortcut && (
         <button type="button" onClick={() => setOpen(true)} aria-label="Show the panel" title="Show the pages" className="-ml-1.5 mt-3 grid h-10 w-5 place-items-center self-start rounded-r-lg border border-l-0 border-[var(--glass-border)] bg-[var(--crm-card)] text-ash hover:text-bone">
           <ChevronsRight className="size-3.5" aria-hidden />
         </button>

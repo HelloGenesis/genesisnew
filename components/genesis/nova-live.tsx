@@ -15,6 +15,8 @@ export function NovaLive() {
   const box = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  /* "View demo" reopens it on the dashboard with the tour running (Genesis, 31 Oct 2026: "it should expand and start the tour"). */
+  const [src, setSrc] = useState("/demo");
 
   useEffect(() => {
     const sync = () => setFull(document.fullscreenElement === box.current);
@@ -51,7 +53,14 @@ export function NovaLive() {
         <span className="ml-auto flex shrink-0 items-center gap-2">
           {/* "View demo" opens it full screen (Genesis, 31 Oct 2026). */}
           {!full && (
-            <button type="button" onClick={toggle} className="rounded-full border border-white/20 px-3.5 py-1.5 text-[0.75rem] font-medium text-white transition-colors hover:border-white/50 hover:bg-white/10">
+            <button
+              type="button"
+              onClick={() => {
+                setLoaded(false);
+                setSrc(`/demo?next=${encodeURIComponent(`/admin?tour=1&at=${Date.now()}`)}`);
+                void toggle();
+              }}
+              className="rounded-full border border-white/20 px-3.5 py-1.5 text-[0.75rem] font-medium text-white transition-colors hover:border-white/50 hover:bg-white/10">
               View demo
             </button>
           )}
@@ -71,7 +80,7 @@ export function NovaLive() {
             </span>
           </div>
         )}
-        <iframe src="/demo" title="Nova by Genesis, live demo" loading="lazy" onLoad={() => setLoaded(true)} className={`size-full border-0 transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`} />
+        <iframe src={src} title="Nova by Genesis, live demo" loading="lazy" onLoad={() => setLoaded(true)} className={`size-full border-0 transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`} />
       </div>
     </div>
   );

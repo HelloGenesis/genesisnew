@@ -43,6 +43,7 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
       label: "Today",
       items: [
         { href: "/admin", label: "Dashboard" },
+        { href: "/admin/features", label: "All features" },
         { href: "/admin/notifications", label: "Notifications", count: unread },
         { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew },
         { href: "/admin/tasks", label: "Tasks", count: myTasks },
@@ -89,10 +90,12 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
         ]
       : []),
     ...(delivery
-      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Project timeline", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, { href: "/admin/vendors", label: "Vendors & crew" }, ...LIBRARY] }]
+      ? [{ label: "Delivery", items: [{ href: "/admin/projects", label: "Project timeline", count: review }, { href: "/admin/requests", label: "Requests & support", count: openRequests }, ...LIBRARY] }]
       : viewer.roles.includes("CREATIVE")
         ? [{ label: "My work", items: [{ href: "/admin/projects", label: "Projects", count: review }, { href: "/admin/requests", label: "Requests" }, ...LIBRARY] }]
         : []),
+    /* PORTAL (Genesis, 31 Oct 2026: "add a portal icon and add this in that"): the vendors and crew who work through their portal. */
+    ...(delivery ? [{ label: "Portal", items: [{ href: "/admin/vendors", label: "Vendors & crew" }] }] : []),
     ...(sales || finance
       ? [
           {
@@ -110,6 +113,8 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
     {
       label: "Setup",
       items: [
+        /* Each person's own: their Google for the Inbox (app/(crm)/admin/me). */
+        { href: "/admin/me", label: "My settings" },
         ...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []),
         /* An agency's own team and its details for quotes and invoices; Genesis's integrations are Genesis's. */
         ...(viewer.workspaceId ? (viewer.workspaceRole === "ADMIN" ? [{ href: "/admin/team", label: "Team & company" }] : []) : [{ href: "/admin/settings", label: "Integrations" }]),
