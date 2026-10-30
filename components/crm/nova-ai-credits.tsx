@@ -53,3 +53,35 @@ export function NovaAiCredits({ nova, open = false, compact = false }: { nova: N
     </div>
   );
 }
+
+/**
+ * The credits as a pill in the chat's top corner (Genesis, 31 Oct 2026: "put
+ * it here, in place of New chat, and make the colour nice"): NOVA's orb
+ * colours, the count, and the top-up packs under it on a click.
+ */
+export function NovaAiPill({ nova }: { nova: NovaAi }) {
+  const [open, setOpen] = useState(false);
+  const low = nova.credits <= 1;
+  return (
+    <div className="relative ml-auto">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="rounded-full bg-gradient-to-r from-[#c084fc] via-[#f472b6] to-[#ffc516] p-px shadow-[0_6px_24px_-8px_rgba(244,114,182,0.55)] transition-transform hover:scale-[1.03]"
+      >
+        <span className="flex items-center gap-2 rounded-full bg-[#1a1720] px-3.5 py-1.5 text-[0.8125rem]">
+          <Sparkles className="size-3.5 text-[#f472b6]" aria-hidden />
+          <span className="bg-gradient-to-r from-[#c084fc] via-[#f472b6] to-[#ffc516] bg-clip-text font-medium text-transparent">NOVA AI</span>
+          <span className={`tabular-nums ${low ? "text-[#ffc516]" : "text-bone"}`}>{nova.credits} credit{nova.credits === 1 ? "" : "s"}</span>
+          <span className="text-ash">· Top up</span>
+        </span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-float,#1d1b1f)] p-3 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)]">
+          <NovaAiCredits nova={nova} open compact />
+        </div>
+      )}
+    </div>
+  );
+}
