@@ -98,7 +98,7 @@ export default async function AccountPage() {
 
       {(viewer.roles.length > 0 || accounts.length > 0) && (
         <section aria-labelledby="spaces" className="crm-card crm-pad space-y-4">
-          <h2 id="spaces" className="text-[1.25rem] text-bone">Your workspaces</h2>
+          <h2 id="spaces" className="font-sans font-semibold text-[1.375rem] text-bone">Your workspaces</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {viewer.roles.length > 0 && (
               <Link href="/admin" className="rounded-2xl border border-[var(--glass-border)] p-4 transition-colors hover:bg-[var(--hover-wash)]">
@@ -123,7 +123,7 @@ export default async function AccountPage() {
       {creators.map((c) => (
         <section key={c.id} aria-labelledby={`creator-${c.id}`} className="crm-card crm-pad space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id={`creator-${c.id}`} className="text-[1.25rem] text-bone">Your creator profile · @{c.handle}</h2>
+            <h2 id={`creator-${c.id}`} className="font-sans font-semibold text-[1.375rem] text-bone">Your creator profile · @{c.handle}</h2>
             <p className="text-[0.875rem] text-ash">
               Reel {(c.reelRatePaise ? money(c.reelRatePaise) : "—")} · Story {(c.storyRatePaise ? money(c.storyRatePaise) : "—")} · DL {(c.dlRatePaise ? money(c.dlRatePaise) : "—")}
             </p>
@@ -147,7 +147,7 @@ export default async function AccountPage() {
       ))}
 
       <section aria-labelledby="cart" className="crm-card crm-pad space-y-4">
-        <h2 id="cart" className="text-[1.25rem] text-bone">Your cart</h2>
+        <h2 id="cart" className="font-sans font-semibold text-[1.375rem] text-bone">Your cart</h2>
         <CartProvider>
           <AccountCart />
         </CartProvider>
@@ -155,7 +155,7 @@ export default async function AccountPage() {
 
       {subscriptions.length > 0 && (
         <section aria-labelledby="subs" className="crm-card crm-pad space-y-3">
-          <h2 id="subs" className="text-[1.25rem] text-bone">Your subscriptions</h2>
+          <h2 id="subs" className="font-sans font-semibold text-[1.375rem] text-bone">Your subscriptions</h2>
           <ul className="divide-y divide-[var(--glass-border)]">
             {subscriptions.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
@@ -171,7 +171,7 @@ export default async function AccountPage() {
       )}
 
       <section aria-labelledby="orders" className="crm-card crm-pad space-y-3">
-        <h2 id="orders" className="text-[1.25rem] text-bone">Your purchases</h2>
+        <h2 id="orders" className="font-sans font-semibold text-[1.375rem] text-bone">Your purchases</h2>
         {purchases.length === 0 ? (
           <p className="text-ash">
             No purchases yet{verified ? "" : " (we match purchases to your email once it's verified)"}. Bought with a different email? Sign out and sign in with that one.
@@ -195,7 +195,7 @@ export default async function AccountPage() {
 
       {quotes.length > 0 && (
         <section aria-labelledby="quotes" className="crm-card crm-pad space-y-3">
-          <h2 id="quotes" className="text-[1.25rem] text-bone">Quotes & proposals for you</h2>
+          <h2 id="quotes" className="font-sans font-semibold text-[1.375rem] text-bone">Quotes & proposals for you</h2>
           <ul className="divide-y divide-[var(--glass-border)]">
             {quotes.map((q) => (
               <li key={q.token} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
@@ -209,7 +209,7 @@ export default async function AccountPage() {
 
       {invoices.length > 0 && (
         <section aria-labelledby="invoices" className="crm-card crm-pad space-y-3">
-          <h2 id="invoices" className="text-[1.25rem] text-bone">Invoices</h2>
+          <h2 id="invoices" className="font-sans font-semibold text-[1.375rem] text-bone">Invoices</h2>
           <ul className="divide-y divide-[var(--glass-border)]">
             {invoices.map((i) => (
               <li key={i.token} className="flex flex-wrap items-center justify-between gap-2 py-2.5">

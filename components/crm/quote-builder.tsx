@@ -671,7 +671,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
       {/* THE PROPOSAL (Genesis, 12–13 Oct 2026): first, one box after another, each with its own formatting tools. */}
       <section className={`crm-card crm-pad space-y-4 ${parts.proposal ? "" : "hidden"}`}>
         <div>
-          <h2 className="text-[1.125rem] text-bone">Proposal</h2>
+          <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Proposal</h2>
           <p className="text-[0.8125rem] text-ash">Comes first on the document. When sending you can send the proposal on its own, the pricing on its own, or both.</p>
         </div>
         <fieldset>
@@ -720,7 +720,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
 
       <section className={`space-y-3 ${parts.plan ? "" : "hidden"}`}>
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-[1.125rem] text-bone">Influencer plan</h2>
+          <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Influencer plan</h2>
           <span className="text-[0.8125rem] text-ash">{q.creators.length} creators · {inr(totals.creators)} to the client</span>
         </div>
         <div className="crm-card crm-pad space-y-3">
@@ -1062,7 +1062,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
 
       <section className={`space-y-3 ${parts.pricing ? "" : "hidden"}`}>
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-[1.125rem] text-bone">Costing: products & services</h2>
+          <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Costing: products & services</h2>
           <div className="flex flex-wrap gap-2">
             <select value={pick} onChange={(e) => addFromCatalog(e.target.value)} className="crm-input w-auto max-w-[22rem]" aria-label="Add from plans, products and add-ons">
               <option value="">＋ Plans, products & add-ons…</option>
@@ -1103,7 +1103,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <section className="crm-card crm-pad space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-2">
-            <h2 className="text-[1.125rem] text-bone">Notes & legal terms</h2>
+            <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Notes & legal terms</h2>
             <select defaultValue="" onChange={(e) => e.target.value && loadTerms(e.target.value)} className="crm-input w-auto" aria-label="Load a terms template">
               <option value="">Load a template…</option>
               {terms.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
@@ -1113,7 +1113,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           <label className="block"><span className="crm-label">Legal terms (one per line)</span><textarea value={q.terms ?? ""} onChange={(e) => set("terms", e.target.value)} className="crm-input !min-h-56" /></label>
         </section>
         <section className="crm-card crm-pad space-y-3 self-start">
-          <h2 className="text-[1.125rem] text-bone">Totals</h2>
+          <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Totals</h2>
           <dl className="grid grid-cols-[1fr_auto] gap-y-2 text-[0.9375rem]">
             {q.creators.length > 0 && (
               <dt className="col-span-2">

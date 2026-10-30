@@ -70,7 +70,7 @@ export function CampaignReport({ title, client, rows, summary, showFees = true, 
       </div>
       {summary && (
         <div className="crm-card crm-pad">
-          <h3 className="mb-2 text-[1rem] text-bone">Summary</h3>
+          <h3 className="mb-2 font-sans font-semibold text-[1.125rem] text-bone">Summary</h3>
           <p className="whitespace-pre-wrap text-pretty text-ash">{summary}</p>
         </div>
       )}

@@ -36,7 +36,7 @@ export default async function PortalReferrals() {
       </Card>
       <Stats items={[{ label: "Referred clients", value: referrals.length }, { label: "Commission owed", value: money(owed) }, { label: "Commission paid", value: money(paid) }]} />
       <section className="space-y-3">
-        <h2 className="text-[1.125rem] text-bone">Commission</h2>
+        <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Commission</h2>
         {commissions.length === 0 ? <Empty>No commission yet. It appears when a referred client pays.</Empty> : (
           <Table head={["Date", "On", "Commission", "Status"]}>
             {commissions.map((c) => (

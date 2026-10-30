@@ -36,7 +36,7 @@ export default async function PayoutsPage() {
       <PageHead kicker="Money" title="Commissions & payouts" exportKind={isSuperAdmin(viewer) ? "payouts" : undefined} />
       <Stats items={[{ label: "Commission owed", value: money(owed) }, { label: "Vendor invoices to pay", value: money(bills), tone: bills ? "warn" : undefined }]} />
       <section className="space-y-3">
-        <h2 className="text-[1.125rem] text-bone">Reseller commission</h2>
+        <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Reseller commission</h2>
         {commissions.length === 0 ? (
           <Empty>No commission yet. It accrues automatically when a referred client pays.</Empty>
         ) : (
@@ -59,7 +59,7 @@ export default async function PayoutsPage() {
         )}
       </section>
       <section className="space-y-3">
-        <h2 className="text-[1.125rem] text-bone">Vendor invoices</h2>
+        <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Vendor invoices</h2>
         {invoices.length === 0 ? (
           <Empty>No invoices. Vendors submit them from their portal.</Empty>
         ) : (

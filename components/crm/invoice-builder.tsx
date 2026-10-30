@@ -53,7 +53,7 @@ export function InvoiceBuilder({ initial, states, accounts }: { initial: Invoice
       <input type="hidden" name="payload" value={JSON.stringify(v)} />
       <section className="crm-card crm-pad space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-[1.125rem] text-bone">Billed to</h2>
+          <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Billed to</h2>
           {accounts.length > 0 && (
             <select
               defaultValue=""
@@ -97,7 +97,7 @@ export function InvoiceBuilder({ initial, states, accounts }: { initial: Invoice
 
       <section className="crm-card crm-pad space-y-3">
         <div className="flex items-end justify-between gap-2">
-          <h2 className="text-[1.125rem] text-bone">Lines</h2>
+          <h2 className="font-sans font-semibold text-[1.25rem] text-bone">Lines</h2>
           <button type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => setV((x) => ({ ...x, lines: [...x.lines, { description: "", sac: "996211", qty: 1, uom: "NOS", unit: 0 }] }))}><Plus className="size-4" /> Add line</button>
         </div>
         {v.lines.map((l, i) => (
