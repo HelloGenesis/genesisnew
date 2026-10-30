@@ -178,10 +178,13 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     return item ? [{ ...sc, count: item.count }] : [];
   });
   const bell = pages.find((i) => i.href === "/admin/notifications");
+  /* A page opened from the rail's own links (Files, Creatives…) shows on its own, no panel beside it (Genesis, 31 Oct 2026), until an area is picked. */
+  const onShortcut = shortcuts.some((sc) => sc.href === best) && !(picked && picked.at === path);
+  const panelOpen = open && !onShortcut;
 
   const railButton = (g: NavGroup) => {
     const Icon = AREA_ICON[g.label] ?? LayoutGrid;
-    const lit = g.label === area && open;
+    const lit = g.label === area && panelOpen;
     const inside = g.label === here;
     const n = counts(g);
     return (
@@ -189,7 +192,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         key={g.label}
         type="button"
         onClick={() => {
-          if (g.label === area && open) return setOpen(false);
+          if (g.label === area && panelOpen) return setOpen(false);
           setPicked({ label: g.label, at: path });
           setOpen(true);
         }}
@@ -264,7 +267,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
       </nav>
 
       {/* The area's pages, in a panel that folds away. */}
-      {open && group && (
+      {panelOpen && group && (
         <nav aria-label="CRM" className="crm-card flex w-[15rem] shrink-0 flex-col overflow-hidden">
           <div className="flex items-center justify-between gap-2 border-b border-[var(--glass-border)] px-4 py-3.5">
             <div className="min-w-0">
@@ -311,7 +314,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           </div>
         </nav>
       )}
-      {!open && (
+      {!open && !onShortcut && (
         <button type="button" onClick={() => setOpen(true)} aria-label="Show the panel" title="Show the pages" className="-ml-1.5 mt-3 grid h-10 w-5 place-items-center self-start rounded-r-lg border border-l-0 border-[var(--glass-border)] bg-[var(--crm-card)] text-ash hover:text-bone">
           <ChevronsRight className="size-3.5" aria-hidden />
         </button>
