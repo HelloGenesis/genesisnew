@@ -37,22 +37,22 @@ const ROLES = [
   {
     title: "Your team",
     icon: "team",
-    body: "One admin for leads, briefs, quotes, influencer plans, invoices and tasks. Everyone sees their own work; owners see it all.",
+    body: "Leads, briefs, quotes, influencer plans, GST invoices and tasks in one admin, with roles for sales, delivery and finance. Up to 5, 15 or 50 users, by plan.",
   },
   {
     title: "Your brands",
     icon: "approve",
-    body: "Their own portal to approve work, send briefs, track every project and download invoices. No more chasing on email.",
+    body: "On Growth and Scale, a client portal where your brands approve work, send briefs, follow their projects and download invoices.",
   },
   {
     title: "Partner agencies & resellers",
     icon: "link",
-    body: "Partner agencies run their clients under their own logo. Resellers refer agencies and earn 20% of every payment for a year.",
+    body: "On Scale, brands that work with several agencies sit in one place. Resellers who bring agencies earn 20% of every payment for the first 12 months.",
   },
   {
     title: "Creators & vendors",
     icon: "creative",
-    body: "Creators send their rates from one WhatsApp or email request. Vendors get the brief and send their invoice back to the same place.",
+    body: "Your influencer database, imported from Excel or Google Sheets. On Growth and Scale, ask creators for their rates from WhatsApp and email templates.",
   },
 ] as const;
 
@@ -77,10 +77,10 @@ const FEATURES = [
 ] as const;
 
 const STEPS = [
-  ["Start free", "14 days of everything, no card needed. Tell us a little about your team.", "plan"],
-  ["Walkthrough", "A short call on your real work, and we set up your workspace with you.", "call"],
-  ["Bring your data", "We import your sheets, invite your team and brands, and put your logo on it.", "import"],
-  ["Go live", "Pick a plan by day 3 and pay ₹0 then. Billing starts on day 14 through Razorpay; cancel any time.", "rocket"],
+  ["Start your free trial", "Your name, email, phone and agency name. You're in straight away, with no card.", "call"],
+  ["Bring your team and data", "Invite your team, and import your leads, clients and creators from Excel or Google Sheets.", "import"],
+  ["Choose a plan", "From day 3, pick Starter, Growth or Scale and add a card. You pay ₹0 that day.", "plan"],
+  ["Go live", "Your card is first charged on day 14, then monthly. Cancel before then and you pay nothing.", "rocket"],
 ] as const;
 
 /* Nova's 3D icons (Genesis, 31 Oct 2026), on the who's-in-it and four-step cards. */
@@ -134,7 +134,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
               Everyone you work with, on one platform
             </h2>
             <p className="mt-5 max-w-3xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              Everyone gets their own login and sees only what&apos;s theirs: your team, your brands, partner agencies, and the creators and vendors who deliver.
+              Each person gets their own login and sees only what&apos;s theirs.
             </p>
           </Reveal>
           <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
