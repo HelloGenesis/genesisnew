@@ -1647,6 +1647,22 @@ body:has([data-nova-page]) .nova-page-hide {
 body:has([data-nova-page]) .nova-page-show {
     display: block;
 }
+/* And its free trial in place of the call button (components/genesis/glass-nav). */
+.nova-cta,
+.nova-cta-menu {
+    display: none;
+}
+body:has([data-nova-page]) .site-cta {
+    display: none !important;
+}
+body:has([data-nova-page]) .nova-cta-menu {
+    display: flex;
+}
+@media (min-width: 640px) {
+    body:has([data-nova-page]) .nova-cta {
+        display: inline-flex;
+    }
+}
 /* And its own links on the bar (lib/site-config novaNavItems): from xl on the bar, always in the phone menu. */
 .nova-nav,
 .nova-nav-mobile {

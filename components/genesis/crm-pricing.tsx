@@ -1,10 +1,12 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { CRM_PLAN_PRICES, crmCycleCharge, crmCycleTotal, crmPerMonth, type CrmBilling, type CrmPlan } from "@/lib/crm-plans";
+import { tierGlow, tierGradient } from "@/app/(home)/components/offer/tier-colors";
+
 import { openSubscriptionCheckout, type SubscriptionStart } from "./razorpay-checkout";
 
 const inr = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
@@ -29,33 +31,57 @@ export function CrmPricing({ compact = false }: { compact?: boolean }) {
         ))}
       </div>
       <ul className={`${compact ? "mt-5 sm:grid-cols-3" : "mt-8 lg:grid-cols-3"} grid gap-4`}>
-        {CRM_PLAN_PRICES.map((p) => {
+        {CRM_PLAN_PRICES.map((p, tier) => {
           const popular = "popular" in p && p.popular;
+          const gradient = tierGradient(tier);
+          /*
+            DRAWN LIKE THE OTHER PLAN CARDS (Genesis, 31 Oct 2026: "make the
+            design like this", the AI Content Studio's): a 1px edge in the
+            tier's gradient, a solid card with its glow, the name in the
+            gradient, a light price, and the points as the tier's dots.
+          */
           return (
-            <li key={p.key} className={`glass glass-lit relative flex flex-col rounded-card ${compact ? "p-5" : "p-6 sm:p-7"} ${popular ? "ring-2 ring-[#ffc516]" : ""}`}>
-              {popular && <span className="absolute -top-3 left-6 rounded-full bg-[#ffc516] px-3 py-1 text-[0.75rem] font-medium text-[#141216]">Most agencies pick this</span>}
-              <h3 className={`${compact ? "text-body" : "text-lead"} font-semibold text-bone`}>{p.key}</h3>
-              <p className="mt-1 text-small text-ash">{compact ? p.features.find((f) => /users/i.test(f)) : p.blurb}</p>
-              <p className={`${compact ? "mt-4" : "mt-6"} flex items-baseline gap-1`}>
-                <span className={`${compact ? "text-[1.75rem]" : "text-h3"} font-normal tabular-nums text-bone`}>{inr(crmPerMonth(p, billing))}</span>
-                <span className="text-small text-ash">/ month</span>
-              </p>
-              <p className="mt-1 text-[0.8125rem] text-faint">
-                {billing === "annual" ? `${inr(crmCycleCharge(p, "annual"))} billed yearly` : `Billed monthly · ${inr(crmPerMonth(p, "annual"))}/month on annual`} · + 18% GST
-              </p>
-              {/* The homepage keeps the cards small, as its other plan cards (Genesis, 22 Oct 2026): the full list is on /resellers. Tablet: two columns. */}
-              <ul className={`mt-6 flex-1 gap-x-6 space-y-2.5 sm:grid sm:grid-cols-2 sm:space-y-0 sm:gap-y-2.5 lg:block lg:space-y-2.5 ${compact ? "hidden" : ""}`}>
-                {p.features.map((f) => (
-                  <li key={f} className="flex gap-2.5 text-small text-ash">
-                    <Check className="mt-0.5 size-4 shrink-0 text-[#ffc516]" aria-hidden />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              {compact && <div className="flex-1" />}
-              <button type="button" onClick={() => setChosen(p)} className={`${compact ? "mt-5 h-10" : "mt-7 h-12"} inline-flex items-center justify-center rounded-full px-6 text-small font-medium transition-colors ${popular ? "bg-[#ffc516] text-[#141216] hover:bg-[#ffd24d]" : "border border-[var(--glass-border)] text-bone hover:bg-[var(--hover-wash)]"}`}>
-                Choose {p.key}
-              </button>
+            <li key={p.key} className="flex">
+              <div
+                className={`flex w-full rounded-panel p-px ${popular ? "shadow-[0_30px_80px_-30px_var(--tier-glow)]" : "shadow-[0_24px_60px_-36px_var(--tier-glow)]"}`}
+                style={{ background: gradient, ["--tier-glow" as string]: tierGlow(tier) }}
+              >
+                <div className={`relative flex w-full flex-col overflow-hidden rounded-panel bg-ink ${compact ? "p-5" : "p-6 sm:p-7"}`}>
+                  <span aria-hidden className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full blur-3xl" style={{ background: tierGlow(tier) }} />
+                  <div className="relative flex items-start justify-between gap-3">
+                    <h3 className={`bg-clip-text font-display ${compact ? "text-[1.75rem]" : "text-h3"} font-normal leading-none tracking-tight text-transparent`} style={{ backgroundImage: gradient }}>
+                      {p.key}
+                    </h3>
+                    {popular && (
+                      <span className="rounded-full px-3 py-1 text-micro uppercase tracking-[0.14em] text-white" style={{ background: gradient }}>
+                        Most popular
+                      </span>
+                    )}
+                  </div>
+                  <p className={`relative mt-3 text-pretty ${compact ? "text-small" : "text-body"} leading-relaxed text-bone`}>{compact ? p.features.find((f) => /users/i.test(f)) : p.blurb}</p>
+                  <p className={`relative ${compact ? "mt-4" : "mt-6"} flex flex-wrap items-baseline gap-x-2`}>
+                    <span className={`font-display ${compact ? "text-[2rem]" : "text-h2"} font-normal leading-none tracking-tight text-bone tabular-nums`}>{inr(crmPerMonth(p, billing))}</span>
+                    <span className="-ml-1.5 text-lead text-ash">/-</span>
+                    <span className="text-small text-ash">per month</span>
+                  </p>
+                  <p className="relative mt-2 text-[0.8125rem] text-faint">
+                    {billing === "annual" ? `${inr(crmCycleCharge(p, "annual"))} billed yearly` : `Billed monthly · ${inr(crmPerMonth(p, "annual"))}/month on annual`} · + 18% GST
+                  </p>
+                  {/* The homepage keeps the cards small, as its other plan cards (Genesis, 22 Oct 2026): the full list is on /resellers. Tablet: two columns. */}
+                  <ul className={`relative mt-6 flex-1 gap-x-6 space-y-2.5 sm:grid sm:grid-cols-2 sm:space-y-0 sm:gap-y-2.5 lg:block lg:space-y-2.5 ${compact ? "hidden" : ""}`}>
+                    {p.features.map((f) => (
+                      <li key={f} className="flex gap-3 text-body leading-snug text-bone">
+                        <span aria-hidden className="mt-[0.5em] size-1.5 shrink-0 rounded-full" style={{ background: gradient }} />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {compact && <div className="flex-1" />}
+                  <button type="button" onClick={() => setChosen(p)} className={`relative ${compact ? "mt-5 h-10" : "mt-7 h-12"} inline-flex items-center justify-center rounded-full px-6 text-small font-medium transition-transform hover:scale-[1.02] ${popular ? "bg-[#ffc516] text-[#141216]" : "border border-[var(--glass-border)] text-bone hover:bg-[var(--hover-wash)]"}`}>
+                    Choose {p.key}
+                  </button>
+                </div>
+              </div>
             </li>
           );
         })}
