@@ -91,7 +91,13 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
       { target: rail, title: "The areas", body: "Home, Sales, Influence, Delivery, Money and Setup down the side. Click one and its pages open in the panel beside it; « folds the panel away for more room. A yellow dot means something's waiting there." },
       ...chapters,
       { target: `${rail} a[href="/admin/notifications"]`, title: "Notifications", body: "A client opened your quote, accepted it or paid; a deliverable was approved or needs changes; a task was given to you. All here, and by email for the important ones." },
-      ...(copilot ? [{ target: `${rail} a[href="/admin/assistant"]`, title: "Genesis Copilot", body: "The AI that works in the CRM with you: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. It has its own tour the first time you open it." }] : []),
+      ...(copilot
+        ? [
+            product === "Nova"
+              ? { target: `${rail} a[href="/admin/assistant"]`, title: "NOVA AI", body: "The AI that works in your CRM: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. You get 5 free requests; after that it runs on credits you top up." }
+              : { target: `${rail} a[href="/admin/assistant"]`, title: "Genesis Copilot", body: "The AI that works in the CRM with you: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. It has its own tour the first time you open it." },
+          ]
+        : []),
       { target: "text:How it works", title: "Help on every page", body: "Each page has its own “How it works” that walks through that page step by step: how to make a quote, an influencer plan, an invoice, import a sheet." },
       { target: 'nav[aria-label="Page history"]', title: "Back, forward, refresh", body: "Move between pages, and refresh to see a teammate's latest changes without losing what you've typed." },
     ].filter(shown);

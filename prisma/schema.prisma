@@ -1707,6 +1707,22 @@ model AiChat {
   @@map("crm_ai_chats")
 }
 
+/// NOVA AI credits for an agency's CRM (lib/crm/nova-ai): a ledger, the balance its sum. FREE (the starting allowance), USE (one per request), REFUND (a request that failed), TOPUP (paid), GRANT (from Genesis).
+model NovaAiCredit {
+  id          String   @id @default(cuid())
+  workspaceId String   @map("workspace_id")
+  delta       Int
+  reason      String
+  /// The top-up's Razorpay payment link, or who granted it and why.
+  ref         String?  @unique
+  note        String?
+  userId      String?  @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([workspaceId, createdAt])
+  @@map("crm_nova_ai_credits")
+}
+
 /// One call (or one Copilot answer) to Claude: its tokens and cost (lib/crm/ai-usage). No person for background reading.
 model AiUsage {
   id               String   @id @default(cuid())

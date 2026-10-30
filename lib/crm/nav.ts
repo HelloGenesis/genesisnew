@@ -1,6 +1,6 @@
 import type { NavGroup } from "@/components/crm/side-nav";
 
-import { plansOnly, sees, seesCreators, usesAi } from "./scope";
+import { plansOnly, sees, seesCreators, usesAi, usesNovaAi } from "./scope";
 import { can, type Viewer } from "./session";
 
 /**
@@ -12,6 +12,11 @@ type Recent = { href: string; label: string; hint?: string }[];
 export function crmNav(viewer: Viewer, ...rest: Parameters<typeof allNav> extends [Viewer, ...infer R] ? R : never): NavGroup[] {
   const groups = allNav(viewer, ...rest);
   if (usesAi(viewer)) return groups;
+  /* An agency's CRM has the assistant as NOVA AI, on credits (lib/crm/nova-ai). */
+  if (usesNovaAi(viewer)) {
+    const rename = <T extends { href: string; label: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant/usage")).map((x) => ({ ...x, label: x.label.replace("Genesis Copilot", "NOVA AI").replace("(Copilot)", "(NOVA AI)") }));
+    return groups.map((g) => ({ ...g, items: rename(g.items)!, ...(g.create ? { create: rename(g.create) } : {}) }));
+  }
   /* Genesis Copilot is for the owners only (lib/crm/scope usesAi): its links go for everyone else. */
   const keep = <T extends { href: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant"));
   return groups.map((g) => ({ ...g, items: keep(g.items)!, ...(g.create ? { create: keep(g.create) } : {}) }));

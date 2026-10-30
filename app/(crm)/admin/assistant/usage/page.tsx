@@ -1,11 +1,15 @@
 import Link from "next/link";
 
-import { Card, Empty, PageHead, Stats, Table } from "@/components/crm/ui";
+import { ActionForm } from "@/components/crm/action-form";
+import { Card, Empty, Field, PageHead, Select, Stats, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { date, dateTime, todayIst } from "@/lib/crm/catalog";
 import { dollars, SOURCE_LABEL, type UsageSource } from "@/lib/crm/ai-usage";
+import { FREE_PROMPTS, novaAiPacks } from "@/lib/crm/nova-ai";
 import { isSuperAdmin, usesAi } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
+
+import { grantNovaAiCredits, saveNovaAiPricing } from "../../actions/nova-ai";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "AI usage" };
@@ -39,6 +43,23 @@ export default async function UsagePage() {
     prisma.aiUsage.findMany({ where: { userId: viewer.id }, orderBy: { createdAt: "desc" }, take: 25 }),
     prisma.aiUsage.findMany({ where: { createdAt: { gte: since14 }, ...(all ? {} : { userId: viewer.id }) }, select: { createdAt: true, costMicros: true, userId: true } }),
   ]);
+  /* NOVA AI's agencies, for the owners. */
+  const nova = all
+    ? await (async () => {
+        const [rows, workspaces, pricing] = await Promise.all([
+          prisma.novaAiCredit.groupBy({ by: ["workspaceId", "reason"], _sum: { delta: true } }),
+          prisma.account.findMany({ where: { crmWorkspace: true, workspaceId: null }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+          novaAiPacks(),
+        ]);
+        const ids = [...new Set(rows.map((r) => r.workspaceId))];
+        const sum = (ws: string, reasons: string[]) => rows.filter((r) => r.workspaceId === ws && reasons.includes(r.reason)).reduce((n, r) => n + (r._sum.delta ?? 0), 0);
+        return {
+          ...pricing,
+          workspaces,
+          agencies: ids.map((id) => ({ id, name: workspaces.find((w) => w.id === id)?.name ?? "Removed agency", left: sum(id, ["FREE", "USE", "REFUND", "TOPUP", "GRANT"]), used: -sum(id, ["USE", "REFUND"]), bought: sum(id, ["TOPUP"]) })),
+        };
+      })()
+    : null;
   const people = new Map((await prisma.user.findMany({ where: { id: { in: byPerson.map((p) => p.userId!).filter(Boolean) } }, select: { id: true, name: true, email: true } })).map((u) => [u.id, u.name ?? u.email]));
   const chats = new Map((await prisma.aiChat.findMany({ where: { id: { in: recent.map((r) => r.chatId).filter((x): x is string => Boolean(x)) } }, select: { id: true, title: true } })).map((c) => [c.id, c.title]));
 
@@ -125,6 +146,49 @@ export default async function UsagePage() {
           </Table>
         </Card>
       </div>
+
+      {/* NOVA AI for agencies (lib/crm/nova-ai): the packs they buy, their credits, and grants. */}
+      {all && nova && (
+        <div className="grid gap-6 xl:grid-cols-[1fr_24rem]">
+          <Card title="NOVA AI · agencies' credits">
+            {nova.agencies.length === 0 ? (
+              <p className="text-ash">No agency has used NOVA AI yet. Each starts with {FREE_PROMPTS} free requests.</p>
+            ) : (
+              <Table head={["Agency", "Credits left", "Used", "Bought"]}>
+                {nova.agencies.map((a) => (
+                  <tr key={a.id}>
+                    <td className="text-bone">{a.name}</td>
+                    <td className="tabular-nums">{a.left}</td>
+                    <td className="tabular-nums">{a.used}</td>
+                    <td className="tabular-nums">{a.bought}</td>
+                  </tr>
+                ))}
+              </Table>
+            )}
+            <ActionForm action={grantNovaAiCredits} submit="Apply" reset>
+              <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_8rem_1fr]">
+                <Field label="Agency"><Select name="ws" required options={Object.fromEntries(nova.workspaces.map((w) => [w.id, w.name]))} /></Field>
+                <Field label="Credits" hint="Negative takes away."><input name="credits" required inputMode="numeric" className="crm-input" /></Field>
+                <Field label="Note"><input name="note" className="crm-input" placeholder="Launch offer, goodwill…" /></Field>
+              </div>
+            </ActionForm>
+          </Card>
+          <Card title="NOVA AI packs">
+            {nova.placeholder && <p className="crm-notice mb-3">These are placeholder prices. Set Genesis&apos;s own and save.</p>}
+            <ActionForm action={saveNovaAiPricing} submit="Save packs">
+              <p className="crm-label">Credits, and the price in ₹ with GST. One credit is one request.</p>
+              <div className="space-y-2">
+                {Array.from({ length: Math.max(nova.packs.length + 1, 4) }, (_, i) => nova.packs[i]).map((p, i) => (
+                  <div key={i} className="grid grid-cols-2 gap-2">
+                    <input name={`pack${i}_credits`} defaultValue={p?.credits ?? ""} placeholder="Credits" inputMode="numeric" className="crm-input" />
+                    <input name={`pack${i}_price`} defaultValue={p?.price ?? ""} placeholder="₹ price" inputMode="numeric" className="crm-input" />
+                  </div>
+                ))}
+              </div>
+            </ActionForm>
+          </Card>
+        </div>
+      )}
     </>
   );
 }
