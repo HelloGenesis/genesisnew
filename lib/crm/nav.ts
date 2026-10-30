@@ -113,6 +113,8 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
     {
       label: "Setup",
       items: [
+        /* Each person's own: their Google for the Inbox (app/(crm)/admin/me). */
+        { href: "/admin/me", label: "My settings" },
         ...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []),
         /* An agency's own team and its details for quotes and invoices; Genesis's integrations are Genesis's. */
         ...(viewer.workspaceId ? (viewer.workspaceRole === "ADMIN" ? [{ href: "/admin/team", label: "Team & company" }] : []) : [{ href: "/admin/settings", label: "Integrations" }]),

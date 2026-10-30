@@ -109,6 +109,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/gst": FileSpreadsheet,
   "/admin/staff": UserCog,
   "/admin/plan": CreditCard,
+  "/admin/me": UserCog,
   "/admin/lab": FlaskConical,
   "/admin/lab/avatars": ScanFace,
   "/admin/team": Briefcase,

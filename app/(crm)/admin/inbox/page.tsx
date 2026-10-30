@@ -6,11 +6,10 @@ import { getPrisma } from "@/lib/db";
 import type { Reading } from "@/lib/crm/ai";
 import { aiConfigured } from "@/lib/crm/ai";
 import { dateTime, money } from "@/lib/crm/catalog";
-import { COMPANY_ACCOUNT, googleConfigured } from "@/lib/crm/google";
 import { sees, leadScope, accountScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
-import { addAccountFromItem, attachItem, disconnectMyGoogle, dismissItem, expenseFromItem, importRazorpay, syncMyGoogle } from "../actions/inbox";
+import { addAccountFromItem, attachItem, dismissItem, expenseFromItem, importRazorpay } from "../actions/inbox";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Inbox" };
@@ -90,40 +89,9 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       {notice && <Notice warn={notice[1]}>{notice[0]}</Notice>}
       {!aiConfigured() && <Notice warn>The AI key isn&apos;t set yet (ANTHROPIC_API_KEY), so nothing is read until it is.</Notice>}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card title="Your Google">
-          {conn ? (
-            <div className="space-y-3">
-              <p className="text-bone">Connected as {conn.email}</p>
-              {!conn.scopes.includes("auth/drive.file") && (
-                <Notice warn>
-                  Reconnect once to allow file access: project uploads and the live CRM Google Sheets need it{conn.email === COMPANY_ACCOUNT() ? " (this is the company account they use)" : ""}.{" "}
-                  <a href="/api/crm/google/connect" className="crm-link">Reconnect Google</a>
-                </Notice>
-              )}
-              <p className="text-[0.875rem] text-ash">
-                Gmail inbox and Drive, read-only. {conn.lastSyncAt ? `Last checked ${dateTime(conn.lastSyncAt)}.` : "First check within five minutes."}
-              </p>
-              {conn.lastError && <Notice warn><span className="break-words [overflow-wrap:anywhere]">{conn.status === "REVOKED" ? "Google access was removed. Connect again." : `Last check failed: ${conn.lastError.slice(0, 160)}`}</span></Notice>}
-              <div className="flex flex-wrap items-center gap-2">
-                <ActionForm action={syncMyGoogle} submit="Check now" inline />
-                {conn.status === "REVOKED" && <a href="/api/crm/google/connect" className="crm-btn crm-btn-primary crm-btn-sm">Connect again</a>}
-                <form action={disconnectMyGoogle}>
-                  <button className="text-[0.8125rem] text-faint hover:text-[#dc2626]">Disconnect</button>
-                </form>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-ash">
-                Connect your @genesismedia.co Google once. New emails and Drive docs are read for briefs, client and vendor details, invoices, proposals and links. Briefs become leads automatically and you&apos;re notified; the rest waits here.
-              </p>
-              <p className="text-[0.8125rem] text-faint">Read-only. Personal mail, newsletters and notifications are skipped and never stored.</p>
-              {googleConfigured() ? <a href="/api/crm/google/connect" className="crm-btn crm-btn-primary">Connect Google</a> : <Notice warn>Google isn&apos;t set up for the CRM yet. An owner adds the Google OAuth client (see Integrations).</Notice>}
-            </div>
-          )}
-        </Card>
-
+      {/* Connecting Google lives in My settings (Genesis, 31 Oct 2026: "this can go in settings"). */}
+      {!conn && <Notice>Connect your Google once in <Link href="/admin/me" className="crm-link">My settings</Link>: new emails and Drive docs are then read for briefs, client and vendor details, invoices and links.</Notice>}
+      <div>
         <Card title="Waiting for you">
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {Object.entries(KINDS).filter(([k]) => k !== "OTHER").map(([k, v]) => (

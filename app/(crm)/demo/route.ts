@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   if (await signedInIdentity()) return NextResponse.redirect(new URL("/demo/signed-in", url.origin));
   await ensureDemo();
   const next = url.searchParams.get("next");
-  const out = NextResponse.redirect(new URL(next && /^\/(admin|portal)(\/|$)/.test(next) ? next : "/admin", url.origin));
+  const out = NextResponse.redirect(new URL(next && /^\/(admin|portal)(\/|\?|$)/.test(next) ? next : "/admin", url.origin));
   out.cookies.set(DEMO_COOKIE, "1", { httpOnly: true, sameSite: "lax", secure: url.protocol === "https:", path: "/", maxAge: 60 * 60 * 6 });
   return out;
 }
