@@ -17,7 +17,7 @@ import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
 import { ProductWordmark } from "./product-wordmark";
-import { homeHref, navItems, type NavItem } from "@/lib/site-config";
+import { homeHref, navItems, novaNavItems, type NavItem } from "@/lib/site-config";
 import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { cn } from "@/lib/utils";
 
@@ -277,7 +277,21 @@ export function GlassNav() {
           2026). With the four divisions on the bar as their own menus, a
           1024px laptop pushed "Start a Project" off the right edge.
         */}
-        <ul className="hidden flex-1 items-center justify-center gap-1 xl:flex">
+        {/* On the Nova by Genesis page its own sections instead (novaNavItems), swapped in CSS (globals.css) like its logo. */}
+        <ul className="nova-nav flex-1 items-center justify-center gap-1">
+          {novaNavItems.map((item) =>
+            item.children ? (
+              <NavMenu key={item.label} item={item} />
+            ) : (
+              <li key={item.label}>
+                <Link href={item.href} className={NAV_LINK}>
+                  {item.label}
+                </Link>
+              </li>
+            ),
+          )}
+        </ul>
+        <ul className="site-nav hidden flex-1 items-center justify-center gap-1 xl:flex">
           {navItems.map((item) =>
             item.children || item.items?.length ? (
               <NavMenu key={item.label} item={item} />
@@ -371,8 +385,67 @@ export function GlassNav() {
               */}
               <ThemeToggle />
             </div>
-            <ul className="flex flex-col">
+            <ul className="site-nav-mobile flex flex-col">
               {navItems.map((item) => (
+                <li key={item.label}>
+                  <Link
+                    href={item.href}
+                    {...outbound(item)}
+                    onClick={() => setMenuOpen(false)}
+                    className="block rounded-card px-3 py-3 text-small text-ash transition-colors hover:bg-[var(--hover-wash)] hover:text-bone"
+                  >
+                    {/* A division is its logo — the N and the name — as everywhere else. */}
+                    {item.short ? (
+                      <>
+                        <span className="sr-only">{item.label}</span>
+                        <DivisionName name={item.short} height={22} />
+                      </>
+                    ) : (
+                      item.label
+                    )}
+                  </Link>
+                  {/*
+                    THE SUBMENU IS ALWAYS OPEN ON A PHONE, which is the right
+                    call rather than a shortcut. A sheet is already a
+                    disclosure — the reader opened it — so putting a second
+                    one inside it makes the four divisions two taps deep in a
+                    menu with six items in it. They are indented under their
+                    parent and that is the whole treatment.
+                  */}
+                  {item.children && (
+                    <ul className="mb-1 ml-3 flex flex-col border-l border-[var(--glass-border)] pl-3">
+                      {item.children.map((child) => (
+                        <li key={child.label}>
+                          <Link
+                            href={child.href}
+                            data-page-link
+                            data-work-mode={child.workMode}
+                            onClick={() => setMenuOpen(false)}
+                            className="block rounded-card px-3 py-2.5 text-small transition-colors hover:bg-[var(--hover-wash)]"
+                          >
+                            <span className="bg-[linear-gradient(100deg,#a77be8_0%,#f2607e_55%,#f09a2e_100%)] bg-clip-text font-medium text-transparent">
+                              {child.label}
+                            </span>
+                          </Link>
+                          {/*
+                            THE SERVICES ARE ON THE DESKTOP PANEL AND NOT
+                            HERE. Four divisions with their three or four
+                            services each is nineteen rows of unclickable
+                            text inside a sheet a reader opened to navigate —
+                            it would push Contact off the bottom of a phone
+                            to describe columns they cannot click. The
+                            division names are the navigation; the services
+                            are what the wide panel has room to explain.
+                          */}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <ul className="nova-nav-mobile flex-col">
+              {novaNavItems.map((item) => (
                 <li key={item.label}>
                   <Link
                     href={item.href}

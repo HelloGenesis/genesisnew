@@ -107,7 +107,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-6 pb-[var(--section-pad)] sm:gap-28">
         {/* Straight after NOVA, the real dashboard, live and usable (components/genesis/nova-live; Genesis, 31 Oct 2026). */}
-        <section aria-labelledby="tour-heading">
+        <section id="demo" aria-labelledby="tour-heading" className="scroll-mt-28">
           <h2 id="tour-heading" className="sr-only">The Nova dashboard, live</h2>
           <NovaLive />
         </section>
@@ -221,7 +221,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           </RevealGroup>
         </section>
 
-        <section aria-labelledby="faq-heading">
+        <section id="faq" aria-labelledby="faq-heading" className="scroll-mt-28">
           <Reveal>
             <h2 id="faq-heading" className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
               Questions we get asked
