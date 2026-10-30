@@ -629,3 +629,27 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
     ],
   },
 ];
+
+/*
+ * THE NOVA BY GENESIS PAGE'S BAR (Genesis, 31 Oct 2026: "here only this
+ * website's things; a View verticals dropdown where all other website URLs
+ * are"). Nova's own sections, then one small menu out to the rest of Genesis.
+ * Hash links, so they work on genesismedia.co/resellers and at the root of
+ * nova.genesismedia.co alike. components/genesis/glass-nav swaps it in.
+ */
+export const novaNavItems: NavItem[] = [
+  { label: "Live demo", href: "#demo" },
+  { label: "Features", href: "#inside" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Free trial", href: "#trial" },
+  { label: "FAQ", href: "#faq" },
+  {
+    label: "View verticals",
+    href: "/",
+    children: [
+      { label: "Genesis Media", href: "/", description: "The agency: everything Genesis does." },
+      ...divisionPages.map((d) => ({ label: d.label, href: d.href })),
+      { label: "Case Studies", href: "/case-studies", description: "Work for real brands, with the numbers." },
+    ],
+  },
+];

@@ -87,7 +87,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <ScrollMain className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:h-full lg:overflow-y-auto lg:px-9 lg:py-8">{children}</ScrollMain>
       {viewer?.demo && <DemoGuard />}
       <Suspense fallback={null}>
-        <AppTour firstTime={!tourSeen} name={viewer.name} area="portal" />
+        <AppTour firstTime={!tourSeen} name={viewer.name} area="portal" groups={groups} demo={viewer.demo} product="your portal" />
       </Suspense>
     </div>
   );

@@ -327,3 +327,15 @@ textarea.crm-input.crm-grow {
   padding-bottom: 0.375rem;
   max-width: 40rem;
 }
+
+/* The tour's invitation slides up into the corner (components/crm/app-tour). */
+@keyframes tour-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}

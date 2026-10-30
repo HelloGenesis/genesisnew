@@ -5,7 +5,8 @@ import { z } from "zod";
 import { aiConfigured } from "@/lib/crm/ai";
 import { type ChatEvent, runChat } from "@/lib/crm/assistant";
 import { inWorkspace } from "@/lib/crm/request-workspace";
-import { usesAi } from "@/lib/crm/scope";
+import { NoCredits, refundNovaAi, spendNovaAi } from "@/lib/crm/nova-ai";
+import { usesAi, usesNovaAi } from "@/lib/crm/scope";
 import { getViewer, staffAccess } from "@/lib/crm/session";
 
 export const runtime = "nodejs";
@@ -33,10 +34,23 @@ const Body = z.object({
 export async function POST(request: Request) {
   const viewer = await getViewer();
   if (staffAccess(viewer) !== "granted") return NextResponse.json({ error: "Sign in to the CRM first." }, { status: 401 });
-  if (!usesAi(viewer!)) return NextResponse.json({ error: "Genesis Copilot is open to the owners only." }, { status: 403 });
+  const nova = !usesAi(viewer!) && usesNovaAi(viewer!);
+  if (!usesAi(viewer!) && !nova) return NextResponse.json({ error: "Genesis Copilot is open to the owners only." }, { status: 403 });
+  if (viewer!.demo) return NextResponse.json({ error: "NOVA AI isn't part of the demo. Start your free trial to get 5 free requests." }, { status: 403 });
   if (!aiConfigured()) return NextResponse.json({ error: "The AI isn't set up yet (ANTHROPIC_API_KEY)." }, { status: 503 });
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "That message or its files are too large, or not a supported type." }, { status: 400 });
+  /* NOVA AI: one credit a request, quick mode only (lib/crm/nova-ai). */
+  let useId: string | null = null;
+  if (nova) {
+    try {
+      useId = await spendNovaAi(viewer!.workspaceId!, viewer!.id);
+    } catch (error) {
+      if (error instanceof NoCredits) return NextResponse.json({ error: error.message, topUp: true }, { status: 402 });
+      throw error;
+    }
+    parsed.data.mode = "quick";
+  }
 
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
@@ -53,6 +67,7 @@ export async function POST(request: Request) {
           : error instanceof Anthropic.APIError ? `The AI had a problem (${error.status}). Try again.`
           : "Something went wrong. Try again.";
         console.error("[assistant]", error);
+        if (useId) await refundNovaAi(useId).catch(() => undefined);
         emit({ t: "error", m });
         emit({ t: "done" });
       }

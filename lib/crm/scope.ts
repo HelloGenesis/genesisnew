@@ -32,6 +32,8 @@ export const isSuperAdmin = (v: Viewer) => v.roles.includes("OWNER");
  * for Genesis's own owners. Not the rest of the team, not an agency's CRM.
  */
 export const usesAi = (v: Viewer) => isSuperAdmin(v) && !v.workspaceId;
+/** NOVA AI: the same assistant in an agency's own CRM, on credits (lib/crm/nova-ai). */
+export const usesNovaAi = (v: Viewer) => Boolean(v.workspaceId);
 
 /*
  * EVERY SCOPE STAYS IN ONE CRM (lib/crm/workspace): the person's agency's, the

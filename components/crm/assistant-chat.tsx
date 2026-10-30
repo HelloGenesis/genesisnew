@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, ChevronDown, Maximize2, Minimize2, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
+import { AudioLines, ChevronDown, CircleHelp, Maximize2, Minimize2, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -9,6 +9,8 @@ import { type Added, type BuiltIn, ConnectorsDialog } from "@/components/crm/con
 import { usePref } from "@/components/crm/use-pref";
 import { NeuralOrb } from "@/components/genesis/neural-orb";
 import { ProductWordmark } from "@/components/genesis/product-wordmark";
+
+import { NovaAiCredits, type NovaAi } from "./nova-ai-credits";
 import { readSheetFile } from "@/lib/sheet-file";
 
 type ChatItem = { id: string; title: string; updatedAt: string };
@@ -95,12 +97,13 @@ function Rich({ text }: { text: string }) {
  * the answer streams in as it's written, with what it's doing in the CRM
  * shown as it happens.
  */
-export function AssistantChat({ chats, open, firstName, connectors, initialText = "", monthCost }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; initialText?: string; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean }; monthCost?: string }) {
+export function AssistantChat({ chats, open, firstName, connectors, initialText = "", monthCost, nova }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; initialText?: string; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean }; monthCost?: string; nova?: NovaAi }) {
   const router = useRouter();
   const [chatId, setChatId] = useState<string | null>(open?.id ?? null);
   const [messages, setMessages] = useState<Msg[]>(open?.messages ?? []);
   /* A prompt to start from (?prompt=, from the rail's Create links). */
   const [text, setText] = useState(initialText);
+  const [outOfCredits, setOutOfCredits] = useState(Boolean(nova && !nova.demo && nova.credits < 1));
   const [files, setFiles] = useState<Attachment[]>([]);
   const [busy, setBusy] = useState(false);
   const [activity, setActivity] = useState<string | null>(null);
@@ -198,7 +201,11 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
     setFiles([]);
     try {
       const r = await fetch("/api/crm/assistant", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chatId, ...sent }) });
-      if (!r.ok || !r.body) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "Couldn't reach Genesis Copilot.");
+      if (!r.ok || !r.body) {
+        const why = (await r.json().catch(() => ({}))) as { error?: string; topUp?: boolean };
+        if (why.topUp) setOutOfCredits(true);
+        throw new Error(why.error ?? "Couldn't reach the assistant.");
+      }
       const reader = r.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -286,7 +293,8 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             onPaste={(e) => { if (e.clipboardData.files.length) { e.preventDefault(); void attach(e.clipboardData.files); } }}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }}
             rows={2}
-            placeholder="Ask anything, or paste screenshots…"
+            placeholder={nova?.demo ? "NOVA AI isn't part of the demo: start a free trial for 5 free requests" : "Ask anything, or paste screenshots…"}
+            disabled={nova?.demo}
             className="w-full resize-none bg-transparent px-1 py-1 text-[0.9375rem] text-bone placeholder:text-faint focus:outline-none"
             aria-label="Message"
           />
@@ -303,20 +311,23 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
                 </ul>
               )}
             </div>
+            {/* NOVA AI runs in quick mode only (lib/crm/nova-ai). */}
+            {!nova && (
             <div className="relative">
-              <button type="button" onClick={() => { setModeMenu((m) => !m); setMenu(false); }} aria-expanded={modeMenu} aria-label={`Mode: ${modeNow.label}`} className={CHIP}>
-                <modeNow.icon className="size-3.5" aria-hidden /> {modeNow.label} <ChevronDown className={`size-3.5 transition-transform ${modeMenu ? "rotate-180" : ""}`} aria-hidden />
-              </button>
-              {modeMenu && (
-                <ul className={MENU}>
-                  {MODES.map((m) => (
-                    <li key={m.key}>
-                      <button type="button" onClick={() => { setMode(m.key); setModeMenu(false); }} aria-pressed={mode === m.key} className={`${MENU_ITEM} ${mode === m.key ? "bg-[var(--hover-wash)] text-bone" : ""}`}><m.icon className="size-4" aria-hidden /> {m.label}</button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                <button type="button" onClick={() => { setModeMenu((m) => !m); setMenu(false); }} aria-expanded={modeMenu} aria-label={`Mode: ${modeNow.label}`} className={CHIP}>
+                  <modeNow.icon className="size-3.5" aria-hidden /> {modeNow.label} <ChevronDown className={`size-3.5 transition-transform ${modeMenu ? "rotate-180" : ""}`} aria-hidden />
+                </button>
+                {modeMenu && (
+                  <ul className={MENU}>
+                    {MODES.map((m) => (
+                      <li key={m.key}>
+                        <button type="button" onClick={() => { setMode(m.key); setModeMenu(false); }} aria-pressed={mode === m.key} className={`${MENU_ITEM} ${mode === m.key ? "bg-[var(--hover-wash)] text-bone" : ""}`}><m.icon className="size-4" aria-hidden /> {m.label}</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
             <input ref={picker} type="file" multiple accept="image/*,.pdf,.xlsx,.csv,.tsv" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => { void attach(e.target.files); e.target.value = ""; }} />
             <button type="button" onClick={() => setShowConnectors(true)} className={`${CHIP} max-sm:hidden`} aria-label={`Connectors: ${liveApps} on`}>
               <Plug className="size-3.5" aria-hidden /> Connectors <span className="rounded-full bg-[var(--hover-wash)] px-1.5 text-[0.6875rem] text-bone">{liveApps}</span>
@@ -341,7 +352,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
         <aside className="flex w-[16rem] shrink-0 flex-col border-r border-[var(--glass-border)] max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-30 max-lg:bg-[var(--crm-panel)] max-lg:shadow-[var(--shadow-float)]">
           <div className="flex items-center gap-2 px-4 pb-3 pt-4">
             {/* The GENESIS COPILOT wordmark (Genesis, 30 Oct 2026), its N standing in for the logo tile. */}
-            <span className="flex-1"><ProductWordmark product="copilot" className="h-[13px]" /></span>
+            <span className="flex flex-1 items-center gap-1.5">{nova ? <><ProductWordmark product="nova" className="h-[14px]" /><span className="text-[0.75rem] font-medium tracking-[0.2em] text-ash">AI</span></> : <ProductWordmark product="copilot" className="h-[13px]" />}</span>
             {fullButton}
             <button type="button" onClick={() => toggleList(false)} className="grid size-8 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone" aria-label="Hide the sidebar" title="Hide the sidebar"><ChevronsLeft className="size-4" aria-hidden /></button>
           </div>
@@ -371,7 +382,8 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             {!chats.length && <li className="px-3 text-[0.8125rem] text-faint">Your chats will show here.</li>}
           </ul>
           {/* What you've used this month (Genesis, 30 Oct 2026: "show usage to each user"); the detail is on /admin/assistant/usage. */}
-          {monthCost && (
+          {nova && <NovaAiCredits nova={nova} open={outOfCredits} />}
+          {monthCost && !nova && (
             <Link href="/admin/assistant/usage" className="mx-3 mb-3 flex items-center justify-between rounded-xl border border-[var(--glass-border)] px-3 py-2 text-[0.75rem] text-ash hover:border-[#ffc516]/60 hover:text-bone">
               <span>Your usage this month</span>
               <span className="tabular-nums text-bone">{monthCost} →</span>
@@ -398,7 +410,9 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             <button type="button" onClick={() => toggleList(true)} className={CHIP} aria-label="Show the sidebar"><ChevronsRight className="size-3.5" aria-hidden /> Chats</button>
           )}
           {!listOpen && <span className="ml-auto">{fullButton}</span>}
-          <Link href="/admin/assistant" className={`${CHIP} ${listOpen ? "ml-auto" : ""}`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
+          {/* Copilot's own tour (components/crm/copilot-tour). */}
+          {!nova && <button type="button" data-copilot-tour className={`${CHIP} ${listOpen ? "ml-auto" : ""}`}><CircleHelp className="size-3.5" aria-hidden /> <span className="max-sm:hidden">How it works</span></button>}
+          <Link href="/admin/assistant" className={`${CHIP} ${nova && listOpen ? "ml-auto" : ""}`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
         </div>
 
         {!messages.length ? (
@@ -407,7 +421,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             <div className="relative w-[max(5rem,min(14rem,58vw,calc(100cqh-23rem)))]">
               <NeuralOrb thinking={thinking} />
               {/* The GENESIS COPILOT wordmark in the orb's middle, as GENESIS MEDIA sits in the homepage's (Genesis, 30 Oct 2026: "the logo should appear here in the center as well"). */}
-              <span className={`pointer-events-none absolute inset-0 grid place-items-center ${thinking ? "motion-safe:animate-pulse" : ""}`}><ProductWordmark product="copilot" className="h-auto w-[80%] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]" /></span>
+              <span className={`pointer-events-none absolute inset-0 grid place-items-center ${thinking ? "motion-safe:animate-pulse" : ""}`}><ProductWordmark product={nova ? "nova" : "copilot"} className="h-auto w-[80%] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]" /></span>
               {SHORTCUTS.filter((x) => x.at).map((x) => (
                 <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone sm:[@container(min-height:36rem)]:flex ${x.at}`}>
                   <x.icon className="size-3.5" aria-hidden /> {x.label}
@@ -423,6 +437,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             </div>
             <div className="mt-6 w-full max-w-3xl">{composer}</div>
             {error && <p className="mt-3 text-[0.8125rem] text-[#dc2626]" role="alert">{error}</p>}
+            {nova && (outOfCredits || nova.demo) && <div className="mt-3 w-full max-w-sm"><NovaAiCredits nova={nova} open compact /></div>}
           </div>
         ) : (
           <>

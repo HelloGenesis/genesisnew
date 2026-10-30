@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /**
  * NOVA, LIVE (Genesis, 31 Oct 2026: "our real dashboard interface, usable …
  * what you see is what you get; a book-a-trial button top right and a full
- * screen button"). The real CRM in a window, signed in as the demo agency
+ * screen button"; a "View demo" that opens it full screen). The real CRM in a window, signed in as the demo agency
  * (/demo, lib/crm/demo): every page opens and works, nothing is saved. Full
  * screen uses the browser's own, or fills the window where there is none
  * (iPhone Safari).
@@ -49,8 +49,14 @@ export function NovaLive() {
         <span className="size-2.5 rounded-full bg-[#28c840]" />
         <span className="ml-3 truncate text-[0.75rem] text-white/45">nova.genesismedia.co · live demo, nothing is saved</span>
         <span className="ml-auto flex shrink-0 items-center gap-2">
-          <a href="#apply" onClick={() => document.fullscreenElement && document.exitFullscreen()} className="rounded-full bg-[#ffc516] px-3.5 py-1.5 text-[0.75rem] font-medium text-[#141216] transition-transform hover:scale-[1.03]">
-            Book a trial
+          {/* "View demo" opens it full screen (Genesis, 31 Oct 2026). */}
+          {!full && (
+            <button type="button" onClick={toggle} className="rounded-full border border-white/20 px-3.5 py-1.5 text-[0.75rem] font-medium text-white transition-colors hover:border-white/50 hover:bg-white/10">
+              View demo
+            </button>
+          )}
+          <a href="#trial" onClick={() => document.fullscreenElement && document.exitFullscreen()} className="rounded-full bg-[#ffc516] px-3.5 py-1.5 text-[0.75rem] font-medium text-[#141216] transition-transform hover:scale-[1.03]">
+            Start free trial
           </a>
           <button type="button" onClick={toggle} aria-label={full ? "Exit full screen" : "Full screen"} title={full ? "Exit full screen" : "Full screen"} className="grid size-8 place-items-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white">
             {full ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />}

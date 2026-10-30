@@ -9,6 +9,8 @@ export type TourStep = {
   target?: string;
   title: string;
   body: string;
+  /** What's in this part, one line each (the app tour's areas list their pages). */
+  points?: { title: string; body: string }[];
 };
 
 const TEXTUAL = "h1, h2, h3, button, a, summary, label, legend, th, span, p, [role=tab]";
@@ -36,7 +38,7 @@ export function findTarget(target: string): HTMLElement | null {
  * a phone, centred when there's nothing to point at). Arrow keys move, Esc
  * closes.
  */
-export function TourOverlay({ steps, onClose, startLabel = "Start" }: { steps: TourStep[]; onClose: () => void; startLabel?: string }) {
+export function TourOverlay({ steps, onClose, onDone, startLabel = "Start" }: { steps: TourStep[]; onClose: () => void; onDone?: () => void; startLabel?: string }) {
   const [i, setI] = useState(0);
   const [box, setBox] = useState<DOMRect | null>(null);
   const step = steps[i];
@@ -75,11 +77,14 @@ export function TourOverlay({ steps, onClose, startLabel = "Start" }: { steps: T
   const card = useMemo(() => {
     if (!box || typeof window === "undefined") return { left: "50%", top: "50%", transform: "translate(-50%, -50%)" } as const;
     const wide = window.innerWidth >= 1024;
-    if (wide && box.right + 380 < window.innerWidth) return { left: box.right + 16, top: Math.max(16, Math.min(box.top - 8, window.innerHeight - 280)) };
-    if (wide && box.left - 380 > 0) return { left: box.left - 368, top: Math.max(16, Math.min(box.top - 8, window.innerHeight - 280)) };
+    /* A card with a list is taller: keep it on screen. */
+    const tall = step?.points?.length ? Math.min(window.innerHeight * 0.75, 200 + step.points.length * 58) : 280;
+    const top = Math.max(16, Math.min(box.top - 8, window.innerHeight - tall - 16));
+    if (wide && box.right + 440 < window.innerWidth) return { left: box.right + 16, top };
+    if (wide && box.left - 440 > 0) return { left: box.left - 432, top };
     const below = box.bottom + 12;
     return below + 260 < window.innerHeight ? { left: 16, right: 16, top: below } : { left: 16, right: 16, top: Math.max(16, box.top - 272) };
-  }, [box]);
+  }, [box, step]);
 
   if (!step) return null;
   const last = i === steps.length - 1;
@@ -94,7 +99,7 @@ export function TourOverlay({ steps, onClose, startLabel = "Start" }: { steps: T
       ) : (
         <div aria-hidden className="fixed inset-0 bg-black/60" />
       )}
-      <div data-tour-card className="fixed max-w-sm rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-float,#1d1b1f)] p-5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)] sm:w-[22rem]" style={card}>
+      <div data-tour-card className={`fixed flex max-h-[min(80vh,40rem)] flex-col rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-float,#1d1b1f)] p-5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.7)] ${step.points?.length ? "max-w-[26rem] sm:w-[26rem]" : "max-w-sm sm:w-[22rem]"}`} style={card}>
         <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 grid size-8 place-items-center rounded-full text-ash hover:bg-[var(--hover-wash)] hover:text-bone">
           <X className="size-4" aria-hidden />
         </button>
@@ -102,8 +107,19 @@ export function TourOverlay({ steps, onClose, startLabel = "Start" }: { steps: T
           {i + 1} of {steps.length}
         </p>
         <h2 id="tour-title" className="mt-1.5 pr-8 font-sans text-[1.25rem] font-semibold text-bone">{step.title}</h2>
-        <p className="mt-2 text-[0.9375rem] leading-relaxed text-ash">{step.body}</p>
-        <div className="mt-5 flex items-center justify-between gap-2">
+        <div className="min-h-0 overflow-y-auto">
+          <p className="mt-2 text-[0.9375rem] leading-relaxed text-ash">{step.body}</p>
+          {step.points?.length ? (
+            <ul className="mt-3 space-y-2 border-t border-[var(--glass-border)] pt-3">
+              {step.points.map((pt) => (
+                <li key={pt.title} className="text-[0.8125rem] leading-snug text-ash">
+                  <span className="font-medium text-bone">{pt.title}.</span> {pt.body}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+        <div className="mt-5 flex shrink-0 items-center justify-between gap-2">
           <button type="button" onClick={onClose} className="text-[0.875rem] text-ash underline-offset-4 hover:text-bone hover:underline">
             {last ? "" : "Skip"}
           </button>
@@ -113,7 +129,7 @@ export function TourOverlay({ steps, onClose, startLabel = "Start" }: { steps: T
                 Back
               </button>
             )}
-            <button type="button" onClick={() => (last ? onClose() : setI(i + 1))} className="crm-btn crm-btn-primary crm-btn-sm">
+            <button type="button" onClick={() => (last ? (onDone ?? onClose)() : setI(i + 1))} className="crm-btn crm-btn-primary crm-btn-sm">
               {last ? "Done" : i === 0 ? startLabel : "Next"}
             </button>
           </div>

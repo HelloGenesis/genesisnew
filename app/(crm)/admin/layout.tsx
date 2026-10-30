@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CrmRail, RailUser } from "@/components/crm/crm-rail";
 import { SideNav } from "@/components/crm/side-nav";
 import { crmNav } from "@/lib/crm/nav";
-import { Notice } from "@/components/crm/ui";
+import { Notice, PageHead } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
 import { emailLoginEnabled } from "@/lib/crm/email-login";
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
@@ -18,6 +18,8 @@ import { setViewingCrm } from "./actions/workspaces";
 import { AppTour } from "@/components/crm/app-tour";
 import { ScrollMain } from "@/components/crm/scroll-main";
 import { DemoGuard } from "@/components/crm/demo-guard";
+import { TrialPlans } from "@/components/crm/trial-plans";
+import { daysLeft, planCards, prettyDate, trialGate, trialOf } from "@/lib/crm/nova-trial";
 import { Suspense } from "react";
 
 export const metadata: Metadata = { title: { default: "CRM", template: "%s · Genesis CRM" } };
@@ -60,6 +62,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   /* The tour opens by itself on someone's first visit (components/crm/app-tour). */
   const tourSeen = Boolean(await prisma.appSetting.findUnique({ where: { key: `tour:done:${viewer!.id}` }, select: { key: true } }));
+  const trial = viewer!.workspaceId ? await trialOf(viewer!.workspaceId) : null;
+  const gate = trialGate(trial);
   /* The latest plans and quotes, for the rail's "Check existing" lists. */
   const latest = can(viewer, "plans")
     ? await prisma.quote.findMany({ where: quoteScope(viewer!), orderBy: { updatedAt: "desc" }, take: 30, select: { id: true, number: true, kind: true, title: true, company: true } })
@@ -110,11 +114,34 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <button className="crm-btn crm-btn-secondary crm-btn-sm">Back to Genesis</button>
           </form>
         )}
-        {children}
+        {/* NOVA'S FREE TRIAL (lib/crm/nova-trial): the days left, and from day 3 the plan and card before anything else. */}
+        {trial && gate === "open" && (trial.state === "TRIAL" || trial.state === "CARD_ADDED") && (
+          <Link href="/admin/plan" className="crm-notice flex flex-wrap items-center justify-between gap-3 hover:border-[#ffc516]/60">
+            <span>
+              {trial.state === "TRIAL"
+                ? `Free trial · ${daysLeft(trial)} days left. Choose a plan and add your card by ${prettyDate(trial.cardDueAt)}: ₹0 today.`
+                : `Free trial until ${prettyDate(trial.endsAt)}. Your ${trial.plan} plan starts then.`}
+            </span>
+            <span className="crm-btn crm-btn-primary crm-btn-sm">{trial.state === "TRIAL" ? "Choose a plan" : "Plan & billing"}</span>
+          </Link>
+        )}
+        {gate === "card" ? (
+          <>
+            <PageHead kicker="Your free trial" title="Choose your plan to carry on" sub={`Everything you've set up is waiting. You pay ₹0 today; your card is first charged on ${prettyDate(trial!.endsAt)}, when your 14-day trial ends.`} />
+            <TrialPlans plans={planCards()} firstCharge={prettyDate(trial!.endsAt)} admin={viewer!.workspaceRole === "ADMIN" && !viewer!.demo} initial={trial!.plan} />
+          </>
+        ) : gate === "ended" ? (
+          <>
+            <PageHead kicker="Nova by Genesis" title={trial!.state === "CANCELLED" ? "Your trial is cancelled" : "Your free trial has ended"} sub="Nothing has been charged. Your data is kept for 30 days." />
+            <p className="crm-notice">To pick up where you left off, reply to any of our emails or write to us on WhatsApp, and we&apos;ll switch it back on with the plan you choose.</p>
+          </>
+        ) : (
+          children
+        )}
       </ScrollMain>
       <Suspense fallback={null}>
-        {/* The demo can't remember the tour was seen, so it doesn't open by itself there ("Take the tour" still does). */}
-        <AppTour firstTime={!tourSeen && !viewer!.demo} name={viewer!.name} area="admin" />
+        {/* An agency's CRM (and Nova's live demo, which remembers the tour in the browser) is Nova by Genesis. */}
+        <AppTour firstTime={!tourSeen && gate === "open"} name={viewer!.name} area="admin" groups={groups} demo={viewer!.demo} product={viewer!.workspaceId ? "Nova" : "Genesis"} />
       </Suspense>
       {viewer!.demo && <DemoGuard />}
     </div>

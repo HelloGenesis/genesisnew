@@ -1647,6 +1647,23 @@ body:has([data-nova-page]) .nova-page-hide {
 body:has([data-nova-page]) .nova-page-show {
     display: block;
 }
+/* And its own links on the bar (lib/site-config novaNavItems): from xl on the bar, always in the phone menu. */
+.nova-nav,
+.nova-nav-mobile {
+    display: none;
+}
+body:has([data-nova-page]) .site-nav,
+body:has([data-nova-page]) .site-nav-mobile {
+    display: none;
+}
+body:has([data-nova-page]) .nova-nav-mobile {
+    display: flex;
+}
+@media (min-width: 1280px) {
+    body:has([data-nova-page]) .nova-nav {
+        display: flex;
+    }
+}
 
 /* Scrollbars everywhere (Genesis, 30 Oct 2026: "a very 0.1 line", grey, "all
    across"): a 2px hairline in the ink colour at low strength, so it matches
