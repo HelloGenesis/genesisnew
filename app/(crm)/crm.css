@@ -69,9 +69,10 @@
   .crm-frame > .crm-side {
     overflow-y: auto;
   }
-  /* The admin rail scrolls itself; the side mustn't clip its account menu. */
+  /* The admin rail scrolls itself; the side mustn't clip its account menu. No line beside the rail, which is its own card (Genesis, 31 Oct 2026). */
   .crm-frame > .crm-side:has(> .crm-rail-wrap) {
     overflow: visible;
+    border-right: 0;
   }
 }
 .crm-side-title {
