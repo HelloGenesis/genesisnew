@@ -119,6 +119,7 @@ export const iconFor = (href: string) => PAGE_ICON[href] ?? BookOpen;
 const ITEM = "group flex min-h-[3.375rem] max-h-[3.75rem] w-full flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-[0.6875rem] text-white/65 transition-colors hover:text-white";
 const TILE = "relative grid size-8 shrink-0 place-items-center rounded-xl transition-colors";
 /* The areas set apart at the bottom of the rail, as Vitra's are. */
+const TOP_SHORTCUT = "/admin/tasks";
 const LOWER = new Set(["Portal", "Money", "Setup"]);
 /*
  * PAGES STRAIGHT ON THE RAIL (Genesis, 28 Oct 2026: "Files, Tasks, Inbox,
@@ -201,6 +202,21 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     );
   };
 
+  /* One quick link (Inbox, Tasks, Files…). */
+  const shortcutLink = (sc: (typeof shortcuts)[number]) => {
+    const Icon = iconFor(sc.href);
+    const lit = sc.href === best;
+    return (
+      <Link key={sc.href} href={sc.href} aria-current={lit ? "page" : undefined} aria-label={`${sc.label}${sc.count ? `, ${sc.count} waiting` : ""}`} className={ITEM}>
+        <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-white/10"}`}>
+          <Icon className="size-[1.125rem]" aria-hidden />
+          {!!sc.count && <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
+        </span>
+        <span className={`leading-none ${lit ? "font-medium text-white" : ""}`}>{sc.label}</span>
+      </Link>
+    );
+  };
+
   return (
     <div className="flex h-full gap-3">
       {/* The rail. */}
@@ -217,7 +233,8 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         <span aria-hidden className="mx-auto mb-1 h-px w-10 bg-white/15" />
         {/* Scrolls when the window is too short for every icon (Genesis, 29 Oct 2026: "add a scroller here"); icons never squash into each other. */}
         <div className="-mr-1 flex min-h-0 w-[calc(100%+0.25rem)] flex-1 flex-col overflow-y-auto pr-1" data-lenis-prevent>
-          {groups.filter((g) => !LOWER.has(g.label)).map(railButton)}
+          {/* Tasks sits at the top, under Home (Genesis, 31 Oct 2026: "move this on top"). */}
+          {groups.filter((g) => !LOWER.has(g.label)).flatMap((g, i) => (i === 0 ? [railButton(g), ...shortcuts.filter((sc) => sc.href === TOP_SHORTCUT).map(shortcutLink)] : [railButton(g)]))}
           {/* Genesis Copilot for its owners, NOVA AI in an agency's CRM (lib/crm/scope; the nav keeps the link only for them). */}
           {aiLink && (
           <Link href="/admin/assistant" aria-label={aiLink.label} className={ITEM}>
@@ -228,19 +245,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           </Link>
           )}
           {shortcuts.length > 0 && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
-          {shortcuts.map((sc) => {
-            const Icon = iconFor(sc.href);
-            const lit = sc.href === best;
-            return (
-              <Link key={sc.href} href={sc.href} aria-current={lit ? "page" : undefined} aria-label={`${sc.label}${sc.count ? `, ${sc.count} waiting` : ""}`} className={ITEM}>
-                <span className={`${TILE} ${lit ? "bg-white text-[#141216] shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-white/10"}`}>
-                  <Icon className="size-[1.125rem]" aria-hidden />
-                  {!!sc.count && <span aria-hidden className="absolute right-1 top-1 size-2 rounded-full bg-[#ffc516] ring-2 ring-[#18171b]" />}
-                </span>
-                <span className={`leading-none ${lit ? "font-medium text-white" : ""}`}>{sc.label}</span>
-              </Link>
-            );
-          })}
+          {shortcuts.filter((sc) => sc.href !== TOP_SHORTCUT).map(shortcutLink)}
           {groups.some((g) => LOWER.has(g.label)) && <span aria-hidden className="mx-auto my-1 h-px w-10 shrink-0 bg-white/15" />}
           {groups.filter((g) => LOWER.has(g.label)).map(railButton)}
         </div>
