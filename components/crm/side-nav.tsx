@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+
+import { ProBadge } from "./pro-badge";
 import { usePathname } from "next/navigation";
 
 /**
@@ -9,7 +11,8 @@ import { usePathname } from "next/navigation";
  */
 export type NavGroup = {
   label: string;
-  items: { href: string; label: string; count?: number }[];
+  /** `pro`: locked until a Nova plan is chosen (lib/crm/nova-pro), marked Pro. */
+  items: { href: string; label: string; count?: number; pro?: boolean }[];
   create?: { href: string; label: string; hint?: string }[];
   recent?: { label: string; all: string; items: { href: string; label: string; hint?: string }[] };
 };
@@ -25,7 +28,7 @@ export function SideNav({ groups, root, label, title, phoneOnly = false }: { gro
   const active = (href: string) => href === best;
   const link = (item: NavGroup["items"][number]) => (
     <Link key={item.href} href={item.href} aria-current={active(item.href) ? "page" : undefined} className="crm-nav-link justify-between">
-      <span>{item.label}</span>
+      <span className="flex items-center gap-1.5">{item.label}{item.pro && <ProBadge />}</span>
       {item.count ? <span className="rounded-full bg-[#ffc516] px-1.5 text-[0.6875rem] font-semibold leading-5 text-[#141216]">{item.count}</span> : null}
     </Link>
   );

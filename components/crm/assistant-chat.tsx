@@ -10,7 +10,7 @@ import { usePref } from "@/components/crm/use-pref";
 import { NeuralOrb } from "@/components/genesis/neural-orb";
 import { ProductWordmark } from "@/components/genesis/product-wordmark";
 
-import { NovaAiCredits, type NovaAi } from "./nova-ai-credits";
+import { NovaAiCredits, NovaAiPill, type NovaAi } from "./nova-ai-credits";
 import { readSheetFile } from "@/lib/sheet-file";
 
 type ChatItem = { id: string; title: string; updatedAt: string };
@@ -382,7 +382,6 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             {!chats.length && <li className="px-3 text-[0.8125rem] text-faint">Your chats will show here.</li>}
           </ul>
           {/* What you've used this month (Genesis, 30 Oct 2026: "show usage to each user"); the detail is on /admin/assistant/usage. */}
-          {nova && <NovaAiCredits nova={nova} open={outOfCredits} />}
           {monthCost && !nova && (
             <Link href="/admin/assistant/usage" className="mx-3 mb-3 flex items-center justify-between rounded-xl border border-[var(--glass-border)] px-3 py-2 text-[0.75rem] text-ash hover:border-[#ffc516]/60 hover:text-bone">
               <span>Your usage this month</span>
@@ -412,7 +411,10 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
           {!listOpen && <span className="ml-auto">{fullButton}</span>}
           {/* Copilot's own tour (components/crm/copilot-tour). */}
           {!nova && <button type="button" data-copilot-tour className={`${CHIP} ${listOpen ? "ml-auto" : ""}`}><CircleHelp className="size-3.5" aria-hidden /> <span className="max-sm:hidden">How it works</span></button>}
-          <Link href="/admin/assistant" className={`${CHIP} ${nova && listOpen ? "ml-auto" : ""}`} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
+          {/* NOVA AI: its credits in this corner instead of New chat (that stays in the sidebar); nothing here in the demo. */}
+          {nova ? (!nova.demo && <NovaAiPill nova={nova} />) : (
+          <Link href="/admin/assistant" className={CHIP} aria-label="New chat"><MessageSquarePlus className="size-3.5" aria-hidden /> <span className="max-sm:hidden">New chat</span></Link>
+          )}
         </div>
 
         {!messages.length ? (
@@ -421,7 +423,10 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             <div className="relative w-[max(5rem,min(14rem,58vw,calc(100cqh-23rem)))]">
               <NeuralOrb thinking={thinking} />
               {/* The GENESIS COPILOT wordmark in the orb's middle, as GENESIS MEDIA sits in the homepage's (Genesis, 30 Oct 2026: "the logo should appear here in the center as well"). */}
-              <span className={`pointer-events-none absolute inset-0 grid place-items-center ${thinking ? "motion-safe:animate-pulse" : ""}`}><ProductWordmark product={nova ? "nova" : "copilot"} className="h-auto w-[80%] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]" /></span>
+              {/* Just the orb for NOVA AI (Genesis, 31 Oct 2026); Copilot keeps its wordmark. */}
+              {!nova && (
+                <span className={`pointer-events-none absolute inset-0 grid place-items-center ${thinking ? "motion-safe:animate-pulse" : ""}`}><ProductWordmark product="copilot" className="h-auto w-[80%] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]" /></span>
+              )}
               {SHORTCUTS.filter((x) => x.at).map((x) => (
                 <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone sm:[@container(min-height:36rem)]:flex ${x.at}`}>
                   <x.icon className="size-3.5" aria-hidden /> {x.label}
@@ -437,7 +442,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             </div>
             <div className="mt-6 w-full max-w-3xl">{composer}</div>
             {error && <p className="mt-3 text-[0.8125rem] text-[#dc2626]" role="alert">{error}</p>}
-            {nova && (outOfCredits || nova.demo) && <div className="mt-3 w-full max-w-sm"><NovaAiCredits nova={nova} open compact /></div>}
+            {nova && !nova.demo && outOfCredits && <div className="mt-3 w-full max-w-sm"><NovaAiCredits nova={nova} open compact /></div>}
           </div>
         ) : (
           <>

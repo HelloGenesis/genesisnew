@@ -15,7 +15,9 @@ export function crmNav(viewer: Viewer, ...rest: Parameters<typeof allNav> extend
   /* An agency's CRM has the assistant as NOVA AI, on credits (lib/crm/nova-ai). */
   if (usesNovaAi(viewer)) {
     const rename = <T extends { href: string; label: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant/usage")).map((x) => ({ ...x, label: x.label.replace("Genesis Copilot", "NOVA AI").replace("(Copilot)", "(NOVA AI)") }));
-    return groups.map((g) => ({ ...g, items: rename(g.items)!, ...(g.create ? { create: rename(g.create) } : {}) }));
+    /* Its own GST, a Pro feature (lib/crm/nova-pro; the admin layout clears the mark once a plan is chosen). */
+    const gst = (g: NavGroup) => (g.label === "Money" ? [...g.items, { href: "/admin/gst", label: "GST", pro: true }] : g.items);
+    return groups.map((g) => ({ ...g, items: rename(gst(g))!, ...(g.create ? { create: rename(g.create) } : {}) }));
   }
   /* Genesis Copilot is for the owners only (lib/crm/scope usesAi): its links go for everyone else. */
   const keep = <T extends { href: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant"));

@@ -19,6 +19,7 @@ import { AppTour } from "@/components/crm/app-tour";
 import { ScrollMain } from "@/components/crm/scroll-main";
 import { DemoGuard } from "@/components/crm/demo-guard";
 import { TrialPlans } from "@/components/crm/trial-plans";
+import { novaAccess } from "@/lib/crm/nova-pro";
 import { daysLeft, planCards, prettyDate, trialGate, trialOf } from "@/lib/crm/nova-trial";
 import { Suspense } from "react";
 
@@ -70,6 +71,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     : [];
   const pick = (kind: "INFLUENCER_PLAN" | "QUOTE") => latest.filter((q) => q.kind === kind).slice(0, 8).map((q) => ({ href: `/admin/quotes/${q.id}`, label: q.company ? `${q.company} · ${q.title}` : q.title, hint: quoteRef(q.number) }));
   const groups = crmNav(viewer!, { unread, inboxNew, myTasks, dueLeads, review, openRequests }, { plans: pick("INFLUENCER_PLAN"), quotes: pick("QUOTE") });
+  /* Pro marks only while locked (lib/crm/nova-pro). */
+  if (viewer!.workspaceId && (await novaAccess(viewer!.workspaceId)).pro) for (const g of groups) g.items = g.items.map((i) => ({ ...i, pro: false }));
 
   /* Owners can look inside an agency's CRM: the switch sits over the page. */
   const viewingSwitch = switchable.length > 0 && (

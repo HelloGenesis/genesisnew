@@ -45,6 +45,8 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
+
+import { ProBadge } from "./pro-badge";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -100,6 +102,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/expenses": Wallet,
   "/admin/expenses/subscriptions": Repeat,
   "/admin/expenses/gst": FileSpreadsheet,
+  "/admin/gst": FileSpreadsheet,
   "/admin/staff": UserCog,
   "/admin/plan": CreditCard,
   "/admin/lab": FlaskConical,
@@ -270,6 +273,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
                 <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[0.9375rem] transition-colors ${active ? "bg-[#ffc516]/15 font-medium text-bone" : "text-ash hover:bg-[var(--hover-wash)] hover:text-bone"}`}>
                   <Icon className={`size-[1.125rem] shrink-0 ${active ? "text-[#ffc516]" : ""}`} aria-hidden />
                   <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {item.pro && <ProBadge />}
                   {item.count ? <span className="rounded-full bg-[#ffc516] px-1.5 text-[0.6875rem] font-semibold leading-5 text-[#141216]">{item.count}</span> : null}
                 </Link>
               );
