@@ -6,7 +6,7 @@ import { Card, Field, PageHead, Select, Status } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, DIVISIONS, LEAD_SOURCE, LEAD_STATUS, ORDER_STATUS, SERVICES, date, dateTime, money } from "@/lib/crm/catalog";
 import { accountOptions, dateValue, inDays, staffOptions } from "@/lib/crm/options";
-import { leadScope } from "@/lib/crm/scope";
+import { leadScope, orderScope } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 import { createTask, toggleTask } from "../../actions/delivery";
@@ -26,7 +26,8 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const [staff, partners, orders] = await Promise.all([
     staffOptions(),
     accountOptions(["AGENCY"], true),
-    lead.email ? prisma.order.findMany({ where: { contactEmail: lead.email }, orderBy: { createdAt: "desc" } }) : [],
+    /* Orders (Genesis's website sales) aren't tagged by CRM: inside an agency's CRM there are none, so it never sees Genesis's orders for the same email. */
+    lead.email ? prisma.order.findMany({ where: { contactEmail: lead.email, ...(viewer.ws ? orderScope(viewer) : {}) }, orderBy: { createdAt: "desc" } }) : [],
   ]);
 
   return (

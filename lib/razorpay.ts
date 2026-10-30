@@ -1,4 +1,5 @@
 import "server-only";
+import { assertNotDemo } from "./crm/demo";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 
@@ -27,6 +28,7 @@ export class RazorpayError extends Error {
 }
 
 export async function razorpay<T>(path: string, body: unknown): Promise<T> {
+  await assertNotDemo();
   const keys = razorpayKeys();
   if (!keys) throw new Error("Razorpay keys are not set");
   const response = await fetch(`https://api.razorpay.com/v1/${path}`, {

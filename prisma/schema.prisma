@@ -1697,3 +1697,24 @@ model AiChat {
   @@index([userId, updatedAt])
   @@map("crm_ai_chats")
 }
+
+/// One call (or one Copilot answer) to Claude: its tokens and cost (lib/crm/ai-usage). No person for background reading.
+model AiUsage {
+  id               String   @id @default(cuid())
+  userId           String?  @map("user_id")
+  /// copilot, inbox or import.
+  source           String
+  model            String
+  chatId           String?  @map("chat_id")
+  inputTokens      Int      @default(0) @map("input_tokens")
+  outputTokens     Int      @default(0) @map("output_tokens")
+  cacheReadTokens  Int      @default(0) @map("cache_read_tokens")
+  cacheWriteTokens Int      @default(0) @map("cache_write_tokens")
+  /// US dollars, in millionths.
+  costMicros       Int      @default(0) @map("cost_micros")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("crm_ai_usage")
+}

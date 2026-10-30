@@ -1,5 +1,6 @@
 import "server-only";
 
+import { assertNotDemo } from "./demo";
 import { getPrisma } from "@/lib/db";
 import { LEGAL_EMAIL } from "@/lib/legal";
 
@@ -86,6 +87,7 @@ async function staffRecipients(scope: StaffScope): Promise<string[]> {
 }
 
 async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null) {
+  await assertNotDemo();
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },

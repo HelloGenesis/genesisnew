@@ -1640,6 +1640,14 @@ body:has(main.scene-dark) header {
     }
 }
 
+/* The Nova by Genesis page shows Nova's logo in the header (components/genesis/glass-nav). */
+body:has([data-nova-page]) .nova-page-hide {
+    display: none;
+}
+body:has([data-nova-page]) .nova-page-show {
+    display: block;
+}
+
 /* Scrollbars everywhere (Genesis, 30 Oct 2026: "a very 0.1 line", grey, "all
    across"): a 2px hairline in the ink colour at low strength, so it matches
    either theme. In the base layer, so .no-scrollbar still hides one. Chrome

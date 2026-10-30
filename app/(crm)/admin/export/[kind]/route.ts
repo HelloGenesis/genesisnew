@@ -32,79 +32,79 @@ function csv(rows: Cell[][]): string {
     .join("\r\n");
 }
 
-const EXPORTS: Record<string, { area?: StaffArea; build: () => Promise<Cell[][]> }> = {
+const EXPORTS: Record<string, { area?: StaffArea; build: (db: ReturnType<typeof getPrisma>) => Promise<Cell[][]> }> = {
   invoices: {
-    async build() {
-      const rows = await getPrisma().invoice.findMany({ orderBy: [{ issueDate: "desc" }, { seq: "desc" }] });
+    async build(db) {
+      const rows = await db.invoice.findMany({ orderBy: [{ issueDate: "desc" }, { seq: "desc" }] });
       return [["Number", "Date", "Due", "Status", "Billed to", "GSTIN", "Place of supply", "Taxable (₹)", "CGST (₹)", "SGST (₹)", "IGST (₹)", "Total (₹)", "Paid at"],
         ...rows.map((i) => [i.number, d(i.issueDate).slice(0, 10), d(i.dueDate).slice(0, 10), i.status, i.billToName, i.billToGstin, i.placeOfSupply, rs(i.subtotalPaise - i.discountPaise), rs(i.cgstPaise), rs(i.sgstPaise), rs(i.igstPaise), rs(i.totalPaise), d(i.paidAt)])];
     },
   },
   quotes: {
     area: "sales",
-    async build() {
-      const rows = await getPrisma().quote.findMany({ orderBy: { number: "desc" } });
+    async build(db) {
+      const rows = await db.quote.findMany({ orderBy: { number: "desc" } });
       return [["Number", "Kind", "Title", "Client", "Email", "Status", "Total (₹)", "Issued", "Sent", "Accepted", "Expires"],
         ...rows.map((q) => [`#${String(q.number).padStart(7, "0")}`, q.kind, q.title, q.company ?? q.contactName, q.contactEmail, q.status, rs(q.totalPaise), d(q.issuedAt), d(q.sentAt), d(q.acceptedAt), d(q.expiresAt).slice(0, 10)])];
     },
   },
   expenses: {
     area: "finance",
-    async build() {
-      const rows = await getPrisma().expense.findMany({ orderBy: { date: "desc" } });
+    async build(db) {
+      const rows = await db.expense.findMany({ orderBy: { date: "desc" } });
       return [["Date", "Category", "What", "Paid to", "Paid via", "Amount (₹)", "GST (₹)", "Reference", "Notes"],
         ...rows.map((e) => [d(e.date).slice(0, 10), EXPENSE_CATEGORY[e.category], e.description, e.payee, e.paidVia, rs(e.amountPaise), rs(e.gstPaise), e.reference, e.notes])];
     },
   },
   leads: {
     area: "sales",
-    async build() {
-      const rows = await getPrisma().lead.findMany({ orderBy: { createdAt: "desc" }, include: { owner: true, partner: true } });
+    async build(db) {
+      const rows = await db.lead.findMany({ orderBy: { createdAt: "desc" }, include: { owner: true, partner: true } });
       return [["Added", "Name", "Company", "Email", "Phone", "Division", "Interest", "Source", "Partner", "Status", "Value (₹)", "Owner", "Next follow-up", "Notes"],
         ...rows.map((l) => [d(l.createdAt), l.name, l.company, l.email, l.phone, l.division ? DIVISION_LABEL[l.division] : "", l.interest, LEAD_SOURCE[l.source], l.partner?.name, LEAD_STATUS[l.status].label, rs(l.valuePaise), l.owner?.email, d(l.nextFollowUp).slice(0, 10), l.notes])];
     },
   },
   accounts: {
     area: "sales",
-    async build() {
-      const rows = await getPrisma().account.findMany({ orderBy: { name: "asc" }, include: { parent: true, referredBy: true, manager: true } });
+    async build(db) {
+      const rows = await db.account.findMany({ orderBy: { name: "asc" }, include: { parent: true, referredBy: true, manager: true } });
       return [["Name", "Type", "Reseller %", "Status", "Agency", "Referred by", "Email", "Phone", "GSTIN", "City", "Manager", "Added"],
         ...rows.map((a) => [a.name, ACCOUNT_KIND[a.kind], a.isReseller ? a.commissionPercent : "", a.status, a.parent?.name, a.referredBy?.name, a.email, a.phone, a.gstin, a.city, a.manager?.email, d(a.createdAt)])];
     },
   },
   orders: {
     area: "finance",
-    async build() {
-      const rows = await getPrisma().order.findMany({ orderBy: { createdAt: "desc" }, include: { lines: true, account: true } });
+    async build(db) {
+      const rows = await db.order.findMany({ orderBy: { createdAt: "desc" }, include: { lines: true, account: true } });
       return [["Reference", "Created", "Status", "Channel", "Client", "Contact", "Email", "Items", "Billing", "Subtotal (₹)", "Discounts (₹)", "Tax (₹)", "Total (₹)", "Paid at", "Razorpay"],
         ...rows.map((o) => [o.reference, d(o.createdAt), ORDER_STATUS[o.status].label, o.channel, o.account?.name ?? o.company, o.contactName, o.contactEmail, o.lines.map((l) => `${l.name} x${l.qty}`).join("; "), o.billing, rs(o.subtotalPaise), rs(o.discountPaise + o.comboDiscountPaise), rs(o.taxPaise), rs(o.totalPaise), d(o.paidAt), [o.razorpayPaymentId, o.razorpaySubscriptionId, o.razorpayLinkId].filter(Boolean).join(" ")])];
     },
   },
   projects: {
-    async build() {
-      const rows = await getPrisma().project.findMany({ orderBy: { createdAt: "desc" }, include: { account: true, manager: true, _count: { select: { deliverables: { where: { status: "APPROVED" } } } } } });
+    async build(db) {
+      const rows = await db.project.findMany({ orderBy: { createdAt: "desc" }, include: { account: true, manager: true, _count: { select: { deliverables: { where: { status: "APPROVED" } } } } } });
       return [["Ref", "Project", "Client", "Division", "Stage", "Status", "Delivered", "Quota", "Producer", "Due", "Created"],
         ...rows.map((p) => [projectRef(p.number), p.name, p.account.name, DIVISION_LABEL[p.division], stageName(p), PROJECT_STATUS[p.status].label, p._count.deliverables, p.quota, p.manager?.email, d(p.dueDate).slice(0, 10), d(p.createdAt)])];
     },
   },
   requests: {
-    async build() {
-      const rows = await getPrisma().request.findMany({ orderBy: { createdAt: "desc" }, include: { account: true, assignee: true } });
+    async build(db) {
+      const rows = await db.request.findMany({ orderBy: { createdAt: "desc" }, include: { account: true, assignee: true } });
       return [["Ref", "Opened", "Client", "Type", "Title", "Status", "Priority", "Assignee", "Closed"],
         ...rows.map((r) => [requestRef(r.number), d(r.createdAt), r.account.name, REQUEST_KIND[r.kind], r.title, REQUEST_STATUS[r.status].label, r.priority, r.assignee?.email, d(r.closedAt)])];
     },
   },
   creators: {
-    async build() {
-      const rows = await getPrisma().creator.findMany({ orderBy: { followers: "desc" } });
+    async build(db) {
+      const rows = await db.creator.findMany({ orderBy: { followers: "desc" } });
       return [["Name", "Handle", "Platform", "Profile", "Followers", "Avg views", "ER %", "Tier", "Niches", "Languages", "City", "Reel (₹)", "Story (₹)", "Post (₹)", "Email", "Phone", "Managed by", "Tags", "Do not use"],
         ...rows.map((c) => [c.name, c.handle, c.platform, c.profileUrl, c.followers, c.avgViews, c.engagementRate, c.tier, c.niches.join("; "), c.languages.join("; "), c.city, rs(c.reelRatePaise), rs(c.storyRatePaise), rs(c.postRatePaise), c.email, c.phone, c.managedBy, c.tags.join("; "), c.blacklisted ? "yes" : ""])];
     },
   },
   payouts: {
     area: "finance",
-    async build() {
-      const prisma = getPrisma();
+    async build(db) {
+      const prisma = db;
       const [commissions, invoices] = await Promise.all([prisma.commission.findMany({ include: { partner: true } }), prisma.vendorInvoice.findMany({ include: { vendor: true } })]);
       return [["Type", "To", "Reference", "Amount (₹)", "Status", "Created", "Paid"],
         ...commissions.map((c) => ["Commission", c.partner.name, `${c.percent}% of ${rs(c.basePaise)}`, rs(c.amountPaise), c.status, d(c.createdAt), d(c.paidAt)]),
@@ -146,8 +146,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
       { status: 409, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   }
-  /* The CRM being looked at: Genesis's own, or the agency an owner switched to — never the two mixed. */
-  const rows = await inWorkspace(viewer!.ws, () => spec.build());
+  /* The CRM being looked at: Genesis's own, or the agency an owner switched to — never the two mixed. `db` is bound to it. */
+  const rows = await inWorkspace(viewer!.ws, (db) => spec.build(db));
   await recordAuditLog({ action: "crm.exported", entity: kind, actorId: viewer!.id, metadata: { format: url.searchParams.get("format") ?? "csv" } });
   const stamp = new Date().toISOString().slice(0, 10);
   if (url.searchParams.get("format") === "xlsx") {

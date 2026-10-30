@@ -22,7 +22,7 @@ import { dbEnv, isPlaceholder } from "./env";
 type Client = InstanceType<typeof PrismaClient>;
 
 // Reuse across hot reloads in dev so we don't leak a pool per recompile.
-const globalForPrisma = globalThis as unknown as { genesisPrisma?: Client };
+const globalForPrisma = globalThis as unknown as { genesisBase?: Client; genesisCrmPrisma?: Client; genesisScoped?: Map<string | null, Client> };
 
 function createClient(): Client {
   const { DATABASE_URL } = dbEnv();
@@ -38,7 +38,11 @@ function createClient(): Client {
         ? ["warn", "error"]
         : ["error"],
   });
-  return withWorkspaces(client);
+  return client;
+}
+
+function baseClient(): Client {
+  return (globalForPrisma.genesisBase ??= createClient());
 }
 
 /*
@@ -49,17 +53,25 @@ function createClient(): Client {
  * request (lib/crm/request-workspace) every read and write on those models is
  * held to that request's CRM here, in one place, so no page can forget it.
  * Public pages, webhooks and scheduled jobs run unfiltered.
+ *
+ * A client from `getPrisma(ws)` carries its CRM in a closure and never looks
+ * anywhere else: background work (a Gmail sync, a sheet import, an export)
+ * uses that, or `inWorkspace`, which hands one over. Reading the CRM from
+ * AsyncLocalStorage in here is only as good as the moment Prisma runs the
+ * hook: a Prisma query is lazy and runs on its first `.then()`, so a query
+ * built inside `als.run(...)` and awaited outside it ran with no CRM at all
+ * (30 Oct 2026).
  */
 const TAGGED = new Set(["Lead", "Brief", "Account", "Quote", "Invoice", "Project", "Task", "Creator", "Request"]);
 const WHERE_OPS = new Set(["findMany", "findFirst", "findFirstOrThrow", "findUnique", "findUniqueOrThrow", "count", "aggregate", "groupBy", "update", "updateMany", "updateManyAndReturn", "delete", "deleteMany", "upsert"]);
 
-function withWorkspaces(client: Client): Client {
+function withWorkspaces(client: Client, bound?: { ws: string | null }): Client {
   return client.$extends({
     query: {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
           if (!model || !TAGGED.has(model)) return query(args);
-          const ws = await activeWorkspace();
+          const ws = bound ? bound.ws : await activeWorkspace();
           if (ws === undefined) return query(args);
           const a = (args ?? {}) as Record<string, unknown>;
           if (WHERE_OPS.has(operation)) {
@@ -82,11 +94,16 @@ function withWorkspaces(client: Client): Client {
   }) as unknown as Client;
 }
 
-export function getPrisma(): Client {
-  if (!globalForPrisma.genesisPrisma) {
-    globalForPrisma.genesisPrisma = createClient();
-  }
-  return globalForPrisma.genesisPrisma;
+/**
+ * `getPrisma()` — the CRM of this request (or `inWorkspace`); none outside one.
+ * `getPrisma(ws)` — held to that CRM whatever runs it (null: Genesis's own).
+ */
+export function getPrisma(ws?: string | null): Client {
+  if (ws === undefined) return (globalForPrisma.genesisCrmPrisma ??= withWorkspaces(baseClient()));
+  const scoped = (globalForPrisma.genesisScoped ??= new Map());
+  let client = scoped.get(ws);
+  if (!client) scoped.set(ws, (client = withWorkspaces(baseClient(), { ws })));
+  return client;
 }
 
 /**

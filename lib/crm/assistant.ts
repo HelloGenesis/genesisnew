@@ -7,6 +7,7 @@ import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 import { mcpForChat } from "./ai-connectors";
+import { addUsage, emptyUsage, recordUsage } from "./ai-usage";
 import { CRM_INSTRUCTIONS, TOOLS } from "./mcp-tools";
 import type { Viewer } from "./session";
 
@@ -130,82 +131,89 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
   const apps = await mcpForChat(viewer.ws ?? null);
   let retries = 0;
   const haiku = MODEL().includes("haiku");
-  for (let turn = 0; turn < MAX_TURNS; turn++) {
-    const stream = call({
-      model: MODEL(),
-      max_tokens: 64000,
-      system: system(viewer),
-      tools: [...API_TOOLS, ...apps.toolsets],
-      ...(apps.servers.length ? { mcp_servers: apps.servers } : {}),
-      messages,
-      stream: true,
-      /* Effort: the chosen mode; balanced (medium) is this model's default. */
-      output_config: { effort: EFFORT[input.mode ?? "balanced"] },
-      /* Caches the conversation so far: later turns re-read it at a fraction of the cost. */
-      cache_control: { type: "ephemeral" },
-      /* A request the model declines is answered by Anthropic's recommended stand-in model instead (Haiku has no stand-in). */
-      betas: [...(haiku ? [] : ["server-side-fallback-2026-07-01" as const]), ...(apps.servers.length ? ["mcp-client-2025-11-20" as const] : [])],
-      ...(haiku ? {} : { fallbacks: "default" as const }),
-    });
-    stream.on("text", (d) => emit({ t: "text", d }));
-    let message: Anthropic.Beta.BetaMessage;
-    try {
-      message = await stream.finalMessage();
-      retries = 0;
-    } catch (error) {
-      /* A tool input that couldn't be read at all: asked again, twice at most. API errors go up. */
-      if (error instanceof Anthropic.APIError || retries++ >= 2) throw error;
-      continue;
-    }
-
-    if (message.stop_reason === "refusal") {
-      emit({ t: "text", d: "\n\nI can't help with that request." });
-      break;
-    }
-    /* A connected app's tools it used (run by Anthropic's MCP connector): "Canva: create design". */
-    for (const b of message.content) if (b.type === "mcp_tool_use") emit({ t: "tool", name: b.name, label: `${apps.names[b.server_name] ?? b.server_name}: ${b.name.replace(/[_-]+/g, " ")}` });
-    messages.push({ role: "assistant", content: message.content as Anthropic.Beta.BetaContentBlockParam[] });
-    if (message.stop_reason === "pause_turn") continue;
-    const uses = message.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
-    if (!uses.length) {
-      await save(messages);
-      break;
-    }
-    if (message.stop_reason === "max_tokens") {
-      /* A tool call cut off mid-input is never run. */
-      messages.pop();
-      emit({ t: "error", m: "That answer ran too long. Try asking for less at once." });
-      break;
-    }
-
-    const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
-    for (const use of uses) {
-      const tool = TOOLS.find((t) => t.name === use.name);
-      emit({ t: "tool", name: use.name, label: LABEL[use.name] ?? use.name });
-      if (!tool) {
-        results.push({ type: "tool_result", tool_use_id: use.id, is_error: true, content: `Unknown tool ${use.name}` });
-        emit({ t: "tool_done", name: use.name, ok: false });
-        continue;
-      }
-      /* Checked against the tool's schema before it runs (inputs are streamed and not checked by the API). */
-      const parsed = tool.input.safeParse(use.input);
-      if (!parsed.success) {
-        results.push({ type: "tool_result", tool_use_id: use.id, is_error: true, content: `Invalid input: ${parsed.error.message.slice(0, 600)}` });
-        emit({ t: "tool_done", name: use.name, ok: false });
-        continue;
-      }
+  /* What this answer costs, over all its turns, saved once it ends (lib/crm/ai-usage). */
+  const usage = emptyUsage();
+  try {
+    for (let turn = 0; turn < MAX_TURNS; turn++) {
+      const stream = call({
+        model: MODEL(),
+        max_tokens: 64000,
+        system: system(viewer),
+        tools: [...API_TOOLS, ...apps.toolsets],
+        ...(apps.servers.length ? { mcp_servers: apps.servers } : {}),
+        messages,
+        stream: true,
+        /* Effort: the chosen mode; balanced (medium) is this model's default. */
+        output_config: { effort: EFFORT[input.mode ?? "balanced"] },
+        /* Caches the conversation so far: later turns re-read it at a fraction of the cost. */
+        cache_control: { type: "ephemeral" },
+        /* A request the model declines is answered by Anthropic's recommended stand-in model instead (Haiku has no stand-in). */
+        betas: [...(haiku ? [] : ["server-side-fallback-2026-07-01" as const]), ...(apps.servers.length ? ["mcp-client-2025-11-20" as const] : [])],
+        ...(haiku ? {} : { fallbacks: "default" as const }),
+      });
+      stream.on("text", (d) => emit({ t: "text", d }));
+      let message: Anthropic.Beta.BetaMessage;
       try {
-        const out = await tool.run(viewer, parsed.data as never);
-        results.push({ type: "tool_result", tool_use_id: use.id, content: JSON.stringify(out).slice(0, 100_000) });
-        emit({ t: "tool_done", name: use.name, ok: true });
+        message = await stream.finalMessage();
+        addUsage(usage, message.model ?? MODEL(), message.usage);
+        retries = 0;
       } catch (error) {
-        results.push({ type: "tool_result", tool_use_id: use.id, is_error: true, content: (error as Error).message.slice(0, 600) });
-        emit({ t: "tool_done", name: use.name, ok: false });
+        /* A tool input that couldn't be read at all: asked again, twice at most. API errors go up. */
+        if (error instanceof Anthropic.APIError || retries++ >= 2) throw error;
+        continue;
       }
+
+      if (message.stop_reason === "refusal") {
+        emit({ t: "text", d: "\n\nI can't help with that request." });
+        break;
+      }
+      /* A connected app's tools it used (run by Anthropic's MCP connector): "Canva: create design". */
+      for (const b of message.content) if (b.type === "mcp_tool_use") emit({ t: "tool", name: b.name, label: `${apps.names[b.server_name] ?? b.server_name}: ${b.name.replace(/[_-]+/g, " ")}` });
+      messages.push({ role: "assistant", content: message.content as Anthropic.Beta.BetaContentBlockParam[] });
+      if (message.stop_reason === "pause_turn") continue;
+      const uses = message.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
+      if (!uses.length) {
+        await save(messages);
+        break;
+      }
+      if (message.stop_reason === "max_tokens") {
+        /* A tool call cut off mid-input is never run. */
+        messages.pop();
+        emit({ t: "error", m: "That answer ran too long. Try asking for less at once." });
+        break;
+      }
+
+      const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
+      for (const use of uses) {
+        const tool = TOOLS.find((t) => t.name === use.name);
+        emit({ t: "tool", name: use.name, label: LABEL[use.name] ?? use.name });
+        if (!tool) {
+          results.push({ type: "tool_result", tool_use_id: use.id, is_error: true, content: `Unknown tool ${use.name}` });
+          emit({ t: "tool_done", name: use.name, ok: false });
+          continue;
+        }
+        /* Checked against the tool's schema before it runs (inputs are streamed and not checked by the API). */
+        const parsed = tool.input.safeParse(use.input);
+        if (!parsed.success) {
+          results.push({ type: "tool_result", tool_use_id: use.id, is_error: true, content: `Invalid input: ${parsed.error.message.slice(0, 600)}` });
+          emit({ t: "tool_done", name: use.name, ok: false });
+          continue;
+        }
+        try {
+          const out = await tool.run(viewer, parsed.data as never);
+          results.push({ type: "tool_result", tool_use_id: use.id, content: JSON.stringify(out).slice(0, 100_000) });
+          emit({ t: "tool_done", name: use.name, ok: true });
+        } catch (error) {
+          results.push({ type: "tool_result", tool_use_id: use.id, is_error: true, content: (error as Error).message.slice(0, 600) });
+          emit({ t: "tool_done", name: use.name, ok: false });
+        }
+      }
+      /* All results together in one message. */
+      messages.push({ role: "user", content: results });
+      await save(messages);
     }
-    /* All results together in one message. */
-    messages.push({ role: "user", content: results });
-    await save(messages);
+  } finally {
+    await recordUsage({ userId: viewer.id, source: "copilot", model: MODEL(), chatId: chat.id, usage });
   }
   emit({ t: "done" });
 }

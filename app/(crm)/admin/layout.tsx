@@ -17,6 +17,7 @@ import { workspaces } from "@/lib/crm/workspace";
 import { setViewingCrm } from "./actions/workspaces";
 import { AppTour } from "@/components/crm/app-tour";
 import { ScrollMain } from "@/components/crm/scroll-main";
+import { DemoGuard } from "@/components/crm/demo-guard";
 import { Suspense } from "react";
 
 export const metadata: Metadata = { title: { default: "CRM", template: "%s · Genesis CRM" } };
@@ -112,8 +113,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {children}
       </ScrollMain>
       <Suspense fallback={null}>
-        <AppTour firstTime={!tourSeen} name={viewer!.name} area="admin" />
+        {/* The demo can't remember the tour was seen, so it doesn't open by itself there ("Take the tour" still does). */}
+        <AppTour firstTime={!tourSeen && !viewer!.demo} name={viewer!.name} area="admin" />
       </Suspense>
+      {viewer!.demo && <DemoGuard />}
     </div>
   );
 }

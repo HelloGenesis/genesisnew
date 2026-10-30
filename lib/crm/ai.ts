@@ -1,5 +1,8 @@
 import "server-only";
 
+import { recordCall, type Usage } from "./ai-usage";
+import { assertNotDemo } from "./demo";
+
 /**
  * THE AI THAT READS THE INBOX (Genesis, 12 Oct 2026: "AI reads it"). Claude
  * sorts an email or a document into what Genesis cares about and pulls out
@@ -85,6 +88,7 @@ Sort what you're given into one kind and pull out every detail that's actually t
 /** Reads one email or document. Null when the AI isn't configured or the call fails (the item is retried next run). */
 export async function readItem(input: { source: string; from?: string; to?: string; subject: string; date?: string; text: string; links: string[]; attachments?: string[] }): Promise<Reading | null> {
   if (!aiConfigured()) return null;
+  await assertNotDemo();
   const content = [
     `Source: ${input.source}`,
     input.from ? `From: ${input.from}` : "",
@@ -115,7 +119,8 @@ export async function readItem(input: { source: string; from?: string; to?: stri
     console.error("[crm] AI read failed", response.status, (await response.text()).slice(0, 300));
     return null;
   }
-  const body = (await response.json()) as { content?: { type: string; input?: unknown }[] };
+  const body = (await response.json()) as { content?: { type: string; input?: unknown }[]; usage?: Usage };
+  await recordCall("inbox", MODEL(), body.usage);
   const call = body.content?.find((c) => c.type === "tool_use");
   return (call?.input as Reading | undefined) ?? null;
 }
@@ -123,6 +128,7 @@ export async function readItem(input: { source: string; from?: string; to?: stri
 /** Matches a sheet's columns to CRM fields: returns { column header: field }. */
 export async function mapColumns(kind: string, fields: Record<string, string>, headers: string[], sample: string[][]): Promise<Record<string, string>> {
   if (!aiConfigured()) return {};
+  await assertNotDemo();
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": process.env.ANTHROPIC_API_KEY!, "anthropic-version": "2023-06-01", "content-type": "application/json" },
@@ -147,7 +153,8 @@ export async function mapColumns(kind: string, fields: Record<string, string>, h
     signal: AbortSignal.timeout(60_000),
   });
   if (!response.ok) return {};
-  const body = (await response.json()) as { content?: { type: string; input?: { mapping?: { column: string; field: string }[] } }[] };
+  const body = (await response.json()) as { content?: { type: string; input?: { mapping?: { column: string; field: string }[] } }[]; usage?: Usage };
+  await recordCall("import", MODEL(), body.usage);
   const pairs = body.content?.find((c) => c.type === "tool_use")?.input?.mapping ?? [];
   return Object.fromEntries(pairs.filter((p) => headers.includes(p.column) && p.field in fields).map((p) => [p.column, p.field]));
 }

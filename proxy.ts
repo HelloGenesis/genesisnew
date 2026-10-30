@@ -29,9 +29,31 @@ function isProtectedPath(pathname: string): boolean {
   );
 }
 
+/*
+ * NOVA'S LIVE DEMO (lib/crm/demo). A visitor with the demo cookie and no real
+ * sign-in may open the CRM (the server then checks the demo user page by
+ * page), but only to look: anything that would change something there is
+ * refused here, before it reaches the app. Done at this door, not in the
+ * database client, so it never depends on which request a query thinks it is in.
+ */
+const DEMO_PATHS = /^\/(admin|portal|lab|demo|api\/(crm|mcp|lab))(\/|$)/;
+const REAL_SESSION_COOKIES = ["__session", "gm_session", "gm_dev_identity"];
+
+function demoVisitor(request: Request) {
+  const cookies = request.headers.get("cookie") ?? "";
+  if (!/(?:^|;\s*)nova_demo=1(?:;|$)/.test(cookies)) return false;
+  /* Auth0 splits a large session into __session__0, __session__1 (older: __session.0). */
+  return !REAL_SESSION_COOKIES.some((name) => new RegExp(`(?:^|;\\s*)${name}(?:__\\d+|\\.\\d+)?=`).test(cookies));
+}
+
 export async function proxy(request: Request): Promise<NextResponse> {
   const auth0 = getAuth0IfConfigured();
   const url = new URL(request.url);
+  const demo = demoVisitor(request);
+
+  if (demo && DEMO_PATHS.test(url.pathname) && !["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+    return NextResponse.json({ error: "This is the Nova demo, so nothing is saved. Book a trial to use it for real." }, { status: 403 });
+  }
 
   // Before Auth0 credentials are supplied, let every request through. The
   // proxy matcher covers the whole site, so throwing here would take the
@@ -58,7 +80,7 @@ export async function proxy(request: Request): Promise<NextResponse> {
     return authResponse;
   }
 
-  if (isProtectedPath(url.pathname)) {
+  if (isProtectedPath(url.pathname) && !(demo && DEMO_PATHS.test(url.pathname))) {
     const session = await auth0.getSession(new NextRequest(request));
 
     if (!session) {

@@ -16,6 +16,7 @@ import { CartButton, useCart } from "./cart";
 import { GlassButton } from "./glass-button";
 import { ThemeToggle } from "./theme-toggle";
 import { GenesisMarkMotion } from "./genesis-mark-motion";
+import { ProductWordmark } from "./product-wordmark";
 import { homeHref, navItems, type NavItem } from "@/lib/site-config";
 import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { cn } from "@/lib/utils";
@@ -228,7 +229,9 @@ export function GlassNav() {
             sweep the still mark; see GenesisMarkMotion for the crop, the
             two blend modes and the Reduce Motion still.
           */}
-          <GenesisMarkMotion />
+          <span className="nova-page-hide contents"><GenesisMarkMotion /></span>
+          {/* On the Nova by Genesis page, its logo instead (Genesis, 31 Oct 2026); swapped in CSS (globals.css) as that page is also nova.genesismedia.co's "/". */}
+          <span className="nova-page-show hidden"><ProductWordmark product="nova" className="h-[22px]" /></span>
         </Link>
 
         {/*

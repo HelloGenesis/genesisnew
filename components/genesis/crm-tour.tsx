@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { ProductWordmark } from "./product-wordmark";
+
 /**
  * THE GENESIS CRM, SHOWN (Genesis, 13 Oct 2026: "show the real dashboard, what
  * it does"). The CRM's own screens, redrawn with sample data — no real
@@ -199,7 +201,7 @@ export function CrmTour() {
   const [tab, setTab] = useState<Tab>("dashboard");
   return (
     <div>
-      <div role="tablist" aria-label="Parts of the CRM" className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+      <div role="tablist" aria-label="Parts of the CRM" className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] md:justify-center">
         {TABS.map(([id, label]) => (
           <button key={id} role="tab" type="button" aria-selected={tab === id} onClick={() => setTab(id)} className={`shrink-0 rounded-full border px-4 py-2 text-small transition-colors ${tab === id ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)] text-ash hover:text-bone"}`}>
             {label}
@@ -210,12 +212,12 @@ export function CrmTour() {
       <div className="mt-4 overflow-hidden rounded-[1.25rem] border border-[var(--glass-border)] bg-[#141216] shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] [color-scheme:dark]">
         <div className="flex items-center gap-1.5 border-b border-white/5 px-4 py-2.5">
           <span className="size-2.5 rounded-full bg-[#ff5f57]" /><span className="size-2.5 rounded-full bg-[#febc2e]" /><span className="size-2.5 rounded-full bg-[#28c840]" />
-          <span className="ml-3 truncate text-[0.75rem] text-faint">yourcrm.app/{tab === "portal" ? "portal" : "admin"}</span>
+          <span className="ml-3 truncate text-[0.75rem] text-faint">nova.genesismedia.co/{tab === "portal" ? "portal" : "admin"}</span>
           <span className="ml-auto text-[0.6875rem] text-faint">Sample data</span>
         </div>
         <div className="grid min-h-[22rem] lg:grid-cols-[13rem_minmax(0,1fr)]">
           <aside className="hidden border-r border-white/5 p-3 lg:block">
-            <p className="px-2 pb-2 text-[0.8125rem] font-semibold tracking-wide text-bone">YOUR AGENCY</p>
+            <div className="px-2 pb-3 pt-1 [--logo-invert:0]"><ProductWordmark product="nova" className="h-[18px]" /></div>
             {NAV.map((n) => (
               <p key={n} className={`rounded-lg px-2 py-1.5 text-[0.75rem] ${NAV_FOR[tab] === n ? "bg-[#ffc516] text-[#141216]" : "text-ash"}`}>{n}</p>
             ))}
