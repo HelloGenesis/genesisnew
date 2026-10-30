@@ -29,6 +29,7 @@ export const ABOUT: Record<string, { title: string; body: string }> = {
   "/admin/expenses/gst": { title: "GST", body: "GST due dates and filings." },
   "/admin/staff": { title: "Staff & roles", body: "Who works in the CRM, what each person can open, influencer-data access, and client or influencer portal access." },
   "/admin/lab": { title: "AI Lab", body: "Genesis AI Lab's credit prices, grants and usage." },
+  "/admin/gst": { title: "GST", body: "Your GST month by month from your own invoices: taxable value, CGST, SGST and IGST, with the GSTR-1 and GSTR-3B due dates. Comes with a plan." },
   "/admin/plan": { title: "Plan & billing", body: "Your Nova plan: the free trial's days left, choosing a plan and adding your card (₹0 until the trial ends), and cancelling any time." },
   "/admin/team": { title: "Team & company", body: "Your agency's team in the CRM, and your company details for quotes and invoices." },
   "/admin/settings": { title: "Integrations", body: "Google Drive, Gmail, Google Sheets and Contacts, and anything that didn't send." },

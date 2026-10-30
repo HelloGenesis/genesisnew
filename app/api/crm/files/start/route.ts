@@ -6,6 +6,7 @@ import type { FileAudience } from "@/lib/generated/prisma/enums";
 import { projectRef } from "@/lib/crm/catalog";
 import { DriveNotConnected, projectFolderId, startUpload } from "@/lib/crm/drive";
 import { FOLDERS, projectRole, signTicket } from "@/lib/crm/files";
+import { storageProblem } from "@/lib/crm/nova-pro";
 import { getViewer } from "@/lib/crm/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -45,6 +46,9 @@ export async function POST(request: Request) {
 
   const project = await getPrisma().project.findUnique({ where: { id: input.projectId }, include: { account: true } });
   if (!project) return NextResponse.json({ error: "No such project" }, { status: 404 });
+  /* An agency's storage allowance (lib/crm/nova-pro): its trial's, or its plan's. */
+  const tooBig = await storageProblem(project.workspaceId, input.size);
+  if (tooBig) return NextResponse.json({ error: tooBig, pro: true }, { status: 413 });
   try {
     const parentId = await projectFolderId({
       accountId: project.accountId,
