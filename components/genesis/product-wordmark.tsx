@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
  * its own gradient as the O (scripts/nova-lockup.mjs).
  */
 export const PRODUCTS = {
-  copilot: { name: "Genesis Copilot", ratio: 1978 / 200 },
+  /* Nova Copilot (Genesis, 31 Oct 2026): the NOVA lockup, then COPILOT in the gradient, set wide (scripts/nova-copilot-lockup.mjs). */
+  copilot: { name: "Nova Copilot", ratio: 2162 / 290, file: "nova-copilot" },
   nova: { name: "Nova by Genesis", ratio: 1150 / 290, file: "nova-by-genesis" },
   "elite-ai": { name: "Genesis Elite AI", ratio: 1837 / 200 },
   "ai-lab": { name: "Genesis AI Lab", ratio: 1737 / 200 },

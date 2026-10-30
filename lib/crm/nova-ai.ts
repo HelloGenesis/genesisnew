@@ -12,7 +12,7 @@ import { appUrl, queueEmail, queueStaffEmail } from "./notify";
  * CRM, quick mode only. Each agency starts with FREE_PROMPTS; every request
  * takes one credit (given back if it fails); after that, credit packs bought
  * through a Razorpay payment link. Genesis sets the packs and can grant
- * credits (AI usage page). Genesis's own team uses Genesis Copilot, uncounted.
+ * credits (AI usage page). Genesis's own team uses Nova Copilot, uncounted.
  */
 
 export const FREE_PROMPTS = 5;

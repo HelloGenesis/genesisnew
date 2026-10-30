@@ -9,6 +9,7 @@ import type { Platform } from "@/lib/generated/prisma/enums";
 
 import { tierFor } from "./catalog";
 import { contactVisibility } from "./creator-privacy";
+import { ADMIN_TOOLS } from "./mcp-admin-tools";
 import { CRM_TOOLS } from "./mcp-crm-tools";
 import { WORK_TOOLS } from "./mcp-work-tools";
 import { tidyNiches } from "./niches";
@@ -54,7 +55,7 @@ export const CRM_INSTRUCTIONS = `You are connected to Genesis Media's CRM, all o
 - Always end with links to everything you made or changed.
 - Rupee amounts are plain numbers (180000 for ₹1.8L). Nothing can be deleted through these tools (if something was made by mistake, say so and give its link so a person can delete it), and nothing is emailed or sent to a client or vendor: quotes and invoices stay drafts until someone sends them from the CRM.`;
 
-type Tool = { name: string; description: string; input: z.ZodType; readOnly?: boolean; run: (viewer: Viewer, args: never) => Promise<unknown> };
+type Tool = { name: string; description: string; input: z.ZodType; readOnly?: boolean; ownerOnly?: boolean; run: (viewer: Viewer, args: never) => Promise<unknown> };
 
 const r = (paise: number | null | undefined) => (paise === null || paise === undefined ? null : paise / 100);
 const toPaise = (v: number | string | null | undefined) => {
@@ -354,6 +355,8 @@ export const TOOLS: Tool[] = [
   ...CRM_TOOLS,
   /* Projects, invoices, expenses, briefs, requests, vendors and the numbers (lib/crm/mcp-work-tools). */
   ...WORK_TOOLS,
+  /* Every agency's CRM, for Genesis's owners in Nova Copilot (lib/crm/mcp-admin-tools). */
+  ...ADMIN_TOOLS,
   {
     name: "search_influencers",
     readOnly: true,

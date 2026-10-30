@@ -96,7 +96,7 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
         ? [
             product === "Nova"
               ? { target: `${rail} a[href="/admin/assistant"]`, title: "NOVA AI", body: "The AI that works in your CRM: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. You get 5 free requests; after that it runs on credits you top up." }
-              : { target: `${rail} a[href="/admin/assistant"]`, title: "Genesis Copilot", body: "The AI that works in the CRM with you: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. It has its own tour the first time you open it." },
+              : { target: `${rail} a[href="/admin/assistant"]`, title: "Nova Copilot", body: "The AI that works in the CRM with you: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. It has its own tour the first time you open it." },
           ]
         : []),
       { target: "text:How it works", title: "Help on every page", body: "Each page has its own “How it works” that walks through that page step by step: how to make a quote, an influencer plan, an invoice, import a sheet." },

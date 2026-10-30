@@ -18,14 +18,14 @@ const tokens = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 
 
 /**
  * AI USAGE (Genesis, 30 Oct 2026: "show usage to each user"): what you used
- * Genesis Copilot for this month and what it cost (lib/crm/ai-usage); the
+ * Nova Copilot for this month and what it cost (lib/crm/ai-usage); the
  * owners also see everyone's, and the background reading of the inbox and
  * sheet imports. Recorded from 30 Oct 2026. Prices are Anthropic's, in US
  * dollars, as billed to Genesis's API key.
  */
 export default async function UsagePage() {
   const viewer = await requireStaff();
-  if (!usesAi(viewer)) return <p className="crm-notice">Genesis Copilot is open to the owners only, so there&apos;s no AI usage to show.</p>;
+  if (!usesAi(viewer)) return <p className="crm-notice">Nova Copilot is open to the owners only, so there&apos;s no AI usage to show.</p>;
   const all = isSuperAdmin(viewer);
   const prisma = getPrisma();
   const today = todayIst();
@@ -82,7 +82,7 @@ export default async function UsagePage() {
 
   return (
     <>
-      <PageHead kicker="Genesis Copilot" title="AI usage" sub={`What Genesis Copilot used and cost, in US dollars as Anthropic bills it. Recorded from 30 Oct 2026.`}>
+      <PageHead kicker="Nova Copilot" title="AI usage" sub={`What Nova Copilot used and cost, in US dollars as Anthropic bills it. Recorded from 30 Oct 2026.`}>
         <Link href="/admin/assistant" className="crm-btn crm-btn-secondary crm-btn-sm">← Back to Copilot</Link>
       </PageHead>
       <Stats
