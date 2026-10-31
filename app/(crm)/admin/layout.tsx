@@ -101,6 +101,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <ScrollMain className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:h-full lg:overflow-y-auto lg:px-8 lg:py-7">
         {/* Who's signed in, in the top bar (Genesis, 31 Oct 2026: "show the user name here"). */}
         <HeaderSlot>
+          {/* Nova is in Beta for agencies (Genesis, 31 Oct 2026). */}
+          {viewer!.workspaceId && <span className="rounded-full border border-[#ffc516]/40 bg-[#ffc516]/10 px-2.5 py-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-[#ffc516]">Beta</span>}
           <span className="max-w-[12rem] truncate text-[0.875rem] text-ash max-sm:hidden" title={viewer!.email ?? undefined}>
             {viewer!.name ?? viewer!.email}
           </span>
