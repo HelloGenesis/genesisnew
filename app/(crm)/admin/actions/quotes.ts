@@ -22,7 +22,8 @@ import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Platform } from "@/lib/generated/prisma/enums";
 import { tierFor } from "@/lib/crm/catalog";
-import { newToken, openFor, refreshTotals, sendQuote } from "@/lib/crm/quotes";
+import { DraftAccessError } from "@/lib/crm/gmail-draft";
+import { newToken, openFor, type QuoteDelivery, refreshTotals, sendQuote } from "@/lib/crm/quotes";
 import { termsByKey } from "@/lib/crm/quote-templates";
 import { creatorScope, quoteScope, seesCreators, seesQuoteContact } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
@@ -362,12 +363,16 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return fail("Add the client's email to the quote (and save) before sending.");
   try {
     const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";
-    const { paymentUrl } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && (view === "both" || view === "pricing"), view);
+    const how = text(form, "deliver");
+    const delivery: QuoteDelivery = how === "draft" ? "draft" : form.get("pdf") === "on" ? "email-pdf" : "email";
+    const { paymentUrl, draftAccount } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && (view === "both" || view === "pricing"), view, delivery);
     archiveLater("quote", id);
-    await recordAuditLog({ action: "quote.sent", entity: "quote", entityId: id, actorId: viewer.id });
+    await recordAuditLog({ action: delivery === "draft" ? "quote.drafted" : "quote.sent", entity: "quote", entityId: id, actorId: viewer.id });
     revalidatePath("/admin", "layout");
-    return ok(`Sent to ${q.contactEmail}${paymentUrl ? " with a payment link" : ""}.`);
+    if (delivery === "draft") return ok(`Draft saved in ${draftAccount}'s Gmail with the PDF attached. Open Gmail's Drafts to change it and send.`);
+    return ok(`Sent to ${q.contactEmail}${delivery === "email-pdf" ? " with the PDF" : ""}${paymentUrl ? " and a payment link" : ""}.`);
   } catch (error) {
+    if (error instanceof DraftAccessError) return fail(error.message);
     console.error("[crm] quote send failed", error);
     return fail(error instanceof RazorpayError ? "Razorpay couldn't make the payment link. Check the total, or send without one." : "Couldn't send. Try again.");
   }
