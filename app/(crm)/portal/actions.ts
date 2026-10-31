@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { recordAuditLog } from "@/lib/audit";
+import { decideDeliverable } from "@/lib/crm/review-links";
 import { getPrisma } from "@/lib/db";
 import type { MemberRole, RequestKind } from "@/lib/generated/prisma/enums";
 import { REQUEST_KIND, money, projectRef, requestRef, toPaise } from "@/lib/crm/catalog";
@@ -46,20 +47,10 @@ export async function reviewDeliverable(_: ActionState, form: FormData): Promise
   const feedback = text(form, "feedback");
   if (!id || (decision !== "approve" && decision !== "changes")) return fail("Choose approve or request changes.");
   if (decision === "changes" && !feedback) return fail("Tell us what to change, in one consolidated note.");
-  const prisma = getPrisma();
-  const d = await prisma.deliverable.findUnique({ where: { id }, include: { project: true } });
+  const d = await getPrisma().deliverable.findUnique({ where: { id }, include: { project: true } });
   if (!d || !allowed.has(d.project.accountId) || d.status !== "IN_REVIEW") return fail("This isn't waiting for your review any more.");
-  await prisma.deliverable.update({
-    where: { id },
-    data: { status: decision === "approve" ? "APPROVED" : "CHANGES_REQUESTED", feedback: decision === "changes" ? feedback : null, reviewedById: viewer.id, reviewedAt: new Date() },
-  });
-  await prisma.activity.create({ data: { projectId: d.projectId, kind: "STATUS", actorId: viewer.id, body: `Client ${decision === "approve" ? "approved" : "asked for changes to"} "${d.title}" v${d.version}.` } });
-  await queueStaffEmail({
-    kind: decision === "approve" ? "deliverable_approved" : "deliverable_changes",
-    scope: "producers",
-    subject: `${decision === "approve" ? "Approved" : "Changes requested"}: ${d.title} · ${d.project.name}`,
-    text: `${viewer.name ?? viewer.email} ${decision === "approve" ? "approved" : "asked for changes to"} "${d.title}" (v${d.version}).${feedback ? `\n\nTheir note:\n${feedback}` : ""}\n\n${appUrl(`/admin/projects/${d.projectId}`)}`,
-  });
+  /* The same decision as from the email's page (lib/crm/review-links). */
+  await decideDeliverable({ id, decision, feedback: feedback ?? null, by: viewer.name ?? viewer.email ?? "The client", userId: viewer.id });
   done();
   return ok(decision === "approve" ? "Approved. Thank you!" : "Sent to the team.");
 }

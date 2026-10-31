@@ -103,8 +103,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <HeaderSlot>
           {/* Nova is in Beta for agencies (Genesis, 31 Oct 2026). */}
           {viewer!.workspaceId && <span className="rounded-full border border-[#ffc516]/40 bg-[#ffc516]/10 px-2.5 py-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-[#ffc516]">Beta</span>}
-          <span className="max-w-[12rem] truncate text-[0.875rem] text-ash max-sm:hidden" title={viewer!.email ?? undefined}>
-            {viewer!.name ?? viewer!.email}
+          {/* The person, with their initials as on the rail's foot (Genesis, 31 Oct 2026: "add user icon"). */}
+          <span className="flex items-center gap-2" title={viewer!.email ?? undefined}>
+            <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#ffc516] to-[#f472b6] text-[0.6875rem] font-semibold text-[#141216]">
+              {initials(viewer!.name ?? viewer!.email ?? "?")}
+            </span>
+            <span className="max-w-[12rem] truncate text-[0.875rem] text-ash max-sm:hidden">{viewer!.name ?? viewer!.email}</span>
           </span>
         </HeaderSlot>
         {viewingSwitch}
@@ -148,4 +152,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {viewer!.demo && <DemoGuard />}
     </div>
   );
+}
+
+/** "Riya Kapoor" → "RK"; one word → its first two letters. */
+function initials(n: string) {
+  const parts = n.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts.at(-1)?.[0] ?? "") : (parts[0]?.[1] ?? ""))).toUpperCase() || "?";
 }

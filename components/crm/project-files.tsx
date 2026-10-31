@@ -4,7 +4,7 @@ import { Check, Download, FileText, Play, Trash2, Upload, X } from "lucide-react
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
-import { deleteProjectFile, saveProjectBrief, setFileAudience } from "@/app/(crm)/files-actions";
+import { briefAsGoogleDoc, createProjectGoogleFile, deleteProjectFile, saveProjectBrief, setFileAudience } from "@/app/(crm)/files-actions";
 
 import { uploadToProject } from "./upload-to-drive";
 
@@ -18,12 +18,16 @@ export type FileItem = {
   uploadedAs: string;
   uploader: string | null;
   createdAt: string;
+  /** Google's own page for it: how a Google Doc or Sheet opens. */
+  link?: string | null;
 };
 
 type Folder = { key: string; label: string; hint: string; audience: string; canUpload: boolean };
 
 const AUDIENCE: Record<string, string> = { ADMINS: "Admins only", TEAM: "Genesis only", TEAM_VENDOR: "Genesis + vendors", TEAM_CLIENT: "Genesis + client", EVERYONE: "Everyone" };
 const BRIEF = "__brief";
+/* Folders where a new Google Doc or Sheet makes sense. */
+const GOOGLE_FILES = new Set(["brief", "scripts", "internal", "edited"]);
 
 /*
  * WHO SEES IT, AT A GLANCE (Genesis, 31 Oct 2026: "all files or folders should
@@ -72,7 +76,25 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
   const [error, setError] = useState<string | null>(null);
   const [audience, setAudience] = useState<string>("");
   /* Every folder can go for review (Genesis, 31 Oct 2026): to the producer first, or to the client when they can see it. */
-  const [review, setReview] = useState<"" | "internal" | "client">("");
+  /* Which upload button was pressed: plain, producer reviews, or to the client. */
+  const pending = useRef<"" | "internal" | "client">("");
+  const pick = (r: "" | "internal" | "client") => {
+    pending.current = r;
+    input.current?.click();
+  };
+  const [making, setMaking] = useState(false);
+  const newGoogle = async (kind: "doc" | "sheet") => {
+    if (!folder) return;
+    const name = window.prompt(kind === "doc" ? "Name the Google Doc" : "Name the Google Sheet", kind === "doc" ? `${folder.label} · script` : `${folder.label} · sheet`);
+    if (name === null) return;
+    setMaking(true);
+    setError(null);
+    const r = await createProjectGoogleFile(projectId, folder.key, kind, name);
+    setMaking(false);
+    if (!r.ok) return setError(r.error);
+    if (r.url) window.open(r.url, "_blank", "noopener");
+    router.refresh();
+  };
   const [briefText, setBriefText] = useState(brief ?? "");
   const [savingBrief, setSavingBrief] = useState<"idle" | "saving" | "saved">("idle");
   const input = useRef<HTMLInputElement>(null);
@@ -86,7 +108,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
       setProgress((p) => [...p, { name: file.name, pct: 0 }]);
       const set = (pct: number) => setProgress((p) => p.map((x) => (x.name === file.name ? { ...x, pct } : x)));
       try {
-        await uploadToProject(file, { projectId, folder: folder.key, audience, review: review || undefined }, set);
+        await uploadToProject(file, { projectId, folder: folder.key, audience, review: pending.current || undefined }, set);
       } catch (e) {
         setError(`${file.name}: ${(e as Error).message}`);
       } finally {
@@ -99,31 +121,6 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
 
   return (
     <div id="files" className="space-y-4">
-      {/* The upload first, at the top (Genesis, 31 Oct 2026: "this should come on top"), then the folders. */}
-      {folder?.canUpload && (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {role === "staff" && (
-            <>
-              <select value={audience} onChange={(e) => setAudience(e.target.value)} className="crm-input !min-h-9 !w-auto text-[0.8125rem]" aria-label="Who can see new files">
-                <option value="">{agency ? "Default: admins only" : "Folder default"}</option>
-                {Object.entries(AUDIENCE).filter(([k]) => admin || k !== "ADMINS").map(([k, v]) => (
-                  <option key={k} value={k}>{k === "TEAM" && agency ? "Team only" : agency ? v.replace("Genesis", "Team") : v}</option>
-                ))}
-              </select>
-              <select value={review} onChange={(e) => setReview(e.target.value as typeof review)} className="crm-input !min-h-9 !w-auto text-[0.8125rem]" aria-label="Send for approval">
-                <option value="">No approval</option>
-                <option value="internal">Internal review (producer)</option>
-                {SEES[audience || defaultFor(folder)]?.client && <option value="client">Send to client for review</option>}
-              </select>
-            </>
-          )}
-          <input ref={input} type="file" multiple hidden onChange={(e) => void upload(e.target.files)} />
-          <button type="button" onClick={() => input.current?.click()} className="crm-btn crm-btn-primary crm-btn-sm" disabled={progress.length > 0}>
-            <Upload className="size-4" aria-hidden /> Upload to {folder.label}
-          </button>
-        </div>
-      )}
-
       <nav className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
         {hasBrief && (
           <button type="button" onClick={() => setActive(BRIEF)} aria-current={active === BRIEF ? "page" : undefined} className="crm-nav-link !min-h-9 shrink-0">Brief</button>
@@ -139,19 +136,62 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
         })}
       </nav>
 
+      {/*
+        ONE FOLDER AT A TIME, ITS OWN BUTTONS (Genesis, 31 Oct 2026: "keep it
+        structured; the upload below View; each section its own buttons to its
+        folder"). Its name and who sees it, Open in Google Drive, then what you
+        can do in it.
+      */}
       {folder && (
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-ash">
-          <span>{folder.hint}</span>
-          <span className="text-faint">·</span>
-          <span>{role === "staff" ? "New files:" : "Shared with:"}</span>
-          <SharedWith audience={audience || defaultFor(folder)} team={teamName} />
-          {/* The folder itself on Google Drive (lib/crm/files-view). */}
-          {drive[folder.key] ? (
-            <a href={drive[folder.key]} target="_blank" rel="noopener noreferrer" className="crm-link ml-auto">Open {folder.label} in Google Drive ↗</a>
-          ) : drive.project ? (
-            <a href={drive.project} target="_blank" rel="noopener noreferrer" className="crm-link ml-auto">Project folder in Google Drive ↗</a>
-          ) : null}
-        </p>
+        <div className="space-y-3 rounded-2xl border border-[var(--glass-border)] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[1rem] font-semibold text-bone">{folder.label}</p>
+              <p className="mt-0.5 text-[0.8125rem] text-ash">{folder.hint}</p>
+            </div>
+            {(drive[folder.key] ?? drive.project) && (
+              <a href={drive[folder.key] ?? drive.project} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Open in Google Drive ↗</a>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-[0.8125rem] text-ash">
+            <span>{role === "staff" ? "New files are seen by:" : "Shared with:"}</span>
+            <SharedWith audience={audience || defaultFor(folder)} team={teamName} />
+            {role === "staff" && (
+              <select value={audience} onChange={(e) => setAudience(e.target.value)} className="crm-input !min-h-8 !w-auto !py-0.5 text-[0.75rem]" aria-label="Who can see new files">
+                <option value="">{agency ? "Change: admins only (default)" : "Change who sees new files"}</option>
+                {Object.entries(AUDIENCE).filter(([k]) => admin || k !== "ADMINS").map(([k, v]) => (
+                  <option key={k} value={k}>{k === "TEAM" && agency ? "Team only" : agency ? v.replace("Genesis", "Team") : v}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          {folder.canUpload && (
+            <div className="flex flex-wrap gap-2 border-t border-[var(--glass-border)] pt-3">
+              <input ref={input} type="file" multiple hidden onChange={(e) => void upload(e.target.files)} />
+              <button type="button" onClick={() => pick("")} className="crm-btn crm-btn-primary crm-btn-sm" disabled={progress.length > 0}>
+                <Upload className="size-4" aria-hidden /> Upload to {folder.label}
+              </button>
+              {role === "staff" && (
+                <>
+                  <button type="button" onClick={() => pick("internal")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={progress.length > 0} title="Your producer reviews it first; the client doesn't see it">
+                    Upload &amp; producer reviews
+                  </button>
+                  {SEES[audience || defaultFor(folder)]?.client && (
+                    <button type="button" onClick={() => pick("client")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={progress.length > 0} title="Emails the client with Approve and Ask for changes buttons">
+                      Upload &amp; send to client to approve
+                    </button>
+                  )}
+                  {GOOGLE_FILES.has(folder.key) && (
+                    <>
+                      <button type="button" onClick={() => void newGoogle("doc")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}>＋ Google Doc</button>
+                      <button type="button" onClick={() => void newGoogle("sheet")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}>＋ Google Sheet</button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {active === BRIEF && (
@@ -184,6 +224,21 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
                   {savingBrief === "saving" ? "Saving…" : "Save the brief"}
                 </button>
                 {savingBrief === "saved" && <span className="text-[0.8125rem] text-ash">Saved.</span>}
+                <button
+                  type="button"
+                  disabled={making}
+                  onClick={async () => {
+                    setMaking(true);
+                    setError(null);
+                    const r = await briefAsGoogleDoc(projectId);
+                    setMaking(false);
+                    if (!r.ok) return setError(r.error);
+                    window.open(r.url, "_blank", "noopener");
+                  }}
+                  className="crm-btn crm-btn-secondary crm-btn-sm"
+                >
+                  {making ? "Opening…" : "Open as Google Doc ↗"}
+                </button>
                 <span className="ml-auto"><SharedWith audience="EVERYONE" /></span>
               </div>
             </>
@@ -211,7 +266,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
             const k = kind(f.mimeType);
             return (
               <li key={f.id} className="crm-card overflow-hidden !rounded-xl">
-                <button type="button" onClick={() => setOpen(f)} className="relative block aspect-video w-full bg-black/80">
+                <button type="button" onClick={() => (f.mimeType?.startsWith("application/vnd.google-apps") && f.link ? window.open(f.link, "_blank", "noopener") : setOpen(f))} className="relative block aspect-video w-full bg-black/80">
                   {k === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={`/api/crm/files/${f.id}`} alt="" loading="lazy" className="size-full object-cover" />

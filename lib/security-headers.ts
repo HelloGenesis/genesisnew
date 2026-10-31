@@ -73,6 +73,9 @@ function contentSecurityPolicy(): string {
       // these cover Speed Insights and the non-Vercel/dev fallback.
       "https://vitals.vercel-insights.com",
       "https://va.vercel-scripts.com",
+      // Project files go from the browser straight to Google Drive's resumable upload (lib/crm/drive startUpload);
+      // without this every upload failed as a "network error" (31 Oct 2026).
+      "https://www.googleapis.com",
       // Razorpay Checkout's own calls.
       "https://api.razorpay.com",
       "https://lumberjack.razorpay.com",

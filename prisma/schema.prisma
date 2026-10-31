@@ -1094,6 +1094,8 @@ model EmailOutbox {
   staffScope    String?      @map("staff_scope")
   subject       String
   text          String
+  /// The designed version, with buttons (lib/crm/email-html); `text` is always sent alongside.
+  html          String?
   /// Same key twice = one email (a retried webhook never mails twice).
   dedupeKey     String?      @unique @map("dedupe_key")
   status        OutboxStatus @default(PENDING)

@@ -246,6 +246,37 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               </label>
             </ActionForm>
           </Card>
+          <Card title="Tasks">
+            <ul className="mb-4 space-y-2">
+              {project.tasks.map((t) => (
+                <li key={t.id} className="flex items-center gap-2">
+                  <form action={toggleTask}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <button aria-label={t.status === "OPEN" ? "Mark done" : "Reopen"} className={`grid size-5 place-items-center rounded border border-[var(--glass-border)] ${t.status === "DONE" ? "bg-[#16a34a] text-white" : ""}`}>{t.status === "DONE" ? "✓" : ""}</button>
+                  </form>
+                  <span className={t.status === "DONE" ? "text-faint line-through" : "text-bone"}>{t.title}</span>
+                  <span className="ml-auto text-[0.75rem] text-faint">{date(t.dueDate)}</span>
+                </li>
+              ))}
+            </ul>
+            <ActionForm action={createTask} submit="Add" inline reset>
+              <input type="hidden" name="projectId" value={project.id} />
+              <input name="title" required placeholder="Book the location" className="crm-input min-w-[10rem] flex-1" />
+              <input name="dueDate" type="date" defaultValue={inDays(2)} className="crm-input w-auto" />
+              <Select name="ownerId" options={staff} className="w-auto" />
+            </ActionForm>
+          </Card>
+
+          <Card title="Timeline">
+            <ol className="space-y-3">
+              {project.activities.map((a) => (
+                <li key={a.id} className="border-l-2 border-[#ffc516]/60 pl-3">
+                  <p className="text-[0.75rem] text-faint">{a.actor?.name ?? a.actor?.email ?? "Genesis"} · {dateTime(a.createdAt)}</p>
+                  <p className="text-bone">{a.body}</p>
+                </li>
+              ))}
+            </ol>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -320,37 +351,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             </Card>
           )}
 
-          <Card title="Tasks">
-            <ul className="mb-4 space-y-2">
-              {project.tasks.map((t) => (
-                <li key={t.id} className="flex items-center gap-2">
-                  <form action={toggleTask}>
-                    <input type="hidden" name="id" value={t.id} />
-                    <button aria-label={t.status === "OPEN" ? "Mark done" : "Reopen"} className={`grid size-5 place-items-center rounded border border-[var(--glass-border)] ${t.status === "DONE" ? "bg-[#16a34a] text-white" : ""}`}>{t.status === "DONE" ? "✓" : ""}</button>
-                  </form>
-                  <span className={t.status === "DONE" ? "text-faint line-through" : "text-bone"}>{t.title}</span>
-                  <span className="ml-auto text-[0.75rem] text-faint">{date(t.dueDate)}</span>
-                </li>
-              ))}
-            </ul>
-            <ActionForm action={createTask} submit="Add" inline reset>
-              <input type="hidden" name="projectId" value={project.id} />
-              <input name="title" required placeholder="Book the location" className="crm-input min-w-[10rem] flex-1" />
-              <input name="dueDate" type="date" defaultValue={inDays(2)} className="crm-input w-auto" />
-              <Select name="ownerId" options={staff} className="w-auto" />
-            </ActionForm>
-          </Card>
-
-          <Card title="Timeline">
-            <ol className="space-y-3">
-              {project.activities.map((a) => (
-                <li key={a.id} className="border-l-2 border-[#ffc516]/60 pl-3">
-                  <p className="text-[0.75rem] text-faint">{a.actor?.name ?? a.actor?.email ?? "Genesis"} · {dateTime(a.createdAt)}</p>
-                  <p className="text-bone">{a.body}</p>
-                </li>
-              ))}
-            </ol>
-          </Card>
         </div>
       </div>
     </>

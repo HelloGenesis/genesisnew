@@ -362,17 +362,11 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           ) : (
           /* Nova Copilot: the NOVA logo, COPILOT under it (Genesis, 31 Oct 2026: "add the Nova logo here, Copilot you can write below"). */
           <Link href="/admin/assistant" aria-label="Nova Copilot" aria-current={path.startsWith("/admin/assistant") ? "page" : undefined} className={ITEM}>
-            {/* The logo in an icon's place, the same height as the rest (Genesis, 31 Oct 2026: "fit, aligned, aesthetic"). */}
-            <span className={`${TILE} !w-auto px-1.5 ${path.startsWith("/admin/assistant") ? "bg-[var(--rail-hover)] text-[var(--rail-fg)] shadow-[0_0_0_2px_#ffc516]" : "text-[var(--rail-fg)] group-hover:bg-[var(--rail-hover)]"}`}>
-              <span className="flex items-center gap-[0.1875rem]">
-                <NovaGlyph letter="N" className="h-[0.5625rem] shrink-0" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand/genesis-orb.png" alt="" aria-hidden className="size-[0.8125rem] shrink-0 scale-[1.3] object-contain brightness-[1.5] saturate-[1.5]" />
-                <NovaGlyph letter="V" className="h-[0.5625rem] shrink-0" />
-                <NovaGlyph letter="A" className="h-[0.5625rem] shrink-0" />
-              </span>
+            {/* Like every other item: an icon (the orb, glowing) and its name (Genesis, 31 Oct 2026: "this still sucks"). */}
+            <span className={`${TILE} ${path.startsWith("/admin/assistant") ? "bg-white shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-[var(--rail-hover)]"}`}>
+              <span aria-hidden className="size-[1.375rem] rounded-full bg-[radial-gradient(circle_at_32%_28%,#fff6d6_0%,#ffc516_22%,#f472b6_52%,#7c3aed_86%)] shadow-[0_0_12px_rgb(244_114_182/0.65)] transition-transform group-hover:scale-110" />
             </span>
-            <span className={`bg-gradient-to-r from-[#ffaf18] via-[#f06144] to-[#ac84fe] bg-clip-text text-[0.5625rem] font-semibold uppercase leading-none tracking-[0.2em] text-transparent ${path.startsWith("/admin/assistant") ? "" : "opacity-90 group-hover:opacity-100"}`}>Copilot</span>
+            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-[var(--rail-fg)]" : ""}`}>Copilot</span>
           </Link>
           )
           )}
