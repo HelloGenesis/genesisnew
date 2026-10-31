@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { CrmRail, RailUser } from "@/components/crm/crm-rail";
 import { SideNav } from "@/components/crm/side-nav";
+import { HeaderSlot } from "@/components/crm/header-slot";
 import { ViewingSwitch } from "@/components/crm/viewing-switch";
 import { crmNav } from "@/lib/crm/nav";
 import { Notice, PageHead } from "@/components/crm/ui";
@@ -98,6 +99,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </div>
       <ScrollMain className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:h-full lg:overflow-y-auto lg:px-8 lg:py-7">
+        {/* Who's signed in, in the top bar (Genesis, 31 Oct 2026: "show the user name here"). */}
+        <HeaderSlot>
+          <span className="max-w-[12rem] truncate text-[0.875rem] text-ash max-sm:hidden" title={viewer!.email ?? undefined}>
+            {viewer!.name ?? viewer!.email}
+          </span>
+        </HeaderSlot>
         {viewingSwitch}
         {/* A Genesis owner inside an agency's CRM: anything added here is the agency's. */}
         {agencyCrm && !viewer!.workspaceId && (

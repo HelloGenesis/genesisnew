@@ -222,7 +222,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
   const railButton = (g: NavGroup) => {
     const Icon = AREA_ICON[g.label] ?? LayoutGrid;
     /* A page with its own rail icon (Inbox, Tasks…) lights that one, not its area too. */
-    const lit = g.label === here && !shortcuts.some((sc) => sc.href === best);
+    const lit = g.label === here && !shortcuts.some((sc) => sc.href === best) && !best?.startsWith("/admin/assistant");
     const n = counts(g);
     return (
       <button
@@ -361,15 +361,18 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
             </Link>
           ) : (
           /* Nova Copilot: the NOVA logo, COPILOT under it (Genesis, 31 Oct 2026: "add the Nova logo here, Copilot you can write below"). */
-          <Link href="/admin/assistant" aria-label="Nova Copilot" className={`${ITEM} px-1 ${path.startsWith("/admin/assistant") ? "bg-[var(--rail-hover)] text-[var(--rail-fg)]" : "text-[var(--rail-soft)] hover:bg-[var(--rail-hover)] hover:text-[var(--rail-fg)]"}`}>
-            <span className="flex items-center">
-              <NovaGlyph letter="N" className="h-[0.75rem] shrink-0" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/genesis-orb.png" alt="" aria-hidden className="mx-[0.125rem] size-[0.9375rem] shrink-0 scale-[1.35] object-contain" />
-              <NovaGlyph letter="V" className="h-[0.75rem] shrink-0" />
-              <NovaGlyph letter="A" className="h-[0.75rem] shrink-0" />
+          <Link href="/admin/assistant" aria-label="Nova Copilot" aria-current={path.startsWith("/admin/assistant") ? "page" : undefined} className={ITEM}>
+            {/* The logo in an icon's place, the same height as the rest (Genesis, 31 Oct 2026: "fit, aligned, aesthetic"). */}
+            <span className={`${TILE} !w-auto px-1.5 ${path.startsWith("/admin/assistant") ? "bg-[var(--rail-hover)] text-[var(--rail-fg)] shadow-[0_0_0_2px_#ffc516]" : "text-[var(--rail-fg)] group-hover:bg-[var(--rail-hover)]"}`}>
+              <span className="flex items-center gap-[0.1875rem]">
+                <NovaGlyph letter="N" className="h-[0.5625rem] shrink-0" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brand/genesis-orb.png" alt="" aria-hidden className="size-[0.8125rem] shrink-0 scale-[1.3] object-contain brightness-[1.5] saturate-[1.5]" />
+                <NovaGlyph letter="V" className="h-[0.5625rem] shrink-0" />
+                <NovaGlyph letter="A" className="h-[0.5625rem] shrink-0" />
+              </span>
             </span>
-            <span className="bg-gradient-to-r from-[#ffaf18] via-[#f06144] to-[#ac84fe] bg-clip-text text-[0.5625rem] font-medium uppercase leading-none tracking-[0.22em] text-transparent">Copilot</span>
+            <span className={`bg-gradient-to-r from-[#ffaf18] via-[#f06144] to-[#ac84fe] bg-clip-text text-[0.5625rem] font-semibold uppercase leading-none tracking-[0.2em] text-transparent ${path.startsWith("/admin/assistant") ? "" : "opacity-90 group-hover:opacity-100"}`}>Copilot</span>
           </Link>
           )
           )}
