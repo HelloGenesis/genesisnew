@@ -34,12 +34,12 @@ export const SIGN_OFF = "\n\n— Genesis Media\nhello@genesismedia.co · genesis
 
 /** One email to named people. `dedupeKey` makes a repeat (a retried webhook) a no-op. */
 /** `signOff` and `replyTo`: an agency CRM's own (lib/crm/workspace); Genesis's otherwise. */
-export async function queueEmail(input: { kind: string; to: (string | null | undefined)[]; subject: string; text: string; dedupeKey?: string; signOff?: string; replyTo?: string | null }) {
+export async function queueEmail(input: { kind: string; to: (string | null | undefined)[]; subject: string; text: string; html?: string; dedupeKey?: string; signOff?: string; replyTo?: string | null }) {
   const to = [...new Set(input.to.filter((e): e is string => Boolean(e)).map((e) => e.toLowerCase()))];
   if (to.length === 0) return;
   await getPrisma().emailOutbox.upsert({
     where: { dedupeKey: input.dedupeKey ?? `${input.kind}:${crypto.randomUUID()}` },
-    create: { kind: input.kind, to, subject: input.subject, text: `${input.text}${input.signOff ?? SIGN_OFF}`, dedupeKey: input.dedupeKey ?? null, replyTo: input.replyTo ?? null },
+    create: { kind: input.kind, to, subject: input.subject, text: `${input.text}${input.signOff ?? SIGN_OFF}`, html: input.html ?? null, dedupeKey: input.dedupeKey ?? null, replyTo: input.replyTo ?? null },
     update: {},
   }).catch(() => undefined);
 }
@@ -88,7 +88,7 @@ async function staffRecipients(scope: StaffScope): Promise<string[]> {
 
 export type Attachment = { filename: string; content: Buffer };
 
-async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null, attachments: Attachment[] = [], from?: string) {
+async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null, attachments: Attachment[] = [], from?: string, html?: string | null) {
   await assertNotDemo();
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -102,6 +102,7 @@ async function send(to: string[], bcc: string[], subject: string, text: string, 
       headers: { "X-Genesis-CRM": "1" },
       subject,
       text,
+      ...(html ? { html } : {}),
       ...(attachments.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: a.content.toString("base64") })) } : {}),
     }),
     signal: AbortSignal.timeout(attachments.length ? 30_000 : 10_000),
@@ -110,8 +111,8 @@ async function send(to: string[], bcc: string[], subject: string, text: string, 
 }
 
 /** Sends one email now, outside the outbox (sign-in codes can't wait for the next run). */
-export async function sendNow(to: string[], subject: string, text: string, opts: { replyTo?: string | null; signOff?: boolean | string; attachments?: Attachment[]; from?: string } = {}) {
-  await send(to, [], subject, opts.signOff === false ? text : `${text}${typeof opts.signOff === "string" ? opts.signOff : SIGN_OFF}`, opts.replyTo, opts.attachments, opts.from);
+export async function sendNow(to: string[], subject: string, text: string, opts: { replyTo?: string | null; signOff?: boolean | string; attachments?: Attachment[]; from?: string; html?: string } = {}) {
+  await send(to, [], subject, opts.signOff === false ? text : `${text}${typeof opts.signOff === "string" ? opts.signOff : SIGN_OFF}`, opts.replyTo, opts.attachments, opts.from, opts.html);
 }
 
 /*
@@ -151,7 +152,7 @@ export async function deliverEmails(limit = 25) {
         await prisma.emailOutbox.update({ where: { id }, data: { status: "SKIPPED", lastError: "no recipient" } });
         continue;
       }
-      await send(to, bcc, row.subject, row.text, row.replyTo);
+      await send(to, bcc, row.subject, row.text, row.replyTo, [], undefined, row.html);
       await prisma.emailOutbox.update({ where: { id }, data: { status: "SENT", sentAt: new Date(), lastError: null } });
       sent++;
     } catch (error) {

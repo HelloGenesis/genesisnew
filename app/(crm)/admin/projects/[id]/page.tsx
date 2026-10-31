@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
 import { canDeleteFiles } from "@/app/(crm)/files-actions";
+import { invoiceFromQuote } from "@/app/(crm)/admin/actions/invoices";
+import { docRef } from "@/lib/crm/quote-templates";
 import { ProjectFiles } from "@/components/crm/project-files";
 import { Badge, Card, Field, PageHead, Select, StageBar, Status, Thread } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
@@ -21,6 +23,7 @@ import {
   requestRef,
 } from "@/lib/crm/catalog";
 import { accountOptions, dateValue, inDays, staffOptions } from "@/lib/crm/options";
+import { fileAdmin } from "@/lib/crm/files";
 import { filesFor } from "@/lib/crm/files-view";
 import { creatorScope, projectScope, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
@@ -65,6 +68,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   });
   if (!project) notFound();
   const influence = project.division === "INFLUENCE";
+  /* BILLING ON THE PROJECT (Genesis, 31 Oct 2026: "from new lead to delivery, invoicing, payment received"): the quote it was sold on, and its invoices. */
+  const quote = project.quoteId ? await prisma.quote.findUnique({ where: { id: project.quoteId }, select: { id: true, number: true, baseNumber: true, revision: true, title: true, status: true, totalPaise: true } }) : null;
+  const invoices = await prisma.invoice.findMany({
+    where: quote ? { quoteId: quote.id } : { accountId: project.accountId, createdAt: { gte: project.createdAt } },
+    orderBy: { createdAt: "desc" },
+    take: 8,
+    select: { id: true, number: true, status: true, totalPaise: true, dueDate: true, paidAt: true },
+  });
+  const billed = invoices.filter((i) => i.status !== "CANCELLED");
+  const paid = billed.filter((i) => i.status === "PAID").reduce((n, i) => n + i.totalPaise, 0);
+  const owed = billed.filter((i) => i.status !== "PAID").reduce((n, i) => n + i.totalPaise, 0);
   const [staff, vendors, pool] = await Promise.all([
     staffOptions(),
     accountOptions(["VENDOR"]),
@@ -73,7 +87,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       : [],
   ]);
   const stages = stagesOf(project);
-  const files = await filesFor(project.id, "staff", { avatar: stages.some((s) => /avatar/i.test(s)) });
+  const files = await filesFor(project.id, "staff", { avatar: stages.some((s) => /avatar/i.test(s)), admin: fileAdmin(viewer) });
   const approved = project.deliverables.filter((d) => d.status === "APPROVED").length;
   const fees = project.creators.reduce((s, c) => s + (c.status !== "DROPPED" ? (c.feePaise ?? 0) : 0), 0);
   const views = project.creators.reduce((s, c) => s + (c.views ?? 0), 0);
@@ -107,8 +121,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <StageBar stages={stages} stage={project.stage} />
       </Card>
 
-      <Card title="Files" action={<span className="text-[0.8125rem] text-ash">Stored in Genesis&apos;s Google Drive · clients and vendors see only their folders</span>}>
-        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} drive={files.drive} brief={project.brief ?? null} canDelete={await canDeleteFiles(project.id)} />
+      <Card title="Files" action={<span className="text-[0.8125rem] text-ash">{project.workspaceId ? "Stored in Google Drive · new files are for admins until shared" : <>Stored in Genesis&apos;s Google Drive · clients and vendors see only their folders</>}</span>}>
+        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} drive={files.drive} agency={Boolean(project.workspaceId)} admin={fileAdmin(viewer)} brief={project.brief ?? null} canDelete={await canDeleteFiles(project.id)} />
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -245,9 +259,76 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               </label>
             </ActionForm>
           </Card>
+          <Card title="Tasks">
+            <ul className="mb-4 space-y-2">
+              {project.tasks.map((t) => (
+                <li key={t.id} className="flex items-center gap-2">
+                  <form action={toggleTask}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <button aria-label={t.status === "OPEN" ? "Mark done" : "Reopen"} className={`grid size-5 place-items-center rounded border border-[var(--glass-border)] ${t.status === "DONE" ? "bg-[#16a34a] text-white" : ""}`}>{t.status === "DONE" ? "✓" : ""}</button>
+                  </form>
+                  <span className={t.status === "DONE" ? "text-faint line-through" : "text-bone"}>{t.title}</span>
+                  <span className="ml-auto text-[0.75rem] text-faint">{date(t.dueDate)}</span>
+                </li>
+              ))}
+            </ul>
+            <ActionForm action={createTask} submit="Add" inline reset>
+              <input type="hidden" name="projectId" value={project.id} />
+              <input name="title" required placeholder="Book the location" className="crm-input min-w-[10rem] flex-1" />
+              <input name="dueDate" type="date" defaultValue={inDays(2)} className="crm-input w-auto" />
+              <Select name="ownerId" options={staff} className="w-auto" />
+            </ActionForm>
+          </Card>
+
+          <Card title="Timeline">
+            <ol className="space-y-3">
+              {project.activities.map((a) => (
+                <li key={a.id} className="border-l-2 border-[#ffc516]/60 pl-3">
+                  <p className="text-[0.75rem] text-faint">{a.actor?.name ?? a.actor?.email ?? "Genesis"} · {dateTime(a.createdAt)}</p>
+                  <p className="text-bone">{a.body}</p>
+                </li>
+              ))}
+            </ol>
+          </Card>
         </div>
 
         <div className="space-y-6">
+          <Card title="Billing" action={billed.length ? <span className="text-[0.8125rem] text-ash">{money(paid)} paid{owed ? ` · ${money(owed)} due` : ""}</span> : undefined}>
+            {/* Delivered and not invoiced: the next step, in yellow. */}
+            {project.status === "DELIVERED" && billed.length === 0 && (
+              <p className="crm-notice crm-notice-warn mb-3">Delivered. Invoice it so the client can pay.</p>
+            )}
+            {quote && (
+              <p className="text-[0.875rem] text-ash">
+                Sold on <Link href={`/admin/quotes/${quote.id}`} className="crm-link">{docRef(quote)} · {quote.title}</Link> · {money(quote.totalPaise)} · {quote.status.toLowerCase()}
+              </p>
+            )}
+            {billed.length > 0 ? (
+              <ul className="mt-3 divide-y divide-[var(--glass-border)]">
+                {billed.map((i) => (
+                  <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                    <Link href={`/admin/invoices/${i.id}`} className="crm-link">Invoice {i.number}</Link>
+                    <span className="flex items-center gap-2 text-[0.875rem]">
+                      <span className="tabular-nums text-bone">{money(i.totalPaise)}</span>
+                      <Badge tone={i.status === "PAID" ? "good" : i.dueDate && i.dueDate < new Date() ? "bad" : "warn"}>{i.status === "PAID" ? `Paid ${i.paidAt ? date(i.paidAt) : ""}` : i.status === "DRAFT" ? "Draft" : i.dueDate && i.dueDate < new Date() ? "Overdue" : "Sent"}</Badge>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-[0.875rem] text-ash">Not invoiced yet.</p>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {quote ? (
+                <form action={invoiceFromQuote}>
+                  <input type="hidden" name="quoteId" value={quote.id} />
+                  <button className="crm-btn crm-btn-primary crm-btn-sm">{billed.length ? "Another invoice from the quote" : "Make the invoice"}</button>
+                </form>
+              ) : null}
+              <Link href={`/admin/invoices/new?account=${project.accountId}`} className={`crm-btn crm-btn-sm ${quote ? "crm-btn-secondary" : "crm-btn-primary"}`}>New invoice for {project.account.name}</Link>
+            </div>
+          </Card>
+
           <Card title="Project">
             <ActionForm action={updateProject} submit="Save">
               <input type="hidden" name="id" value={project.id} />
@@ -319,37 +400,6 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             </Card>
           )}
 
-          <Card title="Tasks">
-            <ul className="mb-4 space-y-2">
-              {project.tasks.map((t) => (
-                <li key={t.id} className="flex items-center gap-2">
-                  <form action={toggleTask}>
-                    <input type="hidden" name="id" value={t.id} />
-                    <button aria-label={t.status === "OPEN" ? "Mark done" : "Reopen"} className={`grid size-5 place-items-center rounded border border-[var(--glass-border)] ${t.status === "DONE" ? "bg-[#16a34a] text-white" : ""}`}>{t.status === "DONE" ? "✓" : ""}</button>
-                  </form>
-                  <span className={t.status === "DONE" ? "text-faint line-through" : "text-bone"}>{t.title}</span>
-                  <span className="ml-auto text-[0.75rem] text-faint">{date(t.dueDate)}</span>
-                </li>
-              ))}
-            </ul>
-            <ActionForm action={createTask} submit="Add" inline reset>
-              <input type="hidden" name="projectId" value={project.id} />
-              <input name="title" required placeholder="Book the location" className="crm-input min-w-[10rem] flex-1" />
-              <input name="dueDate" type="date" defaultValue={inDays(2)} className="crm-input w-auto" />
-              <Select name="ownerId" options={staff} className="w-auto" />
-            </ActionForm>
-          </Card>
-
-          <Card title="Timeline">
-            <ol className="space-y-3">
-              {project.activities.map((a) => (
-                <li key={a.id} className="border-l-2 border-[#ffc516]/60 pl-3">
-                  <p className="text-[0.75rem] text-faint">{a.actor?.name ?? a.actor?.email ?? "Genesis"} · {dateTime(a.createdAt)}</p>
-                  <p className="text-bone">{a.body}</p>
-                </li>
-              ))}
-            </ol>
-          </Card>
         </div>
       </div>
     </>

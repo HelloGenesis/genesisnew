@@ -1094,6 +1094,8 @@ model EmailOutbox {
   staffScope    String?      @map("staff_scope")
   subject       String
   text          String
+  /// The designed version, with buttons (lib/crm/email-html); `text` is always sent alongside.
+  html          String?
   /// Same key twice = one email (a retried webhook never mails twice).
   dedupeKey     String?      @unique @map("dedupe_key")
   status        OutboxStatus @default(PENDING)
@@ -1291,6 +1293,8 @@ model QuoteCreator {
 
 /// Who can see a project file. Genesis staff always can.
 enum FileAudience {
+  /// The organisation's admins only: an agency's admins (and Genesis's owners). The default for new files in an agency's CRM.
+  ADMINS
   /// Genesis only — internal notes, costings, rough material.
   TEAM
   /// Genesis and the vendors on the project — raw footage, project files.

@@ -2,12 +2,14 @@ import "server-only";
 
 import { getPrisma } from "@/lib/db";
 
+import { projectRef } from "./catalog";
+import { ensureProjectFolders } from "./drive";
 import { FOLDERS, type FileRole, visibleTo } from "./files";
 
 /** The folders and files one person sees on a project, ready for <ProjectFiles>. */
-export async function filesFor(projectId: string, role: FileRole, opts: { avatar?: boolean } = {}) {
+export async function filesFor(projectId: string, role: FileRole, opts: { avatar?: boolean; admin?: boolean } = {}) {
   const files = await getPrisma().driveFile.findMany({
-    where: { projectId, audience: { in: visibleTo(role) } },
+    where: { projectId, audience: { in: visibleTo(role, opts.admin) } },
     orderBy: { createdAt: "desc" },
   });
   const uploaders = await getPrisma().user.findMany({ where: { id: { in: files.map((f) => f.uploadedById).filter((x): x is string => Boolean(x)) } }, select: { id: true, name: true, email: true } });
@@ -29,6 +31,11 @@ export async function filesFor(projectId: string, role: FileRole, opts: { avatar
    */
   const drive: Record<string, string> = {};
   if (role === "staff") {
+    /* Every folder made on Drive the first time the project is opened (lib/crm/drive ensureProjectFolders); Drive not connected: skipped. */
+    const project = await getPrisma().project.findUnique({ where: { id: projectId }, select: { accountId: true, number: true, name: true, account: { select: { name: true } } } });
+    if (project) {
+      await ensureProjectFolders({ accountId: project.accountId, accountName: project.account.name, projectId, projectLabel: `${projectRef(project.number)} ${project.name}` }, folders).catch(() => undefined);
+    }
     const rows = await getPrisma().appSetting.findMany({ where: { key: { in: [`drive:folder:project:${projectId}`, ...folders.map((f) => `drive:folder:project:${projectId}:${f.key}`)] } } });
     for (const r of rows) if (!r.value.startsWith("local-")) drive[r.key === `drive:folder:project:${projectId}` ? "project" : r.key.split(":").pop()!] = `https://drive.google.com/drive/folders/${r.value}`;
   }
@@ -45,6 +52,7 @@ export async function filesFor(projectId: string, role: FileRole, opts: { avatar
       uploadedAs: f.uploadedAs,
       uploader: role === "staff" ? name(f.uploadedById) : f.uploadedAs === "staff" ? "Genesis" : f.uploadedAs === "client" ? (name(f.uploadedById) ?? "Client") : "Vendor",
       createdAt: f.createdAt.toISOString(),
+      link: f.webViewLink,
     })),
   };
 }

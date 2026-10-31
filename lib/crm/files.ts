@@ -35,6 +35,7 @@ export const FOLDERS: readonly { key: FolderKey; label: string; audience: FileAu
 ];
 
 export const AUDIENCE_LABEL: Record<FileAudience, string> = {
+  ADMINS: "Admins only",
   TEAM: "Genesis only",
   TEAM_VENDOR: "Genesis + vendors",
   TEAM_CLIENT: "Genesis + client",
@@ -49,7 +50,13 @@ const VISIBLE: Record<FileRole, FileAudience[]> = {
   vendor: ["TEAM_VENDOR", "EVERYONE"],
 };
 
-export const visibleTo = (role: FileRole) => VISIBLE[role];
+/*
+ * ADMINS ONLY, PER ORGANISATION (Genesis, 31 Oct 2026): an agency's new files
+ * are seen by its admins until one of them shares the file wider. Admins are
+ * an agency's ADMINs, and Genesis's owners.
+ */
+export const visibleTo = (role: FileRole, admin = false) => (role === "staff" && admin ? (["ADMINS", ...VISIBLE.staff] as FileAudience[]) : VISIBLE[role]);
+export const fileAdmin = (viewer: Viewer | null) => Boolean(viewer && (viewer.roles.includes("OWNER") || viewer.workspaceRole === "ADMIN"));
 
 /** How this person relates to a project: Genesis staff, its client (or the client's agency), a vendor on it — or nothing. */
 export async function projectRole(viewer: Viewer | null, projectId: string): Promise<FileRole | null> {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { fetchThumbnail } from "@/lib/crm/drive";
-import { projectRole, visibleTo } from "@/lib/crm/files";
+import { fileAdmin, projectRole, visibleTo } from "@/lib/crm/files";
 import { getViewer } from "@/lib/crm/session";
 
 export const runtime = "nodejs";
@@ -14,8 +14,9 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const { id } = await params;
   const file = await getPrisma().driveFile.findUnique({ where: { id } });
   if (!file?.projectId) return new NextResponse(null, { status: 404 });
-  const role = await projectRole(await getViewer(), file.projectId);
-  if (!role || !visibleTo(role).includes(file.audience)) return new NextResponse(null, { status: 404 });
+  const viewer = await getViewer();
+  const role = await projectRole(viewer, file.projectId);
+  if (!role || !visibleTo(role, fileAdmin(viewer)).includes(file.audience)) return new NextResponse(null, { status: 404 });
   const thumb = await fetchThumbnail(file.driveId).catch(() => null);
   if (!thumb?.ok) return new NextResponse(null, { status: 404 });
   return new NextResponse(thumb.body, { headers: { "Content-Type": thumb.headers.get("content-type") ?? "image/jpeg", "Cache-Control": "private, max-age=3600" } });

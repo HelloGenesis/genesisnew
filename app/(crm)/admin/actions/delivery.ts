@@ -28,6 +28,7 @@ import { tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { recordReach, syncPlanContacts } from "@/lib/crm/reachout";
 import { notifyAssignee } from "@/lib/crm/task-notify";
 import { notifyProjectTeam } from "@/lib/crm/project-team";
+import { reviewEmail } from "@/lib/crm/review-links";
 import { stagesOf } from "@/lib/crm/stages";
 
 /** Server actions for projects, deliverables, messages, requests, tasks, vendors and creators. */
@@ -144,7 +145,7 @@ export async function addDeliverable(_: ActionState, form: FormData): Promise<Ac
   /* Straight to the client, to the producer first (internal review), or a draft. "send" is the old checkbox. */
   const review = form.has("review") ? text(form, "review") : form.get("send") === "on" ? "client" : null;
   const send = review === "client";
-  await prisma.deliverable.create({
+  const made = await prisma.deliverable.create({
     data: {
       projectId,
       title,
@@ -155,20 +156,16 @@ export async function addDeliverable(_: ActionState, form: FormData): Promise<Ac
       submittedById: viewer.id,
     },
   });
-  if (send) await askForReview(projectId, title);
+  if (send) await askForReview(made.id);
   if (review === "internal") await notifyProjectTeam(projectId, viewer.id, { vendorsToo: true, subject: `For internal review: ${title}`, text: `"${title}" is ready for the producer's review, before the client sees it.\n\n${appUrl(`/admin/projects/${projectId}#deliverables`)}` });
   done();
   return ok(send ? "Shared with the client for review." : review === "internal" ? "Sent for internal review." : "Saved as an internal draft.");
 }
 
-async function askForReview(projectId: string, title: string) {
-  const p = await getPrisma().project.findUniqueOrThrow({ where: { id: projectId } });
-  await queueEmail({
-    kind: "deliverable_review",
-    to: await accountEmails(p.accountId),
-    subject: `Ready for your review: ${title}`,
-    text: `"${title}" for ${p.name} is ready. Have a look, then approve it or tell us what to change, all in one place:\n\n${appUrl(`/portal/projects/${projectId}`)}\n\nOne consolidated round of feedback per piece keeps things moving fastest.`,
-  });
+/* To the client, with Approve and Ask for changes right in the email (lib/crm/review-links). */
+async function askForReview(deliverableId: string) {
+  const d = await getPrisma().deliverable.findUniqueOrThrow({ where: { id: deliverableId }, include: { project: true } });
+  await queueEmail(reviewEmail({ id: d.id, title: d.title, project: d.project.name, to: await accountEmails(d.project.accountId), portal: appUrl(`/portal/projects/${d.projectId}`) }));
 }
 
 export async function setDeliverableStatus(form: FormData) {
@@ -177,7 +174,7 @@ export async function setDeliverableStatus(form: FormData) {
   const status = oneOf(text(form, "status"), ["DRAFT", "INTERNAL_REVIEW", "IN_REVIEW", "CHANGES_REQUESTED", "APPROVED"] as const) as DeliverableStatus | null;
   if (!id || !status) return;
   const d = await getPrisma().deliverable.update({ where: { id }, data: { status } });
-  if (status === "IN_REVIEW") await askForReview(d.projectId, d.title);
+  if (status === "IN_REVIEW") await askForReview(d.id);
   if (status === "INTERNAL_REVIEW" || status === "CHANGES_REQUESTED") await notifyProjectTeam(d.projectId, null, { vendorsToo: true, subject: `${status === "INTERNAL_REVIEW" ? "For internal review" : "Changes asked for"}: ${d.title}`, text: appUrl(`/admin/projects/${d.projectId}#deliverables`) });
   done();
 }

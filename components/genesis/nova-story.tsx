@@ -1,6 +1,7 @@
-import { ArrowUpRight, Bell, Bot, CalendarDays, Check, Contact, FileSpreadsheet, FolderUp, Mail, MessageCircle, Phone, Sparkles, Users } from "lucide-react";
+import { ArrowUpRight, Bell, Bot, CalendarDays, Check, Contact, FileSpreadsheet, FolderUp, Mail, MessageCircle, Phone, Users } from "lucide-react";
 import Link from "next/link";
 
+import { ViewDemoButton } from "@/components/genesis/nova-live";
 import { Reveal, RevealGroup, RevealItem } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { siteConfig } from "@/lib/site-config";
@@ -29,7 +30,7 @@ export function NovaPromise() {
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link href="#trial" className={`${BTN} bg-[#ffc516] text-[#141216] shadow-[0_10px_30px_-10px_rgb(255_197_22/0.6)]`}>Start your free trial</Link>
-        <Link href="#demo" className={`${BTN} border border-[var(--glass-border)] text-bone hover:border-[#ffc516]/60`}>See it live</Link>
+        <ViewDemoButton className={`${BTN} border border-[var(--glass-border)] text-bone hover:border-[#ffc516]/60`}>View demo</ViewDemoButton>
       </div>
       <p className="mt-4 text-small text-faint">14 days free · no card to start</p>
     </div>
@@ -53,15 +54,17 @@ export function NovaConnected() {
         <h2 id="connected-heading" className={H2}>Connect your workspace once. Everything stays in sync.</h2>
         <p className={LEAD}>One click to connect your Google Workspace, and your mail, files, sheets and calendar work with Nova: data, quotes and emails, all in one place.</p>
       </Reveal>
-      <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <RevealGroup className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {GOOGLE.map((g) => (
-          <RevealItem key={g.name} className="glass glass-lit rounded-card p-6">
-            <span className={TILE}><g.icon className="size-5" aria-hidden /></span>
-            <h3 className="mt-5 text-body font-semibold text-bone">{g.name === "Gmail" ? "Gmail" : `Google ${g.name}`}</h3>
-            <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{g.what}</p>
+          <RevealItem key={g.name} className="glass glass-lit flex gap-4 rounded-card p-5">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#ac84fe] via-[#f06144] to-[#ffaf18] text-white"><g.icon className="size-[1.125rem]" aria-hidden /></span>
+            <div className="min-w-0">
+              <h3 className="text-body font-semibold text-bone">{g.name === "Gmail" ? "Gmail" : `Google ${g.name}`}</h3>
+              <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{g.what}</p>
+            </div>
           </RevealItem>
         ))}
-        <RevealItem className="flex flex-col justify-center rounded-card border border-dashed border-[var(--glass-border)] p-6">
+        <RevealItem className="flex flex-col justify-center rounded-card border border-dashed border-[var(--glass-border)] p-5">
           <h3 className="text-body font-semibold text-bone">Microsoft 365</h3>
           <p className="mt-2 text-pretty text-small leading-relaxed text-ash">Outlook, OneDrive and Teams calendars are coming. Tell us if your agency is on Microsoft and we&apos;ll bring you in first.</p>
           <span className="mt-4 w-fit rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.6875rem] text-ash">Coming soon</span>
@@ -71,14 +74,6 @@ export function NovaConnected() {
   );
 }
 
-const STEPS = [
-  "Reads the three screenshots and the Excel, row by row",
-  "Adds the 42 creators to your influencer database, merging the 6 you already had",
-  "Builds the influencer plan: each creator's deliverables, fee, your margin and the totals",
-  "Makes the plan's two Google Sheets, one with your costs and one for the brand",
-  "Creates Bloomfield as a lead, links the plan, and sets a follow-up for Friday",
-  "Adds a task for Priya to get costing from the 12 creators without a rate",
-];
 
 /** What NOVA AI does from one message, on its own. */
 export function NovaAiExample() {
@@ -96,28 +91,16 @@ export function NovaAiExample() {
           </ul>
           <p className="mt-6 text-small text-faint">5 free requests to start, then credits you top up. It adds and updates; it never deletes or messages anyone.</p>
         </Reveal>
-        {/* One real job, start to end. */}
-        <Reveal className="overflow-hidden rounded-[1.25rem] border border-[var(--glass-border)] bg-[#141216] shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] [color-scheme:dark]">
-          <div className="flex items-center gap-1.5 border-b border-white/5 px-4 py-2.5">
-            <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-            <span className="size-2.5 rounded-full bg-[#febc2e]" />
-            <span className="size-2.5 rounded-full bg-[#28c840]" />
-            <span className="ml-3 text-[0.75rem] text-white/45">NOVA AI · one message</span>
-          </div>
-          <div className="space-y-4 p-5">
-            <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-white/10 px-4 py-3 text-small text-white/90">
-              Make an influencer plan for Bloomfield Organics from these screenshots and this Excel: 40 food creators in Mumbai and Pune, under 100k followers. Add them as a lead and remind me Friday.
-            </p>
-            <div className="flex gap-3">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516]"><Sparkles className="size-4 text-white" aria-hidden /></span>
-              <ol className="min-w-0 space-y-2">
-                {STEPS.map((s) => (
-                  <li key={s} className="flex gap-2 text-small text-white/80"><Check className="mt-0.5 size-4 shrink-0 text-[#28c840]" aria-hidden />{s}</li>
-                ))}
-                <li className="pt-1 text-small text-white">Done: the plan, both sheets, the lead and the task, each linked. About two minutes.</li>
-              </ol>
-            </div>
-          </div>
+        {/* The real NOVA AI screen; a click opens it in the live demo (Genesis, 31 Oct 2026). */}
+        <Reveal>
+          <ViewDemoButton path="/admin/assistant" className="group relative block w-full overflow-hidden rounded-[1.25rem] border border-[var(--glass-border)] text-left shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/nova/nova-ai-screen.webp" alt="NOVA AI in Nova: a message asking for an influencer plan from screenshots" width={2636} height={1618} loading="lazy" className="block w-full transition-transform duration-500 group-hover:scale-[1.02]" />
+            <span className="absolute bottom-4 right-4 rounded-full bg-[#ffc516] px-4 py-2 text-small font-medium text-[#141216] shadow-lg">Try NOVA AI in the demo →</span>
+          </ViewDemoButton>
+          <p className="mt-4 text-small text-ash">
+            <strong className="text-bone">One message, about two minutes:</strong> it reads the screenshots and Excel, adds the 42 creators, builds the plan with fees and your margin, makes both Google Sheets, creates the lead and sets Friday&apos;s follow-up.
+          </p>
         </Reveal>
       </div>
     </section>

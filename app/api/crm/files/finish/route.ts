@@ -7,6 +7,7 @@ import { fileMeta } from "@/lib/crm/drive";
 import { folderOf, readTicket } from "@/lib/crm/files";
 import { accountEmails, appUrl, queueEmail, queueStaffEmail } from "@/lib/crm/notify";
 import { notifyProjectTeam } from "@/lib/crm/project-team";
+import { reviewEmail } from "@/lib/crm/review-links";
 import { getViewer } from "@/lib/crm/session";
 
 export const runtime = "nodejs";
@@ -70,15 +71,11 @@ export async function POST(request: Request) {
     });
   } else if (ticket.as === "staff" && review === "client" && clientSees) {
     const previous = await prisma.deliverable.findFirst({ where: { projectId: project.id, title: meta.name }, orderBy: { version: "desc" } });
-    await prisma.deliverable.create({
+    const made = await prisma.deliverable.create({
       data: { projectId: project.id, title: `${folder.label}: ${meta.name}`, url: `/api/crm/files/${file.id}`, fileId: file.id, kind: meta.mimeType?.startsWith("image/") ? "IMAGE" : "VIDEO", status: "IN_REVIEW", version: (previous?.version ?? 0) + 1, submittedById: viewer.id },
     });
-    await queueEmail({
-      kind: "deliverable_review",
-      to: await accountEmails(project.accountId),
-      subject: `${folder.label} ready for your review: ${project.name}`,
-      text: `The ${folder.label.toLowerCase()} for ${project.name} is ready. Watch it, then approve or send one consolidated round of changes:\n\n${appUrl(`/portal/projects/${project.id}#review`)}`,
-    });
+    /* Approve and Ask for changes right in the email (lib/crm/review-links). */
+    await queueEmail(reviewEmail({ id: made.id, title: `${folder.label}: ${meta.name}`, project: project.name, to: await accountEmails(project.accountId), portal: appUrl(`/portal/projects/${project.id}#review`) }));
   } else if (ticket.as !== "staff") {
     await queueStaffEmail({ kind: "file_uploaded", scope: "producers", subject: `New file from the ${ticket.as}: ${meta.name} · ${ref}`, text: `${folder.label} · ${appUrl(`/admin/projects/${project.id}#files`)}` });
   }

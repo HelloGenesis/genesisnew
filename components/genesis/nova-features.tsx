@@ -1,9 +1,10 @@
+"use client";
+
 import {
   BadgeIndianRupee,
   BellRing,
   Bot,
   CalendarClock,
-  Check,
   ClipboardCheck,
   Contact,
   FileSpreadsheet,
@@ -25,7 +26,9 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { Reveal, RevealGroup, RevealItem } from "@/components/genesis/reveal";
+import { useState } from "react";
+
+import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 
 /*
@@ -104,57 +107,43 @@ const GROUPS: Group[] = [
   },
 ];
 
+/*
+ * SHORT, ONE PART AT A TIME (Genesis, 31 Oct 2026: "too lengthy and
+ * confusing"): a tab per part of the work, its features as small cards, one
+ * line each.
+ */
 export function NovaFeatures() {
+  const [on, setOn] = useState(GROUPS[0]!.id);
+  const g = GROUPS.find((x) => x.id === on) ?? GROUPS[0]!;
   return (
     <section id="features" aria-labelledby="features-heading" className="scroll-mt-24">
       <Reveal>
         <SectionLabel dot tone="brand">Features</SectionLabel>
         <h2 id="features-heading" className="mt-6 max-w-3xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-          Everything your agency runs on, in one place
+          Everything your agency runs on
         </h2>
-        <p className="mt-5 max-w-3xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-          From the first brief to the paid invoice: leads, proposals, influencer plans, projects, approvals, files, invoices and your team.
-        </p>
-        {/* Jump to a part. */}
-        <nav aria-label="Feature groups" className="mt-8 flex flex-wrap gap-2">
-          {GROUPS.map((g) => (
-            <a key={g.id} href={`#features-${g.id}`} className="rounded-full border border-[var(--glass-border)] px-4 py-2 text-small text-ash transition-colors hover:border-[#ffc516]/60 hover:text-bone">
-              {g.label} <span className="text-faint">· {g.features.length}</span>
-            </a>
-          ))}
-        </nav>
       </Reveal>
-
-      <div className="mt-14 space-y-20">
-        {GROUPS.map((g) => (
-          <div key={g.id} id={`features-${g.id}`} className="grid scroll-mt-28 gap-8 lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-12">
-            <Reveal className="lg:sticky lg:top-28 lg:self-start">
-              <p className="micro-label text-[#ffc516]">{g.label}</p>
-              <h3 className="mt-3 text-balance text-[1.5rem] font-semibold leading-snug text-bone">{g.title}</h3>
-              <p className="mt-3 text-pretty text-small leading-relaxed text-ash">{g.line}</p>
-            </Reveal>
-            <RevealGroup className="grid gap-4 sm:grid-cols-2">
-              {g.features.map((f) => (
-                <RevealItem key={f.title} className="glass glass-lit flex flex-col rounded-card p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#ac84fe] via-[#f06144] to-[#ffaf18] text-white shadow-[0_10px_24px_-10px_rgb(240_97_68/0.7)]">
-                      <f.icon className="size-5" aria-hidden />
-                    </span>
-                    {f.plan && <span className="rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.6875rem] text-ash">{f.plan}</span>}
-                  </div>
-                  <h4 className="mt-5 text-body font-semibold leading-snug text-bone">{f.title}</h4>
-                  <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{f.line}</p>
-                  <ul className="mt-4 space-y-2 border-t border-[var(--glass-border)] pt-4">
-                    {f.points.map((pt) => (
-                      <li key={pt} className="flex gap-2 text-small leading-snug text-ash">
-                        <Check className="mt-0.5 size-4 shrink-0 text-[#ffc516]" aria-hidden />
-                        {pt}
-                      </li>
-                    ))}
-                  </ul>
-                </RevealItem>
-              ))}
-            </RevealGroup>
+      <div role="tablist" aria-label="Feature groups" className="mt-8 flex flex-wrap gap-2">
+        {GROUPS.map((x) => (
+          <button key={x.id} type="button" role="tab" aria-selected={x.id === on} onClick={() => setOn(x.id)} className={`rounded-full px-4 py-2 text-small transition-colors ${x.id === on ? "bg-[#ffc516] font-medium text-[#141216]" : "border border-[var(--glass-border)] text-ash hover:text-bone"}`}>
+            {x.label}
+          </button>
+        ))}
+      </div>
+      <p className="mt-6 max-w-3xl text-pretty text-body text-ash">{g.line}</p>
+      <div role="tabpanel" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {g.features.map((f) => (
+          <div key={f.title} className="glass glass-lit flex gap-4 rounded-card p-5">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#ac84fe] via-[#f06144] to-[#ffaf18] text-white">
+              <f.icon className="size-[1.125rem]" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h3 className="flex flex-wrap items-center gap-2 text-body font-semibold leading-snug text-bone">
+                {f.title}
+                {f.plan && <span className="rounded-full border border-[var(--glass-border)] px-2 py-0.5 text-[0.625rem] font-normal text-ash">{f.plan}</span>}
+              </h3>
+              <p className="mt-1 text-pretty text-small leading-relaxed text-ash">{f.line}</p>
+            </div>
           </div>
         ))}
       </div>

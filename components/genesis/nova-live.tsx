@@ -39,6 +39,20 @@ export function NovaLive() {
     if (el.requestFullscreen) await el.requestFullscreen().catch(() => setFull(true));
     else setFull(true);
   }, [full]);
+  /* The demo, full screen, on the dashboard with the tour running: from this window's button, or any "View demo" on the page (ViewDemoButton). */
+  const viewDemo = useCallback(
+    (path = "/admin?tour=1") => {
+      setLoaded(false);
+      setSrc(`/demo?next=${encodeURIComponent(`${path}${path.includes("?") ? "&" : "?"}at=${Date.now()}`)}`);
+      if (!full) void toggle();
+    },
+    [full, toggle],
+  );
+  useEffect(() => {
+    const open = (e: Event) => viewDemo((e as CustomEvent<string | undefined>).detail);
+    window.addEventListener("nova-view-demo", open);
+    return () => window.removeEventListener("nova-view-demo", open);
+  }, [viewDemo]);
 
   return (
     <div
@@ -55,11 +69,7 @@ export function NovaLive() {
           {!full && (
             <button
               type="button"
-              onClick={() => {
-                setLoaded(false);
-                setSrc(`/demo?next=${encodeURIComponent(`/admin?tour=1&at=${Date.now()}`)}`);
-                void toggle();
-              }}
+              onClick={() => viewDemo()}
               className="rounded-full border border-white/20 px-3.5 py-1.5 text-[0.75rem] font-medium text-white transition-colors hover:border-white/50 hover:bg-white/10">
               View demo
             </button>
@@ -83,5 +93,17 @@ export function NovaLive() {
         <iframe src={src} title="Nova by Genesis, live demo" loading="lazy" onLoad={() => setLoaded(true)} className={`size-full border-0 transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`} />
       </div>
     </div>
+  );
+}
+
+/**
+ * "View demo" anywhere on the Nova page: opens the live demo above full screen,
+ * on `path` (the dashboard with the tour, unless told otherwise).
+ */
+export function ViewDemoButton({ className, path, children }: { className?: string; path?: string; children: React.ReactNode }) {
+  return (
+    <button type="button" className={className} onClick={() => window.dispatchEvent(new CustomEvent("nova-view-demo", { detail: path }))}>
+      {children}
+    </button>
   );
 }

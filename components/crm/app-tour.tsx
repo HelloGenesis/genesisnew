@@ -73,33 +73,44 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
       const pages = groups.flatMap((g) => g.items).filter((i) => ABOUT[i.href]);
       return [
         { title: `Welcome${first ? `, ${first}` : ""}`, body: "Your portal is where you follow everything we're doing for you: approve work, send briefs, see invoices and add your team. Here's each part." },
-        ...pages.map((p) => ({ target: `${nav} a[href="${p.href}"]`, ...ABOUT[p.href]! })),
+        ...pages.map((p) => ({ target: `${nav} a[href="${p.href}"]`, href: p.href, ...ABOUT[p.href]! })),
         { target: 'nav[aria-label="Page history"]', title: "Back, forward, refresh", body: "Move between pages, and refresh to see the team's latest without losing what you've typed." },
       ].filter(shown);
     }
     const rail = 'nav[aria-label="CRM areas"]';
+    /*
+     * EVERY PAGE, OPENED, ONE AT A TIME (Genesis, 31 Oct 2026: "show each and
+     * everything, with the pages open; not explained over text"). Each step
+     * opens the page behind the card and says a line or two about it; an
+     * area's first page also opens that area's menu on the rail.
+     */
     const chapters: TourStep[] = groups
       .filter((g) => JOURNEY[g.label])
-      .map((g) => {
+      .flatMap((g) => {
         const label = g.label === "Today" ? "Home" : g.label === "My work" ? "Work" : g.label;
-        const points = g.items.filter((i) => ABOUT[i.href] && !i.href.startsWith("/admin/assistant") && i.href !== "/admin?tour=1").map((i) => ABOUT[i.href]!);
-        return { target: `${rail} button[aria-label^="${label}"]`, ...JOURNEY[g.label]!, points };
+        const pages = g.items.filter((i) => ABOUT[i.href] && !i.href.includes("tour=") && !i.href.startsWith("/admin/assistant"));
+        return pages.map((i, n) => ({
+          href: i.href,
+          target: n === 0 ? `${rail} button[aria-label^="${label}"]` : "main h1",
+          title: `${label} · ${ABOUT[i.href]!.title}`,
+          body: ABOUT[i.href]!.body,
+        }));
       });
     const copilot = groups.some((g) => g.items.some((i) => i.href === "/admin/assistant"));
     return [
       { title: `Welcome to ${product}${first ? `, ${first}` : ""}`, body: `A tour of everything, start to end: your dashboard, then each part of ${product} in the order the work happens, from a new lead to a paid invoice. Use the arrow keys or Next; leave any time and take it again from “Take the tour”.` },
-      ...(home ? DASHBOARD : []),
-      { target: rail, title: "The areas", body: "Home, Sales, Influence, Delivery, Money and Setup down the side. Point at one and everything in it shows beside the rail: its pages, what you can create and the latest few; click it to open its first page. A yellow dot means something's waiting there." },
+      ...(home ? DASHBOARD.map((s) => ({ ...s, href: "/admin" })) : []),
+      { target: rail, href: "/admin", title: "The areas", body: "Home, Sales, Influence, Delivery, Money and Setup down the side. Point at one and everything in it shows beside the rail: its pages, what you can create and the latest few; click it to open its first page. A yellow dot means something's waiting there." },
       ...chapters,
-      { target: `${rail} a[href="/admin/notifications"]`, title: "Notifications", body: "A client opened your quote, accepted it or paid; a deliverable was approved or needs changes; a task was given to you. All here, and by email for the important ones." },
+      { target: `${rail} a[href="/admin/notifications"]`, href: "/admin/notifications", title: "Notifications", body: "A client opened your quote, accepted it or paid; a deliverable was approved or needs changes; a task was given to you. All here, and by email for the important ones." },
       ...(copilot
         ? [
             product === "Nova"
-              ? { target: `${rail} a[href="/admin/assistant"]`, title: "NOVA AI", body: "The AI that works in your CRM: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. You get 5 free requests; after that it runs on credits you top up." }
-              : { target: `${rail} a[href="/admin/assistant"]`, title: "Nova Copilot", body: "The AI that works in the CRM with you: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. It has its own tour the first time you open it." },
+              ? { target: `${rail} a[href="/admin/assistant"]`, href: "/admin/assistant", title: "NOVA AI", body: "The AI that works in your CRM: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. You get 5 free requests; after that it runs on credits you top up." }
+              : { target: `${rail} a[href="/admin/assistant"]`, href: "/admin/assistant", title: "Nova Copilot", body: "The AI that works in the CRM with you: ask it to make a quote or influencer plan from screenshots, Excel or PDFs, add leads and tasks, or find creators. It has its own tour the first time you open it." },
           ]
         : []),
-      { target: "text:How it works", title: "Help on every page", body: "Each page has its own “How it works” that walks through that page step by step: how to make a quote, an influencer plan, an invoice, import a sheet." },
+      { target: "text:How it works", href: "/admin", title: "Help on every page", body: "Each page has its own “How it works” that walks through that page step by step: how to make a quote, an influencer plan, an invoice, import a sheet." },
       { target: 'nav[aria-label="Page history"]', title: "Back, forward, refresh", body: "Move between pages, and refresh to see a teammate's latest changes without losing what you've typed." },
     ].filter(shown);
   }, [area, groups, home, name, product]);
@@ -107,10 +118,14 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
   /* The invitation: the first time, on the dashboard. A link to "Take the tour" opens the tour itself. */
   useEffect(() => {
     const t = window.setTimeout(() => {
+      /* Only from rest: the tour moving through the dashboard mustn't start it again. */
       if (asked) {
-        setSteps(build());
-        setStage("tour");
-      } else if (home && (demo ? !demoSeen() : firstTime)) setStage("invite");
+        setStage((s) => {
+          if (s !== "idle") return s;
+          setSteps(build());
+          return "tour";
+        });
+      } else if (home && (demo ? !demoSeen() : firstTime)) setStage((s) => (s === "idle" ? "invite" : s));
     }, 600);
     return () => window.clearTimeout(t);
   }, [asked, build, demo, firstTime, home]);
@@ -123,9 +138,11 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
     (then: "idle" | "try") => {
       remember();
       setStage(then);
-      if (asked) router.replace(path);
+      /* Back where it started: the dashboard (the tour opens each area's page on the way). */
+      const start = area === "admin" ? "/admin" : "/portal";
+      if (asked || path !== start) router.replace(start);
     },
-    [asked, path, remember, router],
+    [area, asked, path, remember, router],
   );
 
   if (stage === "invite")

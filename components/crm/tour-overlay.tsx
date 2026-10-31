@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 /** One step: what to light up (optional) and what to say about it. */
@@ -11,6 +12,8 @@ export type TourStep = {
   body: string;
   /** What's in this part, one line each (the app tour's areas list their pages). */
   points?: { title: string; body: string }[];
+  /** The page to open behind the card while it's shown (components/crm/app-tour). */
+  href?: string;
 };
 
 const TEXTUAL = "h1, h2, h3, button, a, summary, label, legend, th, span, p, [role=tab]";
@@ -66,6 +69,13 @@ export function TourOverlay({ steps, onClose, onDone, startLabel = "Start", logo
     const left = Math.min(a.left, b.left), top = Math.min(a.top, b.top);
     setBox(new DOMRect(left, top, Math.max(a.right, b.right) - left, Math.max(a.bottom, b.bottom) - top));
   }, [step]);
+  /* Open the step's page behind the card; the tour itself lives in the layout, so it carries on. */
+  const router = useRouter();
+  const path = usePathname();
+  useEffect(() => {
+    const to = step?.href;
+    if (to && to.split("?")[0] !== path) router.push(to, { scroll: false });
+  }, [step, path, router]);
   /*
    * SHOW WHAT IT'S TALKING ABOUT (Genesis, 31 Oct 2026: "when the tour goes on
    * these it's not opening the particular thing"): on a rail area, its menu

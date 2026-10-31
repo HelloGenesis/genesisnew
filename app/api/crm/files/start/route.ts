@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 const body = z.object({
   projectId: z.string().min(1).max(40),
   folder: z.string().max(20),
-  audience: z.enum(["TEAM", "TEAM_VENDOR", "TEAM_CLIENT", "EVERYONE"]).optional(),
+  audience: z.enum(["ADMINS", "TEAM", "TEAM_VENDOR", "TEAM_CLIENT", "EVERYONE"]).optional(),
   name: z.string().min(1).max(250),
   mimeType: z.string().max(150).default("application/octet-stream"),
   size: z.number().int().min(1).max(10 * 1024 ** 3),
@@ -41,11 +41,14 @@ export async function POST(request: Request) {
   const role = await projectRole(viewer, input.projectId);
   const folder = FOLDERS.find((f) => f.key === input.folder);
   if (!role || !folder || !folder.upload.includes(role)) return NextResponse.json({ error: "You can't upload to this folder." }, { status: 403 });
-  /* Only staff choose who sees a file; clients' and vendors' uploads take the folder's default. */
-  const audience: FileAudience = role === "staff" && input.audience ? input.audience : folder.audience;
-
   const project = await getPrisma().project.findUnique({ where: { id: input.projectId }, include: { account: true } });
   if (!project) return NextResponse.json({ error: "No such project" }, { status: 404 });
+  /*
+   * Only staff choose who sees a file. Everything else takes the default: in
+   * an agency's CRM its admins only (Genesis, 31 Oct 2026), elsewhere the
+   * folder's own.
+   */
+  const audience: FileAudience = role === "staff" && input.audience ? input.audience : project.workspaceId ? "ADMINS" : folder.audience;
   /* An agency's storage allowance (lib/crm/nova-pro): its trial's, or its plan's. */
   const tooBig = await storageProblem(project.workspaceId, input.size);
   if (tooBig) return NextResponse.json({ error: tooBig, pro: true }, { status: 413 });

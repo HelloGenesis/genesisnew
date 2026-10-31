@@ -5,13 +5,15 @@ import { revalidatePath } from "next/cache";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
 import type { FileAudience } from "@/lib/generated/prisma/enums";
-import { trashFile } from "@/lib/crm/drive";
+import { projectRef } from "@/lib/crm/catalog";
+import { createGoogleFile, projectFolderId, trashFile } from "@/lib/crm/drive";
+import { folderOf } from "@/lib/crm/files";
 import { isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
 /** Genesis staff only: who sees a project file, and removing one (to Drive's trash, recoverable for 30 days). */
 
-const AUDIENCES: FileAudience[] = ["TEAM", "TEAM_VENDOR", "TEAM_CLIENT", "EVERYONE"];
+const AUDIENCES: FileAudience[] = ["ADMINS", "TEAM", "TEAM_VENDOR", "TEAM_CLIENT", "EVERYONE"];
 
 export async function setFileAudience(id: string, audience: string) {
   const viewer = await requireStaff();
@@ -48,4 +50,48 @@ export async function saveProjectBrief(projectId: string, brief: string) {
   await getPrisma().project.update({ where: { id: projectId }, data: { brief: text } });
   await getPrisma().activity.create({ data: { projectId, kind: "SYSTEM", actorId: viewer.id, body: "Updated the brief." } });
   revalidatePath("/", "layout");
+}
+
+/*
+ * NEW GOOGLE DOCS AND SHEETS, RIGHT IN THEIR FOLDER (Genesis, 31 Oct 2026):
+ * a script as a Doc, a shot list as a Sheet, in the project's folder on Drive,
+ * listed with the rest of its files. Opens in Google.
+ */
+export async function createProjectGoogleFile(projectId: string, folderKey: string, kind: "doc" | "sheet", name: string) {
+  const viewer = await requireStaff();
+  const folder = folderOf(folderKey);
+  const prisma = getPrisma();
+  const project = await prisma.project.findUnique({ where: { id: projectId }, include: { account: { select: { name: true } } } });
+  if (!project || !folder) return { ok: false as const, error: "No such project or folder." };
+  try {
+    const parentId = await projectFolderId({ accountId: project.accountId, accountName: project.account.name, projectId, projectLabel: `${projectRef(project.number)} ${project.name}`, folderKey: folder.key, folderLabel: folder.label });
+    const made = await createGoogleFile({ parentId, name: name.trim() || (kind === "doc" ? "Untitled document" : "Untitled spreadsheet"), kind });
+    await prisma.driveFile.create({ data: { driveId: made.id, name: name.trim() || (kind === "doc" ? "Untitled document" : "Untitled spreadsheet"), mimeType: made.mimeType, webViewLink: made.webViewLink, folder: folder.key, audience: project.workspaceId ? "ADMINS" : folder.audience, projectId, accountId: project.accountId, uploadedById: viewer.id, uploadedAs: "staff" } });
+    revalidatePath("/", "layout");
+    return { ok: true as const, url: made.webViewLink };
+  } catch (error) {
+    return { ok: false as const, error: `Google Drive couldn't make it: ${(error as Error).message.slice(0, 140)}` };
+  }
+}
+
+/** The brief as a Google Doc in the project's folder, made once, then opened (Genesis, 31 Oct 2026: "brief Google Doc"). */
+export async function briefAsGoogleDoc(projectId: string) {
+  await requireStaff();
+  const prisma = getPrisma();
+  const key = `drive:brief:${projectId}`;
+  const known = await prisma.appSetting.findUnique({ where: { key } });
+  if (known) return { ok: true as const, url: known.value };
+  const project = await prisma.project.findUnique({ where: { id: projectId }, include: { account: { select: { name: true } } } });
+  if (!project) return { ok: false as const, error: "No such project." };
+  try {
+    const label = `${projectRef(project.number)} ${project.name}`;
+    const assets = await projectFolderId({ accountId: project.accountId, accountName: project.account.name, projectId, projectLabel: label, folderKey: "brief", folderLabel: "Assets" });
+    const parent = (await prisma.appSetting.findUnique({ where: { key: `drive:folder:project:${projectId}` } }))?.value ?? assets;
+    const made = await createGoogleFile({ parentId: parent, name: `Brief · ${label}`, kind: "doc", text: `${label}\n${project.account.name}\n\n${project.brief ?? "Write the brief here."}` });
+    const url = made.webViewLink ?? `https://docs.google.com/document/d/${made.id}/edit`;
+    await prisma.appSetting.create({ data: { key, value: url } });
+    return { ok: true as const, url };
+  } catch (error) {
+    return { ok: false as const, error: `Google Drive couldn't make it: ${(error as Error).message.slice(0, 140)}` };
+  }
 }

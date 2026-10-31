@@ -216,6 +216,41 @@ export async function projectFolderId(p: { accountId: string; accountName: strin
   return folder(p.folderLabel, project, `project:${p.projectId}:${p.folderKey}`);
 }
 
+/**
+ * THE WHOLE PROJECT ON DRIVE AT ONCE (Genesis, 31 Oct 2026: "the drive only has
+ * 2 folders; keep it structured"): every stage's folder made when the project
+ * is first opened, not on its first upload. Folders already made are reused.
+ */
+export async function ensureProjectFolders(p: { accountId: string; accountName: string; projectId: string; projectLabel: string }, folders: readonly { key: string; label: string }[]) {
+  const out: Record<string, string> = {};
+  for (const f of folders) out[f.key] = await projectFolderId({ ...p, folderKey: f.key, folderLabel: f.label });
+  return out;
+}
+
+/**
+ * A NEW GOOGLE DOC OR SHEET IN A PROJECT'S FOLDER (Genesis, 31 Oct 2026:
+ * "ideation and scripts as Google Docs and Sheets; the brief as a Google Doc").
+ * `text` fills a new Doc. drive.file lets the CRM make and open these.
+ */
+export async function createGoogleFile(input: { parentId: string; name: string; kind: "doc" | "sheet"; text?: string }) {
+  const mimeType = input.kind === "doc" ? "application/vnd.google-apps.document" : "application/vnd.google-apps.spreadsheet";
+  if (localDrive()) return { id: `local-${input.kind}-${randomBytes(6).toString("hex")}`, webViewLink: null as string | null, mimeType };
+  if (input.kind === "doc" && input.text) {
+    /* A Doc made from plain text: Drive converts the upload. */
+    const boundary = `genesis${randomBytes(8).toString("hex")}`;
+    const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: clean(input.name), mimeType, parents: [input.parentId] })}\r\n--${boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n${input.text}\r\n--${boundary}--`;
+    const response = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+      body,
+    });
+    if (!response.ok) throw new Error(`Drive couldn't make the Doc (${response.status})`);
+    return { ...((await response.json()) as { id: string; webViewLink: string | null }), mimeType };
+  }
+  const made = await api<{ id: string; webViewLink: string | null }>("files?fields=id,webViewLink", { method: "POST", body: JSON.stringify({ name: clean(input.name), mimeType, parents: [input.parentId] }) });
+  return { ...made, mimeType };
+}
+
 /*
  * ONE FOLDER PER CLIENT (Genesis, 22 Oct 2026: "an organised folder for
  * quotes, invoices and all"):
@@ -275,6 +310,16 @@ export async function archivedPdf(key: string): Promise<{ id: string; folder: st
 export async function proposalImagesFolderId() {
   const root = await folder(ROOT_NAME, null, "root");
   return folder("Proposal images", root, "proposal-images");
+}
+
+/**
+ * Genesis AI Lab / <Avatar photos | Creations> / <person> (lib/lab): an
+ * influencer's avatar photos, and what the models made for each person.
+ */
+export async function labFolderId(area: "Avatar photos" | "Creations", ownerId: string, ownerName: string) {
+  const root = await folder("Genesis AI Lab", null, "lab-root");
+  const part = await folder(area, root, `lab:${area}`);
+  return folder(ownerName, part, `lab:${area}:${ownerId}`);
 }
 
 /** Marks a Drive file as a proposal image (the only files /api/crm/images will serve). */

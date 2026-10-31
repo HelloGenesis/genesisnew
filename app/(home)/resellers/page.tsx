@@ -11,7 +11,7 @@ import { NovaAiExample, NovaApprovals, NovaConnected, NovaPromise, NovaSupport }
 import { NovaHero } from "@/components/genesis/nova-hero";
 import { NovaLive } from "@/components/genesis/nova-live";
 import { NovaTrialForm } from "@/components/genesis/nova-trial-form";
-import { Reveal, RevealGroup, RevealItem } from "@/components/genesis/reveal";
+import { Reveal } from "@/components/genesis/reveal";
 import { SectionLabel } from "@/components/genesis/section-label";
 import { crmSoftwareJsonLd, faqJsonLd } from "@/lib/geo";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
@@ -35,28 +35,6 @@ export const metadata: Metadata = pageMetadata({
  * the application with it filled in; it lands as a PARTNER lead.
  */
 
-const ROLES = [
-  {
-    title: "Your team",
-    icon: "team",
-    body: "Leads, briefs, quotes, influencer plans, GST invoices and tasks in one admin, with roles for sales, delivery and finance. Up to 5, 15 or 50 users, by plan.",
-  },
-  {
-    title: "Your brands",
-    icon: "approve",
-    body: "On Growth and Scale, a client portal where your brands approve work, send briefs, follow their projects and download invoices.",
-  },
-  {
-    title: "Partner agencies & resellers",
-    icon: "link",
-    body: "On Scale, brands that work with several agencies sit in one place. Resellers who bring agencies earn 20% of every payment for the first 12 months.",
-  },
-  {
-    title: "Creators & vendors",
-    icon: "creative",
-    body: "Your influencer database, imported from Excel or Google Sheets. On Growth and Scale, ask creators for their rates from WhatsApp and email templates.",
-  },
-] as const;
 
 const BEFORE_AFTER = [
   ["Briefs sit in someone's inbox until they remember", "A brief in Gmail or Drive becomes a lead, with the brief attached, and the right person is told"],
@@ -67,18 +45,7 @@ const BEFORE_AFTER = [
 ] as const;
 
 
-const STEPS = [
-  ["Start your free trial", "Your name, email, phone and agency name. You're in straight away, with no card.", "call"],
-  ["Bring your team and data", "Invite your team, and import your leads, clients and creators from Excel or Google Sheets.", "import"],
-  ["Choose a plan", "From day 3, pick Starter, Growth or Scale and add a card. You pay ₹0 that day.", "plan"],
-  ["Go live", "Your card is first charged on day 14, then monthly. Cancel before then and you pay nothing.", "rocket"],
-] as const;
 
-/* Nova's 3D icons (Genesis, 31 Oct 2026), on the who's-in-it and four-step cards. */
-const NovaIcon = ({ name }: { name: string }) => (
-  // eslint-disable-next-line @next/next/no-img-element
-  <img src={`/brand/nova/icons/${name}.webp`} alt="" aria-hidden width={256} height={256} loading="lazy" className="mb-4 size-16 object-contain drop-shadow-[0_10px_18px_rgb(236_72_153/0.25)]" />
-);
 
 const FAQS = [
   ["What does Beta mean?", "Nova is live and agencies run on it every day, and it's still growing: new features arrive every week. As a Beta agency you get them first, we set them up with you, and what you ask for shapes what we build next. Your data is safe and yours either way."],
@@ -169,26 +136,6 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
         <NovaApprovals />
 
 
-        <section aria-labelledby="who-heading">
-          <Reveal>
-            <SectionLabel dot tone="brand">Who&apos;s in it</SectionLabel>
-            <h2 id="who-heading" className="mt-6 max-w-3xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-              Everyone you work with, on one platform
-            </h2>
-            <p className="mt-5 max-w-3xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              Each person gets their own login and sees only what&apos;s theirs.
-            </p>
-          </Reveal>
-          <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {ROLES.map((r) => (
-              <RevealItem key={r.title} className="glass glass-lit rounded-card p-6">
-                <NovaIcon name={r.icon} />
-                <h3 className="text-body font-semibold leading-snug text-bone">{r.title}</h3>
-                <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{r.body}</p>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </section>
 
 
         <section id="pricing" aria-labelledby="pricing-heading" className="scroll-mt-24">
@@ -207,24 +154,6 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           <NovaTrialForm />
         </section>
 
-        <section aria-labelledby="how-heading">
-          <Reveal>
-            <SectionLabel dot tone="brand">How it works</SectionLabel>
-            <h2 id="how-heading" className="mt-6 max-w-3xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-              Live in four steps
-            </h2>
-          </Reveal>
-          <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map(([title, body, icon], i) => (
-              <RevealItem key={title} className="glass glass-lit rounded-card p-6">
-                <NovaIcon name={icon} />
-                <p className="micro-label">Step {i + 1}</p>
-                <h3 className="mt-3 text-body font-semibold leading-snug text-bone">{title}</h3>
-                <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{body}</p>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </section>
 
         <section id="faq" aria-labelledby="faq-heading" className="scroll-mt-28">
           <Reveal>

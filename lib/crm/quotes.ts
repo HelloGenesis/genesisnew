@@ -7,6 +7,7 @@ import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 
 import { agencyEmail, workspaceProfile } from "./workspace";
 import { date, money } from "./catalog";
+import { emailHtml } from "./email-html";
 import { gmailDraft } from "./gmail-draft";
 import { SIGN_OFF, appUrl, queueEmail, queueStaffEmail, sendNow } from "./notify";
 import { renderPdf } from "./pdf";
@@ -184,8 +185,23 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
       .join("\n"),
     ...agencyEmail(agency),
   };
+  /* The designed email (Genesis, 31 Oct 2026: "an embedded email for quotes with a confirm button"): the summary, then View and confirm, and Pay now when there's a link. */
+  const what = view === "proposal" || view === "proposal-plan" ? "proposal" : view === "plan" || plan ? "influencer plan" : "quotation";
+  const html = emailHtml({
+    heading: mail.subject,
+    paragraphs: [
+      `Hi ${q.contactName.split(" ")[0]},`,
+      message ?? `Here's our ${what}.`,
+      [`**${q.title}**`, ...lines, pricing && t.discount ? `Discount: −${money(t.discount)}` : "", pricing ? `**Total: ${money(t.total)}**` : ""].filter(Boolean).join("\n"),
+      sheetLink ? `The creator list as a Google Sheet: ${sheetLink}` : "",
+      `Valid until ${date(q.expiresAt)}.`,
+    ],
+    buttons: [{ label: plan ? "View and approve the plan" : `View and confirm the ${what}`, url: link, tone: "primary" }, ...(paymentUrl ? [{ label: "Pay now", url: paymentUrl, tone: "secondary" as const }] : [])],
+    note: "Reply to this email with any questions.",
+    signOff: mail.signOff,
+  });
   if (delivery === "email") {
-    await queueEmail(mail);
+    await queueEmail({ ...mail, html });
     return { paymentUrl };
   }
   /* The very page the client opens, printed (lib/crm/pdf). */
@@ -194,7 +210,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
     const draft = await gmailDraft(actorId, { to: mail.to, subject: mail.subject, text: `${mail.text}${mail.signOff ?? SIGN_OFF}`, attachments: [pdf] });
     return { paymentUrl, draftUrl: draft.url, draftAccount: draft.account };
   }
-  await sendNow(mail.to, mail.subject, mail.text, { replyTo: mail.replyTo, signOff: mail.signOff, attachments: [pdf] });
+  await sendNow(mail.to, mail.subject, mail.text, { replyTo: mail.replyTo, signOff: mail.signOff, attachments: [pdf], html });
   return { paymentUrl };
 }
 
