@@ -11,7 +11,7 @@ import { requireStaff } from "@/lib/crm/session";
 
 /** Genesis staff only: who sees a project file, and removing one (to Drive's trash, recoverable for 30 days). */
 
-const AUDIENCES: FileAudience[] = ["TEAM", "TEAM_VENDOR", "TEAM_CLIENT", "EVERYONE"];
+const AUDIENCES: FileAudience[] = ["ADMINS", "TEAM", "TEAM_VENDOR", "TEAM_CLIENT", "EVERYONE"];
 
 export async function setFileAudience(id: string, audience: string) {
   const viewer = await requireStaff();

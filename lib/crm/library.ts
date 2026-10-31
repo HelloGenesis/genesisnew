@@ -3,7 +3,7 @@ import "server-only";
 import { getPrisma } from "@/lib/db";
 
 import { projectRef } from "./catalog";
-import { FOLDERS } from "./files";
+import { FOLDERS, fileAdmin } from "./files";
 import { projectScope } from "./scope";
 import type { Viewer } from "./session";
 
@@ -25,7 +25,8 @@ export async function libraryFor(viewer: Viewer, media: boolean) {
   const byId = new Map(projects.map((p) => [p.id, p]));
   const files = projects.length
     ? await prisma.driveFile.findMany({
-        where: { projectId: { in: projects.map((p) => p.id) }, ...(media ? { OR: [{ mimeType: { startsWith: "image/" } }, { mimeType: { startsWith: "video/" } }] } : {}) },
+        /* Admins-only files stay with the admins (lib/crm/files). */
+        where: { projectId: { in: projects.map((p) => p.id) }, ...(fileAdmin(viewer) ? {} : { audience: { not: "ADMINS" } }), ...(media ? { OR: [{ mimeType: { startsWith: "image/" } }, { mimeType: { startsWith: "video/" } }] } : {}) },
         orderBy: { createdAt: "desc" },
         take: 600,
       })

@@ -22,7 +22,7 @@ export type FileItem = {
 
 type Folder = { key: string; label: string; hint: string; audience: string; canUpload: boolean };
 
-const AUDIENCE: Record<string, string> = { TEAM: "Genesis only", TEAM_VENDOR: "Genesis + vendors", TEAM_CLIENT: "Genesis + client", EVERYONE: "Everyone" };
+const AUDIENCE: Record<string, string> = { ADMINS: "Admins only", TEAM: "Genesis only", TEAM_VENDOR: "Genesis + vendors", TEAM_CLIENT: "Genesis + client", EVERYONE: "Everyone" };
 const BRIEF = "__brief";
 
 /*
@@ -30,13 +30,14 @@ const BRIEF = "__brief";
  * show who it's shared with and who it's not, for the employee to easily
  * understand"): Genesis, the client and the vendors, each ticked or crossed.
  */
-const SEES: Record<string, { client: boolean; vendors: boolean }> = {
+const SEES: Record<string, { client: boolean; vendors: boolean; team?: boolean }> = {
+  ADMINS: { client: false, vendors: false, team: false },
   TEAM: { client: false, vendors: false },
   TEAM_VENDOR: { client: false, vendors: true },
   TEAM_CLIENT: { client: true, vendors: false },
   EVERYONE: { client: true, vendors: true },
 };
-export function SharedWith({ audience, small = false }: { audience: string; small?: boolean }) {
+export function SharedWith({ audience, small = false, team = "Genesis" }: { audience: string; small?: boolean; team?: string }) {
   const s = SEES[audience] ?? SEES.TEAM!;
   const chip = (label: string, on: boolean) => (
     <span key={label} className={`inline-flex items-center gap-1 rounded-full px-2 ${small ? "py-0 text-[0.625rem]" : "py-0.5 text-[0.75rem]"} ${on ? "bg-[#22c55e]/15 text-[#22c55e]" : "bg-[var(--hover-wash)] text-faint line-through decoration-1"}`} title={on ? `${label} can see this` : `${label} can't see this`}>
@@ -44,7 +45,9 @@ export function SharedWith({ audience, small = false }: { audience: string; smal
       {label}
     </span>
   );
-  return <span className="inline-flex flex-wrap items-center gap-1" aria-label={`Shared with Genesis${s.client ? ", the client" : ""}${s.vendors ? ", vendors" : ""}`}>{[chip("Genesis", true), chip("Client", s.client), chip("Vendors", s.vendors)]}</span>;
+  /* Admins only (an agency's default): the admins, not the rest of the team. */
+  if (s.team === false) return <span className="inline-flex flex-wrap items-center gap-1" aria-label="Admins only">{[chip("Admins", true), chip("Team", false), chip("Client", false), chip("Vendors", false)]}</span>;
+  return <span className="inline-flex flex-wrap items-center gap-1" aria-label={`Shared with the team${s.client ? ", the client" : ""}${s.vendors ? ", vendors" : ""}`}>{[chip(team, true), chip("Client", s.client), chip("Vendors", s.vendors)]}</span>;
 }
 
 const size = (n: number | null) => (n === null ? "" : n > 1e9 ? `${(n / 1e9).toFixed(1)} GB` : n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`);
@@ -56,7 +59,10 @@ const kind = (m: string | null) => (m?.startsWith("image/") ? "image" : m?.start
  * (the server filters; this only draws). Images and videos play in place,
  * streamed from Genesis's Drive through /api/crm/files.
  */
-export function ProjectFiles({ projectId, role, folders, files, brief, canDelete = false, drive = {} }: { projectId: string; role: "staff" | "client" | "vendor"; folders: Folder[]; files: FileItem[]; brief?: string | null; canDelete?: boolean; drive?: Record<string, string> }) {
+export function ProjectFiles({ projectId, role, folders, files, brief, canDelete = false, drive = {}, agency = false, admin = true }: { projectId: string; role: "staff" | "client" | "vendor"; folders: Folder[]; files: FileItem[]; brief?: string | null; canDelete?: boolean; drive?: Record<string, string>; agency?: boolean; admin?: boolean }) {
+  /* In an agency's CRM new files are its admins' until shared (lib/crm/files); its team is "Team", not Genesis. */
+  const teamName = agency ? "Team" : "Genesis";
+  const defaultFor = (f: Folder) => (agency ? "ADMINS" : f.audience);
   const router = useRouter();
   const hasBrief = brief !== undefined;
   const firstWithFiles = hasBrief ? BRIEF : (folders.find((f) => files.some((x) => x.folder === f.key))?.key ?? folders[0]?.key ?? "brief");
@@ -99,15 +105,15 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
           {role === "staff" && (
             <>
               <select value={audience} onChange={(e) => setAudience(e.target.value)} className="crm-input !min-h-9 !w-auto text-[0.8125rem]" aria-label="Who can see new files">
-                <option value="">Folder default</option>
-                {Object.entries(AUDIENCE).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
+                <option value="">{agency ? "Default: admins only" : "Folder default"}</option>
+                {Object.entries(AUDIENCE).filter(([k]) => admin || k !== "ADMINS").map(([k, v]) => (
+                  <option key={k} value={k}>{k === "TEAM" && agency ? "Team only" : agency ? v.replace("Genesis", "Team") : v}</option>
                 ))}
               </select>
               <select value={review} onChange={(e) => setReview(e.target.value as typeof review)} className="crm-input !min-h-9 !w-auto text-[0.8125rem]" aria-label="Send for approval">
                 <option value="">No approval</option>
                 <option value="internal">Internal review (producer)</option>
-                {SEES[audience || folder.audience]?.client && <option value="client">Send to client for review</option>}
+                {SEES[audience || defaultFor(folder)]?.client && <option value="client">Send to client for review</option>}
               </select>
             </>
           )}
@@ -138,7 +144,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
           <span>{folder.hint}</span>
           <span className="text-faint">·</span>
           <span>{role === "staff" ? "New files:" : "Shared with:"}</span>
-          <SharedWith audience={audience || folder.audience} />
+          <SharedWith audience={audience || defaultFor(folder)} team={teamName} />
           {/* The folder itself on Google Drive (lib/crm/files-view). */}
           {drive[folder.key] ? (
             <a href={drive[folder.key]} target="_blank" rel="noopener noreferrer" className="crm-link ml-auto">Open {folder.label} in Google Drive ↗</a>
@@ -223,7 +229,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
                   <p className="truncate text-[0.6875rem] text-faint">
                     {size(f.size)} · {f.uploader ?? f.uploadedAs} · {new Date(f.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </p>
-                  <SharedWith audience={f.audience} small />
+                  <SharedWith audience={f.audience} small team={teamName} />
                   <div className="flex items-center justify-between gap-1">
                     {role === "staff" ? (
                       <select
@@ -235,7 +241,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
                         className="min-w-0 rounded-md border border-[var(--glass-border)] bg-transparent px-1 py-0.5 text-[0.6875rem] text-ash"
                         aria-label="Who can see this file"
                       >
-                        {Object.entries(AUDIENCE).map(([k2, v]) => <option key={k2} value={k2}>{v}</option>)}
+                        {Object.entries(AUDIENCE).filter(([k2]) => admin || k2 !== "ADMINS").map(([k2, v]) => <option key={k2} value={k2}>{k2 === "TEAM" && agency ? "Team only" : agency ? v.replace("Genesis", "Team") : v}</option>)}
                       </select>
                     ) : null}
                     <span className="flex shrink-0 items-center gap-1.5">

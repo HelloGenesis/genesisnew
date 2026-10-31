@@ -5,9 +5,9 @@ import { getPrisma } from "@/lib/db";
 import { FOLDERS, type FileRole, visibleTo } from "./files";
 
 /** The folders and files one person sees on a project, ready for <ProjectFiles>. */
-export async function filesFor(projectId: string, role: FileRole, opts: { avatar?: boolean } = {}) {
+export async function filesFor(projectId: string, role: FileRole, opts: { avatar?: boolean; admin?: boolean } = {}) {
   const files = await getPrisma().driveFile.findMany({
-    where: { projectId, audience: { in: visibleTo(role) } },
+    where: { projectId, audience: { in: visibleTo(role, opts.admin) } },
     orderBy: { createdAt: "desc" },
   });
   const uploaders = await getPrisma().user.findMany({ where: { id: { in: files.map((f) => f.uploadedById).filter((x): x is string => Boolean(x)) } }, select: { id: true, name: true, email: true } });

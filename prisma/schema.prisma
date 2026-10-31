@@ -1291,6 +1291,8 @@ model QuoteCreator {
 
 /// Who can see a project file. Genesis staff always can.
 enum FileAudience {
+  /// The organisation's admins only: an agency's admins (and Genesis's owners). The default for new files in an agency's CRM.
+  ADMINS
   /// Genesis only — internal notes, costings, rough material.
   TEAM
   /// Genesis and the vendors on the project — raw footage, project files.

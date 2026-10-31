@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import { fetchContent } from "@/lib/crm/drive";
-import { projectRole, visibleTo } from "@/lib/crm/files";
+import { fileAdmin, projectRole, visibleTo } from "@/lib/crm/files";
 import { getViewer } from "@/lib/crm/session";
 
 export const runtime = "nodejs";
@@ -19,8 +19,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const file = await getPrisma().driveFile.findUnique({ where: { id } });
   if (!file || !file.projectId) return new NextResponse(null, { status: 404 });
-  const role = await projectRole(await getViewer(), file.projectId);
-  if (!role || !visibleTo(role).includes(file.audience)) return new NextResponse(null, { status: 404 });
+  const viewer = await getViewer();
+  const role = await projectRole(viewer, file.projectId);
+  if (!role || !visibleTo(role, fileAdmin(viewer)).includes(file.audience)) return new NextResponse(null, { status: 404 });
 
   const upstream = await fetchContent(file.driveId, request.headers.get("range"));
   if (!upstream.ok && upstream.status !== 206) return new NextResponse(null, { status: upstream.status === 404 ? 404 : 502 });

@@ -21,6 +21,7 @@ import {
   requestRef,
 } from "@/lib/crm/catalog";
 import { accountOptions, dateValue, inDays, staffOptions } from "@/lib/crm/options";
+import { fileAdmin } from "@/lib/crm/files";
 import { filesFor } from "@/lib/crm/files-view";
 import { creatorScope, projectScope, seesCreators } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
@@ -73,7 +74,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       : [],
   ]);
   const stages = stagesOf(project);
-  const files = await filesFor(project.id, "staff", { avatar: stages.some((s) => /avatar/i.test(s)) });
+  const files = await filesFor(project.id, "staff", { avatar: stages.some((s) => /avatar/i.test(s)), admin: fileAdmin(viewer) });
   const approved = project.deliverables.filter((d) => d.status === "APPROVED").length;
   const fees = project.creators.reduce((s, c) => s + (c.status !== "DROPPED" ? (c.feePaise ?? 0) : 0), 0);
   const views = project.creators.reduce((s, c) => s + (c.views ?? 0), 0);
@@ -107,8 +108,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <StageBar stages={stages} stage={project.stage} />
       </Card>
 
-      <Card title="Files" action={<span className="text-[0.8125rem] text-ash">Stored in Genesis&apos;s Google Drive · clients and vendors see only their folders</span>}>
-        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} drive={files.drive} brief={project.brief ?? null} canDelete={await canDeleteFiles(project.id)} />
+      <Card title="Files" action={<span className="text-[0.8125rem] text-ash">{project.workspaceId ? "Stored in Google Drive · new files are for admins until shared" : <>Stored in Genesis&apos;s Google Drive · clients and vendors see only their folders</>}</span>}>
+        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} drive={files.drive} agency={Boolean(project.workspaceId)} admin={fileAdmin(viewer)} brief={project.brief ?? null} canDelete={await canDeleteFiles(project.id)} />
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
