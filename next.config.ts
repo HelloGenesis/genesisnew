@@ -144,8 +144,22 @@ const nextConfig: NextConfig = {
     too.
   */
   async rewrites() {
-    /* NOVA.GENESISMEDIA.CO (Genesis, 31 Oct 2026: "domain now would be nova.genesismedia.co"): Nova by Genesis's own address, the same way. */
-    return { beforeFiles: ["crm.genesismedia.co", "nova.genesismedia.co"].map((value) => ({ source: "/", has: [{ type: "host" as const, value }], destination: "/resellers" })) };
+    /*
+     * EACH PRODUCT AND DIVISION ON ITS OWN ADDRESS (Genesis, 31 Oct 2026): its
+     * page at the root, the rest of the site as it is. Nova by Genesis (and the
+     * CRM's old address), then the four divisions; Genesis Elite AI opens the
+     * AI page until Elite has its own.
+     */
+    const HOSTS: [string, string][] = [
+      ["crm.genesismedia.co", "/resellers"],
+      ["nova.genesismedia.co", "/resellers"],
+      ["influence.genesismedia.co", "/influencer-marketing"],
+      ["ailab.genesismedia.co", "/ai-content-automation"],
+      ["studio.genesismedia.co", "/content-production"],
+      ["brandanddesign.genesismedia.co", "/brand-design"],
+      ["genesiseliteai.genesismedia.co", "/ai-content-automation"],
+    ];
+    return { beforeFiles: HOSTS.map(([value, destination]) => ({ source: "/", has: [{ type: "host" as const, value }], destination })) };
   },
   async redirects() {
     const slug = ":slug([a-z0-9-]+)";

@@ -88,13 +88,13 @@ async function staffRecipients(scope: StaffScope): Promise<string[]> {
 
 export type Attachment = { filename: string; content: Buffer };
 
-async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null, attachments: Attachment[] = []) {
+async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null, attachments: Attachment[] = [], from?: string) {
   await assertNotDemo();
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: process.env.CRM_EMAIL_FROM || process.env.ORDER_EMAIL_FROM,
+      from: from || process.env.CRM_EMAIL_FROM || process.env.ORDER_EMAIL_FROM,
       to,
       ...(bcc.length ? { bcc } : {}),
       reply_to: replyTo || LEGAL_EMAIL,
@@ -110,8 +110,20 @@ async function send(to: string[], bcc: string[], subject: string, text: string, 
 }
 
 /** Sends one email now, outside the outbox (sign-in codes can't wait for the next run). */
-export async function sendNow(to: string[], subject: string, text: string, opts: { replyTo?: string | null; signOff?: boolean | string; attachments?: Attachment[] } = {}) {
-  await send(to, [], subject, opts.signOff === false ? text : `${text}${typeof opts.signOff === "string" ? opts.signOff : SIGN_OFF}`, opts.replyTo, opts.attachments);
+export async function sendNow(to: string[], subject: string, text: string, opts: { replyTo?: string | null; signOff?: boolean | string; attachments?: Attachment[]; from?: string } = {}) {
+  await send(to, [], subject, opts.signOff === false ? text : `${text}${typeof opts.signOff === "string" ? opts.signOff : SIGN_OFF}`, opts.replyTo, opts.attachments, opts.from);
+}
+
+/*
+ * INFLUENCER REACH-OUTS FROM GENESIS INFLUENCE'S OWN ADDRESS (Genesis, 31 Oct
+ * 2026: "influencer reach-outs go from coworking; they should go from
+ * influence.genesismedia.co"). Env OUTREACH_EMAIL_FROM overrides; the domain
+ * must be verified in Resend. Replies still go to the person who sent it.
+ */
+export const OUTREACH_FROM = () => process.env.OUTREACH_EMAIL_FROM || "Genesis Influence <hello@influence.genesismedia.co>";
+
+export async function sendOutreach(to: string[], subject: string, text: string, replyTo: string | null) {
+  await send(to, [], subject, text, replyTo, [], OUTREACH_FROM());
 }
 
 /** Sends up to `limit` due emails. Safe to overlap: each row is claimed once (SKIP LOCKED). */
