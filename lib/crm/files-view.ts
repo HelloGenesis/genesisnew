@@ -21,8 +21,20 @@ export async function filesFor(projectId: string, role: FileRole, opts: { avatar
     const canSee = visibleTo(role).includes(f.audience) || files.some((x) => x.folder === f.key);
     return canSee || f.upload.includes(role);
   }).map((f) => ({ key: f.key, label: f.label, hint: f.hint, audience: f.audience, canUpload: f.upload.includes(role) }));
+  /*
+   * EACH FOLDER ON GOOGLE DRIVE (Genesis, 31 Oct 2026: "links should be
+   * visible here, properly organised by project"): Genesis CRM / client /
+   * project / folder, as lib/crm/drive makes them on the first upload. For
+   * Genesis's team only; the Drive is Genesis's.
+   */
+  const drive: Record<string, string> = {};
+  if (role === "staff") {
+    const rows = await getPrisma().appSetting.findMany({ where: { key: { in: [`drive:folder:project:${projectId}`, ...folders.map((f) => `drive:folder:project:${projectId}:${f.key}`)] } } });
+    for (const r of rows) if (!r.value.startsWith("local-")) drive[r.key === `drive:folder:project:${projectId}` ? "project" : r.key.split(":").pop()!] = `https://drive.google.com/drive/folders/${r.value}`;
+  }
   return {
     folders,
+    drive,
     files: files.map((f) => ({
       id: f.id,
       name: f.name,

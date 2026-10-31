@@ -56,7 +56,7 @@ const kind = (m: string | null) => (m?.startsWith("image/") ? "image" : m?.start
  * (the server filters; this only draws). Images and videos play in place,
  * streamed from Genesis's Drive through /api/crm/files.
  */
-export function ProjectFiles({ projectId, role, folders, files, brief, canDelete = false }: { projectId: string; role: "staff" | "client" | "vendor"; folders: Folder[]; files: FileItem[]; brief?: string | null; canDelete?: boolean }) {
+export function ProjectFiles({ projectId, role, folders, files, brief, canDelete = false, drive = {} }: { projectId: string; role: "staff" | "client" | "vendor"; folders: Folder[]; files: FileItem[]; brief?: string | null; canDelete?: boolean; drive?: Record<string, string> }) {
   const router = useRouter();
   const hasBrief = brief !== undefined;
   const firstWithFiles = hasBrief ? BRIEF : (folders.find((f) => files.some((x) => x.folder === f.key))?.key ?? folders[0]?.key ?? "brief");
@@ -139,6 +139,12 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
           <span className="text-faint">·</span>
           <span>{role === "staff" ? "New files:" : "Shared with:"}</span>
           <SharedWith audience={audience || folder.audience} />
+          {/* The folder itself on Google Drive (lib/crm/files-view). */}
+          {drive[folder.key] ? (
+            <a href={drive[folder.key]} target="_blank" rel="noopener noreferrer" className="crm-link ml-auto">Open {folder.label} in Google Drive ↗</a>
+          ) : drive.project ? (
+            <a href={drive.project} target="_blank" rel="noopener noreferrer" className="crm-link ml-auto">Project folder in Google Drive ↗</a>
+          ) : null}
         </p>
       )}
 
