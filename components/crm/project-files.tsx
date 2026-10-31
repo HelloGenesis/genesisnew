@@ -1,10 +1,10 @@
 "use client";
 
-import { Check, Download, FileText, Play, Trash2, Upload, X } from "lucide-react";
+import { Check, Download, FileText, Link2, Play, Trash2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
-import { briefAsGoogleDoc, createProjectGoogleFile, deleteProjectFile, saveProjectBrief, sendFileForReview, setFileAudience } from "@/app/(crm)/files-actions";
+import { addProjectLink, briefAsGoogleDoc, createProjectGoogleFile, deleteProjectFile, saveProjectBrief, sendFileForReview, setFileAudience } from "@/app/(crm)/files-actions";
 
 import { uploadToProject } from "./upload-to-drive";
 
@@ -64,7 +64,9 @@ export function SharedWith({ audience, small = false, team = "Genesis" }: { audi
 }
 
 const size = (n: number | null) => (n === null ? "" : n > 1e9 ? `${(n / 1e9).toFixed(1)} GB` : n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`);
-const kind = (m: string | null) => (m?.startsWith("image/") ? "image" : m?.startsWith("video/") ? "video" : m === "application/pdf" ? "pdf" : "file");
+const kind = (m: string | null) => (m?.startsWith("image/") ? "image" : m?.startsWith("video/") ? "video" : m === "application/pdf" ? "pdf" : m === "text/uri-list" ? "link" : "file");
+/* Opens in its own place, not the viewer: Google Docs and Sheets, and pasted links. */
+const opensOut = (f: { mimeType: string | null; link?: string | null }) => Boolean(f.link) && (f.mimeType?.startsWith("application/vnd.google-apps") || f.mimeType === "text/uri-list");
 
 /**
  * A PROJECT'S FILES, FOLDER BY FOLDER — the same gallery for Genesis, the
@@ -93,6 +95,19 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
   };
   const [making, setMaking] = useState(false);
   const [sending, setSending] = useState<string | null>(null);
+  const addLink = async () => {
+    if (!folder) return;
+    const url = window.prompt(`Paste the link to add to ${folder.label} (Drive, Frame.io, YouTube, Dropbox, Figma…)`);
+    if (!url) return;
+    const name = window.prompt("Name it", [label, folder.label].filter(Boolean).join(" · "));
+    if (name === null) return;
+    setMaking(true);
+    setError(null);
+    const r = await addProjectLink(projectId, folder.key, url, name);
+    setMaking(false);
+    if (!r.ok) return setError(r.error);
+    router.refresh();
+  };
   const sendOn = async (f: FileItem, to: "team" | "client") => {
     if (to === "client" && !window.confirm(`Email "${f.name}" to the client to approve?${SEES[f.audience]?.client ? "" : " It will be shared with them."}`)) return;
     setSending(f.id);
@@ -194,6 +209,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
               </button>
               {role === "staff" && (
                 <>
+                  <button type="button" onClick={() => void addLink()} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}><Link2 className="size-4" aria-hidden /> Add a link</button>
                   {GOOGLE_FILES.has(folder.key) && (
                     <>
                       <button type="button" onClick={() => void newGoogle("doc")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}>＋ Google Doc</button>
@@ -279,7 +295,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
             const k = kind(f.mimeType);
             return (
               <li key={f.id} className="crm-card overflow-hidden !rounded-xl">
-                <button type="button" onClick={() => (f.mimeType?.startsWith("application/vnd.google-apps") && f.link ? window.open(f.link, "_blank", "noopener") : setOpen(f))} className="relative block aspect-video w-full bg-black/80">
+                <button type="button" onClick={() => (opensOut(f) ? window.open(f.link!, "_blank", "noopener") : setOpen(f))} className="relative block aspect-video w-full bg-black/80">
                   {k === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={`/api/crm/files/${f.id}`} alt="" loading="lazy" className="size-full object-cover" />
@@ -288,6 +304,8 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
                       <video src={`/api/crm/files/${f.id}#t=0.5`} preload="metadata" muted className="size-full object-cover" />
                       <span className="absolute inset-0 grid place-items-center"><span className="grid size-10 place-items-center rounded-full bg-white/85 text-[#141216]"><Play className="ml-0.5 size-4" aria-hidden /></span></span>
                     </>
+                  ) : k === "link" ? (
+                    <span className="grid size-full place-items-center gap-1 text-white/70"><Link2 className="size-8" aria-hidden /><span className="max-w-[90%] truncate text-[0.6875rem] text-white/45">{f.link?.replace(/^https?:\/\/(www\.)?/, "")}</span></span>
                   ) : (
                     <span className="grid size-full place-items-center text-white/70"><FileText className="size-8" aria-hidden /></span>
                   )}
@@ -323,7 +341,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
                       </select>
                     ) : null}
                     <span className="flex shrink-0 items-center gap-1.5">
-                      <a href={`/api/crm/files/${f.id}?download=1`} aria-label={`Download ${f.name}`} className="text-ash hover:text-bone"><Download className="size-4" /></a>
+                      {!opensOut(f) && <a href={`/api/crm/files/${f.id}?download=1`} aria-label={`Download ${f.name}`} className="text-ash hover:text-bone"><Download className="size-4" /></a>}
                       {role === "staff" && canDelete && (
                         <button
                           type="button"
