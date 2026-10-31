@@ -72,7 +72,7 @@ const kind = (m: string | null) => (m?.startsWith("image/") ? "image" : m?.start
  * (the server filters; this only draws). Images and videos play in place,
  * streamed from Genesis's Drive through /api/crm/files.
  */
-export function ProjectFiles({ projectId, role, folders, files, brief, canDelete = false, drive = {}, agency = false, admin = true }: { projectId: string; role: "staff" | "client" | "vendor"; folders: Folder[]; files: FileItem[]; brief?: string | null; canDelete?: boolean; drive?: Record<string, string>; agency?: boolean; admin?: boolean }) {
+export function ProjectFiles({ projectId, role, folders, files, brief, canDelete = false, drive = {}, agency = false, admin = true, label = "" }: { label?: string; projectId: string; role: "staff" | "client" | "vendor"; folders: Folder[]; files: FileItem[]; brief?: string | null; canDelete?: boolean; drive?: Record<string, string>; agency?: boolean; admin?: boolean }) {
   /* In an agency's CRM new files are its admins' until shared (lib/crm/files); its team is "Team", not Genesis. */
   const teamName = agency ? "Team" : "Genesis";
   const defaultFor = (f: Folder) => (agency ? "ADMINS" : f.audience);
@@ -104,7 +104,9 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
   };
   const newGoogle = async (kind: "doc" | "sheet") => {
     if (!folder) return;
-    const name = window.prompt(kind === "doc" ? "Name the Google Doc" : "Name the Google Sheet", kind === "doc" ? `${folder.label} · script` : `${folder.label} · sheet`);
+    /* Named after the project, so it's findable on Drive (Genesis, 31 Oct 2026: "rename this according to the project, so it's trackable"). */
+    const base = [label, folder.label].filter(Boolean).join(" · ");
+    const name = window.prompt(kind === "doc" ? "Name the Google Doc" : "Name the Google Sheet", kind === "doc" ? `${base} · Doc` : `${base} · Sheet`);
     if (name === null) return;
     setMaking(true);
     setError(null);
