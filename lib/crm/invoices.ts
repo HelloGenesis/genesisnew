@@ -1,5 +1,6 @@
 import "server-only";
 
+
 import { randomBytes } from "node:crypto";
 
 import { getPrisma } from "@/lib/db";
@@ -8,7 +9,9 @@ import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 import { activeWorkspace } from "./request-workspace";
 import { agencyEmail, workspaceProfile } from "./workspace";
 import { date, money } from "./catalog";
+import { emailHtml } from "./email-html";
 import { appUrl, queueEmail, queueStaffEmail } from "./notify";
+import { notifyProjectTeam } from "./project-team";
 
 /**
  * GST TAX INVOICES (Genesis, 12 Oct 2026: "add a create an invoice").
@@ -203,6 +206,13 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
       ]
         .filter((l, i, all) => l !== "" || all[i - 1] !== "")
         .join("\n"),
+      /* The designed version (Genesis, 31 Oct 2026): the totals, then View the invoice and Pay now. */
+      html: emailHtml({
+        heading: `Tax invoice ${inv.number}`,
+        paragraphs: [`Hello ${inv.billToName},`, message ?? "Please find our tax invoice below.", `Invoice ${inv.number}, dated ${date(inv.issueDate)}${inv.dueDate ? `, due ${date(inv.dueDate)}` : ""}\nTaxable value: ${money(inv.subtotalPaise - inv.discountPaise)}\n${inv.igst ? `IGST 18%: ${money(inv.igstPaise)}` : `CGST 9%: ${money(inv.cgstPaise)}\nSGST 9%: ${money(inv.sgstPaise)}`}\n**Total: ${money(inv.totalPaise)}**`],
+        buttons: [{ label: "View the invoice", url: appUrl(`/invoice/${inv.token}`) }, ...(paymentUrl && inv.status !== "PAID" ? [{ label: "Pay now", url: paymentUrl, tone: "secondary" as const }] : [])],
+        signOff: agencyEmail(agency).signOff,
+      }),
       ...agencyEmail(agency),
     });
   }
@@ -223,6 +233,31 @@ export async function markInvoicePaid(id: string, razorpayPaymentId?: string | n
     });
   }
   await queueStaffEmail({ kind: "invoice_paid", scope: "finance", subject: `Paid: invoice ${inv.number} · ${inv.billToName} · ${money(inv.totalPaise)}`, text: appUrl(`/admin/invoices/${inv.id}`), dedupeKey: `invoice-paid:${inv.id}` });
+  /*
+   * PAYMENT RECEIVED, END TO END (Genesis, 31 Oct 2026): the client gets a
+   * receipt, and the people on the project it was for hear it's paid.
+   */
+  const agency = inv.workspaceId ? await workspaceProfile(inv.workspaceId) : null;
+  if (inv.billToEmail) {
+    const subject = `Payment received: invoice ${inv.number} · ${money(inv.totalPaise)}`;
+    const link = appUrl(`/invoice/${inv.token}`);
+    await queueEmail({
+      kind: "invoice_receipt",
+      to: [inv.billToEmail],
+      subject,
+      text: `Hello ${inv.billToName},\n\nThank you: we've received ${money(inv.totalPaise)} for invoice ${inv.number}.\n\nThe invoice, marked paid: ${link}`,
+      html: emailHtml({ heading: "Payment received. Thank you!", paragraphs: [`Hello ${inv.billToName},`, `We've received **${money(inv.totalPaise)}** for invoice ${inv.number}.`], buttons: [{ label: "View the paid invoice", url: link }], signOff: agencyEmail(agency).signOff }),
+      dedupeKey: `invoice-receipt:${inv.id}`,
+      ...agencyEmail(agency),
+    });
+  }
+  if (inv.quoteId) {
+    const projects = await prisma.project.findMany({ where: { quoteId: inv.quoteId }, select: { id: true, name: true } });
+    for (const p of projects) {
+      await prisma.activity.create({ data: { projectId: p.id, kind: "SYSTEM", body: `Invoice ${inv.number} paid: ${money(inv.totalPaise)}.` } });
+      await notifyProjectTeam(p.id, null, { vendorsToo: false, subject: `Paid: invoice ${inv.number} · ${p.name}`, text: appUrl(`/admin/projects/${p.id}`) });
+    }
+  }
   return true;
 }
 
