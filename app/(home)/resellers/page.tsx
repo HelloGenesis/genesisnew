@@ -7,6 +7,7 @@ import { CrmPricing, SavingsCalculator } from "@/components/genesis/crm-pricing"
 import { GenesisForm } from "@/components/genesis/genesis-form";
 import { JsonLd } from "@/components/genesis/json-ld";
 import { NovaFeatures } from "@/components/genesis/nova-features";
+import { NovaAiExample, NovaApprovals, NovaConnected, NovaPromise, NovaSupport } from "@/components/genesis/nova-story";
 import { NovaHero } from "@/components/genesis/nova-hero";
 import { NovaLive } from "@/components/genesis/nova-live";
 import { NovaTrialForm } from "@/components/genesis/nova-trial-form";
@@ -80,6 +81,7 @@ const NovaIcon = ({ name }: { name: string }) => (
 );
 
 const FAQS = [
+  ["What does Beta mean?", "Nova is live and agencies run on it every day, and it's still growing: new features arrive every week. As a Beta agency you get them first, we set them up with you, and what you ask for shapes what we build next. Your data is safe and yours either way."],
   ["How does the free trial work?", "Start with no card and use everything for 14 days. From day 3 you choose a plan and add a card, and pay ₹0 that day: the card is first charged on day 14, when the trial ends, then monthly. Cancel any time before day 14 and you aren't charged. We email you before every step."],
   ["How does billing work?", "Pick annual (the lowest price, paid for the year upfront) or monthly (10% more, paid month by month). Prices exclude 18% GST. You pay through Razorpay by card, UPI AutoPay or netbanking; monthly plans can be cancelled any time. The free trial continues on a monthly plan."],
   ["How do resellers earn?", "Bring agencies to the CRM and earn 20% of every payment they make for their first 12 months, paid out monthly."],
@@ -103,6 +105,7 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
       {/* THE OPENING (Genesis, 31 Oct 2026): centred, the orb with Nova at its core and who it connects round it (components/genesis/nova-hero). */}
       <Atmosphere tone="brand" origin="top" intensity={0.28}>
         <NovaHero />
+        <NovaPromise />
       </Atmosphere>
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-6 pb-[var(--section-pad)] sm:gap-28">
@@ -112,41 +115,15 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           <NovaLive />
         </section>
 
-        {/* The 14-day free trial (components/genesis/nova-trial-form, lib/crm/nova-trial). */}
-        {/* What it does, feature by feature, straight after seeing it (Genesis, 31 Oct 2026: "feature-driven"). */}
-        <NovaFeatures />
-
-        <section id="trial" aria-labelledby="trial-heading" className="scroll-mt-28">
-          <NovaTrialForm />
-        </section>
-
-        <section aria-labelledby="who-heading">
-          <Reveal>
-            <SectionLabel dot tone="brand">Who&apos;s in it</SectionLabel>
-            <h2 id="who-heading" className="mt-6 max-w-3xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-              Everyone you work with, on one platform
-            </h2>
-            <p className="mt-5 max-w-3xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              Each person gets their own login and sees only what&apos;s theirs.
-            </p>
-          </Reveal>
-          <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {ROLES.map((r) => (
-              <RevealItem key={r.title} className="glass glass-lit rounded-card p-6">
-                <NovaIcon name={r.icon} />
-                <h3 className="text-body font-semibold leading-snug text-bone">{r.title}</h3>
-                <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{r.body}</p>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </section>
-
         <section aria-labelledby="save-heading">
           <Reveal>
-            <SectionLabel dot tone="brand">Time & money</SectionLabel>
+            <SectionLabel dot tone="brand">The problem</SectionLabel>
             <h2 id="save-heading" className="mt-6 max-w-3xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-              Where the hours go today, and where they stop going
+              An agency runs on a dozen tools and a hundred WhatsApp threads
             </h2>
+            <p className="mt-5 max-w-3xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+              Leads in DMs, briefs buried in inboxes, plans in ten spreadsheets, quotes in Word, approvals on WhatsApp and invoices chased by phone. The hours go into moving things between tools. Nova puts the whole operation in one place.
+            </p>
           </Reveal>
           {/* A window, like the demo's (Genesis, 31 Oct 2026: "fill in colours in the window like a real one"): red for today, green for Nova. */}
           <div className="mt-8 overflow-hidden rounded-[1.25rem] border border-[var(--glass-border)] bg-[#141216] shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] [color-scheme:dark]">
@@ -182,6 +159,38 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           </div>
         </section>
 
+        {/* What it does, feature by feature, straight after seeing it (Genesis, 31 Oct 2026: "feature-driven"). */}
+        <NovaFeatures />
+
+        <NovaConnected />
+
+        <NovaAiExample />
+
+        <NovaApprovals />
+
+
+        <section aria-labelledby="who-heading">
+          <Reveal>
+            <SectionLabel dot tone="brand">Who&apos;s in it</SectionLabel>
+            <h2 id="who-heading" className="mt-6 max-w-3xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
+              Everyone you work with, on one platform
+            </h2>
+            <p className="mt-5 max-w-3xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
+              Each person gets their own login and sees only what&apos;s theirs.
+            </p>
+          </Reveal>
+          <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {ROLES.map((r) => (
+              <RevealItem key={r.title} className="glass glass-lit rounded-card p-6">
+                <NovaIcon name={r.icon} />
+                <h3 className="text-body font-semibold leading-snug text-bone">{r.title}</h3>
+                <p className="mt-2 text-pretty text-small leading-relaxed text-ash">{r.body}</p>
+              </RevealItem>
+            ))}
+          </RevealGroup>
+        </section>
+
+
         <section id="pricing" aria-labelledby="pricing-heading" className="scroll-mt-24">
           <Reveal>
             <SectionLabel dot tone="brand">Pricing</SectionLabel>
@@ -192,6 +201,10 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           <div className="mt-8">
             <CrmPricing />
           </div>
+        </section>
+
+        <section id="trial" aria-labelledby="trial-heading" className="scroll-mt-28">
+          <NovaTrialForm />
         </section>
 
         <section aria-labelledby="how-heading">
@@ -221,6 +234,8 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           </Reveal>
           <Accordion items={FAQS} name="nova-faq" openFirst className="mt-10" />
         </section>
+
+        <NovaSupport />
 
         <section id="apply" aria-labelledby="apply-heading" className="mx-auto w-full max-w-2xl scroll-mt-24">
           <h2 id="apply-heading" className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">

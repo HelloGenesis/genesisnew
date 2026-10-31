@@ -640,6 +640,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
 export const novaNavItems: NavItem[] = [
   { label: "Live demo", href: "#demo" },
   { label: "Features", href: "#features" },
+  { label: "NOVA AI", href: "#nova-ai" },
   { label: "Pricing", href: "#pricing" },
   { label: "Free trial", href: "#trial" },
   { label: "FAQ", href: "#faq" },

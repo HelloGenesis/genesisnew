@@ -108,7 +108,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       </Card>
 
       <Card title="Files" action={<span className="text-[0.8125rem] text-ash">Stored in Genesis&apos;s Google Drive · clients and vendors see only their folders</span>}>
-        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} brief={project.brief ?? null} canDelete={await canDeleteFiles(project.id)} />
+        <ProjectFiles projectId={project.id} role="staff" folders={files.folders} files={files.files} drive={files.drive} brief={project.brief ?? null} canDelete={await canDeleteFiles(project.id)} />
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">

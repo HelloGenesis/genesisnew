@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { recordAuditLog } from "@/lib/audit";
 import { getPrisma } from "@/lib/db";
 import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
-import { sendNow } from "@/lib/crm/notify";
+import { sendNow, sendOutreach } from "@/lib/crm/notify";
 import { makePlanSheets } from "@/lib/crm/plan-sheets";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
 import { emailList, phoneList, splitList, tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
@@ -75,7 +75,7 @@ export async function emailCreator(quoteCreatorId: string, to: string, subject: 
   if (!qc) return { ok: false, message: "Not your plan." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { ok: false, message: "No valid email for this creator." };
   try {
-    await sendNow([to.toLowerCase()], subject.slice(0, 200), body.slice(0, 8000), { replyTo: viewer.email, signOff: false });
+    await sendOutreach([to.toLowerCase()], subject.slice(0, 200), body.slice(0, 8000), viewer.email);
   } catch (error) {
     return { ok: false, message: `Email didn't send: ${(error as Error).message.slice(0, 120)}` };
   }

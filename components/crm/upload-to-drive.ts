@@ -33,11 +33,11 @@ const TRIES = 8;
 
 type Sent = { done: true; id: string } | { done: false; next: number };
 
-function put(url: string, body: Blob | null, range: string, type: string, onBytes?: (n: number) => void): Promise<Sent> {
+function put(url: string, body: Blob | null, range: string | null, type: string, onBytes?: (n: number) => void): Promise<Sent> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url);
-    xhr.setRequestHeader("Content-Range", range);
+    if (range) xhr.setRequestHeader("Content-Range", range);
     if (body) xhr.setRequestHeader("Content-Type", type);
     if (onBytes) xhr.upload.onprogress = (e) => onBytes(e.loaded);
     xhr.onload = () => {
@@ -63,9 +63,16 @@ async function sendInPieces(url: string, file: File, onPct: (pct: number) => voi
   const total = file.size;
   const type = file.type || "application/octet-stream";
   const pct = (n: number) => onPct(total ? Math.min(99, Math.round((n / total) * 100)) : 99);
-  if (total === 0) {
-    const r = await put(url, file, "bytes */0", type);
-    if (r.done) return r.id;
+  /*
+   * Up to one piece: the whole file in one request, no Content-Range, as
+   * Google's simplest resumable upload (a file stuck at 0% on 31 Oct 2026 came
+   * from piece uploads on a small file). Bigger files go in pieces; if Google
+   * won't take a piece at all, the file goes in one request instead.
+   */
+  if (total <= PIECE) {
+    const r = await sendWhole(url, file, type, pct);
+    onPct(100);
+    return r;
   }
   let at = 0;
   let failures = 0;
@@ -82,6 +89,17 @@ async function sendInPieces(url: string, file: File, onPct: (pct: number) => voi
       pct(at);
     } catch (e) {
       if ((e as Error).message === "expired") throw new Error("The upload expired. Start it again.");
+      /* The very first piece refused outright: this browser or network won't do pieces, so send it whole. */
+      if (at === 0 && failures === 0 && (e as Error).message === "network") {
+        failures++;
+        try {
+          const id = await sendWhole(url, file, type, pct);
+          onPct(100);
+          return id;
+        } catch {
+          /* Fall through to retrying the pieces. */
+        }
+      }
       if (++failures > TRIES) throw new Error("The connection kept dropping. Check it and try again; nothing is lost on Drive.");
       await new Promise((ok) => setTimeout(ok, Math.min(30_000, 1000 * 2 ** failures)));
       /* Ask Google where it got to, then go on from there. */
@@ -94,4 +112,21 @@ async function sendInPieces(url: string, file: File, onPct: (pct: number) => voi
       }
     }
   }
+}
+
+/* The file in one request, tried three times. */
+async function sendWhole(url: string, file: File, type: string, pct: (n: number) => void): Promise<string> {
+  let last: Error = new Error("Upload failed.");
+  for (let i = 0; i < 3; i++) {
+    try {
+      const r = await put(url, file, null, type, pct);
+      if (r.done) return r.id;
+      last = new Error("Upload didn't finish.");
+    } catch (e) {
+      if ((e as Error).message === "expired") throw new Error("The upload expired. Start it again.");
+      last = e as Error;
+    }
+    await new Promise((ok) => setTimeout(ok, 1500 * (i + 1)));
+  }
+  throw new Error(last.message === "network" ? "Network error during upload. Check your connection and try again." : `Upload failed (${last.message}).`);
 }
