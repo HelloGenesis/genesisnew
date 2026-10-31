@@ -154,7 +154,12 @@ export function Select({ name, options, defaultValue, required, className = "", 
 }
 
 /** The stage tracker: one bar per stage, done / current / to come, with the current stage named. */
-export function StageBar({ stages, stage, compact = false }: { stages: readonly string[]; stage: number; compact?: boolean }) {
+/**
+ * `move` (Genesis, 31 Oct 2026: "make this functional, there's no going back in
+ * progress"): each step becomes a button that moves the project to it,
+ * backwards as well as forwards.
+ */
+export function StageBar({ stages, stage, compact = false, move, id }: { stages: readonly string[]; stage: number; compact?: boolean; move?: (form: FormData) => Promise<void>; id?: string }) {
   return (
     <div>
       <div className="flex gap-1" aria-hidden>
@@ -171,8 +176,21 @@ export function StageBar({ stages, stage, compact = false }: { stages: readonly 
         <ol className="mt-2 hidden justify-between text-[0.75rem] sm:flex">
           {stages.map((name, i) => (
             <li key={name} className={i === stage ? "font-semibold text-bone" : i < stage ? "text-ash" : "text-faint"}>
-              {i < stage ? "✓ " : ""}
-              {name}
+              {move && id && i !== stage ? (
+                <form action={move}>
+                  <input type="hidden" name="id" value={id} />
+                  <input type="hidden" name="stage" value={i} />
+                  <button title={`Move to ${name}`} className="rounded-md px-1 py-0.5 transition-colors hover:bg-[var(--hover-wash)] hover:text-bone">
+                    {i < stage ? "✓ " : ""}
+                    {name}
+                  </button>
+                </form>
+              ) : (
+                <>
+                  {i < stage ? "✓ " : ""}
+                  {name}
+                </>
+              )}
             </li>
           ))}
         </ol>

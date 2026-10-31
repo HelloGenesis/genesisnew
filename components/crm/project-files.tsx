@@ -4,7 +4,7 @@ import { Check, Download, FileText, Play, Trash2, Upload, X } from "lucide-react
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
-import { briefAsGoogleDoc, createProjectGoogleFile, deleteProjectFile, saveProjectBrief, setFileAudience } from "@/app/(crm)/files-actions";
+import { briefAsGoogleDoc, createProjectGoogleFile, deleteProjectFile, saveProjectBrief, sendFileForReview, setFileAudience } from "@/app/(crm)/files-actions";
 
 import { uploadToProject } from "./upload-to-drive";
 
@@ -20,6 +20,15 @@ export type FileItem = {
   createdAt: string;
   /** Google's own page for it: how a Google Doc or Sheet opens. */
   link?: string | null;
+  /** Its latest review, when it's been sent on: INTERNAL_REVIEW, IN_REVIEW, CHANGES_REQUESTED, APPROVED. */
+  review?: string | null;
+};
+
+const REVIEW: Record<string, { label: string; tone: string }> = {
+  INTERNAL_REVIEW: { label: "With the team", tone: "bg-[#a78bfa]/15 text-[#a78bfa]" },
+  IN_REVIEW: { label: "With the client", tone: "bg-[#ffc516]/15 text-[#ffc516]" },
+  CHANGES_REQUESTED: { label: "Changes asked", tone: "bg-[#ef4444]/15 text-[#ef4444]" },
+  APPROVED: { label: "Approved", tone: "bg-[#22c55e]/15 text-[#22c55e]" },
 };
 
 type Folder = { key: string; label: string; hint: string; audience: string; canUpload: boolean };
@@ -83,6 +92,16 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
     input.current?.click();
   };
   const [making, setMaking] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
+  const sendOn = async (f: FileItem, to: "team" | "client") => {
+    if (to === "client" && !window.confirm(`Email "${f.name}" to the client to approve?${SEES[f.audience]?.client ? "" : " It will be shared with them."}`)) return;
+    setSending(f.id);
+    setError(null);
+    const r = await sendFileForReview(f.id, to);
+    setSending(null);
+    if (!r.ok) return setError(r.error);
+    router.refresh();
+  };
   const newGoogle = async (kind: "doc" | "sheet") => {
     if (!folder) return;
     const name = window.prompt(kind === "doc" ? "Name the Google Doc" : "Name the Google Sheet", kind === "doc" ? `${folder.label} · script` : `${folder.label} · sheet`);
@@ -173,14 +192,6 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
               </button>
               {role === "staff" && (
                 <>
-                  <button type="button" onClick={() => pick("internal")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={progress.length > 0} title="Your producer reviews it first; the client doesn't see it">
-                    Upload &amp; producer reviews
-                  </button>
-                  {SEES[audience || defaultFor(folder)]?.client && (
-                    <button type="button" onClick={() => pick("client")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={progress.length > 0} title="Emails the client with Approve and Ask for changes buttons">
-                      Upload &amp; send to client to approve
-                    </button>
-                  )}
                   {GOOGLE_FILES.has(folder.key) && (
                     <>
                       <button type="button" onClick={() => void newGoogle("doc")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}>＋ Google Doc</button>
@@ -285,6 +296,16 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
                     {size(f.size)} · {f.uploader ?? f.uploadedAs} · {new Date(f.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </p>
                   <SharedWith audience={f.audience} small team={teamName} />
+                  {/* Send it on, once it's up (Genesis, 31 Oct 2026): to the team, or to the client to approve. */}
+                  {role === "staff" &&
+                    (f.review && REVIEW[f.review] ? (
+                      <p className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6875rem] ${REVIEW[f.review]!.tone}`}>{REVIEW[f.review]!.label}</p>
+                    ) : (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        <button type="button" disabled={sending === f.id} onClick={() => void sendOn(f, "team")} className="rounded-full border border-[var(--glass-border)] px-2 py-0.5 text-[0.6875rem] text-ash hover:border-[#a78bfa] hover:text-bone">Send to team</button>
+                        <button type="button" disabled={sending === f.id} onClick={() => void sendOn(f, "client")} className="rounded-full border border-[var(--glass-border)] px-2 py-0.5 text-[0.6875rem] text-ash hover:border-[#ffc516] hover:text-bone">Send to client</button>
+                      </div>
+                    ))}
                   <div className="flex items-center justify-between gap-1">
                     {role === "staff" ? (
                       <select

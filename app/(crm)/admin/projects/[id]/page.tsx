@@ -32,6 +32,7 @@ import {
   addCampaignCreators,
   addDeliverable,
   advanceStage,
+  setProjectStage,
   assignVendor,
   createTask,
   postStaffMessage,
@@ -109,6 +110,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         <Status value={PROJECT_STATUS[project.status]} />
         {influence && <Link href={`/admin/reports/campaign/${project.id}`} className="crm-btn crm-btn-secondary crm-btn-sm">Campaign report</Link>}
         {project.driveUrl && <a href={project.driveUrl} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Drive folder ↗</a>}
+        {project.stage > 0 && (
+          <form action={setProjectStage}>
+            <input type="hidden" name="id" value={project.id} />
+            <input type="hidden" name="stage" value={project.stage - 1} />
+            <button className="crm-btn crm-btn-secondary crm-btn-sm" title={`Back to ${stages[project.stage - 1]}`}>← Back</button>
+          </form>
+        )}
         {project.status === "ACTIVE" && project.stage < stages.length - 1 && (
           <form action={advanceStage}>
             <input type="hidden" name="id" value={project.id} />
@@ -118,7 +126,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       </PageHead>
 
       <Card>
-        <StageBar stages={stages} stage={project.stage} />
+        <StageBar stages={stages} stage={project.stage} move={setProjectStage} id={project.id} />
       </Card>
 
       <Card title="Files" action={<span className="text-[0.8125rem] text-ash">{project.workspaceId ? "Stored in Google Drive · new files are for admins until shared" : <>Stored in Genesis&apos;s Google Drive · clients and vendors see only their folders</>}</span>}>

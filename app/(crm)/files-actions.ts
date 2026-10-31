@@ -8,6 +8,9 @@ import type { FileAudience } from "@/lib/generated/prisma/enums";
 import { projectRef } from "@/lib/crm/catalog";
 import { createGoogleFile, projectFolderId, trashFile } from "@/lib/crm/drive";
 import { folderOf } from "@/lib/crm/files";
+import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
+import { notifyProjectTeam } from "@/lib/crm/project-team";
+import { reviewEmail } from "@/lib/crm/review-links";
 import { isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
@@ -94,4 +97,36 @@ export async function briefAsGoogleDoc(projectId: string) {
   } catch (error) {
     return { ok: false as const, error: `Google Drive couldn't make it: ${(error as Error).message.slice(0, 140)}` };
   }
+}
+
+/*
+ * SEND ANY FILE ON, AFTER IT'S UP (Genesis, 31 Oct 2026: "one upload; then for
+ * whatever's uploaded, an option to send it to the internal/creative team or
+ * to the client"). To the team: an internal review the client never sees. To
+ * the client: shared with them if it wasn't, and emailed with Approve and Ask
+ * for changes buttons (lib/crm/review-links).
+ */
+export async function sendFileForReview(fileId: string, to: "team" | "client") {
+  const viewer = await requireStaff();
+  const prisma = getPrisma();
+  const file = await prisma.driveFile.findUnique({ where: { id: fileId }, include: { project: true } });
+  if (!file?.project) return { ok: false as const, error: "This file isn't on a project." };
+  const folder = folderOf(file.folder);
+  const title = `${folder?.label ?? "File"}: ${file.name}`;
+  const previous = await prisma.deliverable.findFirst({ where: { projectId: file.project.id, title }, orderBy: { version: "desc" } });
+  const kind = file.mimeType?.startsWith("image/") ? "IMAGE" : file.mimeType?.startsWith("video/") ? "VIDEO" : file.mimeType === "application/pdf" ? "DOCUMENT" : "DOCUMENT";
+  const url = file.webViewLink && file.mimeType?.startsWith("application/vnd.google-apps") ? file.webViewLink : `/api/crm/files/${file.id}`;
+  if (to === "client") {
+    /* The client has to be able to see it. */
+    if (file.audience !== "TEAM_CLIENT" && file.audience !== "EVERYONE") await prisma.driveFile.update({ where: { id: file.id }, data: { audience: file.audience === "TEAM_VENDOR" ? "EVERYONE" : "TEAM_CLIENT" } });
+    const d = await prisma.deliverable.create({ data: { projectId: file.project.id, title, url, fileId: file.id, kind, status: "IN_REVIEW", version: (previous?.version ?? 0) + 1, submittedById: viewer.id } });
+    await queueEmail(reviewEmail({ id: d.id, title, project: file.project.name, to: await accountEmails(file.project.accountId), portal: appUrl(`/portal/projects/${file.project.id}#review`) }));
+    await prisma.activity.create({ data: { projectId: file.project.id, kind: "SYSTEM", actorId: viewer.id, body: `Sent "${file.name}" to the client for approval.` } });
+  } else {
+    await prisma.deliverable.create({ data: { projectId: file.project.id, title, url, fileId: file.id, kind, status: "INTERNAL_REVIEW", version: (previous?.version ?? 0) + 1, submittedById: viewer.id } });
+    await notifyProjectTeam(file.project.id, viewer.id, { vendorsToo: file.audience === "TEAM_VENDOR" || file.audience === "EVERYONE", subject: `For review: ${file.name} · ${file.project.name}`, text: `${title} is ready for the team's review, before the client sees it.\n\n${appUrl(`/admin/projects/${file.project.id}#files`)}` });
+    await prisma.activity.create({ data: { projectId: file.project.id, kind: "SYSTEM", actorId: viewer.id, body: `Sent "${file.name}" to the team for review.` } });
+  }
+  revalidatePath("/", "layout");
+  return { ok: true as const };
 }
