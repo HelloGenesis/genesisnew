@@ -28,6 +28,8 @@ export const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/drive.file",
   /* The CRM's influencers, clients, vendors and leads kept in Google Contacts (lib/crm/contacts, Genesis, 22 Oct 2026). */
   "https://www.googleapis.com/auth/contacts",
+  /* Drafts only (Genesis, 31 Oct 2026: "put a draft in the mail box for the user to customise"): a quote's email with its PDF, never sent by the CRM. */
+  "https://www.googleapis.com/auth/gmail.compose",
 ];
 
 /** The company Google account whose Drive holds project files and the CRM sheets. */

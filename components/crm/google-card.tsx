@@ -24,8 +24,14 @@ export async function GoogleCard({ userId, agency }: { userId: string; agency: b
                   <a href="/api/crm/google/connect" className="crm-link">Reconnect Google</a>
                 </Notice>
               )}
+              {conn.scopes.includes("auth/drive.file") && !conn.scopes.includes("gmail.compose") && (
+                <Notice>
+                  Reconnect once to put quote and proposal drafts, with their PDF, in your Gmail to edit and send yourself. The CRM never sends from your Gmail.{" "}
+                  <a href="/api/crm/google/connect" className="crm-link">Reconnect Google</a>
+                </Notice>
+              )}
               <p className="text-[0.875rem] text-ash">
-                Gmail inbox and Drive, read-only. {conn.lastSyncAt ? `Last checked ${dateTime(conn.lastSyncAt)}.` : "First check within five minutes."}
+                Gmail inbox and Drive, read-only, plus drafts you ask for. {conn.lastSyncAt ? `Last checked ${dateTime(conn.lastSyncAt)}.` : "First check within five minutes."}
               </p>
               {conn.lastError && <Notice warn><span className="break-words [overflow-wrap:anywhere]">{conn.status === "REVOKED" ? "Google access was removed. Connect again." : `Last check failed: ${conn.lastError.slice(0, 160)}`}</span></Notice>}
               <div className="flex flex-wrap items-center gap-2">

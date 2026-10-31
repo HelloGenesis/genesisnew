@@ -30,7 +30,7 @@ export function appUrl(path: string): string {
   return new URL(path, base).toString();
 }
 
-const SIGN_OFF = "\n\n— Genesis Media\nhello@genesismedia.co · genesismedia.co";
+export const SIGN_OFF = "\n\n— Genesis Media\nhello@genesismedia.co · genesismedia.co";
 
 /** One email to named people. `dedupeKey` makes a repeat (a retried webhook) a no-op. */
 /** `signOff` and `replyTo`: an agency CRM's own (lib/crm/workspace); Genesis's otherwise. */
@@ -86,7 +86,9 @@ async function staffRecipients(scope: StaffScope): Promise<string[]> {
   return [...new Set([ops, ...rows.map((r) => r.user.email!), ...granted.map((u) => u.email!)].map((e) => e.toLowerCase()))];
 }
 
-async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null) {
+export type Attachment = { filename: string; content: Buffer };
+
+async function send(to: string[], bcc: string[], subject: string, text: string, replyTo?: string | null, attachments: Attachment[] = []) {
   await assertNotDemo();
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -100,15 +102,16 @@ async function send(to: string[], bcc: string[], subject: string, text: string, 
       headers: { "X-Genesis-CRM": "1" },
       subject,
       text,
+      ...(attachments.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: a.content.toString("base64") })) } : {}),
     }),
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(attachments.length ? 30_000 : 10_000),
   });
   if (!response.ok) throw new Error(`Resend ${response.status}: ${(await response.text()).slice(0, 200)}`);
 }
 
 /** Sends one email now, outside the outbox (sign-in codes can't wait for the next run). */
-export async function sendNow(to: string[], subject: string, text: string, opts: { replyTo?: string | null; signOff?: boolean } = {}) {
-  await send(to, [], subject, opts.signOff === false ? text : `${text}${SIGN_OFF}`, opts.replyTo);
+export async function sendNow(to: string[], subject: string, text: string, opts: { replyTo?: string | null; signOff?: boolean | string; attachments?: Attachment[] } = {}) {
+  await send(to, [], subject, opts.signOff === false ? text : `${text}${typeof opts.signOff === "string" ? opts.signOff : SIGN_OFF}`, opts.replyTo, opts.attachments);
 }
 
 /** Sends up to `limit` due emails. Safe to overlap: each row is claimed once (SKIP LOCKED). */

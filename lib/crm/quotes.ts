@@ -7,7 +7,9 @@ import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 
 import { agencyEmail, workspaceProfile } from "./workspace";
 import { date, money } from "./catalog";
-import { appUrl, queueEmail, queueStaffEmail } from "./notify";
+import { gmailDraft } from "./gmail-draft";
+import { SIGN_OFF, appUrl, queueEmail, queueStaffEmail, sendNow } from "./notify";
+import { renderPdf } from "./pdf";
 import { makePlanSheets, shareExternalSheet } from "./plan-sheets";
 import { brandSheetLink, type PlanColumns, sharesSheet } from "./plan-tables";
 import { openProject, winLead } from "./projects";
@@ -49,7 +51,14 @@ export async function refreshTotals(quoteId: string) {
  * cancelled, so a client can never pay a superseded figure), a pending order
  * the webhook can fulfil, the email, and the lead moved to Proposal sent.
  */
-export async function sendQuote(quoteId: string, actorId: string, message: string | null, withPayment: boolean, view: "both" | "proposal" | "pricing" | "plan" | "proposal-plan" = "both") {
+/**
+ * How it reaches the client (Genesis, 31 Oct 2026): the CRM's email (queued),
+ * the same with the PDF attached (sent now), or a draft with the PDF in the
+ * sender's own Gmail for them to change and send themselves.
+ */
+export type QuoteDelivery = "email" | "email-pdf" | "draft";
+
+export async function sendQuote(quoteId: string, actorId: string, message: string | null, withPayment: boolean, view: "both" | "proposal" | "pricing" | "plan" | "proposal-plan" = "both", delivery: QuoteDelivery = "email"): Promise<{ paymentUrl: string | null; draftUrl?: string; draftAccount?: string }> {
   const prisma = getPrisma();
   const t = await refreshTotals(quoteId);
   const q = t.quote;
@@ -121,6 +130,9 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
     await prisma.activity.create({ data: { leadId, kind: "EMAIL", actorId, body: `${view === "proposal" ? "Proposal" : q.kind === "INFLUENCER_PLAN" ? "Influencer plan" : "Quote"} ${ref} sent${view === "proposal" ? "" : `: ${money(t.total)}`}.` } });
     await queueSheet("leads", leadId);
   }
+  /* The briefs it answers move on too (Genesis, 31 Oct 2026): a new brief from this lead or client is now quoted. */
+  const briefOf = [...(leadId ? [{ leadId }] : []), ...(q.accountId ? [{ accountId: q.accountId }] : [])];
+  if (briefOf.length) await prisma.brief.updateMany({ where: { status: "NEW", OR: briefOf }, data: { status: "QUOTED" } });
 
   const plan = q.kind === "INFLUENCER_PLAN";
   const pricing = view === "both" || view === "pricing";
@@ -146,7 +158,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   const lines = pricing ? q.lines.map((l) => `• ${l.title}${l.qty > 1 ? ` × ${l.qty}` : ""}: ${money(l.qty * l.unitPaise)}`) : [];
   if (pricing && t.creators > 0) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
   const half = Math.round(t.tax / 2);
-  await queueEmail({
+  const mail = {
     kind: "quote_sent",
     to: [q.contactEmail],
     subject: `${view === "proposal" || view === "proposal-plan" ? "Proposal" : view === "plan" || plan ? "Influencer plan" : "Quotation"} ${ref} · ${q.title}`,
@@ -171,7 +183,18 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
       .filter((l, i, all) => l !== "" || all[i - 1] !== "")
       .join("\n"),
     ...agencyEmail(agency),
-  });
+  };
+  if (delivery === "email") {
+    await queueEmail(mail);
+    return { paymentUrl };
+  }
+  /* The very page the client opens, printed (lib/crm/pdf). */
+  const pdf = { filename: `${ref.replace(/[^\w.-]+/g, "-")}.pdf`, content: await renderPdf(link) };
+  if (delivery === "draft") {
+    const draft = await gmailDraft(actorId, { to: mail.to, subject: mail.subject, text: `${mail.text}${mail.signOff ?? SIGN_OFF}`, attachments: [pdf] });
+    return { paymentUrl, draftUrl: draft.url, draftAccount: draft.account };
+  }
+  await sendNow(mail.to, mail.subject, mail.text, { replyTo: mail.replyTo, signOff: mail.signOff, attachments: [pdf] });
   return { paymentUrl };
 }
 

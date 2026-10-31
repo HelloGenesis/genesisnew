@@ -22,6 +22,7 @@ import { razorpayKeys } from "@/lib/razorpay";
 import { invoiceFromQuote } from "../../actions/invoices";
 import { DriveCard } from "@/components/crm/drive-card";
 import { archivedPdf } from "@/lib/crm/drive";
+import { canDraft } from "@/lib/crm/gmail-draft";
 import { archiveQuoteNow, deleteQuote, duplicateQuote, reviseQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
 
 const rupee = (v: number | null | undefined) => (v === null || v === undefined ? null : v / 100);
@@ -98,6 +99,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
   const template = hasCreators ? ((await getPrisma().appSetting.findUnique({ where: { key: "outreach-template" } }))?.value ?? DEFAULT_OUTREACH) : "";
   const cities = [...new Set(q.creators.map((c) => c.city).filter(Boolean))] as string[];
   const clientLink = appUrl(`/quote/${q.token}`);
+  const drafts = await canDraft(viewer.id);
   /* Every version of this quote: the first, and its revisions R1, R2… */
   const rootId = q.revisionOfId ?? q.id;
   const versions = await getPrisma().quote.findMany({ where: { OR: [{ id: rootId }, { revisionOfId: rootId }], ...quoteScope(viewer) }, orderBy: { revision: "asc" }, select: { id: true, number: true, baseNumber: true, revision: true, status: true, totalPaise: true, createdAt: true } });
@@ -123,6 +125,13 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
               <Select name="view" required defaultValue="both" options={[["both", "Everything together (proposal, pricing, influencer plan)"], ["proposal", "Proposal only (no prices)"], ["proposal-plan", "Proposal + influencer list (no prices)"], ["plan", "Influencer plan only (with its prices)"], ["pricing", "Pricing only"]]} />
             </Field>
             <Field label={showContact ? `Message to ${q.contactName}` : "Message to the client"} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
+            {/* By the CRM's email (with the PDF if wanted), or as a draft in the sender's own Gmail (Genesis, 31 Oct 2026). */}
+            <Field label="How" hint={drafts ? "A draft goes into your Gmail with the PDF attached; edit it there and send it yourself." : "For Gmail drafts, reconnect Google in My settings once."}>
+              <Select name="deliver" required defaultValue="email" options={[["email", "Email it from the CRM"], ["draft", drafts ? "Put a draft in my Gmail to edit and send (PDF attached)" : "Put a draft in my Gmail (reconnect Google first)"]]} />
+            </Field>
+            <label className="flex items-center gap-2 text-[0.875rem] text-ash">
+              <input type="checkbox" name="pdf" defaultChecked /> Attach the PDF
+            </label>
             {/* An agency CRM's quotes have no pay link: it would collect into Genesis's Razorpay. */}
             {!q.workspaceId && (
             <label className="flex items-center gap-2 text-[0.875rem] text-ash">
