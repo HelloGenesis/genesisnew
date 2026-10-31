@@ -161,3 +161,12 @@ export async function addProjectLink(projectId: string, folderKey: string, url: 
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
+
+/** Everything put straight into projects' Drive folders, now (the Files page's "Sync from Drive"; lib/crm/drive-sync). */
+export async function syncDriveNow() {
+  await requireStaff();
+  const { syncAllDrives } = await import("@/lib/crm/drive-sync");
+  const added = await syncAllDrives(60).catch(() => 0);
+  revalidatePath("/", "layout");
+  return { added };
+}

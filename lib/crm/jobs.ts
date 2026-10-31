@@ -1,5 +1,7 @@
 import "server-only";
 
+import { syncAllDrives } from "./drive-sync";
+
 import { getPrisma } from "@/lib/db";
 
 import { LEAD_STATUS, date, todayIst } from "./catalog";
@@ -27,6 +29,8 @@ export async function runAllJobs() {
   await step("digest", morningDigest);
   await step("money", moneyReminders);
   await step("trials", () => trialReminders());
+  /* Files put straight into projects' Drive folders (lib/crm/drive-sync). */
+  await step("drive", async () => ({ added: await syncAllDrives() }));
   await step("emails", () => deliverEmails());
   await step("creators", () => mirrorCreators());
   await step("sheets", () => syncSheets());

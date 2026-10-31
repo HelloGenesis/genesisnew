@@ -4,10 +4,13 @@ import { getPrisma } from "@/lib/db";
 
 import { projectRef } from "./catalog";
 import { ensureProjectFolders } from "./drive";
+import { syncProjectDrive } from "./drive-sync";
 import { FOLDERS, type FileRole, visibleTo } from "./files";
 
 /** The folders and files one person sees on a project, ready for <ProjectFiles>. */
 export async function filesFor(projectId: string, role: FileRole, opts: { avatar?: boolean; admin?: boolean } = {}) {
+  /* What was put straight into the project's Drive folders comes in first, so it's listed now (lib/crm/drive-sync). */
+  if (role === "staff") await syncProjectDrive(projectId).catch(() => 0);
   const files = await getPrisma().driveFile.findMany({
     where: { projectId, audience: { in: visibleTo(role, opts.admin) } },
     orderBy: { createdAt: "desc" },

@@ -66,7 +66,7 @@ export function SharedWith({ audience, small = false, team = "Genesis" }: { audi
 const size = (n: number | null) => (n === null ? "" : n > 1e9 ? `${(n / 1e9).toFixed(1)} GB` : n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1e3))} KB`);
 const kind = (m: string | null) => (m?.startsWith("image/") ? "image" : m?.startsWith("video/") ? "video" : m === "application/pdf" ? "pdf" : m === "text/uri-list" ? "link" : "file");
 /* Opens in its own place, not the viewer: Google Docs and Sheets, and pasted links. */
-const opensOut = (f: { mimeType: string | null; link?: string | null }) => Boolean(f.link) && (f.mimeType?.startsWith("application/vnd.google-apps") || f.mimeType === "text/uri-list");
+const opensOut = (f: { mimeType: string | null; link?: string | null; uploadedAs?: string }) => Boolean(f.link) && (f.mimeType?.startsWith("application/vnd.google-apps") || f.mimeType === "text/uri-list" || f.uploadedAs === "drive");
 
 /**
  * A PROJECT'S FILES, FOLDER BY FOLDER — the same gallery for Genesis, the

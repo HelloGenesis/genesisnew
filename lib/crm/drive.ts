@@ -217,6 +217,38 @@ export async function projectFolderId(p: { accountId: string; accountName: strin
 }
 
 /**
+ * WHAT'S IN A DRIVE FOLDER, ITS SUBFOLDERS INCLUDED (Genesis, 1 Nov 2026: "this
+ * shows every file on Drive here"). Read with the company account's own Google
+ * connection, which can see files people add straight into Drive, not only the
+ * CRM's own uploads.
+ */
+export type DriveListed = { id: string; name: string; mimeType: string; size: number | null; webViewLink: string | null; createdTime: string; path: string };
+export async function listFolderFiles(folderId: string, depth = 3, prefix = ""): Promise<DriveListed[]> {
+  if (localDrive()) return [];
+  let token: string;
+  try {
+    token = await companyToken();
+  } catch {
+    token = await accessToken();
+  }
+  const out: DriveListed[] = [];
+  let pageToken: string | undefined;
+  do {
+    const params = new URLSearchParams({ q: `'${folderId}' in parents and trashed = false`, fields: "nextPageToken,files(id,name,mimeType,size,webViewLink,createdTime)", pageSize: "200", ...(pageToken ? { pageToken } : {}) });
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(20_000) });
+    if (!response.ok) throw new Error(`Drive list failed (${response.status})`);
+    const body = (await response.json()) as { nextPageToken?: string; files: { id: string; name: string; mimeType: string; size?: string; webViewLink?: string; createdTime: string }[] };
+    for (const f of body.files) {
+      if (f.mimeType === "application/vnd.google-apps.folder") {
+        if (depth > 0) out.push(...(await listFolderFiles(f.id, depth - 1, `${prefix}${f.name} / `)));
+      } else out.push({ id: f.id, name: f.name, mimeType: f.mimeType, size: f.size ? Number(f.size) : null, webViewLink: f.webViewLink ?? null, createdTime: f.createdTime, path: prefix });
+    }
+    pageToken = body.nextPageToken;
+  } while (pageToken);
+  return out;
+}
+
+/**
  * THE WHOLE PROJECT ON DRIVE AT ONCE (Genesis, 31 Oct 2026: "the drive only has
  * 2 folders; keep it structured"): every stage's folder made when the project
  * is first opened, not on its first upload. Folders already made are reused.
