@@ -5,9 +5,9 @@ import {
   Bell,
   Blocks,
   BookOpen,
-  ChartColumn,
   Briefcase,
   Building2,
+  ChartColumn,
   ChevronsRight,
   CreditCard,
   DoorOpen,
@@ -89,6 +89,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/assistant": Sparkles,
   "/admin/assistant/usage": Gauge,
   "/admin/assistant/settings": Settings2,
+  "/admin/analytics": ChartColumn,
   "/admin/reports": ChartColumn,
   "/admin/leads": Users,
   "/admin/briefs": Lightbulb,
@@ -364,9 +365,11 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
           <Link href="/admin/assistant" aria-label="Nova Copilot" aria-current={path.startsWith("/admin/assistant") ? "page" : undefined} className={ITEM}>
             {/* Like every other item: an icon (the orb, glowing) and its name (Genesis, 31 Oct 2026: "this still sucks"). */}
             <span className={`${TILE} ${path.startsWith("/admin/assistant") ? "bg-white shadow-[0_0_0_2px_#ffc516]" : "group-hover:bg-[var(--rail-hover)]"}`}>
-              <span aria-hidden className="size-[1.375rem] rounded-full bg-[radial-gradient(circle_at_32%_28%,#fff6d6_0%,#ffc516_22%,#f472b6_52%,#7c3aed_86%)] shadow-[0_0_12px_rgb(244_114_182/0.65)] transition-transform group-hover:scale-110" />
+              {/* Our orb (Genesis, 31 Oct 2026: "just add our orb and Copilot in gradient"). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/genesis-orb.png" alt="" aria-hidden className="size-[1.75rem] scale-[1.25] object-contain brightness-[1.6] saturate-[1.5] transition-transform group-hover:scale-[1.35]" />
             </span>
-            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-[var(--rail-fg)]" : ""}`}>Copilot</span>
+            <span className="bg-gradient-to-r from-[#ffaf18] via-[#f06144] to-[#ac84fe] bg-clip-text font-semibold leading-none text-transparent">Copilot</span>
           </Link>
           )
           )}

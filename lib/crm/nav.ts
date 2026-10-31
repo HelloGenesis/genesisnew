@@ -49,6 +49,8 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
         { href: "/admin/tasks", label: "Tasks", count: myTasks },
         { href: "/admin/assistant", label: "Nova Copilot" },
         ...(sees(viewer, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : []),
+        /* The website's visitors (Genesis, 31 Oct 2026); Genesis's owners. */
+        ...(viewer.roles.includes("OWNER") && !viewer.workspaceId ? [{ href: "/admin/analytics", label: "Website analytics" }] : []),
       ],
       create: [
         { href: "/admin/tasks?add=1", label: "Add a task" },

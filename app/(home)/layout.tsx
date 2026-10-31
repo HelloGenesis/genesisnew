@@ -6,6 +6,7 @@ import { PageAtmosphere } from "@/components/genesis/page-atmosphere";
 import { SmoothScroll } from "@/components/genesis/smooth-scroll";
 import { QuickContact } from "@/components/genesis/quick-contact";
 import { SiteFooter } from "@/components/genesis/site-footer";
+import { SiteTracker } from "@/components/genesis/site-tracker";
 import { WhatsappButton } from "@/components/genesis/whatsapp-button";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
@@ -29,6 +30,8 @@ export default function HomeLayout({
       */}
       <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
       <SmoothScroll />
+      {/* Website analytics (components/genesis/site-tracker, /admin/analytics). */}
+      <SiteTracker />
       <GlassNav />
       {/*
         The page's light lives here, above every route, because a wash that

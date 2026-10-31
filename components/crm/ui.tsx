@@ -12,9 +12,10 @@ export function PageHead({ kicker, title, sub, exportKind, children }: { kicker:
   return (
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <p className="micro-label">{kicker}</p>
-        <h1 className="mt-2 text-balance text-[1.75rem] font-normal leading-tight tracking-tight text-bone sm:text-[2.125rem]">{title}</h1>
-        {sub && <p className="mt-1 text-ash">{sub}</p>}
+        {/* Clear at a glance (Genesis, 31 Oct 2026: "headings and subheadings bold and semibold, visible enough, all across"). */}
+        <p className="micro-label !font-semibold !text-ash">{kicker}</p>
+        <h1 className="mt-2 text-balance font-sans text-[1.75rem] font-semibold leading-tight tracking-tight text-bone sm:text-[2.125rem]">{title}</h1>
+        {sub && <p className="mt-1.5 text-[1rem] font-medium text-ash">{sub}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {/* Every page with a walkthrough gets its "How it works" (lib/crm/guides). */}
