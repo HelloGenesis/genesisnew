@@ -6,6 +6,7 @@ import { Atmosphere } from "@/components/genesis/atmosphere";
 import { CrmPricing, SavingsCalculator } from "@/components/genesis/crm-pricing";
 import { GenesisForm } from "@/components/genesis/genesis-form";
 import { JsonLd } from "@/components/genesis/json-ld";
+import { NovaFeatures } from "@/components/genesis/nova-features";
 import { NovaHero } from "@/components/genesis/nova-hero";
 import { NovaLive } from "@/components/genesis/nova-live";
 import { NovaTrialForm } from "@/components/genesis/nova-trial-form";
@@ -61,20 +62,9 @@ const BEFORE_AFTER = [
   ["Influencer lists in ten different sheets", "One influencer database: import any Excel or Google Sheet, filter, tick and make a plan"],
   ["Plans copied by hand into a client sheet, costs hidden by deleting columns", "One plan, two sheets: internal with costs and profit, external for the brand, kept in step"],
   ["Quotes in Word, GST worked out on a calculator", "Proposal, plan and pricing on one link and PDF, with CGST/SGST or IGST done for you"],
-  ["“Did they pay?” on WhatsApp", "Razorpay links on quotes, invoices tracked, finance told when a signed copy comes back"],
+  ["“Did they pay?” on WhatsApp", "GST invoices tracked, unpaid and overdue ones flagged, finance told when a signed copy comes back"],
 ] as const;
 
-const FEATURES = [
-  ["Leads & pipeline", "Drag leads across stages. Every source tracked, from website forms and calendar bookings to ChatGPT, WhatsApp and referrals."],
-  ["An inbox that reads briefs", "Connect Gmail and Drive. AI spots a client brief, turns it into a lead with the brief attached, and tells the right person."],
-  ["Influencer database", "Import from Excel or Google Sheets. Filter by platform, tier, niche, city and followers at once, then tick and plan."],
-  ["Proposals, quotes & plans", "TG, objectives, content ideas, creators and pricing: together or separately, as a link or a PDF."],
-  ["Get costing in one tap", "Message creators for their rates over WhatsApp or email from a saved template, personalised for each."],
-  ["GST invoices", "Tax invoices with the GST worked out, a supporting document and a space to sign."],
-  ["Client portal", "Brands approve work, send requests, follow projects and download invoices."],
-  ["Team & access", "Roles for sales, delivery and finance; people see their own work plus what they're given."],
-  ["Money in one view", "Expenses, salaries, software subscriptions and GST due dates, with reminders."],
-] as const;
 
 const STEPS = [
   ["Start your free trial", "Your name, email, phone and agency name. You're in straight away, with no card.", "call"],
@@ -123,6 +113,9 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
         </section>
 
         {/* The 14-day free trial (components/genesis/nova-trial-form, lib/crm/nova-trial). */}
+        {/* What it does, feature by feature, straight after seeing it (Genesis, 31 Oct 2026: "feature-driven"). */}
+        <NovaFeatures />
+
         <section id="trial" aria-labelledby="trial-heading" className="scroll-mt-28">
           <NovaTrialForm />
         </section>
@@ -187,19 +180,6 @@ export default async function ResellersPage({ searchParams }: { searchParams: Pr
           <div className="mt-6">
             <SavingsCalculator />
           </div>
-        </section>
-
-        <section id="inside" aria-labelledby="inside-heading" className="scroll-mt-24">
-          <Reveal>
-            <SectionLabel dot tone="brand">What&apos;s inside</SectionLabel>
-            <h2 id="inside-heading" className="mt-6 max-w-3xl text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">
-              Everything an influencer and content agency runs on
-            </h2>
-            <p className="mt-5 max-w-3xl text-pretty text-body leading-relaxed text-ash sm:text-lead">
-              Built for Genesis&apos;s own team first, and used every day on real campaigns.
-            </p>
-          </Reveal>
-          <Accordion items={FEATURES} name="nova-features" openFirst className="mt-8" />
         </section>
 
         <section id="pricing" aria-labelledby="pricing-heading" className="scroll-mt-24">

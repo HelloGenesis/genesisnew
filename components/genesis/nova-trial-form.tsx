@@ -7,11 +7,6 @@ import { useState } from "react";
 /* The site's yellow button (the CRM's crm-btn styles aren't loaded on the public pages). */
 const BUTTON = "inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#ffc516] px-6 text-body font-medium text-[#141216] shadow-[0_10px_30px_-10px_rgb(255_197_22/0.6)] transition-transform hover:scale-[1.02] disabled:opacity-60";
 const FIELD = "w-full rounded-xl border border-[var(--glass-border)] bg-[var(--glass-fill)] px-4 py-3 text-body text-bone placeholder:text-faint focus:border-[#ffc516] focus:outline-none";
-const STEPS = [
-  ["Today", "Your own Nova CRM, everything switched on. No card."],
-  ["Day 3", "Choose a plan and add your card. You pay ₹0."],
-  ["Day 14", "Your trial ends and the plan starts. Cancel any time before."],
-] as const;
 
 /**
  * START A 14-DAY FREE TRIAL (lib/crm/nova-trial; Genesis, 31 Oct 2026). Name,
@@ -43,16 +38,8 @@ export function NovaTrialForm() {
     <div className="grid gap-8 lg:grid-cols-[1fr_minmax(0,28rem)] lg:items-start">
       <div>
         <h2 id="trial-heading" className="text-balance text-h3 font-normal leading-[1.1] tracking-tight text-bone sm:text-h2">Start your 14-day free trial</h2>
-        <p className="mt-4 max-w-xl text-pretty text-body leading-relaxed text-ash">Your own Nova CRM in a minute, with your team, brands and creators. No card to start.</p>
-        <ol className="mt-8 space-y-4">
-          {STEPS.map(([when, what]) => (
-            <li key={when} className="flex gap-4">
-              <span className="w-16 shrink-0 text-small font-medium text-[#ffc516]">{when}</span>
-              <span className="text-small text-ash">{what}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-6 text-small text-faint">We email you before every step.</p>
+        {/* One line, no day-by-day steps (Genesis, 31 Oct 2026); the FAQ explains how the trial works. */}
+        <p className="mt-4 max-w-xl text-pretty text-body leading-relaxed text-ash sm:text-lead">Try your 14-day free trial today.</p>
       </div>
       {done ? (
         <div className="glass glass-lit rounded-card p-6">

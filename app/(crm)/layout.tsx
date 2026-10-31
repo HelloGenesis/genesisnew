@@ -33,6 +33,8 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
             <HistoryNav />
           </div>
           <div className="flex items-center gap-3">
+            {/* Page controls that live in the top bar (components/crm/viewing-switch). */}
+            <div id="crm-header-slot" className="contents" />
             <ThemeToggle className="origin-right scale-[0.8]" />
           </div>
         </div>

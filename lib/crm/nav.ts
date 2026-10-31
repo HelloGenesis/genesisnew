@@ -14,7 +14,7 @@ export function crmNav(viewer: Viewer, ...rest: Parameters<typeof allNav> extend
   if (usesAi(viewer)) return groups;
   /* An agency's CRM has the assistant as NOVA AI, on credits (lib/crm/nova-ai). */
   if (usesNovaAi(viewer)) {
-    const rename = <T extends { href: string; label: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant/usage")).map((x) => ({ ...x, label: x.label.replace("Nova Copilot", "NOVA AI").replace("(Copilot)", "(NOVA AI)") }));
+    const rename = <T extends { href: string; label: string }>(xs: T[] | undefined) => xs?.filter((x) => !x.href.startsWith("/admin/assistant/usage") && !x.href.startsWith("/admin/assistant/settings")).map((x) => ({ ...x, label: x.label.replace("Nova Copilot", "NOVA AI").replace("(Copilot)", "(NOVA AI)") }));
     /* Its own GST, a Pro feature (lib/crm/nova-pro; the admin layout clears the mark once a plan is chosen). */
     const gst = (g: NavGroup) => (g.label === "Money" ? [...g.items, { href: "/admin/gst", label: "GST", pro: true }] : g.items);
     return groups.map((g) => ({ ...g, items: rename(gst(g))!, ...(g.create ? { create: rename(g.create) } : {}) }));
@@ -48,7 +48,6 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
         { href: "/admin/inbox", label: "Inbox · Gmail & Drive", count: inboxNew },
         { href: "/admin/tasks", label: "Tasks", count: myTasks },
         { href: "/admin/assistant", label: "Nova Copilot" },
-        { href: "/admin/assistant/usage", label: "AI usage" },
         ...(sees(viewer, "reports") ? [{ href: "/admin/reports", label: "Reports" }] : []),
       ],
       create: [
@@ -115,6 +114,8 @@ function allNav(viewer: Viewer, c: { unread?: number; inboxNew?: number; myTasks
       items: [
         /* Each person's own: their Google for the Inbox (app/(crm)/admin/me). */
         { href: "/admin/me", label: "My settings" },
+        /* Nova Copilot's settings and usage (Genesis, 31 Oct 2026: "this should go in settings"); owners only, as the crmNav filters below keep it. */
+        { href: "/admin/assistant/settings", label: "AI settings" },
         ...(can(viewer, "staff") ? [{ href: "/admin/staff", label: "Staff & roles" }] : []),
         /* Genesis AI Lab's prices, credits and usage (super admins). */
         ...(viewer.roles.includes("OWNER") && !viewer.workspaceId ? [{ href: "/admin/lab", label: "AI Lab" }] : []),

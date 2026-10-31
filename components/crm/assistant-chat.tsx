@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, ChevronDown, CircleHelp, Maximize2, Minimize2, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Sheet, UserPlus, Users, X, Zap } from "lucide-react";
+import { AudioLines, ChevronDown, CircleHelp, Maximize2, Minimize2, ChevronsLeft, ChevronsRight, FileText, Lightbulb, ListChecks, Loader2, MessageSquarePlus, Paperclip, Plug, Plus, Scale, Search, SendHorizontal, Settings2, Sheet, Sparkles, UserPlus, Users, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -58,6 +58,13 @@ const MODES = [
 ] as const;
 type Mode = (typeof MODES)[number]["key"];
 
+/* Which AI answers (Genesis, 31 Oct 2026: "options to switch between NOVA AI 1.0 and Copilot"): Genesis's owners can try what agencies get. */
+const MODELS = [
+  { key: "copilot", label: "Nova Copilot", hint: "Every CRM and every tool; you choose how hard it thinks" },
+  { key: "nova", label: "NOVA AI 1.0", hint: "What agencies get: their own CRM, quick answers" },
+] as const;
+type Model = (typeof MODELS)[number]["key"];
+
 /*
  * THE CHARACTERS BEHIND THE CHAT BOX (Genesis, 27 Oct 2026: "the numbers in
  * the background element"): rows of letters, numbers and signs, the same on
@@ -97,7 +104,7 @@ function Rich({ text }: { text: string }) {
  * the answer streams in as it's written, with what it's doing in the CRM
  * shown as it happens.
  */
-export function AssistantChat({ chats, open, firstName, connectors, initialText = "", monthCost, nova }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; initialText?: string; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean }; monthCost?: string; nova?: NovaAi }) {
+export function AssistantChat({ chats, open, firstName, connectors, initialText = "", monthCost, nova, defaults }: { chats: ChatItem[]; open: { id: string; title: string; messages: Msg[] } | null; firstName?: string | null; initialText?: string; connectors: { builtIns: BuiltIn[]; added: Added[]; canManage: boolean }; monthCost?: string; nova?: NovaAi; defaults?: { model: "copilot" | "nova"; mode: "quick" | "balanced" | "deep" } }) {
   const router = useRouter();
   const [chatId, setChatId] = useState<string | null>(open?.id ?? null);
   const [messages, setMessages] = useState<Msg[]>(open?.messages ?? []);
@@ -109,7 +116,9 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
   const [activity, setActivity] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
-  const [mode, setMode] = useState<Mode>("balanced");
+  /* Where each owner's chats start (AI settings, lib/crm/ai-prefs). */
+  const [mode, setMode] = useState<Mode>(defaults?.mode ?? "balanced");
+  const [model, setModel] = useState<Model>(defaults?.model ?? "copilot");
   const [modeMenu, setModeMenu] = useState(false);
   const [listening, setListening] = useState(false);
   const [showConnectors, setShowConnectors] = useState(false);
@@ -191,9 +200,25 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
 
   const send = async () => {
     if (busy || (!text.trim() && !files.length)) return;
+    /*
+     * THE DEMO ANSWERS ITSELF (Genesis, 31 Oct 2026: "when anyone writes on
+     * the demo, an automated reply: explore our plans to upgrade"). Nothing is
+     * sent to the AI from the demo.
+     */
+    if (nova?.demo) {
+      const asked = text.trim() || files.map((f) => f.name).join(", ");
+      setMessages((m) => [
+        ...m,
+        { role: "user", text: asked, files: files.map((f) => f.name), previews: files.map((f) => (f.kind === "image" ? `data:${f.media_type};base64,${f.data}` : null)) },
+        { role: "assistant", text: "This is Nova's live demo, so NOVA AI doesn't answer here.\n\nIn your own Nova, it would do this for you: make the quote or plan, add the lead, or find the creators, from text, screenshots, Excel or PDFs.\n\n[Start your 14-day free trial](https://genesismedia.co/resellers#trial) to get 5 free NOVA AI requests, or [explore the plans](https://genesismedia.co/resellers#pricing) to upgrade.", tools: [] },
+      ]);
+      setText("");
+      setFiles([]);
+      return;
+    }
     setBusy(true);
     setError(null);
-    const sent = { text: text.trim(), files, mode };
+    const sent = { text: text.trim(), files, mode, model };
     let madeId: string | null = null;
     let failed = false;
     setMessages((m) => [...m, { role: "user", text: sent.text, files: sent.files.map((f: Attachment) => f.name), previews: sent.files.map((f: Attachment) => (f.kind === "image" ? `data:${f.media_type};base64,${f.data}` : null)) }, { role: "assistant", text: "", tools: [] }]);
@@ -293,8 +318,7 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             onPaste={(e) => { if (e.clipboardData.files.length) { e.preventDefault(); void attach(e.clipboardData.files); } }}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }}
             rows={2}
-            placeholder={nova?.demo ? "NOVA AI isn't part of the demo: start a free trial for 5 free requests" : "Ask anything, or paste screenshots…"}
-            disabled={nova?.demo}
+            placeholder="Ask anything, or paste screenshots…"
             className="w-full resize-none bg-transparent px-1 py-1 text-[0.9375rem] text-bone placeholder:text-faint focus:outline-none"
             aria-label="Message"
           />
@@ -314,16 +338,33 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
             {/* NOVA AI runs in quick mode only (lib/crm/nova-ai). */}
             {!nova && (
             <div className="relative">
-                <button type="button" onClick={() => { setModeMenu((m) => !m); setMenu(false); }} aria-expanded={modeMenu} aria-label={`Mode: ${modeNow.label}`} className={CHIP}>
-                  <modeNow.icon className="size-3.5" aria-hidden /> {modeNow.label} <ChevronDown className={`size-3.5 transition-transform ${modeMenu ? "rotate-180" : ""}`} aria-hidden />
+                <button type="button" onClick={() => { setModeMenu((m) => !m); setMenu(false); }} aria-expanded={modeMenu} aria-label={`Model: ${model === "nova" ? "NOVA AI 1.0" : `Nova Copilot, ${modeNow.label}`}`} className={CHIP}>
+                  <Sparkles className="size-3.5 text-[#f472b6]" aria-hidden />
+                  <span className="font-medium text-bone">{model === "nova" ? "NOVA AI 1.0" : "Nova Copilot"}</span>
+                  {model === "copilot" && <span className="max-sm:hidden">· {modeNow.label}</span>}
+                  <ChevronDown className={`size-3.5 transition-transform ${modeMenu ? "rotate-180" : ""}`} aria-hidden />
                 </button>
                 {modeMenu && (
-                  <ul className={MENU}>
-                    {MODES.map((m) => (
+                  <ul className={`${MENU} w-72`}>
+                    <li className="px-3 pb-1 pt-1.5 text-[0.6875rem] uppercase tracking-[0.14em] text-faint">Model</li>
+                    {MODELS.map((m) => (
                       <li key={m.key}>
-                        <button type="button" onClick={() => { setMode(m.key); setModeMenu(false); }} aria-pressed={mode === m.key} className={`${MENU_ITEM} ${mode === m.key ? "bg-[var(--hover-wash)] text-bone" : ""}`}><m.icon className="size-4" aria-hidden /> {m.label}</button>
+                        <button type="button" onClick={() => { setModel(m.key); if (m.key === "nova") setModeMenu(false); }} aria-pressed={model === m.key} className={`${MENU_ITEM} !items-start ${model === m.key ? "bg-[var(--hover-wash)] text-bone" : ""}`}>
+                          <Sparkles className={`mt-0.5 size-4 shrink-0 ${m.key === "copilot" ? "text-[#f472b6]" : "text-[#c084fc]"}`} aria-hidden />
+                          <span className="text-left"><span className="block text-bone">{m.label}</span><span className="block text-[0.75rem] text-faint">{m.hint}</span></span>
+                        </button>
                       </li>
                     ))}
+                    {model === "copilot" && (
+                      <>
+                        <li className="mt-1 border-t border-[var(--glass-border)] px-3 pb-1 pt-2 text-[0.6875rem] uppercase tracking-[0.14em] text-faint">Thinking</li>
+                        {MODES.map((m) => (
+                          <li key={m.key}>
+                            <button type="button" onClick={() => { setMode(m.key); setModeMenu(false); }} aria-pressed={mode === m.key} className={`${MENU_ITEM} ${mode === m.key ? "bg-[var(--hover-wash)] text-bone" : ""}`}><m.icon className="size-4" aria-hidden /> {m.label}</button>
+                          </li>
+                        ))}
+                      </>
+                    )}
                   </ul>
                 )}
               </div>
@@ -383,10 +424,16 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
           </ul>
           {/* What you've used this month (Genesis, 30 Oct 2026: "show usage to each user"); the detail is on /admin/assistant/usage. */}
           {monthCost && !nova && (
-            <Link href="/admin/assistant/usage" className="mx-3 mb-3 flex items-center justify-between rounded-xl border border-[var(--glass-border)] px-3 py-2 text-[0.75rem] text-ash hover:border-[#ffc516]/60 hover:text-bone">
-              <span>Your usage this month</span>
-              <span className="tabular-nums text-bone">{monthCost} →</span>
-            </Link>
+            <div className="mx-3 mb-3 flex gap-2">
+              <Link href="/admin/assistant/usage" className="flex min-w-0 flex-1 items-center justify-between rounded-xl border border-[var(--glass-border)] px-3 py-2 text-[0.75rem] text-ash hover:border-[#ffc516]/60 hover:text-bone">
+                <span className="truncate">Your usage this month</span>
+                <span className="tabular-nums text-bone">{monthCost} →</span>
+              </Link>
+              {/* AI settings (Genesis, 31 Oct 2026). */}
+              <Link href="/admin/assistant/settings" aria-label="AI settings" title="AI settings" className="grid size-9 shrink-0 place-items-center rounded-xl border border-[var(--glass-border)] text-ash hover:border-[#ffc516]/60 hover:text-bone">
+                <Settings2 className="size-4" aria-hidden />
+              </Link>
+            </div>
           )}
         </aside>
       )}
@@ -420,15 +467,11 @@ export function AssistantChat({ chats, open, firstName, connectors, initialText 
         {!messages.length ? (
           <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 [container-type:size] sm:px-10 [&>*:first-child]:mt-auto [&>*:last-child]:mb-auto" data-lenis-prevent>
             {/* Genesis's orb with what it can do round it (as before), the greeting, the chat box; the orb shrinks on a short window so the chat box always shows. */}
-            <div className="relative w-[max(5rem,min(14rem,58vw,calc(100cqh-23rem)))]">
+            <div className="relative w-[max(9rem,min(15rem,58vw,calc(100cqh-20rem)))]">
               <NeuralOrb thinking={thinking} />
-              {/* The GENESIS COPILOT wordmark in the orb's middle, as GENESIS MEDIA sits in the homepage's (Genesis, 30 Oct 2026: "the logo should appear here in the center as well"). */}
-              {/* Just the orb for NOVA AI (Genesis, 31 Oct 2026); Copilot keeps its wordmark. */}
-              {!nova && (
-                <span className={`pointer-events-none absolute inset-0 grid place-items-center ${thinking ? "motion-safe:animate-pulse" : ""}`}><ProductWordmark product="copilot" className="h-auto w-[80%] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]" /></span>
-              )}
+              {/* Just the orb, for NOVA AI and Nova Copilot alike (Genesis, 31 Oct 2026: "remove the Nova logo from here"). */}
               {SHORTCUTS.filter((x) => x.at).map((x) => (
-                <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone sm:[@container(min-height:36rem)]:flex ${x.at}`}>
+                <button key={x.label} type="button" onClick={() => setText(x.prompt)} className={`absolute hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--glass-border)] bg-[var(--surface-float)] px-3 py-1.5 text-[0.75rem] text-ash shadow-[var(--shadow-float)] transition-colors hover:border-[#ffc516] hover:text-bone sm:[@container(min-height:30rem)]:flex ${x.at}`}>
                   <x.icon className="size-3.5" aria-hidden /> {x.label}
                 </button>
               ))}

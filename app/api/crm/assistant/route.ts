@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { aiConfigured } from "@/lib/crm/ai";
 import { type ChatEvent, runChat } from "@/lib/crm/assistant";
+import { queueStaffEmail } from "@/lib/crm/notify";
 import { inWorkspace } from "@/lib/crm/request-workspace";
 import { NoCredits, refundNovaAi, spendNovaAi } from "@/lib/crm/nova-ai";
 import { usesAi, usesNovaAi } from "@/lib/crm/scope";
@@ -19,6 +20,8 @@ const Body = z.object({
   chatId: z.string().max(40).nullable().optional(),
   text: z.string().max(20_000),
   mode: z.enum(["quick", "balanced", "deep"]).optional(),
+  /* Owners can switch to NOVA AI 1.0, what agencies get (Genesis, 31 Oct 2026). */
+  model: z.enum(["copilot", "nova"]).optional(),
   files: z
     .array(
       z.discriminatedUnion("kind", [
@@ -51,6 +54,9 @@ export async function POST(request: Request) {
     }
     parsed.data.mode = "quick";
   }
+  /* An owner on NOVA AI 1.0: agency tools, quick, and no credits. */
+  const asNova = !nova && parsed.data.model === "nova";
+  if (asNova) parsed.data.mode = "quick";
 
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
@@ -58,10 +64,24 @@ export async function POST(request: Request) {
       const emit = (e: ChatEvent) => controller.enqueue(encoder.encode(`${JSON.stringify(e)}\n`));
       try {
         /* In this person's own CRM (an agency's, or Genesis's). */
-        await inWorkspace(viewer!.ws, () => runChat(viewer!, parsed.data, emit));
+        await inWorkspace(viewer!.ws, () => runChat(viewer!, { ...parsed.data, asNova }, emit));
       } catch (error) {
-        const m =
-          error instanceof Anthropic.RateLimitError ? "The AI is busy right now; try again in a minute."
+        /*
+         * GENESIS'S AI ACCOUNT RAN DRY (Genesis, 31 Oct 2026: "when credits are
+         * over, give an automated reply to upgrade"): a plain message, never
+         * Anthropic's raw error. Owners are told where to top up; an agency is
+         * told it's brief and its credit is given back; the owners get one
+         * email a day about it.
+         */
+        const dry = error instanceof Anthropic.APIError && /credit balance is too low|billing/i.test(error.message);
+        if (dry) {
+          await queueStaffEmail({ kind: "ai_out_of_credit", scope: "owners", dedupeKey: `ai-dry:${new Date().toISOString().slice(0, 10)}`, subject: "Nova Copilot and NOVA AI are paused: the Anthropic account is out of credit", text: "Every AI request is failing until credit is added. Top up at console.anthropic.com → Plans & Billing; nothing else needs changing." });
+        }
+        const m = dry
+          ? nova
+            ? "NOVA AI is taking a short break and will be back soon. This request didn't use a credit."
+            : "Nova Copilot is out of AI credit. Top up Genesis's Anthropic account (console.anthropic.com → Plans & Billing) to keep using it; nothing else needs changing."
+          : error instanceof Anthropic.RateLimitError ? "The AI is busy right now; try again in a minute."
           : error instanceof Anthropic.AuthenticationError ? "The AI key isn't valid; ask an admin to check ANTHROPIC_API_KEY."
           : error instanceof Anthropic.BadRequestError ? `The AI couldn't take that: ${error.message.slice(0, 200)}`
           : error instanceof Anthropic.APIError ? `The AI had a problem (${error.status}). Try again.`
