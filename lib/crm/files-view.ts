@@ -17,6 +17,9 @@ export async function filesFor(projectId: string, role: FileRole, opts: { avatar
     const u = uploaders.find((x) => x.id === id);
     return u ? (u.name ?? u.email) : null;
   };
+  /* Where each file stands in review: its latest send (sendFileForReview). */
+  const reviews = await getPrisma().deliverable.findMany({ where: { fileId: { in: files.map((f) => f.id) } }, orderBy: { createdAt: "desc" }, select: { fileId: true, status: true } });
+  const reviewOf = (id: string) => reviews.find((r) => r.fileId === id)?.status ?? null;
   const folders = FOLDERS.filter((f) => {
     if (f.key === "avatar" && !opts.avatar && !files.some((x) => x.folder === "avatar")) return false;
     /* A folder this person can neither see anything in nor upload to is left out. */
@@ -53,6 +56,7 @@ export async function filesFor(projectId: string, role: FileRole, opts: { avatar
       uploader: role === "staff" ? name(f.uploadedById) : f.uploadedAs === "staff" ? "Genesis" : f.uploadedAs === "client" ? (name(f.uploadedById) ?? "Client") : "Vendor",
       createdAt: f.createdAt.toISOString(),
       link: f.webViewLink,
+      review: reviewOf(f.id),
     })),
   };
 }

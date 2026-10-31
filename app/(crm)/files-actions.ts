@@ -8,6 +8,9 @@ import type { FileAudience } from "@/lib/generated/prisma/enums";
 import { projectRef } from "@/lib/crm/catalog";
 import { createGoogleFile, projectFolderId, trashFile } from "@/lib/crm/drive";
 import { folderOf } from "@/lib/crm/files";
+import { accountEmails, appUrl, queueEmail } from "@/lib/crm/notify";
+import { notifyProjectTeam } from "@/lib/crm/project-team";
+import { reviewEmail } from "@/lib/crm/review-links";
 import { isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
@@ -37,7 +40,8 @@ export async function deleteProjectFile(id: string) {
   const file = await getPrisma().driveFile.findUnique({ where: { id } });
   if (!file) return;
   if (!(await canDeleteFiles(file.projectId))) throw new Error("Only the project's producer or an owner can remove files.");
-  await trashFile(file.driveId).catch(() => undefined);
+  /* A pasted link has nothing on Drive to trash. */
+  if (!file.driveId.startsWith("link:")) await trashFile(file.driveId).catch(() => undefined);
   await getPrisma().driveFile.delete({ where: { id } });
   await recordAuditLog({ action: "file.deleted", entity: "drive_file", entityId: id, actorId: viewer.id, metadata: { name: file.name } });
   revalidatePath("/", "layout");
@@ -94,4 +98,66 @@ export async function briefAsGoogleDoc(projectId: string) {
   } catch (error) {
     return { ok: false as const, error: `Google Drive couldn't make it: ${(error as Error).message.slice(0, 140)}` };
   }
+}
+
+/*
+ * SEND ANY FILE ON, AFTER IT'S UP (Genesis, 31 Oct 2026: "one upload; then for
+ * whatever's uploaded, an option to send it to the internal/creative team or
+ * to the client"). To the team: an internal review the client never sees. To
+ * the client: shared with them if it wasn't, and emailed with Approve and Ask
+ * for changes buttons (lib/crm/review-links).
+ */
+export async function sendFileForReview(fileId: string, to: "team" | "client") {
+  const viewer = await requireStaff();
+  const prisma = getPrisma();
+  const file = await prisma.driveFile.findUnique({ where: { id: fileId }, include: { project: true } });
+  if (!file?.project) return { ok: false as const, error: "This file isn't on a project." };
+  const folder = folderOf(file.folder);
+  const title = `${folder?.label ?? "File"}: ${file.name}`;
+  const previous = await prisma.deliverable.findFirst({ where: { projectId: file.project.id, title }, orderBy: { version: "desc" } });
+  const kind = file.mimeType?.startsWith("image/") ? "IMAGE" : file.mimeType?.startsWith("video/") ? "VIDEO" : file.mimeType === "application/pdf" ? "DOCUMENT" : "DOCUMENT";
+  const url = file.webViewLink && (file.mimeType?.startsWith("application/vnd.google-apps") || file.mimeType === "text/uri-list") ? file.webViewLink : `/api/crm/files/${file.id}`;
+  if (to === "client") {
+    /* The client has to be able to see it. */
+    if (file.audience !== "TEAM_CLIENT" && file.audience !== "EVERYONE") await prisma.driveFile.update({ where: { id: file.id }, data: { audience: file.audience === "TEAM_VENDOR" ? "EVERYONE" : "TEAM_CLIENT" } });
+    const d = await prisma.deliverable.create({ data: { projectId: file.project.id, title, url, fileId: file.id, kind, status: "IN_REVIEW", version: (previous?.version ?? 0) + 1, submittedById: viewer.id } });
+    await queueEmail(reviewEmail({ id: d.id, title, project: file.project.name, to: await accountEmails(file.project.accountId), portal: appUrl(`/portal/projects/${file.project.id}#review`) }));
+    await prisma.activity.create({ data: { projectId: file.project.id, kind: "SYSTEM", actorId: viewer.id, body: `Sent "${file.name}" to the client for approval.` } });
+  } else {
+    await prisma.deliverable.create({ data: { projectId: file.project.id, title, url, fileId: file.id, kind, status: "INTERNAL_REVIEW", version: (previous?.version ?? 0) + 1, submittedById: viewer.id } });
+    await notifyProjectTeam(file.project.id, viewer.id, { vendorsToo: file.audience === "TEAM_VENDOR" || file.audience === "EVERYONE", subject: `For review: ${file.name} · ${file.project.name}`, text: `${title} is ready for the team's review, before the client sees it.\n\n${appUrl(`/admin/projects/${file.project.id}#files`)}` });
+    await prisma.activity.create({ data: { projectId: file.project.id, kind: "SYSTEM", actorId: viewer.id, body: `Sent "${file.name}" to the team for review.` } });
+  }
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
+/*
+ * OUR OWN LINKS, IN ANY FOLDER (Genesis, 31 Oct 2026: "an option to add our own
+ * existing links to each project, each section, all across"): a Frame.io cut,
+ * a YouTube draft, a Dropbox or Drive file, a Figma board, filed with the
+ * folder's files and sent on like them.
+ */
+export async function addProjectLink(projectId: string, folderKey: string, url: string, name: string) {
+  const viewer = await requireStaff();
+  const folder = folderOf(folderKey);
+  const link = url.trim();
+  if (!/^https?:\/\/\S+$/i.test(link)) return { ok: false as const, error: "Paste a full link, starting with https://" };
+  const prisma = getPrisma();
+  const project = await prisma.project.findUnique({ where: { id: projectId }, select: { id: true, accountId: true, workspaceId: true } });
+  if (!project || !folder) return { ok: false as const, error: "No such project or folder." };
+  let label = name.trim();
+  if (!label) {
+    try {
+      label = new URL(link).hostname.replace(/^www\./, "");
+    } catch {
+      label = "Link";
+    }
+  }
+  await prisma.driveFile.create({
+    data: { driveId: `link:${crypto.randomUUID()}`, name: label.slice(0, 200), mimeType: "text/uri-list", webViewLink: link, folder: folder.key, audience: project.workspaceId ? "ADMINS" : folder.audience, projectId, accountId: project.accountId, uploadedById: viewer.id, uploadedAs: "staff" },
+  });
+  await prisma.activity.create({ data: { projectId, kind: "SYSTEM", actorId: viewer.id, body: `Added a link to ${folder.label}: ${label}.` } });
+  revalidatePath("/", "layout");
+  return { ok: true as const };
 }
