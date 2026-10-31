@@ -639,7 +639,7 @@ export const footerNav: { heading: string; items: NavItem[] }[] = [
  */
 export const novaNavItems: NavItem[] = [
   { label: "Live demo", href: "#demo" },
-  { label: "Features", href: "#inside" },
+  { label: "Features", href: "#features" },
   { label: "Pricing", href: "#pricing" },
   { label: "Free trial", href: "#trial" },
   { label: "FAQ", href: "#faq" },

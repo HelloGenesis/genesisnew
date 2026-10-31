@@ -2,6 +2,7 @@ import { AssistantChat } from "@/components/crm/assistant-chat";
 import { CopilotTour } from "@/components/crm/copilot-tour";
 import { aiConfigured } from "@/lib/crm/ai";
 import { addedConnectors, builtInConnectors } from "@/lib/crm/ai-connectors";
+import { aiPrefs } from "@/lib/crm/ai-prefs";
 import { dollars } from "@/lib/crm/ai-usage";
 import { todayIst } from "@/lib/crm/catalog";
 import { getPrisma } from "@/lib/db";
@@ -31,7 +32,7 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
       <h1 className="sr-only">{nova ? "NOVA AI" : "Nova Copilot"}</h1>
       {nova && topup && <p className="crm-notice mb-3">{topup === "done" ? "Credits added. Thank you: we've emailed the details." : "We haven't had Razorpay's confirmation yet. If you paid, refresh in a minute."}</p>}
       {aiConfigured() ? (
-        <AssistantChat key={`${open?.id ?? "new"}:${prompt ?? ""}`} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} initialText={prompt?.slice(0, 2000) ?? ""} connectors={{ builtIns, added: added.map((c) => ({ id: c.id, name: c.name, url: c.url, enabled: c.enabled, hasToken: c.hasToken })), canManage }} monthCost={dollars(used._sum.costMicros ?? 0)} nova={nova} />
+        <AssistantChat key={`${open?.id ?? "new"}:${prompt ?? ""}`} chats={chats.map((c) => ({ ...c, updatedAt: c.updatedAt.toISOString() }))} open={open} firstName={viewer.name?.split(" ")[0] ?? null} initialText={prompt?.slice(0, 2000) ?? ""} connectors={{ builtIns, added: added.map((c) => ({ id: c.id, name: c.name, url: c.url, enabled: c.enabled, hasToken: c.hasToken })), canManage }} monthCost={dollars(used._sum.costMicros ?? 0)} nova={nova} defaults={nova ? undefined : await aiPrefs(viewer.id)} />
       ) : (
         <p className="crm-notice">Nova Copilot isn&apos;t set up yet: an admin needs to add ANTHROPIC_API_KEY.</p>
       )}

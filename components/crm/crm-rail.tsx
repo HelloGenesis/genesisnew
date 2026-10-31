@@ -37,6 +37,7 @@ import {
   ScanFace,
   Send,
   Settings,
+  Settings2,
   Sparkles,
   Store,
   TrendingUp,
@@ -87,6 +88,7 @@ export const PAGE_ICON: Record<string, LucideIcon> = {
   "/admin/features": Blocks,
   "/admin/assistant": Sparkles,
   "/admin/assistant/usage": Gauge,
+  "/admin/assistant/settings": Settings2,
   "/admin/reports": ChartColumn,
   "/admin/leads": Users,
   "/admin/briefs": Lightbulb,
@@ -340,11 +342,16 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
               <span className="ml-[0.25rem] text-[0.8125rem] leading-[0.625rem] tracking-[0.02em]">AI</span>
             </Link>
           ) : (
-          <Link href="/admin/assistant" aria-label={aiLink.label} className={ITEM}>
-            <span className={`${TILE} bg-gradient-to-br from-[#c084fc] via-[#f472b6] to-[#ffc516] text-[#141216] ${path.startsWith("/admin/assistant") ? "shadow-[0_0_0_2px_#fff]" : "opacity-90 group-hover:opacity-100"}`}>
-              <Sparkles className="size-[1.125rem]" aria-hidden />
+          /* Nova Copilot: the NOVA logo, COPILOT under it (Genesis, 31 Oct 2026: "add the Nova logo here, Copilot you can write below"). */
+          <Link href="/admin/assistant" aria-label="Nova Copilot" className={`${ITEM} px-1 ${path.startsWith("/admin/assistant") ? "bg-[var(--rail-hover)] text-[var(--rail-fg)]" : "text-[var(--rail-soft)] hover:bg-[var(--rail-hover)] hover:text-[var(--rail-fg)]"}`}>
+            <span className="flex items-center">
+              <NovaGlyph letter="N" className="h-[0.75rem] shrink-0" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/genesis-orb.png" alt="" aria-hidden className="mx-[0.125rem] size-[0.9375rem] shrink-0 scale-[1.35] object-contain" />
+              <NovaGlyph letter="V" className="h-[0.75rem] shrink-0" />
+              <NovaGlyph letter="A" className="h-[0.75rem] shrink-0" />
             </span>
-            <span className={`leading-none ${path.startsWith("/admin/assistant") ? "font-medium text-[var(--rail-fg)]" : ""}`}>Copilot</span>
+            <span className="bg-gradient-to-r from-[#ffaf18] via-[#f06144] to-[#ac84fe] bg-clip-text text-[0.5625rem] font-medium uppercase leading-none tracking-[0.22em] text-transparent">Copilot</span>
           </Link>
           )
           )}

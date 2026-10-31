@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { CrmRail, RailUser } from "@/components/crm/crm-rail";
 import { SideNav } from "@/components/crm/side-nav";
+import { ViewingSwitch } from "@/components/crm/viewing-switch";
 import { crmNav } from "@/lib/crm/nav";
 import { Notice, PageHead } from "@/components/crm/ui";
 import { isAuth0Configured } from "@/lib/auth0";
@@ -74,19 +75,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   /* Pro marks only while locked (lib/crm/nova-pro). */
   if (viewer!.workspaceId && (await novaAccess(viewer!.workspaceId)).pro) for (const g of groups) g.items = g.items.map((i) => ({ ...i, pro: false }));
 
-  /* Owners can look inside an agency's CRM: the switch sits over the page. */
-  const viewingSwitch = switchable.length > 0 && (
-    <form action={setViewingCrm} className="flex flex-wrap items-center gap-2">
-      <label className="flex items-center gap-2">
-        <span className="text-[0.6875rem] uppercase tracking-[0.12em] text-faint">Viewing</span>
-        <select name="ws" defaultValue={viewer!.ws ?? ""} className="crm-input !min-h-9 w-auto !py-1 text-[0.875rem]">
-          <option value="">Genesis Media</option>
-          {switchable.map((w) => <option key={w.id} value={w.id}>{w.name} (agency CRM)</option>)}
-        </select>
-      </label>
-      <button className="crm-btn crm-btn-secondary crm-btn-sm">Switch</button>
-    </form>
-  );
+  /* Owners can look inside an agency's CRM: the switch sits in the top bar (components/crm/viewing-switch). */
+  const viewingSwitch = switchable.length > 0 && <ViewingSwitch current={viewer!.ws ?? null} options={switchable.map((w) => ({ id: w.id, name: w.name }))} action={setViewingCrm} />;
 
   return (
     /*
@@ -108,7 +98,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </div>
       <ScrollMain className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:h-full lg:overflow-y-auto lg:px-8 lg:py-7">
-        {viewingSwitch && <div className="flex justify-end">{viewingSwitch}</div>}
+        {viewingSwitch}
         {/* A Genesis owner inside an agency's CRM: anything added here is the agency's. */}
         {agencyCrm && !viewer!.workspaceId && (
           <form action={setViewingCrm} className="crm-notice flex flex-wrap items-center justify-between gap-3">

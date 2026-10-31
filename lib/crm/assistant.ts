@@ -83,10 +83,10 @@ const API_TOOLS: (Anthropic.Beta.BetaTool & { ownerOnly?: boolean })[] = TOOLS.m
   ownerOnly: t.ownerOnly,
 }));
 /* Nova Copilot (Genesis's owners) gets every tool; NOVA AI in an agency's CRM never the ones across every CRM. */
-const toolsFor = (viewer: Viewer): Anthropic.Beta.BetaTool[] => API_TOOLS.filter((t) => usesAi(viewer) || !t.ownerOnly).map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema, eager_input_streaming: t.eager_input_streaming }));
+const toolsFor = (full: boolean): Anthropic.Beta.BetaTool[] => API_TOOLS.filter((t) => full || !t.ownerOnly).map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema, eager_input_streaming: t.eager_input_streaming }));
 
-function system(viewer: Viewer) {
-  return `${usesAi(viewer) ? "You are Nova Copilot, Genesis Media's own CRM assistant for its owners: besides Genesis's CRM you can see every agency's CRM on Nova (all_crms, crm_details, search_all_crms)." : "You are NOVA AI, the assistant in this agency's CRM."} You're chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
+function system(viewer: Viewer, full: boolean) {
+  return `${full ? "You are Nova Copilot, Genesis Media's own CRM assistant for its owners: besides Genesis's CRM you can see every agency's CRM on Nova (all_crms, crm_details, search_all_crms)." : "You are NOVA AI, the assistant in this agency's CRM."} You're chatting with ${viewer.name ?? viewer.email ?? "a team member"} inside the CRM. Answer in plain, short English; use the tools to read and change the CRM rather than guessing, and say what you changed with links to it. Files the person attaches (screenshots, Excel/CSV as text, PDFs) are in their message.
 
 ${CRM_INSTRUCTIONS}
 
@@ -125,8 +125,10 @@ const defaultCall: ModelCall = (params) => new Anthropic().beta.messages.stream(
 const EFFORT = { quick: "low", balanced: "medium", deep: "high" } as const;
 export type ChatMode = keyof typeof EFFORT;
 
-export async function runChat(viewer: Viewer, input: { chatId?: string | null; text: string; files: Attachment[]; mode?: ChatMode }, emit: (e: ChatEvent) => void, call: ModelCall = defaultCall) {
+export async function runChat(viewer: Viewer, input: { chatId?: string | null; text: string; files: Attachment[]; mode?: ChatMode; asNova?: boolean }, emit: (e: ChatEvent) => void, call: ModelCall = defaultCall) {
   const prisma = getPrisma();
+  /* Nova Copilot in full, or (an owner trying what agencies get, Genesis 31 Oct 2026) NOVA AI 1.0. */
+  const full = usesAi(viewer) && !input.asNova;
   const existing = input.chatId ? await prisma.aiChat.findFirst({ where: { id: input.chatId, userId: viewer.id } }) : null;
   const chat = existing ?? (await prisma.aiChat.create({ data: { userId: viewer.id, title: (input.text || input.files[0]?.name || "New chat").slice(0, 80), messages: [] } }));
   emit({ t: "chat", id: chat.id });
@@ -145,8 +147,8 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
       const stream = call({
         model: MODEL(),
         max_tokens: 64000,
-        system: system(viewer),
-        tools: [...toolsFor(viewer), ...apps.toolsets],
+        system: system(viewer, full),
+        tools: [...toolsFor(full), ...apps.toolsets],
         ...(apps.servers.length ? { mcp_servers: apps.servers } : {}),
         messages,
         stream: true,
@@ -192,7 +194,7 @@ export async function runChat(viewer: Viewer, input: { chatId?: string | null; t
 
       const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
       for (const use of uses) {
-        const tool = TOOLS.find((t) => t.name === use.name && (usesAi(viewer) || !t.ownerOnly));
+        const tool = TOOLS.find((t) => t.name === use.name && (full || !t.ownerOnly));
         emit({ t: "tool", name: use.name, label: LABEL[use.name] ?? use.name });
         if (!tool) {
           results.push({ type: "tool_result", tool_use_id: use.id, is_error: true, content: `Unknown tool ${use.name}` });
