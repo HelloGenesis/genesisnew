@@ -52,7 +52,7 @@ import { NovaGlyph } from "@/components/genesis/nova-glyphs";
 
 import { ProBadge } from "./pro-badge";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import type { NavGroup } from "./side-nav";
@@ -193,7 +193,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
   const keep = () => window.clearTimeout(closing.current);
   const leave = () => {
     keep();
-    closing.current = window.setTimeout(() => setFly(null), 160);
+    closing.current = window.setTimeout(() => !pinned.current && setFly(null), 160);
   };
   const hover = (label: string, el: HTMLElement) => {
     keep();
@@ -201,6 +201,22 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
     setFly({ label, top: Math.max(8, Math.min(r.top - 12, window.innerHeight - 520)), left: r.right + 8 });
   };
   const flyGroup = fly ? groups.find((g) => g.label === fly.label) : null;
+  /* The tour opens an area's menu while it talks about it (components/crm/tour-overlay); it stays until the tour moves on. */
+  const pinned = useRef(false);
+  useEffect(() => {
+    const open = (e: Event) => {
+      const el = (e as CustomEvent<HTMLElement | null>).detail;
+      if (el?.dataset.area) {
+        pinned.current = true;
+        hover(el.dataset.area, el);
+      } else if (pinned.current) {
+        pinned.current = false;
+        setFly(null);
+      }
+    };
+    window.addEventListener("crm-rail-open", open);
+    return () => window.removeEventListener("crm-rail-open", open);
+  });
   const touch = useRef(false);
 
   const railButton = (g: NavGroup) => {
@@ -224,6 +240,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
         }}
         aria-current={lit ? "page" : undefined}
         aria-haspopup="menu"
+        data-area={g.label}
         aria-label={`${AREA_LABEL[g.label] ?? g.label}${n ? `, ${n} waiting` : ""}`}
         className={ITEM}
       >
@@ -258,6 +275,7 @@ export function CrmRail({ groups, title, root = "/admin", footer }: { groups: Na
       {flyGroup && fly && createPortal(
         <div
           role="menu"
+          data-rail-fly
           aria-label={AREA_LABEL[flyGroup.label] ?? flyGroup.label}
           onPointerEnter={keep}
           onPointerLeave={leave}
