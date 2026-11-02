@@ -25,11 +25,25 @@ export async function GoogleCard({ userId, agency }: { userId: string; agency: b
                 </Notice>
               )}
               {conn.scopes.includes("auth/drive.file") && !conn.scopes.includes("gmail.compose") && (
-                <Notice>
-                  Reconnect once to put quote and proposal drafts, with their PDF, in your Gmail to edit and send yourself. The CRM never sends from your Gmail.{" "}
-                  <a href="/api/crm/google/connect" className="crm-link">Reconnect Google</a>
+                <Notice warn>
+                  Gmail drafts aren&apos;t allowed yet, so quote drafts can&apos;t go into your Gmail. <a href="/api/crm/google/connect" className="crm-link">Reconnect Google</a> and, on Google&apos;s screen, tick every box, including <b>Manage drafts and send emails</b> (Google leaves some unticked). The CRM only makes drafts; it never sends from your Gmail.
                 </Notice>
               )}
+              {/*
+               * WHAT GOOGLE ALLOWED (Genesis, 3 Nov 2026: "reconnected, still not
+               * in drafts"): Google's screen has a box per permission, and an
+               * unticked one is easy to miss, so each is listed with a tick or a cross.
+               */}
+              <ul className="grid gap-1 text-[0.8125rem] sm:grid-cols-2">
+                {([["gmail.readonly", "Read Gmail (briefs, leads)"], ["drive.readonly", "Read Drive"], ["spreadsheets.readonly", "Read Sheets"], ["drive.file", "Files the CRM makes"], ["contacts", "Google Contacts"], ["gmail.compose", "Gmail drafts"]] as const).map(([scope, label]) => {
+                  const on = conn.scopes.split(" ").some((s) => s.endsWith(`/auth/${scope}`));
+                  return (
+                    <li key={scope} className={on ? "text-ash" : "text-[#dc2626]"}>
+                      {on ? "✓" : "✕"} {label}
+                    </li>
+                  );
+                })}
+              </ul>
               <p className="text-[0.875rem] text-ash">
                 Gmail inbox and Drive, read-only, plus drafts you ask for. {conn.lastSyncAt ? `Last checked ${dateTime(conn.lastSyncAt)}.` : "First check within five minutes."}
               </p>

@@ -366,7 +366,7 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
     const value = JSON.stringify({ view: text(form, "view"), message: text(form, "message", 2000) ?? "", deliver: text(form, "deliver"), pdf: form.get("pdf") === "on", payment: form.get("payment") === "on", by: viewer.id, at: new Date().toISOString() });
     await getPrisma().appSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
     /* And as a draft in their own Gmail, with the PDF, when Google allows it. */
-    if (!(await canDraft(viewer.id))) return ok("Draft saved here. To also put it in your Gmail drafts, reconnect Google once in My settings.");
+    if (!(await canDraft(viewer.id))) return fail("Draft saved here only: Google hasn't allowed Gmail drafts. In My settings, Reconnect Google and tick every box on Google's screen, including \u201cManage drafts and send emails\u201d.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return ok("Draft saved here. Add the client's email to the quote to also put it in your Gmail drafts.");
     try {
       const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";
