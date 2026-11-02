@@ -17,6 +17,7 @@ export function ActionForm({
   tone = "primary",
   reset = false,
   inline = false,
+  extra,
 }: {
   action: (state: ActionState, form: FormData) => Promise<ActionState>;
   children?: React.ReactNode;
@@ -26,6 +27,8 @@ export function ActionForm({
   tone?: "primary" | "secondary" | "danger";
   reset?: boolean;
   inline?: boolean;
+  /** More buttons beside the submit one; a button marked data-no-confirm skips `confirm` (a "Save draft" beside "Send"). */
+  extra?: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const form = useRef<HTMLFormElement>(null);
@@ -38,7 +41,8 @@ export function ActionForm({
       action={formAction}
       className={inline ? `flex flex-wrap items-end gap-2 ${className}` : `space-y-3 ${className}`}
       onSubmit={(e) => {
-        if (confirm && !window.confirm(confirm)) e.preventDefault();
+        const by = (e.nativeEvent as SubmitEvent).submitter;
+        if (confirm && !by?.hasAttribute("data-no-confirm") && !window.confirm(confirm)) e.preventDefault();
       }}
     >
       {children}
@@ -46,6 +50,7 @@ export function ActionForm({
         <button className={`crm-btn crm-btn-${tone} ${inline ? "crm-btn-sm" : ""}`} disabled={pending}>
           {pending ? "Working…" : submit}
         </button>
+        {extra}
         {state?.message && (
           <span className={`text-[0.8125rem] font-medium ${state.ok ? "text-[#16a34a]" : "text-[#dc2626]"}`} role={state.ok ? "status" : "alert"}>
             {state.message}

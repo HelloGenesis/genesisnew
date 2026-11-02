@@ -23,7 +23,7 @@ import { can, requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
 import { invoiceFromQuote } from "../../actions/invoices";
-import { DriveCard } from "@/components/crm/drive-card";
+import { DriveButton } from "@/components/crm/drive-card";
 import { archivedPdf } from "@/lib/crm/drive";
 import { canDraft } from "@/lib/crm/gmail-draft";
 import { archiveQuoteNow, deleteQuote, duplicateQuote, reviseQuote, sendQuoteAction, setQuoteStatus } from "../../actions/quotes";
@@ -53,6 +53,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     if (elsewhere && (elsewhere.workspaceId ?? null) !== (viewer.ws ?? null)) redirect(`/admin/switch?ws=${elsewhere.workspaceId ?? ""}&next=${encodeURIComponent(`/admin/quotes/${id}`)}`);
     notFound();
   }
+  const draft = await getPrisma().appSetting.findUnique({ where: { key: `quote-send-draft:${q.id}` } }).then((r) => (r ? (JSON.parse(r.value) as { view: string | null; message: string; deliver: string | null; pdf: boolean; payment: boolean; at: string }) : null)).catch(() => null);
   const [withAccess, candidates, crmName] = await Promise.all([
     peopleWithAccess(q),
     shareCandidates(q.workspaceId),
@@ -136,40 +137,40 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
       {saved && <Notice>Saved as a draft. Check the client view, then send it.{sheetsNote ? ` ${sheetsNote}` : ""}</Notice>}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] [&>*]:min-w-0">
-        <Card title={q.status === "DRAFT" ? "Send to the client" : "Send again"}>
-          <ActionForm action={sendQuoteAction} submit={q.status === "DRAFT" ? "Send quotation email" : "Re-send with the latest changes"} confirm={showContact ? `Email this ${plan ? "plan" : "quote"} to ${q.contactEmail}?` : `Email this ${plan ? "plan" : "quote"} to the client?`}>
+        <Card title={q.status === "DRAFT" ? "Send to the client" : "Send again"} action={!q.workspaceId ? <DriveButton id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} /> : undefined}>
+          <ActionForm action={sendQuoteAction} submit={q.status === "DRAFT" ? "Send quotation email" : "Re-send with the latest changes"} extra={<button name="intent" value="save" data-no-confirm className="crm-btn crm-btn-secondary">Save draft</button>} confirm={showContact ? `Email this ${plan ? "plan" : "quote"} to ${q.contactEmail}?` : `Email this ${plan ? "plan" : "quote"} to the client?`}>
             <input type="hidden" name="id" value={q.id} />
             <Field label="Send" hint="Together, or each part on its own: proposal (platforms, problems, objectives), pricing (lines, totals, terms), influencer plan (the creator list).">
-              <Select name="view" required defaultValue="both" options={[["both", "Everything together (proposal, pricing, influencer plan)"], ["proposal", "Proposal only (no prices)"], ["proposal-plan", "Proposal + influencer list (no prices)"], ["plan", "Influencer plan only (with its prices)"], ["pricing", "Pricing only"]]} />
+              <Select name="view" required defaultValue={draft?.view ?? "both"} options={[["both", "Everything together (proposal, pricing, influencer plan)"], ["proposal", "Proposal only (no prices)"], ["proposal-plan", "Proposal + influencer list (no prices)"], ["plan", "Influencer plan only (with its prices)"], ["pricing", "Pricing only"]]} />
             </Field>
-            <Field label={showContact ? `Message to ${q.contactName}` : "Message to the client"} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
+            <Field label={showContact && q.contactName.trim() ? `Message to ${q.contactName}` : "Message to the client"} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={draft ? draft.message : plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
             {/* By the CRM's email (with the PDF if wanted), or as a draft in the sender's own Gmail (Genesis, 31 Oct 2026). */}
             <Field label="How" hint={drafts ? "A draft goes into your Gmail with the PDF attached; edit it there and send it yourself." : "For Gmail drafts, reconnect Google in My settings once."}>
-              <Select name="deliver" required defaultValue="email" options={[["email", "Email it from the CRM"], ["draft", drafts ? "Put a draft in my Gmail to edit and send (PDF attached)" : "Put a draft in my Gmail (reconnect Google first)"]]} />
+              <Select name="deliver" required defaultValue={draft?.deliver ?? "email"} options={[["email", "Email it from the CRM"], ["draft", drafts ? "Put a draft in my Gmail to edit and send (PDF attached)" : "Put a draft in my Gmail (reconnect Google first)"]]} />
             </Field>
             <label className="flex items-center gap-2 text-[0.875rem] text-ash">
-              <input type="checkbox" name="pdf" defaultChecked /> Attach the PDF
+              <input type="checkbox" name="pdf" defaultChecked={draft?.pdf ?? true} /> Attach the PDF
             </label>
             {/* An agency CRM's quotes have no pay link: it would collect into Genesis's Razorpay. */}
             {!q.workspaceId && (
             <label className="flex items-center gap-2 text-[0.875rem] text-ash">
-              <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys())} disabled={!razorpayKeys()} /> Include a Razorpay payment link for {money(q.totalPaise)}
+              <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys()) && (draft?.payment ?? true)} disabled={!razorpayKeys()} /> Include a Razorpay payment link for {money(q.totalPaise)}
               {!razorpayKeys() && <span className="text-faint">(Razorpay keys not set)</span>}
             </label>
             )}
           </ActionForm>
           <p className="mt-3 break-all text-[0.8125rem] text-faint">Client link: {clientLink} · <a className="crm-link" href={`${clientLink}?view=proposal`} target="_blank" rel="noreferrer">proposal only</a> · <a className="crm-link" href={`${clientLink}?view=plan`} target="_blank" rel="noreferrer">influencer plan only</a> · <a className="crm-link" href={`${clientLink}?view=pricing`} target="_blank" rel="noreferrer">pricing only</a></p>
           {q.paymentUrl && <p className="break-all text-[0.8125rem] text-faint">Payment link: {q.paymentUrl}</p>}
-          <div className="mt-4 border-t border-[var(--glass-border)] pt-3">
-            <p className="crm-label mb-1">Or share it on WhatsApp / email</p>
+          {draft && <p className="mt-2 text-[0.8125rem] text-faint">Draft saved {dateTime(new Date(draft.at))}.</p>}
+        </Card>
+        {/* WhatsApp or your own email, beside the send card (Genesis, 3 Nov 2026: "can fit into this section"). */}
+        <Card title="Or share it on WhatsApp / email">
             <ShareBox
               subject={`${plan ? "Influencer plan" : "Quotation"} ${docRef(q)} · ${q.title}`}
               phone={showContact ? q.contactPhone : null}
               text={`Hi${showContact && q.contactName ? ` ${q.contactName.split(" ")[0]}` : ""},\n\nHere's our ${plan ? "influencer plan" : "quotation"} for ${q.title}:\n${clientLink}${q.paymentUrl ? `\n\nPay securely: ${q.paymentUrl}` : ""}\n\nBest,\n${viewer.name ?? "Genesis Media"}${viewer.title ? `\n${viewer.title}` : ""}${q.workspaceId ? "" : "\ngenesismedia.co"}`}
             />
-          </div>
         </Card>
-        {!q.workspaceId && <DriveCard id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} what="quote" />}
         {versions.length > 1 && (
           <Card title="Versions">
             <ul className="space-y-1.5 text-[0.9375rem]">
