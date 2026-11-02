@@ -59,13 +59,13 @@ const FIX = rules([
   ["alot", "a lot"], ["thankyou", "thank you"], ["pls", "please"], ["plz", "please"], ["thx", "thanks"], ["u", "you"], ["ur", "your"],
   ["discuss on", "discuss"], ["discuss about", "discuss"], ["proceed ahead", "proceed"], ["proceed further", "proceed"], ["revert back", "get back"],
   ["return back", "return"], ["repeat again", "repeat"], ["reply back", "reply"], ["each and every", "every"], ["do the needful", "take care of this"],
-  ["prepone", "bring forward"], ["kindly revert", "please let us know"], ["same will be", "it will be"], ["PFA", "please find attached"],
+  ["prepone", "bring forward"], ["over a meet", "over a meeting"], ["on a meet", "on a meeting"], ["have a meet", "have a meeting"], ["schedule a meet", "schedule a meeting"], ["kindly revert", "please let us know"], ["same will be", "it will be"], ["PFA", "please find attached"],
   ["please find attached herewith", "I've attached"], ["attached herewith", "attached"],
 ]);
 
 /* Warmer, more polished. */
 const FORMAL = rules([
-  ["hey", "Hello"], ["hi", "Hello"], ["thanks a lot", "thank you very much"], ["thanks", "thank you"], ["let's", "let us"],
+  ["please have a look", "please review it"], ["have a look", "take a look"], ["if we can", "if we could"], ["can we", "could we"], ["can you", "could you"], ["connect over", "speak over"], ["get on a call", "schedule a call"], ["sharing the", "Please find the"], ["hey", "Hello"], ["hi", "Hello"], ["thanks a lot", "thank you very much"], ["thanks", "thank you"], ["let's", "let us"],
   ["can't", "cannot"], ["won't", "will not"], ["don't", "do not"], ["didn't", "did not"], ["isn't", "is not"], ["it's", "it is"],
   ["we're", "we are"], ["you're", "you are"], ["I'm", "I am"], ["we'll", "we will"], ["I'll", "I will"], ["we've", "we have"], ["I've", "I have"],
   ["get back to you", "respond to you"],
@@ -77,7 +77,7 @@ const FORMAL = rules([
 
 /* Easier, more personal. */
 const FRIENDLY = rules([
-  ["dear", "Hi"], ["hello", "Hi"], ["thank you very much", "thanks so much"], ["thank you", "thanks"], ["let us", "let's"],
+  ["dear", "Hi"], ["hello", "Hi"], ["thank you very much", "thanks so much"], ["thank you", "thanks"], ["let us connect", "let's connect"], ["let us discuss", "let's discuss"], ["let us start", "let's start"], ["let us do", "let's do"], ["let us get", "let's get"], ["let us speak", "let's speak"], ["let us know", "do let us know"], ["please review it", "have a look"], ["could we", "can we"],
   ["cannot", "can't"], ["will not", "won't"], ["do not", "don't"], ["did not", "didn't"], ["is not", "isn't"], ["it is", "it's"],
   ["we are", "we're"], ["you are", "you're"], ["I am", "I'm"], ["we will", "we'll"], ["I will", "I'll"], ["we have", "we've"], ["I have", "I've"],
   ["at the earliest", "as soon as you can"], ["please find attached", "I've attached"], ["kindly", "please"], ["require", "need"],
@@ -88,7 +88,7 @@ const FRIENDLY = rules([
 
 /* Fewer words for the same thing. */
 const SHORTER = rules([
-  ["in order to", "to"], ["at this point in time", "now"], ["at the present time", "now"], ["due to the fact that", "because"],
+  ["please have a look and let us know", "let us know"], ["please have a look and let me know", "let me know"], ["please go through it and let us know", "let us know"], ["in order to", "to"], ["at this point in time", "now"], ["at the present time", "now"], ["due to the fact that", "because"],
   ["in spite of the fact that", "although"], ["for the purpose of", "for"], ["in the event that", "if"], ["with regard to", "about"],
   ["in regard to", "about"], ["with reference to", "about"], ["a number of", "several"], ["a large number of", "many"], ["the majority of", "most"],
   ["at the earliest possible", "soon"], ["at the earliest", "soon"], ["in the near future", "soon"], ["prior to", "before"], ["subsequent to", "after"],
@@ -100,9 +100,64 @@ const SHORTER = rules([
   ["future plans", "plans"], ["past history", "history"], ["advance planning", "planning"], ["close proximity", "near"], ["completely finished", "finished"],
 ]);
 
-export type Tool = "fix" | "formal" | "friendly" | "shorter";
+/*
+ * SAY IT ANOTHER WAY: common client-email phrases, each with a few ways to say
+ * it. Every click moves to the next wording, so it never repeats itself.
+ */
+const BANK: [string, string[]][] = [
+  ["please have a look", ["please take a look", "please go through it", "do have a look"]],
+  ["have a look", ["take a look", "go through it", "review it"]],
+  ["let us know", ["tell us", "do tell us", "do let us know"]],
+  ["let me know", ["tell me", "drop me a note", "do let me know"]],
+  ["if we can connect over a meeting", ["if we could catch up on a call", "whether we can get on a quick call", "if we can meet over a call"]],
+  ["connect over a meeting", ["catch up on a call", "get on a quick call", "meet over a call"]],
+  ["if we can connect", ["if we could speak", "whether we can catch up", "if we can get on a call"]],
+  ["how to proceed ahead", ["the next steps", "how to move forward", "how we take it ahead"]],
+  ["how to proceed", ["the next steps", "how to move forward", "how we take it ahead"]],
+  ["sharing the", ["here's the", "attaching the", "please find the"]],
+  ["please find attached", ["I've attached", "attached is", "here's"]],
+  ["as discussed", ["as we discussed", "following our conversation", "as per our call"]],
+  ["get back to you", ["come back to you", "respond", "revert"]],
+  ["at the earliest", ["as soon as you can", "soon", "when you get a moment"]],
+  ["looking forward to", ["we look forward to", "keen to hear about", "awaiting"]],
+  ["we would love to", ["we'd be glad to", "we're keen to", "we'd be happy to"]],
+  ["happy to", ["glad to", "more than happy to", "keen to"]],
+  ["feel free to", ["please don't hesitate to", "do", "you're welcome to"]],
+  ["if you have any questions", ["if anything is unclear", "for any questions", "if you need anything"]],
+  ["thank you for", ["thanks for", "we appreciate", "grateful for"]],
+  ["we can start", ["we'll begin", "we can kick off", "we'll get going"]],
+  ["get started", ["kick off", "begin", "get going"]],
+  ["discuss", ["go over", "talk through", "discuss"]],
+  ["kindly", ["please", "please", "do"]],
+  ["approve it", ["sign off on it", "give it the go-ahead", "confirm it"]],
+  ["any changes", ["any edits", "anything changed", "any tweaks"]],
+];
+
+function reword(text: string, turn: number) {
+  let changes = 0;
+  let out = text;
+  /* A phrase handled as part of a longer one isn't changed again (BANK lists the longer first). */
+  const skip = new Set<number>();
+  BANK.forEach(([from, options], idx) => {
+    if (skip.has(idx)) return;
+    const re = new RegExp(`(?<![\\w'])${from.replace(/ /g, "\\s+")}(?![\\w'])`, "gi");
+    let hit = false;
+    out = out.replace(re, (match) => {
+      hit = true;
+      const to = options[turn % options.length]!;
+      if (to.toLowerCase() === match.toLowerCase()) return match;
+      changes++;
+      return /^[A-Z]/.test(match) ? to[0]!.toUpperCase() + to.slice(1) : to;
+    });
+    if (hit) BANK.forEach(([f], k) => k > idx && from.toLowerCase().includes(f) && skip.add(k));
+  });
+  return { text: out, changes };
+}
+
+export type Tool = "fix" | "rephrase" | "formal" | "friendly" | "shorter";
 export const TOOLS: { id: Tool; label: string; hint: string }[] = [
   { id: "fix", label: "Fix", hint: "Spelling and phrases like \u201cdiscuss on\u201d or \u201cproceed ahead\u201d" },
+  { id: "rephrase", label: "Rephrase", hint: "Says common phrases another way; click again for another wording" },
   { id: "formal", label: "More formal", hint: "Polished, no contractions" },
   { id: "friendly", label: "Friendlier", hint: "Warmer and easier" },
   { id: "shorter", label: "Shorter", hint: "Drops filler words and long phrases" },
@@ -111,11 +166,11 @@ export const TOOLS: { id: Tool; label: string; hint: string }[] = [
 /* Links, emails and @handles are left exactly as they are. */
 const KEEP = /\b(?:https?:\/\/|www\.)\S+|[\w.+-]+@[\w-]+\.[\w.-]+|@\w[\w.]*/g;
 
-export function rephrase(text: string, tool: Tool): { text: string; changes: number } {
+export function rephrase(text: string, tool: Tool, turn = 0): { text: string; changes: number } {
   const kept: string[] = [];
   const shielded = text.replace(KEEP, (m) => `\u0000${kept.push(m) - 1}\u0000`);
   const fixed = apply(shielded, FIX);
-  const r = tool === "fix" ? { text: fixed.text, changes: 0 } : apply(fixed.text, tool === "formal" ? FORMAL : tool === "friendly" ? FRIENDLY : SHORTER);
+  const r = tool === "fix" ? { text: fixed.text, changes: 0 } : tool === "rephrase" ? reword(fixed.text, turn) : apply(fixed.text, tool === "formal" ? FORMAL : tool === "friendly" ? FRIENDLY : SHORTER);
   return { text: tidy(r.text).replace(/\u0000(\d+)\u0000/g, (_, i) => kept[Number(i)] ?? ""), changes: fixed.changes + r.changes };
 }
 

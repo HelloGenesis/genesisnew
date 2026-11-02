@@ -5,6 +5,9 @@ import { ActionForm } from "@/components/crm/action-form";
 import { OutreachPanel } from "@/components/crm/outreach-panel";
 import { ShareBox } from "@/components/crm/share-box";
 import { ShareDialog } from "@/components/crm/share-dialog";
+import { Menu } from "@/components/crm/menu";
+import { menuItem } from "@/components/crm/menu-item";
+import { CheckCircle2, Copy, GitBranch, History, ReceiptText, Trash2, XCircle } from "lucide-react";
 import { MessageBox } from "@/components/crm/rephrase-bar";
 import { peopleWithAccess, shareCandidates } from "@/lib/crm/quote-share";
 import { workspaces } from "@/lib/crm/workspace";
@@ -131,7 +134,40 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         sub={<>{q.account ? <Link href={`/admin/accounts/${q.account.id}`} className="crm-link">{q.account.name}</Link> : (q.company ?? (showContact ? q.contactName : "Client"))} · {money(q.totalPaise)}{q.lead && showContact && <> · lead <Link href={`/admin/leads/${q.lead.id}`} className="crm-link">{q.lead.name}</Link></>}{q.request && <> · request <Link href={`/admin/requests/${q.request.id}`} className="crm-link">{q.request.title}</Link></>}</>}
       >
         <Status value={QUOTE_STATUS[q.status]} />
-        <Link href={`/admin/quotes/${q.id}/history`} className="crm-btn crm-btn-secondary crm-btn-sm">Change history</Link>
+        {/* History and the quote's actions, as an icon and a dropdown (Genesis, 3 Nov 2026). */}
+        <Menu title="History" icon={<History className="size-4" aria-hidden />} width="w-80">
+          <p className="px-3 pt-2 text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-faint">History</p>
+          <ul className="space-y-1.5 px-3 py-2 text-[0.875rem]">
+            <li className="text-ash">Created {dateTime(q.createdAt)}</li>
+            {q.sentAt && <li className="text-bone">Sent {dateTime(q.sentAt)}</li>}
+            {q.viewedAt && <li className="text-bone">Opened by the client {dateTime(q.viewedAt)}</li>}
+            {q.acceptedAt && <li className="text-bone">Accepted {dateTime(q.acceptedAt)} · {q.acceptedBy}</li>}
+            {q.order && <li className="text-bone">Order <Link className="crm-link" href={`/admin/billing/${q.order.id}`}>{q.order.reference}</Link> · {q.order.status.toLowerCase()}</li>}
+            {q.projects.map((p) => <li key={p.id} className="text-bone">Project <Link className="crm-link" href={`/admin/projects/${p.id}`}>{projectRef(p.number)} · {p.name}</Link></li>)}
+          </ul>
+          <Link href={`/admin/quotes/${q.id}/history`} className={menuItem}><History className="size-4 text-ash" aria-hidden /> Every change, field by field →</Link>
+        </Menu>
+        <Menu label="Actions" width="w-72">
+
+            {/* The invoice from this quote: open it, or make it with the quote's client and lines (Genesis, 22 Oct 2026). */}
+            {invoices.length > 0
+              ? invoices.map((inv) => <Link key={inv.id} href={`/admin/invoices/${inv.id}`} className={menuItem}><ReceiptText className="size-4 text-ash" aria-hidden /> Invoice {inv.number}</Link>)
+              : (can(viewer, "sales") || can(viewer, "finance")) && (
+                  <form action={invoiceFromQuote}><input type="hidden" name="quoteId" value={q.id} /><button className={menuItem}><ReceiptText className="size-4 text-ash" aria-hidden /> Make the invoice</button></form>
+                )}
+            {!["ACCEPTED", "PAID"].includes(q.status) && (
+              <form action={setQuoteStatus}><input type="hidden" name="id" value={q.id} /><input type="hidden" name="status" value="ACCEPTED" /><button className={menuItem}><CheckCircle2 className="size-4 text-[#16a34a]" aria-hidden /> Client accepted (start project)</button></form>
+            )}
+            {!["DECLINED", "PAID", "ACCEPTED"].includes(q.status) && (
+              <form action={setQuoteStatus}><input type="hidden" name="id" value={q.id} /><input type="hidden" name="status" value="DECLINED" /><button className={menuItem}><XCircle className="size-4 text-ash" aria-hidden /> Client declined</button></form>
+            )}
+            {/* A revised copy (R1, R2…), saved apart; this version stays as it is. */}
+            <form action={reviseQuote}><input type="hidden" name="id" value={q.id} /><button className={menuItem}><GitBranch className="size-4 text-ash" aria-hidden /> {plan ? "Revise plan" : "Revise quote"} (R{(versions.at(-1)?.revision ?? 0) + 1})</button></form>
+            <form action={duplicateQuote}><input type="hidden" name="id" value={q.id} /><button className={menuItem}><Copy className="size-4 text-ash" aria-hidden /> Duplicate</button></form>
+            {!["ACCEPTED", "PAID"].includes(q.status) && (
+              <form action={deleteQuote}><input type="hidden" name="id" value={q.id} /><button className={`${menuItem} !text-[#dc2626]`}><Trash2 className="size-4" aria-hidden /> Delete</button></form>
+            )}
+        </Menu>
         <a href={`/quote/${q.token}`} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Client view / PDF ↗</a>
         <ShareDialog quoteId={q.id} title={q.title} viewerId={viewer.id} link={appUrl(`/admin/quotes/${q.id}`)} crm={crmName} people={withAccess} candidates={candidates} />
       </PageHead>
@@ -185,36 +221,6 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             </ul>
           </Card>
         )}
-        <Card title="History">
-          <ul className="space-y-1.5 text-[0.9375rem]">
-            <li className="text-ash">Created {dateTime(q.createdAt)}</li>
-            {q.sentAt && <li className="text-bone">Sent {dateTime(q.sentAt)}</li>}
-            {q.viewedAt && <li className="text-bone">Opened by the client {dateTime(q.viewedAt)}</li>}
-            {q.acceptedAt && <li className="text-bone">Accepted {dateTime(q.acceptedAt)} · {q.acceptedBy}</li>}
-            {q.order && <li className="text-bone">Order <Link className="crm-link" href={`/admin/billing/${q.order.id}`}>{q.order.reference}</Link> · {q.order.status.toLowerCase()}</li>}
-            {q.projects.map((p) => <li key={p.id} className="text-bone">Project <Link className="crm-link" href={`/admin/projects/${p.id}`}>{projectRef(p.number)} · {p.name}</Link></li>)}
-          </ul>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {/* The invoice from this quote: open it, or make it with the quote's client and lines (Genesis, 22 Oct 2026). */}
-            {invoices.length > 0
-              ? invoices.map((inv) => <Link key={inv.id} href={`/admin/invoices/${inv.id}`} className="crm-btn crm-btn-primary crm-btn-sm">Invoice {inv.number} ↗</Link>)
-              : (can(viewer, "sales") || can(viewer, "finance")) && (
-                  <form action={invoiceFromQuote}><input type="hidden" name="quoteId" value={q.id} /><button className="crm-btn crm-btn-primary crm-btn-sm">Make the invoice</button></form>
-                )}
-            {!["ACCEPTED", "PAID"].includes(q.status) && (
-              <form action={setQuoteStatus}><input type="hidden" name="id" value={q.id} /><input type="hidden" name="status" value="ACCEPTED" /><button className="crm-btn crm-btn-secondary crm-btn-sm">Client accepted (start project)</button></form>
-            )}
-            {!["DECLINED", "PAID", "ACCEPTED"].includes(q.status) && (
-              <form action={setQuoteStatus}><input type="hidden" name="id" value={q.id} /><input type="hidden" name="status" value="DECLINED" /><button className="crm-btn crm-btn-secondary crm-btn-sm">Declined</button></form>
-            )}
-            {/* A revised copy (R1, R2…), saved apart; this version stays as it is. */}
-            <form action={reviseQuote}><input type="hidden" name="id" value={q.id} /><button className="crm-btn crm-btn-secondary crm-btn-sm">{plan ? "Revise plan" : "Revise quote"} (R{(versions.at(-1)?.revision ?? 0) + 1})</button></form>
-            <form action={duplicateQuote}><input type="hidden" name="id" value={q.id} /><button className="crm-btn crm-btn-secondary crm-btn-sm">Duplicate</button></form>
-            {!["ACCEPTED", "PAID"].includes(q.status) && (
-              <form action={deleteQuote}><input type="hidden" name="id" value={q.id} /><button className="crm-btn crm-btn-secondary crm-btn-sm text-[#dc2626]">Delete</button></form>
-            )}
-          </div>
-        </Card>
       </div>
 
       {/*
