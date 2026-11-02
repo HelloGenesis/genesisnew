@@ -22,7 +22,7 @@ import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Platform } from "@/lib/generated/prisma/enums";
 import { tierFor } from "@/lib/crm/catalog";
-import { DraftAccessError } from "@/lib/crm/gmail-draft";
+import { canDraft, DraftAccessError } from "@/lib/crm/gmail-draft";
 import { newToken, openFor, type QuoteDelivery, refreshTotals, sendQuote } from "@/lib/crm/quotes";
 import { termsByKey } from "@/lib/crm/quote-templates";
 import { creatorScope, quoteScope, seesCreators, seesQuoteContact } from "@/lib/crm/scope";
@@ -365,7 +365,17 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
     const key = `quote-send-draft:${id}`;
     const value = JSON.stringify({ view: text(form, "view"), message: text(form, "message", 2000) ?? "", deliver: text(form, "deliver"), pdf: form.get("pdf") === "on", payment: form.get("payment") === "on", by: viewer.id, at: new Date().toISOString() });
     await getPrisma().appSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
-    return ok("Draft saved. Nothing was sent.");
+    /* And as a draft in their own Gmail, with the PDF, when Google allows it. */
+    if (!(await canDraft(viewer.id))) return ok("Draft saved here. To also put it in your Gmail drafts, reconnect Google once in My settings.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return ok("Draft saved here. Add the client's email to the quote to also put it in your Gmail drafts.");
+    try {
+      const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";
+      const { draftAccount } = await sendQuote(id, viewer.id, text(form, "message", 2000), form.get("payment") === "on" && (view === "both" || view === "pricing"), view, "draft", { saveOnly: true });
+      return ok(`Draft saved here and in ${draftAccount}'s Gmail drafts, with the PDF. Nothing was sent.`);
+    } catch (error) {
+      console.error("[crm] gmail draft failed", error);
+      return ok(error instanceof DraftAccessError ? `Draft saved here. ${error.message}` : "Draft saved here, but Gmail didn't take it. Try again.");
+    }
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return fail("Add the client's email to the quote (and save) before sending.");
   try {
