@@ -4,6 +4,7 @@ import { Mail, MessageCircle } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { shareByEmail } from "@/app/(crm)/admin/actions/outreach";
+import { RephraseBar } from "@/components/crm/rephrase-bar";
 
 /**
  * SEND IT FROM HERE (Genesis, 12 Oct 2026: "share it over WhatsApp or email
@@ -21,6 +22,7 @@ export function ShareBox({ subject, text: initial, phone }: { subject: string; t
   return (
     <div className="space-y-2">
       <textarea value={text} onChange={(e) => setText(e.target.value)} className="crm-input !min-h-40 text-[0.875rem]" />
+      <RephraseBar value={text} onChange={setText} />
       <div className="flex flex-wrap items-center gap-2">
         <a href={wa} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm"><MessageCircle className="size-4" aria-hidden /> WhatsApp</a>
         <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="email(s)" className="crm-input !min-h-8 min-w-[12rem] flex-1 !px-2 text-[0.8125rem]" />

@@ -49,7 +49,8 @@ export function NovaLive() {
     [full, toggle],
   );
   useEffect(() => {
-    const open = (e: Event) => viewDemo((e as CustomEvent<string | undefined>).detail);
+    /* No page given arrives as null (CustomEvent's default), which a default parameter doesn't catch. */
+    const open = (e: Event) => viewDemo((e as CustomEvent<string | null>).detail ?? undefined);
     window.addEventListener("nova-view-demo", open);
     return () => window.removeEventListener("nova-view-demo", open);
   }, [viewDemo]);

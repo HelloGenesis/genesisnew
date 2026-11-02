@@ -360,6 +360,13 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
   const q = await getPrisma().quote.findFirst({ where: { id, ...quoteScope(viewer) } });
   if (!q) return fail("That quote isn't yours, or no longer exists.");
   if (q.status === "PAID") return fail("Already paid.");
+  /* SAVE DRAFT (Genesis, 3 Nov 2026): the message and choices kept for later, nothing sent. */
+  if (text(form, "intent") === "save") {
+    const key = `quote-send-draft:${id}`;
+    const value = JSON.stringify({ view: text(form, "view"), message: text(form, "message", 2000) ?? "", deliver: text(form, "deliver"), pdf: form.get("pdf") === "on", payment: form.get("payment") === "on", by: viewer.id, at: new Date().toISOString() });
+    await getPrisma().appSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
+    return ok("Draft saved. Nothing was sent.");
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return fail("Add the client's email to the quote (and save) before sending.");
   try {
     const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";

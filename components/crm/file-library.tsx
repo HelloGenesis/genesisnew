@@ -1,11 +1,13 @@
 "use client";
 
-import { Download, ExternalLink, FileText, Film, ImageIcon, Play, Search, Upload, X } from "lucide-react";
+import { Download, ExternalLink, FileText, Film, ImageIcon, Link2, Play, RefreshCw, Search, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
 import type { Library } from "@/lib/crm/library";
+
+import { addProjectLink, sendFileForReview, syncDriveNow } from "@/app/(crm)/files-actions";
 
 import { uploadToProject } from "./upload-to-drive";
 
@@ -35,6 +37,37 @@ export function FileLibrary({ mode, library }: { mode: "files" | "creatives"; li
   const [error, setError] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  /* Send on, add a link, sync from Drive (Genesis, 1 Nov 2026: "the same features here, and more"). */
+  const [busy, setBusy] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const opensOut = (f: Item) => Boolean(f.link) && (f.mimeType?.startsWith("application/vnd.google-apps") || f.mimeType === "text/uri-list" || f.uploadedAs === "drive");
+  const view = (f: Item) => (opensOut(f) ? window.open(f.link!, "_blank", "noopener") : setOpen(f));
+  const sendOn = async (f: Item, toWho: "team" | "client") => {
+    if (toWho === "client" && !window.confirm(`Email "${f.name}" to ${f.client} to approve?`)) return;
+    setBusy(f.id);
+    const r = await sendFileForReview(f.id, toWho);
+    setBusy(null);
+    if (!r.ok) return setError(r.error);
+    router.refresh();
+  };
+  const sync = async () => {
+    setBusy("sync");
+    const r = await syncDriveNow();
+    setBusy(null);
+    setNote(r.added ? `${r.added} file${r.added === 1 ? "" : "s"} added from Google Drive.` : "Up to date with Google Drive.");
+    router.refresh();
+  };
+  const addLink = async () => {
+    if (!to.projectId) return setError("Pick the project first (Upload opens the picker).");
+    const url = window.prompt("Paste the link (a Canva deck, Drive file, Frame.io, YouTube, Dropbox, Figma…)");
+    if (!url) return;
+    const p = library.projects.find((x) => x.id === to.projectId);
+    const name = window.prompt("Name it", [p?.label, library.folders.find((x) => x.key === to.folder)?.label].filter(Boolean).join(" · "));
+    if (name === null) return;
+    const r = await addProjectLink(to.projectId, to.folder, url, name);
+    if (!r.ok) return setError(r.error);
+    router.refresh();
+  };
 
   const clients = useMemo(() => [...new Set(library.files.map((f) => f.client))].sort(), [library.files]);
   const folders = useMemo(() => [...new Map(library.files.map((f) => [f.folder, f.folderLabel])).entries()], [library.files]);
@@ -87,8 +120,11 @@ export function FileLibrary({ mode, library }: { mode: "files" | "creatives"; li
         <option value="">All folders</option>
         {folders.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
       </select>
+      <button type="button" onClick={() => void sync()} disabled={busy === "sync"} className="crm-btn crm-btn-secondary" title="Bring in files put straight into projects' Drive folders">
+        <RefreshCw className={`size-4 ${busy === "sync" ? "animate-spin" : ""}`} aria-hidden /> Sync from Drive
+      </button>
       <button type="button" onClick={() => setPanel((p) => !p)} className="crm-btn crm-btn-primary" aria-expanded={panel}>
-        <Upload className="size-4" aria-hidden /> Upload
+        <Upload className="size-4" aria-hidden /> Upload or add a link
       </button>
     </div>
   );
@@ -110,6 +146,7 @@ export function FileLibrary({ mode, library }: { mode: "files" | "creatives"; li
       }}
     >
       {filters}
+      {note && <p className="crm-notice">{note}</p>}
 
       {panel && (
         <section className="crm-card crm-pad space-y-3">
@@ -141,6 +178,7 @@ export function FileLibrary({ mode, library }: { mode: "files" | "creatives"; li
                 <span className="text-bone">Drop files here, or click to choose</span>
                 <span className="text-[0.8125rem] text-ash">They go to Google Drive, in the project&apos;s folder. Big videos are fine.</span>
               </button>
+              <button type="button" onClick={() => void addLink()} className="crm-btn crm-btn-secondary crm-btn-sm"><Link2 className="size-4" aria-hidden /> Or add a link: a Canva deck, Drive file, Frame.io, YouTube…</button>
             </>
           )}
           {progress.map((p) => (
@@ -163,7 +201,7 @@ export function FileLibrary({ mode, library }: { mode: "files" | "creatives"; li
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
           {shown.map((f) => (
             <li key={f.id} className="crm-card group overflow-hidden !rounded-2xl">
-              <button type="button" onClick={() => setOpen(f)} className="relative block aspect-[4/5] w-full bg-black/80">
+              <button type="button" onClick={() => view(f)} className="relative block aspect-[4/5] w-full bg-black/80">
                 {kind(f.mimeType) === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={`/api/crm/files/${f.id}`} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-[1.02]" />
@@ -190,12 +228,25 @@ export function FileLibrary({ mode, library }: { mode: "files" | "creatives"; li
             return (
               <li key={f.id} className="flex items-center gap-3 px-4 py-3">
                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#ffc516]/12 text-[#ffc516]"><Icon className="size-5" aria-hidden /></span>
-                <button type="button" onClick={() => setOpen(f)} className="min-w-0 flex-1 text-left">
-                  <span className="block truncate text-[0.9375rem] text-bone">{f.name}</span>
-                  <span className="block truncate text-[0.75rem] text-ash">{f.project.includes(f.client) ? f.project : `${f.client} · ${f.project}`} · {f.folderLabel}</span>
+                <button type="button" onClick={() => view(f)} className="min-w-0 flex-1 text-left">
+                  <span className="block truncate text-[0.9375rem] font-medium text-bone">{f.name}</span>
+                  <span className="block truncate text-[0.75rem] text-ash">{f.project.includes(f.client) ? f.project : `${f.client} · ${f.project}`} · {f.folderLabel}{f.uploadedAs === "drive" ? " · from Drive" : ""}</span>
                 </button>
+                {f.review ? (
+                  <span className="hidden shrink-0 rounded-full bg-[var(--hover-wash)] px-2 py-0.5 text-[0.6875rem] text-ash md:inline">{({ INTERNAL_REVIEW: "With the team", IN_REVIEW: "With the client", CHANGES_REQUESTED: "Changes asked", APPROVED: "Approved" } as Record<string, string>)[f.review] ?? f.review}</span>
+                ) : (
+                  <span className="hidden shrink-0 gap-1 md:flex">
+                    <button type="button" disabled={busy === f.id} onClick={() => void sendOn(f, "team")} className="rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.75rem] text-ash hover:border-[#a78bfa] hover:text-bone">Send to team</button>
+                    <button type="button" disabled={busy === f.id} onClick={() => void sendOn(f, "client")} className="rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.75rem] text-ash hover:border-[#ffc516] hover:text-bone">Send to client</button>
+                  </span>
+                )}
+                <Link href={`/admin/projects/${f.projectId}#files`} className="hidden shrink-0 text-[0.75rem] text-ash hover:text-bone lg:block">Project →</Link>
                 <span className="hidden shrink-0 text-right text-[0.75rem] text-faint sm:block">{size(f.size)}<br />{f.uploader} · {day(f.createdAt)}</span>
-                <a href={`/api/crm/files/${f.id}?download=1`} aria-label={`Download ${f.name}`} className="grid size-9 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone"><Download className="size-4" /></a>
+                {opensOut(f) ? (
+                  <a href={f.link!} target="_blank" rel="noopener noreferrer" aria-label={`Open ${f.name}`} className="grid size-9 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone"><ExternalLink className="size-4" /></a>
+                ) : (
+                  <a href={`/api/crm/files/${f.id}?download=1`} aria-label={`Download ${f.name}`} className="grid size-9 shrink-0 place-items-center rounded-lg text-ash hover:bg-[var(--hover-wash)] hover:text-bone"><Download className="size-4" /></a>
+                )}
               </li>
             );
           })}

@@ -33,6 +33,8 @@ export async function libraryFor(viewer: Viewer, media: boolean) {
     : [];
   const people = await prisma.user.findMany({ where: { id: { in: [...new Set(files.map((f) => f.uploadedById).filter((x): x is string => Boolean(x)))] } }, select: { id: true, name: true, email: true } });
   const who = new Map(people.map((u) => [u.id, u.name ?? u.email]));
+  /* Where each file stands in review (sendFileForReview). */
+  const reviews = files.length ? await prisma.deliverable.findMany({ where: { fileId: { in: files.map((f) => f.id) } }, orderBy: { createdAt: "desc" }, select: { fileId: true, status: true } }) : [];
   return {
     files: files.map((f) => {
       const p = byId.get(f.projectId!)!;
@@ -48,6 +50,9 @@ export async function libraryFor(viewer: Viewer, media: boolean) {
         client: p.account.name,
         uploader: (f.uploadedById && who.get(f.uploadedById)) || (f.uploadedAs === "staff" ? "Genesis" : f.uploadedAs),
         createdAt: f.createdAt.toISOString(),
+        link: f.webViewLink,
+        uploadedAs: f.uploadedAs,
+        review: reviews.find((r) => r.fileId === f.id)?.status ?? null,
       };
     }),
     /* Where a new upload can go: open projects first, and the folders staff may upload to. */

@@ -118,3 +118,56 @@ export async function saveAgencyProfile(_: ActionState, form: FormData): Promise
   revalidatePath("/admin", "layout");
   return ok("Saved. Your quotes and invoices use these details.");
 }
+
+/**
+ * A TEAMMATE INSIDE AN AGENCY'S CRM (Genesis, 2 Nov 2026: "why, when he's on
+ * our team?"): someone added to an agency CRM before they joined Genesis's
+ * team stayed in it, and everything they made was filed there. Owners can take
+ * them out (what they made stays in that CRM)…
+ */
+export async function moveToGenesisTeam(form: FormData) {
+  const viewer = await requireStaff();
+  if (!isSuperAdmin(viewer) || viewer.workspaceId) return;
+  const userId = text(form, "userId");
+  if (!userId) return;
+  await getPrisma().user.updateMany({ where: { id: userId, workspaceId: { not: null } }, data: { workspaceId: null, workspaceRole: null } });
+  await recordAuditLog({ action: "workspace.member_moved_to_genesis", entity: "user", entityId: userId, actorId: viewer.id });
+  revalidatePath("/admin/staff");
+}
+
+/**
+ * …or bring a whole agency CRM into Genesis Media's, when it was never really
+ * an agency's (a test, or a teammate's): its leads, clients, quotes and plans,
+ * briefs, projects, tasks, invoices, requests and influencers become Genesis
+ * Media's, its people join Genesis (roles still given on Staff & roles), and
+ * the agency keeps its account without a CRM. Numbers are unique across CRMs,
+ * so nothing clashes.
+ */
+export async function mergeCrmIntoGenesis(_: ActionState, form: FormData): Promise<ActionState> {
+  const viewer = await requireStaff();
+  if (!isSuperAdmin(viewer) || viewer.workspaceId) return fail("Only Genesis's owners can do that.");
+  const ws = text(form, "ws");
+  const prisma = getPrisma();
+  const agency = ws ? await prisma.account.findFirst({ where: { id: ws, crmWorkspace: true, workspaceId: null }, select: { id: true, name: true } }) : null;
+  if (!agency) return fail("Pick an agency CRM.");
+  const where = { workspaceId: agency.id };
+  const data = { workspaceId: null };
+  const moved = await prisma.$transaction([
+    prisma.lead.updateMany({ where, data }),
+    prisma.account.updateMany({ where, data }),
+    prisma.quote.updateMany({ where, data }),
+    prisma.brief.updateMany({ where, data }),
+    prisma.project.updateMany({ where, data }),
+    prisma.task.updateMany({ where, data }),
+    prisma.invoice.updateMany({ where, data }),
+    prisma.request.updateMany({ where, data }),
+    prisma.creator.updateMany({ where, data }),
+    prisma.user.updateMany({ where, data: { workspaceId: null, workspaceRole: null } }),
+    prisma.account.update({ where: { id: agency.id }, data: { crmWorkspace: false } }),
+  ]);
+  const [leads, , quotes] = moved.map((m) => ("count" in m ? m.count : 0));
+  await recordAuditLog({ action: "workspace.merged_into_genesis", entity: "account", entityId: agency.id, actorId: viewer.id, metadata: { name: agency.name } });
+  (await cookies()).delete(VIEWING_COOKIE);
+  revalidatePath("/admin", "layout");
+  return ok(`${agency.name}'s CRM is now part of Genesis Media's: ${quotes} quotes and plans, ${leads} leads and the rest.`);
+}

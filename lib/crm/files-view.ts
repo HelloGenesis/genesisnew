@@ -4,10 +4,13 @@ import { getPrisma } from "@/lib/db";
 
 import { projectRef } from "./catalog";
 import { ensureProjectFolders } from "./drive";
+import { syncProjectDrive } from "./drive-sync";
 import { FOLDERS, type FileRole, visibleTo } from "./files";
 
 /** The folders and files one person sees on a project, ready for <ProjectFiles>. */
 export async function filesFor(projectId: string, role: FileRole, opts: { avatar?: boolean; admin?: boolean } = {}) {
+  /* What was put straight into the project's Drive folders comes in first, so it's listed now (lib/crm/drive-sync). */
+  if (role === "staff") await syncProjectDrive(projectId).catch(() => 0);
   const files = await getPrisma().driveFile.findMany({
     where: { projectId, audience: { in: visibleTo(role, opts.admin) } },
     orderBy: { createdAt: "desc" },
@@ -17,6 +20,9 @@ export async function filesFor(projectId: string, role: FileRole, opts: { avatar
     const u = uploaders.find((x) => x.id === id);
     return u ? (u.name ?? u.email) : null;
   };
+  /* Where each file stands in review: its latest send (sendFileForReview). */
+  const reviews = await getPrisma().deliverable.findMany({ where: { fileId: { in: files.map((f) => f.id) } }, orderBy: { createdAt: "desc" }, select: { fileId: true, status: true } });
+  const reviewOf = (id: string) => reviews.find((r) => r.fileId === id)?.status ?? null;
   const folders = FOLDERS.filter((f) => {
     if (f.key === "avatar" && !opts.avatar && !files.some((x) => x.folder === "avatar")) return false;
     /* A folder this person can neither see anything in nor upload to is left out. */
@@ -53,6 +59,7 @@ export async function filesFor(projectId: string, role: FileRole, opts: { avatar
       uploader: role === "staff" ? name(f.uploadedById) : f.uploadedAs === "staff" ? "Genesis" : f.uploadedAs === "client" ? (name(f.uploadedById) ?? "Client") : "Vendor",
       createdAt: f.createdAt.toISOString(),
       link: f.webViewLink,
+      review: reviewOf(f.id),
     })),
   };
 }

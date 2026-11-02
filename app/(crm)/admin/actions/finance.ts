@@ -116,6 +116,8 @@ export async function inviteStaff(_: ActionState, form: FormData): Promise<Actio
     if (user) await prisma.staffRole.upsert({ where: { userId_role: { userId: user.id, role } }, create: { userId: user.id, role, grantedById: viewer.id }, update: {} });
     else await prisma.staffInvite.upsert({ where: { email_role: { email, role } }, create: { email, role, invitedById: viewer.id }, update: {} });
   }
+  /* On Genesis's team now, so out of any agency's CRM (as lib/crm/session on sign-in). */
+  if (user?.workspaceId) await prisma.user.update({ where: { id: user.id }, data: { workspaceId: null, workspaceRole: null } });
   const named = roles.map((r) => STAFF_ROLE[r].label).join(", ");
   await queueEmail({
     kind: "staff_invite",

@@ -1880,3 +1880,64 @@ model LabOrder {
   @@map("lab_orders")
 }
 
+
+/// WEBSITE ANALYTICS (Genesis, 31 Oct 2026): one visit to the public site (components/genesis/site-tracker, app/api/track).
+/// Anonymous: a random visitor id kept in the browser to tell new from returning, nothing personal.
+model SiteSession {
+  id          String    @id
+  visitorId   String    @map("visitor_id")
+  isNew       Boolean   @default(true) @map("is_new")
+  startedAt   DateTime  @default(now()) @map("started_at")
+  lastAt      DateTime  @default(now()) @map("last_at")
+  host        String?
+  landing     String
+  referrer    String?
+  /// Direct, Google (organic), Instagram, LinkedIn, ChatGPT, … (lib/site-analytics sourceOf).
+  source      String
+  utmSource   String?   @map("utm_source")
+  utmMedium   String?   @map("utm_medium")
+  utmCampaign String?   @map("utm_campaign")
+  country     String?
+  city        String?
+  /// Desktop, Mobile or Tablet.
+  device      String
+  browser     String?
+  os          String?
+  pages       Int       @default(0)
+  views       SitePageView[]
+  events      SiteEvent[]
+
+  @@index([startedAt])
+  @@index([lastAt])
+  @@map("site_sessions")
+}
+
+model SitePageView {
+  id         String      @id @default(cuid())
+  sessionId  String      @map("session_id")
+  session    SiteSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  path       String
+  title      String?
+  /// 1 for the landing page, 2 for the next…
+  position   Int         @default(0)
+  at         DateTime    @default(now())
+  durationMs Int         @default(0) @map("duration_ms")
+
+  @@index([at])
+  @@index([sessionId])
+  @@map("site_page_views")
+}
+
+/// A click on a button or link, or a form sent.
+model SiteEvent {
+  id        String      @id @default(cuid())
+  sessionId String      @map("session_id")
+  session   SiteSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  kind      String
+  label     String
+  path      String
+  at        DateTime    @default(now())
+
+  @@index([at])
+  @@map("site_events")
+}

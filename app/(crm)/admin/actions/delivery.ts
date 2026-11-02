@@ -111,6 +111,25 @@ export async function advanceStage(form: FormData) {
   done();
 }
 
+/** Straight to any step, back or forward, from the project's stage bar (Genesis, 31 Oct 2026). */
+export async function setProjectStage(form: FormData) {
+  const viewer = await requireStaff("delivery");
+  const id = text(form, "id");
+  const to = Number(text(form, "stage"));
+  if (!id || !Number.isInteger(to)) return;
+  const prisma = getPrisma();
+  const p = await prisma.project.findUnique({ where: { id } });
+  if (!p) return;
+  const last = stagesOf(p).length - 1;
+  const stage = Math.max(0, Math.min(last, to));
+  /* The last step delivers it; going back from there reopens it. */
+  const status: ProjectStatus = stage === last ? "DELIVERED" : p.status === "DELIVERED" ? "ACTIVE" : p.status;
+  await prisma.project.update({ where: { id }, data: { stage, status } });
+  await afterProgress(id, p.stage, stage, p.status, status, viewer.id);
+  await queueSheet("projects", id);
+  done();
+}
+
 /** The timeline note, and the client told when their project moves on. */
 async function afterProgress(id: string, from: number, to: number, fromStatus: ProjectStatus, toStatus: ProjectStatus, actorId: string) {
   const prisma = getPrisma();
