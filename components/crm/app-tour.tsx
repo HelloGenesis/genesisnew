@@ -49,7 +49,7 @@ const DASHBOARD: TourStep[] = [
   { target: "text:Tasks", title: "Tasks", body: "What's due today and soon: yours, and what you've given teammates. Tick one off, click a title to rename it, change its date or priority, right here. Overdue dates turn red." },
   { target: "text:Calendar", title: "Calendar", body: "Your Google Calendar for the week, once you've connected Google in the Inbox." },
   { target: "text:From Gmail & Drive", title: "Found in Gmail & Drive", body: "Briefs, client and vendor details, invoices and links the AI found in connected Gmail and Drive. Open one to keep it as a lead or record." },
-  { target: 'nav[aria-label="CRM areas"] a[href="/admin/features"]', title: "All features", body: "Every part of the CRM as a card with what it does, in one place. Search it, or pick an area, and open any of them." },
+  { target: 'nav[aria-label="CRM areas"] [data-area="Setup"]', title: "All features", body: "Every part of the CRM as a card with what it does, in one place: open All features from Setup's menu. Search it, or pick an area, and open any of them." },
   { target: "text:Follow up today", title: "Follow up today", body: "Leads whose next follow-up is today or overdue, so nobody is forgotten." },
   { target: "text:Requests waiting on us", title: "Requests waiting on us", body: "Briefs and questions clients sent from their portal that still need a reply." },
   { target: "text:Due in the next 7 days", title: "Due this week", body: "Projects and deliverables due in the next seven days." },
@@ -91,7 +91,7 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
         const pages = g.items.filter((i) => ABOUT[i.href] && !i.href.includes("tour=") && !i.href.startsWith("/admin/assistant"));
         return pages.map((i, n) => ({
           href: i.href,
-          target: n === 0 ? `${rail} button[aria-label^="${label}"]` : "main h1",
+          target: n === 0 ? `${rail} [data-area="${g.label}"]` : "main h1",
           title: `${label} · ${ABOUT[i.href]!.title}`,
           body: ABOUT[i.href]!.body,
         }));
@@ -100,9 +100,9 @@ export function AppTour({ firstTime, name, area, groups, demo = false, product =
     return [
       { title: `Welcome to ${product}${first ? `, ${first}` : ""}`, body: `A tour of everything, start to end: your dashboard, then each part of ${product} in the order the work happens, from a new lead to a paid invoice. Use the arrow keys or Next; leave any time and take it again from “Take the tour”.` },
       ...(home ? DASHBOARD.map((s) => ({ ...s, href: "/admin" })) : []),
-      { target: rail, href: "/admin", title: "The areas", body: "Home, Sales, Influence, Delivery, Money and Setup down the side. Point at one and everything in it shows beside the rail: its pages, what you can create and the latest few; click it to open its first page. A yellow dot means something's waiting there." },
+      { target: rail, href: "/admin", title: "The areas", body: "Home, Tasks, Email Inbox, Sales, Influencers, Delivery & Timeline and Reports, then Assets, Share Portal, Money and Setup. Point at an area and everything in it shows beside the menu: its pages, what you can create and the latest few. A number means something's waiting there. Fold the menu to icons with the button at its top." },
       ...chapters,
-      { target: `${rail} a[href="/admin/notifications"]`, href: "/admin/notifications", title: "Notifications", body: "A client opened your quote, accepted it or paid; a deliverable was approved or needs changes; a task was given to you. All here, and by email for the important ones." },
+      { target: 'a[href="/admin/notifications"][title="Notifications"]', href: "/admin/notifications", title: "Notifications", body: "A client opened your quote, accepted it or paid; a deliverable was approved or needs changes; a task was given to you. All here, and by email for the important ones." },
       ...(copilot
         ? [
             product === "Nova"
