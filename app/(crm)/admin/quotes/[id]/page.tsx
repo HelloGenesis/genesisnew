@@ -36,6 +36,9 @@ const rupee = (v: number | null | undefined) => (v === null || v === undefined ?
 
 export const dynamic = "force-dynamic";
 
+/* Sending with the PDF, or putting it in Gmail drafts, renders the PDF first: more time than a page needs. */
+export const maxDuration = 120;
+
 export default async function QuotePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; sheets?: string }> }) {
   const viewer = await requireStaff("plans");
   const { id } = await params;

@@ -197,10 +197,12 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   const what = view === "proposal" || view === "proposal-plan" ? "proposal" : view === "plan" || plan ? "influencer plan" : "quotation";
   const html = emailHtml({
     heading: mail.subject,
+    kicker: agency ? undefined : `Genesis Media · ${plan ? "Influencer plan" : "Quotation"} ${ref}`,
+    summary: [`**${q.title}**`, ...lines, pricing && t.discount ? `Discount: −${money(t.discount)}` : "", pricing ? `**Total: ${money(t.total)}**` : ""].filter(Boolean).join("\n"),
+    agency: Boolean(agency),
     paragraphs: [
       `Hi ${q.contactName.split(" ")[0]},`,
       message ?? `Here's our ${what}.`,
-      [`**${q.title}**`, ...lines, pricing && t.discount ? `Discount: −${money(t.discount)}` : "", pricing ? `**Total: ${money(t.total)}**` : ""].filter(Boolean).join("\n"),
       sheetLink ? `The creator list as a Google Sheet: ${sheetLink}` : "",
       `Valid until ${date(q.expiresAt)}.`,
     ],
@@ -215,7 +217,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   /* The very page the client opens, printed (lib/crm/pdf). */
   const pdf = { filename: `${ref.replace(/[^\w.-]+/g, "-")}.pdf`, content: await renderPdf(link) };
   if (delivery === "draft") {
-    const draft = await gmailDraft(actorId, { to: mail.to, subject: mail.subject, text: `${mail.text}${mail.signOff ?? SIGN_OFF}`, attachments: [pdf] });
+    const draft = await gmailDraft(actorId, { to: mail.to, subject: mail.subject, text: `${mail.text}${mail.signOff ?? SIGN_OFF}`, html, attachments: [pdf] });
     return { paymentUrl, draftUrl: draft.url, draftAccount: draft.account };
   }
   await sendNow(mail.to, mail.subject, mail.text, { replyTo: mail.replyTo, signOff: mail.signOff, attachments: [pdf], html });

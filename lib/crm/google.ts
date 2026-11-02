@@ -174,7 +174,16 @@ async function accessToken(userId: string): Promise<string> {
 
 /** A Google API call as this person. `url` is absolute (Gmail, Drive and Sheets live on different hosts). */
 export async function google<T>(userId: string, url: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, { ...init, headers: { Authorization: `Bearer ${await accessToken(userId)}`, ...(init.headers ?? {}) }, signal: AbortSignal.timeout(20_000) });
+  const call = async () => fetch(url, { signal: AbortSignal.timeout(20_000), ...init, headers: { Authorization: `Bearer ${await accessToken(userId)}`, ...(init.headers ?? {}) } });
+  let response = await call();
+  /*
+   * A token from before a reconnect lacks what was just allowed (Genesis, 3 Nov
+   * 2026: Gmail drafts after reconnecting): once more with a fresh one.
+   */
+  if (response.status === 401 || response.status === 403) {
+    tokenCache.delete(userId);
+    response = await call();
+  }
   if (!response.ok) {
     const error = new Error(`Google ${response.status}: ${(await response.text()).slice(0, 300)}`) as Error & { status?: number };
     error.status = response.status;

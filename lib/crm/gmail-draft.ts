@@ -24,13 +24,20 @@ export async function canDraft(userId: string) {
   return Boolean(conn && conn.status === "ACTIVE" && conn.scopes.includes("gmail.compose"));
 }
 
-export async function gmailDraft(userId: string, mail: { to: string[]; subject: string; text: string; attachments?: Attachment[] }) {
+export async function gmailDraft(userId: string, mail: { to: string[]; subject: string; text: string; html?: string; attachments?: Attachment[] }) {
   const conn = await getPrisma().googleConnection.findUnique({ where: { userId }, select: { email: true, status: true, scopes: true } });
   if (!conn || conn.status !== "ACTIVE") throw new DraftAccessError("Connect your Google account in My settings first.");
   if (!conn.scopes.includes("gmail.compose")) throw new DraftAccessError("Reconnect Google in My settings to let the CRM put drafts in your Gmail.");
   const boundary = `genesis-${crypto.randomUUID()}`;
+  /* The designed email (lib/crm/email-html) with the text version beside it, so the draft looks as the client will see it (Genesis, 3 Nov 2026). */
+  const alt = `alt-${crypto.randomUUID()}`;
+  const body = mail.html
+    ? `--${boundary}\r\nContent-Type: multipart/alternative; boundary="${alt}"\r\n\r\n` +
+      `--${alt}\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${wrap(b64(mail.text))}\r\n` +
+      `--${alt}\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${wrap(b64(mail.html))}\r\n--${alt}--`
+    : `--${boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${wrap(b64(mail.text))}`;
   const parts = [
-    `--${boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${wrap(b64(mail.text))}`,
+    body,
     ...(mail.attachments ?? []).map(
       (a) => `--${boundary}\r\nContent-Type: application/pdf; name="${a.filename}"\r\nContent-Disposition: attachment; filename="${a.filename}"\r\nContent-Transfer-Encoding: base64\r\n\r\n${wrap(a.content.toString("base64"))}`,
     ),
@@ -41,6 +48,8 @@ export async function gmailDraft(userId: string, mail: { to: string[]; subject: 
     method: "POST",
     headers: { "Content-Type": "message/rfc822" },
     body: mime,
+    /* A draft with its PDF can be several MB. */
+    signal: AbortSignal.timeout(60_000),
   });
   return { url: `https://mail.google.com/mail/u/${encodeURIComponent(conn.email)}/#drafts?compose=${draft.message.id}`, account: conn.email };
 }

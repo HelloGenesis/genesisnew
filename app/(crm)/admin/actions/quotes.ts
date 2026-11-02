@@ -374,7 +374,14 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
       return ok(`Draft saved here and in ${draftAccount}'s Gmail drafts, with the PDF. Nothing was sent.`);
     } catch (error) {
       console.error("[crm] gmail draft failed", error);
-      return ok(error instanceof DraftAccessError ? `Draft saved here. ${error.message}` : "Draft saved here, but Gmail didn't take it. Try again.");
+      const status = (error as { status?: number }).status;
+      return fail(
+        error instanceof DraftAccessError
+          ? `Draft saved here. ${error.message}`
+          : status === 401 || status === 403
+            ? "Draft saved here, but Google refused the Gmail draft. Reconnect Google in My settings and allow everything it asks for, then Save draft again."
+            : `Draft saved here, but Gmail didn't take it${status ? ` (Google ${status})` : ""}. Try again.`,
+      );
     }
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return fail("Add the client's email to the quote (and save) before sending.");
