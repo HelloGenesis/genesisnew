@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Download, FileText, Link2, Play, Trash2, Upload, X } from "lucide-react";
+import { Check, Download, ExternalLink, FileText, Link2, Lock, Play, Share2, Trash2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { addProjectLink, briefAsGoogleDoc, createProjectGoogleFile, deleteProjectFile, saveProjectBrief, sendFileForReview, setFileAudience } from "@/app/(crm)/files-actions";
 
@@ -95,17 +96,31 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
   };
   const [making, setMaking] = useState(false);
   const [sending, setSending] = useState<string | null>(null);
-  const addLink = async () => {
+  /*
+   * A BOX, NOT A POP-UP (Genesis, 3 Nov 2026: "just add a box here", over the
+   * browser's prompt): Add a link and the new Google Doc or Sheet open a small
+   * form under the buttons.
+   */
+  const [box, setBox] = useState<null | { kind: "link" | "doc" | "sheet"; url: string; name: string }>(null);
+  const openBox = (kind: "link" | "doc" | "sheet") => {
     if (!folder) return;
-    const url = window.prompt(`Paste the link to add to ${folder.label} (Drive, Frame.io, YouTube, Dropbox, Figma…)`);
-    if (!url) return;
-    const name = window.prompt("Name it", [label, folder.label].filter(Boolean).join(" · "));
-    if (name === null) return;
+    const base = [label, folder.label].filter(Boolean).join(" · ");
+    setError(null);
+    setBox({ kind, url: "", name: kind === "doc" ? `${base} · Doc` : kind === "sheet" ? `${base} · Sheet` : base });
+  };
+  const submitBox = async () => {
+    if (!box) return;
+    if (box.kind === "link") await addLink(box.url, box.name);
+    else await newGoogle(box.kind, box.name);
+  };
+  const addLink = async (url: string, name: string) => {
+    if (!folder || !url.trim()) return setError("Paste a link first.");
     setMaking(true);
     setError(null);
     const r = await addProjectLink(projectId, folder.key, url, name);
     setMaking(false);
     if (!r.ok) return setError(r.error);
+    setBox(null);
     router.refresh();
   };
   const sendOn = async (f: FileItem, to: "team" | "client") => {
@@ -117,17 +132,15 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
     if (!r.ok) return setError(r.error);
     router.refresh();
   };
-  const newGoogle = async (kind: "doc" | "sheet") => {
+  /* Named after the project, so it's findable on Drive (Genesis, 31 Oct 2026: "rename this according to the project, so it's trackable"). */
+  const newGoogle = async (kind: "doc" | "sheet", name: string) => {
     if (!folder) return;
-    /* Named after the project, so it's findable on Drive (Genesis, 31 Oct 2026: "rename this according to the project, so it's trackable"). */
-    const base = [label, folder.label].filter(Boolean).join(" · ");
-    const name = window.prompt(kind === "doc" ? "Name the Google Doc" : "Name the Google Sheet", kind === "doc" ? `${base} · Doc` : `${base} · Sheet`);
-    if (name === null) return;
     setMaking(true);
     setError(null);
     const r = await createProjectGoogleFile(projectId, folder.key, kind, name);
     setMaking(false);
     if (!r.ok) return setError(r.error);
+    setBox(null);
     if (r.url) window.open(r.url, "_blank", "noopener");
     router.refresh();
   };
@@ -185,21 +198,25 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
               <p className="text-[1rem] font-semibold text-bone">{folder.label}</p>
               <p className="mt-0.5 text-[0.8125rem] text-ash">{folder.hint}</p>
             </div>
-            {(drive[folder.key] ?? drive.project) && (
-              <a href={drive[folder.key] ?? drive.project} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Open in Google Drive ↗</a>
+            {role === "staff" ? (
+              <FolderShare
+                folder={folder.label}
+                drive={drive[folder.key] ?? drive.project}
+                value={audience || defaultFor(folder)}
+                options={Object.entries(AUDIENCE).filter(([k]) => admin || k !== "ADMINS").map(([k, v]) => [k, k === "TEAM" && agency ? "Team only" : agency ? v.replace("Genesis", "Team") : v] as [string, string])}
+                onChange={setAudience}
+                team={teamName}
+              />
+            ) : (
+              (drive[folder.key] ?? drive.project) && (
+                <a href={drive[folder.key] ?? drive.project} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Open in Google Drive ↗</a>
+              )
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2 text-[0.8125rem] text-ash">
             <span>{role === "staff" ? "New files are seen by:" : "Shared with:"}</span>
             <SharedWith audience={audience || defaultFor(folder)} team={teamName} />
-            {role === "staff" && (
-              <select value={audience} onChange={(e) => setAudience(e.target.value)} className="crm-input !min-h-8 !w-auto !py-0.5 text-[0.75rem]" aria-label="Who can see new files">
-                <option value="">{agency ? "Change: admins only (default)" : "Change who sees new files"}</option>
-                {Object.entries(AUDIENCE).filter(([k]) => admin || k !== "ADMINS").map(([k, v]) => (
-                  <option key={k} value={k}>{k === "TEAM" && agency ? "Team only" : agency ? v.replace("Genesis", "Team") : v}</option>
-                ))}
-              </select>
-            )}
+
           </div>
           {folder.canUpload && (
             <div className="flex flex-wrap gap-2 border-t border-[var(--glass-border)] pt-3">
@@ -209,16 +226,34 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
               </button>
               {role === "staff" && (
                 <>
-                  <button type="button" onClick={() => void addLink()} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}><Link2 className="size-4" aria-hidden /> Add a link</button>
+                  <button type="button" onClick={() => openBox("link")} aria-pressed={box?.kind === "link"} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}><Link2 className="size-4" aria-hidden /> Add a link</button>
                   {GOOGLE_FILES.has(folder.key) && (
                     <>
-                      <button type="button" onClick={() => void newGoogle("doc")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}>＋ Google Doc</button>
-                      <button type="button" onClick={() => void newGoogle("sheet")} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}>＋ Google Sheet</button>
+                      <button type="button" onClick={() => openBox("doc")} aria-pressed={box?.kind === "doc"} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}>＋ Google Doc</button>
+                      <button type="button" onClick={() => openBox("sheet")} aria-pressed={box?.kind === "sheet"} className="crm-btn crm-btn-secondary crm-btn-sm" disabled={making}>＋ Google Sheet</button>
                     </>
                   )}
                 </>
               )}
             </div>
+          )}
+          {box && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submitBox();
+              }}
+              className="grid gap-2 rounded-xl border border-[var(--glass-border)] bg-[var(--crm-field)] p-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto]"
+            >
+              {box.kind === "link" && (
+                <input autoFocus type="url" required value={box.url} onChange={(e) => setBox({ ...box, url: e.target.value })} placeholder={`Paste the link: Drive, Frame.io, YouTube, Dropbox, Figma…`} aria-label="Link" className="crm-input !min-h-9" />
+              )}
+              <input autoFocus={box.kind !== "link"} value={box.name} onChange={(e) => setBox({ ...box, name: e.target.value })} placeholder="Name" aria-label="Name" className={`crm-input !min-h-9 ${box.kind === "link" ? "" : "sm:col-span-2"}`} />
+              <div className="flex gap-2">
+                <button className="crm-btn crm-btn-primary crm-btn-sm" disabled={making}>{making ? "Working…" : box.kind === "link" ? "Add link" : box.kind === "doc" ? "Create Doc" : "Create Sheet"}</button>
+                <button type="button" onClick={() => setBox(null)} className="crm-btn crm-btn-secondary crm-btn-sm">Cancel</button>
+              </div>
+            </form>
           )}
         </div>
       )}
@@ -389,5 +424,81 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
         </div>
       )}
     </div>
+  );
+}
+
+/*
+ * SHARE A FOLDER, THE SAME WAY AS A QUOTE (Genesis, 3 Nov 2026: "instead of
+ * this add a share button here, same as the other one"): who sees new files
+ * in it, as a list to pick from, and its Google Drive folder to open or copy.
+ */
+function FolderShare({ folder, drive, value, options, onChange, team }: { folder: string; drive?: string; value: string; options: [string, string][]; onChange: (v: string) => void; team: string }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [open]);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="crm-btn crm-btn-primary crm-btn-sm">
+        <Share2 className="size-4" aria-hidden /> Share
+      </button>
+      {open &&
+        createPortal(
+          <div className="fixed inset-0 z-[90] grid place-items-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setOpen(false)}>
+            <div role="dialog" aria-modal aria-label={`Share ${folder}`} onClick={(e) => e.stopPropagation()} className="flex max-h-[88svh] w-full max-w-[32rem] flex-col overflow-hidden rounded-[1.5rem] border border-[var(--glass-border)] bg-[var(--crm-panel)] shadow-[var(--shadow-float)]">
+              <div className="flex items-start gap-3 px-6 pt-6">
+                <h2 className="min-w-0 flex-1 text-[1.375rem] font-semibold leading-snug text-bone">Share &lsquo;{folder}&rsquo;</h2>
+                <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="grid size-9 shrink-0 place-items-center rounded-full text-ash hover:bg-[var(--hover-wash)] hover:text-bone"><X className="size-5" aria-hidden /></button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-4">
+                <h3 className="text-[1rem] font-semibold text-bone">Who sees new files</h3>
+                <p className="mt-0.5 text-[0.8125rem] text-ash">For what you add to {folder} from now on. Each file can still be changed on its own.</p>
+                <ul className="mt-3 space-y-1.5">
+                  {options.map(([k, label]) => (
+                    <li key={k}>
+                      <button type="button" onClick={() => onChange(k)} aria-pressed={value === k} className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${value === k ? "border-[#ffc516] bg-[#ffc516]/10" : "border-[var(--glass-border)] hover:bg-[var(--hover-wash)]"}`}>
+                        <span className={`grid size-5 shrink-0 place-items-center rounded-full border ${value === k ? "border-[#ffc516] bg-[#ffc516] text-[#141216]" : "border-[var(--glass-border)]"}`}>{value === k && <Check className="size-3" aria-hidden />}</span>
+                        <span className="min-w-0 flex-1 text-[0.9375rem] font-medium text-bone">{label}</span>
+                        <SharedWith audience={k} small team={team} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <h3 className="mt-5 text-[1rem] font-semibold text-bone">Google Drive folder</h3>
+                <div className="mt-2 flex items-center gap-3 pb-2">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--hover-wash)] text-ash"><Lock className="size-4" aria-hidden /></span>
+                  <span className="min-w-0 text-[0.8125rem] text-ash">In Genesis&apos;s Drive. Clients and vendors get their files through the CRM, not the folder.</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--crm-line)] px-6 py-4">
+                <div className="flex flex-wrap gap-2">
+                  {drive && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(drive).catch(() => undefined);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1800);
+                        }}
+                        className="crm-btn crm-btn-secondary crm-btn-sm"
+                      >
+                        {copied ? <Check className="size-4" aria-hidden /> : <Link2 className="size-4" aria-hidden />} {copied ? "Copied" : "Copy link"}
+                      </button>
+                      <a href={drive} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm"><ExternalLink className="size-4" aria-hidden /> Open in Google Drive</a>
+                    </>
+                  )}
+                </div>
+                <button type="button" onClick={() => setOpen(false)} className="crm-btn crm-btn-primary crm-btn-sm">Done</button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

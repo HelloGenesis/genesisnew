@@ -134,6 +134,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
       <PageHead
         kicker={`${plan ? "Influencer plan" : "Price quote"} ${docRef(q)}`}
         title={q.title}
+        corner={<ShareDialog quoteId={q.id} title={q.title} viewerId={viewer.id} link={appUrl(`/admin/quotes/${q.id}`)} crm={crmName} people={withAccess} candidates={candidates} />}
         sub={<>{q.account ? <Link href={`/admin/accounts/${q.account.id}`} className="crm-link">{q.account.name}</Link> : (q.company ?? (showContact ? q.contactName : "Client"))} · {money(q.totalPaise)}{q.lead && showContact && <> · lead <Link href={`/admin/leads/${q.lead.id}`} className="crm-link">{q.lead.name}</Link></>}{q.request && <> · request <Link href={`/admin/requests/${q.request.id}`} className="crm-link">{q.request.title}</Link></>}</>}
       >
         <Status value={QUOTE_STATUS[q.status]} />
@@ -172,7 +173,6 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             )}
         </Menu>
         <a href={`/quote/${q.token}`} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Client view / PDF ↗</a>
-        <ShareDialog quoteId={q.id} title={q.title} viewerId={viewer.id} link={appUrl(`/admin/quotes/${q.id}`)} crm={crmName} people={withAccess} candidates={candidates} />
       </PageHead>
       {saved && <Notice>Saved as a draft. Check the client view, then send it.{sheetsNote ? ` ${sheetsNote}` : ""}</Notice>}
 
