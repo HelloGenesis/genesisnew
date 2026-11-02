@@ -234,7 +234,7 @@ export function ProjectFiles({ projectId, role, folders, files, brief, canDelete
                   setSavingBrief("idle");
                 }}
                 rows={8}
-                className="crm-input w-full"
+                className="crm-input w-full !min-h-48"
                 placeholder="What the client wants: the idea, the audience, the deliverables, the dos and don'ts."
                 aria-label="The brief"
               />

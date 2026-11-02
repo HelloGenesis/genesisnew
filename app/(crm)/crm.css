@@ -194,9 +194,19 @@
   border-color: #ffc516;
   box-shadow: 0 0 0 3px rgb(255 197 22 / 0.25);
 }
+/*
+ * EVERY TEXT BOX AS TALL AS ITS TEXT (Genesis, 3 Nov 2026: "extended section
+ * on a lot of places is not available, fix it all across"): it grows while
+ * you type, up to most of the screen, then scrolls; the corner still drags it
+ * taller. field-sizing does it in Chrome and Edge; components/crm/auto-grow
+ * does it elsewhere.
+ */
 textarea.crm-input {
   min-height: 6rem;
+  max-height: 70vh;
   resize: vertical;
+  field-sizing: content;
+  overflow-y: auto;
 }
 select.crm-input {
   appearance: none;

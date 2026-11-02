@@ -48,7 +48,10 @@ export function ShareDialog({ quoteId, title, viewerId, link, crm, people, candi
 
   const has = useMemo(() => new Set([...people.map((p) => p.id), ...picked.map((p) => p.id), viewerId]), [people, picked, viewerId]);
   const q = query.trim().toLowerCase();
-  const matches = q ? candidates.filter((c) => !has.has(c.id) && (c.name.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q))).slice(0, 6) : [];
+  /* The team shows as soon as the box is clicked (Genesis, 3 Nov 2026: "a little confusing, as it's not visible"); typing narrows it. */
+  const [listOpen, setListOpen] = useState(false);
+  const open_ = candidates.filter((c) => !has.has(c.id));
+  const matches = (q ? open_.filter((c) => c.name.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q)) : listOpen ? open_ : []).slice(0, 8);
 
   const send = () =>
     start(async () => {
@@ -93,6 +96,8 @@ export function ShareDialog({ quoteId, title, viewerId, link, crm, people, candi
                       ref={input}
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
+                      onFocus={() => setListOpen(true)}
+                      onBlur={() => setTimeout(() => setListOpen(false), 150)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && matches[0]) {
                           e.preventDefault();
@@ -101,15 +106,18 @@ export function ShareDialog({ quoteId, title, viewerId, link, crm, people, candi
                         }
                         if (e.key === "Backspace" && !query && picked.length) setPicked((x) => x.slice(0, -1));
                       }}
-                      placeholder={picked.length ? "" : "Add people from your team"}
+                      placeholder={picked.length ? "Add more" : "Add people from your team: click to see them, or type a name"}
                       className="min-w-[8rem] flex-1 bg-transparent text-[0.9375rem] text-bone outline-none placeholder:text-ash"
                     />
                   </div>
+                  {listOpen && !q && open_.length === 0 && (
+                    <p className="mt-2 rounded-xl border border-[var(--glass-border)] bg-[var(--crm-field)] px-3 py-3 text-[0.8125rem] text-ash">Everyone on your team already has access.</p>
+                  )}
                   {matches.length > 0 && (
-                    <ul className="absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-xl border border-[var(--glass-border)] bg-[var(--crm-panel)] shadow-[var(--shadow-float)]">
+                    <ul className="mt-2 max-h-72 overflow-y-auto rounded-xl border border-[var(--glass-border)] bg-[var(--crm-field)] py-1">
                       {matches.map((m) => (
                         <li key={m.id}>
-                          <button type="button" onClick={() => { setPicked((x) => [...x, m]); setQuery(""); input.current?.focus(); }} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-[var(--hover-wash)]">
+                          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setPicked((x) => [...x, m]); setQuery(""); input.current?.focus(); }} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-[var(--hover-wash)]">
                             <Avatar p={m} />
                             <span className="min-w-0"><span className="block truncate text-[0.875rem] font-medium text-bone">{m.name}</span>{m.email && <span className="block truncate text-[0.75rem] text-ash">{m.email}</span>}</span>
                           </button>

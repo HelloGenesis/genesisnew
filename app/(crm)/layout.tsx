@@ -7,6 +7,7 @@ import { getViewer } from "@/lib/crm/session";
 import { isDatabaseConfigured } from "@/lib/db";
 import { ThemeToggle } from "@/components/genesis/theme-toggle";
 import { HistoryNav } from "@/components/crm/history-nav";
+import { AutoGrow } from "@/components/crm/auto-grow";
 
 import "./crm.css";
 
@@ -40,6 +41,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       {children}
+      <AutoGrow />
     </div>
   );
 }
