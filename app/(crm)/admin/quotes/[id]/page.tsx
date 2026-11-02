@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/crm/action-form";
 import { OutreachPanel } from "@/components/crm/outreach-panel";
 import { ShareBox } from "@/components/crm/share-box";
 import { ShareDialog } from "@/components/crm/share-dialog";
+import { MessageBox } from "@/components/crm/rephrase-bar";
 import { peopleWithAccess, shareCandidates } from "@/lib/crm/quote-share";
 import { workspaces } from "@/lib/crm/workspace";
 import { QuoteBuilder, type BuilderQuote, type PlanColumnsState, type ProposalSection } from "@/components/crm/quote-builder";
@@ -143,7 +144,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             <Field label="Send" hint="Together, or each part on its own: proposal (platforms, problems, objectives), pricing (lines, totals, terms), influencer plan (the creator list).">
               <Select name="view" required defaultValue={draft?.view ?? "both"} options={[["both", "Everything together (proposal, pricing, influencer plan)"], ["proposal", "Proposal only (no prices)"], ["proposal-plan", "Proposal + influencer list (no prices)"], ["plan", "Influencer plan only (with its prices)"], ["pricing", "Pricing only"]]} />
             </Field>
-            <Field label={showContact && q.contactName.trim() ? `Message to ${q.contactName}` : "Message to the client"} hint="Goes above the summary in the email."><textarea name="message" className="crm-input !min-h-24" defaultValue={draft ? draft.message : plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} /></Field>
+            <Field label={showContact && q.contactName.trim() ? `Message to ${q.contactName}` : "Message to the client"} hint="Goes above the summary in the email."><MessageBox name="message" defaultValue={draft ? draft.message : plan ? "Here's the influencer plan we've put together, with the creator list and fees. Approve it on the link and we'll start booking." : "Thank you for the brief. Here's our quotation for the scope we discussed."} fill={{ name: showContact ? q.contactName : null, title: q.title }} /></Field>
             {/* By the CRM's email (with the PDF if wanted), or as a draft in the sender's own Gmail (Genesis, 31 Oct 2026). */}
             <Field label="How" hint={drafts ? "A draft goes into your Gmail with the PDF attached; edit it there and send it yourself." : "For Gmail drafts, reconnect Google in My settings once."}>
               <Select name="deliver" required defaultValue={draft?.deliver ?? "email"} options={[["email", "Email it from the CRM"], ["draft", drafts ? "Put a draft in my Gmail to edit and send (PDF attached)" : "Put a draft in my Gmail (reconnect Google first)"]]} />
