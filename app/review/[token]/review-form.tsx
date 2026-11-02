@@ -21,7 +21,7 @@ export function ReviewForm({ token, start }: { token: string; start: "approve" |
         <button type="button" disabled={busy} onClick={() => decide("approve")} className="h-12 w-full rounded-full bg-[#ffc516] font-semibold text-[#141216] disabled:opacity-60">{busy ? "Approving…" : "Yes, approve it"}</button>
       ) : (
         <>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={5} placeholder="Everything you'd like changed, in one note: the more specific, the faster the next version." className="w-full rounded-2xl border border-[#d8d4cc] bg-white px-4 py-3 text-[#141216] outline-none focus:border-[#ffc516]" />
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={5} placeholder="Everything you'd like changed, in one note: the more specific, the faster the next version." className="min-h-32 max-h-[70vh] w-full resize-y rounded-2xl [field-sizing:content] border border-[#d8d4cc] bg-white px-4 py-3 text-[#141216] outline-none focus:border-[#ffc516]" />
           <button type="button" disabled={busy} onClick={() => decide("changes")} className="h-12 w-full rounded-full bg-[#141216] font-semibold text-white disabled:opacity-60">{busy ? "Sending…" : "Send my changes"}</button>
         </>
       )}
