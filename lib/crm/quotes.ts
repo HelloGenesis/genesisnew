@@ -59,7 +59,14 @@ export async function refreshTotals(quoteId: string) {
  */
 export type QuoteDelivery = "email" | "email-pdf" | "draft";
 
-export async function sendQuote(quoteId: string, actorId: string, message: string | null, withPayment: boolean, view: "both" | "proposal" | "pricing" | "plan" | "proposal-plan" = "both", delivery: QuoteDelivery = "email"): Promise<{ paymentUrl: string | null; draftUrl?: string; draftAccount?: string }> {
+export async function sendQuote(quoteId: string, actorId: string, message: string | null, withPayment: boolean, view: "both" | "proposal" | "pricing" | "plan" | "proposal-plan" = "both", delivery: QuoteDelivery = "email", opts: { saveOnly?: boolean } = {}): Promise<{ paymentUrl: string | null; draftUrl?: string; draftAccount?: string }> {
+  /*
+   * SAVE DRAFT INTO GMAIL (Genesis, 3 Nov 2026: "draft should be saved in Gmail
+   * draft"): the same email as a Gmail draft, but nothing moves: the quote
+   * stays as it is, no new payment link (an existing one goes in), and the
+   * lead and briefs don't change until it's really sent.
+   */
+  const saveOnly = Boolean(opts.saveOnly);
   const prisma = getPrisma();
   const t = await refreshTotals(quoteId);
   const q = t.quote;
@@ -69,7 +76,8 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
 
   /* Pay links collect into Genesis's Razorpay: never on an agency CRM's quote. */
   const agency = q.workspaceId ? await workspaceProfile(q.workspaceId) : null;
-  if (withPayment && !agency && t.total > 0 && razorpayKeys()) {
+  if (saveOnly) paymentUrl = withPayment ? q.paymentUrl : null;
+  else if (withPayment && !agency && t.total > 0 && razorpayKeys()) {
     if (q.razorpayLinkId) await razorpay(`payment_links/${q.razorpayLinkId}/cancel`, {}).catch(() => undefined);
     const reference = `GMQ${q.number}-${randomBytes(3).toString("hex")}`.toUpperCase();
     const link = await razorpay<{ id: string; short_url: string }>("payment_links", {
@@ -119,12 +127,12 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
     await queueSheet("orders", order.id);
   }
 
-  await prisma.quote.update({
+  if (!saveOnly) await prisma.quote.update({
     where: { id: q.id },
     data: { status: "SENT", sentAt: new Date(), ...(linkId ? { razorpayLinkId: linkId, paymentUrl } : withPayment ? {} : { razorpayLinkId: null, paymentUrl: null }) },
   });
   /* The lead it answers, even when the quote started from a brief or a client: theirs by email (Genesis, 12 Oct 2026). */
-  const leadId = q.leadId ?? (await prisma.lead.findFirst({ where: { email: q.contactEmail, status: { notIn: ["WON", "LOST"] } }, orderBy: { createdAt: "desc" }, select: { id: true } }))?.id ?? null;
+  const leadId = saveOnly ? null : q.leadId ?? (await prisma.lead.findFirst({ where: { email: q.contactEmail, status: { notIn: ["WON", "LOST"] } }, orderBy: { createdAt: "desc" }, select: { id: true } }))?.id ?? null;
   if (leadId && !q.leadId) await prisma.quote.update({ where: { id: q.id }, data: { leadId } });
   if (leadId) {
     await prisma.lead.updateMany({ where: { id: leadId, status: { in: ["NEW", "CONTACTED", "QUALIFIED", "CALL_BOOKED"] } }, data: { status: "PROPOSAL_SENT", valuePaise: t.total } });
@@ -132,7 +140,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
     await queueSheet("leads", leadId);
   }
   /* The briefs it answers move on too (Genesis, 31 Oct 2026): a new brief from this lead or client is now quoted. */
-  const briefOf = [...(leadId ? [{ leadId }] : []), ...(q.accountId ? [{ accountId: q.accountId }] : [])];
+  const briefOf = saveOnly ? [] : [...(leadId ? [{ leadId }] : []), ...(q.accountId ? [{ accountId: q.accountId }] : [])];
   if (briefOf.length) await prisma.brief.updateMany({ where: { status: "NEW", OR: briefOf }, data: { status: "QUOTED" } });
 
   const plan = q.kind === "INFLUENCER_PLAN";
