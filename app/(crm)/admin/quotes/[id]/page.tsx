@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
 import { OutreachPanel } from "@/components/crm/outreach-panel";
 import { ShareBox } from "@/components/crm/share-box";
+import { ShareDialog } from "@/components/crm/share-dialog";
+import { peopleWithAccess, shareCandidates } from "@/lib/crm/quote-share";
+import { workspaces } from "@/lib/crm/workspace";
 import { QuoteBuilder, type BuilderQuote, type PlanColumnsState, type ProposalSection } from "@/components/crm/quote-builder";
 import { Card, Field, Notice, PageHead, Select, Status } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
@@ -15,7 +18,7 @@ import { lastReaches } from "@/lib/crm/reachout";
 import { pullPlanSheets } from "@/lib/crm/plan-sync";
 import { builderData } from "@/lib/crm/quote-data";
 import { docRef } from "@/lib/crm/quote-templates";
-import { quoteScope, seesCreators, creatorScope, seesQuoteContact } from "@/lib/crm/scope";
+import { isSuperAdmin, quoteScope, seesCreators, creatorScope, seesQuoteContact } from "@/lib/crm/scope";
 import { can, requireStaff } from "@/lib/crm/session";
 import { razorpayKeys } from "@/lib/razorpay";
 
@@ -40,7 +43,21 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     where: { id, ...quoteScope(viewer) },
     include: { lines: { orderBy: { position: "asc" } }, creators: { orderBy: { position: "asc" } }, order: true, projects: true, lead: true, account: true, request: true },
   });
-  if (!q) notFound();
+  if (!q) {
+    /*
+     * IN ANOTHER CRM (Genesis, 2 Nov 2026: "as a super admin, why wasn't I able
+     * to see this"): Genesis's owners are switched to the CRM it's in and
+     * brought straight back here. Its key present, so lib/db looks everywhere.
+     */
+    const elsewhere = isSuperAdmin(viewer) && !viewer.workspaceId ? await getPrisma().quote.findFirst({ where: { id, workspaceId: undefined }, select: { workspaceId: true } }) : null;
+    if (elsewhere && (elsewhere.workspaceId ?? null) !== (viewer.ws ?? null)) redirect(`/admin/switch?ws=${elsewhere.workspaceId ?? ""}&next=${encodeURIComponent(`/admin/quotes/${id}`)}`);
+    notFound();
+  }
+  const [withAccess, candidates, crmName] = await Promise.all([
+    peopleWithAccess(q),
+    shareCandidates(q.workspaceId),
+    q.workspaceId ? workspaces().then((w) => w.find((x) => x.id === q.workspaceId)?.name ?? "this CRM") : "Genesis Media",
+  ]);
   /* The client's contact details are confidential: only for the quote's maker, the lead's owner and those given every lead. */
   const showContact = seesQuoteContact(viewer, q);
   /* Creators' numbers and emails, only where this person may see them (lib/crm/creator-privacy). */
@@ -114,6 +131,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         <Status value={QUOTE_STATUS[q.status]} />
         <Link href={`/admin/quotes/${q.id}/history`} className="crm-btn crm-btn-secondary crm-btn-sm">Change history</Link>
         <a href={`/quote/${q.token}`} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Client view / PDF ↗</a>
+        <ShareDialog quoteId={q.id} title={q.title} viewerId={viewer.id} link={appUrl(`/admin/quotes/${q.id}`)} crm={crmName} people={withAccess} candidates={candidates} />
       </PageHead>
       {saved && <Notice>Saved as a draft. Check the client view, then send it.{sheetsNote ? ` ${sheetsNote}` : ""}</Notice>}
 

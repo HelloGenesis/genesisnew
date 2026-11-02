@@ -5,7 +5,7 @@ import { STAFF_ROLE, date } from "@/lib/crm/catalog";
 import { AREAS, CREATOR_ACCESS, creatorAccess, isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 
-import { grantAgencyCrm } from "../actions/workspaces";
+import { grantAgencyCrm, mergeCrmIntoGenesis, moveToGenesisTeam } from "../actions/workspaces";
 import { grantPortalAccess, inviteStaff, resetTwoFactor, revokeStaff, setGrants, setStaffProfile } from "../actions/finance";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +26,7 @@ export default async function StaffPage() {
     prisma.account.findMany({ where: { kind: "AGENCY", workspaceId: null }, orderBy: { name: "asc" }, select: { id: true, name: true, crmWorkspace: true, _count: { select: { crmTeam: true } } } }),
   ]);
   const people = [...new Map(roles.map((r) => [r.userId, r.user])).values()];
+  const inAgency = people.filter((u) => u.workspaceId);
   const accessOf = (u: (typeof people)[number]) => creatorAccess({ ...viewer, id: u.id, grants: u.grants, roles: roles.filter((r) => r.userId === u.id).map((r) => r.role) });
   const seesText = (grants: string[]) => (grants.some((g) => g in AREAS) ? grants.filter((g) => g in AREAS).map((g) => AREAS[g]).join(", ") : "Only their own");
   return (
@@ -75,6 +76,28 @@ export default async function StaffPage() {
             <p className="mt-4 text-[0.875rem] text-ash">
               Agencies with a CRM: {agencies.filter((a) => a.crmWorkspace).map((a) => `${a.name} (${a._count.crmTeam} ${a._count.crmTeam === 1 ? "person" : "people"})`).join(", ")}
             </p>
+          )}
+          {inAgency.length > 0 && (
+            <div className="mt-4 rounded-xl border border-[#f59e0b]/50 bg-[#f59e0b]/10 p-4 text-[0.875rem]">
+              <p className="font-semibold text-bone">On Genesis&apos;s team, but working inside an agency&apos;s CRM</p>
+              <p className="mt-1 text-ash">What they make is filed in that agency&apos;s CRM, not Genesis Media&apos;s. Take them out, or bring that CRM into Genesis Media&apos;s below.</p>
+              <ul className="mt-2 space-y-1">
+                {inAgency.map((u) => (
+                  <li key={u.id} className="flex flex-wrap items-center gap-2">
+                    <span className="text-bone">{u.name ?? u.email}</span>
+                    <span className="text-ash">in {agencies.find((a) => a.id === u.workspaceId)?.name ?? "an agency CRM"}</span>
+                    <form action={moveToGenesisTeam}><input type="hidden" name="userId" value={u.id} /><button className="crm-btn crm-btn-secondary crm-btn-sm">Move to Genesis Media</button></form>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {agencies.some((a) => a.crmWorkspace) && (
+            <ActionForm action={mergeCrmIntoGenesis} submit="Bring into Genesis Media" confirm="Everything in that CRM becomes Genesis Media's and its people join Genesis. This can't be undone from here. Go ahead?" reset>
+              <p className="mt-6 text-[0.875rem] font-semibold text-bone">An agency CRM that was really Genesis&apos;s</p>
+              <p className="text-[0.8125rem] text-ash">For a test CRM, or one a teammate ended up in: its leads, quotes and plans, briefs, projects, invoices and influencers move into Genesis Media&apos;s.</p>
+              <Field label="Agency CRM"><Select name="ws" required options={agencies.filter((a) => a.crmWorkspace).map((a) => [a.id, a.name] as const)} placeholder="Pick one" /></Field>
+            </ActionForm>
           )}
         </Card>
       )}

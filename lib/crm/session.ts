@@ -201,6 +201,8 @@ export async function syncIdentity(identity: Identity) {
         update: {},
       });
     }
+    /* Genesis's own team is never inside an agency's CRM: a role takes them out of one (their work there stays there). */
+    if (roles.size && user.workspaceId) user = await prisma.user.update({ where: { id: user.id }, data: { workspaceId: null, workspaceRole: null } });
     if (staffInvites.length) {
       await prisma.staffInvite.deleteMany({ where: { email: verifiedEmail } });
       await recordAuditLog({ action: "staff.invite_claimed", entity: "user", entityId: user.id, actorId: user.id, metadata: { roles: [...roles] } });
