@@ -53,6 +53,7 @@ export default async function NewQuote({ searchParams }: { searchParams: Promise
     addGst: true,
     gstPercent: 18,
     igst: false,
+    currency: "INR",
     proposalPlatforms: brief?.platforms ?? [],
     proposalProblems: null,
     proposalObjectives: brief?.objective ?? null,

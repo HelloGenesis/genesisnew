@@ -7,7 +7,7 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import type { SubscriptionStatus } from "@/lib/generated/prisma/enums";
 import { products } from "@/lib/products";
 
-import { divisionOf, money, quotaFrom } from "./catalog";
+import { divisionOf, money, moneyIn, quotaFrom } from "./catalog";
 import { markInvoicePaid } from "./invoices";
 import { accountEmails, appUrl, queueEmail, queueStaffEmail } from "./notify";
 import { openProject } from "./projects";
@@ -469,7 +469,13 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
     archiveLater("quote", quote.id);
   }
 
-  const amount = num(payment?.amount) ?? order.totalPaise;
+  /*
+   * A CLIENT ABROAD (Genesis, 5 Nov 2026): Razorpay gives the payment in their
+   * currency and, as base_amount, the rupees it comes to; the books keep rupees.
+   */
+  const foreign = order.currency !== "INR";
+  if (foreign && num(payment?.base_amount) === undefined) console.warn("[crm] foreign payment without base_amount", order.reference, payment?.id);
+  const amount = (foreign ? num(payment?.base_amount) : undefined) ?? num(payment?.amount) ?? order.totalPaise;
   const paymentRow = str(payment?.id)
     ? await prisma.payment.upsert({
         where: { razorpayId: str(payment!.id)! },
@@ -482,11 +488,11 @@ export async function fulfil(orderId: string, payment?: Entity, subscriptionId?:
 
   /* The lead that became this order. */
   for (const lead of leads) {
-    await prisma.lead.update({ where: { id: lead.id }, data: { status: "WON", accountId, valuePaise: order.totalPaise } });
-    await prisma.activity.create({ data: { leadId: lead.id, kind: "STATUS", body: `Won: order ${order.reference} paid (${money(order.totalPaise)}).` } });
+    await prisma.lead.update({ where: { id: lead.id }, data: { status: "WON", accountId, ...(foreign ? { valuePaise: amount } : { valuePaise: order.totalPaise }) } });
+    await prisma.activity.create({ data: { leadId: lead.id, kind: "STATUS", body: `Won: order ${order.reference} paid (${moneyIn(order.totalPaise, order.currency)}).` } });
     await queueSheet("leads", lead.id);
   }
-  await prisma.activity.create({ data: { accountId, kind: "SYSTEM", body: `Order ${order.reference} paid: ${money(order.totalPaise)}.` } });
+  await prisma.activity.create({ data: { accountId, kind: "SYSTEM", body: `Order ${order.reference} paid: ${moneyIn(order.totalPaise, order.currency)}${foreign ? ` (${money(amount)})` : ""}.` } });
   await queueSheet("orders", orderId);
 
   /* GENESIS CRM: the buyer hears what happens next, and the team is told to set up the workspace. */
