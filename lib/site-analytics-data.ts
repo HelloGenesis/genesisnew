@@ -60,7 +60,7 @@ export async function analytics(r: Range) {
       select path, count(*)::int as views, coalesce(avg(nullif(duration_ms, 0)), 0)::float as avg_ms,
              count(*) filter (where position = pages)::int as exits
       from v group by path order by views desc limit 10`,
-    prisma.siteSession.groupBy({ by: ["country"], where, _count: true, orderBy: { _count: { country: "desc" } }, take: 8 }),
+    prisma.siteSession.groupBy({ by: ["country"], where, _count: true, orderBy: { _count: { country: "desc" } }, take: 250 }),
     prisma.siteSession.groupBy({ by: ["device"], where, _count: true, orderBy: { _count: { device: "desc" } } }),
     prisma.siteEvent.groupBy({ by: ["label"], where: { at: { gte: r.from, lt: r.to }, kind: "click" }, _count: true, orderBy: { _count: { label: "desc" } }, take: 8 }),
     prisma.$queryRaw<{ landing: string; next: string | null; n: number }[]>`
@@ -94,7 +94,8 @@ export async function analytics(r: Range) {
     days,
     sources: sources.map((s) => ({ name: s.source, n: s._count, change: pct(s._count, prevSource.get(s.source) ?? 0) })),
     pages: pages.map((p) => ({ path: p.path, views: p.views, avg: Math.round(p.avg_ms / 1000), exit: p.views ? Math.round((p.exits / p.views) * 100) : 0 })),
-    countries: countries.map((c) => ({ name: c.country ?? "Unknown", n: c._count })),
+    /* Every country, for the map; the list shows the top few (components/crm/country-map). */
+    countries: countries.map((c) => ({ code: c.country ?? "Unknown", n: c._count })),
     devices: devices.map((d) => ({ name: d.device, n: d._count })),
     clicks: clicks.map((c) => ({ label: c.label, n: c._count })),
     flows: flows.map((f) => ({ landing: f.landing, next: f.next, n: f.n })),

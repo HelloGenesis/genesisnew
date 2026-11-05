@@ -6,6 +6,7 @@ import { Card, PageHead } from "@/components/crm/ui";
 import { analytics, type Analytics, rangeOf } from "@/lib/site-analytics-data";
 import { isSuperAdmin } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
+import { CountryMap } from "@/components/crm/country-map";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Website analytics" };
@@ -145,8 +146,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card title="Countries"><Bars rows={a.countries} empty="No visits yet." /></Card>
+      {/* Sessions by country on a world map (Genesis, 5 Nov 2026: "need this also in the analytics page", after Wix). */}
+      <Card title="Sessions by country"><CountryMap rows={a.countries} /></Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Devices"><Bars rows={a.devices} empty="No visits yet." /></Card>
         <Card title="New vs returning">
           <Bars rows={[{ name: "New visitors", n: a.now.newVisitors }, { name: "Returning", n: a.now.returning }]} empty="No visits yet." />
