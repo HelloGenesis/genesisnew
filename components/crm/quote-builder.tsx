@@ -2,6 +2,7 @@
 
 import { ArrowDown, ArrowUp, ChevronDown, Redo2, Undo2, Columns3, ExternalLink, FileSpreadsheet, Maximize2, Minimize2, Plus, Sheet, Trash2, Upload, X } from "lucide-react";
 import { MultiValue } from "@/components/crm/multi-value";
+import { CURRENCIES, moneyIn } from "@/lib/crm/catalog";
 import { autoTier, TIERS, tidyEmails, tidyPhones } from "@/lib/crm/creator-contacts";
 import { type SetStateAction, useActionState, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
@@ -50,6 +51,8 @@ export type BuilderQuote = {
   addGst: boolean;
   gstPercent: number;
   igst?: boolean;
+  /** INR, or the client's currency abroad (lib/crm/catalog CURRENCIES): no GST then. */
+  currency?: string;
   discount: number;
   proposalPlatforms?: string[];
   proposalProblems?: string | null;
@@ -70,7 +73,6 @@ type Terms = { key: string; label: string; notes: string; terms: string[] };
 type Client = { key: string; kind: "client" | "agency" | "lead"; accountId: string | null; leadId: string | null; company: string; contactName: string; email: string; phone: string | null };
 
 const DIVISIONS: [string, string][] = [["AI_LAB", "AI Lab"], ["STUDIOS", "Studios"], ["BRAND_DESIGN", "Brand & Design"], ["INFLUENCE", "Influence"]];
-const inr = (r: number) => `₹${r.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const compact = (n: number) => new Intl.NumberFormat("en-IN", { notation: "compact" }).format(n);
 const PLATFORMS = ["Instagram", "YouTube", "LinkedIn", "Facebook", "X", "Snapchat", "Moj / Josh", "Website", "OTT / TV", "Events"];
 
@@ -177,6 +179,11 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
   type Steps = { q: BuilderQuote; past: BuilderQuote[]; future: BuilderQuote[]; at: number };
   const [steps, setSteps] = useState<Steps>(() => ({ q: { ...initial, proposalSections: initial.proposalSections ?? [], planColumns: initial.planColumns ?? {} }, past: [], future: [], at: 0 }));
   const q = steps.q;
+  /* Rupees, or the quote's own currency (Genesis, 5 Nov 2026). */
+  const currency = q.currency ?? "INR";
+  const abroad = currency !== "INR";
+  const inr = (r: number) => moneyIn(Math.round(r * 100), currency, true);
+  const sign = () => (abroad ? currency : "₹");
   const setQ = useCallback((next: SetStateAction<BuilderQuote>) => {
     setSteps((h) => {
       const now = typeof next === "function" ? next(h.q) : next;
@@ -503,7 +510,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
     /* Creator fees count towards the total only when asked (Genesis, 13 Oct 2026), and never on a sample. */
     const subtotal = lines + (q.planColumns?.feesInTotal && q.planColumns?.extPrices !== false ? creators : 0);
     const taxable = Math.max(0, subtotal - q.discount);
-    const tax = q.addGst ? Math.round(taxable * q.gstPercent) / 100 : 0;
+    const tax = q.addGst && (q.currency ?? "INR") === "INR" ? Math.round(taxable * q.gstPercent) / 100 : 0;
     return { subtotal, creators, tax, total: taxable + tax };
   }, [q]);
 
@@ -1024,7 +1031,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                           {shows("location") && <td><GrowText value={c.city ?? ""} onChange={(e) => setCreator(i, { city: e.target.value })} className="crm-input !min-h-8 !w-32 !px-2" /></td>}
                           {shows("reachout") && <td><select value={c.reachout ?? ""} onChange={(e) => setCreator(i, { reachout: e.target.value || null })} className="crm-input !min-h-8 !w-36 !px-2">{reachOptions(c.reachout).map((r) => <option key={r} value={r}>{r || "Not contacted"}</option>)}</select></td>}
                           {MONEY.filter(shows).map((k) => (
-                            <td key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder="₹" /></td>
+                            <td key={k} className={k.endsWith("Cost") ? "bg-[var(--hover-wash)]" : ""}><input type="number" step="any" min={0} value={c[k] ?? ""} onChange={(e) => setCreator(i, { [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<BuilderCreator>)} className="crm-input !min-h-8 !w-28 !px-2 text-right" placeholder={sign()} /></td>
                           ))}
                           {shows("profit") && <td className={`whitespace-nowrap tabular-nums ${profit < 0 ? "text-[#dc2626]" : "text-bone"}`}>{inr(profit)}</td>}
                           {/* Standard Phone and Email, more than one of each; saved to the database and the creator's other plans (lib/crm/reachout). */}
@@ -1083,7 +1090,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
             <div className="grid gap-3 sm:grid-cols-[1fr_6rem_9rem_9rem_auto] sm:items-end">
               <label><span className="crm-label">{l.kind === "custom" ? "Custom line" : l.kind === "addon" ? "Add-on" : l.kind === "plan" ? "Plan" : "Product"}</span><GrowText value={l.title} onChange={(e) => setLine(i, { title: e.target.value })} className="w-full font-medium" placeholder="Premium UGC Content Production | 10 Videos" /></label>
               <label><span className="crm-label">Qty</span><input type="number" step="any" min={1} value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} className="crm-input" /></label>
-              <label><span className="crm-label">Price (₹)</span><input type="number" step="any" min={0} value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
+              <label><span className="crm-label">Price ({sign()})</span><input type="number" step="any" min={0} value={l.unit} onChange={(e) => setLine(i, { unit: Number(e.target.value) || 0 })} className="crm-input" /></label>
               <p className="pb-2.5 text-right tabular-nums text-bone"><span className="crm-label">Line total</span>{inr(l.qty * l.unit)}</p>
               <span className="flex gap-0.5 pb-1">
                 <button type="button" aria-label="Move up" onClick={() => move(i, -1)} className="grid size-8 place-items-center rounded-lg hover:bg-[var(--hover-wash)] text-ash hover:text-bone"><ArrowUp className="size-4" /></button>
@@ -1123,9 +1130,22 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                 </label>
               </dt>
             )}
+            {/*
+              THE CLIENT'S CURRENCY (Genesis, 5 Nov 2026: "currency per quote, and no
+              GST for international"): prices, the quote, its PDF, the email and the
+              Razorpay link all in it; anything but rupees is an export, so no GST.
+            */}
+            <dt className="text-ash"><label htmlFor="quote-currency">Currency</label></dt>
+            <dd>
+              <select id="quote-currency" value={q.currency ?? "INR"} onChange={(e) => setQ((x) => ({ ...x, currency: e.target.value, ...(e.target.value !== "INR" ? { addGst: false, igst: false } : {}) }))} className="crm-input !min-h-8 !w-auto text-[0.875rem]">
+                {Object.entries(CURRENCIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </dd>
+            {abroad && <dt className="col-span-2 -mt-1 rounded-lg bg-[#ffc516]/10 px-3 py-2 text-[0.8125rem] text-ash">Client outside India: <b className="text-bone">no GST</b> (export of services). The quote says so. Check you have a Letter of Undertaking (LUT) filed with GST.</dt>}
             <dt className="text-ash">Subtotal</dt><dd className="tabular-nums">{inr(totals.subtotal)}</dd>
-            <dt className="text-ash"><label className="flex items-center gap-2">Discount (₹)</label></dt>
+            <dt className="text-ash"><label className="flex items-center gap-2">Discount ({sign()})</label></dt>
             <dd><input type="number" step="any" min={0} value={q.discount} onChange={(e) => set("discount", Number(e.target.value) || 0)} className="crm-input !min-h-8 w-32 text-right" /></dd>
+            {!abroad && (<>
             <dt className="text-ash"><label className="flex flex-wrap items-center gap-2 whitespace-nowrap"><input type="checkbox" checked={q.addGst} onChange={(e) => set("addGst", e.target.checked)} /> Add GST at <span className="inline-flex items-center gap-1"><input type="number" step="any" min={0} max={28} value={q.gstPercent} onChange={(e) => set("gstPercent", Number(e.target.value) || 0)} className="crm-input !min-h-8 !w-16 text-right" aria-label="GST percent" />%</span></label></dt>
             <dd className="tabular-nums">{inr(totals.tax)}</dd>
             {q.addGst && (
@@ -1141,10 +1161,11 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
                 )}
               </>
             )}
+            </>)}
             <dt className="border-t border-[var(--glass-border)] pt-2 font-semibold text-bone">Total price</dt>
             <dd className="border-t border-[var(--glass-border)] pt-2 text-[1.25rem] font-semibold tabular-nums text-bone">{inr(totals.total)}</dd>
           </dl>
-          <p className="text-[0.75rem] text-faint">The sample quote states prices exclusive of GST; untick to show the total without it.</p>
+          {!abroad && <p className="text-[0.75rem] text-faint">The sample quote states prices exclusive of GST; untick to show the total without it.</p>}
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button className="crm-btn crm-btn-primary" disabled={pending}>{pending ? "Saving…" : q.id ? (sheets?.ext ? "Save changes & update sheets" : "Save changes") : "Save draft"}</button>
             {state?.message && <span className={`text-[0.8125rem] ${state.ok ? "text-[#16a34a]" : "text-[#dc2626]"}`} role={state.ok ? "status" : "alert"}>{state.message}</span>}

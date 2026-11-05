@@ -519,6 +519,8 @@ enum LineKind {
 
 /// One checkout on the site (or an order staff raise by hand), priced by lib/cart.
 model Order {
+  /// The quote's currency for a Razorpay link in another currency; payments are still in rupees as settled.
+  currency          String      @default("INR")
   id                 String       @id @default(cuid())
   /// GM-… — the reference Razorpay carries.
   reference          String       @unique
@@ -1173,6 +1175,8 @@ model Quote {
   gstPercent    Int         @default(18) @map("gst_percent")
   /// Client outside Maharashtra: IGST in place of CGST + SGST.
   igst          Boolean     @default(false)
+  /// INR, or the client's currency abroad (no GST then: an export of services).
+  currency      String      @default("INR")
   discountPaise Int         @default(0) @map("discount_paise")
   /// The proposal block (Genesis, 12 Oct 2026): sent with the pricing, or on its own.
   proposalPlatforms   String[] @default([]) @map("proposal_platforms")

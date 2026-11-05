@@ -227,6 +227,30 @@ export function money(paise: number | null | undefined): string {
   return `₹${rupees.toLocaleString("en-IN", { minimumFractionDigits: rupees % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
 }
 
+/*
+ * CURRENCIES FOR CLIENTS ABROAD (Genesis, 5 Nov 2026: "currency per quote, and
+ * no GST for international"). All in hundredths, as paise are, so amounts are
+ * stored the same way whatever the currency.
+ */
+export const CURRENCIES = {
+  INR: { label: "₹ Indian rupee", locale: "en-IN" },
+  USD: { label: "$ US dollar", locale: "en-US" },
+  SAR: { label: "SAR Saudi riyal", locale: "en-US" },
+  AED: { label: "AED UAE dirham", locale: "en-US" },
+  EUR: { label: "€ Euro", locale: "en-IE" },
+  GBP: { label: "£ Pound sterling", locale: "en-GB" },
+} as const;
+export type Currency = keyof typeof CURRENCIES;
+export const isCurrency = (c: unknown): c is Currency => typeof c === "string" && c in CURRENCIES;
+/** Hundredths in a currency → "SAR 4,500" / "$1,200.50" / "₹24,999". */
+export function moneyIn(minor: number | null | undefined, currency: string | null | undefined = "INR", fixed = false): string {
+  if (minor === null || minor === undefined) return "—";
+  if (!currency || currency === "INR") return fixed ? `₹${(minor / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : money(minor);
+  const c = isCurrency(currency) ? currency : "USD";
+  const units = minor / 100;
+  return new Intl.NumberFormat(CURRENCIES[c].locale, { style: "currency", currency: c, currencyDisplay: "symbol", minimumFractionDigits: fixed || units % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(units);
+}
+
 /** A rupee figure typed into a form ("24,999" or "24999.50") → paise; null when it is not a number. */
 export function toPaise(input: FormDataEntryValue | null | undefined): number | null {
   const text = String(input ?? "").replace(/[₹,\s]/g, "");

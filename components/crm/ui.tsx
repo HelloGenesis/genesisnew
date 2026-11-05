@@ -8,10 +8,12 @@ import { GuideButton } from "./guide-button";
 
 export type Tone = "good" | "warn" | "bad" | "info" | "muted";
 
-export function PageHead({ kicker, title, sub, exportKind, children }: { kicker: string; title: string; sub?: React.ReactNode; exportKind?: string; children?: React.ReactNode }) {
+export function PageHead({ kicker, title, sub, exportKind, children, corner }: { kicker: string; title: string; sub?: React.ReactNode; exportKind?: string; children?: React.ReactNode; corner?: React.ReactNode }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4">
-      <div className="min-w-0">
+    <header className="relative flex flex-wrap items-end justify-between gap-4">
+      {/* The page's main action in the top-right corner, beside the title (Genesis, 3 Nov 2026: Share on a quote). */}
+      {corner && <div className="absolute right-0 top-0">{corner}</div>}
+      <div className={`min-w-0 ${corner ? "pr-28" : ""}`}>
         {/* Clear at a glance (Genesis, 31 Oct 2026: "headings and subheadings bold and semibold, visible enough, all across"). */}
         <p className="micro-label !font-semibold !text-ash">{kicker}</p>
         <h1 className="mt-2 text-balance font-sans text-[1.75rem] font-semibold leading-tight tracking-tight text-bone sm:text-[2.125rem]">{title}</h1>
@@ -161,6 +163,44 @@ export function Select({ name, options, defaultValue, required, className = "", 
  * backwards as well as forwards.
  */
 export function StageBar({ stages, stage, compact = false, move, id }: { stages: readonly string[]; stage: number; compact?: boolean; move?: (form: FormData) => Promise<void>; id?: string }) {
+  /*
+   * THE TIMELINE IS THE CONTROL (Genesis, 3 Nov 2026: "remove these buttons and
+   * make the section clickable, straight in the timeline"): with `move`, every
+   * stage, its bar and its name, is a button that moves the project there,
+   * forward or back.
+   */
+  if (move && id && !compact) {
+    return (
+      <div>
+        <ol className="grid gap-1" style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}>
+          {stages.map((name, i) => (
+            <li key={name}>
+              <form action={move}>
+                <input type="hidden" name="id" value={id} />
+                <input type="hidden" name="stage" value={i} />
+                <button
+                  disabled={i === stage}
+                  title={i === stage ? `Now: ${name}` : `Move to ${name}`}
+                  aria-current={i === stage ? "step" : undefined}
+                  className={`group block w-full rounded-lg px-1 pb-1.5 pt-1 text-left transition-colors ${i === stage ? "cursor-default" : "cursor-pointer hover:bg-[var(--hover-wash)]"}`}
+                >
+                  <span className="crm-stage block transition-transform group-hover:scale-y-150" data-state={i < stage ? "done" : i === stage ? "current" : "todo"} />
+                  <span className={`mt-2 hidden truncate text-[0.75rem] sm:block ${i === stage ? "font-semibold text-bone" : i < stage ? "text-ash group-hover:text-bone" : "text-faint group-hover:text-bone"}`}>
+                    {i < stage ? "✓ " : ""}
+                    {name}
+                  </span>
+                </button>
+              </form>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-1.5 text-[0.8125rem] text-ash sm:hidden">
+          Step {stage + 1} of {stages.length}: <span className="font-semibold text-bone">{stages[stage]}</span>
+        </p>
+        <p className="mt-1 hidden text-[0.75rem] text-faint sm:block">Click a stage to move the project there.</p>
+      </div>
+    );
+  }
   return (
     <div>
       <div className="flex gap-1" aria-hidden>
@@ -177,21 +217,8 @@ export function StageBar({ stages, stage, compact = false, move, id }: { stages:
         <ol className="mt-2 hidden justify-between text-[0.75rem] sm:flex">
           {stages.map((name, i) => (
             <li key={name} className={i === stage ? "font-semibold text-bone" : i < stage ? "text-ash" : "text-faint"}>
-              {move && id && i !== stage ? (
-                <form action={move}>
-                  <input type="hidden" name="id" value={id} />
-                  <input type="hidden" name="stage" value={i} />
-                  <button title={`Move to ${name}`} className="rounded-md px-1 py-0.5 transition-colors hover:bg-[var(--hover-wash)] hover:text-bone">
-                    {i < stage ? "✓ " : ""}
-                    {name}
-                  </button>
-                </form>
-              ) : (
-                <>
-                  {i < stage ? "✓ " : ""}
-                  {name}
-                </>
-              )}
+              {i < stage ? "✓ " : ""}
+              {name}
             </li>
           ))}
         </ol>

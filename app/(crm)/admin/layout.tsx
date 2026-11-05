@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Bell } from "lucide-react";
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { CrmRail, RailUser } from "@/components/crm/crm-rail";
@@ -95,7 +97,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
         </div>
         <div className="crm-rail-wrap hidden lg:block lg:h-full">
-          <CrmRail groups={groups} title={agencyCrm?.name ?? "Genesis Media"} footer={<RailUser name={viewer!.name} email={viewer!.email} roles={viewer!.roles.join(", ").toLowerCase()} portal={viewer!.memberships.length > 0} />} />
+          <CrmRail collapsed={(await cookies()).get("crm_rail")?.value === "collapsed"} groups={groups} title={agencyCrm?.name ?? "Genesis Media"} footer={<RailUser name={viewer!.name} email={viewer!.email} roles={viewer!.roles.join(", ").toLowerCase()} portal={viewer!.memberships.length > 0} />} />
         </div>
       </div>
       <ScrollMain className="min-w-0 space-y-6 px-4 pb-16 pt-6 sm:px-6 lg:h-full lg:overflow-y-auto lg:px-8 lg:py-7">
@@ -103,6 +105,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <HeaderSlot>
           {/* Nova is in Beta for agencies (Genesis, 31 Oct 2026). */}
           {viewer!.workspaceId && <span className="rounded-full border border-[#ffc516]/40 bg-[#ffc516]/10 px-2.5 py-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-[#ffc516]">Beta</span>}
+          {/* Notifications, moved off the menu into the top bar (Genesis, 3 Nov 2026). */}
+          <Link href="/admin/notifications" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`} title="Notifications" className="relative grid size-9 place-items-center rounded-full border border-[var(--glass-border)] text-ash transition-colors hover:text-bone">
+            <Bell className="size-[1.0625rem]" aria-hidden />
+            {unread > 0 && <span aria-hidden className="absolute -right-1 -top-1 min-w-[1.125rem] rounded-full bg-[#ffc516] px-1 text-center text-[0.625rem] font-semibold leading-[1.125rem] text-[#141216]">{unread > 99 ? "99+" : unread}</span>}
+          </Link>
           {/* The person, with their initials as on the rail's foot (Genesis, 31 Oct 2026: "add user icon"). */}
           <span className="flex items-center gap-2" title={viewer!.email ?? undefined}>
             <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#ffc516] to-[#f472b6] text-[0.6875rem] font-semibold text-[#141216]">

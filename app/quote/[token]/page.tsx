@@ -15,6 +15,7 @@ import { looksLikeHtml, sanitizeHtml, textToHtml } from "@/lib/rich-text";
 
 import { AcceptForm } from "./accept-form";
 import { PrintButton } from "./print-button";
+import { moneyIn } from "@/lib/crm/catalog";
 
 export const dynamic = "force-dynamic";
 /*
@@ -32,7 +33,6 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
 /* Genesis Events and Media Group's own logo, when it's in /public/brand; its name set in type until then. */
 const GROUP_LOGO = ["genesis-events-media.png", "genesis-events-media.svg", "genesis-events-media.webp"].find((f) => existsSync(join(process.cwd(), "public", "brand", f)));
 
-const inr = (paise: number) => `₹${(paise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const day = (d: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Kolkata" }).format(d);
 const compact = (n: number | null) => (n ? new Intl.NumberFormat("en-IN", { notation: "compact" }).format(n) : "—");
 
@@ -112,6 +112,9 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
   const showTable = sharesTable(cols);
   const showProposal = (view === "both" || view === "proposal" || view === "proposal-plan") && has("proposal") && proposal.length > 0;
   const cgst = Math.round(q.taxPaise / 2);
+  /* Rupees, or the client's currency abroad (Genesis, 5 Nov 2026). */
+  const inr = (minor: number) => moneyIn(minor, q.currency, true);
+  const abroad = q.currency !== "INR";
 
   return (
     <div className="min-h-dvh bg-[#eef2f7] py-6 text-[#0f172a] print:bg-white print:py-0 [color-scheme:light]">
@@ -336,7 +339,11 @@ export default async function QuoteDocument({ params, searchParams }: { params: 
               <dt className="text-[1.0625rem]">Total Price:</dt>
               <dd className="text-[1.375rem] font-bold">{inr(q.totalPaise)}</dd>
             </div>
-            {!q.addGst && <p className="text-right text-[0.8125rem] text-[#64748b]">Exclusive of GST.</p>}
+            {abroad ? (
+              <p className="text-right text-[0.8125rem] text-[#64748b]">Prices in {q.currency}. No GST: export of services from India.</p>
+            ) : (
+              !q.addGst && <p className="text-right text-[0.8125rem] text-[#64748b]">Exclusive of GST.</p>
+            )}
           </dl>
         </section>
         )}

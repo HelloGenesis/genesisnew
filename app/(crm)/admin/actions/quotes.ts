@@ -21,7 +21,7 @@ import { getPrisma } from "@/lib/db";
 import { type ActionState, fail, ok, text } from "@/lib/crm/form-state";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Platform } from "@/lib/generated/prisma/enums";
-import { tierFor } from "@/lib/crm/catalog";
+import { isCurrency, tierFor } from "@/lib/crm/catalog";
 import { canDraft, DraftAccessError } from "@/lib/crm/gmail-draft";
 import { newToken, openFor, type QuoteDelivery, refreshTotals, sendQuote } from "@/lib/crm/quotes";
 import { termsByKey } from "@/lib/crm/quote-templates";
@@ -53,6 +53,7 @@ const payload = z.object({
   addGst: z.boolean(),
   gstPercent: z.coerce.number().min(0).max(28).transform(Math.round),
   igst: z.boolean().optional(),
+  currency: z.string().optional(),
   proposalPlatforms: z.array(z.string().max(40)).max(12).optional(),
   proposalProblems: z.string().max(60000).nullable().optional(),
   proposalObjectives: z.string().max(60000).nullable().optional(),
@@ -153,9 +154,11 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     expiresAt: new Date(`${q.expiresAt}T23:59:59+05:30`),
     notes: q.notes || null,
     terms: q.terms || null,
-    addGst: q.addGst,
+    /* A client abroad: their currency, and no GST (an export of services). */
+    currency: isCurrency(q.currency) ? q.currency : "INR",
+    addGst: isCurrency(q.currency) && q.currency !== "INR" ? false : q.addGst,
     gstPercent: q.gstPercent,
-    igst: q.igst ?? false,
+    igst: isCurrency(q.currency) && q.currency !== "INR" ? false : (q.igst ?? false),
     discountPaise: paise(q.discount),
     proposalPlatforms: q.proposalPlatforms ?? [],
     /* Rich text, cleaned: only formatting, links, images and known embeds are kept. */
@@ -366,7 +369,7 @@ export async function sendQuoteAction(_: ActionState, form: FormData): Promise<A
     const value = JSON.stringify({ view: text(form, "view"), message: text(form, "message", 2000) ?? "", deliver: text(form, "deliver"), pdf: form.get("pdf") === "on", payment: form.get("payment") === "on", by: viewer.id, at: new Date().toISOString() });
     await getPrisma().appSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
     /* And as a draft in their own Gmail, with the PDF, when Google allows it. */
-    if (!(await canDraft(viewer.id))) return ok("Draft saved here. To also put it in your Gmail drafts, reconnect Google once in My settings.");
+    if (!(await canDraft(viewer.id))) return fail("Draft saved here only: Google hasn't allowed Gmail drafts. In My settings, Reconnect Google and tick every box on Google's screen, including \u201cManage drafts and send emails\u201d.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q.contactEmail)) return ok("Draft saved here. Add the client's email to the quote to also put it in your Gmail drafts.");
     try {
       const view = (["both", "proposal", "pricing", "plan", "proposal-plan"] as const).find((v) => v === text(form, "view")) ?? "both";

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Badge, Empty, PageHead, Stats, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import type { QuoteStatus } from "@/lib/generated/prisma/enums";
-import { QUOTE_STATUS, date, money } from "@/lib/crm/catalog";
+import { QUOTE_STATUS, date, money, moneyIn } from "@/lib/crm/catalog";
 import { docRef } from "@/lib/crm/quote-templates";
 import { daysFromNow } from "@/lib/crm/options";
 import { quoteScope, isSuperAdmin, seesQuoteContact } from "@/lib/crm/scope";
@@ -38,8 +38,9 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
   const prisma = getPrisma();
   const [quotes, open, won] = await Promise.all([
     prisma.quote.findMany({ where: { ...scope, ...kind, ...(status && status in QUOTE_STATUS ? { status: status as QuoteStatus } : {}) }, orderBy: { createdAt: "desc" }, take: 200, include: { account: true, lead: true, _count: { select: { creators: true } } } }),
-    prisma.quote.aggregate({ where: { ...scope, ...kind, status: { in: ["SENT", "VIEWED"] } }, _sum: { totalPaise: true }, _count: true }),
-    prisma.quote.aggregate({ where: { ...scope, ...kind, status: { in: ["ACCEPTED", "PAID"] }, createdAt: { gte: daysFromNow(-30) } }, _sum: { totalPaise: true }, _count: true }),
+    /* Rupee totals only: a quote abroad is in its own currency. */
+    prisma.quote.aggregate({ where: { ...scope, ...kind, currency: "INR", status: { in: ["SENT", "VIEWED"] } }, _sum: { totalPaise: true }, _count: true }),
+    prisma.quote.aggregate({ where: { ...scope, ...kind, currency: "INR", status: { in: ["ACCEPTED", "PAID"] }, createdAt: { gte: daysFromNow(-30) } }, _sum: { totalPaise: true }, _count: true }),
   ]);
   /* Who made each, so a plan is easy to find by its maker. */
   const makers = new Map((await prisma.user.findMany({ where: { id: { in: [...new Set(quotes.map((q) => q.createdById).filter((x): x is string => Boolean(x)))] } }, select: { id: true, name: true, email: true } })).map((u) => [u.id, u.name ?? u.email ?? ""]));
@@ -82,7 +83,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
               {everyCrm && <td className="text-ash">{crmName(q.workspaceId)}</td>}
               <td>{q.account?.name ?? q.company ?? (seesQuoteContact(viewer, q) ? q.contactName : "Client")}{seesQuoteContact(viewer, q) && <span className="block text-[0.75rem] text-faint">{q.contactEmail}</span>}</td>
               <td>{q.kind === "INFLUENCER_PLAN" ? `Influencer plan · ${q._count.creators}` : "Quote"}</td>
-              <td className="tabular-nums">{money(q.totalPaise)}</td>
+              <td className="tabular-nums">{moneyIn(q.totalPaise, q.currency)}</td>
               <td><Badge tone={QUOTE_STATUS[q.status].tone}>{QUOTE_STATUS[q.status].label}</Badge></td>
               <td>{date(q.issuedAt)}</td>
               <td className={q.expiresAt < new Date() && !["PAID", "ACCEPTED"].includes(q.status) ? "text-[#dc2626]" : ""}>{date(q.expiresAt)}</td>

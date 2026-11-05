@@ -6,7 +6,7 @@ import { getPrisma } from "@/lib/db";
 import { notes, razorpay, razorpayKeys } from "@/lib/razorpay";
 
 import { agencyEmail, workspaceProfile } from "./workspace";
-import { date, money } from "./catalog";
+import { date, moneyIn } from "./catalog";
 import { emailHtml } from "./email-html";
 import { gmailDraft } from "./gmail-draft";
 import { SIGN_OFF, appUrl, queueEmail, queueStaffEmail, sendNow } from "./notify";
@@ -71,6 +71,8 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   const t = await refreshTotals(quoteId);
   const q = t.quote;
   const ref = docRef(q);
+  /* Amounts in the quote's own currency (₹ unless the client is abroad). */
+  const cur = (minor: number) => moneyIn(minor, q.currency);
   let paymentUrl: string | null = null;
   let linkId: string | null = null;
 
@@ -82,7 +84,8 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
     const reference = `GMQ${q.number}-${randomBytes(3).toString("hex")}`.toUpperCase();
     const link = await razorpay<{ id: string; short_url: string }>("payment_links", {
       amount: t.total,
-      currency: "INR",
+      /* The client's currency abroad (Genesis, 5 Nov 2026); Razorpay settles it to us in rupees. */
+      currency: q.currency,
       reference_id: reference,
       description: `Genesis Media quote ${ref}: ${q.title}`.slice(0, 250),
       customer: { name: q.contactName, email: q.contactEmail, ...(q.contactPhone ? { contact: q.contactPhone.replace(/[\s-]/g, "") } : {}) },
@@ -107,7 +110,8 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
         subtotalPaise: t.subtotal - t.discount,
         discountPaise: t.discount,
         taxPaise: t.tax,
-        taxLabel: q.addGst ? `GST ${q.gstPercent}%` : "GST included / not applicable",
+        taxLabel: q.currency !== "INR" ? `No GST: export of services (${q.currency})` : q.addGst ? `GST ${q.gstPercent}%` : "GST included / not applicable",
+        currency: q.currency,
         totalPaise: t.total,
         oneTimePaise: t.total,
         contactName: q.contactName,
@@ -135,8 +139,8 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   const leadId = saveOnly ? null : q.leadId ?? (await prisma.lead.findFirst({ where: { email: q.contactEmail, status: { notIn: ["WON", "LOST"] } }, orderBy: { createdAt: "desc" }, select: { id: true } }))?.id ?? null;
   if (leadId && !q.leadId) await prisma.quote.update({ where: { id: q.id }, data: { leadId } });
   if (leadId) {
-    await prisma.lead.updateMany({ where: { id: leadId, status: { in: ["NEW", "CONTACTED", "QUALIFIED", "CALL_BOOKED"] } }, data: { status: "PROPOSAL_SENT", valuePaise: t.total } });
-    await prisma.activity.create({ data: { leadId, kind: "EMAIL", actorId, body: `${view === "proposal" ? "Proposal" : q.kind === "INFLUENCER_PLAN" ? "Influencer plan" : "Quote"} ${ref} sent${view === "proposal" ? "" : `: ${money(t.total)}`}.` } });
+    await prisma.lead.updateMany({ where: { id: leadId, status: { in: ["NEW", "CONTACTED", "QUALIFIED", "CALL_BOOKED"] } }, data: { status: "PROPOSAL_SENT", ...(q.currency === "INR" ? { valuePaise: t.total } : {}) } });
+    await prisma.activity.create({ data: { leadId, kind: "EMAIL", actorId, body: `${view === "proposal" ? "Proposal" : q.kind === "INFLUENCER_PLAN" ? "Influencer plan" : "Quote"} ${ref} sent${view === "proposal" ? "" : `: ${cur(t.total)}`}.` } });
     await queueSheet("leads", leadId);
   }
   /* The briefs it answers move on too (Genesis, 31 Oct 2026): a new brief from this lead or client is now quoted. */
@@ -164,8 +168,8 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
     }
   }
   const link = appUrl(`/quote/${q.token}${view === "both" ? "" : `?view=${view}`}`);
-  const lines = pricing ? q.lines.map((l) => `• ${l.title}${l.qty > 1 ? ` × ${l.qty}` : ""}: ${money(l.qty * l.unitPaise)}`) : [];
-  if (pricing && t.creators > 0) lines.push(`• ${q.creators.length} creators: ${money(t.creators)}`);
+  const lines = pricing ? q.lines.map((l) => `• ${l.title}${l.qty > 1 ? ` × ${l.qty}` : ""}: ${cur(l.qty * l.unitPaise)}`) : [];
+  if (pricing && t.creators > 0) lines.push(`• ${q.creators.length} creators: ${cur(t.creators)}`);
   const half = Math.round(t.tax / 2);
   const mail = {
     kind: "quote_sent",
@@ -178,9 +182,9 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
       "",
       `${q.title}`,
       ...lines,
-      pricing && t.discount ? `Discount: −${money(t.discount)}` : "",
-      pricing && q.addGst ? (q.igst ? `IGST ${q.gstPercent}%: ${money(t.tax)}` : `CGST ${q.gstPercent / 2}%: ${money(half)}\nSGST ${q.gstPercent / 2}%: ${money(t.tax - half)}`) : "",
-      pricing ? `Total: ${money(t.total)}` : "",
+      pricing && t.discount ? `Discount: −${cur(t.discount)}` : "",
+      pricing && q.addGst ? (q.igst ? `IGST ${q.gstPercent}%: ${cur(t.tax)}` : `CGST ${q.gstPercent / 2}%: ${cur(half)}\nSGST ${q.gstPercent / 2}%: ${cur(t.tax - half)}`) : "",
+      pricing ? `Total: ${cur(t.total)}` : "",
       "",
       sheetLink ? `Influencer plan (Google Sheet): ${sheetLink}\n` : "",
       `View the full ${view === "proposal" || view === "proposal-plan" ? "proposal" : view === "plan" || plan ? "plan" : "quotation"}${view === "pricing" ? "" : " (scope, notes and terms)"}${plan ? " and approve it" : ""}:`,
@@ -198,7 +202,7 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   const html = emailHtml({
     heading: mail.subject,
     kicker: agency ? undefined : `Genesis Media · ${plan ? "Influencer plan" : "Quotation"} ${ref}`,
-    summary: [`**${q.title}**`, ...lines, pricing && t.discount ? `Discount: −${money(t.discount)}` : "", pricing ? `**Total: ${money(t.total)}**` : ""].filter(Boolean).join("\n"),
+    summary: [`**${q.title}**`, ...lines, pricing && t.discount ? `Discount: −${cur(t.discount)}` : "", pricing ? `**Total: ${cur(t.total)}**` : ""].filter(Boolean).join("\n"),
     agency: Boolean(agency),
     paragraphs: [
       `Hi ${q.contactName.split(" ")[0]},`,
@@ -233,7 +237,7 @@ export async function acceptQuote(token: string, acceptedBy: string) {
   const projectId = q.projects[0]?.id ?? (await openFor(q.id));
   /* To super admins, and the people on this deal: the quote's maker and the lead's owner (lead details are confidential). */
   const subject = `Accepted: ${q.kind === "INFLUENCER_PLAN" ? "influencer plan" : "quote"} ${docRef(q)} · ${q.company ?? q.contactName}`;
-  const text = `${acceptedBy} accepted "${q.title}" (${money(q.totalPaise)}).${q.paymentUrl ? " Payment link is with the client." : ""}\n\n${appUrl(`/admin/projects/${projectId}`)}`;
+  const text = `${acceptedBy} accepted "${q.title}" (${moneyIn(q.totalPaise, q.currency)}).${q.paymentUrl ? " Payment link is with the client." : ""}\n\n${appUrl(`/admin/projects/${projectId}`)}`;
   await queueStaffEmail({ kind: "quote_accepted", scope: "owners", subject, text, dedupeKey: `quote-accepted:${q.id}` });
   const lead = q.leadId ? await prisma.lead.findUnique({ where: { id: q.leadId }, select: { ownerId: true } }) : null;
   const people = await prisma.user.findMany({ where: { id: { in: [q.createdById, lead?.ownerId].filter((x): x is string => Boolean(x)) }, email: { not: null } }, select: { email: true } });

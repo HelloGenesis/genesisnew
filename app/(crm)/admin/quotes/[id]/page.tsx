@@ -14,7 +14,7 @@ import { workspaces } from "@/lib/crm/workspace";
 import { QuoteBuilder, type BuilderQuote, type PlanColumnsState, type ProposalSection } from "@/components/crm/quote-builder";
 import { Card, Field, Notice, PageHead, Select, Status } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
-import { QUOTE_STATUS, dateTime, money, projectRef } from "@/lib/crm/catalog";
+import { QUOTE_STATUS, dateTime, moneyIn, projectRef } from "@/lib/crm/catalog";
 import { appUrl } from "@/lib/crm/notify";
 import { DEFAULT_DELIVERABLES, DEFAULT_OUTREACH } from "@/lib/crm/outreach";
 import { contactVisibility } from "@/lib/crm/creator-privacy";
@@ -91,6 +91,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     addGst: q.addGst,
     gstPercent: q.gstPercent,
     igst: q.igst,
+    currency: q.currency,
     proposalPlatforms: q.proposalPlatforms,
     proposalProblems: q.proposalProblems,
     proposalObjectives: q.proposalObjectives,
@@ -134,7 +135,8 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
       <PageHead
         kicker={`${plan ? "Influencer plan" : "Price quote"} ${docRef(q)}`}
         title={q.title}
-        sub={<>{q.account ? <Link href={`/admin/accounts/${q.account.id}`} className="crm-link">{q.account.name}</Link> : (q.company ?? (showContact ? q.contactName : "Client"))} · {money(q.totalPaise)}{q.lead && showContact && <> · lead <Link href={`/admin/leads/${q.lead.id}`} className="crm-link">{q.lead.name}</Link></>}{q.request && <> · request <Link href={`/admin/requests/${q.request.id}`} className="crm-link">{q.request.title}</Link></>}</>}
+        corner={<ShareDialog quoteId={q.id} title={q.title} viewerId={viewer.id} link={appUrl(`/admin/quotes/${q.id}`)} crm={crmName} people={withAccess} candidates={candidates} />}
+        sub={<>{q.account ? <Link href={`/admin/accounts/${q.account.id}`} className="crm-link">{q.account.name}</Link> : (q.company ?? (showContact ? q.contactName : "Client"))} · {moneyIn(q.totalPaise, q.currency)}{q.currency !== "INR" ? " · no GST (export)" : ""}{q.lead && showContact && <> · lead <Link href={`/admin/leads/${q.lead.id}`} className="crm-link">{q.lead.name}</Link></>}{q.request && <> · request <Link href={`/admin/requests/${q.request.id}`} className="crm-link">{q.request.title}</Link></>}</>}
       >
         <Status value={QUOTE_STATUS[q.status]} />
         {/* History and the quote's actions, as an icon and a dropdown (Genesis, 3 Nov 2026). */}
@@ -155,7 +157,8 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             {/* The invoice from this quote: open it, or make it with the quote's client and lines (Genesis, 22 Oct 2026). */}
             {invoices.length > 0
               ? invoices.map((inv) => <Link key={inv.id} href={`/admin/invoices/${inv.id}`} className={menuItem}><ReceiptText className="size-4 text-ash" aria-hidden /> Invoice {inv.number}</Link>)
-              : (can(viewer, "sales") || can(viewer, "finance")) && (
+              /* CRM invoices are GST tax invoices in rupees: not for a quote in another currency. */
+              : (can(viewer, "sales") || can(viewer, "finance")) && q.currency === "INR" && (
                   <form action={invoiceFromQuote}><input type="hidden" name="quoteId" value={q.id} /><button className={menuItem}><ReceiptText className="size-4 text-ash" aria-hidden /> Make the invoice</button></form>
                 )}
             {!["ACCEPTED", "PAID"].includes(q.status) && (
@@ -172,7 +175,6 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             )}
         </Menu>
         <a href={`/quote/${q.token}`} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Client view / PDF ↗</a>
-        <ShareDialog quoteId={q.id} title={q.title} viewerId={viewer.id} link={appUrl(`/admin/quotes/${q.id}`)} crm={crmName} people={withAccess} candidates={candidates} />
       </PageHead>
       {saved && <Notice>Saved as a draft. Check the client view, then send it.{sheetsNote ? ` ${sheetsNote}` : ""}</Notice>}
 
@@ -194,7 +196,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
             {/* An agency CRM's quotes have no pay link: it would collect into Genesis's Razorpay. */}
             {!q.workspaceId && (
             <label className="flex items-center gap-2 text-[0.875rem] text-ash">
-              <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys()) && (draft?.payment ?? true)} disabled={!razorpayKeys()} /> Include a Razorpay payment link for {money(q.totalPaise)}
+              <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys()) && (draft?.payment ?? true)} disabled={!razorpayKeys()} /> Include a Razorpay payment link for {moneyIn(q.totalPaise, q.currency)}{q.currency !== "INR" ? " (international cards must be on in Razorpay)" : ""}
               {!razorpayKeys() && <span className="text-faint">(Razorpay keys not set)</span>}
             </label>
             )}
@@ -217,7 +219,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
               {versions.map((v) => (
                 <li key={v.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   {v.id === q.id ? <span className="font-medium text-bone">{docRef(v)} · this one</span> : <Link href={`/admin/quotes/${v.id}`} className="crm-link">{docRef(v)}</Link>}
-                  <span className="text-ash">{v.revision ? `Revision ${v.revision}` : "First version"} · {money(v.totalPaise)} · {dateTime(v.createdAt)}</span>
+                  <span className="text-ash">{v.revision ? `Revision ${v.revision}` : "First version"} · {moneyIn(v.totalPaise, q.currency)} · {dateTime(v.createdAt)}</span>
                   <Status value={QUOTE_STATUS[v.status]} />
                 </li>
               ))}
