@@ -192,7 +192,7 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
       to: [inv.billToEmail],
       subject: `Tax invoice ${inv.number} · ${agency?.name ?? "Genesis Media"}`,
       text: [
-        `Hello ${inv.billToName},`,
+        `Hello ${inv.billToContact?.trim().split(/\s+/)[0] || inv.billToName},`,
         "",
         message ?? "Please find our tax invoice below.",
         "",
@@ -211,7 +211,7 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
         heading: `Tax invoice ${inv.number}`,
         agency: Boolean(agency),
         kicker: agency ? undefined : `Genesis Media · Tax invoice`,
-        paragraphs: [`Hello ${inv.billToName},`, message ?? "Please find our tax invoice below."],
+        paragraphs: [`Hello ${inv.billToContact?.trim().split(/\s+/)[0] || inv.billToName},`, message ?? "Please find our tax invoice below."],
         summary: `Invoice ${inv.number}, dated ${date(inv.issueDate)}${inv.dueDate ? `, due ${date(inv.dueDate)}` : ""}\nTaxable value: ${money(inv.subtotalPaise - inv.discountPaise)}\n${inv.igst ? `IGST 18%: ${money(inv.igstPaise)}` : `CGST 9%: ${money(inv.cgstPaise)}\nSGST 9%: ${money(inv.sgstPaise)}`}\n**Total: ${money(inv.totalPaise)}**`,
         buttons: [{ label: "View the invoice", url: appUrl(`/invoice/${inv.token}`) }, ...(paymentUrl && inv.status !== "PAID" ? [{ label: "Pay now", url: paymentUrl, tone: "secondary" as const }] : [])],
         signOff: agencyEmail(agency).signOff,
@@ -248,8 +248,8 @@ export async function markInvoicePaid(id: string, razorpayPaymentId?: string | n
       kind: "invoice_receipt",
       to: [inv.billToEmail],
       subject,
-      text: `Hello ${inv.billToName},\n\nThank you: we've received ${money(inv.totalPaise)} for invoice ${inv.number}.\n\nThe invoice, marked paid: ${link}`,
-      html: emailHtml({ heading: "Payment received. Thank you!", paragraphs: [`Hello ${inv.billToName},`, `We've received **${money(inv.totalPaise)}** for invoice ${inv.number}.`], buttons: [{ label: "View the paid invoice", url: link }], signOff: agencyEmail(agency).signOff, agency: Boolean(agency) }),
+      text: `Hello ${inv.billToContact?.trim().split(/\s+/)[0] || inv.billToName},\n\nThank you: we've received ${money(inv.totalPaise)} for invoice ${inv.number}.\n\nThe invoice, marked paid: ${link}`,
+      html: emailHtml({ heading: "Payment received. Thank you!", paragraphs: [`Hello ${inv.billToContact?.trim().split(/\s+/)[0] || inv.billToName},`, `We've received **${money(inv.totalPaise)}** for invoice ${inv.number}.`], buttons: [{ label: "View the paid invoice", url: link }], signOff: agencyEmail(agency).signOff, agency: Boolean(agency) }),
       dedupeKey: `invoice-receipt:${inv.id}`,
       ...agencyEmail(agency),
     });

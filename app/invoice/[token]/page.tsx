@@ -140,6 +140,8 @@ export default async function InvoiceDocument({ params, searchParams }: { params
                   <span className="block font-bold">To,</span>
                   <span className="block font-bold uppercase">{inv.billToName}</span>
                   {inv.billToAddress && <span className="block whitespace-pre-line font-bold">{inv.billToAddress}</span>}
+                  {inv.billToContact && <span className="mt-2 block">Kind Attn: <b>{inv.billToContact}</b>{inv.billToPhone ? ` · ${inv.billToPhone}` : ""}</span>}
+                  {!inv.billToContact && inv.billToPhone && <span className="mt-2 block">Ph: {inv.billToPhone}</span>}
                   <span className="mt-4 block font-bold">Customer</span>
                   {inv.billToGstin && <span className="block">GST No. {inv.billToGstin}</span>}
                   {inv.billToPan && <span className="block">PAN No. {inv.billToPan}</span>}

@@ -131,6 +131,8 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
             quoteId: inv.quoteId,
             billToName: inv.billToName,
             billToEmail: inv.billToEmail,
+            billToContact: inv.billToContact,
+            billToPhone: inv.billToPhone,
             billToGstin: inv.billToGstin,
             billToAddress: inv.billToAddress,
             placeOfSupply: inv.placeOfSupply,
