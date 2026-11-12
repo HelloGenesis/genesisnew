@@ -11,6 +11,9 @@ export type InvoiceDraft = {
   quoteId?: string | null;
   billToName: string;
   billToEmail?: string | null;
+  /** The brand's point of contact (POC). */
+  billToContact?: string | null;
+  billToPhone?: string | null;
   billToGstin?: string | null;
   billToAddress?: string | null;
   placeOfSupply: string;
@@ -71,6 +74,9 @@ export function InvoiceBuilder({ initial, states, accounts }: { initial: Invoice
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="lg:col-span-2"><span className="crm-label">Name (as registered) *</span><input value={v.billToName} onChange={(e) => set("billToName", e.target.value)} required className="crm-input" /></label>
+          {/* The brand's point of contact, beside the registered name (Genesis, 12 Nov 2026). */}
+          <label><span className="crm-label">Contact person (POC)</span><input value={v.billToContact ?? ""} onChange={(e) => set("billToContact", e.target.value)} className="crm-input" placeholder="Who it's for at the brand" /></label>
+          <label><span className="crm-label">POC phone</span><input type="tel" value={v.billToPhone ?? ""} onChange={(e) => set("billToPhone", e.target.value)} className="crm-input" placeholder="+91" /></label>
           <label><span className="crm-label">Email</span><input type="email" value={v.billToEmail ?? ""} onChange={(e) => set("billToEmail", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">GSTIN</span><input value={v.billToGstin ?? ""} onChange={(e) => set("billToGstin", e.target.value.toUpperCase())} className="crm-input uppercase" placeholder="27ABCDE1234F1Z5" /></label>
           <label><span className="crm-label">PAN</span><input value={v.billToPan ?? ""} onChange={(e) => set("billToPan", e.target.value.toUpperCase())} className="crm-input uppercase" placeholder="From the GSTIN when blank" /></label>

@@ -1607,6 +1607,10 @@ model Invoice {
   quoteId       String?       @map("quote_id")
   orderId       String?       @map("order_id")
   billToName    String        @map("bill_to_name")
+  /// The brand's point of contact (POC), beside the registered name.
+  billToContact String?       @map("bill_to_contact")
+  /// The POC's phone.
+  billToPhone   String?       @map("bill_to_phone")
   billToEmail   String?       @map("bill_to_email")
   billToGstin   String?       @map("bill_to_gstin")
   billToAddress String?       @map("bill_to_address")
