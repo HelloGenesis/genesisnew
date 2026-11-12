@@ -27,6 +27,22 @@ async function staff(): Promise<Viewer> {
 const mine = async (viewer: Viewer, id: string | null) => (id ? getPrisma().invoice.findFirst({ where: { id, ...invoiceScope(viewer) } }) : null);
 
 const rupees = z.coerce.number().min(0).max(100_000_000);
+/* What each field is called on the page, for messages. */
+const FIELD: Record<string, string> = {
+  billToName: "the name (as registered)", billToContact: "the contact person", billToPhone: "the POC phone", billToEmail: "the email", billToGstin: "the GSTIN",
+  billToAddress: "the billing address", placeOfSupply: "the place of supply", issueDate: "the date", dueDate: "the due date", discount: "the discount", notes: "the notes",
+  terms: "the terms", quotationRef: "the quotation no.", quotationDate: "the quotation date", poNumber: "the PO no.", poDate: "the PO date", executionDate: "the date of execution",
+  paymentTermDays: "the payment term", reference: "the ref", billToPan: "the PAN", lines: "the lines",
+};
+
+/** A PAN is 5 letters, 4 digits and a letter; anything else is taken from the GSTIN (its characters 3 to 12) when there is one. */
+function pan(typed: string | null | undefined, gstin: string | null) {
+  const clean = (typed ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (/^[A-Z]{5}\d{4}[A-Z]$/.test(clean)) return clean;
+  const fromGstin = gstin && gstin.length >= 12 ? gstin.slice(2, 12) : null;
+  return fromGstin ?? (clean ? clean.slice(0, 10) : null);
+}
+
 const payload = z.object({
   id: z.string().optional(),
   accountId: z.string().nullable().optional(),
@@ -50,14 +66,21 @@ const payload = z.object({
   executionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().or(z.literal("")),
   paymentTermDays: z.coerce.number().int().min(0).max(365).optional(),
   reference: z.string().max(200).nullable().optional(),
-  billToPan: z.string().trim().max(10).nullable().optional(),
+  /* Cleaned on save: a PAN that isn't one comes from the GSTIN instead (Genesis, 12 Nov 2026: an 11-character PAN stopped the save). */
+  billToPan: z.string().trim().max(40).nullable().optional(),
   lines: z.array(z.object({ description: z.string().trim().min(1).max(500), sac: z.string().trim().max(10).default("996211"), qty: z.coerce.number().int().min(1).max(100000), uom: z.string().max(10).optional(), unit: rupees })).min(1).max(60),
 });
 
 export async function saveInvoice(_: ActionState, form: FormData): Promise<ActionState> {
   const viewer = await staff();
   const parsed = payload.safeParse(JSON.parse(String(form.get("payload") ?? "{}")));
-  if (!parsed.success) return fail(`Check the invoice: ${parsed.error.issues[0]?.path.join(".")} ${parsed.error.issues[0]?.message}`);
+  if (!parsed.success) {
+    /* In words, not code (Genesis, 12 Nov 2026: "billToPan Too big"). */
+    const issue = parsed.error.issues[0];
+    const field = FIELD[String(issue?.path[0] ?? "")] ?? String(issue?.path.join(" ") ?? "a field");
+    const line = issue?.path[0] === "lines" && typeof issue.path[1] === "number" ? ` on line ${issue.path[1] + 1}` : "";
+    return fail(`Check ${field}${line}: ${issue?.code === "too_big" ? "it's too long" : issue?.code === "too_small" ? "it's missing or too short" : (issue?.message ?? "it isn't valid").toLowerCase()}.`);
+  }
   const v = parsed.data;
   const prisma = getPrisma();
   const gstin = v.billToGstin?.toUpperCase() || null;
@@ -86,7 +109,7 @@ export async function saveInvoice(_: ActionState, form: FormData): Promise<Actio
     executionDate: day(v.executionDate),
     paymentTermDays: v.paymentTermDays ?? 15,
     reference: v.reference || null,
-    billToPan: v.billToPan?.toUpperCase() || (gstin ? gstin.slice(2, 12) : null),
+    billToPan: pan(v.billToPan, gstin),
   };
   const lines = v.lines.map((l, i) => ({ position: i, description: l.description, sac: l.sac || "996211", qty: l.qty, unit: l.uom || "NOS", unitPaise: Math.round(l.unit * 100) }));
   let id = v.id;

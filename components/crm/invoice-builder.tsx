@@ -79,7 +79,7 @@ export function InvoiceBuilder({ initial, states, accounts }: { initial: Invoice
           <label><span className="crm-label">POC phone</span><input type="tel" value={v.billToPhone ?? ""} onChange={(e) => set("billToPhone", e.target.value)} className="crm-input" placeholder="+91" /></label>
           <label><span className="crm-label">Email</span><input type="email" value={v.billToEmail ?? ""} onChange={(e) => set("billToEmail", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">GSTIN</span><input value={v.billToGstin ?? ""} onChange={(e) => set("billToGstin", e.target.value.toUpperCase())} className="crm-input uppercase" placeholder="27ABCDE1234F1Z5" /></label>
-          <label><span className="crm-label">PAN</span><input value={v.billToPan ?? ""} onChange={(e) => set("billToPan", e.target.value.toUpperCase())} className="crm-input uppercase" placeholder="From the GSTIN when blank" /></label>
+          <label><span className="crm-label">PAN</span><input value={v.billToPan ?? ""} maxLength={10} onChange={(e) => set("billToPan", e.target.value.toUpperCase().replace(/\s/g, ""))} className="crm-input uppercase" placeholder="From the GSTIN when blank" /></label>
           <label className="lg:col-span-2"><span className="crm-label">Billing address</span><input value={v.billToAddress ?? ""} onChange={(e) => set("billToAddress", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">Place of supply</span>
             <select value={v.placeOfSupply} onChange={(e) => set("placeOfSupply", e.target.value)} className="crm-input">{states.map((s) => <option key={s} value={s}>{s}</option>)}</select>
