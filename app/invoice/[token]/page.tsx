@@ -100,7 +100,13 @@ export default async function InvoiceDocument({ params, searchParams }: { params
 
   return (
     <div className="min-h-dvh bg-[#eef2f7] py-6 text-[#111] print:bg-white print:py-0 [color-scheme:light]">
-      <style>{`@media print { @page { size: A4; margin: 10mm; } .no-print { display: none !important; } .page-break { break-before: page; } }`}</style>
+      {/*
+        ONE CLEAN PAGE TO SIGN (Genesis, 16 Nov 2026: the signature box split
+        across pages and the table header came back on page 2): no page margin,
+        so the browser prints no date or address; the margin is the page's own
+        padding; the header prints once; the total and the signature stay together.
+      */}
+      <style>{`@media print { @page { size: A4; margin: 0; } body { margin: 0; } .print-sheet { padding: 10mm !important; } thead { display: table-row-group; } .keep-together { break-inside: avoid; page-break-inside: avoid; } .no-print { display: none !important; } .page-break { break-before: page; } }`}</style>
       <div className="no-print mx-auto mb-4 flex max-w-[900px] flex-wrap items-center justify-between gap-2 px-4">
         <p className="text-[0.875rem] text-[#475569]">{inv.status === "PAID" || paid ? "Paid. Thank you!" : inv.status === "CANCELLED" ? "This invoice was cancelled." : inv.dueDate ? `Due ${ddmmyyyy(inv.dueDate)}` : ""}</p>
         <div className="flex flex-wrap gap-2">
@@ -111,7 +117,7 @@ export default async function InvoiceDocument({ params, searchParams }: { params
       </div>
 
       {showInvoice && (
-        <article className="mx-auto max-w-[900px] bg-white p-6 font-[Arial,Helvetica,sans-serif] text-[11px] leading-snug shadow-[0_10px_40px_-20px_rgb(15_23_42/0.35)] print:max-w-none print:p-0 print:shadow-none">
+        <article className="print-sheet mx-auto max-w-[900px] bg-white p-6 font-[Arial,Helvetica,sans-serif] text-[11px] leading-snug shadow-[0_10px_40px_-20px_rgb(15_23_42/0.35)] print:max-w-none print:p-0 print:shadow-none">
           <table className="w-full border-collapse">
             <tbody>
               <tr>
@@ -229,17 +235,17 @@ export default async function InvoiceDocument({ params, searchParams }: { params
                   <td className={`${cell} text-right font-bold`}>{v2}</td>
                 </tr>
               ))}
-              <tr className="font-bold">
+              <tr className="keep-together font-bold">
                 <td className={cell} colSpan={7}>TOTAL INVOICE VALUE IN INR (WORDS) : {inWords(inv.totalPaise)}</td>
                 <td className={cell} colSpan={2}>TOTAL INVOICE VALUE INR</td>
                 <td className={amount}>{inr(inv.totalPaise)}</td>
               </tr>
-              <tr>
-                <td className={`${cell} h-36 text-center`} colSpan={10}>
+              <tr className="keep-together">
+                <td className={`${cell} h-36 text-center print:h-28`} colSpan={10}>
                   {/* Left blank to sign by hand (Genesis, 12 Oct 2026); the signed copy is uploaded back to the CRM. */}
                   <div className="ml-auto mr-24 w-56 pt-2 text-center">
                     <p className="font-bold text-[#1d4ed8]">For {s.name}</p>
-                    <div className="h-20" />
+                    <div className="h-20 print:h-14" />
                     <p className="font-bold text-[#1d4ed8]">Authorised Signatory</p>
                   </div>
                 </td>
@@ -252,7 +258,7 @@ export default async function InvoiceDocument({ params, searchParams }: { params
       )}
 
       {showSupporting && (
-        <article className={`${showInvoice ? "page-break mt-6" : ""} mx-auto max-w-[900px] bg-white px-12 py-16 font-[Arial,Helvetica,sans-serif] shadow-[0_10px_40px_-20px_rgb(15_23_42/0.35)] print:max-w-none print:p-0 print:shadow-none`}>
+        <article className={`${showInvoice ? "page-break mt-6" : ""} print-sheet mx-auto max-w-[900px] bg-white px-12 py-16 font-[Arial,Helvetica,sans-serif] shadow-[0_10px_40px_-20px_rgb(15_23_42/0.35)] print:max-w-none print:p-0 print:shadow-none`}>
           <h1 className="text-center text-[26px] font-bold underline">Invoice {inv.number} - Supporting Document</h1>
           {link && (
             <p className="mt-2 text-center text-[18px] font-bold underline">
