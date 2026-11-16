@@ -11,7 +11,7 @@ import { inDays } from "@/lib/crm/options";
 import { can, requireStaff } from "@/lib/crm/session";
 
 import { invoiceFromQuote } from "../../actions/invoices";
-import { DEFAULT_TERMS, invoiceAccounts } from "../data";
+import { DEFAULT_TERMS, invoiceAccounts, knownBillTo } from "../data";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "New invoice" };
@@ -50,6 +50,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
       <InvoiceBuilder
         states={STATES}
         accounts={accounts}
+        known={await knownBillTo(viewer)}
         initial={{ ...(client ? { accountId: client.id, billToName: client.legalName ?? client.name, billToEmail: client.email ?? undefined, billToGstin: client.gstin ?? undefined, billToAddress: client.address ?? undefined } : { billToName: "" }), placeOfSupply: client?.state ?? HOME_STATE, issueDate: today, dueDate: due, discount: 0, terms: DEFAULT_TERMS, paymentTermDays: 15, quotationRef: "E-Mail", poNumber: "E-Mail", lines: [{ description: "", sac: "996211", qty: 1, uom: "NOS", unit: 0 }] }}
       />
     </>

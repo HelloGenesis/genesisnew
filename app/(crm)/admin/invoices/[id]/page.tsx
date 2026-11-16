@@ -16,7 +16,7 @@ import { razorpayKeys } from "@/lib/razorpay";
 import { DriveCard } from "@/components/crm/drive-card";
 import { archivedPdf } from "@/lib/crm/drive";
 import { archiveInvoiceNow, cancelInvoice, markInvoicePaidAction, removeInvoiceFile, sendInvoiceAction, setSupportingLink } from "../../actions/invoices";
-import { invoiceAccounts } from "../data";
+import { invoiceAccounts, knownBillTo } from "../data";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +125,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
         <InvoiceBuilder
           states={STATES}
           accounts={await invoiceAccounts(viewer)}
+          known={await knownBillTo(viewer)}
           initial={{
             id: inv.id,
             accountId: inv.accountId,

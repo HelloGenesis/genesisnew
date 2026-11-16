@@ -22,5 +22,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
   if (!allowed) return new NextResponse("Not found", { status: 404 });
   const upstream = await fetchContent(file.driveId, null);
   if (!upstream.ok || !upstream.body) return new NextResponse("Unavailable", { status: 502 });
-  return new NextResponse(upstream.body, { headers: { "Content-Type": file.mimeType, "Cache-Control": "private, max-age=3600", "Content-Disposition": `inline; filename="${file.name.replace(/"/g, "")}"` } });
+  return new NextResponse(upstream.body, { headers: { "Content-Type": file.mimeType, "Cache-Control": "private, max-age=3600", "Content-Disposition": inlineName(file.name) } });
+}
+
+/*
+ * A FILE NAME A HEADER CAN CARRY (Genesis, 16 Nov 2026: screenshots on an
+ * invoice wouldn't show). Mac screenshots are named "… at 2.57.30 PM" with a
+ * narrow no-break space before PM, and headers take only plain characters: a
+ * plain-letter name for old browsers, the real one encoded for the rest.
+ */
+function inlineName(name: string) {
+  const plain = name.normalize("NFKD").replace(/[^\x20-\x7e]+/g, " ").replace(/["\\]/g, "").replace(/\s+/g, " ").trim() || "file";
+  return `inline; filename="${plain}"; filename*=UTF-8''${encodeURIComponent(name)}`;
 }
