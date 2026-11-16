@@ -1,9 +1,10 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useActionState, useMemo, useState } from "react";
+import { startTransition, useActionState, useMemo, useState } from "react";
 
 import { saveInvoice } from "@/app/(crm)/admin/actions/invoices";
+import { stateFromGstin } from "@/lib/crm/gst-states";
 
 export type InvoiceDraft = {
   id?: string;
@@ -36,12 +37,47 @@ export type InvoiceDraft = {
 const inr = (r: number) => `₹${r.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** The invoice form: who it's billed to, the lines with their SAC codes, and live CGST + SGST (or IGST) totals. */
-export function InvoiceBuilder({ initial, states, accounts }: { initial: InvoiceDraft; states: string[]; accounts: { id: string; name: string; legalName: string | null; email: string | null; gstin: string | null; address: string | null; state: string | null }[] }) {
+type Known = { brands: { name: string; email: string | null; gstin: string | null; pan: string | null; address: string | null; place: string; contact: string | null; phone: string | null }[]; contacts: { name: string; phone: string | null; email: string | null; brand: string | null }[] };
+
+export function InvoiceBuilder({ initial, states, accounts, known = { brands: [], contacts: [] } }: { initial: InvoiceDraft; states: string[]; accounts: { id: string; name: string; legalName: string | null; email: string | null; gstin: string | null; address: string | null; state: string | null }[]; known?: Known }) {
   const [v, setV] = useState<InvoiceDraft>(initial);
   const [state, action, pending] = useActionState(saveInvoice, null);
   const set = <K extends keyof InvoiceDraft>(k: K, value: InvoiceDraft[K]) => setV((x) => ({ ...x, [k]: value }));
+  /*
+   * A BRAND OR POC SEEN BEFORE FILLS ITS DETAILS IN (Genesis, 16 Nov 2026):
+   * typing or picking a name that matches a past invoice fills the empty
+   * fields from it; a known contact fills their phone and email. Nothing
+   * already typed is overwritten.
+   */
+  const [filled, setFilled] = useState<string | null>(null);
+  const empty = (s: string | null | undefined) => !s || !s.trim();
+  const typeBrand = (name: string) => {
+    const b = known.brands.find((x) => x.name.toLowerCase() === name.trim().toLowerCase());
+    setV((x) => {
+      const next = { ...x, billToName: name };
+      if (!b) return next;
+      return {
+        ...next,
+        billToEmail: empty(x.billToEmail) ? b.email : x.billToEmail,
+        billToGstin: empty(x.billToGstin) ? b.gstin : x.billToGstin,
+        billToPan: empty(x.billToPan) ? b.pan : x.billToPan,
+        billToAddress: empty(x.billToAddress) ? b.address : x.billToAddress,
+        billToContact: empty(x.billToContact) ? b.contact : x.billToContact,
+        billToPhone: empty(x.billToPhone) ? b.phone : x.billToPhone,
+        placeOfSupply: b.gstin || !x.billToGstin ? b.place : x.placeOfSupply,
+      };
+    });
+    setFilled(b ? `Filled from ${b.name}'s last invoice.` : null);
+  };
+  const typeContact = (name: string) => {
+    const c = known.contacts.find((x) => x.name.toLowerCase() === name.trim().toLowerCase());
+    setV((x) => ({ ...x, billToContact: name, ...(c ? { billToPhone: empty(x.billToPhone) ? c.phone : x.billToPhone, billToEmail: empty(x.billToEmail) ? c.email : x.billToEmail } : {}) }));
+    if (c) setFilled(`Filled ${c.name}'s details${c.brand ? ` (${c.brand})` : ""}.`);
+  };
   const setLine = (i: number, patch: Partial<InvoiceDraft["lines"][number]>) => setV((x) => ({ ...x, lines: x.lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) }));
   const fromGstin = v.billToGstin && /^\d{2}/.test(v.billToGstin) ? v.billToGstin.slice(0, 2) : null;
+  /* With a GSTIN its first two digits decide the place of supply, as saving does (lib/crm/gst-states); shown, and locked. */
+  const gstState = stateFromGstin(v.billToGstin) ?? null;
   const interstate = fromGstin ? fromGstin !== "27" : v.placeOfSupply !== "Maharashtra";
   const t = useMemo(() => {
     const subtotal = v.lines.reduce((s, l) => s + l.qty * l.unit, 0);
@@ -52,7 +88,19 @@ export function InvoiceBuilder({ initial, states, accounts }: { initial: Invoice
   }, [v, interstate]);
 
   return (
-    <form action={action} className="space-y-6">
+    /*
+     * Submitted by hand, not as a form action: React resets a form after its
+     * action, and the Place of supply then showed its first option, Andhra
+     * Pradesh (Genesis, 16 Nov 2026: "Maharashtra isn't getting saved").
+     */
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="space-y-6"
+    >
       <input type="hidden" name="payload" value={JSON.stringify(v)} />
       <section className="crm-card crm-pad space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
@@ -72,17 +120,21 @@ export function InvoiceBuilder({ initial, states, accounts }: { initial: Invoice
             </select>
           )}
         </div>
+        {filled && <p role="status" className="-mt-1 text-[0.8125rem] text-[#16a34a]">{filled} Check it, then save.</p>}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="lg:col-span-2"><span className="crm-label">Name (as registered) *</span><input value={v.billToName} onChange={(e) => set("billToName", e.target.value)} required className="crm-input" /></label>
+          <label className="lg:col-span-2"><span className="crm-label">Name (as registered) *</span><input value={v.billToName} list="known-brands" autoComplete="off" onChange={(e) => typeBrand(e.target.value)} required className="crm-input" />
+            <datalist id="known-brands">{known.brands.map((b) => <option key={b.name} value={b.name} />)}</datalist></label>
           {/* The brand's point of contact, beside the registered name (Genesis, 12 Nov 2026). */}
-          <label><span className="crm-label">Contact person (POC)</span><input value={v.billToContact ?? ""} onChange={(e) => set("billToContact", e.target.value)} className="crm-input" placeholder="Who it's for at the brand" /></label>
+          <label><span className="crm-label">Contact person (POC)</span><input value={v.billToContact ?? ""} list="known-contacts" autoComplete="off" onChange={(e) => typeContact(e.target.value)} className="crm-input" placeholder="Who it's for at the brand" />
+            <datalist id="known-contacts">{known.contacts.map((c) => <option key={c.name} value={c.name}>{c.brand ?? ""}</option>)}</datalist></label>
           <label><span className="crm-label">POC phone</span><input type="tel" value={v.billToPhone ?? ""} onChange={(e) => set("billToPhone", e.target.value)} className="crm-input" placeholder="+91" /></label>
           <label><span className="crm-label">Email</span><input type="email" value={v.billToEmail ?? ""} onChange={(e) => set("billToEmail", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">GSTIN</span><input value={v.billToGstin ?? ""} onChange={(e) => set("billToGstin", e.target.value.toUpperCase())} className="crm-input uppercase" placeholder="27ABCDE1234F1Z5" /></label>
           <label><span className="crm-label">PAN</span><input value={v.billToPan ?? ""} maxLength={10} onChange={(e) => set("billToPan", e.target.value.toUpperCase().replace(/\s/g, ""))} className="crm-input uppercase" placeholder="From the GSTIN when blank" /></label>
           <label className="lg:col-span-2"><span className="crm-label">Billing address</span><input value={v.billToAddress ?? ""} onChange={(e) => set("billToAddress", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">Place of supply</span>
-            <select value={v.placeOfSupply} onChange={(e) => set("placeOfSupply", e.target.value)} className="crm-input">{states.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+            <select value={gstState ?? v.placeOfSupply} disabled={Boolean(gstState)} title={gstState ? "Set by the GSTIN's first two digits" : undefined} onChange={(e) => set("placeOfSupply", e.target.value)} className="crm-input disabled:opacity-80">{states.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+            {gstState && <span className="mt-1 block text-[0.75rem] text-faint">From the GSTIN ({fromGstin}). Clear the GSTIN to choose.</span>}
           </label>
           <div className="grid grid-cols-2 gap-2">
             <label><span className="crm-label">Date</span><input type="date" value={v.issueDate} onChange={(e) => set("issueDate", e.target.value)} className="crm-input" /></label>
