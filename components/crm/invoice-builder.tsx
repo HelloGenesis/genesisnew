@@ -9,6 +9,7 @@ import { stateFromGstin } from "@/lib/crm/gst-states";
 export type InvoiceDraft = {
   id?: string;
   accountId?: string | null;
+  kind?: "TAX" | "PROFORMA";
   quoteId?: string | null;
   billToName: string;
   billToEmail?: string | null;
@@ -192,6 +193,12 @@ export function InvoiceBuilder({ initial, states, accounts, known = { brands: []
           </dl>
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button className="crm-btn crm-btn-primary" disabled={pending}>{pending ? "Saving…" : v.id ? "Save changes" : "Create invoice"}</button>
+            {/* Tax or proforma (Genesis, 16 Nov 2026): the title printed on the invoice. */}
+            <div role="radiogroup" aria-label="Invoice type" className="inline-flex rounded-full border border-[var(--glass-border)] p-1">
+              {([["TAX", "Tax invoice"], ["PROFORMA", "Proforma invoice"]] as const).map(([k, label]) => (
+                <button key={k} type="button" role="radio" aria-checked={(v.kind ?? "TAX") === k} onClick={() => setV((x) => ({ ...x, kind: k }))} className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${(v.kind ?? "TAX") === k ? "bg-[#ffc516] text-black" : "text-bone/60 hover:text-bone"}`}>{label}</button>
+              ))}
+            </div>
             {state?.message && <span className={`text-[0.8125rem] ${state.ok ? "text-[#16a34a]" : "text-[#dc2626]"}`} role={state.ok ? "status" : "alert"}>{state.message}</span>}
           </div>
         </section>
