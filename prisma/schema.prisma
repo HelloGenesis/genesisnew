@@ -1635,6 +1635,8 @@ model Invoice {
   paymentTermDays Int         @default(15) @map("payment_term_days")
   reference     String?
   billToPan     String?       @map("bill_to_pan")
+  /// "TAX" (tax invoice) or "PROFORMA" (proforma invoice): the title printed on it.
+  kind          String        @default("TAX")
   /// Who signs it by hand; the signed copy is uploaded back (InvoiceFile kind SIGNED).
   signatoryId   String?       @map("signatory_id")
   signedAt      DateTime?     @map("signed_at")

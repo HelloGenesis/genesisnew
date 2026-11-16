@@ -134,6 +134,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
             billToEmail: inv.billToEmail,
             billToContact: inv.billToContact,
             billToPhone: inv.billToPhone,
+            kind: inv.kind === "PROFORMA" ? "PROFORMA" : "TAX",
             billToGstin: inv.billToGstin,
             billToAddress: inv.billToAddress,
             placeOfSupply: inv.placeOfSupply,

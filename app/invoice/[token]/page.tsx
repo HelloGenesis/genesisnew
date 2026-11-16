@@ -140,7 +140,7 @@ export default async function InvoiceDocument({ params, searchParams }: { params
                   <span className="block text-[#1d4ed8] underline">{s.website}</span>
                 </td>
               </tr>
-              <tr><td className={`${cell} text-center text-[12px] font-bold`} colSpan={3}>TAX INVOICE</td></tr>
+              <tr><td className={`${cell} text-center text-[12px] font-bold`} colSpan={3}>{inv.kind === "PROFORMA" ? "PROFORMA INVOICE" : "TAX INVOICE"}</td></tr>
               <tr>
                 <td className={`${cell} py-3`}>
                   <span className="block font-bold">To,</span>

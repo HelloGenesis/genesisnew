@@ -189,7 +189,7 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
       text: [
         `Hello ${inv.billToContact?.trim().split(/\s+/)[0] || inv.billToName},`,
         "",
-        message ?? "Please find our tax invoice below.",
+        message ?? `Please find our ${inv.kind === "PROFORMA" ? "proforma" : "tax"} invoice below.`,
         "",
         `Invoice ${inv.number}, dated ${date(inv.issueDate)}${inv.dueDate ? `, due ${date(inv.dueDate)}` : ""}`,
         `Taxable value: ${money(inv.subtotalPaise - inv.discountPaise)}`,
@@ -206,7 +206,7 @@ export async function sendInvoice(id: string, message: string | null, withPaymen
         heading: `Tax invoice ${inv.number}`,
         agency: Boolean(agency),
         kicker: agency ? undefined : `Genesis Media · Tax invoice`,
-        paragraphs: [`Hello ${inv.billToContact?.trim().split(/\s+/)[0] || inv.billToName},`, message ?? "Please find our tax invoice below."],
+        paragraphs: [`Hello ${inv.billToContact?.trim().split(/\s+/)[0] || inv.billToName},`, message ?? `Please find our ${inv.kind === "PROFORMA" ? "proforma" : "tax"} invoice below.`],
         summary: `Invoice ${inv.number}, dated ${date(inv.issueDate)}${inv.dueDate ? `, due ${date(inv.dueDate)}` : ""}\nTaxable value: ${money(inv.subtotalPaise - inv.discountPaise)}\n${inv.igst ? `IGST 18%: ${money(inv.igstPaise)}` : `CGST 9%: ${money(inv.cgstPaise)}\nSGST 9%: ${money(inv.sgstPaise)}`}\n**Total: ${money(inv.totalPaise)}**`,
         buttons: [{ label: "View the invoice", url: appUrl(`/invoice/${inv.token}`) }, ...(paymentUrl && inv.status !== "PAID" ? [{ label: "Pay now", url: paymentUrl, tone: "secondary" as const }] : [])],
         signOff: agencyEmail(agency).signOff,
