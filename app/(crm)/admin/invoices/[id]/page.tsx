@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Ban, Files, IndianRupee, List, Mail, Paperclip, Pencil, Printer } from "lucide-react";
 import { CopyLinkButton } from "@/components/crm/copy-link-button";
-import { InvoicePreview } from "@/components/crm/invoice-preview";
+import { DocPreview } from "@/components/crm/doc-preview";
 import { Menu } from "@/components/crm/menu";
 import { menuItem } from "@/components/crm/menu-item";
 import { notFound, redirect } from "next/navigation";
@@ -63,9 +63,9 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
         </Menu>
         {inv.status !== "CANCELLED" && <a href="#send" className="crm-btn crm-btn-primary crm-btn-sm"><Mail className="size-4" aria-hidden /> Send via email</a>}
       </PageHead>
-      <InvoicePreview
-        token={inv.token}
-        invoiceEditor={locked ? null : (
+      <DocPreview
+        tabs={[
+          { key: "invoice", label: "Invoice", src: `/invoice/${inv.token}?preview=1`, editLabel: "Edit invoice", editor: locked ? undefined : (
         <InvoiceBuilder
           states={STATES}
           accounts={await invoiceAccounts(viewer)}
@@ -98,8 +98,8 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
             lines: inv.lines.map((l) => ({ description: l.description, sac: l.sac, qty: l.qty, uom: l.unit, unit: l.unitPaise / 100 })),
           }}
         />
-        )}
-        supportingEditor={(
+        ) },
+          { key: "supporting", label: "Supporting document", src: `/invoice/${inv.token}?preview=1&doc=supporting`, editLabel: "Edit supporting document", editor: (
           <>
           <form action={setSupportingLink} className="flex flex-wrap items-end gap-2">
             <input type="hidden" name="id" value={inv.id} />
@@ -122,7 +122,8 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           </div>
           <div className="mt-3"><InvoiceUpload invoiceId={inv.id} kind="SUPPORTING" label="Add screenshots" /></div>
           </>
-        )}
+        ) },
+        ]}
       />
       {saved && <Notice>Saved as {inv.number}. Check it, then send.</Notice>}
       {/* What prints under "To," (Genesis, 22 Oct 2026): name, address, then the customer's GST No. and PAN No. */}
