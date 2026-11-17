@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Menu } from "@/components/crm/menu";
+import { menuItem } from "@/components/crm/menu-item";
 
 import { Badge, Empty, PageHead, Stats, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
@@ -63,11 +65,14 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
           {everyCrm && <span className="text-ash">Genesis Media and every agency&apos;s; opening one switches to its CRM.</span>}
         </div>
       )}
-      <nav className="flex flex-wrap gap-1">
-        {[["", "All"], ...Object.entries(QUOTE_STATUS).map(([k, v]) => [k, v.label])].map(([k, l]) => (
-          <Link key={l} href={`/admin/quotes${withType(k ? `status=${k}` : "") ? `?${withType(k ? `status=${k}` : "")}` : ""}`} aria-current={(status ?? "") === k ? "page" : undefined} className="crm-nav-link !min-h-8">{l}</Link>
-        ))}
-      </nav>
+      {/* The statuses in one dropdown (Genesis, 17 Nov 2026), as Wix filters its quotes. */}
+      <div className="flex">
+        <Menu label={<>Status: {status && status in QUOTE_STATUS ? QUOTE_STATUS[status as QuoteStatus].label : "All"}</>} width="w-56">
+          {[["", "All"], ...Object.entries(QUOTE_STATUS).map(([k, v]) => [k, v.label])].map(([k, l]) => (
+            <Link key={l} href={`/admin/quotes${withType(k ? `status=${k}` : "") ? `?${withType(k ? `status=${k}` : "")}` : ""}`} aria-current={(status ?? "") === k ? "page" : undefined} className={`${menuItem} ${(status ?? "") === k ? "font-semibold !text-[#ffc516]" : ""}`}>{l}</Link>
+          ))}
+        </Menu>
+      </div>
       {quotes.length === 0 ? (
         <Empty>{type === "plans" ? "No influencer plans yet. Start one here, or from the influencer database." : "No quotes yet. Start one here, or from a lead, a client or a request."}</Empty>
       ) : (

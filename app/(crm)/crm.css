@@ -294,6 +294,10 @@ select.crm-input {
 .crm-table tbody tr:hover {
   background: var(--crm-card-hover);
 }
+/* A row with a link opens it from anywhere (components/crm/click-rows). */
+.crm-table tbody tr:has(a[href]) {
+  cursor: pointer;
+}
 
 .crm-badge {
   display: inline-flex;
