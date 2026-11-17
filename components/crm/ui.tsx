@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { FoldCard } from "./fold-card";
 import { GuideButton } from "./guide-button";
+import { Menu } from "./menu";
+import { menuItem } from "./menu-item";
 
 /** The CRM's building blocks (server components). Styles: app/(crm)/crm.css. */
 
@@ -22,23 +24,17 @@ export function PageHead({ kicker, title, sub, exportKind, children, corner }: {
       <div className="flex flex-wrap items-center gap-2">
         {/* Every page with a walkthrough gets its "How it works" (lib/crm/guides). */}
         <GuideButton />
-        {children}
+        {/* Exports under one "More actions" (Genesis, 17 Nov 2026: "apply this all across the more action part"); Share stays its own button. */}
         {exportKind && (
-          <>
-            {/* The live Google Sheet for this list, and an Excel download (Genesis, 12 Oct 2026). */}
+          <Menu label="More actions" width="w-60">
             {exportKind !== "payouts" && (
-              <a href={`/admin/export/${exportKind}?open=sheet`} target="_blank" rel="noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">
-                Open in Google Sheets <ExternalLink className="size-4" aria-hidden />
-              </a>
+              <a href={`/admin/export/${exportKind}?open=sheet`} target="_blank" rel="noreferrer" className={menuItem}><ExternalLink className="size-4" aria-hidden /> Open in Google Sheets</a>
             )}
-            <a href={`/admin/export/${exportKind}?format=xlsx`} className="crm-btn crm-btn-secondary crm-btn-sm" download>
-              Export Excel <FileSpreadsheet className="size-4" aria-hidden />
-            </a>
-            <a href={`/admin/export/${exportKind}`} className="crm-btn crm-btn-secondary crm-btn-sm" download>
-              Export CSV <Download className="size-4" aria-hidden />
-            </a>
-          </>
+            <a href={`/admin/export/${exportKind}?format=xlsx`} className={menuItem} download><FileSpreadsheet className="size-4" aria-hidden /> Export Excel</a>
+            <a href={`/admin/export/${exportKind}`} className={menuItem} download><Download className="size-4" aria-hidden /> Export CSV</a>
+          </Menu>
         )}
+        {children}
       </div>
     </header>
   );
