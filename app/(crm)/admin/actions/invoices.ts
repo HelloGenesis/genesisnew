@@ -155,8 +155,15 @@ export async function sendInvoiceAction(_: ActionState, form: FormData): Promise
   const viewer = await staff();
   const inv = await mine(viewer, text(form, "id"));
   if (!inv) return fail("That invoice isn't yours.");
-  if (!inv.billToEmail) return fail("Add the client's email first.");
   if (inv.status === "CANCELLED") return fail("It's cancelled.");
+  /* Sent by hand (Genesis, 16 Nov 2026: "the invoice is sent to the client manually by email, and it will mark it complete"). */
+  if (!inv.billToEmail && form.get("intent") !== "manual") return fail("Add the client's email first.");
+  if (form.get("intent") === "manual") {
+    if (inv.status === "DRAFT") await getPrisma().invoice.update({ where: { id: inv.id }, data: { status: "SENT", sentAt: new Date() } });
+    await recordAuditLog({ action: "invoice.sent_manually", entity: "invoice", entityId: inv.id, actorId: viewer.id });
+    done();
+    return ok("Marked as sent.");
+  }
   try {
     const { paymentUrl } = await sendInvoice(inv.id, text(form, "message", 2000), form.get("payment") === "on");
     archiveLater("invoice", inv.id);

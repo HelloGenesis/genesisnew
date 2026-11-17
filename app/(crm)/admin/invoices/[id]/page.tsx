@@ -55,9 +55,9 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           {inv.status === "CANCELLED" ? (
             <p className="text-ash">Cancelled.</p>
           ) : (
-            <ActionForm action={sendInvoiceAction} submit={inv.status === "DRAFT" ? "Send invoice email" : "Re-send"} confirm={`Email ${inv.number} to ${inv.billToEmail ?? "the client"}?`}>
+            <ActionForm action={sendInvoiceAction} submit={inv.status === "DRAFT" ? "Send invoice email" : "Re-send"} confirm={`Email ${inv.number} to ${inv.billToEmail ?? "the client"}?`} extra={inv.status === "DRAFT" ? <button type="submit" name="intent" value="manual" data-no-confirm className="crm-btn crm-btn-secondary" title="You emailed it yourself: marks it sent, no email from here">I sent it by email myself</button> : undefined}>
               <input type="hidden" name="id" value={inv.id} />
-              <Field label="Message"><textarea name="message" className="crm-input !min-h-20" defaultValue={`Please find our tax invoice below. Thank you for working with ${inv.workspaceId ? "us" : "Genesis"}.`} /></Field>
+              <Field label="Message"><textarea name="message" className="crm-input !min-h-20" defaultValue={`Please find our ${inv.kind === "PROFORMA" ? "proforma" : "tax"} invoice below. Thank you for working with ${inv.workspaceId ? "us" : "Genesis"}.`} /></Field>
               {inv.status !== "PAID" && !inv.workspaceId && (
                 <label className="flex items-center gap-2 text-[0.875rem] text-ash">
                   <input type="checkbox" name="payment" defaultChecked={Boolean(razorpayKeys())} disabled={!razorpayKeys()} /> Include a Razorpay pay link for {money(inv.totalPaise)}
