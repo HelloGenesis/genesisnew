@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Ban, Files, IndianRupee, List, Mail, Paperclip, Pencil, Printer } from "lucide-react";
 import { CopyLinkButton } from "@/components/crm/copy-link-button";
+import { InvoicePreview } from "@/components/crm/invoice-preview";
 import { Menu } from "@/components/crm/menu";
 import { menuItem } from "@/components/crm/menu-item";
 import { notFound, redirect } from "next/navigation";
@@ -62,9 +63,67 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
         </Menu>
         {inv.status !== "CANCELLED" && <a href="#send" className="crm-btn crm-btn-primary crm-btn-sm"><Mail className="size-4" aria-hidden /> Send via email</a>}
       </PageHead>
-      <section className="crm-card overflow-hidden !p-0">
-        <iframe title={`Invoice ${inv.number}`} src={`/invoice/${inv.token}?preview=1`} className="block h-[min(1180px,85vh)] w-full border-0 bg-white" />
-      </section>
+      <InvoicePreview
+        token={inv.token}
+        invoiceEditor={locked ? null : (
+        <InvoiceBuilder
+          states={STATES}
+          accounts={await invoiceAccounts(viewer)}
+          known={await knownBillTo(viewer)}
+          initial={{
+            id: inv.id,
+            accountId: inv.accountId,
+            quoteId: inv.quoteId,
+            billToName: inv.billToName,
+            billToEmail: inv.billToEmail,
+            billToContact: inv.billToContact,
+            billToPhone: inv.billToPhone,
+            kind: inv.kind === "PROFORMA" ? "PROFORMA" : "TAX",
+            billToGstin: inv.billToGstin,
+            billToAddress: inv.billToAddress,
+            placeOfSupply: inv.placeOfSupply,
+            issueDate: inv.issueDate.toISOString().slice(0, 10),
+            dueDate: inv.dueDate?.toISOString().slice(0, 10) ?? "",
+            discount: inv.discountPaise / 100,
+            notes: inv.notes,
+            terms: inv.terms,
+            quotationRef: inv.quotationRef,
+            quotationDate: inv.quotationDate?.toISOString().slice(0, 10) ?? "",
+            poNumber: inv.poNumber,
+            poDate: inv.poDate?.toISOString().slice(0, 10) ?? "",
+            executionDate: inv.executionDate?.toISOString().slice(0, 10) ?? "",
+            paymentTermDays: inv.paymentTermDays,
+            reference: inv.reference,
+            billToPan: inv.billToPan,
+            lines: inv.lines.map((l) => ({ description: l.description, sac: l.sac, qty: l.qty, uom: l.unit, unit: l.unitPaise / 100 })),
+          }}
+        />
+        )}
+        supportingEditor={(
+          <>
+          <form action={setSupportingLink} className="flex flex-wrap items-end gap-2">
+            <input type="hidden" name="id" value={inv.id} />
+            <Field label="Link label"><input name="label" defaultValue={link?.name ?? ""} className="crm-input" placeholder="ABHI | AI Army Trend" /></Field>
+            <Field label="Link (Drive folder, live post)" className="min-w-[14rem] flex-1"><input name="url" type="url" defaultValue={link?.driveId ?? ""} className="crm-input" /></Field>
+            <button className="crm-btn crm-btn-secondary crm-btn-sm">Save</button>
+          </form>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {supporting.map((f) => (
+              <figure key={f.id} className="relative overflow-hidden rounded-xl border border-[var(--glass-border)]">
+                {f.mimeType.startsWith("image/") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`/api/crm/invoices/file/${f.id}`} alt={f.name} className="aspect-video w-full object-cover" />
+                ) : (
+                  <a href={`/api/crm/invoices/file/${f.id}`} target="_blank" rel="noreferrer" className="grid aspect-video place-items-center text-[0.8125rem] text-ash">{f.name}</a>
+                )}
+                <form action={removeInvoiceFile} className="absolute right-1 top-1"><input type="hidden" name="fileId" value={f.id} /><button aria-label="Remove" className="rounded-full bg-black/60 px-2 text-white">×</button></form>
+              </figure>
+            ))}
+          </div>
+          <div className="mt-3"><InvoiceUpload invoiceId={inv.id} kind="SUPPORTING" label="Add screenshots" /></div>
+          </>
+        )}
+      />
       {saved && <Notice>Saved as {inv.number}. Check it, then send.</Notice>}
       {/* What prints under "To," (Genesis, 22 Oct 2026): name, address, then the customer's GST No. and PAN No. */}
       {inv.status === "DRAFT" && (!inv.billToAddress || !inv.billToGstin) && (
@@ -101,28 +160,6 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
             {signed && <form action={removeInvoiceFile}><input type="hidden" name="fileId" value={signed.id} /><button className="text-[0.8125rem] text-faint hover:text-[#dc2626]">Remove</button></form>}
           </div>
         </Card>
-        <Card title="Supporting document">
-          <form action={setSupportingLink} className="flex flex-wrap items-end gap-2">
-            <input type="hidden" name="id" value={inv.id} />
-            <Field label="Link label"><input name="label" defaultValue={link?.name ?? ""} className="crm-input" placeholder="ABHI | AI Army Trend" /></Field>
-            <Field label="Link (Drive folder, live post)" className="min-w-[14rem] flex-1"><input name="url" type="url" defaultValue={link?.driveId ?? ""} className="crm-input" /></Field>
-            <button className="crm-btn crm-btn-secondary crm-btn-sm">Save</button>
-          </form>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {supporting.map((f) => (
-              <figure key={f.id} className="relative overflow-hidden rounded-xl border border-[var(--glass-border)]">
-                {f.mimeType.startsWith("image/") ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`/api/crm/invoices/file/${f.id}`} alt={f.name} className="aspect-video w-full object-cover" />
-                ) : (
-                  <a href={`/api/crm/invoices/file/${f.id}`} target="_blank" rel="noreferrer" className="grid aspect-video place-items-center text-[0.8125rem] text-ash">{f.name}</a>
-                )}
-                <form action={removeInvoiceFile} className="absolute right-1 top-1"><input type="hidden" name="fileId" value={f.id} /><button aria-label="Remove" className="rounded-full bg-black/60 px-2 text-white">×</button></form>
-              </figure>
-            ))}
-          </div>
-          <div className="mt-3"><InvoiceUpload invoiceId={inv.id} kind="SUPPORTING" label="Add screenshots" /></div>
-        </Card>
         {!inv.workspaceId && <DriveCard id={inv.id} saved={await archivedPdf(`invoice:${inv.id}`).catch(() => null)} save={archiveInvoiceNow} what="invoice" />}
         <Card title="History">
           <ul className="space-y-1.5 text-[0.9375rem]">
@@ -141,42 +178,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           </div>
         </Card>
       </div>
-      {locked ? (
-        <Notice>{inv.status === "PAID" ? "Paid invoices can't be edited. Issue a credit note or a new invoice." : "Cancelled."}</Notice>
-      ) : (
-        <div id="edit" className="scroll-mt-24"><InvoiceBuilder
-          states={STATES}
-          accounts={await invoiceAccounts(viewer)}
-          known={await knownBillTo(viewer)}
-          initial={{
-            id: inv.id,
-            accountId: inv.accountId,
-            quoteId: inv.quoteId,
-            billToName: inv.billToName,
-            billToEmail: inv.billToEmail,
-            billToContact: inv.billToContact,
-            billToPhone: inv.billToPhone,
-            kind: inv.kind === "PROFORMA" ? "PROFORMA" : "TAX",
-            billToGstin: inv.billToGstin,
-            billToAddress: inv.billToAddress,
-            placeOfSupply: inv.placeOfSupply,
-            issueDate: inv.issueDate.toISOString().slice(0, 10),
-            dueDate: inv.dueDate?.toISOString().slice(0, 10) ?? "",
-            discount: inv.discountPaise / 100,
-            notes: inv.notes,
-            terms: inv.terms,
-            quotationRef: inv.quotationRef,
-            quotationDate: inv.quotationDate?.toISOString().slice(0, 10) ?? "",
-            poNumber: inv.poNumber,
-            poDate: inv.poDate?.toISOString().slice(0, 10) ?? "",
-            executionDate: inv.executionDate?.toISOString().slice(0, 10) ?? "",
-            paymentTermDays: inv.paymentTermDays,
-            reference: inv.reference,
-            billToPan: inv.billToPan,
-            lines: inv.lines.map((l) => ({ description: l.description, sac: l.sac, qty: l.qty, uom: l.unit, unit: l.unitPaise / 100 })),
-          }}
-        /></div>
-      )}
+      {locked && <Notice>{inv.status === "PAID" ? "Paid invoices can&apos;t be edited. Issue a credit note or a new invoice." : "Cancelled."}</Notice>}
     </>
   );
 }
