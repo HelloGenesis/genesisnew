@@ -2,7 +2,10 @@ import { Download, ExternalLink, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 
 import { FoldCard } from "./fold-card";
+import { ClickRows } from "./click-rows";
 import { GuideButton } from "./guide-button";
+import { Menu } from "./menu";
+import { menuItem } from "./menu-item";
 
 /** The CRM's building blocks (server components). Styles: app/(crm)/crm.css. */
 
@@ -10,7 +13,7 @@ export type Tone = "good" | "warn" | "bad" | "info" | "muted";
 
 export function PageHead({ kicker, title, sub, exportKind, children, corner }: { kicker: string; title: string; sub?: React.ReactNode; exportKind?: string; children?: React.ReactNode; corner?: React.ReactNode }) {
   return (
-    <header className="relative flex flex-wrap items-end justify-between gap-4">
+    <header className="relative flex flex-wrap items-start justify-between gap-x-6 gap-y-4 lg:flex-nowrap">
       {/* The page's main action in the top-right corner, beside the title (Genesis, 3 Nov 2026: Share on a quote). */}
       {corner && <div className="absolute right-0 top-0">{corner}</div>}
       <div className={`min-w-0 ${corner ? "pr-28" : ""}`}>
@@ -19,26 +22,21 @@ export function PageHead({ kicker, title, sub, exportKind, children, corner }: {
         <h1 className="mt-2 text-balance font-sans text-[1.75rem] font-semibold leading-tight tracking-tight text-bone sm:text-[2.125rem]">{title}</h1>
         {sub && <p className="mt-1.5 text-[1rem] font-medium text-ash">{sub}</p>}
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Top right, beside the title, the main button bigger (Genesis, 17 Nov 2026: "Create new should align here and be bigger", as in Wix). */}
+      <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end [&_.crm-btn-primary.crm-btn-sm]:min-h-11 [&_.crm-btn-primary.crm-btn-sm]:px-5 [&_.crm-btn-primary.crm-btn-sm]:text-[0.9375rem]">
         {/* Every page with a walkthrough gets its "How it works" (lib/crm/guides). */}
         <GuideButton />
-        {children}
+        {/* Exports under one "More actions" (Genesis, 17 Nov 2026: "apply this all across the more action part"); Share stays its own button. */}
         {exportKind && (
-          <>
-            {/* The live Google Sheet for this list, and an Excel download (Genesis, 12 Oct 2026). */}
+          <Menu label="More actions" width="w-60">
             {exportKind !== "payouts" && (
-              <a href={`/admin/export/${exportKind}?open=sheet`} target="_blank" rel="noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">
-                Open in Google Sheets <ExternalLink className="size-4" aria-hidden />
-              </a>
+              <a href={`/admin/export/${exportKind}?open=sheet`} target="_blank" rel="noreferrer" className={menuItem}><ExternalLink className="size-4" aria-hidden /> Open in Google Sheets</a>
             )}
-            <a href={`/admin/export/${exportKind}?format=xlsx`} className="crm-btn crm-btn-secondary crm-btn-sm" download>
-              Export Excel <FileSpreadsheet className="size-4" aria-hidden />
-            </a>
-            <a href={`/admin/export/${exportKind}`} className="crm-btn crm-btn-secondary crm-btn-sm" download>
-              Export CSV <Download className="size-4" aria-hidden />
-            </a>
-          </>
+            <a href={`/admin/export/${exportKind}?format=xlsx`} className={menuItem} download><FileSpreadsheet className="size-4" aria-hidden /> Export Excel</a>
+            <a href={`/admin/export/${exportKind}`} className={menuItem} download><Download className="size-4" aria-hidden /> Export CSV</a>
+          </Menu>
         )}
+        {children}
       </div>
     </header>
   );
@@ -116,7 +114,7 @@ export function Empty({ children }: { children: React.ReactNode }) {
 
 export function Table({ head, children }: { head: string[]; children: React.ReactNode }) {
   return (
-    <div className="crm-card overflow-x-auto">
+    <ClickRows>
       <table className="crm-table">
         <thead>
           <tr>
@@ -127,7 +125,7 @@ export function Table({ head, children }: { head: string[]; children: React.Reac
         </thead>
         <tbody>{children}</tbody>
       </table>
-    </div>
+    </ClickRows>
   );
 }
 

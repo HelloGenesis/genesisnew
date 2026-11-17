@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { Ban, Files, IndianRupee, List, Mail, Paperclip, Pencil, Printer } from "lucide-react";
+import { CopyLinkButton } from "@/components/crm/copy-link-button";
+import { Menu } from "@/components/crm/menu";
+import { menuItem } from "@/components/crm/menu-item";
 import { notFound, redirect } from "next/navigation";
 
 import { ActionForm } from "@/components/crm/action-form";
@@ -37,12 +41,30 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
   const locked = inv.status === "PAID" || inv.status === "CANCELLED";
   return (
     <>
-      <PageHead kicker="Invoice" title={inv.number} sub={<><Status value={INVOICE_STATUS[inv.status]} /> <span className="ml-2">{inv.billToName} · {money(inv.totalPaise)}</span></>}>
-        <a href={`/invoice/${inv.token}?preview=1`} target="_blank" rel="noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Invoice PDF ↗</a>
-        <a href={`/invoice/${inv.token}?preview=1&doc=supporting`} target="_blank" rel="noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Supporting doc ↗</a>
-        <a href={`/invoice/${inv.token}?preview=1&doc=both`} target="_blank" rel="noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Both together ↗</a>
-        <Link href="/admin/invoices" className="crm-btn crm-btn-secondary crm-btn-sm">All invoices</Link>
+      {/*
+        LIKE AN OPENED INVOICE IN WIX (Genesis, 17 Nov 2026): the invoice itself on the same screen, Send via email
+        up front, everything else under More actions, and Share on its own.
+      */}
+      <PageHead kicker="Invoice" title={inv.number} sub={<><Status value={INVOICE_STATUS[inv.status]} /> <span className="ml-2">{inv.kind === "PROFORMA" ? "Proforma · " : ""}{inv.billToName} · {money(inv.totalPaise)}</span></>}>
+        <CopyLinkButton url={clientLink} />
+        <Menu label="More actions" width="w-60">
+          {!locked && <a href="#edit" className={menuItem}><Pencil className="size-4" aria-hidden /> Edit</a>}
+          <a href={`/invoice/${inv.token}?preview=1`} target="_blank" rel="noreferrer" className={menuItem}><Printer className="size-4" aria-hidden /> Print / download PDF</a>
+          <a href={`/invoice/${inv.token}?preview=1&doc=supporting`} target="_blank" rel="noreferrer" className={menuItem}><Paperclip className="size-4" aria-hidden /> Supporting doc</a>
+          <a href={`/invoice/${inv.token}?preview=1&doc=both`} target="_blank" rel="noreferrer" className={menuItem}><Files className="size-4" aria-hidden /> Both together</a>
+          {inv.status !== "PAID" && inv.status !== "CANCELLED" && (
+            <form action={markInvoicePaidAction}><input type="hidden" name="id" value={inv.id} /><button className={menuItem}><IndianRupee className="size-4" aria-hidden /> Record payment (mark paid)</button></form>
+          )}
+          {inv.status !== "PAID" && inv.status !== "CANCELLED" && (
+            <form action={cancelInvoice}><input type="hidden" name="id" value={inv.id} /><button className={`${menuItem} !text-[#dc2626]`}><Ban className="size-4" aria-hidden /> Cancel invoice</button></form>
+          )}
+          <Link href="/admin/invoices" className={menuItem}><List className="size-4" aria-hidden /> All invoices</Link>
+        </Menu>
+        {inv.status !== "CANCELLED" && <a href="#send" className="crm-btn crm-btn-primary crm-btn-sm"><Mail className="size-4" aria-hidden /> Send via email</a>}
       </PageHead>
+      <section className="crm-card overflow-hidden !p-0">
+        <iframe title={`Invoice ${inv.number}`} src={`/invoice/${inv.token}?preview=1`} className="block h-[min(1180px,85vh)] w-full border-0 bg-white" />
+      </section>
       {saved && <Notice>Saved as {inv.number}. Check it, then send.</Notice>}
       {/* What prints under "To," (Genesis, 22 Oct 2026): name, address, then the customer's GST No. and PAN No. */}
       {inv.status === "DRAFT" && (!inv.billToAddress || !inv.billToGstin) && (
@@ -51,7 +73,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
         </Notice>
       )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <Card title={inv.status === "DRAFT" ? "Send to the client" : "Send again"}>
+        <div id="send" className="scroll-mt-24"><Card title={inv.status === "DRAFT" ? "Send to the client" : "Send again"}>
           {inv.status === "CANCELLED" ? (
             <p className="text-ash">Cancelled.</p>
           ) : (
@@ -67,7 +89,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
           )}
           <p className="mt-3 break-all text-[0.8125rem] text-faint">Client link: {clientLink}</p>
           {inv.paymentUrl && <p className="break-all text-[0.8125rem] text-faint">Pay link: {inv.paymentUrl}</p>}
-        </Card>
+        </Card></div>
         <Card title="Signature">
           {signed ? (
             <p className="text-[0.9375rem] text-bone">Signed by {nameOf(inv.signedById)} · {dateTime(inv.signedAt)} · <a className="crm-link" href={`/api/crm/invoices/file/${signed.id}`} target="_blank" rel="noreferrer">signed copy ↗</a></p>
@@ -122,7 +144,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
       {locked ? (
         <Notice>{inv.status === "PAID" ? "Paid invoices can't be edited. Issue a credit note or a new invoice." : "Cancelled."}</Notice>
       ) : (
-        <InvoiceBuilder
+        <div id="edit" className="scroll-mt-24"><InvoiceBuilder
           states={STATES}
           accounts={await invoiceAccounts(viewer)}
           known={await knownBillTo(viewer)}
@@ -153,7 +175,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
             billToPan: inv.billToPan,
             lines: inv.lines.map((l) => ({ description: l.description, sac: l.sac, qty: l.qty, uom: l.unit, unit: l.unitPaise / 100 })),
           }}
-        />
+        /></div>
       )}
     </>
   );

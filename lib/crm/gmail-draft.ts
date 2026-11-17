@@ -24,7 +24,7 @@ export async function canDraft(userId: string) {
   return Boolean(conn && conn.status === "ACTIVE" && conn.scopes.includes("gmail.compose"));
 }
 
-export async function gmailDraft(userId: string, mail: { to: string[]; subject: string; text: string; html?: string; attachments?: Attachment[] }) {
+export async function gmailDraft(userId: string, mail: { to: string[]; cc?: string[]; subject: string; text: string; html?: string; attachments?: Attachment[] }) {
   const conn = await getPrisma().googleConnection.findUnique({ where: { userId }, select: { email: true, status: true, scopes: true } });
   if (!conn || conn.status !== "ACTIVE") throw new DraftAccessError("Connect your Google account in My settings first.");
   if (!conn.scopes.includes("gmail.compose")) throw new DraftAccessError("Reconnect Google in My settings to let the CRM put drafts in your Gmail.");
@@ -42,7 +42,7 @@ export async function gmailDraft(userId: string, mail: { to: string[]; subject: 
       (a) => `--${boundary}\r\nContent-Type: application/pdf; name="${a.filename}"\r\nContent-Disposition: attachment; filename="${a.filename}"\r\nContent-Transfer-Encoding: base64\r\n\r\n${wrap(a.content.toString("base64"))}`,
     ),
   ];
-  const mime = [`To: ${mail.to.join(", ")}`, `Subject: ${word(mail.subject)}`, "MIME-Version: 1.0", `Content-Type: multipart/mixed; boundary="${boundary}"`, "", ...parts, `--${boundary}--`, ""].join("\r\n");
+  const mime = [`To: ${mail.to.join(", ")}`, ...(mail.cc?.length ? [`Cc: ${mail.cc.join(", ")}`] : []), `Subject: ${word(mail.subject)}`, "MIME-Version: 1.0", `Content-Type: multipart/mixed; boundary="${boundary}"`, "", ...parts, `--${boundary}--`, ""].join("\r\n");
   /* The upload endpoint takes the raw message as it is, up to 35 MB. */
   const draft = await google<{ id: string; message: { id: string } }>(userId, "https://gmail.googleapis.com/upload/gmail/v1/users/me/drafts?uploadType=media", {
     method: "POST",

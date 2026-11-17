@@ -1089,6 +1089,8 @@ model EmailOutbox {
   kind          String
   /// Recipients; empty with `toStaff` set means "every staff member in `staffScope`".
   to            String[]     @default([])
+  /// Copied in (CC), seen by everyone on it.
+  cc            String[]     @default([])
   toStaff       Boolean      @default(false) @map("to_staff")
   /// Where replies go (an agency CRM's own email); the company address when empty.
   replyTo       String?      @map("reply_to")
@@ -1165,6 +1167,8 @@ model Quote {
   contactName   String      @map("contact_name")
   contactEmail  String      @map("contact_email")
   contactPhone  String?     @map("contact_phone")
+  /// More people on its emails (CC), besides the contact.
+  ccEmails      String[]    @default([]) @map("cc_emails")
   company       String?
   issuedAt      DateTime    @default(now()) @map("issued_at")
   expiresAt     DateTime    @map("expires_at")
