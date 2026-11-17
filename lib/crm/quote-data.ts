@@ -2,7 +2,7 @@ import "server-only";
 
 import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
-import { accountScope, leadScope } from "./scope";
+import { accountScope, invoiceScope, leadScope, quoteScope } from "./scope";
 import type { Viewer } from "./session";
 
 import { CATALOG, TERMS } from "./quote-templates";
@@ -18,15 +18,30 @@ export type BuilderClient = { key: string; kind: "client" | "agency" | "lead"; a
  */
 export async function builderData(creators: Prisma.CreatorWhereInput | null, viewer: Viewer) {
   const prisma = getPrisma();
-  const [pool, accounts, leads] = await Promise.all([
+  const [pool, accounts, leads, quoted, billed] = await Promise.all([
     creators === null ? Promise.resolve([]) : prisma.creator.findMany({ where: { blacklisted: false, ...creators }, orderBy: { followers: "desc" }, take: 1000 }),
     prisma.account.findMany({ where: { ...accountScope(viewer), kind: { in: ["BRAND", "AGENCY"] } }, orderBy: { name: "asc" }, take: 1000, include: { members: { include: { user: { select: { name: true, email: true } } }, take: 1 } } }),
     prisma.lead.findMany({ where: { ...leadScope(viewer), status: { notIn: ["LOST"] } }, orderBy: { createdAt: "desc" }, take: 1000, select: { id: true, name: true, company: true, email: true, phone: true, accountId: true } }),
+    /* Every brand person this user has quoted or invoiced (owners: everyone's), each one pickable (Genesis, 17 Nov 2026). */
+    prisma.quote.findMany({ where: { ...quoteScope(viewer), company: { not: null } }, orderBy: { updatedAt: "desc" }, take: 1000, select: { company: true, contactName: true, contactEmail: true, contactPhone: true, accountId: true, ccEmails: true } }),
+    prisma.invoice.findMany({ where: invoiceScope(viewer), orderBy: { createdAt: "desc" }, take: 500, select: { billToName: true, billToContact: true, billToEmail: true, billToPhone: true, accountId: true } }),
   ]);
   const clients: BuilderClient[] = [
     ...accounts.map((a) => ({ key: `a:${a.id}`, kind: a.kind === "AGENCY" ? ("agency" as const) : ("client" as const), accountId: a.id, leadId: null, company: a.legalName || a.name, contactName: a.members[0]?.user.name ?? "", email: a.email ?? a.members[0]?.user.email ?? "", phone: a.phone })),
     ...leads.map((l) => ({ key: `l:${l.id}`, kind: "lead" as const, accountId: l.accountId, leadId: l.id, company: l.company || l.name, contactName: l.name, email: l.email ?? "", phone: l.phone })),
   ];
+  const seen = new Set(clients.map((c) => `${c.company.trim().toLowerCase()}|${c.email.toLowerCase()}`));
+  const person = (company: string, contactName: string, email: string, phone: string | null, accountId: string | null) => {
+    const k = `${company.trim().toLowerCase()}|${email.toLowerCase()}`;
+    if (!company.trim() || (!email && !contactName) || seen.has(k)) return;
+    seen.add(k);
+    clients.push({ key: `p:${k}`, kind: "client", accountId, leadId: null, company: company.trim(), contactName, email, phone });
+  };
+  for (const x of quoted) {
+    person(x.company ?? "", x.contactName, x.contactEmail, x.contactPhone, x.accountId);
+    for (const cc of x.ccEmails) person(x.company ?? "", "", cc, null, x.accountId);
+  }
+  for (const x of billed) person(x.billToName, x.billToContact ?? "", x.billToEmail ?? "", x.billToPhone, x.accountId);
   return {
     clients,
     catalog: CATALOG.map((c) => ({ ...c })),

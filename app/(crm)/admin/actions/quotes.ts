@@ -25,7 +25,7 @@ import { isCurrency, tierFor } from "@/lib/crm/catalog";
 import { canDraft, DraftAccessError } from "@/lib/crm/gmail-draft";
 import { newToken, openFor, type QuoteDelivery, refreshTotals, sendQuote } from "@/lib/crm/quotes";
 import { termsByKey } from "@/lib/crm/quote-templates";
-import { creatorScope, quoteScope, seesCreators, seesQuoteContact } from "@/lib/crm/scope";
+import { accountScope, creatorScope, quoteScope, seesCreators, seesQuoteContact } from "@/lib/crm/scope";
 import { requireStaff } from "@/lib/crm/session";
 import { RazorpayError, razorpay } from "@/lib/razorpay";
 
@@ -46,6 +46,7 @@ const payload = z.object({
   contactName: z.string().trim().max(120),
   contactEmail: z.string().trim().max(200),
   contactPhone: z.string().trim().max(30).nullable().optional(),
+  ccEmails: z.array(z.string().trim().max(200)).max(20).optional(),
   company: z.string().trim().max(160).nullable().optional(),
   expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   notes: z.string().max(6000).nullable().optional(),
@@ -150,6 +151,7 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     contactName: q.contactName,
     contactEmail: q.contactEmail.toLowerCase(),
     contactPhone: q.contactPhone || null,
+    ccEmails: [...new Set((q.ccEmails ?? []).map((e) => e.toLowerCase()).filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))],
     company: q.company || null,
     expiresAt: new Date(`${q.expiresAt}T23:59:59+05:30`),
     notes: q.notes || null,
@@ -197,6 +199,17 @@ async function persist(viewer: Viewer, raw: string, autosave = false): Promise<P
     reachout: c.reachout || null, phone: tidyPhones(c.phone), email: tidyEmails(c.email), tier: c.tier?.trim() || null, remarks: c.remarks || null, extra: (c.extra ?? {}) as Prisma.InputJsonValue }));
 
   let id = q.id;
+  /*
+   * A NEW BRAND IS SAVED FOR WHOEVER QUOTED IT (Genesis, 17 Nov 2026: "brands and their POCs should
+   * automatically be saved for individual users, only their data; only super admins see all"). On Save,
+   * a typed brand becomes a client this person manages (lib/crm/scope accountScope: theirs; owners see
+   * everyone's). Its people come back in the picker from their quotes and invoices (lib/crm/quote-data).
+   */
+  if (!autosave && !data.accountId && q.company?.trim()) {
+    const name = q.company.trim();
+    const found = await prisma.account.findFirst({ where: { ...accountScope(viewer), name: { equals: name, mode: "insensitive" } }, select: { id: true } });
+    data.accountId = found?.id ?? (await prisma.account.create({ data: { name, kind: "BRAND", status: "PROSPECT", email: data.contactEmail || null, phone: data.contactPhone, managerId: viewer.id }, select: { id: true } })).id;
+  }
   /* The quote as it was, for its change history (lib/crm/quote-history). */
   const beforeSnap = id ? await quoteSnap(id) : null;
   /* The rows as they were, to see which reach-outs and contacts changed (lib/crm/reachout). */

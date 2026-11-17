@@ -44,6 +44,7 @@ export type BuilderQuote = {
   contactName: string;
   contactEmail: string;
   contactPhone?: string | null;
+  ccEmails?: string[];
   company?: string | null;
   expiresAt: string;
   notes?: string | null;
@@ -208,6 +209,7 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   }, [undo, redo]);
+  const [ccText, setCcText] = useState(() => (initial.ccEmails ?? []).join(", "));
   const [pick, setPick] = useState("");
   const [search, setSearch] = useState("");
   const [link, setLink] = useState("");
@@ -671,6 +673,22 @@ export function QuoteBuilder({ initial, catalog, terms, pool, clients = [], shee
           <label><span className="crm-label">Contact name</span><input value={q.contactName} onChange={(e) => set("contactName", e.target.value)} className="crm-input" /></label>
           <label><span className="crm-label">Email</span><input type="email" value={q.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} className="crm-input" placeholder="Needed only to send" /></label>
           <label><span className="crm-label">Phone</span><input value={q.contactPhone ?? ""} onChange={(e) => set("contactPhone", e.target.value)} className="crm-input" /></label>
+          {/* MORE PEOPLE ON IT (Genesis, 17 Nov 2026: "add multiple people … for emailing them add multiple cc"): copied on every email of this quote. */}
+          <label className="sm:col-span-3"><span className="crm-label">CC: more people from the brand</span>
+            <input value={ccText} onChange={(e) => { setCcText(e.target.value); setQ((x) => ({ ...x, ccEmails: e.target.value.split(/[\s,;]+/).filter(Boolean) })); }} className="crm-input" placeholder="name@brand.com, other@brand.com" />
+          </label>
+          {(() => {
+            const brand = (q.company ?? "").trim().toLowerCase();
+            const more = brand ? [...new Map(clients.filter((c) => c.company.trim().toLowerCase() === brand && c.email && c.email.toLowerCase() !== q.contactEmail.toLowerCase() && !(q.ccEmails ?? []).map((e) => e.toLowerCase()).includes(c.email.toLowerCase())).map((c) => [c.email.toLowerCase(), c])).values()] : [];
+            return more.length ? (
+              <div className="flex flex-wrap items-center gap-2 sm:col-span-3 text-[0.8125rem] text-ash">
+                <span>Also at {q.company}:</span>
+                {more.map((c) => (
+                  <button key={c.email} type="button" className="crm-btn crm-btn-secondary crm-btn-sm" onClick={() => { const next = [...(q.ccEmails ?? []), c.email]; setCcText(next.join(", ")); setQ((x) => ({ ...x, ccEmails: next })); }}>+ {c.contactName || c.email}</button>
+                ))}
+              </div>
+            ) : null;
+          })()}
         </div>
         )}
       </section>

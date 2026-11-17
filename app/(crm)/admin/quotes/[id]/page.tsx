@@ -83,6 +83,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
     contactName: showContact ? q.contactName : "",
     contactEmail: showContact ? q.contactEmail : "",
     contactPhone: showContact ? q.contactPhone : null,
+    ccEmails: showContact ? q.ccEmails : [],
     company: q.company,
     /* The day in India: a UTC date moved "valid until" back a day on save for quotes made early in the morning. */
     expiresAt: q.expiresAt.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }),

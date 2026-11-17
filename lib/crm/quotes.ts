@@ -174,6 +174,8 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   const mail = {
     kind: "quote_sent",
     to: [q.contactEmail],
+    /* More people copied in (Genesis, 17 Nov 2026). */
+    cc: q.ccEmails ?? [],
     subject: `${view === "proposal" || view === "proposal-plan" ? "Proposal" : view === "plan" || plan ? "Influencer plan" : "Quotation"} ${ref} · ${q.title}`,
     text: [
       `Hi ${q.contactName.split(" ")[0]},`,
@@ -221,10 +223,10 @@ export async function sendQuote(quoteId: string, actorId: string, message: strin
   /* The very page the client opens, printed (lib/crm/pdf). */
   const pdf = { filename: `${ref.replace(/[^\w.-]+/g, "-")}.pdf`, content: await renderPdf(link) };
   if (delivery === "draft") {
-    const draft = await gmailDraft(actorId, { to: mail.to, subject: mail.subject, text: `${mail.text}${mail.signOff ?? SIGN_OFF}`, html, attachments: [pdf] });
+    const draft = await gmailDraft(actorId, { to: mail.to, cc: mail.cc, subject: mail.subject, text: `${mail.text}${mail.signOff ?? SIGN_OFF}`, html, attachments: [pdf] });
     return { paymentUrl, draftUrl: draft.url, draftAccount: draft.account };
   }
-  await sendNow(mail.to, mail.subject, mail.text, { replyTo: mail.replyTo, signOff: mail.signOff, attachments: [pdf], html });
+  await sendNow(mail.to, mail.subject, mail.text, { replyTo: mail.replyTo, signOff: mail.signOff, attachments: [pdf], html, cc: mail.cc });
   return { paymentUrl };
 }
 
