@@ -14,9 +14,7 @@ export type Tone = "good" | "warn" | "bad" | "info" | "muted";
 export function PageHead({ kicker, title, sub, exportKind, children, corner }: { kicker: string; title: string; sub?: React.ReactNode; exportKind?: string; children?: React.ReactNode; corner?: React.ReactNode }) {
   return (
     <header className="relative flex flex-wrap items-start justify-between gap-x-6 gap-y-4 lg:flex-nowrap">
-      {/* The page's main action in the top-right corner, beside the title (Genesis, 3 Nov 2026: Share on a quote). */}
-      {corner && <div className="absolute right-0 top-0">{corner}</div>}
-      <div className={`min-w-0 ${corner ? "pr-28" : ""}`}>
+      <div className="min-w-0">
         {/* Clear at a glance (Genesis, 31 Oct 2026: "headings and subheadings bold and semibold, visible enough, all across"). */}
         <p className="micro-label !font-semibold !text-ash">{kicker}</p>
         <h1 className="mt-2 text-balance font-sans text-[1.75rem] font-semibold leading-tight tracking-tight text-bone sm:text-[2.125rem]">{title}</h1>
@@ -37,6 +35,8 @@ export function PageHead({ kicker, title, sub, exportKind, children, corner }: {
           </Menu>
         )}
         {children}
+        {/* Share last in the row (Genesis, 3 Nov 2026), no longer pinned over the other buttons (17 Nov). */}
+        {corner}
       </div>
     </header>
   );

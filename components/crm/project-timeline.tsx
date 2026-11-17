@@ -10,13 +10,14 @@ import { projectRef } from "@/lib/crm/catalog";
  * from when it was opened, dashed, until dates are set on its page.
  */
 
-export type TimelineProject = { id: string; number: number; name: string; client: string; start: Date; due: Date | null; stages: readonly string[]; stage: number; active: boolean };
+/* `href`, `ref`, `note`: for rows that aren't projects (lib/crm/deal-tracker: lead to money). */
+export type TimelineProject = { id: string; number: number; name: string; client: string; start: Date; due: Date | null; stages: readonly string[]; stage: number; active: boolean; href?: string; ref?: string; note?: string };
 
 const DAY = 864e5;
 const fmt = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
 
-export function ProjectTimeline({ projects, today }: { projects: TimelineProject[]; today: Date }) {
-  if (!projects.length) return <p className="text-[0.875rem] text-ash">No projects to show.</p>;
+export function ProjectTimeline({ projects, today, empty = "No projects to show.", dashed = "Dashed: no due date yet. Set dates on the project." }: { projects: TimelineProject[]; today: Date; empty?: string; dashed?: string }) {
+  if (!projects.length) return <p className="text-[0.875rem] text-ash">{empty}</p>;
   /* The window: from the earliest start (or a week ago) to the latest due date (or a month ahead), at most about six months. */
   const from = new Date(Math.max(Math.min(today.getTime() - 7 * DAY, ...projects.map((p) => p.start.getTime())), today.getTime() - 90 * DAY));
   const to = new Date(Math.min(Math.max(today.getTime() + 30 * DAY, ...projects.map((p) => (p.due ?? p.start).getTime() + 7 * DAY)), from.getTime() + 190 * DAY));
@@ -49,15 +50,15 @@ export function ProjectTimeline({ projects, today }: { projects: TimelineProject
             const current = p.stages[Math.min(p.stage, p.stages.length - 1)] ?? "";
             return (
               <li key={p.id} className="grid grid-cols-[14rem_minmax(0,1fr)] items-center gap-3 border-b border-[var(--glass-border)] py-2.5 last:border-b-0">
-                <Link href={`/admin/projects/${p.id}`} className="min-w-0">
+                <Link href={p.href ?? `/admin/projects/${p.id}`} className="min-w-0">
                   <span className="block truncate text-[0.875rem] text-bone hover:underline">{p.name}</span>
-                  <span className="block truncate text-[0.75rem] text-ash">{projectRef(p.number)} · {p.client}</span>
+                  <span className="block truncate text-[0.75rem] text-ash">{p.ref ?? projectRef(p.number)} · {p.client}</span>
                 </Link>
                 <div className="relative h-10">
                   {/* Today. */}
                   <span aria-hidden className="absolute inset-y-[-0.625rem] w-px bg-[#ffc516]/60" style={{ left: `${now}%` }} />
                   <Link
-                    href={`/admin/projects/${p.id}`}
+                    href={p.href ?? `/admin/projects/${p.id}`}
                     title={`${p.name}: ${fmt(p.start)} → ${p.due ? fmt(p.due) : "no due date yet"} · ${current}`}
                     className={`absolute top-0 flex h-5 overflow-hidden rounded-full ${p.due ? "" : "border border-dashed border-[var(--glass-border)]"} ${late ? "ring-2 ring-[#dc2626]" : ""}`}
                     style={{ left: `${left}%`, width: `${width}%` }}
@@ -70,7 +71,7 @@ export function ProjectTimeline({ projects, today }: { projects: TimelineProject
                     ))}
                   </Link>
                   <span className="absolute top-6 truncate text-[0.6875rem] text-ash" style={{ left: `${Math.min(left, 70)}%`, maxWidth: "60%" }}>
-                    {current}
+                    {current}{p.note ? <span className="text-faint"> · {p.note}</span> : null}
                     <span className={late ? "font-semibold text-[#dc2626]" : "text-faint"}> · {p.due ? `${late ? "was due" : "due"} ${fmt(p.due)}` : "no due date"}</span>
                   </span>
                 </div>
@@ -83,7 +84,7 @@ export function ProjectTimeline({ projects, today }: { projects: TimelineProject
           <span className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-[#ffc516]" /> Now</span>
           <span className="flex items-center gap-1.5"><span className="h-2 w-4 rounded-full bg-[var(--hover-wash)]" /> To come</span>
           <span className="flex items-center gap-1.5"><span className="h-3 w-px bg-[#ffc516]/60" /> Today</span>
-          <span>Dashed: no due date yet. Set dates on the project.</span>
+          <span>{dashed}</span>
         </p>
       </div>
     </div>

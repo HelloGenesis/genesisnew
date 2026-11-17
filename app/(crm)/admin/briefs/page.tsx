@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import { ActionForm } from "@/components/crm/action-form";
-import { AddPanel, Badge, Empty, PageHead, Table } from "@/components/crm/ui";
+import { AddPanel, Badge, Card, Empty, PageHead, Table } from "@/components/crm/ui";
+import { ProjectTimeline } from "@/components/crm/project-timeline";
+import { DEAL_STAGES, dealRows } from "@/lib/crm/deal-tracker";
 import { getPrisma } from "@/lib/db";
 import { DIVISION_LABEL, date, money } from "@/lib/crm/catalog";
 import { briefScope } from "@/lib/crm/scope";
@@ -40,6 +42,10 @@ export default async function BriefsPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHead kicker="Sales" title="Briefs" sub={`${briefs.length} brief${briefs.length === 1 ? "" : "s"}`} />
+      {/* Each brief from in to paid (lib/crm/deal-tracker), the same as on Leads & pipeline. */}
+      <Card title="Lead to money">
+        <ProjectTimeline today={new Date()} empty="No briefs yet." dashed="Dashed: no deadline on the brief yet. Stages move by themselves from the quote, project and invoice." projects={(await dealRows(viewer)).map((d) => ({ ...d, number: 0, stages: DEAL_STAGES }))} />
+      </Card>
       <AddPanel label="Add a brief" open={Boolean(p.lead || p.account)}>
         <ActionForm action={saveBrief} submit="Save brief">
           <BriefFields brief={{ leadId: p.lead ?? null, accountId: p.account ?? null }} leads={options.leads} accounts={options.accounts} />

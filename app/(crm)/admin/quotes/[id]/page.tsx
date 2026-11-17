@@ -7,7 +7,8 @@ import { ShareBox } from "@/components/crm/share-box";
 import { ShareDialog } from "@/components/crm/share-dialog";
 import { Menu } from "@/components/crm/menu";
 import { menuItem } from "@/components/crm/menu-item";
-import { CheckCircle2, Copy, GitBranch, History, ReceiptText, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, GitBranch, History, Mail, Pencil, ReceiptText, Trash2, XCircle } from "lucide-react";
+import { DocPreview } from "@/components/crm/doc-preview";
 import { MessageBox } from "@/components/crm/rephrase-bar";
 import { peopleWithAccess, shareCandidates } from "@/lib/crm/quote-share";
 import { workspaces } from "@/lib/crm/workspace";
@@ -136,7 +137,6 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
       <PageHead
         kicker={`${plan ? "Influencer plan" : "Price quote"} ${docRef(q)}`}
         title={q.title}
-        corner={<ShareDialog quoteId={q.id} title={q.title} viewerId={viewer.id} link={appUrl(`/admin/quotes/${q.id}`)} crm={crmName} people={withAccess} candidates={candidates} />}
         sub={<>{q.account ? <Link href={`/admin/accounts/${q.account.id}`} className="crm-link">{q.account.name}</Link> : (q.company ?? (showContact ? q.contactName : "Client"))} · {moneyIn(q.totalPaise, q.currency)}{q.currency !== "INR" ? " · no GST (export)" : ""}{q.lead && showContact && <> · lead <Link href={`/admin/leads/${q.lead.id}`} className="crm-link">{q.lead.name}</Link></>}{q.request && <> · request <Link href={`/admin/requests/${q.request.id}`} className="crm-link">{q.request.title}</Link></>}</>}
       >
         <Status value={QUOTE_STATUS[q.status]} />
@@ -153,7 +153,11 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
           </ul>
           <Link href={`/admin/quotes/${q.id}/history`} className={menuItem}><History className="size-4 text-ash" aria-hidden /> Every change, field by field →</Link>
         </Menu>
-        <Menu label="Actions" width="w-72">
+        {/* Like the invoice (Genesis, 17 Nov 2026): Share on its own, More actions, then Send via email. */}
+        <ShareDialog quoteId={q.id} title={q.title} viewerId={viewer.id} link={appUrl(`/admin/quotes/${q.id}`)} crm={crmName} people={withAccess} candidates={candidates} />
+        <Menu label="More actions" width="w-72">
+            {q.status !== "PAID" && <a href="#edit" className={menuItem}><Pencil className="size-4 text-ash" aria-hidden /> Edit</a>}
+            <a href={`/quote/${q.token}`} target="_blank" rel="noopener noreferrer" className={menuItem}><ExternalLink className="size-4 text-ash" aria-hidden /> Client view / PDF</a>
 
             {/* The invoice from this quote: open it, or make it with the quote's client and lines (Genesis, 22 Oct 2026). */}
             {invoices.length > 0
@@ -175,12 +179,14 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
               <form action={deleteQuote}><input type="hidden" name="id" value={q.id} /><button className={`${menuItem} !text-[#dc2626]`}><Trash2 className="size-4" aria-hidden /> Delete</button></form>
             )}
         </Menu>
-        <a href={`/quote/${q.token}`} target="_blank" rel="noopener noreferrer" className="crm-btn crm-btn-secondary crm-btn-sm">Client view / PDF ↗</a>
+        <a href="#send" className="crm-btn crm-btn-primary crm-btn-sm"><Mail className="size-4" aria-hidden /> Send via email</a>
       </PageHead>
       {saved && <Notice>Saved as a draft. Check the client view, then send it.{sheetsNote ? ` ${sheetsNote}` : ""}</Notice>}
+      {/* The quote first, as the client sees it; the editor opens in a pop-up (Genesis, 17 Nov 2026). */}
+      <DocPreview tabs={[{ key: "quote", label: "Client view", src: `/quote/${q.token}`, editLabel: plan ? "Edit plan" : "Edit quote", editor: q.status === "PAID" ? undefined : <QuoteBuilder contactHidden={!showContact} version={q.updatedAt.toISOString()} initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} clients={data.clients} sheets={{ ext: q.extSheetId, int: q.intSheetId }} /> }]} />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] [&>*]:min-w-0">
-        <Card title={q.status === "DRAFT" ? "Send to the client" : "Send again"} action={!q.workspaceId ? <DriveButton id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} /> : undefined}>
+        <div id="send" className="scroll-mt-24 min-w-0"><Card title={q.status === "DRAFT" ? "Send to the client" : "Send again"} action={!q.workspaceId ? <DriveButton id={q.id} saved={await archivedPdf(`quote:${q.id}`).catch(() => null)} save={archiveQuoteNow} /> : undefined}>
           <ActionForm action={sendQuoteAction} submit={q.status === "DRAFT" ? "Send quotation email" : "Re-send with the latest changes"} extra={<button name="intent" value="save" data-no-confirm className="crm-btn crm-btn-secondary">Save draft</button>} confirm={showContact ? `Email this ${plan ? "plan" : "quote"} to ${q.contactEmail}?` : `Email this ${plan ? "plan" : "quote"} to the client?`}>
             <input type="hidden" name="id" value={q.id} />
             <Field label="Send" hint="Together, or each part on its own: proposal (platforms, problems, objectives), pricing (lines, totals, terms), influencer plan (the creator list).">
@@ -205,7 +211,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
           <p className="mt-3 break-all text-[0.8125rem] text-faint">Client link: {clientLink} · <a className="crm-link" href={`${clientLink}?view=proposal`} target="_blank" rel="noreferrer">proposal only</a> · <a className="crm-link" href={`${clientLink}?view=plan`} target="_blank" rel="noreferrer">influencer plan only</a> · <a className="crm-link" href={`${clientLink}?view=pricing`} target="_blank" rel="noreferrer">pricing only</a></p>
           {q.paymentUrl && <p className="break-all text-[0.8125rem] text-faint">Payment link: {q.paymentUrl}</p>}
           {draft && <p className="mt-2 text-[0.8125rem] text-faint">Draft saved {dateTime(new Date(draft.at))}.</p>}
-        </Card>
+        </Card></div>
         {/* WhatsApp or your own email, beside the send card (Genesis, 3 Nov 2026: "can fit into this section"). */}
         <Card title="Or share it on WhatsApp / email">
             <ShareBox
@@ -251,7 +257,7 @@ export default async function QuotePage({ params, searchParams }: { params: Prom
         </Card>
       )}
 
-      {q.status === "PAID" ? <Notice>This quote is paid, so it can&apos;t change. Duplicate it to quote again.</Notice> : <QuoteBuilder contactHidden={!showContact} version={q.updatedAt.toISOString()} initial={initial} catalog={data.catalog} terms={data.terms} pool={data.pool} clients={data.clients} sheets={{ ext: q.extSheetId, int: q.intSheetId }} />}
+      {q.status === "PAID" && <Notice>This quote is paid, so it can&apos;t change. Duplicate it to quote again.</Notice>}
     </>
   );
 }
