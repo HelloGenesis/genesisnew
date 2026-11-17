@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { ProjectTimeline } from "@/components/crm/project-timeline";
+import { DEAL_STAGES, dealRows } from "@/lib/crm/deal-tracker";
 
 import { ActionForm } from "@/components/crm/action-form";
-import { AddPanel, Empty, Field, PageHead, Select, Status, Table } from "@/components/crm/ui";
+import { AddPanel, Card, Empty, Field, PageHead, Select, Status, Table } from "@/components/crm/ui";
 import { getPrisma } from "@/lib/db";
 import type { Division, LeadStatus, Prisma } from "@/lib/generated/prisma/client";
 import { LeadBoard } from "@/components/crm/lead-board";
@@ -59,6 +61,16 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
           {board ? "List view" : "Board view"}
         </Link>
       </PageHead>
+
+      {/* LEAD TO MONEY (Genesis, 17 Nov 2026): every brief and new lead, from in to paid, drawn like the projects timeline. */}
+      <Card title="Lead to money">
+        <ProjectTimeline
+          today={new Date()}
+          empty="No briefs or new leads in the last six months."
+          dashed="Dashed: no deadline on the brief yet. Every stage moves by itself: quote made, sent, accepted, project delivered, invoiced, invoice sent, paid."
+          projects={(await dealRows(viewer)).map((d) => ({ ...d, number: 0, stages: DEAL_STAGES }))}
+        />
+      </Card>
 
       <form className="flex flex-wrap items-end gap-2" action="/admin/leads">
         {params.view && <input type="hidden" name="view" value={params.view} />}
