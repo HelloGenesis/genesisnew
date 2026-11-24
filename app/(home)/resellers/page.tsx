@@ -17,7 +17,7 @@ import { crmSoftwareJsonLd, faqJsonLd } from "@/lib/geo";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Nova by Genesis: one platform for your agency, brands and partners",
+  title: "Nova by Genesis: CRM for Agencies, Brands & Partners",
   description:
     "The CRM Genesis Media runs on: leads, influencer plans, quotes, GST invoices, client portal and an AI inbox, for your team, your brands and your partner agencies. From ₹4,999 a month.",
   path: "/resellers",

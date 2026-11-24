@@ -225,7 +225,8 @@ export function DivisionBoard() {
       className="relative mx-auto mb-14 mt-8 w-[min(calc(100vw-5rem),24rem,46vh)] lg:mb-12 lg:mt-4 lg:w-[min(64vh,calc(100dvh-19rem),40rem)]"
     >
       <motion.div
-        initial={still ? false : { opacity: 0, scale: 0.94 }}
+        /* Visible from the first paint, only the scale animates (SEO review, 24 Nov 2026: content hidden behind animations). */
+        initial={still ? false : { opacity: 1, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.9, delay: ENTER.orb, ease: EASE }}
       >

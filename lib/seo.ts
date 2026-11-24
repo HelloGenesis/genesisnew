@@ -139,12 +139,16 @@ export type PageSeo = {
  * Open Graph (Next copies them across), so it needs only the card type.
  */
 export function pageMetadata(page: PageSeo): Metadata {
-  const fullTitle = page.absoluteTitle
-    ? page.title
-    : `${page.title} | ${siteConfig.name}`;
+  /*
+    AT MOST ABOUT 60 CHARACTERS IN RESULTS (SEO review, 24 Nov 2026): a title that would run past it with
+    " | Genesis Media" on the end drops the brand rather than being cut off mid-word.
+  */
+  const branded = `${page.title} | ${siteConfig.name}`;
+  const bare = page.absoluteTitle || branded.length > 60;
+  const fullTitle = bare ? page.title : branded;
 
   return {
-    title: page.absoluteTitle ? { absolute: page.title } : page.title,
+    title: bare ? { absolute: page.title } : page.title,
     description: page.description,
     alternates: { canonical: page.path },
     openGraph: {
@@ -224,6 +228,20 @@ export function organizationJsonLd(): JsonLdNode {
     email: footerCta.email,
     telephone: siteConfig.whatsapp,
     sameAs: [siteConfig.social.instagram, siteConfig.social.linkedin],
+    slogan: "Plug Genesis into your brand",
+    priceRange: "₹₹₹",
+    /*
+      THE FOUR DIVISIONS AND THE PRODUCT AS NAMED ENTITIES (GEO, 24 Nov 2026): so search and AI answer engines
+      tie "Genesis Influence", "Genesis Studios", "Genesis AI Lab", "Genesis Brand & Design" and Nova to
+      Genesis Media and to their own pages.
+    */
+    department: [
+      { "@type": "Organization", name: "Genesis Influence", url: absoluteUrl("/influencer-marketing"), description: "Influencer marketing, celebrity partnerships and UGC campaigns across India." },
+      { "@type": "Organization", name: "Genesis Studios", url: absoluteUrl("/content-production"), description: "Video and content production in Mumbai: reels, brand films, founder videos, explainers, podcasts and event films." },
+      { "@type": "Organization", name: "Genesis AI Lab", url: absoluteUrl("/ai-content-automation"), description: "AI avatars, voice clones, multilingual AI video and AI automations." },
+      { "@type": "Organization", name: "Genesis Brand & Design", url: absoluteUrl("/brand-design"), description: "Brand positioning, visual identity, guidelines, social-first design and pitch decks." },
+    ],
+    owns: { "@type": "SoftwareApplication", name: "Nova by Genesis", url: absoluteUrl("/resellers"), applicationCategory: "BusinessApplication" },
     address: {
       "@type": "PostalAddress",
       ...(address.streetAddress ? { streetAddress: address.streetAddress } : {}),

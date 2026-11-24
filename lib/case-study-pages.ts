@@ -55,7 +55,11 @@ const BRAND = " | Genesis Media";
  */
 function titleFor(copy: CaseStudyCopy): string {
   const full = `${copy.campaign} Case Study`;
-  return `${full}${BRAND}`.length <= 60 ? full : copy.campaign;
+  if (`${full}${BRAND}`.length <= 60) return full;
+  if (copy.campaign.length <= 60) return copy.campaign;
+  /* A long campaign name keeps the part before its colon (SEO review, 24 Nov 2026: titles of 88-90 characters were cut off in results). */
+  const short = copy.campaign.split(/[:|—]/)[0].trim();
+  return `${short} Case Study`.length <= 60 ? `${short} Case Study` : short.slice(0, 60);
 }
 
 const MIN = 140;
