@@ -9,6 +9,7 @@ import { ClientLogos } from "./components/client-logos";
 import { InfluencerMarketing } from "./components/influencer-marketing";
 import { Portfolio } from "./components/portfolio";
 import { Services } from "./components/services";
+import { HomeIntro } from "./components/home-intro";
 import { Studios } from "./components/studios";
 import { JumpBar, type JumpLink } from "./components/offer/page-aids";
 import { CrmHomeSection } from "@/components/genesis/crm-home-section";
@@ -17,6 +18,7 @@ import { servicePages } from "@/lib/services";
 
 /* The homepage's sections, in the order they come. */
 const HOME_SECTIONS: JumpLink[] = [
+  { id: "what-we-do", label: "What we do" },
   { id: "case-studies", label: "Case studies" },
   { id: "clients", label: "Clients" },
   { id: "influence", label: "Influence" },
@@ -111,6 +113,9 @@ export default function HomePage() {
     <main>
       {/* 01 — the Brain. Four verticals, one system, and the way in. */}
       <Services />
+
+      {/* What Genesis does, in the words people search for, with one clear next step (SEO review, 24 Nov 2026). */}
+      <HomeIntro />
 
       {/*
         02 — WORK THAT MOVED A NUMBER, DIRECTLY UNDER THE ORB.

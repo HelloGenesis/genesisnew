@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { Atmosphere } from "@/components/genesis/atmosphere";
+import { FaqBlock } from "./offer/blocks";
 import { DivisionName } from "@/components/genesis/division-lockup";
 import { GlassButton } from "@/components/genesis/glass-button";
 import { MembershipCard } from "@/components/genesis/membership-card";
@@ -217,6 +218,21 @@ export function PricingHubView() {
           ))}
         </div>
       </section>
+      {/*
+        PRICE QUESTIONS, ANSWERED IN ONE PLACE (AEO, 24 Nov 2026): the questions people ask search engines and AI
+        assistants about what an agency costs in India, answered from the plans above, with FAQPage data.
+      */}
+      <FaqBlock
+        heading="Pricing: common questions"
+        items={[
+          { q: "How much does influencer marketing cost in India with Genesis Media?", a: ["Genesis Influence charges a 15% agency commission on top of the creator fees. For example, ₹5,00,000 in creator fees means ₹75,000 for Genesis, covering strategy, creator sourcing, verification, negotiation, briefing, posting and reporting. UGC packs are fixed: 4 videos for ₹39,999 or 10 videos across 3 creators for ₹64,999."] },
+          { q: "How much does video production cost in Mumbai?", a: ["Genesis Studios subscriptions start at ₹84,999 a month billed quarterly (₹93,499 billed monthly). One-time options: a reel editing pack for ₹24,999, a founder or CEO video shoot for ₹44,999, a half-day content shoot for ₹59,999 and event coverage for ₹74,999."] },
+          { q: "How much does an AI avatar or AI video cost?", a: ["An AI avatar clone of you or your spokesperson is a one-time ₹24,999. A pack of 4 AI campaign videos is ₹39,999, an AI product explainer with motion graphics is ₹44,999, and an AI campaign film is ₹67,999. Genesis AI Lab subscriptions start at ₹94,999 a month billed quarterly."] },
+          { q: "How much does branding and design cost?", a: ["The Genesis Brand & Design Creative Desk, an always-on subscription for social creatives, ads, campaigns, presentations and collateral, is ₹64,999 a month. One-time work: a logo refresh for ₹24,999, a campaign creative kit for ₹29,999, a pitch deck makeover for ₹32,999, a marketing launch kit for ₹39,999, and a full brand build from ₹1,49,999."] },
+          { q: "Do the prices include GST?", a: ["No. All prices are in Indian rupees and exclude 18% GST. Clients outside India are billed as an export of services, so Indian GST is not charged."] },
+          { q: "Is it cheaper to pay quarterly?", a: ["Yes, for Genesis AI Lab and Genesis Studios: their plans cost about 10% less a month billed quarterly than billed monthly. Cancellation works as set out in the cancellation and refund policy."] },
+        ]}
+      />
     </main>
   );
 }

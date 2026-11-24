@@ -7,7 +7,8 @@ import { pageMetadata } from "@/lib/seo";
 /* Cancellations and refunds — see lib/legal-commerce. */
 export const metadata: Metadata = pageMetadata({
   title: refunds.title,
-  description: refunds.standfirst,
+  /* 140-160 characters (the standfirst alone was 93). */
+  description: "When Genesis Media subscriptions, pay-per-project products and content shoots can be cancelled, what is refunded, how refunds are paid and how long they take.",
   path: "/refund-policy",
 });
 

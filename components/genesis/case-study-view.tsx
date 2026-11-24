@@ -188,7 +188,7 @@ export function CaseStudyView({
                 only re-encode; it is already a small PNG committed to /public. */}
             <img
               src={art}
-              alt=""
+              alt={headline}
               className="max-h-[min(62vh,34rem)] w-auto max-w-full rounded-2xl border border-[var(--glass-border)] bg-white object-contain p-6"
             />
           </div>
